@@ -21,8 +21,8 @@
 
 ##We successfuly parsed many open source projects.
 Requirements:
-*Firefox 4 and above
-*Chrome
-*IE above version 10
+* Firefox 4 and above
+* Chrome
+* IE above version 10
 
 
