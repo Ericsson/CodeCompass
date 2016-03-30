@@ -15,9 +15,9 @@
 
 ## Screenshots!
 
-![Screenshot1](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/screenshot1.jpg)
-![Screenshot2](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/screenshot2.jpg)
-![Screenshot3](https://raw.githubusercontent.com/Ericsson/codechecker/master/docs/images/screenshot3.jpg)
+![Screenshot1](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot1.jpg)
+![Screenshot2](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg)
+![Screenshot3](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg)
 
 ##We successfuly parsed many open source projects.
 Requirements:
