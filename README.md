@@ -15,9 +15,9 @@
 
 ## Screenshots!
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot1.jpg" width="200px" />
-![Screenshot2](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg)
-![Screenshot3](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg)
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot1.jpg" width="30%" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg" width="30%" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg" width="30%" />
 
 ##We successfuly parsed many open source projects.
 Requirements:
