@@ -4,6 +4,10 @@
 
 ![CodeCompass](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/logo.jpg)
 
+#Coming soon...
+
+Try a demo on Xerces [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)
+
 ## Features
 * User Friendly Web UI
 * Fast Navigation among source code elements.  
