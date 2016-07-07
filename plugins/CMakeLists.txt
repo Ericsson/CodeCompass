@@ -1,0 +1,10 @@
+# Add all subdirectories to the build
+set(current_dir ${CMAKE_CURRENT_SOURCE_DIR})  
+file(GLOB plugins RELATIVE ${current_dir} "${current_dir}/*")
+message(STATUS "Adding new plugins:")
+foreach(_plugin ${plugins})
+  if(IS_DIRECTORY "${current_dir}/${_plugin}")
+    message(STATUS "  ${_plugin}")
+    add_subdirectory(${_plugin})
+  endif()
+endforeach(_plugin)

@@ -1,0 +1,8 @@
+/build/
+
+*-rule
+
+**/*odb\.cxx
+**/*odb\.hxx
+**/*odb\.ixx
+**/*odb\.sql
