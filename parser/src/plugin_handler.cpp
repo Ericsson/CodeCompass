@@ -13,8 +13,8 @@ namespace cc
 {
 namespace parser
 {
-  
-PluginHandler::PluginHandler(ParserContext& ctx_): _ctx(ctx_)
+
+PluginHandler::PluginHandler(ParserContext& ctx_) : _ctx(ctx_)
 {
 }
 
@@ -47,7 +47,8 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
     auto make = reinterpret_cast<makeParser>(lib->getSymbol("make"));    
     std::shared_ptr<AbstractParser> parser = make(_ctx);    
     _parsers[parser->getName()] = parser;
-  }  
+  }
+
   return true;
 }
 
@@ -63,10 +64,11 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
   std::vector<Edge> edges;
 
   std::vector<std::string> vertexNames;
-  std::map<std::string, 
-          boost::adjacency_list<>::vertex_descriptor> parserNameToVertex;
+  std::map<std::string, boost::adjacency_list<>::vertex_descriptor>
+    parserNameToVertex;
   
   //--- Init data ---//
+
   for(const auto& parser : _parsers)
   {        
     vertexNames.push_back(parser.first); 
@@ -74,23 +76,20 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
   }
 
   //--- Add edges ---//
-  for(const auto& parser: _parsers)
+
+  for(const auto& parser : _parsers)
   {
-    auto depenncies = parser.second->getDependentParsers();
-    for(const auto& dependency : depenncies)
+    for(const auto& dependency : parser.second->getDependentParsers())
     {
-      if(!parserNameToVertex.count(parser.first))
-      {
-        BOOST_LOG_TRIVIAL(error) << parser.first << " is not a real parser";
-        break;
-      }
       if(!parserNameToVertex.count(dependency))
       {
-        BOOST_LOG_TRIVIAL(error) << dependency << " is not a real parser";
+        // TODO: This shouldn't be tolerated so easy.
+        BOOST_LOG_TRIVIAL(warning) << dependency << " is not a real parser";
         continue;
       }
 
       //--- Add edges to the graph ---//
+
       bool inserted;
       boost::graph_traits<Graph>::edge_descriptor e; 
       boost::tie(e, inserted) = boost::add_edge(
@@ -100,6 +99,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
   } 
 
   //--- Topological order of the graph ---//
+
   std::deque<Vertex> make_order;
   boost::topological_sort(g, std::front_inserter(make_order));
 
@@ -121,7 +121,6 @@ PluginHandler::~PluginHandler()
 {
   _parsers.clear();
 }
-
 
 }
 }
