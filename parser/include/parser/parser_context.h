@@ -1,5 +1,5 @@
 #ifndef CC_PARSER_PARSERCONTEXT_H
-#define	CC_PARSER_PARSERCONTEXT_H
+#define CC_PARSER_PARSERCONTEXT_H
 
 #include <boost/program_options.hpp>
 

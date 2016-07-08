@@ -85,7 +85,6 @@ struct File
 
 #ifndef NO_INDICES
   #pragma db index member(path)
-  #pragma db index member(content)
   #pragma db index member(parent)
 #endif
 

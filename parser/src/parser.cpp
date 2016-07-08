@@ -43,6 +43,8 @@ po::options_description commandLineArguments()
     ("loglevel", po::value<std::string>()->default_value("info"),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
       "error, critical.")
+    ("threads,t", po::value<int>()->default_value(4),
+      "Number of threads the parsers can use.")
     ("skip,s", po::value<std::vector<std::string>>(),
       "This is a list of parsers which will be omitted during the parsing "
       "process. The possible values are the plugin names which can be listed "
@@ -84,9 +86,7 @@ int main(int argc, char* argv[])
   }
   catch (const po::error& e)
   {
-    BOOST_LOG_TRIVIAL(error) 
-      << "Error in command line arguments: " << e.what();
-
+    BOOST_LOG_TRIVIAL(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
 
@@ -112,8 +112,7 @@ int main(int argc, char* argv[])
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())
   {
-    BOOST_LOG_TRIVIAL(info)
-      << "[" << parserName << "] started!";
+    BOOST_LOG_TRIVIAL(info) << "[" << parserName << "] started!";
     pHandler.getParser(parserName)->parse();
   }
 
