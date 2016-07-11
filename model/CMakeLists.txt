@@ -14,8 +14,4 @@ set(ODB_SOURCES
 
 generate_odb_files("${ODB_SOURCES}")
 
-add_library(model STATIC ${ODB_CXX_SOURCES})
-target_compile_options(model PUBLIC -Wno-unknown-pragmas)
-target_link_libraries(model
-  ${ODB_LIBRARIES}    
-)
+add_odb_library(model ${ODB_CXX_SOURCES})
