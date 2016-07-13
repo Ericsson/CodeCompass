@@ -1,10 +1,3 @@
-/*
- * pluginhandler.h
- *
- *  Created on: Mar 22, 2013
- *      Author: ezoltbo
- */
-
 #ifndef CC_PLUGIN_PLUGINHANDLER_H
 #define CC_PLUGIN_PLUGINHANDLER_H
 
@@ -12,7 +5,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
@@ -98,7 +90,6 @@ public:
 
   BasePtr getImplementation(const std::string& key_) const
   {
-    std::cout << "getImplementation: " << key_ << std::endl;
     auto handleIter = _implementationMap.find(key_);
 
     if (handleIter != _implementationMap.end())
@@ -113,7 +104,6 @@ public:
     if (_version != version_)
       throw std::runtime_error("Version mismatch while loading " + key_);
 
-    std::cout << "registerImplementation: " << key_ << std::endl;
     _implementationMap[key_] = implementation_;
   }
 
@@ -138,4 +128,5 @@ private:
 
 } // plugin
 } // cc
+
 #endif /* CC_PLUGIN_PLUGINHANDLER_H */

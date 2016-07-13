@@ -1,5 +1,5 @@
-#ifndef __CODECOMPASS_PLUGIN_HELPER_HPP__
-#define __CODECOMPASS_PLUGIN_HELPER_HPP__
+#ifndef CC_PLUGIN_PLUGINHELPER_H
+#define CC_PLUGIN_PLUGINHELPER_H
 
 #include <mongoose/plugin.h>
 #include <mongoose/thrifthandler.h>
@@ -7,10 +7,10 @@
 
 #include <plugin/servicenotavailexception.h>
 
-#include <util/logutil.h>
 #include <util/db/dbutil.h>
 
 #include <boost/program_options/variables_map.hpp>
+#include <boost/log/trivial.hpp>
 
 namespace cc
 {
@@ -37,10 +37,10 @@ inline void registerPluginSimple(
         util::createDatabase(workspace.connectionString);
     if (!db)
     {
-//      SLog(util::ERROR)
-//        << "Wrong connection string: '" << workspace.connectionString << "' "
-//        << "for workspace: '" << workspace.workspaceId << "'"
-//        << "for service: '" << serviceName_ << "'";
+      BOOST_LOG_TRIVIAL(error)
+        << "Wrong connection string: '" << workspace.connectionString << "' "
+        << "for workspace: '" << workspace.workspaceId << "'"
+        << "for service: '" << serviceName_ << "'";
 
       throw std::runtime_error("Wrong database!");
     }
@@ -96,7 +96,8 @@ inline void registerPluginSimple(
         key, servicePtr, RequestHandlerT::version);
     }catch(ServiceNotAvailException &ex)
     {
-//          SLog() << "Exception: " << ex.what() <<" in workspace "+ workspace.workspaceId;      
+      BOOST_LOG_TRIVIAL(error)
+        << "Exception: " << ex.what() <<" in workspace "+ workspace.workspaceId;      
     }
   }
 }
@@ -131,4 +132,4 @@ inline void registerPluginSimple(
 } // plugin
 } // cc
 
-#endif // __CODECOMPASS_PLUGIN_HELPER_HPP__
+#endif // CC_PLUGIN_PLUGINHELPER_H
