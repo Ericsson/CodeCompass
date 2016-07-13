@@ -10,6 +10,8 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TJSONProtocol.h>
 
+#include <boost/log/trivial.hpp>
+
 #include <mongoose/mongoose.h>
 
 /**
@@ -97,13 +99,13 @@ protected:
 public:
   template<class Handler>
   ThriftHandler(Handler *handler_, const std::string& workspaceName_)
-    : processor(::boost::shared_ptr<Handler>(handler_), workspaceName_)
+    : _processor(::boost::shared_ptr<Handler>(handler_), workspaceName_)
   {
   }
 
   template<class Handler>
   ThriftHandler(Handler handler_, const std::string& workspaceName_)
-    : processor(handler_, workspaceName_)
+    : _processor(handler_, workspaceName_)
   {
   }
 
@@ -122,7 +124,7 @@ public:
     {
       std::string content = getContent(conn_);
       
-//      SLog() << "Request content: \n" << content;
+      BOOST_LOG_TRIVIAL(info) << "Request content: \n" << content;
 
       boost::shared_ptr<TTransport> inputBuffer(
         new TMemoryBuffer((uint8_t*)content.c_str(), content.length()));
@@ -134,13 +136,13 @@ public:
       boost::shared_ptr<TProtocol> outputProtocol(new TJSONProtocol(outputBuffer));
 
       CallContext ctx{ conn_, /*userStat_,*/ nullptr };
-      processor.process(inputProtocol, outputProtocol, &ctx);
+      _processor.process(inputProtocol, outputProtocol, &ctx);
 
       TMemoryBuffer *mBuffer = dynamic_cast<TMemoryBuffer*>(outputBuffer.get());
 
       std::string response = mBuffer->getBufferAsString();
 
-//      SLog() << "Response:\n" << response.c_str() << std::endl;
+      BOOST_LOG_TRIVIAL(info) << "Response:\n" << response.c_str() << std::endl;
       
       // Send HTTP reply to the client
       // create headers
@@ -155,11 +157,11 @@ public:
     }
     catch (const std::exception& ex)
     {
-//      SLog(util::ERROR) << ex.what();
+      BOOST_LOG_TRIVIAL(error) << ex.what();
     }
     catch (...)
     {
-//      SLog(util::ERROR) << "Unknown exception have been caught";
+      BOOST_LOG_TRIVIAL(error) << "Unknown exception have been caught";
     }
 
     // Returning non-zero tells mongoose that our function has replied to
@@ -173,7 +175,7 @@ private:
     return std::string(conn_->content, conn_->content + conn_->content_len);
   }
 
-  LoggingProcessor processor;
+  LoggingProcessor _processor;
 };
 
 } // mongoose

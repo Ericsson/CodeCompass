@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <boost/log/trivial.hpp>
 #include <boost/program_options.hpp>
 
@@ -49,9 +47,6 @@ boost::program_options::options_description getMongooseOptions()
       "ports will redirect all their traffic to the first configured SSL port."
       " For example, if listening_ports is 80r,443s, then all HTTP traffic "
       "coming at port 80 will be redirected to HTTPS port 443.")
-    ("document_root,d", po::value<std::string>(),
-      "A directory to serve. By default, current directory is served. Current"
-      " directory is commonly referenced as dot (.).")
     ("threads,t", po::value<int>(),
       "Number of worker threads. Mongoose handles each incoming connection"
       " in a separate thread. Therefore, the value of this option is"
@@ -70,7 +65,7 @@ std::string getDataDirFromDb(const std::string& connectionString)
 
   if (!db)
   {
-    std::cout
+    BOOST_LOG_TRIVIAL(error)
       << "Wrong connection string: '" << connectionString << "' "
       << "for parser: 'doctoolparser'";
 
@@ -104,9 +99,9 @@ int main(int argc, char* argv[])
 
   po::variables_map vm;
   
-  if (argc < 2 || vm.count("help"))
+  if (argc < 2 || vm.count(HELP))
   {
-    std::cout << desc << std::endl;
+    BOOST_LOG_TRIVIAL(info) << desc;
     return 0;
   }
   
@@ -123,39 +118,38 @@ int main(int argc, char* argv[])
     
   MainRequestHandler requestHandler;
     
-  if (vm.count("workspace"))
+  if (vm.count(WORKSPACE_OPTION_NAME))
   {
-    const auto& wses = vm["workspace"].
+    const auto& wses = vm[WORKSPACE_OPTION_NAME].
       as<cc::mongoose::WorkspaceOptions>();
 
     for (const auto& ws : wses)
     {
-      BOOST_LOG_TRIVIAL(info)  << "Workspace";
-      BOOST_LOG_TRIVIAL(info)  << "  id = " << ws.workspaceId;
-      BOOST_LOG_TRIVIAL(info)  << "  connection = " << ws.connectionString;
-      BOOST_LOG_TRIVIAL(info)  << "  description = " << ws.description;
-
       std::string dataDir
         = ws.dataDir.empty()
         ? getDataDirFromDb(ws.connectionString)
         : ws.dataDir;
+      
+      BOOST_LOG_TRIVIAL(info)
+        << "Workspace" << std::endl
+        << "  id = " << ws.workspaceId << std::endl
+        << "  connection = " << ws.connectionString << std::endl
+        << "  description = " << ws.description << std::endl
+        << "  datadir = " << dataDir << std::endl
+        << "  searchdir = " << ws.searchDir;
 
       if (!dataDir.empty())
       {
-        BOOST_LOG_TRIVIAL(info) << "  datadir = " << dataDir;
         requestHandler.dataDir[ws.workspaceId] = dataDir;
       }
-
-      if (!ws.searchDir.empty())
-        BOOST_LOG_TRIVIAL(info)  << "  searchdir = " << ws.searchDir;
     }
   }
   
   //--- Plugin settings ---//
 
-  if (vm.count("plugin_dir"))
+  if (vm.count(PLUGIN_DIR))
   {
-    boost::filesystem::path pluginDir = vm["plugin_dir"].as<std::string>();
+    boost::filesystem::path pluginDir = vm[PLUGIN_DIR].as<std::string>();
     requestHandler.pluginHandler.addDirectory(pluginDir);
 
     po::options_description pluginOptions = requestHandler.pluginHandler.getOptions();
@@ -175,14 +169,7 @@ int main(int argc, char* argv[])
   }
   
   requestHandler.pluginHandler.configure(vm);
-  
-  //--- Request Handler params ---//
-  
-  if (vm.count("document_root"))
-  {
-    requestHandler.documentRoot = vm["document_root"].as<std::string>();
-  }
-  
+    
   //--- Start mongoose server ---//
     
   cc::mongoose::ThreadedMongoose server;
@@ -198,8 +185,7 @@ int main(int argc, char* argv[])
 
   BOOST_LOG_TRIVIAL(info) 
     << "Mongoose web server starting on port(s) "
-    << server.getOption("listening_port")
-    << " with web root [" << server.getOption("document_root") << "]";
+    << server.getOption("listening_port");
     
   try
   {

@@ -10,7 +10,6 @@ namespace cc
 namespace mongoose 
 {
 
-const std::string DOCUMENT_ROOT = "document_root";
 const std::string PLUGIN_DIR = "plugin_dir";
 const std::string CONFIG_FILE = "config_file";
 const std::string HELP = "help";

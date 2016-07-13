@@ -102,30 +102,12 @@ inline void registerPluginSimple(
   }
 }
 
-#define CODECOMPASS_SIMPLE_SERVICE_FACTORY(serviceName, nspace) \
-  [](std::shared_ptr<odb::database>& db_, \
-     const boost::program_options::variables_map& cfg_) { \
-    return new cc::mongoose::ThriftHandler< \
-      cc::service::nspace::serviceName##ServiceProcessor>( \
-        new cc::service::nspace::serviceName##ServiceHandler(db_), \
-        cfg_["workspaceId"].as<std::string>()); \
-  }
-
 #define CODECOMPASS_SERVICE_FACTORY_WITH_CFG(serviceName, nspace) \
   [](std::shared_ptr<odb::database>& db_, \
      const boost::program_options::variables_map& cfg_) { \
     return new cc::mongoose::ThriftHandler< \
       cc::service::nspace::serviceName##ServiceProcessor>( \
         new cc::service::nspace::serviceName##ServiceHandler(db_, cfg_), \
-        cfg_["workspaceId"].as<std::string>()); \
-  }
-
-#define CODECOMPASS_SERVICE_FACTORY_WITH_CFG_NOPOSTFIXSERVICE(serviceName, implName, nspace) \
-  [](std::shared_ptr<odb::database>& db_, \
-     const boost::program_options::variables_map& cfg_) { \
-    return new cc::mongoose::ThriftHandler< \
-      cc::service::nspace::serviceName##Processor>( \
-        new cc::service::nspace::implName##ServiceHandler(db_, cfg_), \
         cfg_["workspaceId"].as<std::string>()); \
   }
 
