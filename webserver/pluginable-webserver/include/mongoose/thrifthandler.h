@@ -1,12 +1,5 @@
-/*
- * thrifthandler.h
- *
- *  Created on: Mar 25, 2013
- *      Author: ezoltbo
- */
-
-#ifndef THRIFTHANDLER_H_
-#define THRIFTHANDLER_H_
+#ifndef CC_MONGOOSE_THRIFTHANDLER_H
+#define CC_MONGOOSE_THRIFTHANDLER_H
 
 #include <stdio.h>
 
@@ -63,10 +56,7 @@ protected:
      * Mongoose connection.
      */
     struct mg_connection* connection;
-    /**
-     * User statistics implementation (optional).
-     */
-//    UserStatPtr userStat;
+
     /**
      * A pointer for the real call context (for dispatch call).
      */
@@ -95,14 +85,6 @@ protected:
       void* callContext_) override
     {
       CallContext& ctx = *reinterpret_cast<CallContext*>(callContext_);
-//      if (ctx.userStat)
-//      {
-//        ctx.userStat->logMethodCall(
-//          ctx.connection,
-//          _workspaceName,
-//          _serviceName,
-//          fname_);
-//      }
 
       return Processor::dispatchCall(in_, out_, fname_, seqid_, ctx.nextCtx);
     }
@@ -114,14 +96,14 @@ protected:
 
 public:
   template<class Handler>
-  ThriftHandler(Handler *handler, const std::string& workspaceName_)
-    : processor(::boost::shared_ptr<Handler>(handler), workspaceName_)
+  ThriftHandler(Handler *handler_, const std::string& workspaceName_)
+    : processor(::boost::shared_ptr<Handler>(handler_), workspaceName_)
   {
   }
 
   template<class Handler>
-  ThriftHandler(Handler handler, const std::string& workspaceName_)
-    : processor(handler, workspaceName_)
+  ThriftHandler(Handler handler_, const std::string& workspaceName_)
+    : processor(handler_, workspaceName_)
   {
   }
 
@@ -130,7 +112,7 @@ public:
     return "ThriftHandler";
   }
 
-  int beginRequest(struct mg_connection *conn) override
+  int beginRequest(struct mg_connection *conn_) override
   {
     using namespace ::apache::thrift;
     using namespace ::apache::thrift::transport;
@@ -138,7 +120,7 @@ public:
     
     try
     {
-      std::string content = getContent(conn);
+      std::string content = getContent(conn_);
       
 //      SLog() << "Request content: \n" << content;
 
@@ -151,7 +133,7 @@ public:
       boost::shared_ptr<TProtocol> inputProtocol(new TJSONProtocol(inputBuffer));
       boost::shared_ptr<TProtocol> outputProtocol(new TJSONProtocol(outputBuffer));
 
-      CallContext ctx{ conn, /*userStat_,*/ nullptr };
+      CallContext ctx{ conn_, /*userStat_,*/ nullptr };
       processor.process(inputProtocol, outputProtocol, &ctx);
 
       TMemoryBuffer *mBuffer = dynamic_cast<TMemoryBuffer*>(outputBuffer.get());
@@ -162,14 +144,14 @@ public:
       
       // Send HTTP reply to the client
       // create headers
-      mg_send_header(conn, "Content-Type", "application/x-thrift");
-      mg_send_header(conn, "Content-Length", std::to_string(response.length()).c_str());
+      mg_send_header(conn_, "Content-Type", "application/x-thrift");
+      mg_send_header(conn_, "Content-Length", std::to_string(response.length()).c_str());
 
       // terminate headers
-      mg_write(conn, "\r\n", 2);
+      mg_write(conn_, "\r\n", 2);
 
       // send content
-      mg_write(conn, response.c_str(), response.length());
+      mg_write(conn_, response.c_str(), response.length());
     }
     catch (const std::exception& ex)
     {
@@ -186,9 +168,9 @@ public:
   }
 
 private:
-  std::string getContent(mg_connection *conn)
+  std::string getContent(mg_connection *conn_)
   {
-    return std::string(conn->content, conn->content + conn->content_len);
+    return std::string(conn_->content, conn_->content + conn_->content_len);
   }
 
   LoggingProcessor processor;
@@ -196,4 +178,5 @@ private:
 
 } // mongoose
 } // cc
-#endif /* THRIFTHANDLER_H_ */
+
+#endif // CC_MONGOOSE_THRIFTHANDLER_H

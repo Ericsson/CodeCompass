@@ -10,10 +10,9 @@ include_directories(
 )
 
 set(SOURCES
-  src/mongoose_main.cpp
+  src/webserver.cpp
   src/threadedmongoose.cpp
   src/mongoose_utility.cpp
-  src/authentication.cpp
   src/main_request_handler.cpp
 )
 

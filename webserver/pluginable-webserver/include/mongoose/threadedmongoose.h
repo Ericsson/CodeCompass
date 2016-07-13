@@ -22,20 +22,20 @@ class SignalChanger
 public:
   typedef sighandler_t SignalHandler;
   
-  SignalChanger(int signum, SignalHandler newHandler)
+  SignalChanger(int signum_, SignalHandler newHandler_)
   {
-    origSignum = signum;
-    origHandler = signal(signum, newHandler);
+    _origSignum = signum_;
+    _origHandler = signal(signum_, newHandler_);
   }
 
   ~SignalChanger()
   {
-    signal(origSignum, origHandler);
+    signal(_origSignum, _origHandler);
   }
 
 private:
-  int origSignum;
-  SignalHandler origHandler;
+  int _origSignum;
+  SignalHandler _origHandler;
 };
 
 class ThreadedMongoose
@@ -45,14 +45,14 @@ public:
   
   ThreadedMongoose(int numThreads_ = 0) : _numThreads(numThreads_) {}
 
-  void setOption(const std::string& optName, const std::string& value)
+  void setOption(const std::string& optName_, const std::string& value_)
   {
-    _options[optName] = value;
+    _options[optName_] = value_;
   }
   
-  std::string getOption(const std::string& optName)
+  std::string getOption(const std::string& optName_)
   {
-    return _options[optName];
+    return _options[optName_];
   }
   
   void run(Handler handler_)
@@ -61,7 +61,7 @@ public:
   }
   
   template <typename T>
-  void run(T* serverData, Handler handler_)
+  void run(T* serverData_, Handler handler_)
   {
     typedef std::shared_ptr<mg_server> ServerPtr;
     
@@ -86,7 +86,7 @@ public:
     for (int i = 0; i < _numThreads; ++i)
     {
       ServerPtr server = ServerPtr(
-        mg_create_server((void*)serverData, delegater),
+        mg_create_server((void*)serverData_, delegater),
         [](mg_server* s)
         {
           mg_destroy_server(&s);
@@ -137,25 +137,25 @@ public:
   }
   
 private:
-  static void signalHandler(int sigNum);
+  static void signalHandler(int sigNum_);
   
   static volatile int exitFlag;
   
-  static void* serve(void* server)
+  static void* serve(void* server_)
   {
     while (!exitFlag)
     {
-      mg_poll_server((mg_server*)server, 1000);
+      mg_poll_server((mg_server*)server_, 1000);
     }
     
     return nullptr;
   }
   
-  static int delegater(mg_connection *conn, enum mg_event ev)
+  static int delegater(mg_connection *conn_, enum mg_event ev_)
   {
     if (handler)
     {
-      return handler(conn, ev);
+      return handler(conn_, ev_);
     }
     
     return MG_FALSE;
@@ -167,7 +167,7 @@ private:
   int _numThreads = 0;
 };
 
-}
-}
+} // mongoose
+} // cc
 
 #endif /* CC_MONGOOSE_THREADEDMONGOOSE_H */

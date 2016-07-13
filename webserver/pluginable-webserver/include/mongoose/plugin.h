@@ -8,7 +8,6 @@
 #include <boost/program_options.hpp>
 
 #include <plugin/pluginhandler.h>
-//#include <mongoose/userstatif.h>
 #include <mongoose/mongoose.h>
 
 // Command line option name.

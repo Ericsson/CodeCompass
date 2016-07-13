@@ -9,9 +9,9 @@ volatile int ThreadedMongoose::exitFlag = 0;
 
 ThreadedMongoose::Handler ThreadedMongoose::handler;
 
-void ThreadedMongoose::signalHandler(int sigNum)
+void ThreadedMongoose::signalHandler(int sigNum_)
 { 
-  ThreadedMongoose::exitFlag = sigNum;
+  ThreadedMongoose::exitFlag = sigNum_;
 }
 
 } // mongoose

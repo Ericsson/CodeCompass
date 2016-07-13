@@ -1,66 +1,31 @@
 #include <mongoose/main_request_handler.h>
 #include <mongoose/mongoose_utility.h>
 
+#include <boost/log/trivial.hpp>
+
 namespace cc
 {
 namespace mongoose
 {
 
-int MainRequestHandler::begin_request_handler(struct mg_connection *conn)
+int MainRequestHandler::begin_request_handler(struct mg_connection *conn_)
 {
-  //--- If not authenticated yet ---//  
-
-  std::pair<std::string, std::string> userData;
-
-  if (authMode == AuthMode::LDAP &&
-    !auth->isAuthenticated(getAuthToken(conn)))
-  {
-    userData = getUsernamePassword(conn);
-    std::string authtoken;
-
-    if (!userData.first.empty())
-      authtoken = auth->authenticate(userData.first, userData.second);
-
-    if (authtoken.empty())
-    {
-      std::string loginPage = getLoginPage(documentRoot);
-
-      mg_send_header(conn, "Content-Type", "text/html");
-      mg_send_data(conn, loginPage.c_str(), loginPage.size());
-
-      return MG_TRUE;
-    }
-    else
-    {
-      mg_send_header(conn, "Set-Cookie", (std::string("authtoken=") + authtoken).c_str());
-    }
-  }
-  else if (auth && !auth->isAuthenticated(getAuthToken(conn)) && conn->content_len != 0)
-  {
-    mg_send_header(conn, "Set-Cookie",
-      (std::string("authtoken=") + auth->authenticate(getRemoteIp(conn), "")).c_str());
-  }
-
-  //--- If already authenticated ---//
-
-  std::string uri = conn->uri + 1; // We advance it by one because of
+  std::string uri = conn_->uri + 1; // We advance it by one because of
                                    // the '/' character
 
-//  SLog(cc::util::INFO)
-//    << getCurrentDate() << " Connection from " << conn->remote_ip
-//    << ':' << conn->remote_port << " requested URI: " << uri
-//    << std::endl;
+  BOOST_LOG_TRIVIAL(info)
+    << getCurrentDate() << " Connection from " << conn_->remote_ip
+    << ':' << conn_->remote_port << " requested URI: " << uri;
 
   auto handler = pluginHandler.getImplementation(uri);
   if (handler)
   {
-    //std::shared_ptr<UserStat>          userStat; 
-    return handler->beginRequest(conn);
+    return handler->beginRequest(conn_);
   }
 
   if (uri.find_first_of("doxygen/") == 0)
   {
-    mg_send_file(conn, getDocDirByURI(uri).c_str());
+    mg_send_file(conn_, getDocDirByURI(uri).c_str());
     return MG_MORE;
   }
 
@@ -69,14 +34,16 @@ int MainRequestHandler::begin_request_handler(struct mg_connection *conn)
   return MG_FALSE;
 }
 
-int MainRequestHandler::operator()(struct mg_connection *conn, enum mg_event ev)
+int MainRequestHandler::operator()(
+  struct mg_connection *conn_,
+  enum mg_event ev_)
 {
   int result;
 
-  switch (ev)
+  switch (ev_)
   {
     case MG_REQUEST:
-      return begin_request_handler(conn);
+      return begin_request_handler(conn_);
 
     case MG_AUTH:
     {
@@ -84,13 +51,16 @@ int MainRequestHandler::operator()(struct mg_connection *conn, enum mg_event ev)
         return MG_TRUE;
 
       FILE* fp = fopen(digestPasswdFile.c_str(), "r");
-      if (fp) {
-        result = mg_authorize_digest(conn, fp);
+      if (fp) 
+      {
+        result = mg_authorize_digest(conn_, fp);
         fclose(fp);
         return result;
-      } else {
-//        SLog(cc::util::ERROR)
-//          << "Password file could not be opened: " << digestPasswdFile;
+      }
+      else 
+      {
+        BOOST_LOG_TRIVIAL(error)
+          << "Password file could not be opened: " << digestPasswdFile;
         //throw an exception instead of a segfault/reauth
         //an internal server error response would be nicer
         throw std::runtime_error("Password file could not be opened.");
@@ -104,22 +74,22 @@ int MainRequestHandler::operator()(struct mg_connection *conn, enum mg_event ev)
   return MG_FALSE;
 }
 
-std::string MainRequestHandler::getDocDirByURI(std::string uri)
+std::string MainRequestHandler::getDocDirByURI(std::string uri_)
 {
-  if (uri.empty())
+  if (uri_.empty())
     return "";
 
-  if (uri.back() == '/')
-    uri.pop_back();
+  if (uri_.back() == '/')
+    uri_.pop_back();
 
-  std::size_t pos1 = uri.find('/');
-  std::size_t pos2 = uri.find('/', pos1 + 1);
+  std::size_t pos1 = uri_.find('/');
+  std::size_t pos2 = uri_.find('/', pos1 + 1);
 
-  std::string ws = uri.substr(pos1 + 1, pos2 - pos1 - 1);
+  std::string ws = uri_.substr(pos1 + 1, pos2 - pos1 - 1);
 
   std::string file;
   if (pos2 != std::string::npos)
-    file = uri.substr(pos2);
+    file = uri_.substr(pos2);
 
   return dataDir[ws] + "/docs" + file;
 }
