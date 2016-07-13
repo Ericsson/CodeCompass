@@ -7,11 +7,14 @@ include(Config.cmake)
 # Utility functions
 include(Functions.cmake)
 
+enable_testing()
+
 find_package(Threads REQUIRED)
 find_package(LLVM    REQUIRED CONFIG)
 find_package(Boost   REQUIRED)
 find_package(Odb     REQUIRED)
 find_package(Thrift  REQUIRED)
+find_package(GTest   REQUIRED)
 
 add_subdirectory(model)
 add_subdirectory(util)
