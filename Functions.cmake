@@ -32,6 +32,13 @@ function(generate_odb_files _src)
   set(ODB_CXX_SOURCES ${SOURCES} PARENT_SCOPE)
 endfunction(generate_odb_files)
 
+# add new odb static library
+function(add_odb_library _name)
+	add_library(${_name} STATIC ${ARGN})
+	target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas)
+	target_link_libraries(${_name} ${ODB_LIBRARIES})
+endfunction(add_odb_library)
+
 # Generate thrift source files
 # @parameter _thriftFiles - List of thrift files
 # @parameter _languages   - List of languages
