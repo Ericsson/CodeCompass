@@ -31,3 +31,32 @@ function(generate_odb_files _src)
 
   set(ODB_CXX_SOURCES ${SOURCES} PARENT_SCOPE)
 endfunction(generate_odb_files)
+
+# Generate thrift source files
+# @parameter _thriftFiles - List of thrift files
+# @parameter _languages   - List of languages
+# @parameter _dependeny   - Dependency target
+function(generate_thrift_files _thriftFiles _languages _dependeny)
+  if(NOT TARGET ${_dependeny})
+    message(ERROR "${_dependency} is not a target!")
+  endif()
+  foreach(_language ${_languages})
+    foreach(_thriftFile ${_thriftFiles})
+      get_filename_component(_thriftFileName ${_thriftFile} NAME_WE)
+      add_custom_command(
+        OUTPUT
+          ${CMAKE_CURRENT_SOURCE_DIR}/gen-${_language}
+        COMMAND
+          thrift --gen ${_language} -o ${CMAKE_CURRENT_SOURCE_DIR} ${_thriftFile}
+        DEPENDS
+          ${_thriftFile}
+        COMMENT "Generate thrift for ${_thriftFile}")
+
+      set(_thriftTarget generate_${_thriftFileName}_${_language}_thrift_files)
+      add_custom_target(${_thriftTarget}
+        DEPENDS
+          ${CMAKE_CURRENT_SOURCE_DIR}/gen-${_language})
+      add_dependencies(${_dependeny} ${_thriftTarget})
+    endforeach()
+  endforeach()
+endfunction(generate_thrift_files)
