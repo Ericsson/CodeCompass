@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
   
   //--- Plugin settings ---//
 
-  if (vm.count("plugin-dir"))
+  if (vm.count("plugin_dir"))
   {
     boost::filesystem::path pluginDir = vm["plugin_dir"].as<std::string>();
     requestHandler.pluginHandler.addDirectory(pluginDir);
