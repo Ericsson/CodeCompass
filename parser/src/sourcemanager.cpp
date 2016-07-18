@@ -67,7 +67,10 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
   util::OdbTransaction trans(_db);
   trans([&, this]() {
     for (const model::File& file : db_->query<model::File>())
+    {
       _files[file.path] = std::make_shared<model::File>(file);
+      _persistedFiles.insert(file.id);
+    }
   });
 
   //--- Initialize magic for plain text testing ---//
