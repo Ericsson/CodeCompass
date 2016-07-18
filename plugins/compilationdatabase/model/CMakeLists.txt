@@ -16,7 +16,12 @@ generate_odb_files("${ODB_SOURCES}")
 
 add_library(compilationdatabasemodel STATIC ${ODB_CXX_SOURCES})
 
-target_compile_options(compilationdatabasemodel PUBLIC -Wno-unknown-pragmas)
+target_compile_options(compilationdatabasemodel PUBLIC -Wno-unknown-pragmas -fPIC)
 target_link_libraries(compilationdatabasemodel
-  ${ODB_LIBRARIES}    
+  model
+  ${ODB_LIBRARIES}
 )
+
+install(TARGETS compilationdatabasemodel
+  LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+  ARCHIVE DESTINATION ${INSTALL_PARSER_DIR})
