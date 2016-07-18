@@ -1,10 +1,3 @@
-/*
- * odbobjectcache.h
- *
- *  Created on: Jul 26, 2013
- *      Author: ezoltbo
- */
-
 #ifndef CC_UTIL_ODBOBJECTCACHE_H
 #define CC_UTIL_ODBOBJECTCACHE_H
 

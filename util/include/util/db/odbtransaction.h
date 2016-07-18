@@ -1,10 +1,3 @@
-/*
- * odbtransaction.h
- *
- *  Created on: May 24, 2013
- *      Author: ezoltbo
- */
-
 #ifndef CC_UTIL_ODBTRANSACTION_H
 #define CC_UTIL_ODBTRANSACTION_H
 

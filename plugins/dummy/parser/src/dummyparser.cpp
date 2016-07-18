@@ -1,4 +1,4 @@
-#include <parser/dummyparser.h>
+#include <dummyparser/dummyparser.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
@@ -37,8 +37,7 @@ bool DummyParser::parse()
   {
     if(accept(path))
     {
-      BOOST_LOG_TRIVIAL(info) 
-        << "DummyParser parse path: " << path;
+      BOOST_LOG_TRIVIAL(info) << "DummyParser parse path: " << path;
     }
   }
   return true;

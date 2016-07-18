@@ -1,10 +1,3 @@
-/*
- * dynamiclibrary.h
- *
- *  Created on: Mar 21, 2013
- *      Author: ezoltbo
- */
-
 #ifndef CC_UTIL_DYNAMICLIBRARY_H
 #define CC_UTIL_DYNAMICLIBRARY_H
 
