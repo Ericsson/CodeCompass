@@ -35,6 +35,6 @@ endfunction(generate_odb_files)
 # add new odb static library
 function(add_odb_library _name)
 	add_library(${_name} STATIC ${ARGN})
-	target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas)
+	target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
 	target_link_libraries(${_name} ${ODB_LIBRARIES})
 endfunction(add_odb_library)
