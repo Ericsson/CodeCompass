@@ -10,12 +10,6 @@ namespace cc
 namespace mongoose 
 {
 
-const std::string PLUGIN_DIR = "plugin_dir";
-const std::string CONFIG_FILE = "config_file";
-const std::string HELP = "help";
-const std::string LISTENING_PORTS = "listening_port";
-const std::string NUM_THREADS = "threads";
-
 void parseConfiguration(
   const boost::program_options::options_description&  options_,
   int argc_, char **argv_,

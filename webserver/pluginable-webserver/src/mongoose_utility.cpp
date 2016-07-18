@@ -188,11 +188,11 @@ void parseConfiguration(
     po::store(po::parse_command_line(argc_, argv_, options_), varMap_);
   }
 
-  if (varMap_.count(CONFIG_FILE))
+  if (varMap_.count("config_file"))
   {
     store(
       po::parse_config_file<char>(
-        varMap_[CONFIG_FILE].as<std::string>().c_str(), options_, allowUnkown_),
+        varMap_["config_file"].as<std::string>().c_str(), options_, allowUnkown_),
       varMap_);
   }
 

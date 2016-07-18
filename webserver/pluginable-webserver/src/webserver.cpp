@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 
   po::variables_map vm;
   
-  if (argc < 2 || vm.count(HELP))
+  if (argc < 2 || vm.count("help"))
   {
     BOOST_LOG_TRIVIAL(info) << desc;
     return 0;
@@ -147,9 +147,9 @@ int main(int argc, char* argv[])
   
   //--- Plugin settings ---//
 
-  if (vm.count(PLUGIN_DIR))
+  if (vm.count("plugin-dir"))
   {
-    boost::filesystem::path pluginDir = vm[PLUGIN_DIR].as<std::string>();
+    boost::filesystem::path pluginDir = vm["plugin_dir"].as<std::string>();
     requestHandler.pluginHandler.addDirectory(pluginDir);
 
     po::options_description pluginOptions = requestHandler.pluginHandler.getOptions();
