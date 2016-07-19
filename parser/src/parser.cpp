@@ -36,6 +36,10 @@ po::options_description commandLineArguments()
       "database type depends on the CodeCompass executable. CodeCompass can be "
       "build to support PostgreSQL or SQLite. Connection string has the "
       "following format: pgsql:database=name;user=user_name.")
+    ("data-dir", po::value<std::string>()->required(),
+      "The parsers can use a directory to store information. In this directory "
+      "the parsers should create an own subdirectory where they can store "
+      "their arbitrary temporary files or local databases.")
     ("labels", po::value<std::string>(),
       "The submodules of a large project can be labeled so it can be easier "
       "later to locate them. With this flag you can provide a label list in "
