@@ -12,6 +12,7 @@ set(SOURCES
 )
 
 add_library(util STATIC ${SOURCES})
+target_compile_options(util PUBLIC -fPIC)
 target_link_libraries(util
   gvc
   boost_regex
