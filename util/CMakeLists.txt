@@ -7,6 +7,7 @@ include_directories(
 
 set(SOURCES
   src/db/dbutil.cpp
+  src/parser/parseutil.cpp
   src/dynamiclibrary.cpp
   src/logutil.cpp
 )
