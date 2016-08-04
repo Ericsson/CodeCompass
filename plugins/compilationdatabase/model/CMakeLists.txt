@@ -18,7 +18,3 @@ add_odb_library(compilationdatabasemodel ${ODB_CXX_SOURCES})
 target_link_libraries(compilationdatabasemodel
   model
 )
-
-install(TARGETS compilationdatabasemodel
-  LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-  ARCHIVE DESTINATION ${INSTALL_PARSER_DIR})
