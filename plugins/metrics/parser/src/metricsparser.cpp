@@ -4,14 +4,14 @@
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
-#include <model/metrics.h>
-#include <model/metrics-odb.hxx>
-
-
 #include <util/db/dbutil.h>
 #include <util/db/odbtransaction.h>
 
 #include <parser/sourcemanager.h>
+
+#include <model/metrics.h>
+#include <model/metrics-odb.hxx>
+
 #include <metricsparser/metricsparser.h>
 
 namespace fs = boost::filesystem;
@@ -23,6 +23,7 @@ namespace parser
 
 MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  _db = cc::util::createDatabase(_ctx.options["database"].as<std::string>());
 }
   
 std::string MetricsParser::getName() const
@@ -39,12 +40,11 @@ bool MetricsParser::parse()
 {    
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
     {
-      BOOST_LOG_TRIVIAL(info) << "Git parse path: " << path;
+      BOOST_LOG_TRIVIAL(info) << "Metrics parse path: " << path;
 
-      _db = cc::util::createDatabase(_ctx.options["database"].as<std::string>());
+
       util::OdbTransaction trans(_db);
       trans([&, this]() {
-
         auto cb = getParserCallback();
 
         /*--- Call non-empty iter-callback for all files
@@ -55,15 +55,15 @@ bool MetricsParser::parse()
         }
         catch (std::exception& ex_)
         {
-          BOOST_LOG_TRIVIAL(error)
-            << "Traverse roots (recursive) failed with exception: "
-            << ex_.what();
+          BOOST_LOG_TRIVIAL(warning)
+            << "Metrics parser threw an exception: " << ex_.what();
         }
         catch (...)
         {
-          BOOST_LOG_TRIVIAL(error)
-            << "Traverse roots (recursive) failed with unknown exception!";
+          BOOST_LOG_TRIVIAL(warning)
+            << "Metrics parser failed with unknown exception!";
         }
+
       });
     }
     return true;
@@ -80,11 +80,9 @@ util::DirIterCallback MetricsParser::getParserCallback()
       model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
       if(file)
       {
-        BOOST_LOG_TRIVIAL(debug) << file->filename;
         persistLoc(getLocFromFile(file), file->id);
       }
     }
-    
     return true;
   };
 }
@@ -92,20 +90,20 @@ util::DirIterCallback MetricsParser::getParserCallback()
 MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file) const
 {
   Loc result;
-  
+
   //--- Get source code ---//
-  
+
   // TODO: Why doesn't it work? It gives empty string.
   // std::string content = file->content.load()->content;
 
-  BOOST_LOG_TRIVIAL(debug) << "Count metrics for " << file->path;
-  
+  BOOST_LOG_TRIVIAL(debug) << "Count LOC metrics for " << file->path;
+
   std::ifstream fileStream(file->path);
   std::string content(
     (std::istreambuf_iterator<char>(fileStream)),
     (std::istreambuf_iterator<char>()));
   fileStream.close();
-  
+
   //--- Original lines ---//
 
   result.originalLines = std::count(content.begin(), content.end(), '\n') + 1;
@@ -200,7 +198,7 @@ void MetricsParser::eraseBlankLines(std::string& file) const
       isBlankLine = true;
     }
   }
-  
+
   file.erase(std::unique(file.begin(), file.end(),
     [](char a, char b) { return a == '\n' && b == '\n'; }), file.end());
 }
@@ -252,15 +250,15 @@ void MetricsParser::persistLoc(const Loc& loc, model::FileId file)
   trans([&, this]{
     model::Metrics metrics;
     metrics.file = file;
-    
+
     metrics.type   = model::Metrics::CODE_LOC;
     metrics.metric = loc.codeLines;
     _db->persist(metrics);
-    
+
     metrics.type   = model::Metrics::NONBLANK_LOC;
     metrics.metric = loc.nonblankLines;
     _db->persist(metrics);
-    
+
     metrics.type   = model::Metrics::ORIGINAL_LOC;
     metrics.metric = loc.originalLines;
     _db->persist(metrics);

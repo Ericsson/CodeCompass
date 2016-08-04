@@ -7,11 +7,13 @@ include_directories(
   ${ODB_INCLUDE_DIRS}
 )
 
-set(SOURCES src/metricsparser.cpp)
+set(SOURCES   
+  src/metricsparser.cpp )
 
 add_library(metricsparser SHARED ${SOURCES})
 target_link_libraries(metricsparser
   metricsmodel
+  model
   util
   boost_filesystem
   boost_system
