@@ -8,8 +8,6 @@
 #include <model/buildsource.h>
 #include <model/buildtarget.h>
 
-#include <odb/core.hxx>
-
 namespace cc
 {
 namespace parser
@@ -72,8 +70,6 @@ private:
 
   std::vector<model::BuildSourcePtr> _buildSources;
   std::vector<model::BuildTargetPtr> _buildTargets;
-
-  std::shared_ptr<odb::database> _db;
 };
   
 } // parser

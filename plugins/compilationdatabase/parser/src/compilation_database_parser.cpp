@@ -168,6 +168,7 @@ namespace parser
 CompilationDatabaseParser::CompilationDatabaseParser(ParserContext& ctx_) :
   AbstractParser(ctx_)
 {
+  _db = cc::util::createDatabase(_ctx.options["database"].as<std::string>());
 }
   
 std::string CompilationDatabaseParser::getName() const
@@ -351,9 +352,7 @@ bool CompilationDatabaseParser::parse()
     {
       BOOST_LOG_TRIVIAL(debug) 
         << "CompilationDatabaseParser parse path: " << path;
-      
-      _db = cc::util::createDatabase(
-        _ctx.options["database"].as<std::string>());
+
       util::OdbTransaction trans(_db);
       
       //--- Step 1: init ---//
@@ -377,9 +376,18 @@ bool CompilationDatabaseParser::parse()
             createNewAction(currentAction);
           }
         }
+
+        //--- Persist all created files ---//
+
+        _ctx.srcMgr.persistFiles();
+        for(const model::BuildSourcePtr& buildSource : _buildSources)
+          _db->persist(buildSource);
+        for(const model::BuildTargetPtr& buildTarget : _buildTargets)
+          _db->persist(buildTarget);
+
       });
       
-      return true;      
+      return true;
     }
   }
   return false;
@@ -387,15 +395,6 @@ bool CompilationDatabaseParser::parse()
 
 CompilationDatabaseParser::~CompilationDatabaseParser()
 {
-  _ctx.srcMgr.persistFiles();
-
-  util::OdbTransaction trans(_db);
-  trans([&, this](){
-    for(const model::BuildSourcePtr& buildSource : _buildSources)
-      _db->persist(buildSource);
-    for(const model::BuildTargetPtr& buildTarget : _buildTargets)
-      _db->persist(buildTarget);
-  });
 }
 
 extern "C"
