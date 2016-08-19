@@ -1,24 +1,32 @@
-#include <plugin/pluginhelper.h>
+#include <webserver/pluginhelper.h>
 
 #include <service/dummyservice.h>
 
+extern "C"
+{
+
 boost::program_options::options_description getOptions()
 {
-  boost::program_options::options_description description("Dummy Plugin");
+  namespace po = boost::program_options;
+
+  po::options_description description("Dummy Plugin");
+
+  description.add_options()
+    ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
+      "This value will be returned by the dummy service.");
 
   return description;
 }
 
-void registerPlugin(const boost::program_options::variables_map& configuration,
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>*
-  pluginHandler)
+void registerPlugin(
+  const boost::program_options::variables_map& configuration,
+  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler)
 {
-  cc::plugin::registerPluginSimple(
+  cc::webserver::registerPluginSimple(
     configuration,
     pluginHandler,
     CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Dummy, dummy),
     "DummyService");
 }
 
-
-
+}

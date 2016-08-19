@@ -1,27 +1,25 @@
-#include <mongoose/main_request_handler.h>
-#include <mongoose/mongoose_utility.h>
-
 #include <boost/log/trivial.hpp>
+
+#include <util/util.h>
+#include "mainrequesthandler.h"
 
 namespace cc
 {
-namespace mongoose
+namespace webserver
 {
 
-int MainRequestHandler::begin_request_handler(struct mg_connection *conn_)
+int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
 {
-  std::string uri = conn_->uri + 1; // We advance it by one because of
-                                   // the '/' character
+  // We advance ot by one because of the '/' character.
+  const std::string& uri = conn_->uri + 1;
 
-  BOOST_LOG_TRIVIAL(info)
-    << getCurrentDate() << " Connection from " << conn_->remote_ip
+  BOOST_LOG_TRIVIAL(debug)
+    << util::getCurrentDate() << " Connection from " << conn_->remote_ip
     << ':' << conn_->remote_port << " requested URI: " << uri;
 
   auto handler = pluginHandler.getImplementation(uri);
   if (handler)
-  {
     return handler->beginRequest(conn_);
-  }
 
   if (uri.find_first_of("doxygen/") == 0)
   {
@@ -30,12 +28,12 @@ int MainRequestHandler::begin_request_handler(struct mg_connection *conn_)
   }
 
   // Returning MG_FALSE tells mongoose that we didn't served the request
-  // so mongoose should serve it
+  // so mongoose should serve it.
   return MG_FALSE;
 }
 
 int MainRequestHandler::operator()(
-  struct mg_connection *conn_,
+  struct mg_connection* conn_,
   enum mg_event ev_)
 {
   int result;
@@ -46,7 +44,6 @@ int MainRequestHandler::operator()(
       return begin_request_handler(conn_);
 
     case MG_AUTH:
-    {
       if (digestPasswdFile.empty())
         return MG_TRUE;
 
@@ -61,13 +58,10 @@ int MainRequestHandler::operator()(
       {
         BOOST_LOG_TRIVIAL(error)
           << "Password file could not be opened: " << digestPasswdFile;
-        //throw an exception instead of a segfault/reauth
-        //an internal server error response would be nicer
+
+        // TODO: An internal server error response would be nicer.
         throw std::runtime_error("Password file could not be opened.");
       }
-    }
-
-    default:
       break;
   }
 

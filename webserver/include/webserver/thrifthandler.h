@@ -1,18 +1,17 @@
-#ifndef CC_MONGOOSE_THRIFTHANDLER_H
-#define CC_MONGOOSE_THRIFTHANDLER_H
+#ifndef CC_WEBSERVER_THRIFTHANDLER_H
+#define CC_WEBSERVER_THRIFTHANDLER_H
 
 #include <stdio.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/log/trivial.hpp>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TJSONProtocol.h>
 
-#include <boost/log/trivial.hpp>
-
-#include <mongoose/mongoose.h>
+#include "mongoose.h"
 
 /**
  * Returns the demangled name of the type described by the given type info.
@@ -42,7 +41,7 @@ inline std::string getTypeName()
 
 namespace cc
 {
-namespace mongoose
+namespace webserver
 {
 
 template<class Processor>
@@ -72,9 +71,9 @@ protected:
     LoggingProcessor(
       boost::shared_ptr<IFaceType> handler_,
       const std::string workspaceName_) :
-      Processor(handler_),
-      _workspaceName(workspaceName_),
-      _serviceName(getTypeName(typeid(*handler_.get())))
+        Processor(handler_),
+        _workspaceName(workspaceName_),
+        _serviceName(getTypeName(typeid(*handler_.get())))
     {
     }
 
@@ -83,7 +82,7 @@ protected:
       apache::thrift::protocol::TProtocol* in_,
       apache::thrift::protocol::TProtocol* out_,
       const std::string& fname_,
-      int32_t seqid_,
+      std::int32_t seqid_,
       void* callContext_) override
     {
       CallContext& ctx = *reinterpret_cast<CallContext*>(callContext_);
@@ -124,25 +123,25 @@ public:
     {
       std::string content = getContent(conn_);
       
-      BOOST_LOG_TRIVIAL(info) << "Request content: \n" << content;
+      BOOST_LOG_TRIVIAL(debug) << "Request content:\n" << content;
 
       boost::shared_ptr<TTransport> inputBuffer(
-        new TMemoryBuffer((uint8_t*)content.c_str(), content.length()));
+        new TMemoryBuffer((std::uint8_t*)content.c_str(), content.length()));
 
       boost::shared_ptr<TTransport> outputBuffer(new TMemoryBuffer(4096));
-      //boost::shared_ptr<TTransport> outHttp(new THttpServer(outputBuffer));
 
       boost::shared_ptr<TProtocol> inputProtocol(new TJSONProtocol(inputBuffer));
       boost::shared_ptr<TProtocol> outputProtocol(new TJSONProtocol(outputBuffer));
 
-      CallContext ctx{ conn_, /*userStat_,*/ nullptr };
+      CallContext ctx{conn_, nullptr};
       _processor.process(inputProtocol, outputProtocol, &ctx);
 
       TMemoryBuffer *mBuffer = dynamic_cast<TMemoryBuffer*>(outputBuffer.get());
 
       std::string response = mBuffer->getBufferAsString();
 
-      BOOST_LOG_TRIVIAL(info) << "Response:\n" << response.c_str() << std::endl;
+      BOOST_LOG_TRIVIAL(debug)
+        << "Response:\n" << response.c_str() << std::endl;
       
       // Send HTTP reply to the client
       // create headers
@@ -157,11 +156,11 @@ public:
     }
     catch (const std::exception& ex)
     {
-      BOOST_LOG_TRIVIAL(error) << ex.what();
+      BOOST_LOG_TRIVIAL(warning) << ex.what();
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(error) << "Unknown exception have been caught";
+      BOOST_LOG_TRIVIAL(warning) << "Unknown exception has been caught";
     }
 
     // Returning non-zero tells mongoose that our function has replied to
@@ -170,7 +169,7 @@ public:
   }
 
 private:
-  std::string getContent(mg_connection *conn_)
+  std::string getContent(mg_connection* conn_)
   {
     return std::string(conn_->content, conn_->content + conn_->content_len);
   }
@@ -181,4 +180,4 @@ private:
 } // mongoose
 } // cc
 
-#endif // CC_MONGOOSE_THRIFTHANDLER_H
+#endif // CC_WEBSERVER_THRIFTHANDLER_H

@@ -1,5 +1,5 @@
-#ifndef CC_MONGOOSE_THREADEDMONGOOSE_H
-#define CC_MONGOOSE_THREADEDMONGOOSE_H
+#ifndef CC_WEBSERVER_THREADEDMONGOOSE_H
+#define CC_WEBSERVER_THREADEDMONGOOSE_H
 
 #include <functional>
 #include <map>
@@ -7,31 +7,22 @@
 #include <string>
 #include <thread>
 #include <vector>
-
 #include <signal.h>
 
-#include <mongoose/mongoose.h>
+#include <webserver/mongoose.h>
 
 namespace cc
 {
-namespace mongoose
+namespace webserver
 {
 
 class SignalChanger
 {
 public:
   typedef sighandler_t SignalHandler;
-  
-  SignalChanger(int signum_, SignalHandler newHandler_)
-  {
-    _origSignum = signum_;
-    _origHandler = signal(signum_, newHandler_);
-  }
 
-  ~SignalChanger()
-  {
-    signal(_origSignum, _origHandler);
-  }
+  SignalChanger(int signum_, SignalHandler newHandler_);
+  ~SignalChanger();
 
 private:
   int _origSignum;
@@ -42,47 +33,55 @@ class ThreadedMongoose
 {
 public:
   typedef std::function<int (mg_connection *, mg_event)> Handler;
-  
-  ThreadedMongoose(int numThreads_ = 0) : _numThreads(numThreads_) {}
 
-  void setOption(const std::string& optName_, const std::string& value_)
-  {
-    _options[optName_] = value_;
-  }
-  
-  std::string getOption(const std::string& optName_)
-  {
-    return _options[optName_];
-  }
-  
-  void run(Handler handler_)
-  {
-    run((void*)0, handler_);
-  }
-  
+  /**
+   * Constructor for creating a multithreaded Mongoose server.
+   * @param numThreads_ Number of threads to run the server on. If its value is
+   * less than 1 then by default maximum the number of available cores and the
+   * value of DEFAULT_MAX_THREAD will be used.
+   */
+  ThreadedMongoose(int numThreads_ = 0);
+
+  /**
+   * This function configures the Mongoose server with the given option. The
+   * usable values can be found in this documentation:
+   * https://backend.cesanta.com/docs/Options.shtml.
+   */
+  void setOption(const std::string& optName_, const std::string& value_);
+
+  /**
+   * This function returns a configured Mongoose option.
+   * TODO: This function now only returns the options which are configured by
+   * setOption() function. The options should be read by mg_get_option().
+   */
+  std::string getOption(const std::string& optName_);
+
+  void run(Handler handler_);
+
   template <typename T>
   void run(T* serverData_, Handler handler_)
   {
     typedef std::shared_ptr<mg_server> ServerPtr;
-    
+
     handler = handler_;
-    
+
     exitFlag = 0;
 
     SignalChanger termSig(SIGTERM, signalHandler);
     SignalChanger intSig(SIGINT, signalHandler);
-    
+
     if (_numThreads < 1)
     {
-      _numThreads = std::max(std::thread::hardware_concurrency(), 20u);
+      _numThreads
+        = std::max(std::thread::hardware_concurrency(), DEFAULT_MAX_THREAD);
     }
-    
+
     std::vector<ServerPtr> servers;
     servers.reserve(_numThreads);
-    
+
     std::vector<std::thread> threads;
     threads.reserve(_numThreads - 1);
-        
+
     for (int i = 0; i < _numThreads; ++i)
     {
       ServerPtr server = ServerPtr(
@@ -91,7 +90,7 @@ public:
         {
           mg_destroy_server(&s);
         });
-      
+
       for (const auto& opt : _options)
       {
         // if we create more servers, we have to share the listening socket
@@ -116,7 +115,7 @@ public:
           }
         }
       }
-      
+
       // if this is not the last server, create a new thread
       if (i != _numThreads - 1)
       {
@@ -127,47 +126,29 @@ public:
       {
         serve(server.get());
       }
-      
+
       servers.push_back(std::move(server));
     }
-    
+
     // ~joiner waits for all threads to finish
     // ~servers releases the servers' resources
     // ~termSig and ~intSig restores signal handlers
   }
-  
+
 private:
   static void signalHandler(int sigNum_);
-  
+  static void* serve(void* server_);
+  static int delegater(mg_connection *conn_, enum mg_event ev_);
+
   static volatile int exitFlag;
-  
-  static void* serve(void* server_)
-  {
-    while (!exitFlag)
-    {
-      mg_poll_server((mg_server*)server_, 1000);
-    }
-    
-    return nullptr;
-  }
-  
-  static int delegater(mg_connection *conn_, enum mg_event ev_)
-  {
-    if (handler)
-    {
-      return handler(conn_, ev_);
-    }
-    
-    return MG_FALSE;
-  }
-  
   static Handler handler;
+  static const unsigned DEFAULT_MAX_THREAD = 20u;
 
   std::map<std::string, std::string> _options;
-  int _numThreads = 0;
+  int _numThreads;
 };
 
 } // mongoose
 } // cc
 
-#endif /* CC_MONGOOSE_THREADEDMONGOOSE_H */
+#endif /* CC_WEBSERVER_THREADEDMONGOOSE_H */

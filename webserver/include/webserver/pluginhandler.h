@@ -1,5 +1,5 @@
-#ifndef CC_PLUGIN_PLUGINHANDLER_H
-#define CC_PLUGIN_PLUGINHANDLER_H
+#ifndef CC_WEBSERVER_PLUGINHANDLER_H
+#define CC_WEBSERVER_PLUGINHANDLER_H
 
 #include <memory>
 #include <string>
@@ -12,7 +12,7 @@
 
 namespace cc
 {
-namespace plugin
+namespace webserver
 {
 
 template <class Base>
@@ -22,33 +22,30 @@ class PluginHandler
   typedef std::map<std::string, BasePtr> KeyBasePtrMap;
 
 public:
-  PluginHandler(int version_) : _version(version_) {}
+  PluginHandler()
+  {
+  }
 
-  PluginHandler(int version_, const boost::filesystem::path& path_)
-    : _version(version_)
+  PluginHandler(const std::string& path_)
   {
     addDirectory(path_);
   }
 
-  void addDirectory(const boost::filesystem::path& path_)
+  void addDirectory(const std::string& path_)
   {
     namespace fs = ::boost::filesystem;
 
     if (!fs::exists(path_) || !fs::is_directory(path_))
-    {
-      throw std::runtime_error(path_.string() + " is not a directory");
-    }
+      throw std::runtime_error(path_ + " is not a directory");
 
     fs::directory_iterator endIter;
-    for (fs::directory_iterator dirIter(path_); dirIter != endIter;
-      ++dirIter)
+    for (fs::directory_iterator dirIter(path_); dirIter != endIter; ++dirIter)
     {
       if (fs::is_regular_file(dirIter->status())
         && fs::extension(*dirIter) == util::DynamicLibrary::extension())
       {
-        std::string dynamicLibraryPath = dirIter->path().string();
         _dynamicLibraries.emplace_back(util::DynamicLibraryPtr(
-          new util::DynamicLibrary(dynamicLibraryPath)));        
+          new util::DynamicLibrary(dirIter->path().string())));
       }
     }
   }
@@ -58,11 +55,11 @@ public:
     namespace po = ::boost::program_options;
 
     po::options_description desc("Options of plugins");
-    for (auto dynamicLibrary : _dynamicLibraries)
+    for (util::DynamicLibraryPtr dynamicLibrary : _dynamicLibraries)
     {
       typedef po::options_description (*GetOptsFuncPtr)();
 
-      auto getOptions = reinterpret_cast<GetOptsFuncPtr>(
+      GetOptsFuncPtr getOptions = reinterpret_cast<GetOptsFuncPtr>(
         dynamicLibrary->getSymbol("getOptions"));
 
       desc.add(getOptions());
@@ -98,12 +95,8 @@ public:
     return BasePtr();
   }
 
-  void registerImplementation(const std::string& key_, BasePtr implementation_,
-    int version_)
+  void registerImplementation(const std::string& key_, BasePtr implementation_)
   {
-    if (_version != version_)
-      throw std::runtime_error("Version mismatch while loading " + key_);
-
     _implementationMap[key_] = implementation_;
   }
 
@@ -112,16 +105,7 @@ public:
     return _implementationMap;
   }
 
-public:
-  static std::string createImplementationKey(
-    const std::string& workspaceId_,
-    const std::string& serviceName_)
-  {
-    return workspaceId_ + "/" + serviceName_;
-  }
-
 private:
-  int _version;
   std::vector<util::DynamicLibraryPtr> _dynamicLibraries;
   KeyBasePtrMap _implementationMap;
 };
