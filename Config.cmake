@@ -4,6 +4,9 @@ set(INSTALL_LIB_DIR "lib")
 # Installation directory for libraries
 set(INSTALL_PARSER_DIR "${INSTALL_LIB_DIR}/parserplugin")
 
+# Installation directory for service libraries
+set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/serviceplugin")
+
 #Installation directory for executables
 set(INSTALL_BIN_DIR "bin")
 

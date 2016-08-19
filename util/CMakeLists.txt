@@ -10,6 +10,8 @@ set(SOURCES
   src/parser/parseutil.cpp
   src/dynamiclibrary.cpp
   src/logutil.cpp
+  src/webserverutil.cpp
+  src/util.cpp
 )
 
 add_library(util STATIC ${SOURCES})
