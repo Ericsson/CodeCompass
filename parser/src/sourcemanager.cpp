@@ -5,7 +5,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <parser/sourcemanager.h>
-#include <util/db/odbtransaction.h>
+#include <util/odbtransaction.h>
 #include <util/hash.h>
 
 namespace

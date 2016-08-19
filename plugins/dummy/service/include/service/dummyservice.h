@@ -5,7 +5,7 @@
 #include <vector>
 
 #include <odb/database.hxx>
-#include <util/db/odbtransaction.h>
+#include <util/odbtransaction.h>
 
 #include <boost/program_options/variables_map.hpp>
 

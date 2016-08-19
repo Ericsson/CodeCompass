@@ -1,5 +1,5 @@
 #include <service/dummyservice.h>
-#include <util/db/dbutil.h>
+#include <util/dbutil.h>
 
 namespace cc
 {

@@ -6,7 +6,8 @@
 
 #include <odb/database.hxx>
 
-#include <util/db/dbutil.h>
+#include <util/util.h>
+#include <util/dbutil.h>
 #include <util/webserverutil.h>
 
 #include "requesthandler.h"

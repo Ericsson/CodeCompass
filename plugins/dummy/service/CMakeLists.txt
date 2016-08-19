@@ -27,11 +27,10 @@ add_library(dummythrift STATIC
   gen-cpp/DummyService.cpp)
 target_compile_options(dummythrift PUBLIC -fPIC)
 
-set(SOURCES
+add_library(dummyservice SHARED
   src/dummyservice.cpp
   src/plugin.cpp)
 
-add_library(dummyservice SHARED ${SOURCES})
 target_compile_options(dummyservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(dummyservice

@@ -1,7 +1,6 @@
 include_directories(
   include
-  ${ODB_INCLUDE_DIRS}
-)
+  ${ODB_INCLUDE_DIRS})
 
 set(ODB_SOURCES
   include/model/file.h
@@ -9,8 +8,7 @@ set(ODB_SOURCES
   include/model/fileloc.h
   include/model/option.h
   include/model/position.h
-  include/model/statistics.h  
-)
+  include/model/statistics.h)
 
 generate_odb_files("${ODB_SOURCES}")
 

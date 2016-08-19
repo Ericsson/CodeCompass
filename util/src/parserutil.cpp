@@ -3,7 +3,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 
-#include <util/parser/parseutil.h>
+#include <util/parserutil.h>
 
 namespace fs = boost::filesystem;
 

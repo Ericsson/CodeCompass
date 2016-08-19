@@ -13,7 +13,7 @@
 #  include <odb/pgsql/database.hxx>
 #endif
 
-#include <util/db/dbutil.h>
+#include <util/dbutil.h>
 
 namespace
 {

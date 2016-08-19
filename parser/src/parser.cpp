@@ -5,10 +5,10 @@
 
 #include <boost/log/trivial.hpp>
 #include <boost/program_options.hpp>
-#include <util/db/dbutil.h>
+#include <util/dbutil.h>
 #include <util/logutil.h>
-#include <parser/parser_context.h>
-#include <parser/plugin_handler.h>
+#include <parser/parsercontext.h>
+#include <parser/pluginhandler.h>
 #include <parser/sourcemanager.h>
 
 namespace po = boost::program_options;
