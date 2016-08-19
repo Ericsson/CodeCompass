@@ -1,8 +1,8 @@
 #ifndef CC_PARSER_DUMMYPARSER_H
 #define CC_PARSER_DUMMYPARSER_H
 
-#include <parser/abstract_parser.h>
-#include <parser/parser_context.h>
+#include <parser/abstractparser.h>
+#include <parser/parsercontext.h>
 
 namespace cc
 {

@@ -27,6 +27,20 @@ struct WorkspaceOption
 
 using WorkspaceOptions = std::map<std::string, WorkspaceOption>;
 
+/**
+ * This function parses a workspace config file. This file has to be in INI-like
+ * format:
+ *
+ * ~~~
+ * [workspace.project1]
+ * connection = sqlite:database=database.sqlite
+ * description = Project1
+ *
+ * [workspace.project2]
+ * connection = sqlite:database=database.sqlite
+ * description = Project2
+ * ~~~
+ */
 WorkspaceOptions parseConfigFile(const std::string& filePath_);
 
 }

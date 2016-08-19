@@ -3,8 +3,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
-  ${LLVM_INCLUDE_DIRS}
-)
+  ${LLVM_INCLUDE_DIRS})
 
 set(SOURCES src/dummyparser.cpp)
 

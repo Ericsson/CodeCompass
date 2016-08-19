@@ -1,4 +1,4 @@
-#include <parser/plugin_handler.h>
+#include <parser/pluginhandler.h>
 
 #include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>

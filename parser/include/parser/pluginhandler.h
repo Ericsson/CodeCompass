@@ -6,8 +6,8 @@
 #include <map>
 #include <vector>
 
-#include <parser/plugin_handler.h>
-#include <parser/abstract_parser.h>
+#include <parser/pluginhandler.h>
+#include <parser/abstractparser.h>
 #include <util/dynamiclibrary.h>
 
 namespace cc
@@ -31,4 +31,5 @@ private:
 
 } // plugin
 } // cc
-#endif /* PLUGINHANDLER_H */
+
+#endif /* CC_PARSER_PLUGINHANDLER_H */

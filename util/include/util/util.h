@@ -8,6 +8,9 @@ namespace cc
 namespace util
 {
 
+/**
+ * This function returns the string representation of the current time.
+ */
 std::string getCurrentDate();
 
 }
