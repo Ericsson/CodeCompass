@@ -201,16 +201,17 @@ model::FilePtr SourceManager::getCreateFile(const std::string& path_)
 
   //--- If the file can't be found on disk then return nullptr ---//
 
+  bool fileExists = true;
   if (ec)
   {
     BOOST_LOG_TRIVIAL(debug) << "File doesn't exist: " << path_;
-    return model::FilePtr();
+    fileExists = false;
   }
 
   //--- Create file entry ---//
 
   std::string canonical = canonicalPath.native();
-  return _files[canonical] = getCreateFileEntry(canonical);
+  return _files[canonical] = getCreateFileEntry(canonical, fileExists);
 }
 
 model::FilePtr SourceManager::getCreateParent(const std::string& path_)
