@@ -21,34 +21,11 @@ struct Project;
 struct FileContent;
 
 typedef std::shared_ptr<File> FilePtr;
-typedef pktype FileId;
+typedef std::uint64_t FileId;
 
 #pragma db object
 struct File
 {
-  // Keep synchronized with FileType in project.thrift
-  enum Type
-  {
-    Unknown = 1,
-    GenericFile = 2,
-    Directory = 3,
-
-    CSource = 100,
-    CxxSource = 101,
-    JavaSource = 102,
-    DelosSource = 103,
-    ErlangSource = 104,
-
-    BashScript = 201,
-    PerlScript = 202,
-    PythonScript = 203,
-    RubyScript = 204,
-    SqlScript = 205,
-    JavaScript = 206,
-
-    JavaClass = 301
-  };
-  
   enum ParseStatus
   {
     PSNone = 0,
@@ -57,11 +34,14 @@ struct File
     PSVCView = 10000, //dummy for "Version Control View" in the editor
   };
 
+  static const std::uint64_t DIRECTORY_TYPE = 0;
+  static const std::uint64_t UNKNOWN_TYPE = -1;
+
   #pragma db id
   FileId id;
 
   #pragma db not_null
-  Type type = Unknown;
+  std::uint64_t type;
 
   #pragma db not_null
   std::string path;

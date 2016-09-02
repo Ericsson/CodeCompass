@@ -8,52 +8,6 @@
 #include <util/odbtransaction.h>
 #include <util/hash.h>
 
-namespace
-{
-
-cc::model::File::Type getFileType(const std::string& path_)
-{
-  std::string ext = boost::filesystem::path(path_).extension().native();
-  std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
-
-  if (ext == ".cc"  || ext == ".cpp" || ext == ".cxx" || ext == ".cp" ||
-      ext == ".hxx" || ext == ".c++" || ext == ".h"   || ext == ".hh" ||
-      ext == ".hpp")
-    return cc::model::File::CxxSource;
-
-  if (ext == ".c")
-    return cc::model::File::CSource;
-
-  if (ext == ".java")
-    return cc::model::File::JavaSource;
-
-  if (ext == ".js")
-    return cc::model::File::JavaScript;
-
-  if (ext == ".pl")
-    return cc::model::File::PerlScript;
-
-  if (ext == ".sh")
-    return cc::model::File::BashScript;
-
-  if (ext == ".erl")
-    return cc::model::File::ErlangSource;
-
-  if (ext == ".py" || ext == ".pyw" || ext == ".pyc" || ext == ".pyc" ||
-      ext == ".pyd")
-    return cc::model::File::PythonScript;
-
-  if (ext == ".rb" || ext == ".rbw")
-    return cc::model::File::RubyScript;
-
-  if (ext == ".sql")
-    return cc::model::File::SqlScript;
-
-  return cc::model::File::GenericFile;
-}
-
-}
-
 namespace cc
 {
 namespace parser
@@ -164,15 +118,15 @@ model::FilePtr SourceManager::getCreateFileEntry(
   model::FilePtr file(new model::File());
   file->id = util::fnvHash(path_);
   file->path = path_;
-  file->type = getFileType(path_);
+  file->type = model::File::UNKNOWN_TYPE;
   file->timestamp = timestamp;
   file->parent = getCreateParent(path_);
   file->filename = path.filename().native();
 
   if (boost::filesystem::is_directory(path, ec))
-    file->type = model::File::Directory;
+    file->type = model::File::DIRECTORY_TYPE;
 
-  if (file->type != model::File::Directory && withContent_)
+  if (file->type != model::File::DIRECTORY_TYPE && withContent_)
   {
     if (!boost::filesystem::is_regular_file(path, ec))
     {
