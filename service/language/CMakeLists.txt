@@ -1,46 +1,27 @@
 include_directories(
-  include
-  language-api/gen-cpp
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${cpp_PLUGIN_DIR}/model/include
-  ${compilationdatabase_PLUGIN_DIR}/model/include
-  ${PROJECT_SOURCE_DIR}/service/project/common-api/gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/project-api/gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/result-api/gen-cpp
-  ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/webserver/mongoose/include
-  ${PROJECT_SOURCE_DIR}/webserver/pluginable-webserver/include
-  ${PROJECT_SOURCE_DIR}/webserver/pluginframework/include
-  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
+  ../project/gen-cpp)
 
-list(APPEND SOURCES
-  src/languageservice.cpp
-)
+add_custom_command(
+  OUTPUT
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/language_constants.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/language_constants.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/language_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/language_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/LanguageService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/LanguageService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
+  COMMAND
+    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
+  DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
+  COMMENT
+    "Generate thrift for language.thrift")
 
-set(GEN_SRC
-  ${CMAKE_CURRENT_SOURCE_DIR}/language-api/gen-cpp/language_constants.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/language-api/gen-cpp/language_types.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/language-api/gen-cpp/LanguageService.cpp)
-  
-set_source_files_properties(${GEN_SRC} PROPERTIES GENERATED TRUE)
+add_library(languagethrift STATIC
+  gen-cpp/language_constants.cpp
+  gen-cpp/language_types.cpp
+  gen-cpp/LanguageService.cpp)
 
-add_library(languageservice SHARED ${SOURCES} ${GEN_SRC})
-target_compile_options(languageservice PUBLIC -Wno-unknown-pragmas)
+target_compile_options(languagethrift PUBLIC -fPIC)
 
-set(_langs cpp js)
-set(_thriftFiles ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift)
-generate_thrift_files(
-  "${_thriftFiles}"
-  "${_langs}"
-  workspaceservice
-  -I ${PROJECT_SOURCE_DIR}/service )
-
-target_link_libraries(languageservice
-  model
-  cppmodel
-  compilationdatabasemodel
-  coreservice 
-  ${THRIFT_LIBTHRIFT_LIBRARIES}
-)
-
-install(TARGETS languageservice DESTINATION ${INSTALL_SERVICE_DIR})
+add_dependencies(languagethrift projectthrift)

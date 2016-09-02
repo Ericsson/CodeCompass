@@ -1,6 +1,9 @@
-#include <plugin/pluginhelper.h>
-
+#include <webserver/requesthandler.h>
+#include <webserver/thrifthandler.h>
 #include <pluginservice/pluginservice.h>
+
+extern "C"
+{
 
 boost::program_options::options_description getOptions()
 {
@@ -9,17 +12,15 @@ boost::program_options::options_description getOptions()
   return description;
 }
 
-void registerPlugin(const boost::program_options::variables_map& config_,
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>*
-  pluginHandler_)
+void registerPlugin(
+  const boost::program_options::variables_map& config_,
+  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
 {
-  using namespace cc::mongoose;
-  using namespace cc::service::plugin;
+  std::shared_ptr<cc::webserver::RequestHandler> handler(
+    new cc::webserver::ThriftHandler<cc::service::plugin::PluginServiceProcessor>(
+      new cc::service::plugin::PluginServiceHandler(pluginHandler_), "*"));
 
-  std::shared_ptr<RequestHandler> handler(
-    new ThriftHandler<PluginServiceProcessor>(
-      new PluginServiceHandler(pluginHandler_), "*"));
+  pluginHandler_->registerImplementation("PluginService", handler);
+}
 
-  pluginHandler_->registerImplementation(
-    "PluginService", handler, RequestHandler::version);
 }

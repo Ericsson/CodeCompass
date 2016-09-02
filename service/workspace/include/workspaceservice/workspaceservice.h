@@ -1,8 +1,7 @@
 #ifndef CC_SERVICE_WORKSPACE_WORKSPACESERVICE_H
 #define CC_SERVICE_WORKSPACE_WORKSPACESERVICE_H
 
-#include <mongoose/plugin.h>
-
+#include <util/webserverutil.h>
 #include <WorkspaceService.h>
 
 namespace cc
@@ -15,16 +14,13 @@ namespace workspace
 class WorkspaceServiceHandler : virtual public WorkspaceServiceIf
 {
 public:
-  typedef cc::mongoose::WorkspaceOptions WorkspaceOptions;
+  typedef cc::util::WorkspaceOptions WorkspaceOptions;
 
-public:
-  WorkspaceServiceHandler(const WorkspaceOptions& workspaces_);
-
-public:
+  WorkspaceServiceHandler(const util::WorkspaceOptions& workspaces_);
   void getWorkspaces(std::vector<WorkspaceInfo>& _return) override;
 
 private:
-  WorkspaceOptions  _workspaces;
+  util::WorkspaceOptions _workspaces;
 };
 
 } // workspace

@@ -6,8 +6,8 @@ namespace java cc.service.workspace
  */
 struct WorkspaceInfo
 {
-  1:string  id,
-  2:string  description
+  1:string id,
+  2:string description
 }
 
 /**

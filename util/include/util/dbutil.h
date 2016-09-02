@@ -6,6 +6,12 @@
 
 #include <odb/database.hxx>
 
+#ifdef DATABASE_PGSQL
+#  define SQL_ILIKE "ILIKE"
+#else
+#  define SQL_ILIKE "LIKE"
+#endif
+
 namespace cc
 {
 namespace util

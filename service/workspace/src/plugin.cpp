@@ -1,6 +1,11 @@
-#include <plugin/pluginhelper.h>
-
+#include <boost/program_options.hpp>
+#include <webserver/pluginhandler.h>
+#include <webserver/requesthandler.h>
+#include <webserver/thrifthandler.h>
 #include <workspaceservice/workspaceservice.h>
+
+extern "C"
+{
 
 boost::program_options::options_description getOptions()
 {
@@ -9,22 +14,18 @@ boost::program_options::options_description getOptions()
   return description;
 }
 
-void registerPlugin(const boost::program_options::variables_map& config_,
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>*
-  pluginHandler_)
+void registerPlugin(
+  const boost::program_options::variables_map& vm_,
+  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
 {
-  using namespace cc::mongoose;
-  using namespace cc::service::workspace;
+  const cc::util::WorkspaceOptions workspaces
+    = cc::util::parseConfigFile(vm_["workspace"].as<std::string>());
 
-  const WorkspaceOptions& workspaces =
-    config_[WORKSPACE_OPTION_NAME].as<WorkspaceOptions>();
+  std::shared_ptr<cc::webserver::RequestHandler> handler(
+    new cc::webserver::ThriftHandler<cc::service::workspace::WorkspaceServiceProcessor>(
+      new cc::service::workspace::WorkspaceServiceHandler(workspaces), "*"));
 
-  std::shared_ptr<RequestHandler> handler(
-    new ThriftHandler<WorkspaceServiceProcessor>(
-      new WorkspaceServiceHandler(workspaces), "*"));
-
-  pluginHandler_->registerImplementation(
-    "WorkspaceService", handler, RequestHandler::version);
+  pluginHandler_->registerImplementation("WorkspaceService", handler);
 }
 
-
+}

@@ -1,33 +1,40 @@
 include_directories(
   include
-  workspace-api/gen-cpp
+  gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/webserver/mongoose/include
-  ${PROJECT_SOURCE_DIR}/webserver/pluginable-webserver/include
-  ${PROJECT_SOURCE_DIR}/webserver/pluginframework/include
+  ${PROJECT_SOURCE_DIR}/webserver/include
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-list(APPEND SOURCES
+add_custom_command(
+  OUTPUT
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/workspace_constants.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/workspace_constants.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/workspace_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/workspace_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/WorkspaceService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/WorkspaceService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
+  COMMAND
+    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
+  DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
+  COMMENT
+    "Generate thrift for workspace.thrift")
+
+add_library(workspacethrift STATIC
+  gen-cpp/workspace_constants.cpp
+  gen-cpp/workspace_types.cpp
+  gen-cpp/WorkspaceService.cpp)
+
+target_compile_options(workspacethrift PUBLIC -fPIC)
+
+add_library(workspaceservice SHARED
   src/workspaceservice.cpp
-  src/plugin.cpp
-)
-
-set(GEN_SRC
-  ${CMAKE_CURRENT_SOURCE_DIR}/workspace-api/gen-cpp/workspace_constants.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/workspace-api/gen-cpp/workspace_types.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/workspace-api/gen-cpp/WorkspaceService.cpp)
-  
-set_source_files_properties(${GEN_SRC} PROPERTIES GENERATED TRUE)
-
-add_library(workspaceservice SHARED ${SOURCES} ${GEN_SRC})
-target_compile_options(workspaceservice PUBLIC -Wno-unknown-pragmas)
-
-set(_langs cpp js)
-set(_thriftFiles ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift)
-generate_thrift_files("${_thriftFiles}" "${_langs}" workspaceservice)
+  src/plugin.cpp)
 
 target_link_libraries(workspaceservice
+  util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
-)
+  workspacethrift)
 
 install(TARGETS workspaceservice DESTINATION ${INSTALL_SERVICE_DIR})

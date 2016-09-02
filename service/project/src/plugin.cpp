@@ -1,6 +1,9 @@
-#include <plugin/pluginhelper.h>
+#include <webserver/pluginhelper.h>
 
 #include <projectservice/projectservice.h>
+
+extern "C"
+{
 
 boost::program_options::options_description getOptions()
 {
@@ -9,15 +12,15 @@ boost::program_options::options_description getOptions()
   return description;
 }
 
-void registerPlugin(const boost::program_options::variables_map& configuration,
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>*
-  pluginHandler)
+void registerPlugin(
+  const boost::program_options::variables_map& configuration,
+  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler)
 {
-  cc::plugin::registerPluginSimple(
-      configuration,
-      pluginHandler,
-      CODECOMPASS_SIMPLE_SERVICE_FACTORY(Project, core),
-      "ProjectService");
+  cc::webserver::registerPluginSimple(
+    configuration,
+    pluginHandler,
+    CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Project, core),
+    "ProjectService");
 }
 
-
+}

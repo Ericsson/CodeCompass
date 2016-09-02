@@ -3,9 +3,11 @@
 
 #include <memory>
 
+#include <boost/program_options/variables_map.hpp>
+
 #include <odb/database.hxx>
 
-#include <util/db/odbtransaction.h>
+#include <util/odbtransaction.h>
 #include <model/file.h>
 
 #include <ProjectService.h>
@@ -18,34 +20,23 @@ namespace core
 {
 
 class ProjectServiceHandler : virtual public ProjectServiceIf {
- public:
-  ProjectServiceHandler(std::shared_ptr<odb::database> db_);
+public:
+  ProjectServiceHandler(
+    std::shared_ptr<odb::database> db_,
+    const boost::program_options::variables_map& config_);
 
-  virtual void getFileInfo(FileInfo& _return, const  FileId& file) override;
-  
-  virtual void getFileInfoByPath(FileInfo& _return, const  std::string& path) override;
-
-  virtual void getFileStat(FileStat& _return, const FileId& file) override;
-  
-  virtual void getProjectInfo(ProjectInfo& _return, const ProjectId& project) override;
-  
-  virtual void getRootFiles(std::vector<FileInfo> & _return, const ProjectId& project) override;
-
-  virtual void getChildFiles(std::vector<FileInfo> & _return, const FileId& file) override;
-
-  virtual void getSubtree(std::vector<FileInfo> & _return, const FileId& file) override;
-
-  virtual void getOpenTreeTillFile(std::vector<FileInfo> & _return, const FileId& file) override;
-
-  virtual void getPathTillFile(std::vector<FileInfo> & _return, const  ::cc::service::core::FileId& file) override;
-  
-  virtual void getBuildLog(std::vector<BuildLog> & _return, const  ::cc::service::core::FileId& file) override;
-  
-  virtual void getContainingFile(FileInfo& _return, const FileId& file) override;
-  
-  virtual void searchFile(std::vector<FileInfo> & _return, const std::string& searchText, const bool onlyFile) override;
-
-  virtual void getStatistics(std::vector<StatisticsInfo>& _return) override;
+  void getFileInfo(FileInfo& return_, const FileId& fileId_) override;
+  void getFileInfoByPath(FileInfo& return_, const std::string& path) override;
+  void getFileContent(std::string& return_, const FileId& fileId_) override;
+  void getRootFiles(std::vector<FileInfo>& return_) override;
+  void getChildFiles(std::vector<FileInfo>& return_, const FileId& fileId_) override;
+  void getSubtree(std::vector<FileInfo>& return_, const FileId& fileId_) override;
+  void getOpenTreeTillFile(std::vector<FileInfo>& return_, const FileId& fileId_) override;
+  void getPathTillFile(std::vector<FileInfo>& return_, const FileId& fileId_) override;
+  void getBuildLog(std::vector<BuildLog>& return_, const FileId& fileId_) override;
+  void getParent(FileInfo& return_, const FileId& fileId_) override;
+  void searchFile(std::vector<FileInfo>& return_, const std::string& text_, const bool onlyFile_) override;
+  void getStatistics(std::vector<StatisticsInfo>& return_) override;
 
 private:
   /**
@@ -54,11 +45,10 @@ private:
    */
   static bool fileInfoOrder(const FileInfo& left, const FileInfo& right);
   
-  void checkDbAndThrow();
-  std::string getFileNameFromPath(std::string path);
-  FileInfo makeFileInfo(model::File &f);  
+  FileInfo makeFileInfo(model::File &f_);
+
   std::shared_ptr<odb::database> _db;
-  util::OdbTransaction transaction;
+  util::OdbTransaction _transaction;
 };
 
 } // project

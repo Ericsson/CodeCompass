@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <pluginservice/pluginservice.h>
 
 namespace cc
@@ -10,15 +8,15 @@ namespace plugin
 {
 
 PluginServiceHandler::PluginServiceHandler(
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>* pluginHandler_)
+  webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
     : _pluginHandler(pluginHandler_)
 {
 }
 
-void PluginServiceHandler::getPlugins(std::vector<std::string>& _return)
+void PluginServiceHandler::getPlugins(std::vector<std::string>& return_)
 {
   for (const auto& it : _pluginHandler->getImplementationMap())
-    _return.push_back(it.first);
+    return_.push_back(it.first);
 }
 
 }

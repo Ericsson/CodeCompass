@@ -1,11 +1,9 @@
 #ifndef CC_SERVICE_PLUGIN_PLUGINSERVICE_H
 #define CC_SERVICE_PLUGIN_PLUGINSERVICE_H
 
-#include <mongoose/plugin.h>
-
+#include <webserver/pluginhandler.h>
+#include <webserver/requesthandler.h>
 #include <PluginService.h>
-
-#include <vector>
 
 namespace cc
 { 
@@ -17,11 +15,13 @@ namespace plugin
 class PluginServiceHandler : virtual public PluginServiceIf
 {
 public:
-  PluginServiceHandler(cc::plugin::PluginHandler<cc::mongoose::RequestHandler>*);
-  void getPlugins(std::vector<std::string> & _return);
-  
+  PluginServiceHandler(
+    webserver::PluginHandler<cc::webserver::RequestHandler>*);
+
+  void getPlugins(std::vector<std::string>& return_) override;
+
 private:
-  cc::plugin::PluginHandler<cc::mongoose::RequestHandler>* _pluginHandler;
+  webserver::PluginHandler<webserver::RequestHandler>* _pluginHandler;
 };
 
 } // plugin
