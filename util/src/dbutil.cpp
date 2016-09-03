@@ -1,8 +1,8 @@
-#include <iostream>
 #include <map>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/log/trivial.hpp>
 #include <boost/regex.hpp>
 
 #ifdef DATABASE_SQLITE
@@ -215,7 +215,7 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
   }
   catch (const odb::exception& ex)
   {
-    std::cout << ex.what() << std::endl;
+    BOOST_LOG_TRIVIAL(error) << ex.what();
     return nullptr;
   }
 

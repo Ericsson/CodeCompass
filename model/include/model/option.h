@@ -13,12 +13,13 @@ namespace model
 
 struct Option;
 typedef std::shared_ptr<Option> OptionPtr;
+typedef int OptionId;
 
 #pragma db object
 struct Option
 {
   #pragma db id auto
-  unsigned long id;
+  OptionId id;
 
   #pragma db not_null
   std::string key;

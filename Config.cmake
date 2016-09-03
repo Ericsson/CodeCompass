@@ -10,7 +10,7 @@ set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/serviceplugin")
 #Installation directory for executables
 set(INSTALL_BIN_DIR "bin")
 
-set(DATABASE pgsql CACHE STRING "Database type")
+set(DATABASE sqlite CACHE STRING "Database type")
 string(TOUPPER ${DATABASE} DATABASE_U)
 
 # Odb commands
