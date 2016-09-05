@@ -9,7 +9,7 @@
 #include <clang/Tooling/Tooling.h>
 
 #include <cxxparser/cxxparser.h>
-#include <util/threadpool.h>
+//#include <util/threadpool.h>
 
 #include "clangastvisitor.h"
 
@@ -96,7 +96,7 @@ bool CxxParser::parseByJson(
   const std::string& jsonFile_,
   std::size_t threadNum_) const
 {
-  util::ThreadPool threadPool(threadNum_);
+  //util::ThreadPool threadPool(threadNum_);
 
   std::string errorMsg;
 

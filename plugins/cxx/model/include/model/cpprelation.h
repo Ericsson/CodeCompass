@@ -22,8 +22,8 @@ struct CppRelation
   #pragma db id auto
   int id;
 
-  unsigned long long lhs;
-  unsigned long long rhs;
+  std::uint64_t lhs;
+  std::uint64_t rhs;
 
   Kind kind;
 

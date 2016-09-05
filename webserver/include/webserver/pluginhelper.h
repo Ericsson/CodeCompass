@@ -76,6 +76,15 @@ inline void registerPluginSimple(
         cfg_["workspace"].as<std::string>()); \
   }
 
+#define CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(serviceName) \
+  [](std::shared_ptr<odb::database>& db_, \
+     const boost::program_options::variables_map& cfg_) { \
+    return new cc::webserver::ThriftHandler< \
+      cc::service::language::LanguageServiceProcessor>( \
+        new cc::service::language::serviceName##ServiceHandler(db_, cfg_), \
+        cfg_["workspace"].as<std::string>()); \
+  }
+
 } // plugin
 } // cc
 
