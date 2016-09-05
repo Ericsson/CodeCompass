@@ -34,8 +34,10 @@ struct File
     PSVCView = 10000, //dummy for "Version Control View" in the editor
   };
 
-  static const std::uint64_t DIRECTORY_TYPE = 0;
-  static const std::uint64_t UNKNOWN_TYPE = -1;
+  enum Type : std::uint64_t {
+    DIRECTORY_TYPE = 0,
+    UNKNOWN_TYPE = -1U
+  };
 
   #pragma db id
   FileId id;
