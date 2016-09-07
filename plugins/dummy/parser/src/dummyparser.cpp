@@ -14,11 +14,6 @@ namespace parser
 DummyParser::DummyParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
 }
-  
-std::string DummyParser::getName() const
-{
-  return "dummyparser";
-}
 
 std::vector<std::string> DummyParser::getDependentParsers()  const
 {

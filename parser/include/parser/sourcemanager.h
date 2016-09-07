@@ -78,6 +78,8 @@ private:
   std::unordered_map<std::string, model::FilePtr> _files;
   std::unordered_set<model::FileId> _persistedFiles;
   std::mutex _createFileMutex;
+  model::FileTypePtr _directoryType;
+  model::FileTypePtr _unknownType;
 };
 
 } // parser

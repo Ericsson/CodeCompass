@@ -24,12 +24,6 @@ public:
    * Destructor
    */
   virtual ~AbstractParser(){}
-  
-  /**
-   * String representation of the parser name.
-   * @return parser name
-   */
-  virtual std::string getName() const = 0; 
 
   /**
    * Get dependencies of parsers. 

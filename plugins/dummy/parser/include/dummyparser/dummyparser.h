@@ -13,8 +13,7 @@ class DummyParser : public AbstractParser
 {
 public:
   DummyParser(ParserContext& ctx_);
-  virtual ~DummyParser();  
-  virtual std::string getName() const override;
+  virtual ~DummyParser();
   virtual std::vector<std::string> getDependentParsers() const override;
   virtual bool parse() override; 
 private:

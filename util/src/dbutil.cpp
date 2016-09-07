@@ -133,14 +133,14 @@ namespace util
 /**
  * Global connection string -> database map to avoid too many live connections.
  */
-std::map<std::string, std::weak_ptr<odb::database>> databasePool;
+std::map<std::string, std::shared_ptr<odb::database>> databasePool;
 
 std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
 {
   auto iter = databasePool.find(connStr_);
   if (iter != databasePool.end())
   {
-    auto db = iter->second.lock();
+    auto db = iter->second;
     
     if (db)
       return db;
@@ -162,7 +162,8 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
 
 #ifdef DATABASE_MYSQL
   if (database == "mysql")
-    db.reset(new odb::mysql::database(odbOpts.size(), cStyleOptions))
+    db.reset(new odb::mysql::database(odbOpts.size(), cStyleOptions),
+      [](odb::database*){});
 #endif
 
 #ifdef DATABASE_SQLITE
@@ -177,7 +178,7 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
       true,
       "",
       std::make_unique<odb::sqlite::single_connection_factory>());
-    db.reset(sqliteDB);
+    db.reset(sqliteDB, [](odb::database*){});
 
     auto sqlitePtr = sqliteDB->connection()->handle();
     sqlite3_create_function_v2(
@@ -196,7 +197,8 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
   if (database == "pgsql")
   {
     int size = odbOpts.size();
-    db.reset(new odb::pgsql::database(size, cStyleOptions));
+    db.reset(new odb::pgsql::database(size, cStyleOptions),
+      [](odb::database*){});
   }
 #endif
 
