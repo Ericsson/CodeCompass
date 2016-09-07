@@ -87,7 +87,8 @@ void ProjectServiceHandler::getFileContent(
       throw ex;
     }
 
-    return_ = f.content.load()->content;
+    if(std::shared_ptr<model::FileContent> fileContent = f.content.load())
+      return_ = fileContent->content;
   });
 }
 
@@ -275,6 +276,7 @@ void ProjectServiceHandler::searchFile(
 {
   typedef odb::result<model::File> FileResult;
   typedef odb::query<model::File> FileQuery;
+  typedef odb::query<model::FileType> FileTypeQuery;
 
   std::string text = text_;
 
@@ -285,7 +287,7 @@ void ProjectServiceHandler::searchFile(
     FileResult r
       = onlyFile_
       ? _db->query<model::File>(
-          FileQuery::type != model::File::DIRECTORY_TYPE &&
+          FileTypeQuery::name != model::File::DIRECTORY_TYPE &&
           FileQuery::filename + SQL_ILIKE + FileQuery::_val("%" + text + "%"))
       : _db->query<model::File>(
           FileQuery::path + SQL_ILIKE + FileQuery::_val("%" + text + "%"));
@@ -342,7 +344,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
   fileInfo.__set_name(f.filename);
   fileInfo.__set_path(f.path);
   
-  if (f.type == model::File::DIRECTORY_TYPE)
+  if (f.type->name == model::File::DIRECTORY_TYPE)
   {
     fileInfo.__set_isDirectory(true);
   }
@@ -352,7 +354,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
     fileInfo.__set_hasChildren(false); // TODO: Why false?
   }
 
-  fileInfo.__set_type(std::to_string(f.type));
+  fileInfo.__set_type(f.type->name);
 
   if (f.parent)
     fileInfo.__set_parent(std::to_string(f.parent.object_id()));

@@ -16,14 +16,31 @@ namespace parser
 SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
   : _db(db_)//, _magicCookie(nullptr)
 {
-  //--- Reload files from database ---//
-
   util::OdbTransaction trans(_db);
   trans([&, this]() {
+
+    //--- Reload files from database ---//
+
     for (const model::File& file : db_->query<model::File>())
     {
       _files[file.path] = std::make_shared<model::File>(file);
       _persistedFiles.insert(file.id);
+    }
+
+    //--- Persist common file types ---//
+
+    typedef odb::query<model::FileType> FileTypeQuery;
+    if(!_db->query_one<model::FileType> (
+      FileTypeQuery::name == model::File::UNKNOWN_TYPE))
+    {
+      model::FileType unknownType (model::File::UNKNOWN_TYPE);
+      _db->persist(unknownType);
+    }
+    if(!_db->query_one<model::FileType> (
+      FileTypeQuery::name == model::File::UNKNOWN_TYPE))
+    {
+      model::FileType directoryType (model::File::DIRECTORY_TYPE);
+      _db->persist(directoryType);
     }
   });
 
@@ -118,15 +135,26 @@ model::FilePtr SourceManager::getCreateFileEntry(
   model::FilePtr file(new model::File());
   file->id = util::fnvHash(path_);
   file->path = path_;
-  file->type = model::File::UNKNOWN_TYPE;
   file->timestamp = timestamp;
   file->parent = getCreateParent(path_);
   file->filename = path.filename().native();
 
-  if (boost::filesystem::is_directory(path, ec))
-    file->type = model::File::DIRECTORY_TYPE;
+  typedef odb::query<model::FileType> query;
+  util::OdbTransaction trans(_db);
+  trans([&, this]() {
+    if (boost::filesystem::is_directory(path, ec))
+    {
+      file->type = _db->query_one<model::FileType> (
+        query::name == model::File::DIRECTORY_TYPE);
+    }
+    else
+    {
+      file->type = _db->query_one<model::FileType> (
+        query::name == model::File::UNKNOWN_TYPE);
+    }
+  });
 
-  if (file->type != model::File::DIRECTORY_TYPE && withContent_)
+  if (file->type->name != model::File::DIRECTORY_TYPE && withContent_)
   {
     if (!boost::filesystem::is_regular_file(path, ec))
     {
