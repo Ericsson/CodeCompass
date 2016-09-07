@@ -1,11 +1,12 @@
 #include <iterator>
 #include <fstream>
+#include <memory>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
-#include <util/db/dbutil.h>
-#include <util/db/odbtransaction.h>
+#include <util/dbutil.h>
+#include <util/odbtransaction.h>
 
 #include <parser/sourcemanager.h>
 
@@ -14,8 +15,6 @@
 
 #include <metricsparser/metricsparser.h>
 
-namespace fs = boost::filesystem;
-
 namespace cc
 {
 namespace parser
@@ -23,12 +22,6 @@ namespace parser
 
 MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
-  _db = cc::util::createDatabase(_ctx.options["database"].as<std::string>());
-}
-  
-std::string MetricsParser::getName() const
-{
-  return "metricsparser";
 }
 
 std::vector<std::string> MetricsParser::getDependentParsers() const
@@ -39,43 +32,41 @@ std::vector<std::string> MetricsParser::getDependentParsers() const
 bool MetricsParser::parse()
 {    
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
-    {
-      BOOST_LOG_TRIVIAL(info) << "Metrics parse path: " << path;
+  {
+    BOOST_LOG_TRIVIAL(info) << "Metrics parse path: " << path;
 
+    util::OdbTransaction trans(_ctx.db);
+    trans([&, this]() {
+      auto cb = getParserCallback();
 
-      util::OdbTransaction trans(_db);
-      trans([&, this]() {
-        auto cb = getParserCallback();
+      /*--- Call non-empty iter-callback for all files
+         in the current root directory. ---*/
+      try
+      {
+        util::iterateDirectoryRecursive(path, cb);
+      }
+      catch (std::exception& ex_)
+      {
+        BOOST_LOG_TRIVIAL(warning)
+          << "Metrics parser threw an exception: " << ex_.what();
+      }
+      catch (...)
+      {
+        BOOST_LOG_TRIVIAL(warning)
+          << "Metrics parser failed with unknown exception!";
+      }
 
-        /*--- Call non-empty iter-callback for all files
-           in the current root directory. ---*/
-        try
-        {
-          util::iterateDirectoryRecursive(path, cb);
-        }
-        catch (std::exception& ex_)
-        {
-          BOOST_LOG_TRIVIAL(warning)
-            << "Metrics parser threw an exception: " << ex_.what();
-        }
-        catch (...)
-        {
-          BOOST_LOG_TRIVIAL(warning)
-            << "Metrics parser failed with unknown exception!";
-        }
-
-      });
-    }
-    return true;
+    });
+  }
+  return true;
 }
 
 util::DirIterCallback MetricsParser::getParserCallback()
 {
-  return [this](
-    const std::string& currPath_)
+  return [this](const std::string& currPath_)
   {
-    fs::path path(currPath_);
-    if (fs::is_regular_file(path))
+    boost::filesystem::path path(currPath_);
+    if (boost::filesystem::is_regular_file(path))
     {
       model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
       if(file)
@@ -87,7 +78,7 @@ util::DirIterCallback MetricsParser::getParserCallback()
   };
 }
 
-MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file) const
+MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
 {
   Loc result;
 
@@ -96,9 +87,9 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file) const
   // TODO: Why doesn't it work? It gives empty string.
   // std::string content = file->content.load()->content;
 
-  BOOST_LOG_TRIVIAL(debug) << "Count LOC metrics for " << file->path;
+  BOOST_LOG_TRIVIAL(debug) << "Count metrics for " << file_->path;
 
-  std::ifstream fileStream(file->path);
+  std::ifstream fileStream(file_->path);
   std::string content(
     (std::istreambuf_iterator<char>(fileStream)),
     (std::istreambuf_iterator<char>()));
@@ -119,7 +110,7 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file) const
   std::string singleComment, multiCommentStart, multiCommentEnd;
 
   setCommentTypes(
-    file->type, singleComment, multiCommentStart, multiCommentEnd);
+    file_->type, singleComment, multiCommentStart, multiCommentEnd);
   eraseComments(
     content, singleComment, multiCommentStart, multiCommentEnd);
 
@@ -129,60 +120,60 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file) const
 }
 
 void MetricsParser::setCommentTypes(
-  model::File::Type& type,
-  std::string& singleComment,
-  std::string& multiCommentStart,
-  std::string& multiCommentEnd) const
+  model::FileTypePtr& fileType_,
+  std::string& singleComment_,
+  std::string& multiCommentStart_,
+  std::string& multiCommentEnd_) const
 {
   if (
-    type == model::File::CSource ||
-    type == model::File::CxxSource ||
-    type == model::File::JavaSource)
+    fileType_->name == "CSource" ||
+    fileType_->name == "CxxSource" ||
+    fileType_->name == "JavaSource")
   {
-    singleComment = "//";
-    multiCommentStart = "/*";
-    multiCommentEnd = "*/";
+    singleComment_ = "//";
+    multiCommentStart_ = "/*";
+    multiCommentEnd_ = "*/";
   }
   else if (
-    type == model::File::ErlangSource ||
-    type == model::File::BashScript ||
-    type == model::File::PerlScript)
+    fileType_->name == "ErlangSource" ||
+    fileType_->name == "BashScript" ||
+    fileType_->name == "PerlScript")
   {
-    singleComment = "#";
-    multiCommentStart = "";  //multi line comment not exist
-    multiCommentEnd = "";
+    singleComment_ = "#";
+    multiCommentStart_ = "";  //multi line comment not exist
+    multiCommentEnd_ = "";
   }
-  else if (type == model::File::PythonScript)
+  else if (fileType_->name == "PythonScript")
   {
-    singleComment = "#";
-    multiCommentStart = R"(""")";
-    multiCommentEnd = R"(""")";
+    singleComment_ = "#";
+    multiCommentStart_ = R"(""")";
+    multiCommentEnd_ = R"(""")";
   }
-  else if (type == model::File::SqlScript)
+  else if (fileType_->name == "SqlScript")
   {
-    singleComment = "--";
-    multiCommentStart = "/*";
-    multiCommentEnd = "*/";
+    singleComment_ = "--";
+    multiCommentStart_ = "/*";
+    multiCommentEnd_ = "*/";
   }
-  else if (type == model::File::RubyScript)
+  else if (fileType_->name == "RubyScript")
   {
-    singleComment = "#";
-    multiCommentStart = "=begin";
-    multiCommentEnd = "\n=end";  //end must be at new line
+    singleComment_ = "#";
+    multiCommentStart_ = "=begin";
+    multiCommentEnd_ = "\n=end";  //end must be at new line
   }
   else //default value
   {
-    singleComment = "";
-    multiCommentStart = "";
-    multiCommentEnd = "";
+    singleComment_ = "";
+    multiCommentStart_ = "";
+    multiCommentEnd_ = "";
   }
 }
 
-void MetricsParser::eraseBlankLines(std::string& file) const
+void MetricsParser::eraseBlankLines(std::string& file_) const
 {
-  std::string::iterator first = file.begin();
+  std::string::iterator first = file_.begin();
   bool isBlankLine = true;
-  for (std::string::iterator it = first; it != file.end(); ++it)
+  for (std::string::iterator it = first; it != file_.end(); ++it)
   {
     if (!std::isspace(*it))
     {
@@ -192,19 +183,19 @@ void MetricsParser::eraseBlankLines(std::string& file) const
     {
       if (isBlankLine && first != it)
       {
-        it = file.erase(first, it);
+        it = file_.erase(first, it);
       }
       first = it + 1;
       isBlankLine = true;
     }
   }
 
-  file.erase(std::unique(file.begin(), file.end(),
-    [](char a, char b) { return a == '\n' && b == '\n'; }), file.end());
+  file_.erase(std::unique(file_.begin(), file_.end(),
+    [](char a, char b) { return a == '\n' && b == '\n'; }), file_.end());
 }
 
 void MetricsParser::eraseComments(
-  std::string& file,
+  std::string& file_,
   const std::string& singleComment,
   const std::string& multiCommentStart,
   const std::string& multiCommentEnd) const
@@ -214,54 +205,52 @@ void MetricsParser::eraseComments(
   // Simple line
   if (!singleComment.empty()) // singleComment exist
   {
-    std::size_t start = file.find(singleComment);
-    for (std::size_t end = file.find('\n', start);
+    std::size_t start = file_.find(singleComment);
+    for (std::size_t end = file_.find('\n', start);
          start != std::string::npos;
-         start = file.find(singleComment), end = file.find('\n', start))
+         start = file_.find(singleComment), end = file_.find('\n', start))
     {
       if (end == std::string::npos) // last line case
       {
-        end = file.size();
+        end = file_.size();
       }
-      file.erase(start, end - start);
+      file_.erase(start, end - start);
     }
   }
 
   // Multiline
   if (!multiCommentStart.empty()) // multiComment exist
   {
-    for (std::size_t start = file.find(multiCommentStart),
-                     end   = file.find(multiCommentEnd, start + s);
+    for (std::size_t start = file_.find(multiCommentStart),
+                     end   = file_.find(multiCommentEnd, start + s);
          start != std::string::npos;
-         start = file.find(multiCommentStart),
-         end   = file.find(multiCommentEnd, start + s))
+         start = file_.find(multiCommentStart),
+         end   = file_.find(multiCommentEnd, start + s))
     {
       // Delete end comment symbol too
-      file.erase(start, end - start + multiCommentStart.size());
+      file_.erase(start, end - start + s);
     }
   }
-
-  eraseBlankLines(file);
 }
 
 void MetricsParser::persistLoc(const Loc& loc, model::FileId file)
 {
-  util::OdbTransaction trans(_db);
+  util::OdbTransaction trans(_ctx.db);
   trans([&, this]{
     model::Metrics metrics;
     metrics.file = file;
 
     metrics.type   = model::Metrics::CODE_LOC;
     metrics.metric = loc.codeLines;
-    _db->persist(metrics);
+    _ctx.db->persist(metrics);
 
     metrics.type   = model::Metrics::NONBLANK_LOC;
     metrics.metric = loc.nonblankLines;
-    _db->persist(metrics);
+    _ctx.db->persist(metrics);
 
     metrics.type   = model::Metrics::ORIGINAL_LOC;
     metrics.metric = loc.originalLines;
-    _db->persist(metrics);
+    _ctx.db->persist(metrics);
   });
 }
 

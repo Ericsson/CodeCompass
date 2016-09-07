@@ -26,16 +26,25 @@ struct Metrics
   };
 
   #pragma db id auto
-  uint64_t id;
+  std::uint64_t id;
 
   #pragma db not_null
   FileId file;
 
   #pragma db not_null
   unsigned metric;
-  
+
   #pragma db not_null
   Type type;
+
+  friend class odb::access;
+};
+
+#pragma db view object(Metrics)
+struct MetricsCount
+{
+  #pragma db column("count(" + Metrics::id + ")")
+  std::size_t count;
 };
 
 } //model

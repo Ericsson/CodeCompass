@@ -11,13 +11,3 @@ set(ODB_SOURCES
 generate_odb_files("${ODB_SOURCES}")
 
 add_odb_library(metricsmodel ${ODB_CXX_SOURCES})
-
-target_link_libraries(metricsmodel
-  model
-  ${ODB_LIBRARIES}
-)
-
-install(TARGETS metricsmodel
-  LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-  ARCHIVE DESTINATION ${INSTALL_LIB_DIR})
-  

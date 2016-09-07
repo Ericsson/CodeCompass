@@ -1,10 +1,10 @@
 #ifndef CC_PARSER_METRICS_PARSER_H
 #define CC_PARSER_METRICS_PARSER_H
 
-#include <parser/abstract_parser.h>
-#include <parser/parser_context.h>
+#include <parser/abstractparser.h>
+#include <parser/parsercontext.h>
 
-#include <util/parser/parseutil.h>
+#include <util/parserutil.h>
 
 namespace cc
 {
@@ -15,9 +15,9 @@ class MetricsParser : public AbstractParser
 {
 public:
   MetricsParser(ParserContext& ctx_);
-  virtual std::string getName() const override;
   virtual std::vector<std::string> getDependentParsers() const override;  
   virtual bool parse() override;
+
 private:
   util::DirIterCallback getParserCallback();
 
@@ -28,23 +28,23 @@ private:
     unsigned codeLines;
   };
 
-  Loc getLocFromFile(model::FilePtr file) const;
+  Loc getLocFromFile(model::FilePtr file_) const;
 
   void setCommentTypes(
-    model::File::Type& type,
-    std::string& singleComment,
-    std::string& multiCommentStart,
-    std::string& multiCommentEnd) const;
+    model::FileTypePtr& filetype_,
+    std::string& singleComment_,
+    std::string& multiCommentStart_,
+    std::string& multiCommentEnd_) const;
 
   void eraseBlankLines(std::string& file) const;
 
   void eraseComments(
-    std::string& file,
-    const std::string& singleComment,
-    const std::string& multiCommentStart,
-    const std::string& multiCommentEnd) const;
+    std::string& file_,
+    const std::string& singleComment_,
+    const std::string& multiCommentStart_,
+    const std::string& multiCommentEnd_) const;
 
-  void persistLoc(const Loc& loc, model::FileId file);
+  void persistLoc(const Loc& loc_, model::FileId file_);
 };
 
 } // namespace parser
