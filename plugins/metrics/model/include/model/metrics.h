@@ -36,15 +36,6 @@ struct Metrics
 
   #pragma db not_null
   Type type;
-
-  friend class odb::access;
-};
-
-#pragma db view object(Metrics)
-struct MetricsCount
-{
-  #pragma db column("count(" + Metrics::id + ")")
-  std::size_t count;
 };
 
 } //model

@@ -196,19 +196,19 @@ void MetricsParser::eraseBlankLines(std::string& file_) const
 
 void MetricsParser::eraseComments(
   std::string& file_,
-  const std::string& singleComment,
-  const std::string& multiCommentStart,
-  const std::string& multiCommentEnd) const
+  const std::string& singleComment_,
+  const std::string& multiCommentStart_,
+  const std::string& multiCommentEnd_) const
 {
-  const int s = multiCommentStart.size();
+  const int s = multiCommentStart_.size();
 
   // Simple line
-  if (!singleComment.empty()) // singleComment exist
+  if (!singleComment_.empty()) // singleComment exist
   {
-    std::size_t start = file_.find(singleComment);
+    std::size_t start = file_.find(singleComment_);
     for (std::size_t end = file_.find('\n', start);
          start != std::string::npos;
-         start = file_.find(singleComment), end = file_.find('\n', start))
+         start = file_.find(singleComment_), end = file_.find('\n', start))
     {
       if (end == std::string::npos) // last line case
       {
@@ -219,13 +219,13 @@ void MetricsParser::eraseComments(
   }
 
   // Multiline
-  if (!multiCommentStart.empty()) // multiComment exist
+  if (!multiCommentStart_.empty()) // multiComment exist
   {
-    for (std::size_t start = file_.find(multiCommentStart),
-                     end   = file_.find(multiCommentEnd, start + s);
+    for (std::size_t start = file_.find(multiCommentStart_),
+                     end   = file_.find(multiCommentEnd_, start + s);
          start != std::string::npos;
-         start = file_.find(multiCommentStart),
-         end   = file_.find(multiCommentEnd, start + s))
+         start = file_.find(multiCommentStart_),
+         end   = file_.find(multiCommentEnd_, start + s))
     {
       // Delete end comment symbol too
       file_.erase(start, end - start + s);
@@ -233,23 +233,23 @@ void MetricsParser::eraseComments(
   }
 }
 
-void MetricsParser::persistLoc(const Loc& loc, model::FileId file)
+void MetricsParser::persistLoc(const Loc& loc_, model::FileId file_)
 {
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]{
     model::Metrics metrics;
-    metrics.file = file;
+    metrics.file = file_;
 
     metrics.type   = model::Metrics::CODE_LOC;
-    metrics.metric = loc.codeLines;
+    metrics.metric = loc_.codeLines;
     _ctx.db->persist(metrics);
 
     metrics.type   = model::Metrics::NONBLANK_LOC;
-    metrics.metric = loc.nonblankLines;
+    metrics.metric = loc_.nonblankLines;
     _ctx.db->persist(metrics);
 
     metrics.type   = model::Metrics::ORIGINAL_LOC;
-    metrics.metric = loc.originalLines;
+    metrics.metric = loc_.originalLines;
     _ctx.db->persist(metrics);
   });
 }
