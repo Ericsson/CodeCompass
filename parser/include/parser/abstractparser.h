@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include <odb/database.hxx>
-
 #include <parser/parsercontext.h>
 
 namespace cc
@@ -43,7 +41,6 @@ public:
   
 protected:
   ParserContext& _ctx;
-  std::shared_ptr<odb::database> _db;
 };
 
 } // parser

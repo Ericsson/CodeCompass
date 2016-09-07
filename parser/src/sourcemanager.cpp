@@ -37,11 +37,16 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
       _db->persist(unknownType);
     }
     if(!_db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::UNKNOWN_TYPE))
+      FileTypeQuery::name == model::File::DIRECTORY_TYPE))
     {
       model::FileType directoryType (model::File::DIRECTORY_TYPE);
       _db->persist(directoryType);
     }
+
+    _directoryType = _db->query_one<model::FileType> (
+      FileTypeQuery::name == model::File::DIRECTORY_TYPE);
+    _unknownType   = _db->query_one<model::FileType> (
+      FileTypeQuery::name == model::File::UNKNOWN_TYPE);
   });
 
   //--- Initialize magic for plain text testing ---//
@@ -139,20 +144,10 @@ model::FilePtr SourceManager::getCreateFileEntry(
   file->parent = getCreateParent(path_);
   file->filename = path.filename().native();
 
-  typedef odb::query<model::FileType> query;
-  util::OdbTransaction trans(_db);
-  trans([&, this]() {
-    if (boost::filesystem::is_directory(path, ec))
-    {
-      file->type = _db->query_one<model::FileType> (
-        query::name == model::File::DIRECTORY_TYPE);
-    }
-    else
-    {
-      file->type = _db->query_one<model::FileType> (
-        query::name == model::File::UNKNOWN_TYPE);
-    }
-  });
+  if (boost::filesystem::is_directory(path, ec))
+    file->type = _directoryType;
+  else
+    file->type = _unknownType;
 
   if (file->type->name != model::File::DIRECTORY_TYPE && withContent_)
   {

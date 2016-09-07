@@ -29,7 +29,12 @@ ProjectServiceHandler::ProjectServiceHandler(
   std::shared_ptr<odb::database> db_,
   const boost::program_options::variables_map&)
     : _db(db_), _transaction(db_)
-{    
+{
+  _transaction([&, this](){
+    typedef odb::query<model::FileType> FileTypeQuery;
+    _directoryType = _db->query_one<model::FileType> (
+      FileTypeQuery::name == model::File::DIRECTORY_TYPE);
+  });
 }
 
 void ProjectServiceHandler::getFileInfo(
@@ -287,7 +292,7 @@ void ProjectServiceHandler::searchFile(
     FileResult r
       = onlyFile_
       ? _db->query<model::File>(
-          FileTypeQuery::name != model::File::DIRECTORY_TYPE &&
+          FileTypeQuery::id != _directoryType->id &&
           FileQuery::filename + SQL_ILIKE + FileQuery::_val("%" + text + "%"))
       : _db->query<model::File>(
           FileQuery::path + SQL_ILIKE + FileQuery::_val("%" + text + "%"));
@@ -344,7 +349,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
   fileInfo.__set_name(f.filename);
   fileInfo.__set_path(f.path);
   
-  if (f.type->name == model::File::DIRECTORY_TYPE)
+  if (f.type->id == _directoryType->id)
   {
     fileInfo.__set_isDirectory(true);
   }

@@ -29,26 +29,25 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
   }
 
   std::vector<std::string> skipParserList;
-  if(_ctx.options.count("skip"))
+  if (_ctx.options.count("skip"))
   {
     skipParserList = _ctx.options["skip"].as<std::vector<std::string>>();
   }
 
   fs::directory_iterator endIter;
-  for (fs::directory_iterator dirIter(path_); dirIter != endIter;
-    ++dirIter)
+  for (fs::directory_iterator dirIter(path_); dirIter != endIter; ++dirIter)
   {
-    if (fs::is_regular_file(dirIter->status())
-      && fs::extension(*dirIter) == util::DynamicLibrary::extension())
+    if (fs::is_regular_file(dirIter->status()) &&
+        fs::extension(*dirIter) == util::DynamicLibrary::extension())
     {
       std::string filename = dirIter->path().stem().string(); // filename without extension
       filename.erase(filename.begin(), filename.begin() + 3); // remove lib from filename
-      if(std::find(skipParserList.begin(),
-        skipParserList.end(), filename) == skipParserList.end())
+      if (std::find(skipParserList.begin(), skipParserList.end(),
+         filename) == skipParserList.end())
       {
         std::string dynamicLibraryPath = dirIter->path().string();
         _dynamicLibraries[filename] = util::DynamicLibraryPtr(
-                new util::DynamicLibrary(dynamicLibraryPath));
+          new util::DynamicLibrary(dynamicLibraryPath));
       }
       else
       {
@@ -57,7 +56,7 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
     }
   }
 
-  for(const auto& lib : _dynamicLibraries)
+  for (const auto& lib : _dynamicLibraries)
   {
     typedef std::shared_ptr<AbstractParser> (*makeParser)(ParserContext& _ctx);
     auto make = reinterpret_cast<makeParser>(lib.second->getSymbol("make"));
@@ -69,7 +68,7 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
 }
 
 std::vector<std::string> PluginHandler::getTopologicalOrder()
-{        
+{
   std::vector<std::string> topologicalOrder;
   typedef boost::adjacency_list<boost::vecS, boost::vecS, 
           boost::bidirectionalS> Graph;
