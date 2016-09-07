@@ -28,25 +28,41 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
     return false;
   }
 
+  std::vector<std::string> skipParserList;
+  if(_ctx.options.count("skip"))
+  {
+    skipParserList = _ctx.options["skip"].as<std::vector<std::string>>();
+  }
+
   fs::directory_iterator endIter;
   for (fs::directory_iterator dirIter(path_); dirIter != endIter;
     ++dirIter)
   {
     if (fs::is_regular_file(dirIter->status())
       && fs::extension(*dirIter) == util::DynamicLibrary::extension())
-    {        
-      std::string dynamicLibraryPath = dirIter->path().string();
-      _dynamicLibraries.emplace_back(util::DynamicLibraryPtr(
-        new util::DynamicLibrary(dynamicLibraryPath)));
+    {
+      std::string filename = dirIter->path().stem().string(); // filename without extension
+      filename.erase(filename.begin(), filename.begin() + 3); // remove lib from filename
+      if(std::find(skipParserList.begin(),
+        skipParserList.end(), filename) == skipParserList.end())
+      {
+        std::string dynamicLibraryPath = dirIter->path().string();
+        _dynamicLibraries[filename] = util::DynamicLibraryPtr(
+                new util::DynamicLibrary(dynamicLibraryPath));
+      }
+      else
+      {
+        BOOST_LOG_TRIVIAL(info) << "[" << filename << "] skipped!";
+      }
     }
   }
 
-  for(const util::DynamicLibraryPtr& lib : _dynamicLibraries)
+  for(const auto& lib : _dynamicLibraries)
   {
     typedef std::shared_ptr<AbstractParser> (*makeParser)(ParserContext& _ctx);
-    auto make = reinterpret_cast<makeParser>(lib->getSymbol("make"));    
-    std::shared_ptr<AbstractParser> parser = make(_ctx);    
-    _parsers[parser->getName()] = parser;
+    auto make = reinterpret_cast<makeParser>(lib.second->getSymbol("make"));
+    std::shared_ptr<AbstractParser> parser = make(_ctx);
+    _parsers[lib.first] = parser;
   }
 
   return true;

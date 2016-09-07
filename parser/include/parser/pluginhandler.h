@@ -25,7 +25,7 @@ public:
   std::shared_ptr<AbstractParser>& getParser(std::string parserName_);  
 private:
   std::map<std::string, std::shared_ptr<AbstractParser> > _parsers;
-  std::vector<util::DynamicLibraryPtr> _dynamicLibraries;
+  std::map<std::string, util::DynamicLibraryPtr> _dynamicLibraries;
   ParserContext& _ctx;
 };
 

@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 
   cc::parser::SourceManager srcMgr(db);
 
-  cc::parser::ParserContext ctx(srcMgr, vm);
+  cc::parser::ParserContext ctx(db, srcMgr, vm);
   cc::parser::PluginHandler pHandler(ctx);
   pHandler.loadPluginsFromDir(
     vm["parser-plugin-dir"].as<std::string>());
