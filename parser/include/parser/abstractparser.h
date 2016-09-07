@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <odb/database.hxx>
+
 #include <parser/parsercontext.h>
 
 namespace cc
@@ -24,12 +26,6 @@ public:
    * Destructor
    */
   virtual ~AbstractParser(){}
-  
-  /**
-   * String representation of the parser name.
-   * @return parser name
-   */
-  virtual std::string getName() const = 0; 
 
   /**
    * Get dependencies of parsers. 
@@ -47,6 +43,7 @@ public:
   
 protected:
   ParserContext& _ctx;
+  std::shared_ptr<odb::database> _db;
 };
 
 } // parser
