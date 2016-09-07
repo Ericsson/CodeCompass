@@ -34,7 +34,7 @@ typedef std::shared_ptr<BuildSource> BuildSourcePtr;
 struct BuildTarget
 {
   #pragma db id auto
-  pktype id;
+  std::uint64_t id;
 
   #pragma db not_null
   FilePtr file;
