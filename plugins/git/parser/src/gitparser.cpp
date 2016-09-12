@@ -54,11 +54,11 @@ util::DirIterCallback GitParser::getParserCallback()
 
     //--- Clone the repo into a bare repo ---//
 
-    git_clone_options *opts = new git_clone_options(GIT_CLONE_OPTIONS_INIT);
-    opts->bare = true;
+    git_clone_options opts(GIT_CLONE_OPTIONS_INIT);
+    opts.bare = true;
 
     git_repository *out;
-    int error = git_clone(&out, path_.c_str(), clonedRepoPath.c_str(), opts);
+    int error = git_clone(&out, path_.c_str(), clonedRepoPath.c_str(), &opts);
 
     if(error)
     {
@@ -71,8 +71,6 @@ util::DirIterCallback GitParser::getParserCallback()
 
       return false;
     }
-
-    delete opts;
 
     return true;
   };
