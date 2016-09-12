@@ -15,6 +15,7 @@ class GitParser : public AbstractParser
 {
 public:
   GitParser(ParserContext& ctx_);
+  virtual ~GitParser();
   virtual std::vector<std::string> getDependentParsers() const override;
   virtual bool parse() override;
 private:

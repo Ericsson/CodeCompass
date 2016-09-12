@@ -36,50 +36,52 @@ util::DirIterCallback GitParser::getParserCallback()
 
     //--- Check for .git folder ---//
 
-    if (boost::filesystem::is_directory(path) && ".git" == path.filename())
+    if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
+      return true;
+
+    BOOST_LOG_TRIVIAL(info) << "Git parser found a git repo at: " << path;
+
+    //--- Generate unique repository ---//
+
+    std::uint64_t    repoId = util::fnvHash(path_);
+    std::string clonedRepoPath = versionDataDir + "/" + std::to_string(repoId);
+
+    BOOST_LOG_TRIVIAL(info) << "GitParser cloning into " << clonedRepoPath;
+
+    //--- Remove folder if exists ---//
+
+    boost::filesystem::remove_all(clonedRepoPath);
+
+    //--- Clone the repo into a bare repo ---//
+
+    git_clone_options *opts = new git_clone_options(GIT_CLONE_OPTIONS_INIT);
+    opts->bare = true;
+
+    git_repository *out;
+    int error = git_clone(&out, path_.c_str(), clonedRepoPath.c_str(), opts);
+
+    if(error)
     {
-      BOOST_LOG_TRIVIAL(info) << "Git parser found a git repo at: " << path;
+      const git_error* errDetails = giterr_last();
 
-      //--- Generate unique repository ---//
+      BOOST_LOG_TRIVIAL(warning)
+        << "Can't copy git repo from: " << path << " to: " << clonedRepoPath
+        << "! Errcode: " << std::to_string(error)
+        << "! Exception: " << errDetails->message;
 
-      uint64_t    repoId = util::fnvHash(path_);
-      std::string clonedRepoPath = versionDataDir + "/" + std::to_string(repoId);
-
-      BOOST_LOG_TRIVIAL(info) << "GitParser cloning into " << clonedRepoPath;
-
-      //--- Remove folder if exists ---//
-
-      //TODO check for change or and delete only if needed or
-      //TODO merge if already exists
-      boost::filesystem::remove_all(clonedRepoPath);
-
-      //--- Clone the repo into a bare repo ---//
-
-      git_clone_options *opts = new git_clone_options(GIT_CLONE_OPTIONS_INIT);
-      opts->bare = true;
-
-      git_repository *out;
-      int error = git_clone(&out, path_.c_str(), clonedRepoPath.c_str(), opts);
-
-      if(error)
-      {
-        const git_error* errDetails = giterr_last();
-
-        BOOST_LOG_TRIVIAL(warning)
-          << "Can't copy git repo from: " << path << " to: " << clonedRepoPath
-          << "! Errcode: " << std::to_string(error)
-          << "! Exception: " << errDetails->message;
-
-        return false;
-      }
+      return false;
     }
+
+    delete opts;
+
     return true;
   };
 }
 
 bool GitParser::parse()
 {
-  for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
+  for(const std::string& path :
+    _ctx.options["input"].as<std::vector<std::string>>())
   {
     BOOST_LOG_TRIVIAL(info) << "Git parse path: " << path;
 
@@ -91,18 +93,23 @@ bool GitParser::parse()
     {
       util::iterateDirectoryRecursive(path, cb);
     }
-    catch (std::exception& ex_)
+    catch (const std::exception& ex_)
     {
-      BOOST_LOG_TRIVIAL(error)
+      BOOST_LOG_TRIVIAL(warning)
         << "Git parser threw an exception: " << ex_.what();
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(error)
+      BOOST_LOG_TRIVIAL(warning)
         << "Git parser failed with unknown exception!";
     }
   }
   return true;
+}
+
+GitParser::~GitParser()
+{
+  git_libgit2_shutdown();
 }
 
 extern "C"
