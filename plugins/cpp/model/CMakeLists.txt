@@ -14,6 +14,6 @@ set(ODB_SOURCES
 
 generate_odb_files("${ODB_SOURCES}")
 
-add_odb_library(cxxmodel ${ODB_CXX_SOURCES})
+add_odb_library(cppmodel ${ODB_CXX_SOURCES})
 
 install_sql(include/model/)

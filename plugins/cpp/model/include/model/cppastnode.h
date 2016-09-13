@@ -35,7 +35,7 @@ struct CppAstNode
     EnumConstant,
     Namespace,
     StringLiteral,
-    File = 500, // TODO: Is this for #include?
+    File = 500,
     Other = 1000
   };
 
@@ -59,8 +59,6 @@ struct CppAstNode
   };
 
   virtual ~CppAstNode() {}
-
-  friend class odb::access;
 
   #pragma db id
   CppAstNodeId id = 0;
@@ -113,7 +111,7 @@ inline std::uint64_t createIdentifier(const CppAstNode& astNode_)
   std::string res;
 
   // For string concatenation we use append() function because this is faster
-  // than cancatenating strings with operator+(). operator+=() would be more
+  // than concatenating strings with operator+(). operator+=() would be more
   // readable but unfortunately that is right associative. This function is
   // invoked many times, so it is important to create identifier as fast as
   // possible.

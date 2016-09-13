@@ -14,6 +14,5 @@ add_library(util STATIC
 
 target_compile_options(util PUBLIC -fPIC)
 target_link_libraries(util
-  #  gvc
   boost_regex
   sqlite3)

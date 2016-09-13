@@ -9,11 +9,11 @@ namespace cc
 namespace parser
 {
   
-class CxxParser : public AbstractParser
+class CppParser : public AbstractParser
 {
 public:
-  CxxParser(ParserContext& ctx_);
-  virtual ~CxxParser();  
+  CppParser(ParserContext& ctx_);
+  virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
   virtual bool parse() override; 
 
@@ -24,4 +24,4 @@ private:
 } // parser
 } // cc
 
-#endif // CC_PLUGINS_PARSER_CXXPARSER_H
+#endif // CC_PARSER_CXXPARSER_H

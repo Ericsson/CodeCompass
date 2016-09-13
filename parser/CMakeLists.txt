@@ -17,7 +17,6 @@ target_link_libraries(CodeCompass_parser
   boost_system
   boost_program_options
   boost_log
-  #  magic
   ${ODB_LIBRARIES}    
   ${CMAKE_DL_LIBS}
   pthread)

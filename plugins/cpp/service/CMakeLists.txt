@@ -5,7 +5,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/service/language/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
-  ${cxx_PLUGIN_DIR}/model/include
+  ${PLUGIN_DIR}/model/include
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_library(cppservice SHARED

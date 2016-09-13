@@ -8,7 +8,7 @@
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
-#include <cxxparser/cxxparser.h>
+#include <cppparser/cppparser.h>
 //#include <util/threadpool.h>
 
 #include "clangastvisitor.h"
@@ -70,16 +70,16 @@ private:
   ParserContext& _ctx;
 };
 
-CxxParser::CxxParser(ParserContext& ctx_) : AbstractParser(ctx_)
+CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
 }
   
-std::vector<std::string> CxxParser::getDependentParsers() const
+std::vector<std::string> CppParser::getDependentParsers() const
 {
   return std::vector<std::string>{};
 }
 
-bool CxxParser::parse()
+bool CppParser::parse()
 {
   bool success = true;
 
@@ -92,7 +92,7 @@ bool CxxParser::parse()
   return success;
 }
 
-bool CxxParser::parseByJson(
+bool CppParser::parseByJson(
   const std::string& jsonFile_,
   std::size_t threadNum_) const
 {
@@ -142,15 +142,15 @@ bool CxxParser::parseByJson(
   return true;
 }
 
-CxxParser::~CxxParser()
+CppParser::~CppParser()
 {
 }
 
 extern "C"
 {
-  std::shared_ptr<CxxParser> make(ParserContext& ctx_)
+  std::shared_ptr<CppParser> make(ParserContext& ctx_)
   {
-    return std::make_shared<CxxParser>(ctx_);
+    return std::make_shared<CppParser>(ctx_);
   }
 }
 

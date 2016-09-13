@@ -5,17 +5,17 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/parser/include
   ${CMAKE_SOURCE_DIR}/util/include
   ${CMAKE_SOURCE_DIR}/model/include
-  ${cxx_PLUGIN_DIR}/model/include
+  ${PLUGIN_DIR}/model/include
   ${LLVM_INCLUDE_DIRS})
 
 add_definitions(${LLVM_DEFINITIONS})
 
-add_library(cxxparser SHARED
-  src/cxxparser.cpp
+add_library(cppparser SHARED
+  src/cppparser.cpp
   src/symbolhelper.cpp)
 
-target_link_libraries(cxxparser
-  cxxmodel
+target_link_libraries(cppparser
+  cppmodel
   model
   clangTooling
   clangFrontendTool
@@ -41,6 +41,6 @@ target_link_libraries(cxxparser
   LLVMOption
   ${llvm_libs})
 
-target_compile_options(cxxparser PUBLIC -Wno-unknown-pragmas)
+target_compile_options(cppparser PUBLIC -Wno-unknown-pragmas)
 
-install(TARGETS cxxparser DESTINATION ${INSTALL_PARSER_DIR})
+install(TARGETS cppparser DESTINATION ${INSTALL_PARSER_DIR})

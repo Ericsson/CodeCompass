@@ -32,7 +32,7 @@ struct CppEntity
   std::string qualifiedName;
 
 #ifndef NO_INDICES
-  #pragma db index member(astNodeId)
+//  #pragma db index member(astNodeId)
   #pragma db index member(mangledNameHash)
 #endif
 };
