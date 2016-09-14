@@ -1,0 +1,863 @@
+html, body {
+  height: 100%;
+}
+
+svg {
+  display: block;
+}
+
+/* User guide */
+
+.image {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.image img {
+  border: 1px solid gray;
+  padding: 3px;
+}
+
+.image .label {
+  font-style: italic;
+}
+
+.bluePanel {
+  background-color: #dfedfb;
+  border: 1px solid #759dc0;
+/*  padding-top: 10px;
+  padding-bottom: 10px;*/
+  padding: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+
+.highlight {
+  position: relative;
+  width: 100%;
+  background-color: #dfedfb;
+  border: 1px solid #557799;
+  list-style: none;
+  font-size: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+
+.highlight ul {
+  margin: 0;
+  padding-left: 25px;
+  width: 60%;
+}
+
+.highlight .icon {
+  margin: 15px 10px 0px 15px;
+  height: 40px;
+}
+
+/* Main header */
+
+.menuicon {
+  width: 16px;
+  height: 16px;
+}
+
+.workspaceicon {
+  background-image: url(/images/workspace_icon.png);
+}
+
+.bugreporticon {
+  background-image: url(/images/bug_icon.png);
+}
+
+.bugstepicon {
+  background-image: url(/images/bugstep_icon.png);
+}
+
+.userguideicon {
+  background-image: url(/images/userguide_icon.png);
+}
+
+.creditsicon {
+  background-image: url(/images/credits_icon.png);
+}
+
+.helpicon {
+  background-image: url(/images/question.png);
+}
+
+.mainheader {
+  background: left center no-repeat url(/images/logo2_ericsson.png)
+}
+
+.searchtable {
+  width: 60%;
+  margin-left: 280px;
+}
+
+.searchlabel {
+  text-align: right;
+  padding-right: 5px;
+}
+
+.searchhelpcell {
+  padding-left: 5px;
+  width: 30px;
+}
+
+.pathelement {
+  cursor: pointer;
+}
+
+.pathelement:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb {
+  position: relative;
+  margin-left: 290px;
+  width: 58%;
+  height: 15px;
+  white-space: nowrap;
+  padding: 3px 3px 3px 6px;
+  border: 1px solid #579;
+  margin-top: 5px;
+  overflow: hidden;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.breadcrumb .elem {
+  position: relative;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.breadcrumb .elem:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.breadcrumb .triangle {
+  width: 5px;
+  height: 9px;
+  background-image: url(/images/breadcrumb_triangle.png);
+}
+
+.breadcrumb .pager {
+  width: 30px;
+  height: 100%;
+  position: absolute;
+  top: 0px;
+}
+
+.breadcrumb .left {
+  background: white url(/images/breadcrumb_left.png) no-repeat center center;
+  left: 0px;
+  border-right: 1px solid #579;
+}
+
+.breadcrumb .right {
+  background: white url(/images/breadcrumb_right.png) no-repeat center center;
+  right: 0px;
+  border-left: 1px solid #579;
+}
+
+.breadcrumb .pager:hover {
+  background-color: #def;
+}
+
+/* Icons */
+
+.erroricon {
+  width: 30px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.dijitTreeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.ext_cpp {
+  background-image: url(/images/ext_cpp.png);
+}
+
+.ext_c {
+  background-image: url(/images/ext_c.png);
+}
+
+.ext_h {
+  background-image: url(/images/ext_h.png);
+}
+
+.ext_cs {
+  background-image: url(/images/ext_cs.png);
+}
+
+.ext_o {
+  background-image: url(/images/ext_o.png);
+}
+
+.ext_css {
+  background-image: url(/images/ext_css.png);
+}
+
+.ext_html {
+  background-image: url(/images/ext_html.png);
+}
+
+.ext_java {
+  background-image: url(/images/ext_java.png);
+}
+
+.ext_class {
+  background-image: url(/images/ext_class.png);
+}
+
+.makefile {
+  background-image: url(/images/makefile.png);
+}
+
+.green_folder {
+  background-image: url(/images/green_folder.png);
+}
+
+.blue_folder {
+  background-image: url(/images/blue_folder.png);
+}
+
+.folder {
+  background-image: url(/images/tree_icons/folder.png);
+}
+
+.parsing_statistics {
+  background-image: url(/images/tree_icons/parsing_statistics.png);
+}
+
+.cpp_catalog {
+  background-image: url(/images/tree_icons/cpp_catalog.png);
+}
+
+.metrics {
+  background-image: url(/images/tree_icons/metrics.png);
+}
+
+.info_tree_root{
+  background-image: url(/images/tree_icons/info_tree_root.png);
+}
+
+.into_tree_aliases {
+  background-image: url(/images/tree_icons/info_tree_alias.png);
+}
+
+.into_tree_inherit_from {
+  background-image: url(/images/tree_icons/info_tree_inherit_from.png);
+}
+
+.into_tree_inherit_by{
+  background-image: url(/images/tree_icons/info_tree_inherit_by.png);
+}
+
+.into_tree_methods{
+  background-image: url(/images/tree_icons/info_tree_methods.png);
+}
+
+.into_tree_friend{
+  background-image: url(/images/tree_icons/info_tree_friend.png);
+}
+
+.into_tree_member{
+  background-image: url(/images/tree_icons/info_tree_member.png);
+}
+
+.into_tree_usage{
+  background-image: url(/images/tree_icons/info_tree_usage.png);
+}
+
+.into_tree_read{
+  background-image: url(/images/tree_icons/info_tree_read.png);
+}
+
+.into_tree_write{
+  background-image: url(/images/tree_icons/info_tree_write.png);
+}
+
+.into_tree_declaration{
+  background-image: url(/images/tree_icons/info_tree_declaration.png);
+}
+
+.into_tree_callees{
+  background-image: url(/images/tree_icons/info_tree_callees.png);
+}
+
+.into_tree_callers{
+  background-image: url(/images/tree_icons/info_tree_callers.png);
+}
+
+.into_tree_assigned{
+  background-image: url(/images/tree_icons/info_tree_assigned.png);
+}
+
+.into_tree_enum{
+  background-image: url(/images/tree_icons/info_tree_enum.png);
+}
+
+.into_tree_overrides{
+  background-image: url(/images/tree_icons/info_tree_overrides.png);
+}
+
+.info_tree_undef{
+  background-image: url(/images/tree_icons/info_tree_undef.png);
+}
+
+.info_tree_expansion{
+  background-image: url(/images/tree_icons/info_tree_expansion.png);
+}
+
+.info_tree_type{
+  background-image: url(/images/tree_icons/info_tree_type.png);
+}
+
+.info_tree_macro{
+  background-image: url(/images/tree_icons/info_tree_macro.png);
+}
+
+.info_tree_include{
+  background-image: url(/images/tree_icons/info_tree_include.png);
+}
+
+.into_tree_overriden_by{
+  background-image: url(/images/tree_icons/info_tree_overriden_by.png);
+}
+
+.into_tree_parameter{
+  background-image: url(/images/tree_icons/info_tree_parameter.png);
+}
+
+.revision_control_commit{
+  background-image: url(/images/revision_control/revision_control_commit.png);
+}
+
+.revision_control_commits_in{
+  background-image: url(/images/revision_control/revision_control_commits_in.png);
+}
+
+.revision_control_tag{
+  background-image: url(/images/revision_control/revision_control_tag.png);
+}
+
+.revision_control_branch{
+  background-image: url(/images/revision_control/revision_control_branch.png);
+}
+
+.revision_control_branch_head{
+  background-image: url(/images/revision_control/revision_control_branch_head.png);
+}
+
+.revision_control_repo{
+  background-image: url(/images/revision_control/revision_control_repo.png);
+}
+
+.revision_control_list{
+  background-image: url(/images/revision_control/revision_control_list.png);
+}
+
+.revision_control_more{
+  background-image: url(/images/revision_control/revision_control_more.png);
+}
+
+.dijitTreeRowHover, .dijitTreeContent:hover{
+  cursor:pointer;
+}
+
+/* Browsing history */
+
+.jumpfrom, .jumpto {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Editor */
+
+.editor {
+  height: 100%;
+  width: 100%;
+}
+
+.editor .header {
+  padding: 5px;
+  font-family: Consolas, monaco, monospace;
+  border-bottom: 1px solid gray;
+  background-color: white;
+  word-wrap: break-word;
+}
+
+.editor .header .parsestatus {
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.editor .header .filename {
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+.editor .header .colons {
+  margin: 0px 5px;
+}
+
+.editor .header .close {
+  float: right;
+  cursor: pointer;
+}
+
+.CodeMirror-dialog .jump {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.CodeMirror-dialog .jump img {
+  margin-left: 5px;
+  margin-right: 5px;
+  position: relative;
+  top: 3px;
+}
+
+.CodeMirror-dialog #closesearch {
+  float: right;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+/* InfoBox */
+
+.infobox {
+  position: absolute !important;
+  top: 100px;
+  left: 100px;
+  width: 500px;
+  height: 300px;
+  border: 1px solid gray;
+  z-index: 15;
+  background-color: white;
+}
+
+.infobox .closebtn {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  cursor: pointer;
+}
+
+.infobox dt, 
+.tooltip-info dt{
+  font-size: 12pt;
+}
+
+.infobox .param dt,
+.tooltip-info .param dt{
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+  margin-top: 5px;
+}
+
+.infobox .param dd, 
+.tooltip-info .param dd{
+  margin-left: 20px;
+}
+
+.infobox .node,
+.tooltip-info .node{
+  font-weight: bold;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
+.infobox p,
+.tooltip-info p{
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
+
+.infobox .group-header,
+.tooltip-info .group-header{
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+
+.infobox .group,
+.tooltip-info .group{
+    padding-left: 15px;
+}
+.infobox .group .node,
+.tooltip-info .group .node{
+    padding: 5px;
+    color: #3D578C;
+    border: 1px solid #C4CFE5;
+    background-color: #EBEFF6;
+}
+
+/* CodeBites */
+
+.cb-label {
+  border: 1px dashed #666;
+  background-color: white;
+  padding: 3px;
+  z-index: 1;
+}
+
+.cb-label-0 { border-color: #42a62c; color: #42a62c; }
+.cb-label-1 { border-color: #2c34a5; color: #2c34a5; }
+.cb-label-2 { border-color: #e5801b; color: #e5801b; }
+.cb-label-3 { border-color: #a0398f; color: #a0398f; }
+.cb-label-4 { border-color: #c91010; color: #c91010; }
+
+.cb-marked-0 { background-color: #5ce53d; }
+.cb-marked-1 { background-color: #3642ed; }
+.cb-marked-2 { background-color: #f7963b; }
+.cb-marked-3 { background-color: #d865c5; }
+.cb-marked-4 { background-color: #f93e3e; }
+
+.cb-marked-select { background-color: #bbcce0; }
+.cb-marked-slicing { background-color: #c3e0bb; }
+
+/* Context Buttons */
+
+.contextButtons {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+}
+
+/* Build log table */
+
+.buildlogtable {
+  border: 1px solid gray;
+  border-collapse: collapse;
+}
+
+.buildlogtable tr:hover {
+  cursor: pointer;
+  background-color: #ddeeff;
+}
+
+.buildlogtable th {
+  text-align: center;
+  font-weight: bold;
+  padding: 5px;
+  border: 1px solid gray;
+  background-color: #eeeeee;
+}
+
+.buildlogtable td {
+  border: 1px solid gray;
+  padding: 3px;
+}
+
+/* Diff view */
+
+.diff-containertable {
+  font-size: 10pt;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.diff-fileheader {
+  font-family: Consolas, courier, fixed;
+  white-space: pre-wrap;
+}
+
+.diff-linecontainer {
+  white-space: pre-wrap;
+}
+
+.diff-linenumber {
+  width: 40px;
+  background-color: #dddddd;
+  color: #999999;
+  text-align: right;
+  padding-right: 10px;
+  vertical-align: top;
+  border-top: 1px solid #cccccc;
+  border-bottom: 1px solid #cccccc;
+}
+
+.diff-linenumber-old {
+}
+
+.diff-linenumber-new {
+}
+
+.diff-linetext {
+  font-family: Consolas, courier, fixed;
+  white-space: pre-wrap;
+}
+
+.diff-linetext-old {
+  background-color: #ffbbbb;
+}
+
+.diff-linetext-new {
+  background-color: #bbffbb;
+}
+
+.diff-linetext-both {
+  background-color: #ffffff;
+}
+
+.diff-linetext-remark {
+  background-color: #ffffff;
+  color: #bbbbbb;
+}
+
+.diff-rowheader {
+  color: #bbbbbb;
+}
+
+.diff-linetext-sidebyside-side {
+  width: 50%;
+}
+
+.diff-outline-icon {
+  width: 50px;
+  height: 10px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.diff-outline-icon-modified {
+  background-color: #ffffbb;
+}
+
+.diff-outline-icon-new {
+  background-color: #bbffbb;
+}
+
+.diff-outline-icon-deleted {
+  background-color: #ffbbbb;
+}
+
+.diff-outline-filename {
+  padding-left: 10px;
+}
+
+.diff-outlinetable {
+  font-family: Consolas, courier, fixed;
+}
+
+.history-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 10px;  /* to compensate canvas positioning */
+  white-space: nowrap;
+  min-width: 100%;
+}
+
+.history-table th {
+  font-weight: bold;
+}
+.history-table td{
+  padding: 0px 5px;
+}
+.history-table tr:nth-child(odd){
+  background-color: #F0F3F5;
+}
+
+.history-table thead>tr th{
+  background-color: linear-gradient(#646F7F, #4A5564);
+  padding:10px 5px;
+}
+
+.history-table td:first-child,
+.history-table th:first-child{
+  background-color: white;
+  padding: 0px;
+}
+
+.history-table .versioncommon-commitid{
+  color:#446E9B;
+}
+.history-table .versioncommon-commitid:hover{
+  color:#2D4866;
+}
+
+.history-graphcanvas {
+  display: block;
+  position: relative;
+  left: 0px;
+  top: 5px;
+}
+
+.versioncommon-commitid {
+  cursor: pointer;
+  font-family: Consolas, courier, fixed;
+}
+
+.versioncommon-commitid:hover {
+  text-decoration: underline;
+}
+
+.versionnavigator_branchesview {
+  background-image: url("/images/versionnavigator_branchesview.png");
+}
+
+div.CodeMirror-linenumber {
+  white-space: nowrap;
+}
+
+.checkerstep {
+  background-color: #eed;
+}
+
+.checkMsg {
+  background-color: #eed;
+  border: 1px solid #aaa;
+  display: inline-block;
+  padding: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.project-tree-file-manager .dijitTreeExpando{
+    display:none;
+}
+
+.project-tree-file-manager .folder_up{
+    background-image: url("/images/folder_up.png");
+}
+
+.dijitAccordionTitleFocus{
+    position: relative;
+}
+
+#select-file-manager{
+  right: 0;
+  top: -2px;
+  position: absolute;
+}
+
+/* Metrics */
+
+/*#metrics .node {
+  border: solid 1px white;
+  font: 10px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  text-indent: 2px;
+}*/
+
+#metrics_chart {
+  width: 960px;
+  height: 500px;
+  margin: 10px auto;
+}
+
+#metrics_chart text {
+  fill: white;
+  pointer-events: none;
+}
+
+#metrics_chart .grandparent text {
+  font-weight: bold;
+}
+
+#metrics_chart rect {
+  fill: none;
+  stroke: #fff;
+}
+
+#metrics_chart rect.parent, #metrics_chart .grandparent rect {
+  stroke-width: 5px;
+}
+
+#metrics_chart .grandparent rect {
+  fill: orange;
+}
+
+#metrics_chart .grandparent:hover rect {
+  fill: #ee9700;
+}
+
+#metrics_chart .children rect.parent, #metrics_chart .grandparent rect {
+  cursor: pointer;
+}
+
+#metrics_chart .children rect.parent {
+  fill: #000;
+  fill-opacity: .1;
+}
+
+#metrics_chart .children:hover rect.child {
+  fill: #000;
+  fill-opacity: .2;
+}
+
+#dimensionPanel {
+  width: 450px;
+  margin: 0 auto;
+}
+
+#dimensionPanel #fileTypeDiv {
+  width: 150px;
+  height: 50px;
+  overflow: auto;
+  border: 1px solid #759dc0;
+  padding: 3px;
+  background-color: #edf4fa;
+}
+
+#dimensionPanel #dimensionTable {
+  margin: 0 auto;
+}
+
+#file-manager-path{
+  margin: 0px 5px;
+  color: grey;
+}
+
+/* Fancy tree */
+
+.fancytree-name {
+  cursor: pointer;
+  color: blue;
+  margin: 0px 3px;
+}
+
+.fancytree-name:hover {
+  text-decoration: underline;
+}
+
+.fancytree-container {
+  margin-top: 10px;
+}
+
+.fancytree-container th {
+  font-weight: bold;
+  padding: 3px 0px;
+  text-align: center;
+}
+
+.diagram-loading{
+  background-image: url("../scripts/plugins/dojo-release-1.9.1/dojox/image/resources/images/loading.gif");
+  background-repeat: no-repeat;
+  display: block;
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+#userguide img{
+  max-width: 100%;
+}

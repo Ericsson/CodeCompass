@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project>
+  <configurations default="xx">
+    <conf>
+      <name>xx</name>
+      <rootconf>
+        <root>source</root>
+        <path>dir1</path>
+      </rootconf>
+    </conf>
+  </configurations>
+  <build>
+    <action>
+    </action>
+  </build>
+</project>

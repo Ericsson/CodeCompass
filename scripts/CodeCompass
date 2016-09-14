@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+function _term {
+  kill $child
+}
+
+trap _term SIGTERM
+
+ulimit -c unlimited &> /dev/null
+
+if [ -z $CODECOMPASS_HOME ]; then
+  CODECOMPASS_HOME=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd );
+  CODECOMPASS_HOME=$(readlink -f "$CODECOMPASS_HOME/..");
+  export CODECOMPASS_HOME;
+fi
+
+python $CODECOMPASS_HOME/share/codecompass/cli/CodeCompass.py "$@" &
+child=$!
+
+wait $child

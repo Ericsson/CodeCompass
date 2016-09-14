@@ -1,0 +1,19 @@
+--- tools/clang/lib/AST/CommentLexer.cpp	2013-12-02 08:38:30.000000000 +0100
++++ tools/clang/lib/AST/CommentLexer.cpp	2014-05-20 17:39:52.622895074 +0200
+@@ -498,8 +498,15 @@
+ void Lexer::lexVerbatimBlockBody(Token &T) {
+   assert(State == LS_VerbatimBlockBody);
+ 
+-  if (CommentState == LCS_InsideCComment)
++  if (CommentState == LCS_InsideCComment) {
+     skipLineStartingDecorations();
++    
++    if (BufferPtr == CommentEnd) {
++      // Empty body
++      State = LS_Normal;
++      return;
++    }
++  }
+ 
+   lexVerbatimBlockFirstLine(T);
+ }

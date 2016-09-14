@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ -z "$TEST_OUTPUT_DIR" ]; then
+	XML=$1.xml
+else
+	XML=$TEST_OUTPUT_DIR/$(basename $1).xml
+fi
+
+if [ -n "$VALGRINDDIR" ]; then
+	V="valgrind --leak-check=full --show-reachable=yes --undef-value-errors=yes --xml=yes --xml-file=$VALGRINDDIR/$(basename $1).xml"
+fi
+
+if [ -z "$SUPPRESS_TEST_FAILURES" ]; then
+	exec libtool exec $V $@ "--gtest_output=xml:$XML"
+fi
+
+$V $@ "--gtest_output=xml:$XML"
+exit 0;

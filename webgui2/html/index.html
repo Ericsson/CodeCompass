@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CodeCompass</title>
+    
+    <meta charset="UTF-8">
+    
+    <link rel="shortcut icon" href="images/favicon.ico" />
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style/doxygen.css" />
+    <link rel="stylesheet" href="style/codecompass.css" />
+    <link rel="stylesheet" href="scripts/plugins/codemirror-3.20/lib/codemirror.css" />
+    <link rel="stylesheet" href="scripts/plugins/codemirror-3.20/addon/dialog/dialog.css" />
+    <link rel="stylesheet" href="scripts/plugins/codemirror-3.20/addon/fold/foldgutter.css" />
+    <link rel="stylesheet" href="scripts/plugins/dojo-release-1.9.1/dojo/resources/dojo.css" />
+    <link rel="stylesheet" href="scripts/plugins/dojo-release-1.9.1/dijit/themes/claro/claro.css" id="theme" />
+    
+    <link rel="stylesheet" href="scripts/plugins/dojo-release-1.9.1/dojox/layout/resources/ResizeHandle.css" />
+    <link rel="stylesheet" href="scripts/plugins/dojo-release-1.9.1/dojox/image/resources/Lightbox.css" />
+    <link rel="stylesheet" href="scripts/plugins/dojo-release-1.9.1/dojox/grid/resources/claroGrid.css" />
+    <link rel="stylesheet" href="scripts/plugins/highlight/styles/xcode.css">
+
+    <link href="scripts/plugins/fancytree/skin-win7/ui.fancytree.min.css" rel="stylesheet" type="text/css">
+    
+    <!-- CodeCompass revision number -->
+    <script type="text/javascript" src="scripts/codecompass/codecompass_rev.js"></script>
+    
+    <!-- Third party libraries -->
+    <script type="text/javascript" src="scripts/plugins/thrift/thrift.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/lib/codemirror.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/clike/clike.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/erlang/erlang.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/javascript/javascript.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/perl/perl.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/python/python.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/ruby/ruby.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/sql/sql.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/mode/diff/diff.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/dialog/dialog.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/search/search.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/search/searchcursor.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/edit/matchbrackets.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/fold/foldcode.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/fold/foldgutter.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/fold/brace-fold.js"></script>
+    <script type="text/javascript" src="scripts/plugins/codemirror-3.20/addon/fold/xml-fold.js"></script>
+    <script type="text/javascript" src="scripts/plugins/jsplumb/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/jsplumb/jquery.jsPlumb-1.7.2-min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/svg-pan-zoom/svg-pan-zoom.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/marked/marked.js"></script>
+    <script type="text/javascript" src="scripts/plugins/highlight/highlight.pack.js"></script>
+    <script type="text/javascript" src="scripts/plugins/d3/d3.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/fancytree/jquery.fancytree-all.min.js"></script>
+    <script type="text/javascript" src="scripts/plugins/fancytree/src/jquery.fancytree.table.js"></script>
+
+    <!-- Services -->
+    <script type="text/javascript" src="scripts/core-api/common_types.js"           ></script>
+    <script type="text/javascript" src="scripts/core-api/result_types.js"           ></script>
+    <script type="text/javascript" src="scripts/core-api/project_types.js"          ></script>
+    <script type="text/javascript" src="scripts/core-api/ProjectService.js"         ></script>
+    <script type="text/javascript" src="scripts/language-api/language_types.js"     ></script>
+    <script type="text/javascript" src="scripts/language-api/LanguageService.js"    ></script>
+    <script type="text/javascript" src="scripts/search-api/search_types.js"         ></script>
+    <script type="text/javascript" src="scripts/search-api/SearchService.js"        ></script>
+    <script type="text/javascript" src="scripts/plugin-api/PluginService.js"        ></script>
+    <script type="text/javascript" src="scripts/plugin-api/plugin_types.js"         ></script>
+    <script type="text/javascript" src="scripts/workspace-api/workspace_types.js"   ></script>
+    <script type="text/javascript" src="scripts/workspace-api/WorkspaceService.js"  ></script>
+    <script type="text/javascript" src="scripts/version-api/VersionService.js"      ></script>
+    <script type="text/javascript" src="scripts/version-api/version_types.js"       ></script>
+    <script type="text/javascript" src="scripts/metrics-api/MetricsService.js"      ></script>
+    <script type="text/javascript" src="scripts/metrics-api/metrics_types.js"       ></script>
+    <script type="text/javascript" src="scripts/codechecker-api/shared_types.js"    ></script>
+    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess_types.js"></script>
+    <script type="text/javascript" src="scripts/codechecker-api/codeCheckerDBAccess.js"></script>
+
+
+    
+    <!-- Dojo -->
+    <!-- Dojo -->
+    
+    <script type="text/javascript">
+      var dojoConfig = {
+        baseUrl: '/scripts/',
+        tlmSiblingOfDojo: false,
+        async: true,
+        packages: [
+          { name: 'dojo',  location: 'plugins/dojo-release-1.9.1/dojo'  },
+          { name: 'dijit', location: 'plugins/dojo-release-1.9.1/dijit' },
+          { name: 'dojox', location: 'plugins/dojo-release-1.9.1/dojox' }
+        ]
+      };
+    </script>
+    <script type="text/javascript" src="scripts/plugins/dojo-release-1.9.1/dojo/dojo.js"></script>
+    <script type="text/javascript">
+      var changeTheme;
+      
+      require([
+        'dojo/dom',
+        'dojo/dom-attr',
+        'dojo/ready',
+        'dojo/topic',
+        'dojo/_base/window',
+        'codecompass/codecompass'],
+      function (dom, attr, ready, topic, window, codecompass) {
+        ready(function () {
+          codecompass();
+
+          changeTheme = function (theme) {
+            attr.set(
+              dom.byId('theme'),
+              'href',
+              'scripts/plugins/dojo-release-1.9.1/dijit/themes/' + theme + '/' + theme + '.css');
+
+            attr.set(window.body(), 'class', theme);
+          };
+          changeFileManager = function(){
+            if(dom.byId('file-manager-tree').checked){
+                var fileManager = 'file-manager-tree';
+            }else{
+                var fileManager = 'file-manager-mc';
+            }
+            
+            if(dijit.byId('select-file-manager') !== undefined)
+                dijit.byId('select-file-manager').attr( 'value', fileManager );
+            
+            topic.publish('codecompass/changefilemanager', {
+                fileManager : fileManager
+            });
+          };
+        });
+        });
+    </script>
+    
+  </head>
+  <body class="claro">
+  </body>
+</html>

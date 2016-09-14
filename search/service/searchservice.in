@@ -1,0 +1,3 @@
+#!/bin/bash
+
+java -server cc.search.service.app.service.ServiceApp "$@"
