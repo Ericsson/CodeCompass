@@ -1,0 +1,85 @@
+<div style="width: 830px">
+  <h1>CodeCompass - Carmack</h1>
+  <i style="margin-top: 5px; display: block">
+    (Version: Carmack, Revision: <span id="revisionNo"></span>)
+  </i>
+
+  <p>
+    CodeCompass is a tool that helps you understand large scale software projects by providing many
+    navigation, visualization, query possibilities in the source code.
+  </p>
+
+  <h2>What's new, what's good?</h2>
+
+  <h2>Highlights</h2>
+
+  <div class="highlight">
+    <ul>
+      <li>Full Java support</li>
+      <li>Full Regex Search</li>
+      <li>Log Search</li>
+      <li>Recursive Function Pointer Analysis</li>
+      <li>Searchable & Navigable GIT revision history</li>
+    </ul>
+
+    <div class="image" style="width: 200px; position: absolute; top: 30px; right: 20px">
+      <a data-dojo-type="dojox.image.Lightbox" title="New features" href="/images/brubeck.png">
+        <img src="/images/brubeck.png" alt="New features" style="width: 200px" />
+      </a>
+      <div style="font-size: 10pt; font-style: italic">(Click on the image)</div>
+    </div>
+
+    <img class="icon" src="/images/startpage_icons/java-logo.png" alt="Java parser" />
+    <img class="icon" src="/images/startpage_icons/regex.png" alt="Regex Search" />
+    <img class="icon" src="/images/startpage_icons/log.png" alt="Log Search" />
+    <img class="icon" src="/images/startpage_icons/fnptr.png" alt="Function Poitner" />
+    <img class="icon" src="/images/startpage_icons/git.png" alt="GIT" />
+  </div>
+
+  <h3>Search</h3>
+  <ul>
+    <li>Regular expression in text searches. <br>-Regex can be written between / / signs, like /.*ipsec.*/</li>
+    <li>Log message search: Support for searching the place where a log message (possibly) generated.<br>-Just copy paste a log message in the search bar</li>
+    <li>Searching for C++ qualified names in definition search. <br>-You can search for names such as “charging::process”</li>
+    <li>Filtering by programming language. <br>-Filter for languages in searches like Python, C++ </li>
+    <li>Filtering by definition type (function, type, etc.)</li>
+    <li>Faster search</li>
+  </ul>
+
+  <h3>New Language Support</h3>
+  <ul>
+    <li>Java: show variable read/write, show usages of types, show function calls/callers <br> -Ask for info tree after right clicking a java symbol</li>
+    <li>Delos: type analysis, process diagrams<br>-Right click in a Delos file and ask for usage of a symbol<br>-Process diagrams:Right click on an MI and ask for process diagram</li>
+    <li>CDF/MI Diagrams
+      <br>-Neighbors of an MI
+      <br>-Users of an MI
+      <br>-Mis used by an MI
+      <br>-Process/DBN diagram in an MI
+    </li>
+  </ul>
+
+  <h3>New C++ Functions</h3>
+  <ul>
+    <li>Function pointer based call chain exploration
+      <br>-Ask for info tree for a function and you can recursively ask for caller and called functions</li>
+    <li>Module dependency diagrams
+      <br>-Right click on a directory in the “Project Tree” and see the available diagrams
+      <br>-Internal Architecture of a module
+      <br>-Other modules a module depends on 
+      <br>-Users of a module    
+    </li>    
+    <li>Basic template support <br>-Show instantiations of templates</li>
+  </ul>
+  <h3>Revision Control</h3>
+  <ul>
+    <li>Searchable & Navigable GIT revision history
+      <br>-Search among GIT commits
+      <br>-Blame view: Show who changed a file line-by-line 
+    </li>
+  </ul>
+
+  <h3>GUI</h3>
+  <ul>
+    <li>Yet more ergonomic design</li>
+  </ul>
+</div>

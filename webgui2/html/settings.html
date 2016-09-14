@@ -1,0 +1,23 @@
+<h1>Settings</h1>
+
+<h2>Themes</h2>
+
+<form>
+  <input type="radio" name="theme" id="claro"  data-dojo-type="dijit/form/RadioButton" onclick="changeTheme('claro')" checked="checked" />
+    <label for="claro">Claro</label><br/>
+  <input type="radio" name="theme" id="tundra" data-dojo-type="dijit/form/RadioButton" onclick="changeTheme('tundra')" />
+    <label for="tundra">Tundra</label><br/>
+  <input type="radio" name="theme" id="soria"  data-dojo-type="dijit/form/RadioButton" onclick="changeTheme('soria')" />
+    <label for="soria">Soria</label><br/>
+  <input type="radio" name="theme" id="nihilo" data-dojo-type="dijit/form/RadioButton" onclick="changeTheme('nihilo')" />
+    <label for="nihilo">Nihilo</label><br/>
+</form>
+
+<h2>File Manager</h2>
+
+<form>
+  <input type="radio" name="project-tree" id="file-manager-mc" value="file-manager-mc" data-dojo-type="dijit/form/RadioButton" onchange="changeFileManager()"/>
+    <label for="project-tree-file-manager">Midnight Commander style</label><br/>
+  <input type="radio" name="project-tree" id="file-manager-tree" value="file-manager-tree" data-dojo-type="dijit/form/RadioButton" onchange="changeFileManager()"/>
+    <label for="project-tree-orig">Tree Style</label><br/>
+</form>

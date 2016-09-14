@@ -23,6 +23,9 @@ Coming soon...
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg" width="30%" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg" width="30%" />
 
+## Full Documentation
+See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentation.
+
 ##We successfuly parsed many open source projects.
 * LLVM
 * Xerces
