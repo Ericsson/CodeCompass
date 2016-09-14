@@ -6,10 +6,11 @@ namespace cpp cc.service.language
 struct AstNodeInfo
 {
   1:common.AstNodeId id /** Uniqe id of the AST node for the whole workspace. */
-  2:string astNodeType /** String representation of AST type (e.g. Function/Type/Variable). */
-  3:string astNodeValue /** String representation of an AST node. */
-  4:string astNodeSrcText /** Corresponding code fragment in the source code. */
-  5:common.FileRange range /** Source code range of an AST node. */
+  2:string astNodeType /** String representation of AST type (e.g. Statement/Declaration/Usage). */
+  3:string symbolType /** String representation of Symbol type (e.g. Function/Type/Variable). */
+  4:string astNodeValue /** String representation of an AST node. */
+  5:string srcText /** Corresponding code fragment in the source code. */
+  6:common.FileRange range /** Source code range of an AST node. */
 }
 
 struct SyntaxHighlight
@@ -51,6 +52,16 @@ service LanguageService
    * the given ID.
    */
   string getDocumentation(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
+
+  /**
+   * Returns a set of properties which can be known about the given AST node.
+   * @param astNodeId ID of an AST node.
+   * @return A collection which maps the property name to the property value.
+   * @exception common.InvalidId Exception is thrown if no AST node belongs to
+   * the given ID.
+   */
+  map<string, string> getProperties(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
   /**

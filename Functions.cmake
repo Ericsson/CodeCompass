@@ -37,4 +37,18 @@ function(add_odb_library _name)
   add_library(${_name} STATIC ${ARGN})
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
+  target_include_directories(${_name} PUBLIC
+    ${CMAKE_SOURCE_DIR}/model/include
+    ${CMAKE_SOURCE_DIR}/util/include)
 endfunction(add_odb_library)
+
+# This function can be used to install the ODB generated .sql files to a
+# specific directory. These files will be used to create database tables before
+# the parsing session.
+# @param _dir The model directory under which the .sql files are located.
+function(install_sql _dir)
+  install(
+    DIRECTORY ${_dir}
+    DESTINATION share/codecompass/sql
+    FILES_MATCHING PATTERN "*.sql")
+endfunction(install_sql)

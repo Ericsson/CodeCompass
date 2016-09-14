@@ -8,8 +8,6 @@
 #include <model/file-odb.hxx>
 #include <model/buildlog.h>
 #include <model/buildlog-odb.hxx>
-#include <model/option.h>
-#include <model/option-odb.hxx>
 #include <model/statistics.h>
 #include <model/statistics-odb.hxx>
 

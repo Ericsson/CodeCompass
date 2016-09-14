@@ -1,6 +1,7 @@
 #ifndef CC_MODEL_STATISTICS_H
 #define CC_MODEL_STATISTICS_H
 
+#include <memory>
 #include <string>
 
 #include <odb/core.hxx>
@@ -9,6 +10,10 @@ namespace cc
 {
 namespace model
 {
+
+struct Statistics;
+typedef std::shared_ptr<Statistics> StatisticsPtr;
+typedef int StatisticsId;
 
 #pragma db object
 struct Statistics

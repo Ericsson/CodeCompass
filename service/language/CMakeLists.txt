@@ -1,5 +1,6 @@
 include_directories(
-  ../project/gen-cpp)
+  ../project/gen-cpp
+  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(
   OUTPUT
