@@ -1,8 +1,17 @@
-/build/
+# IDEs and editors
 
-*-rule
+nbproject
+*.swp
+
+# Generated files and directories
 
 **/*odb\.cxx
 **/*odb\.hxx
 **/*odb\.ixx
 **/*odb\.sql
+
+**/gen-cpp/
+
+# Other
+
+/build/
