@@ -5,27 +5,24 @@
 
 #include <clang/AST/Mangle.h>
 
+#include <model/fileloc.h>
+
 namespace cc
 {
 namespace parser
 {
 
-class SymbolHelper
-{
-public:
-  SymbolHelper(clang::ASTContext& astContext_);
+std::string getMangledName(
+  clang::MangleContext* mangleContext_,
+  const clang::NamedDecl* nd_,
+  const model::FileLoc& fileLoc_ = model::FileLoc());
 
-  std::string getMangledName(
-    const clang::NamedDecl* nd_,
-    const model::FileLoc& fileLoc_ = model::FileLoc()) const;
+std::string getMangledName(
+  clang::MangleContext* mangleContext_,
+  const clang::QualType& qt_,
+  const model::FileLoc& fileLoc_ = model::FileLoc());
 
-  std::string getMangledName(
-    const clang::QualType& qt_,
-    const model::FileLoc& fileLoc_ = model::FileLoc()) const;
-
-private:
-  clang::MangleContext* _mangleContext;
-};
+bool isFunction(const clang::Type* type_);
 
 }
 }

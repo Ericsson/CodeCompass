@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include <memory>
 #include <thread>
 
@@ -9,6 +10,7 @@
 
 #include <cppparser/cppparser.h>
 
+#include "assignmentcollector.h"
 #include "clangastvisitor.h"
 
 namespace cc
@@ -16,7 +18,6 @@ namespace cc
 namespace parser
 {
 
-template <typename MyVisitor>
 class VisitorActionFactory : public clang::tooling::FrontendActionFactory
 {
 public:
@@ -34,17 +35,33 @@ private:
   {
   public:
     MyConsumer(ParserContext& ctx_, clang::ASTContext& context_)
-      : visitor(ctx_, context_)
+      : _ctx(ctx_), _context(context_)
     {
     }
 
     virtual void HandleTranslationUnit(clang::ASTContext& context_) override
     {
-      visitor.TraverseDecl(context_.getTranslationUnitDecl());
+      static std::unordered_map<model::CppAstNodeId, std::uint64_t>
+        mangledNameCache;
+      std::unordered_map<const void*, model::CppAstNodeId>
+        clangToAstNodeId;
+
+      {
+        ClangASTVisitor clangAstVisitor(
+          _ctx, _context, mangledNameCache, clangToAstNodeId);
+        clangAstVisitor.TraverseDecl(context_.getTranslationUnitDecl());
+      }
+
+      {
+        AssignmentCollector assignmentCollector(
+          _ctx, _context, mangledNameCache, clangToAstNodeId);
+        assignmentCollector.TraverseDecl(context_.getTranslationUnitDecl());
+      }
     }
 
   private:
-    MyVisitor visitor;
+    ParserContext& _ctx;
+    clang::ASTContext& _context;
   };
 
   class MyFrontendAction : public clang::ASTFrontendAction
@@ -70,10 +87,10 @@ private:
 
 void CppParser::worker()
 {
-  static VisitorActionFactory<ClangASTVisitor> factory(_ctx);
-
   while (true)
   {
+    //--- Select nect compilation command ---//
+
     _mutex.lock();
 
     if (_index == _compileCommands.size())
@@ -83,9 +100,11 @@ void CppParser::worker()
     }
 
     const clang::tooling::CompileCommand& command = _compileCommands[_index];
-    ++_index;
+    std::size_t index = ++_index;
 
     _mutex.unlock();
+
+    //--- Assemble compiler command line ---//
 
     std::vector<const char*> commandLine;
     commandLine.reserve(command.CommandLine.size());
@@ -103,9 +122,16 @@ void CppParser::worker()
         argc,
         commandLine.data()));
 
-    BOOST_LOG_TRIVIAL(info) << "Parsing " << command.Filename;
+    //--- Start the tool ---//
+
+    VisitorActionFactory factory(_ctx);
+
+    BOOST_LOG_TRIVIAL(info)
+      << '(' << index << '/' << _compileCommands.size() << ')'
+      << " Parsing " << command.Filename;
 
     clang::tooling::ClangTool tool(*compilationDb, command.Filename);
+
     tool.run(&factory);
   }
 }
