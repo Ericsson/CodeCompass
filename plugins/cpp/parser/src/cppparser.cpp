@@ -1,15 +1,13 @@
 #include <memory>
+#include <thread>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendAction.h>
-#include <clang/Tooling/JSONCompilationDatabase.h>
-#include <clang/Tooling/Tooling.h>
 
 #include <cppparser/cppparser.h>
-//#include <util/threadpool.h>
 
 #include "clangastvisitor.h"
 
@@ -70,6 +68,48 @@ private:
   ParserContext& _ctx;
 };
 
+void CppParser::worker()
+{
+  static VisitorActionFactory<ClangASTVisitor> factory(_ctx);
+
+  while (true)
+  {
+    _mutex.lock();
+
+    if (_index == _compileCommands.size())
+    {
+      _mutex.unlock();
+      break;
+    }
+
+    const clang::tooling::CompileCommand& command = _compileCommands[_index];
+    ++_index;
+
+    _mutex.unlock();
+
+    std::vector<const char*> commandLine;
+    commandLine.reserve(command.CommandLine.size());
+    commandLine.push_back("--");
+    std::transform(
+      command.CommandLine.begin() + 1, // Skip compiler name
+      command.CommandLine.end(),
+      std::back_inserter(commandLine),
+      [](const std::string& s){ return s.c_str(); });
+
+    int argc = commandLine.size();
+
+    std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
+      clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
+        argc,
+        commandLine.data()));
+
+    BOOST_LOG_TRIVIAL(info) << "Parsing " << command.Filename;
+
+    clang::tooling::ClangTool tool(*compilationDb, command.Filename);
+    tool.run(&factory);
+  }
+}
+
 CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
 }
@@ -94,10 +134,8 @@ bool CppParser::parse()
 
 bool CppParser::parseByJson(
   const std::string& jsonFile_,
-  std::size_t threadNum_) const
+  std::size_t threadNum_)
 {
-  //util::ThreadPool threadPool(threadNum_);
-
   std::string errorMsg;
 
   std::unique_ptr<clang::tooling::JSONCompilationDatabase> compDb
@@ -110,34 +148,17 @@ bool CppParser::parseByJson(
     return false;
   }
 
-  VisitorActionFactory<ClangASTVisitor> factory(_ctx);
+  _compileCommands = compDb->getAllCompileCommands();
+  _index = 0;
 
-  for (const clang::tooling::CompileCommand& cmd
-    : compDb->getAllCompileCommands())
-  {
-//    threadPool.submit([cmd, &factory](){
-      std::vector<const char*> commandLine;
-      commandLine.reserve(cmd.CommandLine.size());
-      commandLine.push_back("--");
-      std::transform(
-        cmd.CommandLine.begin() + 1, // Skip compiler name
-        cmd.CommandLine.end(),
-        std::back_inserter(commandLine),
-        [](const std::string& s){ return s.c_str(); });
+  std::vector<std::thread> workers;
+  workers.reserve(threadNum_);
 
-      int argc = commandLine.size();
+  for (std::size_t i = 0; i < threadNum_; ++i)
+    workers.emplace_back(&cc::parser::CppParser::worker, this);
 
-      std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
-        clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
-          argc,
-          commandLine.data()));
-
-      BOOST_LOG_TRIVIAL(info) << "Parsing " << cmd.Filename;
-
-      clang::tooling::ClangTool tool(*compilationDb, cmd.Filename);
-      tool.run(&factory);
-//    });
-  }
+  for (std::thread& worker : workers)
+    worker.join();
 
   return true;
 }
