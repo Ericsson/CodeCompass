@@ -129,12 +129,15 @@ void CppServiceHandler::getProperties(
     astNodeId_,
     AstQuery::astType == model::CppAstNode::AstType::Definition);
 
+  if (defs.empty())
+    return;
+
   switch (node.symbolType)
   {
     case model::CppAstNode::SymbolType::Variable:
     {
       model::CppVariable variable = _db->query_value<model::CppVariable>(
-        VarQuery::astNodeId == node.id);
+        VarQuery::mangledNameHash == defs.front().mangledNameHash);
 
       return_["Name"] = variable.name;
       return_["Qualified name"] = variable.qualifiedName;
@@ -145,23 +148,12 @@ void CppServiceHandler::getProperties(
     case model::CppAstNode::SymbolType::Function:
     {
       model::CppFunction function = _db->query_value<model::CppFunction>(
-        FuncQuery::astNodeId == node.id);
+        FuncQuery::mangledNameHash == defs.front().mangledNameHash);
 
       return_["Name"] = function.qualifiedName.substr(
         function.qualifiedName.find_last_of(':') + 1);
       return_["Qualified name"] = function.qualifiedName;
       return_["Signature"] = function.name;
-      return_["Return type"] = function.qualifiedType;
-
-      if (!defs.empty())
-      {
-        const model::Range& range = defs[0].location.range;
-
-        return_["Defined"]
-          = defs[0].location.file.load()->filename
-          + ':' + std::to_string(range.start.line)
-          + ':' + std::to_string(range.start.column);
-      }
 
       break;
     }
@@ -169,7 +161,7 @@ void CppServiceHandler::getProperties(
     case model::CppAstNode::SymbolType::Type:
     {
       model::CppType type = _db->query_value<model::CppType>(
-        TypeQuery::astNodeId == node.id);
+        TypeQuery::mangledNameHash == defs.front().mangledNameHash);
 
       if (type.isAbstract)
         return_["Abstract type"] = "true";
