@@ -1,5 +1,6 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
+#include <clang/AST/Type.h>
 #include <clang/AST/DeclCXX.h>
 
 #include <model/fileloc.h>
@@ -52,15 +53,10 @@ namespace cc
 namespace parser
 {
 
-SymbolHelper::SymbolHelper(clang::ASTContext& astContext_)
-  : _mangleContext(astContext_.createMangleContext())
-{
-
-}
-
-std::string SymbolHelper::getMangledName(
+std::string getMangledName(
+  clang::MangleContext* mangleContext_,
   const clang::NamedDecl* nd_,
-  const model::FileLoc& fileLoc_) const
+  const model::FileLoc& fileLoc_)
 {
   if (llvm::isa<clang::VarDecl>(nd_))
   {
@@ -68,7 +64,9 @@ std::string SymbolHelper::getMangledName(
 
     if (const clang::DeclContext* dc = nd_->getParentFunctionOrMethod())
     {
-      result += ':' + getMangledName(llvm::dyn_cast<clang::FunctionDecl>(dc));
+      result += ':' + getMangledName(
+        mangleContext_,
+        llvm::dyn_cast<clang::FunctionDecl>(dc));
 
       if (const clang::ParmVarDecl* pvd =
           llvm::dyn_cast<clang::ParmVarDecl>(nd_))
@@ -92,7 +90,7 @@ std::string SymbolHelper::getMangledName(
     return nd_->getQualifiedNameAsString();
 
   // No need to mangle C sources or declarations in extern "C".
-  if (!_mangleContext->shouldMangleDeclName(nd_))
+  if (!mangleContext_->shouldMangleDeclName(nd_))
     return nd_->getQualifiedNameAsString();
 
   const clang::FunctionDecl* fd = llvm::dyn_cast<clang::FunctionDecl>(nd_);
@@ -108,12 +106,12 @@ std::string SymbolHelper::getMangledName(
 
     if (const clang::CXXConstructorDecl* ctor
         = llvm::dyn_cast<clang::CXXConstructorDecl>(fd))
-      _mangleContext->mangleCXXCtor(ctor, clang::Ctor_Complete, out);
+      mangleContext_->mangleCXXCtor(ctor, clang::Ctor_Complete, out);
     else if (const clang::CXXDestructorDecl* dtor
         = llvm::dyn_cast<clang::CXXDestructorDecl>(fd))
-      _mangleContext->mangleCXXDtor(dtor, clang::Dtor_Complete, out);
+      mangleContext_->mangleCXXDtor(dtor, clang::Dtor_Complete, out);
     else
-      _mangleContext->mangleName(fd, out);
+      mangleContext_->mangleName(fd, out);
     
     // TODO: The function's own mangled name should be enough. The suffix
     // shouldn't be necessary. The reason is
@@ -126,9 +124,10 @@ std::string SymbolHelper::getMangledName(
   return nd_->getQualifiedNameAsString();
 }
 
-std::string SymbolHelper::getMangledName(
+std::string getMangledName(
+  clang::MangleContext* mangleContext_,
   const clang::QualType& qt_,
-  const model::FileLoc& fileLoc_) const
+  const model::FileLoc& fileLoc_)
 {
   const clang::Type* type = getStrippedType(qt_);
 
@@ -140,15 +139,36 @@ std::string SymbolHelper::getMangledName(
   if (const clang::TypedefType* td = type->getAs<clang::TypedefType>())
   {
     if (const clang::TypedefNameDecl* tDecl = td->getDecl())
-      return getMangledName(tDecl, fileLoc_);
+      return getMangledName(mangleContext_, tDecl, fileLoc_);
   }
   else if (const clang::CXXRecordDecl* rDecl = type->getAsCXXRecordDecl())
-    return getMangledName(rDecl);
+    return getMangledName(mangleContext_, rDecl);
   else if (const clang::EnumType* et = type->getAs<clang::EnumType>())
     if (const clang::Decl* decl = et->getDecl())
-      return getMangledName(llvm::dyn_cast<clang::NamedDecl>(decl));
+      return getMangledName(
+        mangleContext_,
+        llvm::dyn_cast<clang::NamedDecl>(decl));
 
   return std::string();
+}
+
+bool isFunction(const clang::Type* type_)
+{
+  while (type_)
+    if (type_->isFunctionType() ||
+        type_->isFunctionPointerType() ||
+        type_->isVoidPointerType())
+      return true;
+    else if (auto* parenType = type_->getAs<clang::ParenType>())
+      type_ = parenType->getInnerType().getTypePtrOrNull();
+    else if (auto* arrayType = llvm::dyn_cast<clang::ArrayType>(type_))
+      type_ = arrayType->getElementType().getTypePtrOrNull();
+    else if (type_->isPointerType() || type_->isReferenceType())
+      type_ = type_->getPointeeType().getTypePtrOrNull();
+    else
+      return false;
+
+  return false;
 }
 
 }

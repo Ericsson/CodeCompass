@@ -10,7 +10,7 @@ set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/serviceplugin")
 #Installation directory for executables
 set(INSTALL_BIN_DIR "bin")
 
-set(DATABASE pgsql CACHE STRING "Database type")
+set(DATABASE sqlite CACHE STRING "Database type")
 string(TOUPPER ${DATABASE} DATABASE_U)
 
 # Odb commands
@@ -34,4 +34,4 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Debug and Release version flags
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
