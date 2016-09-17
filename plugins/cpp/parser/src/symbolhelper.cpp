@@ -82,6 +82,24 @@ std::string getMangledName(
       ? "anonymous-ns:" + std::to_string(fileLoc_.file.object_id())
       : nd_->getQualifiedNameAsString();
   }
+  else if (const clang::CXXRecordDecl* rd
+    = llvm::dyn_cast<clang::CXXRecordDecl>(nd_))
+  {
+    // AST nodes of type CXXRecordDecl contain another CXXRecordDecl node. The
+    // outer one is for the definition (and its position is the whole
+    // definition) and the inner one is for a declaration (of which the position
+    // is the "class" keyword and the class name.
+    // The qualified name of the inner node is ClassName::ClassName, although we
+    // should choose the same mangled name i.e. the qualified name of its
+    // parent.
+
+    const clang::CXXRecordDecl* parent
+      = llvm::dyn_cast<clang::CXXRecordDecl>(rd->getParent());
+
+    return parent && parent->getName() == rd->getName()
+      ? parent->getQualifiedNameAsString()
+      : rd->getQualifiedNameAsString();
+  }
 
   // TODO: For some reason some named decls don't have name.
   // Function parameters without name (e.g. compiler generated functions) don't
