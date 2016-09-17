@@ -91,6 +91,7 @@ public:
       persistAll(_inheritances);
       persistAll(_friends);
       persistAll(_functions);
+      persistAll(_relations);
     });
   }
 
@@ -861,6 +862,28 @@ public:
     return true;
   }
 
+  bool VisitCXXMethodDecl(clang::CXXMethodDecl* decl)
+  {
+    for (auto it = decl->begin_overridden_methods();
+         it != decl->end_overridden_methods();
+         ++it)
+    {
+      auto left = _clangToAstNodeId.find(decl);
+      auto right = _clangToAstNodeId.find(*it);
+
+      if (left == _clangToAstNodeId.end() || right == _clangToAstNodeId.end())
+        continue;
+
+      model::CppRelationPtr rel = std::make_shared<model::CppRelation>();
+      rel->kind = model::CppRelation::Kind::Override;
+      rel->lhs = _mangledNameCache.at(left->second);
+      rel->rhs = _mangledNameCache.at(right->second);
+      _relations.push_back(rel);
+    }
+
+    return true;
+  }
+
 private:
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
@@ -1031,6 +1054,7 @@ private:
   std::vector<model::CppMemberTypePtr>   _members;
   std::vector<model::CppInheritancePtr>  _inheritances;
   std::vector<model::CppFriendshipPtr>   _friends;
+  std::vector<model::CppRelationPtr>     _relations;
 
   // TODO: Maybe we don't even need a stack, if functions can't be nested.
   // Check lambda.
