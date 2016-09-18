@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 
 #include <model/file.h>
@@ -75,7 +75,7 @@ private:
   bool isPlainText(const std::string& path_) const;
 
   std::shared_ptr<odb::database> _db;
-  std::unordered_map<std::string, model::FilePtr> _files;
+  std::map<std::string, model::FilePtr> _files;
   std::unordered_set<model::FileId> _persistedFiles;
   std::mutex _createFileMutex;
   model::FileTypePtr _directoryType;

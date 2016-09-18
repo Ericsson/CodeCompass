@@ -27,7 +27,7 @@ struct BuildAction
     Other
   };
 
-  #pragma db id
+  #pragma db id auto
   std::uint64_t id;
 
   #pragma db not_null
