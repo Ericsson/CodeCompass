@@ -122,8 +122,7 @@ model::FilePtr SourceManager::getCreateFileEntry(
 {
   //--- Return from cache if it contains ---//
 
-  std::unordered_map<std::string, model::FilePtr>::const_iterator it
-    = _files.find(path_);
+  std::map<std::string, model::FilePtr>::const_iterator it = _files.find(path_);
 
   if (it != _files.end())
     return it->second;
