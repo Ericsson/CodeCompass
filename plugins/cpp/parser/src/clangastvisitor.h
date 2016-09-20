@@ -522,7 +522,7 @@ public:
         = isFunctionPointer(member)
         ? model::CppAstNode::SymbolType::FunctionPtr
         : model::CppAstNode::SymbolType::Variable;
-      astNode->astType = model::CppAstNode::AstType::Definition;
+      astNode->astType = model::CppAstNode::AstType::Write;
 
       astNode->id = model::createIdentifier(*astNode);
 
@@ -761,8 +761,10 @@ public:
 
     astNode->astValue = "call " + namedCallee->getNameAsString();
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
-    astNode->mangledName
-      = getMangledName(_mngCtx, namedCallee, astNode->location);
+    astNode->mangledName = getMangledName(
+      _mngCtx,
+      namedCallee,
+      getFileLoc(namedCallee->getLocStart(), namedCallee->getLocEnd()));
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
