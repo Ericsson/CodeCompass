@@ -1,6 +1,5 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
-#include <clang/AST/Type.h>
 #include <clang/AST/DeclCXX.h>
 
 #include <model/fileloc.h>
@@ -9,6 +8,24 @@
 #include "symbolhelper.h"
 
 namespace
+{
+
+std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
+{
+  if (!fileLoc_.file)
+    return std::string();
+
+  return
+      std::to_string(fileLoc_.file.object_id()) + ':'
+    + std::to_string(fileLoc_.range.start.line) + ':'
+    + std::to_string(fileLoc_.range.start.column);
+}
+
+}
+
+namespace cc
+{
+namespace parser
 {
 
 // TODO: Isn't it same as qt_.getTypePtr()?
@@ -34,24 +51,6 @@ const clang::Type* getStrippedType(const clang::QualType& qt_)
 
   return type;
 }
-
-std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
-{
-  if (!fileLoc_.file)
-    return std::string();
-
-  return 
-      std::to_string(fileLoc_.file.object_id()) + ':'
-    + std::to_string(fileLoc_.range.start.line) + ':'
-    + std::to_string(fileLoc_.range.start.column);
-}
-
-}
-
-namespace cc
-{
-namespace parser
-{
 
 std::string getMangledName(
   clang::MangleContext* mangleContext_,

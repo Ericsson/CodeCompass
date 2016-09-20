@@ -4,6 +4,7 @@
 #include <string>
 
 #include <clang/AST/Mangle.h>
+#include <clang/AST/Type.h>
 
 #include <model/fileloc.h>
 
@@ -11,6 +12,8 @@ namespace cc
 {
 namespace parser
 {
+
+const clang::Type* getStrippedType(const clang::QualType& qt_);
 
 std::string getMangledName(
   clang::MangleContext* mangleContext_,
