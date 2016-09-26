@@ -598,6 +598,25 @@ public:
     else
       return true;
 
+    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
+
+    const clang::Type* type = getStrippedType(vd_->getType());
+    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
+    {
+      typeAstNode->astValue = rd->getNameAsString();
+      typeAstNode->location = getFileLoc(
+        vd_->getSourceRange().getBegin(),
+        vd_->getSourceRange().getEnd());
+      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
+      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
+      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
+      typeAstNode->astType = model::CppAstNode::AstType::Usage;
+
+      typeAstNode->id = model::createIdentifier(*typeAstNode);
+
+      _astNodes.push_back(typeAstNode);
+    }
+
     //--- CppVariable ---//
 
     model::CppVariablePtr variable = std::make_shared<model::CppVariable>();
