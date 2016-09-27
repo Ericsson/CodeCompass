@@ -77,7 +77,7 @@ struct FileType
   FileType(){}
   FileType(const std::string& name_) : name(name_){}
 
-  #pragma db id auto
+  #pragma db id
   unsigned int id;
 
   #pragma db unique not_null

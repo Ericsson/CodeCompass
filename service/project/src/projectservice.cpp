@@ -357,7 +357,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
     fileInfo.__set_hasChildren(false); // TODO: Why false?
   }
 
-  fileInfo.__set_type(f.type->name);
+  fileInfo.__set_type(f.type->id);
 
   if (f.parent)
     fileInfo.__set_parent(std::to_string(f.parent.object_id()));

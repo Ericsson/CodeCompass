@@ -73,6 +73,17 @@ public:
       _mangledNameCache(mangledNameCache_),
       _clangToAstNodeId(clangToAstNodeId_)
   {
+    _cppSourceType->id = util::fnvHash(CPP_SOURCE_TYPE);
+    _cppSourceType->name = CPP_SOURCE_TYPE;
+
+    (util::OdbTransaction(_ctx.db))([this]{
+      typedef odb::query<model::FileType> FileTypeQuery;
+      if(!_ctx.db->query_one<model::FileType> (
+        FileTypeQuery::name == CPP_SOURCE_TYPE))
+      {
+        _ctx.db->persist(_cppSourceType);
+      }
+    });
   }
 
   ~ClangASTVisitor()
@@ -934,6 +945,7 @@ private:
     if (start_.isInvalid() || end_.isInvalid())
     {
       fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
+      fileLoc.file->type = _cppSourceType;
       return fileLoc;
     }
 
@@ -947,6 +959,7 @@ private:
 
     _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
     fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(realStart));
+    fileLoc.file->type = _cppSourceType;
 
     return fileLoc;
   }
@@ -1063,6 +1076,9 @@ private:
       }
     }
   }
+
+  std::string CPP_SOURCE_TYPE = "CPP";
+  model::FileTypePtr _cppSourceType;
 
   std::vector<model::CppAstNodePtr>      _astNodes;
   std::vector<model::CppEnumConstantPtr> _enumConstants;

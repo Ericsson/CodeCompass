@@ -5,6 +5,8 @@
 
 #include <boost/log/trivial.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+
 #include <util/dbutil.h>
 #include <util/logutil.h>
 #include <parser/parsercontext.h>
@@ -52,17 +54,16 @@ po::options_description commandLineArguments()
     ("skip,s", po::value<std::vector<std::string>>(),
       "This is a list of parsers which will be omitted during the parsing "
       "process. The possible values are the plugin names which can be listed "
-      "by --list flag.")
-    ("parser-plugin-dir", po::value<std::string>()->required(),
-      // TODO: Default value should be given.
-      "Path of the directory where parser plugins are located as shared object "
-      "files.");
+      "by --list flag.");
 
   return desc;
 }
 
 int main(int argc, char* argv[])
 {
+  std::string binDir = boost::filesystem::canonical(
+        boost::filesystem::path(argv[0]).parent_path()).string();
+
   cc::util::initLogger();
   
   //--- Process command line arguments ---//
@@ -110,8 +111,7 @@ int main(int argc, char* argv[])
 
   cc::parser::ParserContext ctx(db, srcMgr, vm);
   cc::parser::PluginHandler pHandler(ctx);
-  pHandler.loadPluginsFromDir(
-    vm["parser-plugin-dir"].as<std::string>());
+  pHandler.loadPluginsFromDir(binDir + "/../lib/parserplugin");
 
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())
