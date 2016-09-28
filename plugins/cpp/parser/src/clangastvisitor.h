@@ -73,13 +73,15 @@ public:
       _mangledNameCache(mangledNameCache_),
       _clangToAstNodeId(clangToAstNodeId_)
   {
-    _cppSourceType->id = util::fnvHash(CPP_SOURCE_TYPE);
-    _cppSourceType->name = CPP_SOURCE_TYPE;
+    const std::string cppSourceType = "CPP";
 
-    (util::OdbTransaction(_ctx.db))([this]{
+    _cppSourceType->id = util::fnvHash(cppSourceType);
+    _cppSourceType->name = cppSourceType;
+
+    (util::OdbTransaction(_ctx.db))([&cppSourceType, this]{
       typedef odb::query<model::FileType> FileTypeQuery;
-      if(!_ctx.db->query_one<model::FileType> (
-        FileTypeQuery::name == CPP_SOURCE_TYPE))
+      if (!_ctx.db->query_one<model::FileType> (
+        FileTypeQuery::name == cppSourceType))
       {
         _ctx.db->persist(_cppSourceType);
       }
@@ -1077,7 +1079,6 @@ private:
     }
   }
 
-  std::string CPP_SOURCE_TYPE = "CPP";
   model::FileTypePtr _cppSourceType;
 
   std::vector<model::CppAstNodePtr>      _astNodes;

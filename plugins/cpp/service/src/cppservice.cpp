@@ -53,9 +53,9 @@ namespace
    */
   struct CreateAstNodeInfo
   {
-    CreateAstNodeInfo(
-      const std::map<cc::model::CppAstNodeId, std::vector<std::string>>& tags_ = {})
-        : _tags(tags_)
+    typedef std::map<cc::model::CppAstNodeId, std::vector<std::string>> TagMap;
+
+    CreateAstNodeInfo(const TagMap& tags_ = {}) : _tags(tags_)
     {
     }
 
@@ -85,8 +85,9 @@ namespace
           astNode_.location.range.end.column));
       }
 
-      if(_tags.count(astNode_.id) != 0)
-        ret.tags = _tags.at(astNode_.id);
+      TagMap::const_iterator it = _tags.find(astNode_.id);
+      if (it != _tags.end())
+        ret.__set_tags(it->second);
 
       return ret;
     }
@@ -110,13 +111,10 @@ CppServiceHandler::CppServiceHandler(
 {
 }
 
-static const std::vector<std::string> extension = {"CPP"};
-
 void CppServiceHandler::getFileTypes(
   std::map<std::string, std::int32_t>& _return)
 {
-  for(const std::string& ext_ : extension)
-    _return[ext_] = util::fnvHash(ext_);
+  _return["CPP"] = util::fnvHash("CPP");
 }
 
 void CppServiceHandler::getAstNodeInfo(
@@ -262,38 +260,38 @@ void CppServiceHandler::getReferenceTypes(
 {
   model::CppAstNode node = queryCppAstNode(astNodeId_);
 
-  return_["Definition"]                    = DEFINITION;
-  return_["Declaration"]                   = DECLARATION;
-  return_["Usage"]                         = USAGE;
+  return_["Definition"]                = DEFINITION;
+  return_["Declaration"]               = DECLARATION;
+  return_["Usage"]                     = USAGE;
 
   switch (node.symbolType)
   {
     case model::CppAstNode::SymbolType::Function:
-      return_["Callee"]                    = CALLEE;
-      return_["Caller"]                    = CALLER;
-      return_["Virtual call"]              = VIRTUAL_CALL;
-      return_["Function pointer call"]     = FUNC_PTR_CALL;
-      return_["Parameters"]                = PARAMETER;
-      return_["Local variables"]           = LOCAL_VAR;
+      return_["Callee"]                = CALLEE;
+      return_["Caller"]                = CALLER;
+      return_["Virtual call"]          = VIRTUAL_CALL;
+      return_["Function pointer call"] = FUNC_PTR_CALL;
+      return_["Parameters"]            = PARAMETER;
+      return_["Local variables"]       = LOCAL_VAR;
       break;
 
     case model::CppAstNode::SymbolType::Variable:
-      return_["Reads"]                     = READ;
-      return_["Writes"]                    = WRITE;
+      return_["Reads"]                 = READ;
+      return_["Writes"]                = WRITE;
       break;
 
     case model::CppAstNode::SymbolType::Type:
-      return_["Aliases"]                   = ALIAS;
-      return_["Inherits from"]             = INHERIT_FROM;
-      return_["Inherited by"]              = INHERIT_BY;
-      return_["Data member"]               = DATA_MEMBER;
-      return_["Method"]                    = METHOD;
-      return_["Friends"]                   = FRIEND;
-      return_["Usage"]                     = USAGE;
+      return_["Aliases"]               = ALIAS;
+      return_["Inherits from"]         = INHERIT_FROM;
+      return_["Inherited by"]          = INHERIT_BY;
+      return_["Data member"]           = DATA_MEMBER;
+      return_["Method"]                = METHOD;
+      return_["Friends"]               = FRIEND;
+      return_["Usage"]                 = USAGE;
       break;
 
     case model::CppAstNode::SymbolType::Typedef:
-      return_["Underlying type"]           = UNDERLYING_TYPE;
+      return_["Underlying type"]       = UNDERLYING_TYPE;
       break;
   }
 }
@@ -473,8 +471,9 @@ void CppServiceHandler::getReferences(
       case INHERIT_FROM:
         node = queryCppAstNode(astNodeId_);
 
-        for (const model::CppInheritance& inh : _db->query<model::CppInheritance>(
-          InhQuery::derived == node.mangledNameHash))  // TODO: Filter by tags
+        for (const model::CppInheritance& inh :
+          _db->query<model::CppInheritance>(
+            InhQuery::derived == node.mangledNameHash)) // TODO: Filter by tags
         {
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::mangledNameHash == inh.base &&
@@ -487,8 +486,9 @@ void CppServiceHandler::getReferences(
       case INHERIT_BY:
         node = queryCppAstNode(astNodeId_);
 
-        for (const model::CppInheritance& inh : _db->query<model::CppInheritance>(
-          InhQuery::base == node.mangledNameHash )) // TODO: Filter by tags
+        for (const model::CppInheritance& inh :
+          _db->query<model::CppInheritance>(
+            InhQuery::base == node.mangledNameHash )) // TODO: Filter by tags
         {
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::mangledNameHash == inh.derived &&
@@ -503,26 +503,24 @@ void CppServiceHandler::getReferences(
 
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
           MemTypeQuery::typeHash == node.mangledNameHash &&
-          MemTypeQuery::kind == model::CppMemberType::Kind::Field)) // TODO: Filter by tags
+          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+          // TODO: Filter by tags
         {
           model::CppAstNodePtr astNode = mem.memberAstNode.load();
 
           //--- Visibility Tag---//
 
-          std::string visibility =
-            mem.visibility == model::Visibility::Private   ? "private" :
-            mem.visibility == model::Visibility::Public    ? "public" :
-            mem.visibility == model::Visibility::Protected ? "protected" : "";
+          std::string visibility = model::visibilityToString(mem.visibility);
 
-          if(visibility != "")
+          if (!visibility.empty())
             tags[astNode->id].push_back(visibility);
 
           //--- Static Tag ---//
 
-          if(mem.isStatic)
+          if (mem.isStatic)
             tags[astNode->id].push_back("static");
 
-          if(astNode->location.range.end.line != model::Position::npos)
+          if (astNode->location.range.end.line != model::Position::npos)
             nodes.push_back(*astNode);
         }
 
@@ -534,43 +532,43 @@ void CppServiceHandler::getReferences(
 
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
           MemTypeQuery::typeHash == node.mangledNameHash &&
-          MemTypeQuery::kind == model::CppMemberType::Kind::Method // TODO: Filter by tags
-        ))
+          MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+          // TODO: Filter by tags
         {
           model::CppAstNodePtr astNode = mem.memberAstNode.load();
 
           //--- Visibility Tag---//
 
-          std::string visibility =
-            mem.visibility == model::Visibility::Private   ? "private" :
-            mem.visibility == model::Visibility::Public    ? "public" :
-            mem.visibility == model::Visibility::Protected ? "protected" : "";
+          std::string visibility = model::visibilityToString(mem.visibility);
 
-          if(visibility != "")
+          if (!visibility.empty())
             tags[astNode->id].push_back(visibility);
 
           //--- Static Tag ---//
 
-          if(mem.isStatic)
+          if (mem.isStatic)
             tags[astNode->id].push_back("static");
 
           //--- Virtual Tag ---//
 
-          core::AstNodeId nodeId = std::to_string(astNode->id);
-          std::vector<model::CppAstNode> defs = queryDefinitions(nodeId);
-          if(!defs.empty())
+          std::vector<model::CppAstNode> defs
+            = queryDefinitions(std::to_string(astNode->id));
+
+          if (!defs.empty())
           {
             model::CppFunctionPtr funcNode = _db->query_one<model::CppFunction>(
               FuncQuery::mangledNameHash == defs.front().mangledNameHash);
-            if(funcNode && funcNode->isVirtual)
+            if (funcNode && funcNode->isVirtual)
               tags[astNode->id].push_back("virtual");
           }
 
-          if(astNode->location.range.end.line != model::Position::npos)
+          if (astNode->location.range.end.line != model::Position::npos)
             nodes.push_back(*astNode);
         }
+
         break;
       }
+
       case FRIEND:
         node = queryCppAstNode(astNodeId_);
 
@@ -763,7 +761,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodes(
 
   AstResult result = _db->query<model::CppAstNode>(
     AstQuery::mangledNameHash == node.mangledNameHash &&
-    AstQuery::location.range.end.line != -1 &&
+    AstQuery::location.range.end.line != model::Position::npos &&
     query_);
 
   return std::vector<model::CppAstNode>(result.begin(), result.end());
