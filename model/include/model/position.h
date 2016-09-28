@@ -13,15 +13,16 @@ struct Position
 {
   typedef std::size_t PosType;
 
-  Position() :
-    line(std::numeric_limits<PosType>::max()),
-    column(std::numeric_limits<PosType>::max())
+  Position() : line(npos), column(npos)
   {
+
   }
 
   Position(PosType line, PosType column) : line(line), column(column)
   {
   }
+
+  enum : PosType { npos = static_cast<PosType>(-1) };
 
   PosType line;
   PosType column;

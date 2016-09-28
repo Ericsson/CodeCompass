@@ -35,6 +35,9 @@ public:
     const boost::program_options::variables_map& config_
       = boost::program_options::variables_map());
 
+  void getFileTypes(
+    std::map<std::string, std::int32_t>& _return) override;
+
   void getAstNodeInfo(
     AstNodeInfo& return_,
     const core::AstNodeId& astNodeId_) override;
@@ -52,7 +55,7 @@ public:
     const core::AstNodeId& astNodeId_) override;
 
   void getDiagramTypes(
-    std::vector<core::Description>& return_,
+    std::map<std::string, std::int32_t>& return_,
     const core::AstNodeId& astNodeId_) override;
 
   void getDiagram(
@@ -65,7 +68,7 @@ public:
     const std::int32_t diagramId_) override;
 
   void getFileDiagramTypes(
-    std::vector<core::Description>& return_,
+    std::map<std::string, std::int32_t>& return_,
     const core::FileId& fileId_) override;
 
   void getFileDiagram(
@@ -78,19 +81,21 @@ public:
     const std::int32_t diagramId_) override;
 
   void getReferenceTypes(
-    std::vector<core::Description>& return_,
+    std::map<std::string, std::int32_t>& return_,
     const core::AstNodeId& astNodeId) override;
 
   void getReferences(
     std::vector<AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_) override;
+    const std::int32_t referenceId_,
+    const std::vector<std::string>& tags_) override;
 
   void getReferencesInFile(
     std::vector<AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
     const std::int32_t referenceId_,
-    const core::FileId& fileId_) override;
+    const core::FileId& fileId_,
+    const std::vector<std::string>& tags_) override;
 
   void getReferencesPage(
     std::vector<AstNodeInfo>& return_,
@@ -100,7 +105,7 @@ public:
     const std::int32_t pageNo_) override;
 
   void getFileReferenceTypes(
-    std::vector<core::Description>& return_,
+    std::map<std::string, std::int32_t>& return_,
     const core::FileId& fileId_) override;
 
   void getFileReferences(
@@ -152,49 +157,15 @@ private:
 
     ALIAS, /*!< Types may have aliases, e.g. by typedefs. */
 
-    PUBLIC_INHERIT_FROM, /*!< Types from which the queried type inherits and the
-      inheritance is public. */
+    INHERIT_FROM, /*!< Types from which the queried type inherits. */
 
-    PRIVATE_INHERIT_FROM, /*!< Types from which the queried type inherits and
-      the inheritance is private. */
+    INHERIT_BY, /*!< Types by which the queried type is inherited. */
 
-    PROTECTED_INHERIT_FROM, /*!< Types from which the queried type inherits and
-      the inheritance is protected. */
+    DATA_MEMBER, /*!< Data members of a class. */
 
-    PUBLIC_INHERIT_BY, /*!< Types by which the queried type is inherited and the
-      inheritance is public. */
-
-    PRIVATE_INHERIT_BY, /*!< Types by which the queried type is inherited and
-      the inheritance is private. */
-
-    PROTECTED_INHERIT_BY, /*!< Types by which the queried type is inherited and
-      the inheritance is protected. */
-
-    PUBLIC_MEMBER, /*!< Public members of a class. */
-
-    PRIVATE_MEMBER, /*!< Private members of a class. */
-
-    PROTECTED_MEMBER, /*!< Protected members of a class. */
-
-    PUBLIC_METHOD, /*!< Public members of a class. */
-
-    PRIVATE_METHOD, /*!< Private members of a class. */
-
-    PROTECTED_METHOD, /*!< Protected members of a class. */
+    METHOD, /*!< Members of a class. */
 
     FRIEND, /*!< The friends of a class. */
-
-    USAGE_AS_GLOBAL, /*!< Usages of a type as the type of a global variable. */
-
-    USAGE_AS_LOCAL, /*!< Usages of a type as the type of a local variable. */
-
-    USAGE_AS_FIELD, /*!< Usages of a type as the type of a class field. */
-
-    USAGE_AS_PARAMETER, /*!< Usages of a type as the type of a function
-      parameter. */
-
-    USAGE_AS_RETURN, /*!< Usages of a type as the type of a returned
-      variable. */
 
     UNDERLYING_TYPE, /*!< Underlying type of a typedef. */
 
@@ -208,12 +179,6 @@ private:
     CLASS_OVERVIEW,
     CLASS_COLLABORATION
   };
-
-  /**
-   * This function transforms a model::CppAstNode to an AstNodeInfo Thrift
-   * object.
-   */
-  static AstNodeInfo createAstNodeInfo(const model::CppAstNode& astNode_);
 
   static bool compareByPosition(
     const model::CppAstNode& lhs,
@@ -233,7 +198,7 @@ private:
   std::vector<model::CppAstNode> queryCppAstNodes(
     const core::AstNodeId& astNodeId_,
     const odb::query<model::CppAstNode>& query_
-      = odb::query<model::CppAstNode>());
+      = odb::query<model::CppAstNode>(true));
 
   /**
    * This function returns the model::CppAstNode objects which have the same

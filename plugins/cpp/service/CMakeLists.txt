@@ -16,7 +16,10 @@ target_compile_options(cppservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(cppservice
   util
-  ${THRIFT_LIBTHRIFT_LIBRARIES}
-  languagethrift)
+  model
+  cppmodel
+  projectservice
+  languagethrift
+  ${THRIFT_LIBTHRIFT_LIBRARIES})
 
 install(TARGETS cppservice DESTINATION ${INSTALL_SERVICE_DIR})

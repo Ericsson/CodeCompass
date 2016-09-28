@@ -11,16 +11,24 @@ struct AstNodeInfo
   4:string astNodeValue /** String representation of an AST node. */
   5:string srcText /** Corresponding code fragment in the source code. */
   6:common.FileRange range /** Source code range of an AST node. */
+  7:list<string> tags /** Meta information of the AST node (e.g. public, static, virtual etc.) */
 }
 
 struct SyntaxHighlight
 {
-  1:common.Range range,
-  2:string className
+  1:common.Range range, /** Source code range of an AST node. */
+  2:string className /** CSS class name */
 }
 
 service LanguageService
 {
+  /**
+   * Returns the file types which can be used to associate
+   * the file types with the service
+   * @return File types
+   */
+  map<string, i32> getFileTypes()
+
   /**
    * Returns an AstNodeInfo object for the given AST node ID.
    * @param astNodeId ID of an AST node.
@@ -71,7 +79,7 @@ service LanguageService
    * @exception common.InvalidId Exception is thrown if no AST node belongs to
    * the given ID.
    */
-  list<common.Description> getDiagramTypes(1:common.AstNodeId astNodeId)
+  map<string, i32> getDiagramTypes(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
   /**
@@ -106,7 +114,7 @@ service LanguageService
    * @exception common.InvalidId Exception is thrown if no file belongs to the
    * given ID.
    */
-  list<common.Description> getFileDiagramTypes(1:common.FileId fileId)
+  map<string, i32> getFileDiagramTypes(1:common.FileId fileId)
     throws (1:common.InvalidId ex)
 
   /**
@@ -139,7 +147,7 @@ service LanguageService
    * @exception common.InvalidId Exception is thrown if no AST node belongs to
    * the given ID.
    */
-  list<common.Description> getReferenceTypes(1:common.AstNodeId astNodeId)
+  map<string, i32> getReferenceTypes(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
   /**
@@ -147,13 +155,16 @@ service LanguageService
    * @param astNodeId The AST node to be queried.
    * @param referenceId Reference type (such as derivedClasses, definition,
    * usages etc.). Possible values can be queried by getReferenceTypes().
+   * @param tags Meta-information which can help to filter query results of
+   * the AST node (e.g. public, static)
    * @return List of references.
    * @exception common.InvalidId Exception is thrown if no AST node belongs to
    * the given ID.
    */
   list<AstNodeInfo> getReferences(
     1:common.AstNodeId astNodeId,
-    2:i32 referenceId)
+    2:i32 referenceId
+    3:list<string> tags)
       throws (1:common.InvalidId ex)
 
   /**
@@ -164,6 +175,8 @@ service LanguageService
    * @param referenceId reference type (such as derivedClasses, definition,
    * usages etc.).
    * @param fileId ID of the file in which we search for the references.
+   * @param tags Meta-information which can help to filter query results of
+   * the AST node (e.g. public, static)
    * @return List of references.
    * @exception common.InvalidId Exception is thrown if not AST node or file
    * belongs to the given IDs.
@@ -171,7 +184,8 @@ service LanguageService
   list<AstNodeInfo> getReferencesInFile(
     1:common.AstNodeId astNodeId,
     2:i32 referenceId,
-    3:common.FileId fileId)
+    3:common.FileId fileId
+    4:list<string> tags)
       throws (1:common.InvalidId ex)
 
   /**
@@ -201,7 +215,7 @@ service LanguageService
    * @exception common.InvalidId Exception is thrown if no file belongs to the
    * given ID.
    */
-  list<common.Description> getFileReferenceTypes(1:common.FileId fileId)
+  map<string, i32> getFileReferenceTypes(1:common.FileId fileId)
     throws (1:common.InvalidId ex)
 
   /**
