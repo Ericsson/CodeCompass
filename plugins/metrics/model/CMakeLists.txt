@@ -11,3 +11,5 @@ set(ODB_SOURCES
 generate_odb_files("${ODB_SOURCES}")
 
 add_odb_library(metricsmodel ${ODB_CXX_SOURCES})
+
+install_sql(include/model/)
