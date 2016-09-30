@@ -181,10 +181,7 @@ void CppServiceHandler::getProperties(
 {
   _transaction([&, this](){
     model::CppAstNode node = queryCppAstNode(astNodeId_);
-
-    std::vector<model::CppAstNode> defs = queryCppAstNodes(
-      astNodeId_,
-      AstQuery::astType == model::CppAstNode::AstType::Definition);
+    std::vector<model::CppAstNode> defs = queryDefinitions(astNodeId_);
 
     if (defs.empty())
       return;

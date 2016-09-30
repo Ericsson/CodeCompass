@@ -583,6 +583,19 @@ public:
     member->kind = model::CppMemberType::Kind::Field;
     member->visibility = getMemberVisibility(fd_);
 
+    //--- CppVariable ---//
+
+    model::CppVariablePtr variable = std::make_shared<model::CppVariable>();
+    _variables.push_back(variable);
+
+    variable->astNodeId = astNode->id;
+    variable->mangledNameHash = astNode->mangledNameHash;
+    variable->name = fd_->getNameAsString();
+    variable->qualifiedName = fd_->getQualifiedNameAsString();
+    variable->typeHash = member->memberTypeHash;
+    variable->qualifiedType = qualType.getAsString();
+    variable->isGlobal = false;
+
     return true;
   }
 
@@ -1079,8 +1092,6 @@ private:
       }
     }
   }
-
-  model::FileTypePtr _cppSourceType;
 
   std::vector<model::CppAstNodePtr>      _astNodes;
   std::vector<model::CppEnumConstantPtr> _enumConstants;
