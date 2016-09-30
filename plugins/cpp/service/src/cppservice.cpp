@@ -245,6 +245,8 @@ void CppServiceHandler::getProperties(
           = _db->query_value<model::CppEnumConstant>(
               EnumConstQuery::astNodeId == node.id);
 
+        return_["Name"] = enumConst.name;
+        return_["Qualified name"] = enumConst.qualifiedName;
         return_["Value"] = std::to_string(enumConst.value);
       }
     }

@@ -1,7 +1,6 @@
 #ifndef CC_PARSER_CLANGASTVISITOR_H
 #define CC_PARSER_CLANGASTVISITOR_H
 
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <type_traits>
@@ -111,6 +110,7 @@ public:
   }
 
   bool shouldVisitImplicitCode() const { return true; }
+  bool shouldVisitTemplateInstantiations() const { return true; }
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
@@ -474,7 +474,7 @@ public:
 
     astNode->astValue = fn_->getNameAsString();
     astNode->location = getFileLoc(fn_->getLocStart(), fn_->getLocEnd());
-    astNode->mangledName =getMangledName(_mngCtx, fn_, astNode->location);
+    astNode->mangledName = getMangledName(_mngCtx, fn_, astNode->location);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
