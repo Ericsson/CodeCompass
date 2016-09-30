@@ -70,6 +70,7 @@ public:
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
       _mngCtx(astContext_.createMangleContext()),
+      _cppSourceType(new model::FileType),
       _mangledNameCache(mangledNameCache_),
       _clangToAstNodeId(clangToAstNodeId_)
   {
@@ -694,7 +695,7 @@ public:
 
     const clang::CXXConstructorDecl* ctor = ce_->getConstructor();
 
-    astNode->astValue = "call " + ctor->getNameAsString();
+    astNode->astValue = ctor->getNameAsString();
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, ctor);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -723,7 +724,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = "call " + functionDecl->getNameAsString();
+    astNode->astValue = functionDecl->getNameAsString();
     astNode->location = getFileLoc(ne_->getLocStart(), ne_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -751,7 +752,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = "call " + functionDecl->getNameAsString();
+    astNode->astValue = functionDecl->getNameAsString();
     astNode->location = getFileLoc(de_->getLocStart(), de_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -778,7 +779,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = "call " + namedCallee->getNameAsString();
+    astNode->astValue = namedCallee->getNameAsString();
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(
       _mngCtx,
@@ -807,7 +808,7 @@ public:
 
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
-      astNode->astValue = "ref " + vd->getNameAsString();
+      astNode->astValue = vd->getNameAsString();
       astNode->location = getFileLoc(dr_->getLocStart(), dr_->getLocEnd());
       astNode->mangledName
         = getMangledName(_mngCtx, vd, astNode->location);
@@ -838,7 +839,7 @@ public:
     else if (const clang::FunctionDecl* fd
       = llvm::dyn_cast<clang::FunctionDecl>(decl))
     {
-      astNode->astValue = "ref " + fd->getNameAsString();
+      astNode->astValue = fd->getNameAsString();
       astNode->location = getFileLoc(fd->getLocStart(), fd->getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, fd);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1088,6 +1089,7 @@ private:
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
   clang::MangleContext* _mngCtx;
+  model::FileTypePtr _cppSourceType;
 
   std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
