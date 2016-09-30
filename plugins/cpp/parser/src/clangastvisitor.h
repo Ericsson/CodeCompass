@@ -1,6 +1,7 @@
 #ifndef CC_PARSER_CLANGASTVISITOR_H
 #define CC_PARSER_CLANGASTVISITOR_H
 
+#include <iostream>
 #include <memory>
 #include <mutex>
 #include <type_traits>
@@ -327,15 +328,25 @@ public:
       //--- CppFriendship ---//
 
       for (auto it = crd->friend_begin(); it != crd->friend_end(); ++it)
-        if (clang::NamedDecl* fd = (*it)->getFriendDecl())
+      {
+        const clang::Type* type = nullptr;
+        clang::CXXRecordDecl* cxxRecordDecl = nullptr;
+        clang::TypeSourceInfo* tsi = (*it)->getFriendType();
+
+        if (tsi) type = tsi->getType().getTypePtr();
+        if (type) cxxRecordDecl = type->getAsCXXRecordDecl();
+
+        if (cxxRecordDecl)
         {
           model::CppFriendshipPtr friendship
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
           friendship->target = cppType->mangledNameHash;
-          friendship->theFriend = util::fnvHash(getMangledName(_mngCtx, fd));
+          friendship->theFriend
+            = util::fnvHash(getMangledName(_mngCtx, cxxRecordDecl));
         }
+      }
     }
 
     return true;
