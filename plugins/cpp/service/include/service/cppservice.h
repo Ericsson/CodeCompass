@@ -135,8 +135,11 @@ private:
       parser creates a mangled name even for variables and types, which is
       unique for the element. */
 
-    CALLEE, /*!< Get called functions. WARNING: If the definition of the AST
+    CALL, /*!< Get called functions. WARNING: If the definition of the AST
       node is not unique then it returns the callees of one of them. */
+
+    CALLEE, /*!< Get called functions definitions. WARNING: If the definition of
+      the AST node is not unique then it returns the callees of one of them. */
 
     CALLER, /*!< Get caller functions. */
     
