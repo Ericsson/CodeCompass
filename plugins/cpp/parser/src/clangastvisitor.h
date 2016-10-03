@@ -110,6 +110,7 @@ public:
   }
 
   bool shouldVisitImplicitCode() const { return true; }
+  bool shouldVisitTemplateInstantiations() const { return true; }
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
@@ -327,15 +328,25 @@ public:
       //--- CppFriendship ---//
 
       for (auto it = crd->friend_begin(); it != crd->friend_end(); ++it)
-        if (clang::NamedDecl* fd = (*it)->getFriendDecl())
+      {
+        const clang::Type* type = nullptr;
+        clang::CXXRecordDecl* cxxRecordDecl = nullptr;
+        clang::TypeSourceInfo* tsi = (*it)->getFriendType();
+
+        if (tsi) type = tsi->getType().getTypePtr();
+        if (type) cxxRecordDecl = type->getAsCXXRecordDecl();
+
+        if (cxxRecordDecl)
         {
           model::CppFriendshipPtr friendship
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
           friendship->target = cppType->mangledNameHash;
-          friendship->theFriend = util::fnvHash(getMangledName(_mngCtx, fd));
+          friendship->theFriend
+            = util::fnvHash(getMangledName(_mngCtx, cxxRecordDecl));
         }
+      }
     }
 
     return true;
@@ -463,7 +474,7 @@ public:
 
     astNode->astValue = fn_->getNameAsString();
     astNode->location = getFileLoc(fn_->getLocStart(), fn_->getLocEnd());
-    astNode->mangledName =getMangledName(_mngCtx, fn_, astNode->location);
+    astNode->mangledName = getMangledName(_mngCtx, fn_, astNode->location);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
@@ -582,6 +593,19 @@ public:
     member->memberTypeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     member->kind = model::CppMemberType::Kind::Field;
     member->visibility = getMemberVisibility(fd_);
+
+    //--- CppVariable ---//
+
+    model::CppVariablePtr variable = std::make_shared<model::CppVariable>();
+    _variables.push_back(variable);
+
+    variable->astNodeId = astNode->id;
+    variable->mangledNameHash = astNode->mangledNameHash;
+    variable->name = fd_->getNameAsString();
+    variable->qualifiedName = fd_->getQualifiedNameAsString();
+    variable->typeHash = member->memberTypeHash;
+    variable->qualifiedType = qualType.getAsString();
+    variable->isGlobal = false;
 
     return true;
   }
@@ -1079,8 +1103,6 @@ private:
       }
     }
   }
-
-  model::FileTypePtr _cppSourceType;
 
   std::vector<model::CppAstNodePtr>      _astNodes;
   std::vector<model::CppEnumConstantPtr> _enumConstants;
