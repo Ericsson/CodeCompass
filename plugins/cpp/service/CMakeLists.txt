@@ -18,6 +18,7 @@ target_link_libraries(cppservice
   util
   model
   cppmodel
+  mongoose
   projectservice
   languagethrift
   ${THRIFT_LIBTHRIFT_LIBRARIES})

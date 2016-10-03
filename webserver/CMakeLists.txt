@@ -5,8 +5,12 @@ configure_file(
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp
-  src/threadedmongoose.cpp
-  src/mongoose.c)
+  src/threadedmongoose.cpp )
+
+add_library(mongoose STATIC src/mongoose.c )
+
+target_include_directories(mongoose PUBLIC include)
+target_compile_options(mongoose PUBLIC -fPIC)
 
 target_include_directories(CodeCompass_webserver PUBLIC
   include
@@ -15,6 +19,7 @@ target_include_directories(CodeCompass_webserver PUBLIC
 
 target_link_libraries(CodeCompass_webserver
   util
+  mongoose
   boost_thread
   boost_filesystem
   boost_system
