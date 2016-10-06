@@ -21,6 +21,16 @@ struct CppInheritance
   bool isVirtual = false;
   Visibility visibility;
 
+  std::string toString() const
+  {
+    return std::string("CppInheritance")
+      .append("\nid = ").append(std::to_string(id))
+      .append("\nderived = ").append(std::to_string(derived))
+      .append("\nbase = ").append(std::to_string(base))
+      .append("\nisVirtual = ").append(std::to_string(isVirtual))
+      .append("\nvisibility = ").append(visibilityToString(visibility));
+  }
+
 #ifndef NO_INDICES
   #pragma db index member(derived)
   #pragma db index member(base)

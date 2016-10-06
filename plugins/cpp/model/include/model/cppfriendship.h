@@ -17,6 +17,14 @@ struct CppFriendship
   std::uint64_t target;
   std::uint64_t theFriend;
 
+  std::string toString() const
+  {
+    return std::string("CppFriendship")
+      .append("\nid = ").append(std::to_string(id))
+      .append("\ntarget = ").append(std::to_string(target))
+      .append("\ntheFriend = ").append(std::to_string(theFriend));
+  }
+
 #ifndef NO_INDICES
   #pragma db index member(target)
   #pragma db index member(theFriend)

@@ -33,6 +33,17 @@ struct CppMemberType
   Visibility visibility;
 
   bool isStatic = false;
+
+  std::string toString() const
+  {
+    return std::string("CppMemberType")
+      .append("\nid = ").append(std::to_string(id))
+      .append("\ntypeHash = ").append(std::to_string(typeHash))
+      .append("\nmemberTypeHash = ").append(std::to_string(memberTypeHash))
+      .append("\nkind = ").append(kind == Field ? "Field" : "Method")
+      .append("\nvisibility = ").append(visibilityToString(visibility))
+      .append("\nisStatic = ").append(std::to_string(isStatic));
+  }
 };
 
 typedef std::shared_ptr<CppMemberType> CppMemberTypePtr;
@@ -42,6 +53,15 @@ struct CppType : CppEntity
 {
   bool isAbstract = false;
   bool isPOD = false;
+
+  std::string toString() const
+  {
+    return std::string("id = ").append(std::to_string(id))
+      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nqualifiedName = ").append(qualifiedName)
+      .append("\nisAbstract = ").append(std::to_string(isAbstract))
+      .append("\nisPOD = ").append(std::to_string(isPOD));
+  }
 };
 
 typedef std::shared_ptr<CppType> CppTypePtr;

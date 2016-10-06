@@ -69,7 +69,7 @@ std::string getMangledName(
 
       if (const clang::ParmVarDecl* pvd =
           llvm::dyn_cast<clang::ParmVarDecl>(nd_))
-        result +=  ':' + std::to_string(pvd->getFunctionScopeIndex());
+        result += ':' + std::to_string(pvd->getFunctionScopeIndex());
     }
 
     return result;

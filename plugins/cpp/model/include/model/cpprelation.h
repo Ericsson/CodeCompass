@@ -27,6 +27,17 @@ struct CppRelation
 
   Kind kind;
 
+  std::string toString() const
+  {
+    return std::string("id = ").append(std::to_string(id))
+      .append("\nlhs = ").append(std::to_string(lhs))
+      .append("\nrhs = ").append(std::to_string(rhs))
+      .append("\nkind = ").append(
+        kind == Kind::Override ? "Override" :
+        kind == Kind::Alias ? "Alias" :
+        kind == Kind::Assign ? "Assign" : "DeclContext");
+  }
+
 #ifndef NO_INDICES
   #pragma db index member(lhs)
   #pragma db index member(rhs)

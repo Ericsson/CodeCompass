@@ -18,6 +18,16 @@ struct CppFunction : CppTypedEntity
   std::vector<odb::lazy_shared_ptr<CppVariable>> locals;
 
   bool isVirtual = false;
+
+  std::string toString() const
+  {
+    return std::string("CppFunction")
+      .append("\nid = ").append(std::to_string(id))
+      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nqualifiedName = ").append(qualifiedName)
+      .append("\nqualifiedType = ").append(qualifiedType)
+      .append("\nisVirtual = ").append(std::to_string(isVirtual));
+  }
 };
 
 typedef std::shared_ptr<CppFunction> CppFunctionPtr;

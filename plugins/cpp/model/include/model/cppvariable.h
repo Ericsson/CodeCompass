@@ -12,6 +12,16 @@ namespace model
 struct CppVariable : CppTypedEntity
 {
   bool isGlobal = false;
+
+  std::string toString() const
+  {
+    return std::string("CppVariable")
+      .append("\nid = ").append(std::to_string(id))
+      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nqualifiedName = ").append(qualifiedName)
+      .append("\nqualifiedType = ").append(qualifiedType)
+      .append("\nisGlobal = ").append(std::to_string(isGlobal));
+  }
 };
 
 typedef std::shared_ptr<CppVariable> CppVariablePtr;
