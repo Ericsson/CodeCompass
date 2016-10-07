@@ -49,9 +49,6 @@ private:
   std::size_t _index;
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
-
-  std::mutex _baMutex;
-  std::mutex _compileMutex;
 };
   
 } // parser

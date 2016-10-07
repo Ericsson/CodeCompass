@@ -77,18 +77,8 @@ public:
       _clangToAstNodeId(clangToAstNodeId_)
   {
     const std::string cppSourceType = "CPP";
-
     _cppSourceType->id = util::fnvHash(cppSourceType);
     _cppSourceType->name = cppSourceType;
-
-    (util::OdbTransaction(_ctx.db))([&cppSourceType, this]{
-      typedef odb::query<model::FileType> FileTypeQuery;
-      if (!_ctx.db->query_one<model::FileType> (
-        FileTypeQuery::name == cppSourceType))
-      {
-        _ctx.db->persist(_cppSourceType);
-      }
-    });
   }
 
   ~ClangASTVisitor()

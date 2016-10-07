@@ -14,6 +14,8 @@
 #include <model/buildaction-odb.hxx>
 #include <model/buildsourcetarget.h>
 #include <model/buildsourcetarget-odb.hxx>
+#include <model/file.h>
+#include <model/file-odb.hxx>
 
 #include <util/hash.h>
 #include <util/odbtransaction.h>
@@ -218,52 +220,42 @@ void CppParser::addCompileCommand(
   });
 }
 
-bool CppParser::isParsed(const clang::tooling::CompileCommand& command_)
-{
-  std::lock_guard<std::mutex> guard(_baMutex);
-
-  return _parsedCommandHashes.find(util::fnvHash(
-    boost::algorithm::join(command_.CommandLine, " ")))
-      != _parsedCommandHashes.end();
-}
-
 void CppParser::worker()
 {
+  static std::mutex mutex;
+
   while (true)
   {
     //--- Select nect compilation command ---//
 
-    _compileMutex.lock();
+    mutex.lock();
 
     if (_index == _compileCommands.size())
     {
-      _compileMutex.unlock();
+      mutex.unlock();
       break;
     }
 
     const clang::tooling::CompileCommand& command = _compileCommands[_index];
     std::size_t index = ++_index;
 
-    _compileMutex.unlock();
+    //--- Add compile command hash ---//
 
-    //--- Check if already parsed ---//
+    auto hash = util::fnvHash(
+      boost::algorithm::join(command.CommandLine, ""));
 
-    if (isParsed(command))
+    if (_parsedCommandHashes.find(hash) != _parsedCommandHashes.end())
     {
       BOOST_LOG_TRIVIAL(info)
         << '(' << index << '/' << _compileCommands.size() << ')'
         << " Already parsed " << command.Filename;
+      mutex.unlock();
       continue;
     }
 
-    //--- Add compile command hash ---//
+    _parsedCommandHashes.insert(hash);
 
-    _baMutex.lock();
-
-    _parsedCommandHashes.insert(util::fnvHash(
-      boost::algorithm::join(command.CommandLine, " ")));
-
-    _baMutex.unlock();
+    mutex.unlock();
 
     //--- Assemble compiler command line ---//
 
@@ -304,8 +296,25 @@ void CppParser::worker()
 CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
+    //--- Build actions ---//
+
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
       _parsedCommandHashes.insert(util::fnvHash(ba.command));
+
+    //--- File types ---//
+
+    const std::string cppSourceType = "CPP";
+
+    typedef odb::query<model::FileType> FileTypeQuery;
+    if (!ctx_.db->query_one<model::FileType>(
+        FileTypeQuery::name == cppSourceType))
+    {
+      model::FileType cppSourceFileType;
+      cppSourceFileType.id = util::fnvHash(cppSourceType);
+      cppSourceFileType.name = cppSourceType;
+
+      ctx_.db->persist(cppSourceFileType);
+    }
   });
 }
   
