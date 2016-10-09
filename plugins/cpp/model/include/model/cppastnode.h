@@ -79,6 +79,8 @@ struct CppAstNode
 
   bool visibleInSourceCode = true;
 
+  std::string toString() const;
+
   bool operator<(const CppAstNode& other) const { return id < other.id; }
 
 #ifndef NO_INDICES
@@ -89,6 +91,66 @@ struct CppAstNode
 };
 
 typedef std::shared_ptr<CppAstNode> CppAstNodePtr;
+
+inline std::string symbolTypeToString(CppAstNode::SymbolType type_)
+{
+  switch (type_)
+  {
+    case CppAstNode::SymbolType::Variable: return "Variable";
+    case CppAstNode::SymbolType::Function: return "Function";
+    case CppAstNode::SymbolType::FunctionPtr: return "FunctionPtr";
+    case CppAstNode::SymbolType::Type: return "Type";
+    case CppAstNode::SymbolType::Typedef: return "Typedef";
+    case CppAstNode::SymbolType::Macro: return "Macro";
+    case CppAstNode::SymbolType::Enum: return "Enum";
+    case CppAstNode::SymbolType::EnumConstant: return "EnumConstant";
+    case CppAstNode::SymbolType::Namespace: return "Namespace";
+    case CppAstNode::SymbolType::StringLiteral: return "StringLiteral";
+    case CppAstNode::SymbolType::File: return "File";
+    case CppAstNode::SymbolType::Other: return "Other";
+  }
+
+  return std::string();
+}
+
+inline std::string astTypeToString(CppAstNode::AstType type_)
+{
+  switch (type_)
+  {
+    case CppAstNode::AstType::Statement: return "Statement";
+    case CppAstNode::AstType::TypeLocation: return "TypeLocation";
+    case CppAstNode::AstType::Declaration: return "Declaration";
+    case CppAstNode::AstType::Definition: return "Definition";
+    case CppAstNode::AstType::UnDefinition: return "UnDefinition";
+    case CppAstNode::AstType::Usage: return "Usage";
+    case CppAstNode::AstType::Read: return "Read";
+    case CppAstNode::AstType::Write: return "Write";
+    case CppAstNode::AstType::VirtualCall: return "VirtualCall";
+    case CppAstNode::AstType::ParameterTypeLoc: return "ParameterTypeLoc";
+    case CppAstNode::AstType::ReturnTypeLoc: return "ReturnTypeLoc";
+    case CppAstNode::AstType::FieldTypeLoc: return "FieldTypeLoc";
+    case CppAstNode::AstType::GlobalTypeLoc: return "GlobalTypeLoc";
+    case CppAstNode::AstType::LocalTypeLoc: return "LocalTypeLoc";
+    case CppAstNode::AstType::Other: return "Other";
+  }
+
+  return std::string();
+}
+
+inline std::string CppAstNode::toString() const
+{
+  return std::string("CppAstNode")
+    .append("\nid = ").append(std::to_string(id))
+    .append("\nastValue = ").append(astValue)
+    .append("\nmangledName = ").append(mangledName)
+    .append("\nlocation = ").append(location.file->path).append(" (")
+    .append(std::to_string(location.range.start.line)).append(":")
+    .append(std::to_string(location.range.start.column)).append(" - ")
+    .append(std::to_string(location.range.end.line)).append(":")
+    .append(std::to_string(location.range.end.column)).append(")")
+    .append("\nsymbolType = ").append(symbolTypeToString(symbolType))
+    .append("\nastType = ").append(astTypeToString(astType));
+}
 
 inline bool isTypeLocation(CppAstNode::AstType type_)
 {
@@ -141,51 +203,6 @@ inline std::uint64_t createIdentifier(const CppAstNode& astNode_)
     res.append("null");
 
   return util::fnvHash(res);
-}
-
-inline std::string symbolTypeToString(CppAstNode::SymbolType type_)
-{
-  switch (type_)
-  {
-    case CppAstNode::SymbolType::Variable: return "Variable";
-    case CppAstNode::SymbolType::Function: return "Function";
-    case CppAstNode::SymbolType::FunctionPtr: return "FunctionPtr";
-    case CppAstNode::SymbolType::Type: return "Type";
-    case CppAstNode::SymbolType::Typedef: return "Typedef";
-    case CppAstNode::SymbolType::Macro: return "Macro";
-    case CppAstNode::SymbolType::Enum: return "Enum";
-    case CppAstNode::SymbolType::EnumConstant: return "EnumConstant";
-    case CppAstNode::SymbolType::Namespace: return "Namespace";
-    case CppAstNode::SymbolType::StringLiteral: return "StringLiteral";
-    case CppAstNode::SymbolType::File: return "File";
-    case CppAstNode::SymbolType::Other: return "Other";
-  }
-
-  return std::string();
-}
-
-inline std::string astTypeToString(CppAstNode::AstType type_)
-{
-  switch (type_)
-  {
-    case CppAstNode::AstType::Statement: return "Statement";
-    case CppAstNode::AstType::TypeLocation: return "TypeLocation";
-    case CppAstNode::AstType::Declaration: return "Declaration";
-    case CppAstNode::AstType::Definition: return "Definition";
-    case CppAstNode::AstType::UnDefinition: return "UnDefinition";
-    case CppAstNode::AstType::Usage: return "Usage";
-    case CppAstNode::AstType::Read: return "Read";
-    case CppAstNode::AstType::Write: return "Write";
-    case CppAstNode::AstType::VirtualCall: return "VirtualCall";
-    case CppAstNode::AstType::ParameterTypeLoc: return "ParameterTypeLoc";
-    case CppAstNode::AstType::ReturnTypeLoc: return "ReturnTypeLoc";
-    case CppAstNode::AstType::FieldTypeLoc: return "FieldTypeLoc";
-    case CppAstNode::AstType::GlobalTypeLoc: return "GlobalTypeLoc";
-    case CppAstNode::AstType::LocalTypeLoc: return "LocalTypeLoc";
-    case CppAstNode::AstType::Other: return "Other";
-  }
-
-  return std::string();
 }
 
 #pragma db view object(CppAstNode)

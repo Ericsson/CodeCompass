@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <stack>
 
+#include <boost/log/trivial.hpp>
+
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/AST/Decl.h>
@@ -75,18 +77,8 @@ public:
       _clangToAstNodeId(clangToAstNodeId_)
   {
     const std::string cppSourceType = "CPP";
-
     _cppSourceType->id = util::fnvHash(cppSourceType);
     _cppSourceType->name = cppSourceType;
-
-    (util::OdbTransaction(_ctx.db))([&cppSourceType, this]{
-      typedef odb::query<model::FileType> FileTypeQuery;
-      if (!_ctx.db->query_one<model::FileType> (
-        FileTypeQuery::name == cppSourceType))
-      {
-        _ctx.db->persist(_cppSourceType);
-      }
-    });
   }
 
   ~ClangASTVisitor()
@@ -652,7 +644,14 @@ public:
 
       typeAstNode->id = model::createIdentifier(*typeAstNode);
 
-      _astNodes.push_back(typeAstNode);
+      // For compiler generated copy and move constructors have one parameter
+      // with the same type without name. Since these parameters and their types
+      // are invisible in the source code, all properties of the variable types
+      // are the same. This is the reason why it is checked whether the cache
+      // contains the non-existing AST node which belongs to the arguments'
+      // type.
+      if (insertToCache(0, typeAstNode))
+        _astNodes.push_back(typeAstNode);
     }
 
     //--- CppVariable ---//
@@ -1091,13 +1090,16 @@ private:
       {
         _ctx.db->persist(*item);
       }
-      catch (const odb::object_already_persistent&)
+      catch (const odb::object_already_persistent& ex)
       {
-        // TODO: How can this happen in only one translation unit?
-        // TODO: It should be checked if there are overlapping cases.
+        BOOST_LOG_TRIVIAL(warning)
+          << item->toString() << std::endl
+          << ex.what() << std::endl
+          << "AST nodes in this translation unit will be ignored!";
       }
-      catch (const odb::database_exception&)
+      catch (const odb::database_exception& ex)
       {
+        BOOST_LOG_TRIVIAL(debug) << ex.what();
         // TODO: Error code should be checked and rethrow if it is not unique
         // constraint error. Error code may be database specific.
       }

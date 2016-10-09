@@ -69,7 +69,7 @@ std::string getMangledName(
 
       if (const clang::ParmVarDecl* pvd =
           llvm::dyn_cast<clang::ParmVarDecl>(nd_))
-        result +=  ':' + std::to_string(pvd->getFunctionScopeIndex());
+        result += ':' + std::to_string(pvd->getFunctionScopeIndex());
     }
 
     return result;
@@ -130,12 +130,15 @@ std::string getMangledName(
     else
       mangleContext_->mangleName(fd, out);
     
-    // TODO: The function's own mangled name should be enough. The suffix
-    // shouldn't be necessary. The reason is
-    // odb::details::shared_ptr::shared_ptr<X> where there is a template and a
-    // non-template version, and their mangled name is the same.
-    std::string suffix = getSuffixFromLoc(fileLoc_);
-    return out.str() + (suffix.empty() ? "" : ':' + suffix);
+    // TODO: In the case when a function has a template and a non-template
+    // version then their mangled name is the same as long as the template is
+    // not instantiated. Distinguising them by their locations is not good,
+    // because if there is a function which has two versions in an #ifdef ...
+    // #else ... #endif section then every usage will also have two versions.
+    // So if a function has a template and a non-template version at the same
+    // time then querying the definition of the non-template usage the template
+    // version also returns.
+    return out.str();
   }
 
   return nd_->getQualifiedNameAsString();
