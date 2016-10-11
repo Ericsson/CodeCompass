@@ -21,6 +21,11 @@
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg" width="30%" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg" width="30%" />
 
+##Getting Started##
+
+* [Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
+* [Parse your fist project](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
+
 ## Full Documentation
 See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentation.
 
