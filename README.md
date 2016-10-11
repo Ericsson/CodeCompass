@@ -7,13 +7,12 @@
 #Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)
 
 ## Features
+* Full C/C++ Analysis (based on Clang): Jump to definition, Call hierarchy, virtual caller/callee lookup, build diagrams
+* Fast Navigation among source code elements even for huge (>1GB) source code base
+* Deep Parsing for: C, C++, Java 
+* Shallow parsing & Quick Search for: C, C++, Java, Bash, Python, Make, Perl
+* Architecture visualization: Call Graph, Build graphs, UML class diagrams, CodeBites, ...
 * User Friendly Web UI
-* Fast Navigation among source code elements.  
-* Many languages supported. 
-* Deep Parsing for: C, C++, Java and more is coming.
-* Shallow parsing & Search for: C, C++, Java, Bash, Python, Make, Perl
-* Many Diagrams: Call Path, Inheritance, Aggregation, CodeBites, ...
-* Scalable. Quick Response time even for large (100Mb) source code base.
 
 ## Screenshots
 
@@ -35,7 +34,7 @@ See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentat
 * OpenLDAP
 
 ##Requirements:
-* Firefox 4 and above
+* Firefox 18 and above
 * Chrome
 * IE above version 10
 
