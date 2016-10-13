@@ -859,7 +859,7 @@ build_xercesc()
 {
   dep gcc
   
-  download http://xenia.sote.hu/ftp/mirrors/www.apache.org//xerces/c/3/sources/xerces-c-3.1.1.tar.gz 
+  download http://archive.apache.org/dist/xerces/c/3/sources/xerces-c-3.1.1.tar.gz
   compile xercesc xerces-c-3.1.1 bin/SAX2Print
 }
 
