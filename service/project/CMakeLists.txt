@@ -51,6 +51,19 @@ target_compile_options(projectthrift PUBLIC -fPIC)
 
 add_dependencies(projectthrift commonthrift)
 
+set(CMAKE_JAVA_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/lib/java/*)
+
+add_jar(corethriftjava
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Description.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/FilePosition.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/FileRange.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/InvalidId.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/InvalidInput.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Position.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Range.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Timeout.java
+  OUTPUT_NAME corethrift)
+
 add_library(projectservice SHARED
   src/projectservice.cpp
   src/plugin.cpp)
@@ -63,4 +76,5 @@ target_link_libraries(projectservice
   commonthrift)
 
 install(TARGETS projectservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_jar(corethriftjava "${INSTALL_JAVA_LIB_DIR}")
 install_js_thrift(gen-js/)

@@ -14,8 +14,10 @@ WorkspaceOptions parseConfigFile(const std::string& filePath_)
   const std::size_t prefLen = prefix.length();
 
   std::map<std::string, std::string WorkspaceOption::*> wsOptAttrs = {
-    { "connection", &WorkspaceOption::connectionString },
-    { "description", &WorkspaceOption::description }
+    { "connection",  &WorkspaceOption::connectionString },
+    { "description", &WorkspaceOption::description },
+    { "datadir",     &WorkspaceOption::datadir },
+    { "searchdir",   &WorkspaceOption::searchdir }
   };
 
   //--- Parse config file ---//

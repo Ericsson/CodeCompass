@@ -1,8 +1,8 @@
 #include <util/logutil.h>
 
-#include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/expressions.hpp>
+#include <boost/log/attributes.hpp>
 
 namespace cc
 {
@@ -46,6 +46,13 @@ void logFormatter(
   }
 }
 
+}
+
+boost::log::trivial::severity_level getSeverityLevel()
+{
+ return boost::log::attribute_cast<
+   boost::log::attributes::mutable_constant<boost::log::trivial::severity_level>>(
+     boost::log::core::get()->get_global_attributes()["Severity"]).get();
 }
 
 void initLogger()

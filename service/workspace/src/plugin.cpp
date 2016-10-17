@@ -19,7 +19,7 @@ void registerPlugin(
   cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
 {
   const cc::util::WorkspaceOptions workspaces
-    = cc::util::parseConfigFile(vm_["workspace"].as<std::string>());
+    = cc::util::parseConfigFile(vm_["workspaceCfgFile"].as<std::string>());
 
   std::shared_ptr<cc::webserver::RequestHandler> handler(
     new cc::webserver::ThriftHandler<cc::service::workspace::WorkspaceServiceProcessor>(

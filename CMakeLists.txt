@@ -15,6 +15,8 @@ find_package(Boost   REQUIRED)
 find_package(Odb     REQUIRED)
 find_package(Thrift  REQUIRED)
 find_package(GTest)
+find_package(Java REQUIRED)
+include(UseJava)
 
 add_subdirectory(model)
 add_subdirectory(util)
@@ -23,3 +25,8 @@ add_subdirectory(plugins)
 add_subdirectory(webserver)
 add_subdirectory(service)
 add_subdirectory(webgui)
+
+# Install java libraries
+install(DIRECTORY
+  lib/java/
+  DESTINATION "${INSTALL_JAVA_LIB_DIR}")

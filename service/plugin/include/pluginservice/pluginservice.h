@@ -23,6 +23,8 @@ public:
 
   void getWebPlugins(std::vector<std::string> & _return) override;
 
+  void getWebStylePlugins(std::vector<std::string> & _return) override;
+
 private:
   webserver::PluginHandler<webserver::RequestHandler>* _pluginHandler;
   const boost::program_options::variables_map& _configuration;
