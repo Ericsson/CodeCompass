@@ -14,7 +14,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/common_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
+    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
   COMMENT
@@ -30,7 +30,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/ProjectService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
+    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
   COMMENT
@@ -63,3 +63,4 @@ target_link_libraries(projectservice
   commonthrift)
 
 install(TARGETS projectservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_js_thrift(gen-js/)

@@ -11,6 +11,7 @@ nbproject
 **/*odb\.sql
 
 **/gen-cpp/
+**/gen-js/
 
 # Other
 

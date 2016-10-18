@@ -52,3 +52,29 @@ function(install_sql _dir)
     DESTINATION share/codecompass/sql
     FILES_MATCHING PATTERN "*.sql")
 endfunction(install_sql)
+
+# This function can be used to install the thrift generated .js files to a
+# specific directory. These files will be used at the gui
+# @param _dir The gen-js directory under which the .js files are located.
+function(install_js_thrift _dir)
+  install(
+    DIRECTORY ${_dir}
+    DESTINATION ${INSTALL_GEN_DIR}
+    FILES_MATCHING PATTERN "*.js")
+endfunction(install_js_thrift)
+
+# Install plugins webgui
+# @parameter _dir - webgui directory of the plugin
+function(install_webplugin _dir)
+  # Copy javascript files
+  file(GLOB _js "${_dir}/js/*.js")
+  install(FILES ${_js} DESTINATION "${INSTALL_SCRIPTS_DIR}/view" )
+
+  # Copy css files
+  file(GLOB _css "${_dir}/css/*.css")
+  install(FILES ${_css} DESTINATION "${INSTALL_WEBROOT_DIR}/style" )
+
+  # Copy images
+  file(GLOB _images "${_dir}/images/*.[png|jpg]")
+  install(FILES ${_images} DESTINATION "${INSTALL_WEBROOT_DIR}/images" )
+endfunction(install_webplugin)

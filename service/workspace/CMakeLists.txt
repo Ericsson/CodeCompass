@@ -15,7 +15,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/WorkspaceService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
+    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
   COMMENT
@@ -38,3 +38,4 @@ target_link_libraries(workspaceservice
   workspacethrift)
 
 install(TARGETS workspaceservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_js_thrift(gen-js/)

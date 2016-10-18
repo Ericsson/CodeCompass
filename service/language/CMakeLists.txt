@@ -12,7 +12,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/LanguageService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
+    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
   COMMENT
@@ -26,3 +26,4 @@ add_library(languagethrift STATIC
 target_compile_options(languagethrift PUBLIC -fPIC)
 
 add_dependencies(languagethrift projectthrift)
+install_js_thrift(gen-js/)

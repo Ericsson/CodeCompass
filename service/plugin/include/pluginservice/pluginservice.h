@@ -16,12 +16,15 @@ class PluginServiceHandler : virtual public PluginServiceIf
 {
 public:
   PluginServiceHandler(
-    webserver::PluginHandler<cc::webserver::RequestHandler>*);
+    webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_,
+    const boost::program_options::variables_map& configuration_);
 
   void getPlugins(std::vector<std::string>& return_) override;
 
+  void getWebPlugins(std::vector<std::string> & _return) override;
 private:
   webserver::PluginHandler<webserver::RequestHandler>* _pluginHandler;
+  const boost::program_options::variables_map& _configuration;
 };
 
 } // plugin

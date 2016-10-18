@@ -18,7 +18,7 @@ void registerPlugin(
 {
   std::shared_ptr<cc::webserver::RequestHandler> handler(
     new cc::webserver::ThriftHandler<cc::service::plugin::PluginServiceProcessor>(
-      new cc::service::plugin::PluginServiceHandler(pluginHandler_), "*"));
+      new cc::service::plugin::PluginServiceHandler(pluginHandler_, config_), "*"));
 
   pluginHandler_->registerImplementation("PluginService", handler);
 }

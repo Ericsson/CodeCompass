@@ -1,0 +1,253 @@
+@charset "UTF-8";
+
+@font-face {
+  font-family: "CodeCompass";
+  src:url("../fonts/codecompass.eot");
+  src:url("../fonts/codecompass.eot?#iefix") format("embedded-opentype"),
+    url("../fonts/codecompass.woff") format("woff"),
+    url("../fonts/codecompass.ttf") format("truetype"),
+    url("../fonts/codecompass.svg#codecompass") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.icon{
+    font-family:'CodeCompass',Sans-Serif;
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/** Properties **/
+
+.icon-Name::before{
+  content: 'a';
+}
+
+.icon-user::before{
+  content: 'a';
+}
+
+.icon-Qualified-name::before{
+  content: 'b';
+}
+
+.icon-Definition::before{
+  content: 'c';
+}
+
+/** Tags **/
+
+.icon-plus::before{
+  content: 'I';
+  color: green;
+}
+
+.icon-minus::before{
+  content: 'J';
+  color: red;
+}
+
+.icon-zero::before{
+  content: 'M';
+  color: blue;
+}
+
+/** Icons * */
+
+.icon-question::before{
+  content: 'i';
+}
+
+.icon-search::before{
+  content: 'j';
+}
+
+.icon-right::before{
+  content: 'k';
+}
+
+.icon-left::before{
+  content: 'l';
+}
+
+.icon-bug::before{
+  content: 'm';
+}
+
+.icon-folder-up::before{
+  content: 'A';
+  color: #43ba45;
+  font-size: 0.9em;
+}
+
+/** Infotree icons * */
+
+.icon-info::before{
+  content : 'n'
+}
+
+.icon-Method::before{
+  content : 'o'
+}
+
+.icon-Local-variables::before{
+  content : 'p'
+}
+
+.icon-Declaration::before{
+  content : 'q'
+}
+
+.icon-Data-member::before{
+  content : 'r'
+}
+
+.icon-Callee::before,
+.icon-Call::before{
+  content : 's'
+}
+
+.icon-Caller::before{
+  content : 'B'
+}
+
+.icon-Writes::before{
+  content : 't'
+}
+
+.icon-Friends::before{
+  content : 'u'
+}
+
+.icon-Points::before{
+  content : 'v'
+}
+
+.icon-Aliases::before{
+  content : 'w'
+}
+
+.icon-Reads::before{
+  content : 'x'
+}
+
+.icon-Macro::before{
+  content : 'y'
+}
+
+.icon-Usage::before{
+  content : 'z'
+}
+
+.icon-Abstract-type::before{
+  content : 'C'
+}
+
+.icon-Signature::before{
+  content : 'D'
+}
+
+.icon-POD-type::before{
+  content : 'E'
+}
+
+.icon-Parameters::before{
+  content : 'F'
+}
+
+.icon-Inherited-by::before{
+  content : 'G'
+}
+
+.icon-Inherits-from::before{
+  content : 'H'
+}
+
+.icon-Virtual-call::before{
+  content : 'K'
+}
+
+.icon-Function-pointer-call::before{
+  content : 'L'
+}
+
+.icon-Type::before{
+  content : 'N'
+}
+
+.icon-Underlying-type::before{
+  content : 'T'
+}
+
+.icon-project::before{
+  content : 'O'
+}
+
+.icon-file::before{
+  content : 'Q'
+}
+
+.icon-node::before{
+  content : 'R'
+}
+
+.icon-star::before{
+  content: 'U';
+}
+
+.icon-folder::before{
+  content: 'V';
+}
+
+.icon-folder-with-file::before{
+  content: 'W';
+}
+
+.icon-twoarrow-left::before{
+  content: 'X';
+}
+
+.icon-twoarrow-right::before{
+  content: 'Y';
+}
+
+.icon-arrowhead-right::before{
+  content: 'Z';
+}
+
+.icon-empty-file::before{
+  content: 'P';
+}
+
+/** File types **/
+
+.icon-file-content::after{
+  font-family: initial;
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  font-size: 7px;
+  font-weight: bold;
+  width: 10px;
+  text-align: center;
+}
+
+.icon-ext-cpp::after{
+  content: 'C++';
+  font-size: 4px;
+}
+
+.icon-ext-json::after{
+  content: 'json';
+  font-size: 4px;
+}
+
+.icon-ext-h::after{
+  content: 'h';
+}

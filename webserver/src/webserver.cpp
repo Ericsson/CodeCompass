@@ -36,10 +36,13 @@ po::options_description commandLineArguments()
 
 int main(int argc, char* argv[])
 {
+  std::string binDir = boost::filesystem::canonical(
+      boost::filesystem::path(argv[0]).parent_path()).string();
+
   cc::util::initLogger();
  
   cc::webserver::MainRequestHandler requestHandler;
-  requestHandler.pluginHandler.addDirectory(WEBSERVER_PLUGIN_DIR);
+  requestHandler.pluginHandler.addDirectory(binDir + "/../lib/serviceplugin");
 
   //--- Process command line arguments ---//
 
@@ -84,6 +87,9 @@ int main(int argc, char* argv[])
         << "  description = " << wsOpt.description << std::endl;
     }
   }
+  vm.insert(std::make_pair("binDir", po::variable_value(binDir, false)));
+  vm.insert(std::make_pair("webguiDir", po::variable_value(
+    binDir + "/../share/codecompass/webgui/", false)));
 
   requestHandler.pluginHandler.configure(vm);
 
@@ -91,6 +97,7 @@ int main(int argc, char* argv[])
 
   cc::webserver::ThreadedMongoose server(vm["threads"].as<int>());
   server.setOption("listening_port", std::to_string(vm["port"].as<int>()));
+  server.setOption("document_root", vm["webguiDir"].as<std::string>());
 
   BOOST_LOG_TRIVIAL(info) 
     << "Mongoose web server starting on port "
