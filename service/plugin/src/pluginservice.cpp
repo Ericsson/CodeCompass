@@ -1,6 +1,4 @@
 #include <pluginservice/pluginservice.h>
-#include <iostream>
-namespace fs = boost::filesystem;
 
 namespace cc
 { 
@@ -22,29 +20,26 @@ void PluginServiceHandler::getPlugins(std::vector<std::string>& return_)
     return_.push_back(it.first);
 }
 
-void PluginServiceHandler::getWebPlugins(std::vector<std::string> & _return)
+void PluginServiceHandler::getWebPlugins(std::vector<std::string>& return_)
 {
-    std::string webrootDir = _configuration["webguiDir"].as<std::string>();
-    std::vector<std::string> dirs =
-    {
-      webrootDir + "/scripts/codecompass/generated",
-      webrootDir + "/scripts/codecompass/view"
-    };
+  std::string webrootDir = _configuration["webguiDir"].as<std::string>();
+  std::vector<std::string> dirs =
+  {
+    webrootDir + "/scripts/codecompass/generated",
+    webrootDir + "/scripts/codecompass/view"
+  };
 
-    for(const std::string& dir : dirs)
+  for (const std::string& dir : dirs)
+  {
+    boost::filesystem::recursive_directory_iterator it(dir), end;
+    while (it != end)
     {
-      fs::recursive_directory_iterator it(dir), end;
-      while (it != end)
-      {
-        if(!fs::is_directory(it->path()))
-        {
-          std::string path = it->path().string();
-          std::string relativePath = path.substr(webrootDir.size());
-          _return.push_back(relativePath);
-        }
-        ++it;
-      }
+      if (!boost::filesystem::is_directory(it->path()))
+        return_.push_back(it->path().string().substr(webrootDir.size()));
+
+      ++it;
     }
+  }
 }
 
 }

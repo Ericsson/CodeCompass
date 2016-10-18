@@ -8,7 +8,6 @@ install(FILES
   index.html
   startpage.html
   credits.html
-  #PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_EXECUTE
   DESTINATION ${INSTALL_WEBROOT_DIR})
 
 # Install npm packages

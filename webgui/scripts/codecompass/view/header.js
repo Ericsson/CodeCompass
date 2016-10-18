@@ -75,7 +75,7 @@ function (topic, declare, DropDownMenu, DropDownButton, Select, MenuItem,
         options  : workspaces,
         value    : urlHandler.getState('wsid') || null,
         onChange : function (value) {
-          urlHandler.setState({'wsid': value});
+          urlHandler.setState({ 'wsid' : value });
           location.reload(true);
         }
       });

@@ -70,49 +70,6 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
     },
     
     /**
-     * This function converts an object to array. The length of resulting array
-     * is even number. Odd elements are object properties and even elements are
-     * object values. Only those values are placed in the array which are not
-     * objects.
-     * @param {Object} object Simple object to convert to array.
-     */
-    flattenObject : function (object) {
-      var result = [];
-      
-      for (var property in object)
-        if (object.hasOwnProperty(property) &&
-            !lang.isObject(object[property])) {
-          result.push(property);
-          result.push(object[property]);
-        }
-      
-      return result;
-    },
-    
-    /**
-     * This function does the reverese operation as flattenObject. It expects an
-     * array of even number elements and converts it to an object of which the
-     * properties are the odd elements of the array and the values are the even
-     * elements of the array.
-     * @param {Array} arr Array to convert to object.
-     */
-    unflattenObject : function (arr) {
-      var result = {};
-      var key = null;
-      
-      array.forEach(arr, function (elem) {
-        if (key === null)
-          key = elem;
-        else {
-          result[key] = elem;
-          key = null;
-        }
-      });
-      
-      return result;
-    },
-    
-    /**
      * This function returns the index of the element in the array to which the
      * "f" predicate returns true. If no element is found then the function
      * returns -1.
@@ -126,44 +83,6 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
       return -1;
     },
     
-    /**
-     * This function changes <, > and & characters respectively to &lt;, &gt and
-     * &amp;.
-     * @param {String} string Input string
-     */
-    escapeTags : function (string) {
-      return string.replace(/&/g, '&amp;')
-                   .replace(/</g, '&lt;')
-                   .replace(/>/g, '&gt;');
-    },
-    
-    /**
-     * This function converts the given range to string. The function can have
-     * 1, 2 or 4 parameters. In case of 1 parameter, this parameter is a range
-     * with 'from' and 'to' properties which are also objects with 'line' and
-     * 'column' properties. In case of two parameters these are the 'from' and
-     * 'to' objects themselves. In case of four parameters these are the four
-     * coordinates. In these cases the returning string contains the four
-     * coordinates of the given ranges separated by a pipe (|), otherwise
-     * undefined returns.
-     */
-    rangeToString : function () {
-      switch (arguments.length) {
-        case 1:
-          return arguments[0].from.line   + '|' +
-                 arguments[0].from.column + '|' +
-                 arguments[0].to.line     + '|' +
-                 arguments[0].to.column;
-        case 2:
-          return arguments[0].line   + '|' +
-                 arguments[0].column + '|' +
-                 arguments[1].line   + '|' +
-                 arguments[1].column;
-        case 4:
-          return Array.prototype.join.call(arguments, '|'); 
-      }
-    },
-
     /**
      *
      *  MD5 (Message-Digest Algorithm)

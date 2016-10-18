@@ -8,7 +8,6 @@
 
 #include "threadedmongoose.h"
 #include "mainrequesthandler.h"
-#include "config.h"
 
 namespace po = boost::program_options;
 
@@ -37,7 +36,7 @@ po::options_description commandLineArguments()
 int main(int argc, char* argv[])
 {
   std::string binDir = boost::filesystem::canonical(
-      boost::filesystem::path(argv[0]).parent_path()).string();
+    boost::filesystem::path(argv[0]).parent_path()).string();
 
   cc::util::initLogger();
  

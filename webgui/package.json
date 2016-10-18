@@ -5,17 +5,17 @@
   "license": "BSD-2-Clause",
   "description": "CodeCompass webgui",
   "dependencies": {
-    "dojo"               : ">=1.11.2",
-    "dijit"              : ">=1.11.2",
-    "dojox"              : ">=1.11.2",
-    "d3"                 : ">=4.2.6",
-    "thrift"             : ">=0.9.3",
-    "codemirror"         : ">=5.19.0",
-    "jquery.fancytree"   : ">=2.19.0",
-    "svg-pan-zoom"       : ">=2.19.0",
-    "marked"             : ">=0.3.6",
-    "jsplumb"            : "~2.2.1",
-    "jquery"             : ">=3.1.1"
+    "dojo"             : ">=1.11.2",
+    "dijit"            : ">=1.11.2",
+    "dojox"            : ">=1.11.2",
+    "d3"               : ">=4.2.6",
+    "thrift"           : ">=0.9.3",
+    "codemirror"       : ">=5.19.0",
+    "jquery.fancytree" : ">=2.19.0",
+    "svg-pan-zoom"     : ">=2.19.0",
+    "marked"           : ">=0.3.6",
+    "jsplumb"          : "~2.2.1",
+    "jquery"           : ">=3.1.1"
   },
   "repository" : {
     "type" : "git",
