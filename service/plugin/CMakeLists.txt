@@ -15,7 +15,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/PluginService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
+    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
   COMMENT
@@ -38,3 +38,4 @@ target_link_libraries(pluginservice
   pluginthrift)
 
 install(TARGETS pluginservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_js_thrift(gen-js/)

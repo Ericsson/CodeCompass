@@ -23,11 +23,11 @@ struct SyntaxHighlight
 service LanguageService
 {
   /**
-   * Returns the file types which can be used to associate
+   * Return the file types which can be used to associate
    * the file types with the service
    * @return File types
    */
-  map<string, i32> getFileTypes()
+  list<string> getFileTypes()
 
   /**
    * Returns an AstNodeInfo object for the given AST node ID.

@@ -36,7 +36,7 @@ public:
       = boost::program_options::variables_map());
 
   void getFileTypes(
-    std::map<std::string, std::int32_t>& _return) override;
+    std::vector<std::string>& _return) override;
 
   void getAstNodeInfo(
     AstNodeInfo& return_,

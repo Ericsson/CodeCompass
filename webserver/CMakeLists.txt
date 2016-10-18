@@ -1,7 +1,3 @@
-configure_file(
-  src/config.h.in
-  ${PROJECT_SOURCE_DIR}/webserver/src/config.h)
-
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp

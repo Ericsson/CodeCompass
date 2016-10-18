@@ -1,0 +1,525 @@
+html, body {
+  height: 100%;
+}
+
+svg {
+  display: block;
+}
+
+/* User guide */
+
+.image {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.image img {
+  border: 1px solid gray;
+  padding: 3px;
+}
+
+.image .label {
+  font-style: italic;
+}
+
+.bluePanel {
+  background-color: #dfedfb;
+  border: 1px solid #759dc0;
+/*  padding-top: 10px;
+  padding-bottom: 10px;*/
+  padding: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+
+.claro .dijitAccordionContainer .dijitAccordionContainer-child{
+  padding: 3px;
+}
+
+.claro .dijitContentPane {
+  padding: 3px;
+}
+/* nested layouts */
+.claro .dijitTabContainerTop-dijitContentPane,
+.claro .dijitTabContainerLeft-dijitContentPane,
+.claro .dijitTabContainerBottom-dijitContentPane,
+.claro .dijitTabContainerRight-dijitContentPane,
+.claro .dijitAccordionContainer-dijitContentPane {
+  background-color: #ffffff;
+  padding: 3px;
+}
+.claro .dijitSplitContainer-dijitContentPane,
+.claro .dijitBorderContainer-dijitContentPane {
+  background-color: #ffffff;
+  padding: 0px;
+}
+
+.highlight {
+  position: relative;
+  width: 100%;
+  background-color: #dfedfb;
+  border: 1px solid #557799;
+  list-style: none;
+  font-size: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+
+.highlight ul {
+  margin: 0;
+  padding-left: 25px;
+  width: 60%;
+}
+
+.highlight .icon {
+  margin: 15px 10px 0px 15px;
+  height: 40px;
+}
+
+/* Main header */
+
+#cc-mainheader{
+  height: 50px;
+}
+
+#cc-headermenu{
+  position: absolute;
+  right: 5px;
+  top: 0px;
+  padding: 0px;
+  width: auto !important;
+}
+
+.menuicon {
+  width: 16px;
+  height: 16px;
+  color: #316ecf;
+  font-size: 1.2em;
+}
+
+#cc-headerlogo {
+  background: left center no-repeat url(/images/logo.png);
+  width: 200px;
+  height: 100%;
+  background-size: 200px;
+  opacity: 0.8;
+}
+
+.searchtable {
+  width: 60%;
+  margin-left: 280px;
+}
+
+.searchlabel {
+  text-align: right;
+  padding-right: 5px;
+}
+
+.searchhelpcell {
+  padding-left: 5px;
+  width: 30px;
+}
+
+.pathelement {
+  cursor: pointer;
+}
+
+.pathelement:hover {
+  text-decoration: underline;
+}
+
+/* Icons */
+
+.erroricon {
+  width: 30px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.dijitTreeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+#infotree .label{
+  text-decoration: underline;
+}
+
+#infotree .root.label{
+  color: #008715;
+  text-decoration: none;
+}
+
+#infotree .root.value{
+  color: #8D2222;
+}
+
+#infotree .icon,
+#filemanager .icon{
+  color: #1855B6;
+  font-size: 1.5em;
+}
+
+.dijitTreeContentExpanded > .icon{
+  color: #316ECF !important;
+}
+
+#infotree .icon{
+  color: #002661;
+}
+
+#infotree .tag{
+  color: white;
+  background-color: red;
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  text-align: center;
+  font-size: 0.7em;
+  margin-right: 1px;
+}
+
+.dijitTreeRowHover, .dijitTreeContent:hover{
+  cursor:pointer;
+}
+
+/* Browsing history */
+
+.jumpfrom, .jumpto {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Editor */
+
+.editor {
+  height: 100%;
+  width: 100%;
+}
+
+.editor .header {
+  padding: 5px;
+  font-family: Consolas, monaco, monospace;
+  border-bottom: 1px solid gray;
+  background-color: white;
+  word-wrap: break-word;
+}
+
+.editor .header .parsestatus {
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.editor .header .filename {
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+.editor .header .colons {
+  margin: 0px 5px;
+}
+
+.editor .header .close {
+  float: right;
+  cursor: pointer;
+}
+
+.CodeMirror span.CodeMirror-matchingbracket {
+  color: #FFF;
+  background-color: #268;
+  font-weight: bold;
+}
+.CodeMirror span.CodeMirror-nonmatchingbracket {
+  color: #f22;
+}
+
+.CodeMirror-activeline-background {
+  background: #e8f2ff;
+}
+
+.CodeMirror-dialog .jump {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.CodeMirror-dialog .jump img {
+  margin-left: 5px;
+  margin-right: 5px;
+  position: relative;
+  top: 3px;
+}
+
+.CodeMirror-dialog #closesearch {
+  float: right;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.cm-s-default .cm-keyword {color: rgb(0, 0, 255);}
+.cm-s-default .cm-atom {color: #219;}
+.cm-s-default .cm-number {color: #164;}
+.cm-s-default .cm-def {color: #00f;}
+.cm-s-default .cm-variable {color: black;}
+.cm-s-default .cm-variable-2 {color: #05a;}
+.cm-s-default .cm-variable-3 {color: #085;}
+.cm-s-default .cm-property {color: black;}
+.cm-s-default .cm-operator {color: black;}
+.cm-s-default .cm-comment {color: rgb(0, 128, 0);}
+.cm-s-default .cm-string {color: rgb(163, 21, 21);}
+.cm-s-default .cm-string-2 {color: #f50;}
+.cm-s-default .cm-meta {color: #555;}
+.cm-s-default .cm-qualifier {color: #555;}
+.cm-s-default .cm-builtin {color: #30a;}
+.cm-s-default .cm-bracket {color: #997;}
+.cm-s-default .cm-tag {color: #170;}
+.cm-s-default .cm-attribute {color: #00c;}
+.cm-s-default .cm-header {color: blue;}
+.cm-s-default .cm-quote {color: #090;}
+.cm-s-default .cm-hr {color: #999;}
+.cm-s-default .cm-link {color: #00c;}
+
+/* InfoBox */
+
+.infobox {
+  position: absolute !important;
+  top: 100px;
+  left: 100px;
+  width: 500px;
+  height: 300px;
+  border: 1px solid gray;
+  z-index: 15;
+  background-color: white;
+}
+
+.infobox .closebtn {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  cursor: pointer;
+}
+
+.infobox dt, 
+.tooltip-info dt{
+  font-size: 12pt;
+}
+
+.infobox .param dt,
+.tooltip-info .param dt{
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 10px;
+  margin-top: 5px;
+}
+
+.infobox .param dd, 
+.tooltip-info .param dd{
+  margin-left: 20px;
+}
+
+.infobox .node,
+.tooltip-info .node{
+  font-weight: bold;
+  font-style: italic;
+  margin-bottom: 15px;
+}
+
+.infobox p,
+.tooltip-info p{
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
+
+.infobox .group-header,
+.tooltip-info .group-header{
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+
+.infobox .group,
+.tooltip-info .group{
+    padding-left: 15px;
+}
+.infobox .group .node,
+.tooltip-info .group .node{
+    padding: 5px;
+    color: #3D578C;
+    border: 1px solid #C4CFE5;
+    background-color: #EBEFF6;
+}
+
+/* CodeBites */
+
+.cb-label {
+  border: 1px dashed #666;
+  background-color: white;
+  padding: 3px;
+  z-index: 1;
+}
+
+.cb-label-0 { border-color: #42a62c; color: #42a62c; }
+.cb-label-1 { border-color: #2c34a5; color: #2c34a5; }
+.cb-label-2 { border-color: #e5801b; color: #e5801b; }
+.cb-label-3 { border-color: #a0398f; color: #a0398f; }
+.cb-label-4 { border-color: #c91010; color: #c91010; }
+
+.cb-marked-0 { background-color: #5ce53d; }
+.cb-marked-1 { background-color: #3642ed; }
+.cb-marked-2 { background-color: #f7963b; }
+.cb-marked-3 { background-color: #d865c5; }
+.cb-marked-4 { background-color: #f93e3e; }
+
+.cb-marked-select { background-color: #bbcce0; }
+.cb-marked-slicing { background-color: #c3e0bb; }
+
+/* Context Buttons */
+
+.contextButtons {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+}
+
+.contextButtons .dijitButtonNode {
+  display: block;
+}
+
+/* Build log table */
+
+.buildlogtable {
+  border: 1px solid gray;
+  border-collapse: collapse;
+}
+
+.buildlogtable tr:hover {
+  cursor: pointer;
+  background-color: #ddeeff;
+}
+
+.buildlogtable th {
+  text-align: center;
+  font-weight: bold;
+  padding: 5px;
+  border: 1px solid gray;
+  background-color: #eeeeee;
+}
+
+.buildlogtable td {
+  border: 1px solid gray;
+  padding: 3px;
+}
+
+.CodeMirror{
+  padding-top: 0px;
+}
+
+div.CodeMirror-linenumber {
+  white-space: nowrap;
+}
+
+.checkerstep {
+  background-color: #eed;
+}
+
+.checkMsg {
+  background-color: #eed;
+  border: 1px solid #aaa;
+  display: inline-block;
+  padding: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.project-tree-file-manager .dijitTreeExpando{
+    display:none;
+}
+
+.dijitAccordionTitleFocus{
+    position: relative;
+}
+
+#select-file-manager{
+  right: 0;
+  top: -2px;
+  position: absolute;
+}
+
+/* Metrics */
+
+#metrics_chart {
+  width: 960px;
+  height: 500px;
+  margin: 10px auto;
+}
+
+#metrics_chart text {
+  fill: white;
+  pointer-events: none;
+}
+
+#metrics_chart .grandparent text {
+  font-weight: bold;
+}
+
+#metrics_chart rect {
+  fill: none;
+  stroke: #fff;
+}
+
+#metrics_chart rect.parent, #metrics_chart .grandparent rect {
+  stroke-width: 5px;
+}
+
+#metrics_chart .grandparent rect {
+  fill: orange;
+}
+
+#metrics_chart .grandparent:hover rect {
+  fill: #ee9700;
+}
+
+#metrics_chart .children rect.parent, #metrics_chart .grandparent rect {
+  cursor: pointer;
+}
+
+#metrics_chart .children rect.parent {
+  fill: #000;
+  fill-opacity: .1;
+}
+
+#metrics_chart .children:hover rect.child {
+  fill: #000;
+  fill-opacity: .2;
+}
+
+#dimensionPanel {
+  width: 450px;
+  margin: 0 auto;
+}
+
+#dimensionPanel #fileTypeDiv {
+  width: 150px;
+  height: 50px;
+  overflow: auto;
+  border: 1px solid #759dc0;
+  padding: 3px;
+  background-color: #edf4fa;
+}
+
+#dimensionPanel #dimensionTable {
+  margin: 0 auto;
+}
+
+#file-manager-path{
+  margin: 0px 5px;
+  color: grey;
+}
+
+#userguide img{
+  max-width: 100%;
+}

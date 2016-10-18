@@ -112,9 +112,9 @@ CppServiceHandler::CppServiceHandler(
 }
 
 void CppServiceHandler::getFileTypes(
-  std::map<std::string, std::int32_t>& _return)
+  std::vector<std::string>& _return)
 {
-  _return["CPP"] = util::fnvHash("CPP");
+  _return.push_back("CPP");
 }
 
 void CppServiceHandler::getAstNodeInfo(

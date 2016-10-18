@@ -7,6 +7,18 @@ set(INSTALL_PARSER_DIR "${INSTALL_LIB_DIR}/parserplugin")
 # Installation directory for service libraries
 set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/serviceplugin")
 
+# Installation directory of web gui
+set(INSTALL_WEBROOT_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/webgui")
+
+# Installation directory of scripts
+set(INSTALL_WEBPLUGIN_DIR "${INSTALL_WEBROOT_DIR}/scripts/plugins")
+
+# Installation directory of scripts
+set(INSTALL_SCRIPTS_DIR "${INSTALL_WEBROOT_DIR}/scripts/codecompass")
+
+# Installation directory of thrift api's
+set(INSTALL_GEN_DIR "${INSTALL_SCRIPTS_DIR}/generated")
+
 #Installation directory for executables
 set(INSTALL_BIN_DIR "bin")
 
