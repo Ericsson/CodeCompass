@@ -111,10 +111,9 @@ CppServiceHandler::CppServiceHandler(
 {
 }
 
-void CppServiceHandler::getFileTypes(
-  std::vector<std::string>& _return)
+void CppServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
-  _return.push_back("CPP");
+  return_.push_back("CPP");
 }
 
 void CppServiceHandler::getAstNodeInfo(
@@ -190,8 +189,9 @@ void CppServiceHandler::getProperties(
     {
       case model::CppAstNode::SymbolType::Variable:
       {
-        model::CppVariable variable = _db->query_value<model::CppVariable>(
+        VarResult variables = _db->query<model::CppVariable>(
           VarQuery::mangledNameHash == defs.front().mangledNameHash);
+        model::CppVariable variable = *variables.begin();
 
         return_["Name"] = variable.name;
         return_["Qualified name"] = variable.qualifiedName;
@@ -201,8 +201,9 @@ void CppServiceHandler::getProperties(
 
       case model::CppAstNode::SymbolType::Function:
       {
-        model::CppFunction function = _db->query_value<model::CppFunction>(
+        FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == defs.front().mangledNameHash);
+        model::CppFunction function = *functions.begin();
 
         return_["Name"] = function.qualifiedName.substr(
           function.qualifiedName.find_last_of(':') + 1);
@@ -214,8 +215,9 @@ void CppServiceHandler::getProperties(
 
       case model::CppAstNode::SymbolType::Type:
       {
-        model::CppType type = _db->query_value<model::CppType>(
+        TypeResult types = _db->query<model::CppType>(
           TypeQuery::mangledNameHash == defs.front().mangledNameHash);
+        model::CppType type = *types.begin();
 
         if (type.isAbstract)
           return_["Abstract type"] = "true";
@@ -230,8 +232,9 @@ void CppServiceHandler::getProperties(
 
       case model::CppAstNode::SymbolType::Typedef:
       {
-        model::CppTypedef type = _db->query_value<model::CppTypedef>(
-          TypedefQuery::astNodeId == node.id);
+        TypedefResult types = _db->query<model::CppTypedef>(
+          TypedefQuery::mangledNameHash == defs.front().mangledNameHash);
+        model::CppTypedef type = *types.begin();
 
         return_["Name"] = type.name;
         return_["Qualified name"] = type.qualifiedName;
@@ -241,9 +244,10 @@ void CppServiceHandler::getProperties(
 
       case model::CppAstNode::SymbolType::EnumConstant:
       {
-        model::CppEnumConstant enumConst
-          = _db->query_value<model::CppEnumConstant>(
-              EnumConstQuery::astNodeId == node.id);
+        EnumConstResult enumConsts
+          = _db->query<model::CppEnumConstant>(
+              EnumConstQuery::mangledNameHash == defs.front().mangledNameHash);
+        model::CppEnumConstant enumConst = *enumConsts.begin();
 
         return_["Name"] = enumConst.name;
         return_["Qualified name"] = enumConst.qualifiedName;
@@ -406,12 +410,13 @@ void CppServiceHandler::getReferences(
       {
         node = queryCppAstNode(astNodeId_);
 
-        model::CppFunction function = _db->query_value<model::CppFunction>(
+        FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == node.mangledNameHash);
+        model::CppFunction function = *functions.begin();
 
         for (auto var : function.parameters)
           nodes.push_back(queryCppAstNode(
-            std::to_string(var.load()->astNodeId.get())));
+            std::to_string(var.load()->astNodeId)));
 
         break;
       }
@@ -420,12 +425,13 @@ void CppServiceHandler::getReferences(
       {
         node = queryCppAstNode(astNodeId_);
 
-        model::CppFunction function = _db->query_value<model::CppFunction>(
+        FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == node.mangledNameHash);
+        model::CppFunction function = *functions.begin();
 
         for (auto var : function.locals)
           nodes.push_back(queryCppAstNode(
-            std::to_string(var.load()->astNodeId.get())));
+            std::to_string(var.load()->astNodeId)));
 
         break;
       }
@@ -555,9 +561,10 @@ void CppServiceHandler::getReferences(
 
           if (!defs.empty())
           {
-            model::CppFunctionPtr funcNode = _db->query_one<model::CppFunction>(
+            FuncResult funcNodes = _db->query<model::CppFunction>(
               FuncQuery::mangledNameHash == defs.front().mangledNameHash);
-            if (funcNode && funcNode->isVirtual)
+            model::CppFunction funcNode = *funcNodes.begin();
+            if (funcNode.isVirtual)
               tags[astNode->id].push_back("virtual");
           }
 
@@ -586,8 +593,9 @@ void CppServiceHandler::getReferences(
       {
         node = queryCppAstNode(astNodeId_);
 
-        model::CppTypedef type = _db->query_value<model::CppTypedef>(
+        TypedefResult types = _db->query<model::CppTypedef>(
           TypedefQuery::mangledNameHash == node.mangledNameHash);
+        model::CppTypedef type = *types.begin();
 
         AstResult result = _db->query<model::CppAstNode>(
           AstQuery::mangledNameHash == type.typeHash &&
@@ -602,8 +610,9 @@ void CppServiceHandler::getReferences(
       {
         node = queryCppAstNode(astNodeId_);
 
-        model::CppEnum cppEnum = _db->query_value<model::CppEnum>(
+        EnumResult cppEnums = _db->query<model::CppEnum>(
           EnumQuery::mangledNameHash == node.mangledNameHash);
+        model::CppEnum cppEnum = *cppEnums.begin();
 
         std::transform(
           cppEnum.enumConstants.begin(),
@@ -611,7 +620,7 @@ void CppServiceHandler::getReferences(
           std::back_inserter(nodes),
           [this](const auto& enumConst) {
             return this->queryCppAstNode(
-              std::to_string(enumConst.load()->astNodeId.get()));
+              std::to_string(enumConst.load()->astNodeId));
           });
 
         break;

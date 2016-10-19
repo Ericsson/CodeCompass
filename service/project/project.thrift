@@ -15,7 +15,7 @@ struct FileInfo
 {
   1:common.FileId id,
   2:string name,
-  3:i32 type,
+  3:string type,
   4:string path,
   5:common.FileId parent,  
   6:bool hasChildren,

@@ -23,16 +23,14 @@ struct CppEntity
   CppEntityId id;
 
   #pragma db unique
-  odb::nullable<CppAstNodeId> astNodeId;
+  CppAstNodeId astNodeId;
 
-  // TODO: Why not unique?
   std::uint64_t mangledNameHash = 0;
 
   std::string name;
   std::string qualifiedName;
 
 #ifndef NO_INDICES
-//  #pragma db index member(astNodeId)
   #pragma db index member(mangledNameHash)
 #endif
 };

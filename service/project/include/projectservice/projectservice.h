@@ -49,7 +49,6 @@ private:
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-  model::FileTypePtr _directoryType;
 };
 
 } // project

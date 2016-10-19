@@ -26,27 +26,6 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
       _files[file.path] = std::make_shared<model::File>(file);
       _persistedFiles.insert(file.id);
     }
-
-    //--- Persist common file types ---//
-
-    typedef odb::query<model::FileType> FileTypeQuery;
-    if(!_db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::UNKNOWN_TYPE))
-    {
-      model::FileType unknownType (model::File::UNKNOWN_TYPE);
-      _db->persist(unknownType);
-    }
-    if(!_db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::DIRECTORY_TYPE))
-    {
-      model::FileType directoryType (model::File::DIRECTORY_TYPE);
-      _db->persist(directoryType);
-    }
-
-    _directoryType = _db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::DIRECTORY_TYPE);
-    _unknownType   = _db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::UNKNOWN_TYPE);
   });
 
   //--- Initialize magic for plain text testing ---//
@@ -144,11 +123,11 @@ model::FilePtr SourceManager::getCreateFileEntry(
   file->filename = path.filename().native();
 
   if (boost::filesystem::is_directory(path, ec))
-    file->type = _directoryType;
+    file->type = model::File::DIRECTORY_TYPE;
   else
-    file->type = _unknownType;
+    file->type = model::File::UNKNOWN_TYPE;
 
-  if (file->type->name != model::File::DIRECTORY_TYPE && withContent_)
+  if (file->type != model::File::DIRECTORY_TYPE && withContent_)
   {
     if (!boost::filesystem::is_regular_file(path, ec))
     {

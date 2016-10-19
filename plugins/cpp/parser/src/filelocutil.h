@@ -47,6 +47,9 @@ public:
     if (!setPosition(start_, range_.start) || !setPosition(end_, range_.end))
       return false;
 
+    // For some reason usually getLocEnd() also returns the beginning of the
+    // node. The real ending position of the node can be gotten by adding the
+    // length of the token.
     clang::LangOptions langOpts;
     range_.end.column += clang::Lexer::MeasureTokenLength(
       end_, _clangSrcMan, langOpts);
@@ -56,15 +59,8 @@ public:
 
   /**
    * This function sets position_ parameter to the location based on loc_.
-   * First it considers the expansion location (in case of macro expansion the
-   * expanded location counts) and then the presumed location which means that
-   * location can be modified by #line directive.
-   * TODO: Why is it necessary to consider presumed location? Expansion location
-   * is somewhat understandable, however in case of a "Jump to definition" we'd
-   * like to find the exact location if a macro.
    *
-   * @param loc_ The source location of which we'd like to find the place taking
-   * beforementioned considerations into account.
+   * @param loc_ The source location of which we'd like to find the place.
    * @param position_ Position of the location.
    * @return If the given location is invalid then the function returns false.
    * In this case the position_ variable won't be set.
@@ -76,14 +72,8 @@ public:
     if (loc_.isInvalid())
       return false;
 
-    clang::PresumedLoc presLoc
-      = _clangSrcMan.getPresumedLoc(_clangSrcMan.getExpansionLoc(loc_));
-
-    if (presLoc.isInvalid())
-      return false;
-
-    position_.line = presLoc.getLine();
-    position_.column = presLoc.getColumn();
+    position_.line = _clangSrcMan.getSpellingLineNumber(loc_);
+    position_.column = _clangSrcMan.getSpellingColumnNumber(loc_);
 
     return true;
   }

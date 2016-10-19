@@ -35,8 +35,7 @@ public:
     const boost::program_options::variables_map& config_
       = boost::program_options::variables_map());
 
-  void getFileTypes(
-    std::vector<std::string>& _return) override;
+  void getFileTypes(std::vector<std::string>& return_) override;
 
   void getAstNodeInfo(
     AstNodeInfo& return_,
