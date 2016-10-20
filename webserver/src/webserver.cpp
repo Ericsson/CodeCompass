@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/expressions/attr.hpp>
 #include <boost/program_options.hpp>
 
 #include <util/logutil.h>
@@ -10,6 +12,7 @@
 #include "mainrequesthandler.h"
 
 namespace po = boost::program_options;
+namespace trivial = boost::log::trivial;
 
 po::options_description commandLineArguments()
 {
@@ -27,6 +30,10 @@ po::options_description commandLineArguments()
       "format: pgsql:database=name;user=user_name.")
     ("port,p", po::value<int>()->default_value(8080),
       "Port number of the webserver to listen on.")
+    ("loglevel",
+      po::value<trivial::severity_level>()->default_value(trivial::info),
+      "Logging level of the parser. Possible values are: debug, info, warning, "
+      "error, critical")
     ("threads,t", po::value<int>()->default_value(4),
       "Number of worker threads.");
 
@@ -58,6 +65,15 @@ int main(int argc, char* argv[])
   {
     std::cout << desc << std::endl;
     return 0;
+  }
+
+  if (vm.count("loglevel"))
+  {
+    trivial::severity_level loglevel
+      = vm["loglevel"].as<trivial::severity_level>();
+    boost::shared_ptr<boost::log::core> logger = boost::log::core::get();
+    logger->set_filter(boost::log::expressions::attr<
+      trivial::severity_level>("Severity") >= loglevel);
   }
 
   try

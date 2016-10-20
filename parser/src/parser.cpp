@@ -49,7 +49,8 @@ po::options_description commandLineArguments()
       "The submodules of a large project can be labeled so it can be easier "
       "later to locate them. With this flag you can provide a label list in "
       "the following format: label1=/path/to/submodule1:/path/to/submodule2.")
-    ("loglevel", po::value<trivial::severity_level>()->default_value(trivial::info),
+    ("loglevel",
+      po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
       "error, critical.")
     ("threads,t", po::value<int>()->default_value(4),
@@ -65,7 +66,7 @@ po::options_description commandLineArguments()
 int main(int argc, char* argv[])
 {
   std::string binDir = boost::filesystem::canonical(
-        boost::filesystem::path(argv[0]).parent_path()).string();
+    boost::filesystem::path(argv[0]).parent_path()).string();
 
   cc::util::initLogger();
   
@@ -82,12 +83,13 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if(vm.count("loglevel"))
+  if (vm.count("loglevel"))
   {
-    trivial::severity_level loglevel = vm["loglevel"].as<trivial::severity_level>();
+    trivial::severity_level loglevel
+      = vm["loglevel"].as<trivial::severity_level>();
     boost::shared_ptr<boost::log::core> logger = boost::log::core::get();
-    logger->set_filter( boost::log::expressions::attr <
-      trivial::severity_level > ("Severity") >= loglevel);
+    logger->set_filter(boost::log::expressions::attr<
+      trivial::severity_level>("Severity") >= loglevel);
   }
 
   if (vm.count("list"))
