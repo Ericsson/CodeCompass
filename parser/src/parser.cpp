@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/expressions/attr.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
@@ -14,6 +16,7 @@
 #include <parser/sourcemanager.h>
 
 namespace po = boost::program_options;
+namespace trivial = boost::log::trivial;
 
 po::options_description commandLineArguments()
 {
@@ -46,7 +49,7 @@ po::options_description commandLineArguments()
       "The submodules of a large project can be labeled so it can be easier "
       "later to locate them. With this flag you can provide a label list in "
       "the following format: label1=/path/to/submodule1:/path/to/submodule2.")
-    ("loglevel", po::value<std::string>()->default_value("info"),
+    ("loglevel", po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
       "error, critical.")
     ("threads,t", po::value<int>()->default_value(4),
@@ -77,6 +80,14 @@ int main(int argc, char* argv[])
   {
     std::cout << desc << std::endl;
     return 0;
+  }
+
+  if(vm.count("loglevel"))
+  {
+    trivial::severity_level loglevel = vm["loglevel"].as<trivial::severity_level>();
+    boost::shared_ptr<boost::log::core> logger = boost::log::core::get();
+    logger->set_filter( boost::log::expressions::attr <
+      trivial::severity_level > ("Severity") >= loglevel);
   }
 
   if (vm.count("list"))
