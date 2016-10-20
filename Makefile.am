@@ -76,7 +76,6 @@ CC_EXTERNAL_JAVA_LIBS=\
     $(abs_srcdir)/lib/java/lucene-memory-4.9.0.jar \
     $(abs_srcdir)/lib/java/lucene-misc-4.9.0.jar \
     $(abs_srcdir)/lib/java/lucene-suggest-4.9.0.jar \
-    $(abs_srcdir)/lib/java/commons-cli-1.3.1.jar \
     $(abs_srcdir)/lib/java/commons-codec-1.6.jar \
     $(abs_srcdir)/lib/java/commons-logging-1.1.1.jar \
     $(abs_srcdir)/lib/java/commons-lang3-3.1.jar \
@@ -89,18 +88,15 @@ CC_EXTERNAL_JAVA_LIBS=\
     $(abs_srcdir)/lib/java/slf4j-log4j12-1.5.8.jar \
     $(abs_srcdir)/lib/java/slf4j-api-1.5.8.jar \
     $(abs_srcdir)/lib/java/eclipselink.jar \
-    $(abs_srcdir)/lib/java/javax.json-1.0.jar \
     $(abs_srcdir)/lib/java/javax.persistence_2.1.0.v201304241213.jar \
     $(abs_srcdir)/lib/java/org.eclipse.core.contenttype_3.4.200.v20130326-1255.jar \
     $(abs_srcdir)/lib/java/org.eclipse.core.jobs_3.5.300.v20130429-1813.jar \
     $(abs_srcdir)/lib/java/org.eclipse.core.resources_3.8.101.v20130717-0806.jar \
     $(abs_srcdir)/lib/java/org.eclipse.core.runtime_3.9.0.v20130326-1255.jar \
-    $(abs_srcdir)/lib/java/org.eclipse.emf.common_2.10.1.v20150123-0348.jar \
     $(abs_srcdir)/lib/java/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar \
     $(abs_srcdir)/lib/java/org.eclipse.equinox.preferences_3.5.100.v20130422-1538.jar \
     $(abs_srcdir)/lib/java/org.eclipse.jdt.core_3.9.1.v20130905-0837.jar \
     $(abs_srcdir)/lib/java/org.eclipse.osgi_3.9.1.v20130814-1242.jar \
-    $(abs_srcdir)/lib/java/org.eclipse.uml2.uml_3.1.2.v201010261927.jar \
     $(abs_srcdir)/lib/java/sqlite.jar \
     $(abs_srcdir)/lib/java/postgresql-9.3-1101.jdbc41.jar \
     $(abs_srcdir)/lib/java/simplemagic-1.6.jar \

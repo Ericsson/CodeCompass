@@ -57,8 +57,6 @@ function (topic, urlHandler) {
   addType('VersionCommit',          VersionCommit          );
   addType('VersionDiffOptions',     VersionDiffOptions     );
   addType('SlicingTypes',           SlicingTypes           );
-  addType('ChunkInfo',              ChunkInfo              );
-  addType('Cluster',                Cluster                );
   addType('LocInfo',                LocInfo                );
   addType('Severity',               Severity               );
   addType('MetricsType',            MetricsType            );
