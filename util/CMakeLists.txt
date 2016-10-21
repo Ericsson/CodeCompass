@@ -10,6 +10,8 @@ add_library(util STATIC
   src/webserverutil.cpp
   src/dynamiclibrary.cpp
   src/logutil.cpp
+  src/graph.cpp
+  src/legendbuilder.cpp
   src/util.cpp)
 
 target_compile_options(util PUBLIC -fPIC)
