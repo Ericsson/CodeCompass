@@ -733,7 +733,7 @@ build_odb()
   #  popd
   #fi
  
-  # -fno-devirtualize is an anouther workaround for gcc 4.9.x
+  # -fno-devirtualize is another workaround for gcc 4.9.x
   CXXFLAGS="$CXXFLAGS -fno-devirtualize" compile generic odb-2.4.0 bin/odb
   #compile generic odb-2.4.0 bin/odb
 }
