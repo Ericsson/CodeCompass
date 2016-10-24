@@ -16,8 +16,7 @@ define([
   'dijit/layout/ContentPane',
   'codecompass/registration/diagramProvider',
   'codecompass/registration/model',
-  'dojo/NodeList-traverse',
-  'plugins/mihierarchy/mihierarchy'],
+  'dojo/NodeList-traverse'],
 function (mouse, on, declare, win, topic, attr, dom, style, query, Dialog, 
   Tooltip, Button, ToggleButton, BorderContainer, ContentPane, diagramProvider, model) {
   
@@ -314,7 +313,6 @@ function (mouse, on, declare, win, topic, attr, dom, style, query, Dialog,
               });
             
             that._diagCont.set('content', svgDom);
-            applyMiHierarchyFeatures();
           } else {
             that._diagCont.set('content', dom.create('div', {
               innerHTML : 'No diagram',
