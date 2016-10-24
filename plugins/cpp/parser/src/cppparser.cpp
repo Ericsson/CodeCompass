@@ -296,25 +296,8 @@ void CppParser::worker()
 CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
-    //--- Build actions ---//
-
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
       _parsedCommandHashes.insert(util::fnvHash(ba.command));
-
-    //--- File types ---//
-
-    const std::string cppSourceType = "CPP";
-
-    typedef odb::query<model::FileType> FileTypeQuery;
-    if (!ctx_.db->query_one<model::FileType>(
-        FileTypeQuery::name == cppSourceType))
-    {
-      model::FileType cppSourceFileType;
-      cppSourceFileType.id = util::fnvHash(cppSourceType);
-      cppSourceFileType.name = cppSourceType;
-
-      ctx_.db->persist(cppSourceFileType);
-    }
   });
 }
   

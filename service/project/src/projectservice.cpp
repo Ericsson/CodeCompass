@@ -28,11 +28,6 @@ ProjectServiceHandler::ProjectServiceHandler(
   const boost::program_options::variables_map&)
     : _db(db_), _transaction(db_)
 {
-  _transaction([&, this](){
-    typedef odb::query<model::FileType> FileTypeQuery;
-    _directoryType = _db->query_one<model::FileType> (
-      FileTypeQuery::name == model::File::DIRECTORY_TYPE);
-  });
 }
 
 void ProjectServiceHandler::getFileInfo(
@@ -279,7 +274,6 @@ void ProjectServiceHandler::searchFile(
 {
   typedef odb::result<model::File> FileResult;
   typedef odb::query<model::File> FileQuery;
-  typedef odb::query<model::FileType> FileTypeQuery;
 
   std::string text = text_;
 
@@ -290,7 +284,7 @@ void ProjectServiceHandler::searchFile(
     FileResult r
       = onlyFile_
       ? _db->query<model::File>(
-          FileTypeQuery::id != _directoryType->id &&
+          FileQuery::type != model::File::DIRECTORY_TYPE &&
           FileQuery::filename + SQL_ILIKE + FileQuery::_val("%" + text + "%"))
       : _db->query<model::File>(
           FileQuery::path + SQL_ILIKE + FileQuery::_val("%" + text + "%"));
@@ -347,7 +341,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
   fileInfo.__set_name(f.filename);
   fileInfo.__set_path(f.path);
   
-  if (f.type->id == _directoryType->id)
+  if (f.type == model::File::DIRECTORY_TYPE)
   {
     fileInfo.__set_isDirectory(true);
   }
@@ -357,7 +351,7 @@ FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
     fileInfo.__set_hasChildren(false); // TODO: Why false?
   }
 
-  fileInfo.__set_type(f.type->id);
+  fileInfo.__set_type(f.type);
 
   if (f.parent)
     fileInfo.__set_parent(std::to_string(f.parent.object_id()));

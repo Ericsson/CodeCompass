@@ -72,13 +72,10 @@ public:
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
       _mngCtx(astContext_.createMangleContext()),
-      _cppSourceType(new model::FileType),
+      _cppSourceType("CPP"),
       _mangledNameCache(mangledNameCache_),
       _clangToAstNodeId(clangToAstNodeId_)
   {
-    const std::string cppSourceType = "CPP";
-    _cppSourceType->id = util::fnvHash(cppSourceType);
-    _cppSourceType->name = cppSourceType;
   }
 
   ~ClangASTVisitor()
@@ -455,6 +452,28 @@ public:
     cppTypedef->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     cppTypedef->qualifiedType = qualType.getAsString();
 
+    //--- CppAstNode for aliased type ---//
+
+    const clang::Type* type = getStrippedType(qualType);
+    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
+    {
+      clang::TypeLoc loc = td_->getTypeSourceInfo()->getTypeLoc();
+
+      model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+      astNode->astValue = rd->getNameAsString();
+      astNode->location = getFileLoc(loc.getLocStart(), loc.getLocEnd());
+      astNode->mangledName = getMangledName(_mngCtx, rd);
+      astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
+      astNode->symbolType = model::CppAstNode::SymbolType::Type;
+      astNode->astType = model::CppAstNode::AstType::Usage;
+
+      astNode->id = model::createIdentifier(*astNode);
+
+      if (insertToCache(0, astNode))
+        _astNodes.push_back(astNode);
+    }
+
     return true;
   }
 
@@ -466,7 +485,7 @@ public:
 
     astNode->astValue = fn_->getNameAsString();
     astNode->location = getFileLoc(fn_->getLocStart(), fn_->getLocEnd());
-    astNode->mangledName = getMangledName(_mngCtx, fn_, astNode->location);
+    astNode->mangledName = getMangledName(_mngCtx, fn_);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
@@ -498,6 +517,57 @@ public:
 
     if (md)
       cppFunction->isVirtual = md->isVirtual();
+
+    //--- CppAstNode for the return type ---//
+
+    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
+
+    const clang::Type* type = getStrippedType(qualType);
+    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
+    {
+      typeAstNode->astValue = rd->getNameAsString();
+      typeAstNode->location = getFileLoc(
+        fn_->getReturnTypeSourceRange().getBegin(),
+        fn_->getReturnTypeSourceRange().getEnd());
+      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
+      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
+      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
+      typeAstNode->astType = model::CppAstNode::AstType::Usage;
+
+      typeAstNode->id = model::createIdentifier(*typeAstNode);
+
+      if (insertToCache(0, typeAstNode))
+        _astNodes.push_back(typeAstNode);
+    }
+
+    //---            CppAstNode for class specifier in            ---//
+    //--- CXXMethodDecl, CXXConstructorDecl and CXXDestructorDecl ---//
+
+    if (md && _typeStack.empty())
+    {
+      model::CppAstNodePtr classAstNode = std::make_shared<model::CppAstNode>();
+
+      clang::CXXRecordDecl* parent = md->getParent();
+
+      clang::SourceLocation start
+        = llvm::isa<clang::CXXConstructorDecl>(md) ||
+          llvm::isa<clang::CXXDestructorDecl>(md)
+        ? md->getLocStart()
+        : md->getReturnTypeSourceRange().getEnd();
+
+      classAstNode->astValue = parent->getNameAsString();
+      // The lexed token length will be added to the end position.
+      classAstNode->location = getFileLoc(start, start);
+      classAstNode->mangledName = getMangledName(_mngCtx, parent);
+      classAstNode->mangledNameHash = util::fnvHash(classAstNode->mangledName);
+      classAstNode->symbolType = model::CppAstNode::SymbolType::Type;
+      classAstNode->astType = model::CppAstNode::AstType::Usage;
+
+      classAstNode->id = model::createIdentifier(*classAstNode);
+
+      if (insertToCache(0, classAstNode))
+        _astNodes.push_back(classAstNode);
+    }
 
     //--- CppMemberType ---//
 
@@ -609,7 +679,7 @@ public:
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
     astNode->astValue = vd_->getNameAsString();
-    astNode->location = getFileLoc(vd_->getLocStart(), vd_->getLocEnd());
+    astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, vd_, astNode->location);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType
@@ -627,6 +697,8 @@ public:
       _astNodes.push_back(astNode);
     else
       return true;
+
+    //--- CppAstNode for the type ---//
 
     model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
 
@@ -700,7 +772,7 @@ public:
 
     astNode->astValue = nd_->getNameAsString();
     astNode->location = getFileLoc(nd_->getLocStart(), nd_->getLocEnd());
-    astNode->mangledName =getMangledName(_mngCtx, nd_, astNode->location);
+    astNode->mangledName = getMangledName(_mngCtx, nd_, astNode->location);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Namespace;
     astNode->astType = model::CppAstNode::AstType::Declaration;
@@ -971,7 +1043,8 @@ private:
     if (start_.isInvalid() || end_.isInvalid())
     {
       fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
-      fileLoc.file->type = _cppSourceType;
+      if (fileLoc.file.load()->type != model::File::DIRECTORY_TYPE)
+        fileLoc.file->type = _cppSourceType;
       return fileLoc;
     }
 
@@ -1092,14 +1165,14 @@ private:
       }
       catch (const odb::object_already_persistent& ex)
       {
+        BOOST_LOG_TRIVIAL(debug)
+          << item->toString();
         BOOST_LOG_TRIVIAL(warning)
-          << item->toString() << std::endl
           << ex.what() << std::endl
           << "AST nodes in this translation unit will be ignored!";
       }
       catch (const odb::database_exception& ex)
       {
-        BOOST_LOG_TRIVIAL(debug) << ex.what();
         // TODO: Error code should be checked and rethrow if it is not unique
         // constraint error. Error code may be database specific.
       }
@@ -1130,7 +1203,7 @@ private:
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
   clang::MangleContext* _mngCtx;
-  model::FileTypePtr _cppSourceType;
+  const std::string _cppSourceType;
 
   std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;

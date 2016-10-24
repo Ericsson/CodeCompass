@@ -120,42 +120,41 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
 }
 
 void MetricsParser::setCommentTypes(
-  model::FileTypePtr& fileType_,
+  std::string& fileType_,
   std::string& singleComment_,
   std::string& multiCommentStart_,
   std::string& multiCommentEnd_) const
 {
   if (
-    fileType_->name == "CSource" ||
-    fileType_->name == "CxxSource" ||
-    fileType_->name == "JavaSource")
+    fileType_ == "CXX" || // Should be updated together with C++ plugin.
+    fileType_ == "Java")
   {
     singleComment_ = "//";
     multiCommentStart_ = "/*";
     multiCommentEnd_ = "*/";
   }
   else if (
-    fileType_->name == "ErlangSource" ||
-    fileType_->name == "BashScript" ||
-    fileType_->name == "PerlScript")
+    fileType_ == "Erlang" ||
+    fileType_ == "Bash" ||
+    fileType_ == "Perl")
   {
     singleComment_ = "#";
     multiCommentStart_ = "";  //multi line comment not exist
     multiCommentEnd_ = "";
   }
-  else if (fileType_->name == "PythonScript")
+  else if (fileType_ == "Python")
   {
     singleComment_ = "#";
     multiCommentStart_ = R"(""")";
     multiCommentEnd_ = R"(""")";
   }
-  else if (fileType_->name == "SqlScript")
+  else if (fileType_ == "Sql")
   {
     singleComment_ = "--";
     multiCommentStart_ = "/*";
     multiCommentEnd_ = "*/";
   }
-  else if (fileType_->name == "RubyScript")
+  else if (fileType_ == "Ruby")
   {
     singleComment_ = "#";
     multiCommentStart_ = "=begin";

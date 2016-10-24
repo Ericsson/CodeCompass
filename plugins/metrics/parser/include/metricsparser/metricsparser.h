@@ -31,7 +31,7 @@ private:
   Loc getLocFromFile(model::FilePtr file_) const;
 
   void setCommentTypes(
-    model::FileTypePtr& filetype_,
+    std::string& filetype_,
     std::string& singleComment_,
     std::string& multiCommentStart_,
     std::string& multiCommentEnd_) const;

@@ -18,10 +18,8 @@ namespace model
 struct File;
 struct Project;
 struct FileContent;
-struct FileType;
 
 typedef std::shared_ptr<File> FilePtr;
-typedef std::shared_ptr<FileType> FileTypePtr;
 typedef std::uint64_t FileId;
 
 #pragma db object
@@ -35,14 +33,14 @@ struct File
     PSVCView = 10000, //dummy for "Version Control View" in the editor
   };
 
-  static constexpr const char* DIRECTORY_TYPE = "Directory";
+  static constexpr const char* DIRECTORY_TYPE = "Dir";
   static constexpr const char* UNKNOWN_TYPE   = "Unknown";
 
   #pragma db id
   FileId id;
 
-  #pragma db not_null
-  std::shared_ptr<FileType> type;
+  #pragma db not_null type("VARCHAR(8)")
+  std::string type;
 
   #pragma db not_null
   std::string path;
@@ -69,19 +67,6 @@ struct File
   #pragma db index member(parent)
 #endif
 
-};
-
-#pragma db object
-struct FileType
-{
-  FileType(){}
-  FileType(const std::string& name_) : name(name_){}
-
-  #pragma db id
-  unsigned int id;
-
-  #pragma db unique not_null
-  std::string name;
 };
 
 #pragma db view object(File)
