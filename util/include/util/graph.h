@@ -2,8 +2,10 @@
 #define CC_UTIL_GRAPH_H
 
 #include <string>
-#include <unordered_map>
+#include <map>
+#include <set>
 #include <vector>
+#include <queue>
 
 namespace cc 
 {
@@ -237,6 +239,69 @@ bool operator<(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
 bool operator==(const Graph::Node& n1, const Graph::Node& n2);
 bool operator==(const Graph::Edge& e1, const Graph::Edge& e2);
 bool operator==(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
+
+/**
+ * This function builds a graph in the order of breadth-first search. If style
+ * descriptor maps are given then the added nodes and edges are decorated.
+ * @param graph_ The graph will be appended by the new nodes and edges.
+ * @param startNode_ Breadth-first search starts from this node. This node is
+ * not inserted into the returning set unless there is a loop in the graph which
+ * contains this node.
+ * @param relations_ This function describe the relation which determine the
+ * child nodes of a given node.
+ * @param nodeDecoration_ This parameter maps the style attributes for the newly
+ * created nodes.
+ * \see{Graph::setAttribute(
+ *   const Graph::Node&,
+ *   const std::string&,
+ *   const std::string&)}.
+ * @param edgeDecoration_ This parameter maps the style attributes for the newly
+ * created edges.
+ * \see{Graph::setAttribute(
+ *   const Graph::Edge&,
+ *   const std::string&,
+ *   const std::string&)}.
+ * @return This function returns a set of nodes which are added to the graph.
+ */
+inline std::set<Graph> bfsBuild(
+  Graph& graph_,
+  const Graph::Node& startNode_,
+  std::function<std::vector<Graph::Node>(const Graph::Node&)> relations_,
+  const std::map<std::string, std::string>& nodeDecoration_
+    = std::map<std::string, std::string>(),
+  const std::map<std::string, std::string>& edgeDecoration_
+    = std::map<std::string, std::string>())
+{
+  std::set<Graph::Node> visitedNodes;
+
+  std::queue<Graph::Node> queue;
+  queue.push(startNode_);
+
+  while (!queue.empty())
+  {
+    Graph::Node current = queue.front();
+    queue.pop();
+
+    for (const Graph::Node& to : relations_(current))
+    {
+      Graph::Edge edge = graph_.addEdge(current, to);
+
+      for (const auto& decoration : edgeDecoration_)
+        graph.setAttribute(edge, decoration.first, decoration.second);
+
+      if (visitedNodes.find(to) == visitedNodes.end())
+      {
+        queue.push(to);
+        visitedNodes.insert(to);
+
+        for (const auto& decoration : nodeDecoration_)
+          graph.setAttribute(to, decoration.first, decoration.end);
+      }
+    }
+  }
+
+  return visitedNodes;
+}
 
 } // util
 } // cc
