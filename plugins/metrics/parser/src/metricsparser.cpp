@@ -87,7 +87,7 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
   // TODO: Why doesn't it work? It gives empty string.
   // std::string content = file->content.load()->content;
 
-  BOOST_LOG_TRIVIAL(debug) << "Count metrics for " << file_->path;
+  BOOST_LOG_TRIVIAL(info) << "Count metrics for " << file_->path;
 
   std::ifstream fileStream(file_->path);
   std::string content(
