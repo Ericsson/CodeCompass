@@ -242,6 +242,7 @@ def __run_after_sql_script(args):
       projectdir, args, 'psql', '-c', 'VACUUM ANALYZE;', '-d', args.name)
 
   if res != 0:
+    dblogfile = join(args.workdir, args.name, 'dblog')
     sys.stderr.write(
       'Failed to create the database indexes (psql returned with ' + str(res) +
       ')!\nSee ' + dblogfile + ' for details!\n')
