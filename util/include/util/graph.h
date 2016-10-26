@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 #include <queue>
+#include <functional>
 
 namespace cc 
 {
@@ -263,7 +264,7 @@ bool operator==(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
  *   const std::string&)}.
  * @return This function returns a set of nodes which are added to the graph.
  */
-inline std::set<Graph> bfsBuild(
+inline std::set<Graph::Node> bfsBuild(
   Graph& graph_,
   const Graph::Node& startNode_,
   std::function<std::vector<Graph::Node>(const Graph::Node&)> relations_,
@@ -287,7 +288,7 @@ inline std::set<Graph> bfsBuild(
       Graph::Edge edge = graph_.addEdge(current, to);
 
       for (const auto& decoration : edgeDecoration_)
-        graph.setAttribute(edge, decoration.first, decoration.second);
+        graph_.setAttribute(edge, decoration.first, decoration.second);
 
       if (visitedNodes.find(to) == visitedNodes.end())
       {
@@ -295,7 +296,7 @@ inline std::set<Graph> bfsBuild(
         visitedNodes.insert(to);
 
         for (const auto& decoration : nodeDecoration_)
-          graph.setAttribute(to, decoration.first, decoration.end);
+          graph_.setAttribute(to, decoration.first, decoration.second);
       }
     }
   }
