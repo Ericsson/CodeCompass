@@ -532,7 +532,7 @@ public:
       typeAstNode->mangledName = getMangledName(_mngCtx, rd);
       typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
       typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      typeAstNode->astType = model::CppAstNode::AstType::Usage;
+      typeAstNode->astType = model::CppAstNode::AstType::ReturnTypeLoc;
 
       typeAstNode->id = model::createIdentifier(*typeAstNode);
 
@@ -669,6 +669,28 @@ public:
     variable->qualifiedType = qualType.getAsString();
     variable->isGlobal = false;
 
+    //--- CppAstNode for the type ---//
+
+    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
+
+    const clang::Type* type = getStrippedType(qualType);
+    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
+    {
+      typeAstNode->astValue = rd->getNameAsString();
+      // The lexed token length will be added.
+      typeAstNode->location = getFileLoc(
+        fd_->getLocStart(),
+        fd_->getLocStart());
+      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
+      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
+      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
+      typeAstNode->astType = model::CppAstNode::AstType::FieldTypeLoc;
+
+      typeAstNode->id = model::createIdentifier(*typeAstNode);
+
+      if (insertToCache(0, typeAstNode))
+        _astNodes.push_back(typeAstNode);
+    }
     return true;
   }
 
@@ -712,7 +734,12 @@ public:
       typeAstNode->mangledName = getMangledName(_mngCtx, rd);
       typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
       typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      typeAstNode->astType = model::CppAstNode::AstType::Usage;
+      typeAstNode->astType
+        = _functionStack.empty()
+        ? model::CppAstNode::AstType::GlobalTypeLoc
+        : llvm::isa<clang::ParmVarDecl>(vd_)
+        ? model::CppAstNode::AstType::ParameterTypeLoc
+        : model::CppAstNode::AstType::LocalTypeLoc;
 
       typeAstNode->id = model::createIdentifier(*typeAstNode);
 
