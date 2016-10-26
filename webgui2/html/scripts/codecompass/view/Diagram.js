@@ -57,18 +57,6 @@ function (mouse, on, declare, win, topic, attr, dom, style, query, Dialog,
       }).show();
     };
 
-    if (contextButton[3])
-      contextButton[3].onClick = function () {
-        this.set(
-          'label',
-          contextButton[3].checked ? "Reduced view" : "Non-reduced view");
-          
-        diagram.loadDiagram(
-          diagram.diagramNode,
-          model.DiagramId.MI_HIERARCHY_DIAGRAM,
-          !contextButton[3].checked);
-      };
-
     contextButton.forEach(function (button) {
       style.set(button.domNode, 'display', 'block');
     });
@@ -175,8 +163,7 @@ function (mouse, on, declare, win, topic, attr, dom, style, query, Dialog,
            
       topic.publish('codecompass/openDiagram', {
         diagramNode : this.id,
-        diagramType : diagram._diagType,
-        other : !diagram.contextButton[3].checked
+        diagramType : diagram._diagType
       });
     });
     
@@ -239,8 +226,7 @@ function (mouse, on, declare, win, topic, attr, dom, style, query, Dialog,
       this.contextButton = [
         new Button({ label : 'Text View'  }),
         new Button({ label : 'Export SVG' }),
-        new Button({ label : 'Legend'     }),
-        new ToggleButton({ label : 'Non-reduced view' })
+        new Button({ label : 'Legend'     })
       ];
       
       this.contextButton.forEach(function (button) {
