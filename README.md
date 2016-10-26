@@ -23,7 +23,7 @@
 ##Getting Started##
 
 * [Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
-* [Parse your fist project](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
+* [Parse your first project](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
 
 ## Full Documentation
 See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentation.
