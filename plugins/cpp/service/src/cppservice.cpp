@@ -269,7 +269,7 @@ void CppServiceHandler::getReferenceTypes(
   switch (node.symbolType)
   {
     case model::CppAstNode::SymbolType::Function:
-      return_["Call"]                  = CALL;
+      return_["This calls"]            = THIS_CALLS;
       return_["Callee"]                = CALLEE;
       return_["Caller"]                = CALLER;
       return_["Virtual call"]          = VIRTUAL_CALL;
@@ -309,36 +309,6 @@ void CppServiceHandler::getReferences(
   std::vector<model::CppAstNode> nodes;
   model::CppAstNode node;
 
-  auto queryCalls = [&](const core::AstNodeId& astNodeId_){
-    std::vector<model::CppAstNode> nodes = queryDefinitions(astNodeId_);
-
-    if (nodes.empty())
-      return nodes;
-
-    node = nodes.front();
-
-    const model::Position& start = node.location.range.start;
-    const model::Position& end = node.location.range.end;
-
-    AstResult result = _db->query<model::CppAstNode>(
-      AstQuery::location.file == node.location.file.object_id() &&
-      (AstQuery::astType == model::CppAstNode::AstType::Usage ||
-       AstQuery::astType == model::CppAstNode::AstType::VirtualCall) &&
-      AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
-      // StartPos >= Pos
-      ((AstQuery::location.range.start.line == start.line &&
-        AstQuery::location.range.start.column >= start.column) ||
-       AstQuery::location.range.start.line > start.line) &&
-      // Pos > EndPos
-      ((AstQuery::location.range.end.line == end.line &&
-        AstQuery::location.range.end.column < end.column) ||
-       AstQuery::location.range.end.line < end.line));
-
-    nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
-    std::sort(nodes.begin(), nodes.end(), compareByPosition);
-    return nodes;
-  };
-
   _transaction([&, this](){
     switch (referenceId_)
     {
@@ -357,34 +327,40 @@ void CppServiceHandler::getReferences(
         nodes = queryCppAstNodes(astNodeId_);
         break;
 
-      case CALL:
+      case THIS_CALLS:
         nodes = queryCalls(astNodeId_);
         break;
 
+      case CALLS_OF_THIS:
+        nodes = queryCppAstNodes(
+          astNodeId_,
+          AstQuery::astType == model::CppAstNode::AstType::Usage);
+        break;
+
       case CALLEE:
-      {
-        for(const model::CppAstNode& call: queryCalls(astNodeId_))
+        for (const model::CppAstNode& call : queryCalls(astNodeId_))
         {
           core::AstNodeId astNodeId = std::to_string(call.id);
           std::vector<model::CppAstNode> defs = queryDefinitions(astNodeId);
           nodes.insert(nodes.end(), defs.begin(), defs.end());
-          std::sort(nodes.begin(), nodes.end(), compareByPosition);
         }
 
+        std::sort(nodes.begin(), nodes.end(), compareByPosition);
+        nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
+
         break;
-      }
 
       case CALLER:
-      {
-        for(const model::CppAstNode& astNode : queryCppAstNodes(astNodeId_,
+        for (const model::CppAstNode& astNode : queryCppAstNodes(
+          astNodeId_,
           AstQuery::astType == model::CppAstNode::AstType::Usage))
         {
           const model::Position& start = astNode.location.range.start;
           const model::Position& end   = astNode.location.range.end;
 
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::astType       == model::CppAstNode::AstType::Definition &&
-            AstQuery::symbolType    == model::CppAstNode::SymbolType::Function &&
+            AstQuery::astType    == model::CppAstNode::AstType::Definition &&
+            AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
             // StartPos >= Pos
             ((AstQuery::location.range.start.line == start.line &&
               AstQuery::location.range.start.column <= start.column) ||
@@ -396,10 +372,12 @@ void CppServiceHandler::getReferences(
 
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
+
         std::sort(nodes.begin(), nodes.end(), compareByPosition);
+        nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
 
         break;
-      }
+
       case VIRTUAL_CALL:
       {
         node = queryCppAstNode(astNodeId_);
@@ -815,6 +793,38 @@ std::vector<model::CppAstNode> CppServiceHandler::queryDefinitions(
   return queryCppAstNodes(
     astNodeId_,
     AstQuery::astType == model::CppAstNode::AstType::Definition);
+}
+
+std::vector<model::CppAstNode> CppServiceHandler::queryCalls(
+  const core::AstNodeId& astNodeId_)
+{
+  std::vector<model::CppAstNode> nodes = queryDefinitions(astNodeId_);
+
+  if (nodes.empty())
+    return nodes;
+
+  model::CppAstNode node = nodes.front();
+
+  const model::Position& start = node.location.range.start;
+  const model::Position& end = node.location.range.end;
+
+  AstResult result = _db->query<model::CppAstNode>(
+    AstQuery::location.file == node.location.file.object_id() &&
+    (AstQuery::astType == model::CppAstNode::AstType::Usage ||
+     AstQuery::astType == model::CppAstNode::AstType::VirtualCall) &&
+    AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+    // StartPos >= Pos
+    ((AstQuery::location.range.start.line == start.line &&
+      AstQuery::location.range.start.column >= start.column) ||
+     AstQuery::location.range.start.line > start.line) &&
+    // Pos > EndPos
+    ((AstQuery::location.range.end.line == end.line &&
+      AstQuery::location.range.end.column < end.column) ||
+     AstQuery::location.range.end.line < end.line));
+
+  nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
+  std::sort(nodes.begin(), nodes.end(), compareByPosition);
+  return nodes;
 }
 
 std::unordered_set<std::uint64_t>

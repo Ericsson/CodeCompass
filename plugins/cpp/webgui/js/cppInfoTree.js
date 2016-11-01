@@ -47,7 +47,7 @@ function (model, viewHandler) {
       if (parentNode.refType === refTypes['Caller']) {
         var calls = model.cppservice.getReferences(
           reference.id,
-          refTypes['Call']);
+          refTypes['This calls']);
 
         calls.forEach(function (call) {
 

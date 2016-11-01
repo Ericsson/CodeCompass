@@ -109,7 +109,7 @@
 }
 
 .icon-Callee::before,
-.icon-Call::before{
+.icon-This-calls::before{
   content : 's'
 }
 

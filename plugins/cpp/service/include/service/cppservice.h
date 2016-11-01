@@ -134,8 +134,11 @@ private:
       parser creates a mangled name even for variables and types, which is
       unique for the element. */
 
-    CALL, /*!< Get called functions. WARNING: If the definition of the AST
-      node is not unique then it returns the callees of one of them. */
+    THIS_CALLS, /*!< Get function calls in a function. WARNING: If the
+      definition of the AST node is not unique then it returns the callees of
+      one of them. */
+
+    CALLS_OF_THIS, /*!< Get calls of a function. */
 
     CALLEE, /*!< Get called functions definitions. WARNING: If the definition of
       the AST node is not unique then it returns the callees of one of them. */
@@ -211,6 +214,12 @@ private:
    */
   std::vector<model::CppAstNode> queryDefinitions(
     const core::AstNodeId& astNodeId_);
+
+  /**
+   * This function returns the function calls in a given function.
+   * @param astNodeId_ An AST node ID which belongs to a function.
+   */
+  std::vector<model::CppAstNode> queryCalls(const core::AstNodeId& astNodeId_);
 
   /**
    * This function computes the reverse transitive closure of an element based

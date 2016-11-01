@@ -81,7 +81,8 @@ struct CppAstNode
 
   std::string toString() const;
 
-  bool operator<(const CppAstNode& other) const { return id < other.id; }
+  bool operator< (const CppAstNode& other) const { return id <  other.id; }
+  bool operator==(const CppAstNode& other) const { return id == other.id; }
 
 #ifndef NO_INDICES
   #pragma db index("location_file_idx") member(location.file)
