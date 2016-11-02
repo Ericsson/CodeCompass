@@ -5,13 +5,14 @@ namespace cpp cc.service.language
 
 struct AstNodeInfo
 {
-  1:common.AstNodeId id /** Uniqe id of the AST node for the whole workspace. */
-  2:string astNodeType /** String representation of AST type (e.g. Statement/Declaration/Usage). */
-  3:string symbolType /** String representation of Symbol type (e.g. Function/Type/Variable). */
-  4:string astNodeValue /** String representation of an AST node. */
-  5:string srcText /** Corresponding code fragment in the source code. */
-  6:common.FileRange range /** Source code range of an AST node. */
-  7:list<string> tags /** Meta information of the AST node (e.g. public, static, virtual etc.) */
+  1:common.AstNodeId id /** Unique id of the AST node for the whole workspace. */
+  2:i64    mangledNameHash /** To resolve unique names of the AST node. */
+  3:string astNodeType /** String representation of AST type (e.g. Statement/Declaration/Usage). */
+  4:string symbolType /** String representation of Symbol type (e.g. Function/Type/Variable). */
+  5:string astNodeValue /** String representation of an AST node. */
+  6:string srcText /** Corresponding code fragment in the source code. */
+  7:common.FileRange range /** Source code range of an AST node. */
+  8:list<string> tags /** Meta information of the AST node (e.g. public, static, virtual etc.) */
 }
 
 struct SyntaxHighlight
