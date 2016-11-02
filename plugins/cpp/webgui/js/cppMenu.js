@@ -1,10 +1,12 @@
 define([
   'dojo/topic',
+  'dijit/Menu',
   'dijit/MenuItem',
+  'dijit/PopupMenuItem',
   'codecompass/astHelper',
   'codecompass/model',
   'codecompass/viewHandler'],
-function (topic, MenuItem, astHelper, model, viewHandler) {
+function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
@@ -43,6 +45,37 @@ function (topic, MenuItem, astHelper, model, viewHandler) {
   };
 
   viewHandler.registerModule(infoTree, {
+    type : viewHandler.moduleType.TextContextMenu,
+    service : model.cppservice
+  });
+
+  var diagrams = {
+    id : 'cpp-text-diagrams',
+    render : function (nodeInfo, fileInfo) {
+      var submenu = new Menu();
+
+      var diagramTypes = model.cppservice.getDiagramTypes(nodeInfo.id);
+      for (diagramType in diagramTypes)
+        submenu.addChild(new MenuItem({
+          label : diagramType,
+          onClick : function () {
+            topic.publish('codecompass/openDiagram', {
+              handler : 'cpp-ast-diagram',
+              diagramType : diagramTypes[diagramType],
+              node : nodeInfo.id
+            });
+          }
+        }));
+
+      if (Object.keys(diagramTypes).length !== 0)
+        return new PopupMenuItem({
+          label : 'Diagrams',
+          popup : submenu
+        });
+    }
+  };
+
+  viewHandler.registerModule(diagrams, {
     type : viewHandler.moduleType.TextContextMenu,
     service : model.cppservice
   });

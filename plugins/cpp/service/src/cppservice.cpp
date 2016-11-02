@@ -22,6 +22,8 @@
 
 #include <service/cppservice.h>
 
+#include "diagram.h"
+
 namespace
 {
   typedef odb::query<cc::model::CppAstNode> AstQuery;
@@ -55,7 +57,9 @@ namespace
   {
     typedef std::map<cc::model::CppAstNodeId, std::vector<std::string>> TagMap;
 
-    CreateAstNodeInfo(const TagMap& tags_ = {}) : _tags(tags_)
+    CreateAstNodeInfo(
+      std::shared_ptr<odb::database> db_,
+      const TagMap& tags_ = {}) : _db(db_), _tags(tags_)
     {
     }
 
@@ -77,12 +81,15 @@ namespace
       if (astNode_.location.file)
       {
         ret.range.file = std::to_string(astNode_.location.file.object_id());
-        ret.__set_srcText(cc::util::textRange(
-          astNode_.location.file.load()->content.load()->content,
-          astNode_.location.range.start.line,
-          astNode_.location.range.start.column,
-          astNode_.location.range.end.line,
-          astNode_.location.range.end.column));
+
+        (cc::util::OdbTransaction(_db))([&ret, &astNode_](){
+          ret.__set_srcText(cc::util::textRange(
+            astNode_.location.file.load()->content.load()->content,
+            astNode_.location.range.start.line,
+            astNode_.location.range.start.column,
+            astNode_.location.range.end.line,
+            astNode_.location.range.end.column));
+        });
       }
 
       TagMap::const_iterator it = _tags.find(astNode_.id);
@@ -93,6 +100,7 @@ namespace
     }
 
     const std::map<cc::model::CppAstNodeId, std::vector<std::string>>& _tags;
+    std::shared_ptr<odb::database> _db;
   };
 }
 
@@ -119,7 +127,7 @@ void CppServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
-  return_ = CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+  return_ = CreateAstNodeInfo(_db)(queryCppAstNode(astNodeId_));
 }
 
 void CppServiceHandler::getDocumentation(
@@ -169,7 +177,7 @@ void CppServiceHandler::getAstNodeInfoByPosition(
       }
     }
 
-    return_ = CreateAstNodeInfo()(min);
+    return_ = CreateAstNodeInfo(_db)(min);
   });
 }
 
@@ -276,6 +284,8 @@ void CppServiceHandler::getReferenceTypes(
       return_["Function pointer call"] = FUNC_PTR_CALL;
       return_["Parameters"]            = PARAMETER;
       return_["Local variables"]       = LOCAL_VAR;
+      return_["Overrides"]             = OVERRIDE;
+      return_["Overridden by"]         = OVERRIDDEN_BY;
       break;
 
     case model::CppAstNode::SymbolType::Variable:
@@ -345,7 +355,7 @@ void CppServiceHandler::getReferences(
           nodes.insert(nodes.end(), defs.begin(), defs.end());
         }
 
-        std::sort(nodes.begin(), nodes.end(), compareByPosition);
+        std::sort(nodes.begin(), nodes.end());
         nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
 
         break;
@@ -373,27 +383,24 @@ void CppServiceHandler::getReferences(
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
 
-        std::sort(nodes.begin(), nodes.end(), compareByPosition);
+        std::sort(nodes.begin(), nodes.end());
         nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
 
         break;
 
       case VIRTUAL_CALL:
       {
-        node = queryCppAstNode(astNodeId_);
+        std::vector<model::CppAstNode> calls = queryCalls(astNodeId_);
 
-        std::unordered_set<std::uint64_t> overriddens
-          = reverseTransitiveClosureOfRel(
-              model::CppRelation::Kind::Override,
-              node.mangledNameHash);
-
-        for (std::uint64_t mangledNameHash : overriddens)
+        for (const model::CppAstNode& call : calls)
         {
-          AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == mangledNameHash &&
-            AstQuery::astType == model::CppAstNode::AstType::VirtualCall);
-          nodes.insert(nodes.end(), result.begin(), result.end());
+          std::vector<model::CppAstNode> overrides
+            = queryOverrides(std::to_string(call.id));
+          nodes.insert(nodes.end(), overrides.begin(), overrides.end());
         }
+
+        std::sort(nodes.begin(), nodes.end());
+        nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
 
         break;
       }
@@ -403,9 +410,10 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         std::unordered_set<std::uint64_t> fptrCallers
-          = reverseTransitiveClosureOfRel(
+          = transitiveClosureOfRel(
               model::CppRelation::Kind::Assign,
-              node.mangledNameHash);
+              node.mangledNameHash,
+              true);
 
         for (std::uint64_t mangledNameHash : fptrCallers)
         {
@@ -448,6 +456,13 @@ void CppServiceHandler::getReferences(
         break;
       }
 
+      case OVERRIDE:
+        nodes = queryOverrides(astNodeId_, true);
+
+      case OVERRIDDEN_BY:
+        nodes = queryOverrides(astNodeId_, false);
+        break;
+
       case READ:
         nodes = queryCppAstNodes(
           astNodeId_,
@@ -471,9 +486,10 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         std::unordered_set<std::uint64_t> aliasSet
-          = reverseTransitiveClosureOfRel(
+          = transitiveClosureOfRel(
               model::CppRelation::Kind::Alias,
-              node.mangledNameHash);
+              node.mangledNameHash,
+              true);
 
         for (std::uint64_t alias : aliasSet)
         {
@@ -643,7 +659,7 @@ void CppServiceHandler::getReferences(
     std::transform(
       nodes.begin(), nodes.end(),
       std::back_inserter(return_),
-      CreateAstNodeInfo(tags));
+      CreateAstNodeInfo(_db, tags));
   });
 }
 
@@ -712,23 +728,34 @@ void CppServiceHandler::getSyntaxHighlight(
 }
 
 void CppServiceHandler::getDiagram(
-    std::string& return_,
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t diagramId_)
+  std::string& return_,
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t diagramId_)
 {
-  // TODO
+  Diagram diagram(_db, _config);
+  util::Graph graph;
+
+  switch (diagramId_)
+  {
+    case FUNCTION_CALL:
+      diagram.getFunctionCallDiagram(graph, astNodeId_);
+      break;
+  }
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
 }
 
 void CppServiceHandler::getDiagramLegend(
-    std::string& return_,
-    const std::int32_t diagramId_)
+  std::string& return_,
+  const std::int32_t diagramId_)
 {
   // TODO
 }
 
 void CppServiceHandler::getFileDiagramTypes(
-    std::map<std::string, std::int32_t>& return_,
-    const core::FileId& fileId_)
+  std::map<std::string, std::int32_t>& return_,
+  const core::FileId& fileId_)
 {
   // TODO
 }
@@ -827,10 +854,36 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCalls(
   return nodes;
 }
 
+std::vector<model::CppAstNode> CppServiceHandler::queryOverrides(
+  const core::AstNodeId& astNodeId_,
+  bool reverse_)
+{
+  std::vector<model::CppAstNode> nodes;
+
+  model::CppAstNode node = queryCppAstNode(astNodeId_);
+
+  std::unordered_set<std::uint64_t> overrides
+    = transitiveClosureOfRel(
+        model::CppRelation::Kind::Override,
+        node.id,
+        reverse_);
+
+  std::transform(
+    overrides.begin(),
+    overrides.end(),
+    std::back_inserter(nodes),
+    [this](std::uint64_t nodeId){
+      return queryCppAstNode(std::to_string(nodeId));
+    });
+  
+  return nodes;
+}
+
 std::unordered_set<std::uint64_t>
-CppServiceHandler::reverseTransitiveClosureOfRel(
+CppServiceHandler::transitiveClosureOfRel(
   model::CppRelation::Kind kind_,
-  std::uint64_t to_)
+  std::uint64_t to_,
+  bool reverse_)
 {
   std::unordered_set<std::uint64_t> ret;
 
@@ -843,14 +896,19 @@ CppServiceHandler::reverseTransitiveClosureOfRel(
     q.pop();
 
     RelResult result = _db->query<model::CppRelation>(
-      RelQuery::rhs == current && RelQuery::kind == kind_);
+      (reverse_ ? RelQuery::rhs : RelQuery::lhs) == current &&
+      RelQuery::kind == kind_);
 
     for (const model::CppRelation relation : result)
-      if (ret.find(relation.lhs) == ret.end())
+    {
+      std::uint64_t otherSide = reverse_ ? relation.lhs : relation.rhs;
+
+      if (ret.find(otherSide) == ret.end())
       {
-        ret.insert(relation.lhs);
-        q.push(relation.lhs);
+        ret.insert(otherSide);
+        q.push(otherSide);
       }
+    }
   }
 
   return ret;

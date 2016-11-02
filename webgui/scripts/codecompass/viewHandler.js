@@ -1,7 +1,8 @@
 define([
   'dojo/_base/lang',
+  'dojo/Deferred',
   'codecompass/model'],
-function (lang, model) {
+function (lang, Deferred, model) {
   /**
    * This object contains the registered modules. The keys are the ID of the
    * given module and the value is an other object with 'module' and 'option'
@@ -9,6 +10,13 @@ function (lang, model) {
    * of module (eg. type, service).
    */
   var modules = {};
+
+  /**
+   * This object contains objects of type Deferred. The keys are the ID of the
+   * given module and the value is a deferred object which completes when the
+   * module is registrated.
+   */
+  var asyncModules = {};
 
   return {
 
@@ -30,6 +38,17 @@ function (lang, model) {
      */
     getModule : function (id) {
       return modules[id] ? modules[id].module : undefined;
+    },
+
+    /**
+     * This function returns an object of type Deferred. This object completes
+     * when the module with the given ID is registrated.
+     */
+    getModuleAsync : function (id) {
+      if (!asyncModules[id])
+        asyncModules[id] = new Deferred();
+
+      return asyncModules[id];
     },
 
     /**
@@ -96,7 +115,7 @@ function (lang, model) {
      * id).
      */
     registerModule : function (module, options) {
-      if(!options || options.type === undefined)
+      if (!options || options.type === undefined)
         throw "Options type can't be undefined: " + module;
 
       if (!module)
@@ -112,6 +131,8 @@ function (lang, model) {
         module : module,
         options : options
       };
+
+      this.getModuleAsync(module.id).resolve(modules[module.id].module);
     }
   };
 });

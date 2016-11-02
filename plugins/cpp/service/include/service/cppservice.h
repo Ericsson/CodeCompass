@@ -29,6 +29,8 @@ namespace language
 
 class CppServiceHandler : virtual public LanguageServiceIf
 {
+  friend class Diagram;
+
 public:
   CppServiceHandler(
     std::shared_ptr<odb::database> db_,
@@ -156,6 +158,11 @@ private:
 
     LOCAL_VAR, /*!< This option returns the local variables of a function. */
 
+    OVERRIDE, /*!< This option returns the functions which the given function
+      overrides. */
+
+    OVERRIDDEN_BY, /*!< This option returns the overrides of a function. */
+
     READ, /*!< This option returns the places where a variable is read. */
 
     WRITE, /*!< This option returns the places where a variable is written. */
@@ -179,10 +186,21 @@ private:
 
   enum DiagramType
   {
-    FUNCTION_CALL,
-    DETAILED_CLASS,
-    CLASS_OVERVIEW,
-    CLASS_COLLABORATION
+    FUNCTION_CALL, /*!< In the function call diagram the nodes are functions and
+      the edges are the function calls between them. The diagram also displays
+      some dynamic information such as virtual function calls. */
+
+    DETAILED_CLASS, /*!< This is a classical UML class diagram for the selected
+      class and its direct children and parents. The nodes contain the methods
+      and member variables with their visibility. */
+
+    CLASS_OVERVIEW, /*!< This is a class diagram which contains all classes
+      which inherit from the current one, and all parents from which the
+      current one inherits. The methods and member variables are node included
+      in the nodes, but the type of the member variables are indicated as
+      aggregation relationship. */
+
+    CLASS_COLLABORATION /*!< This returns a class collaboration UML diagram. */
   };
 
   static bool compareByPosition(
@@ -222,12 +240,24 @@ private:
   std::vector<model::CppAstNode> queryCalls(const core::AstNodeId& astNodeId_);
 
   /**
-   * This function computes the reverse transitive closure of an element based
-   * on the CppRelation table along the relations of a given kind.
+   * This function returns the functions which override the given one.
+   * @param reverse_ If this parameter is true then the function returns the
+   * functions which are overriden by the given one.
    */
-  std::unordered_set<std::uint64_t> reverseTransitiveClosureOfRel(
+  std::vector<model::CppAstNode> queryOverrides(
+    const core::AstNodeId& astNodeId_,
+    bool reverse_ = false);
+
+  /**
+   * This function computes the transitive closure of an element based on the
+   * CppRelation table along the relations of a given kind.
+   * @param reverse_ If true then the transitive closure is computed along the
+   * reverse relation of the given one.
+   */
+  std::unordered_set<std::uint64_t> transitiveClosureOfRel(
     model::CppRelation::Kind kind_,
-    std::uint64_t to_);
+    std::uint64_t to_,
+    bool reverse_ = false);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
