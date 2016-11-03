@@ -45,7 +45,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
             to   : buildLog.range.endpos
           });
           
-          that.textmodule.jumpTo(
+          that.textmodule.jumpToPos(
             buildLog.range.startpos.line,
             buildLog.range.startpos.end);
         }});
@@ -210,7 +210,9 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         type : viewHandler.moduleType.TextContextMenu,
         fileType : fileInfo.type
       }).forEach(function (menuItem) {
-        contextMenu.addChild(menuItem.render(astNodeInfo, fileInfo));
+        var item = menuItem.render(astNodeInfo, fileInfo);
+        if (item)
+          contextMenu.addChild(item);
       });
 
     contextMenu.addChild(new MenuItem({
@@ -463,9 +465,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     }
   });
 
-  var text = new Text({ id : 'text' });
-
-  viewHandler.registerModule(text, {
+  viewHandler.registerModule(new Text({ id : 'text' }), {
     type : viewHandler.moduleType.Center
   });
 });
