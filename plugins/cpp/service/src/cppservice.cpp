@@ -69,6 +69,7 @@ namespace
       cc::service::language::AstNodeInfo ret;
 
       ret.__set_id(std::to_string(astNode_.id));
+      ret.__set_mangledNameHash(astNode_.mangledNameHash);
       ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
       ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
       ret.__set_astNodeValue(astNode_.astValue);

@@ -45,32 +45,47 @@ function (model, viewHandler) {
 
     references.forEach(function (reference) {
       if (parentNode.refType === refTypes['Caller']) {
-        var calls = model.cppservice.getReferences(
-          reference.id,
-          refTypes['This calls']);
+        res.push({
+          id          : reference.id,
+          name        : createLabel(reference),
+          nodeInfo    : reference,
+          refType     : parentNode.refType,
+          cssClass    : 'icon icon-Method',
+          hasChildren : true,
+          getChildren : function () {
+            var res = [];
 
-        calls.forEach(function (call) {
+            //--- Recursive Node ---//
 
-          //--- Recursive Node ---//
+            res.push({
+              id          : 'Caller-' + reference.id,
+              name        : parentNode.name,
+              nodeInfo    : reference,
+              refType     : parentNode.refType,
+              cssClass    : parentNode.cssClass,
+              hasChildren : true,
+              getChildren : parentNode.getChildren
+            });
 
-          res.push({
-            name        : parentNode.name,
-            nodeInfo    : reference,
-            refType     : parentNode.refType,
-            cssClass    : parentNode.cssClass,
-            hasChildren : true,
-            getChildren : parentNode.getChildren
-          });
+            //--- Call ---//
 
-          //--- Call ---//
+            var calls = model.cppservice.getReferences(
+              this.nodeInfo.id,
+              refTypes['This calls']);
 
-          res.push({
-            name        : createLabel(call),
-            refType     : parentNode.refType,
-            nodeInfo    : call,
-            hasChildren : false,
-            cssClass    : getCssClass(call)
-          });
+            calls.forEach(function (call) {
+              if (call.mangledNameHash === parentNode.nodeInfo.mangledNameHash)
+                res.push({
+                  name        : createLabel(call),
+                  refType     : parentNode.refType,
+                  nodeInfo    : call,
+                  hasChildren : false,
+                  cssClass    : getCssClass(call)
+                });
+            });
+
+            return res;
+          }
         });
       } else {
         res.push({
