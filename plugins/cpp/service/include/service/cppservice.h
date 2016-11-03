@@ -259,6 +259,13 @@ private:
     std::uint64_t to_,
     bool reverse_ = false);
 
+  /**
+   * This function returns meta information of the AST nodes
+   * (e.g. public, static, virtual etc.)
+   */
+  std::map<model::CppAstNodeId, std::vector<std::string>> getTags(
+    const std::vector<model::CppAstNode>& nodes);
+
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
