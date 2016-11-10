@@ -1,18 +1,24 @@
 require([
+  'dojo/on',
+  'dojo/query',
   'dojo/dom-style',
   'dojo/topic',
   'dojo/_base/declare',
   'dojo/store/Memory',
   'dojo/store/Observable',
+  'dojo/NodeList-traverse',
   'dijit/layout/ContentPane',
   'dijit/Tree',
   'dijit/tree/ObjectStoreModel',
   'codecompass/util',
   'codecompass/model',
+  'codecompass/viewHandler',
   'codecompass/view/component/HtmlTree',
-  'codecompass/viewHandler'],
-function (style, topic, declare, Memory, Observable, ContentPane, Tree,
-  ObjectStoreModel, util, model, HtmlTree, viewHandler) {
+  'codecompass/view/component/ContextMenu',
+  ],
+function (on, query, style, topic, declare, Memory, Observable,
+  NodeListTraverse, ContentPane, Tree, ObjectStoreModel, util, model,
+  viewHandler, HtmlTree, ContextMenu) {
 
   //--- No indent tree ---//
 
@@ -50,11 +56,49 @@ function (style, topic, declare, Memory, Observable, ContentPane, Tree,
         mayHaveChildren : function (node) { return node.fileInfo.isDirectory; }
       });
 
+      this._contextMenu = new ContextMenu();
+
       this.reloadTree();
 
       this.set('model', this._dataModel);
       this.set('openOnClick', true);
     },
+
+    /*
+     * Called after a widget and its children
+     * have been created and added to the page
+     */
+     startup : function () {
+       this.inherited(arguments);
+
+       var that = this;
+
+       //--- Menu ---//
+       var contextmenu = new ContextMenu({
+         targetNodeIds : [this.id],
+         selector      : '.dijitTreeNode'
+       });
+
+       on(this, '.dijitTreeNode:contextmenu', function (event) {
+         var fileInfo = dijit.byNode(query(event.target)
+         .closest('.dijitTreeNode')[0]).item.fileInfo;
+
+         that.buildContextMenu(contextmenu, fileInfo);
+       });
+     },
+
+     buildContextMenu : function (contextMenu, fileInfo) {
+       contextMenu.clear();
+
+       viewHandler.getModules({
+         type : viewHandler.moduleType.FileManagerContextMenu,
+         fileType : fileInfo.type
+       }).forEach(function (menuItem) {
+         var item = menuItem.render(fileInfo);
+         if (item)
+           contextMenu.addChild(item);
+       });
+     },
 
     /**
      * This function removes all nodes from the tree and fills the first layer.
