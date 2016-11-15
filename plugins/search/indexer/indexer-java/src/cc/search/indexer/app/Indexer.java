@@ -40,7 +40,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(Indexer.class.getName());
+  private static final Logger _log = Logger.getLogger(Indexer.class.getName());
   /**
    * Command line options.
    */
@@ -202,7 +202,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
 
   @Override
   public void indexFile(String fileId_, String filePath_, String mimeType_) {
-    _log.log(Level.FINEST, "Adding file {0} to index.", fileId_);
+    _log.log(Level.FINEST, "Adding file {0} to index.", filePath_);
     
     try {
       _indexers.add(_executor.submit(new IndexerTask(

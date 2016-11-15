@@ -58,22 +58,6 @@ struct SearchRange
 }
 
 /**
- * Describes a search query.
- */
-struct SearchQuery
-{
-  /**
-   * Search query string (depends on SearchOptions::options, a Xapian query
-   * string or a regex or else).
-   */
-  1:string  query,
-  /**
-   * Query option flags / data for a query.
-   */
-  2:i64     options
-}
-
-/**
  * Describes the filter options for a search.
  */
 struct SearchFilter
@@ -98,9 +82,9 @@ struct SearchParams
    */
   1:i64 options,
   /**
-   * The query (see SearchQuery)
+   * The query.
    */
-  2:SearchQuery query,
+  2:string query,
   /**
    * Optional search range.
    */
@@ -196,17 +180,13 @@ struct SearchResultEntry
 struct SearchResult
 {
   /**
-   * The index of the first file in the results list.
-   */
-  1:i64 firstFileIndex,
-  /**
    * Number of total file matches.
    */
-  3:i64 totalFiles,
+  1:i64 totalFiles,
   /**
    * The results in the actual range: [firstFileIndex, lastFileIndex]
    */
-  4:list<SearchResultEntry> results
+  2:list<SearchResultEntry> results
 }
 
 /**
@@ -246,21 +226,17 @@ struct HitCountResult
 struct RangedHitCountResult
 {
   /**
-   * The index of the first file in the results list.
-   */
-  1:i64                 firstFileIndex,
-  /**
    * Number of total file matches.
    */
-  3:i64                 totalFiles,
+  1:i64                 totalFiles,
   /**
    * The results in the actual range: [firstFileIndex, lastFileIndex]
    */
-  4:list<HitCountResult> results,
+  2:list<HitCountResult> results,
   /**
    * The original query
    */
-  5:string              query
+  3:string              query
 }
 
 /**

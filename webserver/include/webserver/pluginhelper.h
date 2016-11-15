@@ -39,8 +39,6 @@ inline void registerPluginSimple(
     po::variables_map vm = vm_;
     vm.insert(std::make_pair("datadir", po::variable_value(
       wsOpt.datadir, false)));
-    vm.insert(std::make_pair("searchdir", po::variable_value(
-      wsOpt.searchdir, false)));
 
     std::shared_ptr<odb::database> db
       = util::createDatabase(wsOpt.connectionString);

@@ -3,8 +3,6 @@
 
 #include <magic.h>
 
-#include <model/file.h>
-
 #include <util/parserutil.h>
 
 #include <parser/abstractparser.h>
@@ -28,7 +26,7 @@ public:
 
 private:
   void postParse();
-  util::DirIterCallback getParserCallback(const std::string path_);
+  util::DirIterCallback getParserCallback(const std::string& path_);
   bool shouldHandle(const std::string& path_);
   bool isPlainText(const std::string& path_) const;
 

@@ -24,7 +24,6 @@ struct WorkspaceOption
   std::string connectionString;
   std::string description;
   std::string datadir;
-  std::string searchdir;
 };
 
 using WorkspaceOptions = std::map<std::string, WorkspaceOption>;
@@ -38,13 +37,11 @@ using WorkspaceOptions = std::map<std::string, WorkspaceOption>;
  * connection = sqlite:database=database.sqlite
  * description = Project1
  * datadir = /home/eusername/workdir/project1/data
- * searchdir = /home/eusername/workdir/project1/data/search
  *
  * [workspace.project2]
  * connection = sqlite:database=database.sqlite
  * description = Project2
  * datadir = /home/eusername/workdir/project2/data
- * searchdir = /home/eusername/workdir/project2/data/search
  * ~~~
  */
 WorkspaceOptions parseConfigFile(const std::string& filePath_);

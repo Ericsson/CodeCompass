@@ -1,5 +1,6 @@
 set(CMAKE_JAVA_INCLUDE_PATH
-  ${PROJECT_SOURCE_DIR}/lib/java/*)
+  ${PROJECT_SOURCE_DIR}/lib/java/*
+  ${PLUGIN_DIR}/lib/java/*)
 
 add_jar(searchservicejava
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/service/app/service/ServiceApp.java

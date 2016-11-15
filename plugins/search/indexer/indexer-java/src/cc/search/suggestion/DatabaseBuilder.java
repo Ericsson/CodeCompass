@@ -27,8 +27,8 @@ public final class DatabaseBuilder {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(DatabaseBuilder
-    .class.getName());
+  private static final Logger _log
+    = Logger.getLogger(DatabaseBuilder.class.getName());
   /**
    * An index reader for the main index database.
    */

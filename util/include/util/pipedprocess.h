@@ -27,7 +27,7 @@ public:
 
 public:
   PipedProcess(const PipedProcess&) = delete;
-  PipedProcess& operator = (const PipedProcess&) = delete;
+  PipedProcess& operator=(const PipedProcess&) = delete;
 
   /**
    * Inits the members.
@@ -35,7 +35,7 @@ public:
   PipedProcess();
 
   /**
-   * Closes the process. It will waits until the process exits.
+   * Closes the process. It will wait until the process exits.
    */
   virtual ~PipedProcess() noexcept;
 
@@ -47,51 +47,50 @@ public:
    */
   bool isAlive() noexcept;
 
-
 protected:
   /**
    * Updates _childExitStatus.
    *
-   * @param wait_ if true than it waits for process exit.
+   * @param wait_ If true then it waits for process exit.
    */
   void refreshExitStatus(bool wait_);
 
   /**
    * Does the forking procedure.
    *
-   * @param dieWithMe_ if it is true, than the child process will die when the
-   *                   parent process (this process) exits.
-   * @return 0 if this is the child process, child pid otherwise
+   * @param dieWithMe_ If it is true, then the child process will die when the
+   *   parent process (this process) exits.
+   * @return 0 If this is the child process, child PID otherwise.
    */
   int startProcess(bool dieWithMe_ = true);
 
   /**
    * Opens a pipe.
    *
-   * @param inFd_ reader end
-   * @param outFd_ writer end
+   * @param inFd_ Reader end.
+   * @param outFd_ Writer end.
    */
   void openPipe(int& inFd_, int& outFd_);
 
   /**
    * Closes a pipe.
    *
-   * @param inFd_ reader end
-   * @param outFd_ writer end
+   * @param inFd_ Reader end.
+   * @param outFd_ Writer end.
    */
   void closePipe(int& inFd_, int& outFd_);
 
 protected:
   /**
-   * Pipe file descriptors. The first is the input fd, the second is output.
+   * Pipe file descriptors. The first is the input FD, the second is output.
    */
   int _pipeFd[2];
   /**
-   * Process id of the child process
+   * Process id of the child process.
    */
   int _childPid;
   /**
-   * Exit status code of the child process (if any)
+   * Exit status code of the child process (if any).
    */
   int _childExitStatus;
 };

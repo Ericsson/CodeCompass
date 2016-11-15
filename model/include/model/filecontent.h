@@ -30,6 +30,12 @@ struct FileContent
   std::string content;
 };
 
+#pragma db view object(FileContent)
+struct FileContentIds
+{
+  std::string hash;
+};
+
 } // model
 } // cc
 

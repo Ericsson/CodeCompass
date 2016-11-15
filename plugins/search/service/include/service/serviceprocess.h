@@ -9,7 +9,6 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 
 #include <util/pipedprocess.h>
-#include <util/environment.h>
 #include <util/logutil.h>
 
 #include <SearchService.h>
@@ -38,10 +37,6 @@ public:
   ServiceProcess(const std::string& indexDatabase_) :
     _indexDatabase(indexDatabase_)
   {
-    //--- Init environment ---//
-
-    cc::util::Environment::init();
-
     openPipe(_pipeFd2[0], _pipeFd2[1]);
 
     int pid = startProcess();

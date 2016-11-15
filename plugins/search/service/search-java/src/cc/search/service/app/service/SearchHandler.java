@@ -114,11 +114,9 @@ abstract class SearchHandler extends SearchAppCommon
     final Filter filter = getFilterForSearch(params_);
     TopDocs docs;
     
-    int firstFileIndex = 0;
     if (params_.isSetRange()) {
       docs = rangedSearch(context_.get(), filter, (int) params_.range.start,
         (int) (params_.range.start + params_.range.maxSize - 1));
-      firstFileIndex = (int) params_.range.start;
     } else {
       docs = search(context_.get(), filter);
     }
@@ -138,8 +136,8 @@ abstract class SearchHandler extends SearchAppCommon
           entries.size()
         });
     
-    return new SearchResult(firstFileIndex, Math.min(docs.totalHits,
-      DEFAULT_HIT_LIMIT), entries);
+    return new SearchResult(
+      Math.min(docs.totalHits, DEFAULT_HIT_LIMIT), entries);
   }
   
   /**
@@ -166,12 +164,12 @@ abstract class SearchHandler extends SearchAppCommon
       // "Free text" search
       if ((params_.options & SearchOptions.SearchInSource.getValue()) != 0) {
         qcontext.add(QueryContext.QueryType.Text,
-          _textQueryParser.parse(params_.query.query));
+          _textQueryParser.parse(params_.query));
       }
       // Definition search
       // Advanced search
       if ((params_.options & SearchOptions.SearchInDefs.getValue()) != 0) {
-        final Query query = _advDefQueryParser.parse(params_.query.query);
+        final Query query = _advDefQueryParser.parse(params_.query);
         final Set<Tag.Kind> kinds = _advDefQueryParser.getParsedKinds();
         
         qcontext.add(QueryContext.QueryType.Tag, query, kinds);
@@ -181,12 +179,12 @@ abstract class SearchHandler extends SearchAppCommon
       if ((params_.options & SearchOptions.FindLogText.getValue()) != 0) {
         final MatchCollector collector = new SimpleMatchCollector(0);
         qcontext.add(QueryContext.QueryType.Log, _logQueryBuilder.build(
-          params_.query.query, collector), collector);
+          params_.query, collector), collector);
       }
       
       if (qcontext.isEmpty()) {
         // empty search
-        return new SearchResult(0, 0, null);
+        return new SearchResult(0, null);
       } else {
         return runSearch(qcontext, params_);
       }

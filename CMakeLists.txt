@@ -14,8 +14,9 @@ find_package(LLVM    REQUIRED CONFIG)
 find_package(Boost   REQUIRED)
 find_package(Odb     REQUIRED)
 find_package(Thrift  REQUIRED)
+find_package(Java    REQUIRED)
 find_package(GTest)
-find_package(Java REQUIRED)
+
 include(UseJava)
 
 add_subdirectory(model)

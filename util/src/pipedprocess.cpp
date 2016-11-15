@@ -13,10 +13,7 @@ namespace util
 PipedProcess::Failure::Failure(const std::string& msg_) :
   std::runtime_error(msg_) {}
 
-PipedProcess::PipedProcess() :
-  _pipeFd{0, 0},
-  _childPid(0),
-  _childExitStatus(0)
+PipedProcess::PipedProcess() : _pipeFd{0, 0}, _childPid(0), _childExitStatus(0)
 {
 }
 

@@ -26,35 +26,25 @@ public:
    */
   enum class OpenMode
   {
-    /**
-     * Create / overwrite a new index database.
-     */
-    Create,
-    /**
-     * Replace documents with their new versions and keep the unchanged ones.
-     */
-    ReplaceExisting,
-    /**
-     * Merge new and old documents.
-     */
-    Merge
+    Create, /*!< Create / overwrite a new index database. */
+
+    ReplaceExisting, /*!< Replace documents with their new versions and keep the
+      unchanged ones. */
+
+    Merge /*!< Merge new and old documents. */
   };
   
   /**
    * Database locking modes.
    */
-  enum class LockMode {
-    /**
-     * Use native locks. This is a stable and recommend mode for locking file
-     * but on NFS this isn't works.
-     */
-    Native,
-    /**
-     * This locking mechanism is based on a little buggy Java feature but in
-     * the most cases it's works (see SimpleFSLockFactory in Lucene doc). This
-     * locking mechanism works also on NFS.
-     */
-    Simple
+  enum class LockMode
+  {
+    Native, /*!< Use native locks. This is a stable and recommend mode for
+      locking file but on NFS this isn't works. */
+
+    Simple /*!< This locking mechanism is based on a little buggy Java feature
+      but in the most cases it's works (see SimpleFSLockFactory in Lucene doc).
+      This locking mechanism works also on NFS. */
   };
 
 public:
@@ -64,8 +54,8 @@ public:
    * FIXME: it would be nice if we could detect the filesystem type and only
    * use Simple lock mode on NFS.
    *
-   * @param indexDatabase_ path to index database.
-   * @param openMode_ database open mode.
+   * @param indexDatabase_ Path to index database.
+   * @param openMode_ Database open mode.
    * @param lockMode_ Lucene database lock mode.
    */
   IndexerProcess(

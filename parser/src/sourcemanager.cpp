@@ -14,7 +14,7 @@ namespace parser
 {
 
 SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
-  : _db(db_)//, _magicCookie(nullptr)
+  : _db(db_), _magicCookie(nullptr)
 {
   util::OdbTransaction trans(_db);
   trans([&, this]() {
@@ -26,32 +26,35 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
       _files[file.path] = std::make_shared<model::File>(file);
       _persistedFiles.insert(file.id);
     }
+
+    for (const auto& fileContentId : db_->query<model::FileContentIds>())
+      _persistedContents.insert(fileContentId.hash);
   });
 
   //--- Initialize magic for plain text testing ---//
 
-//  if (_magicCookie = ::magic_open(MAGIC_SYMLINK))
-//  {
-//    if (::magic_load(_magicCookie, 0) != 0)
-//    {
-//      BOOST_LOG_TRIVIAL(error)
-//        << "libmagic error: "
-//        << ::magic_error(_magicCookie);
-//
-//      ::magic_close(_magicCookie);
-//      _magicCookie = nullptr;
-//    }
-//  }
-//  else
-//    BOOST_LOG_TRIVIAL(error) << "Failed to create a libmagic cookie!";
+  if (_magicCookie = ::magic_open(MAGIC_SYMLINK))
+  {
+    if (::magic_load(_magicCookie, 0) != 0)
+    {
+      BOOST_LOG_TRIVIAL(error)
+        << "libmagic error: "
+        << ::magic_error(_magicCookie);
+
+      ::magic_close(_magicCookie);
+      _magicCookie = nullptr;
+    }
+  }
+  else
+    BOOST_LOG_TRIVIAL(error) << "Failed to create a libmagic cookie!";
 }
 
 SourceManager::~SourceManager()
 {
-  //persistFiles();
+  persistFiles();
 
-//  if (_magicCookie)
-//    ::magic_close(_magicCookie);
+  if (_magicCookie)
+    ::magic_close(_magicCookie);
 }
 
 model::FilePtr SourceManager::getFile(const std::string& path_)
@@ -213,10 +216,13 @@ void SourceManager::persistFiles()
       try
       {
         // Directories don't have content.
-        if (p.second->content)
+        if (p.second->content &&
+            _persistedContents.find(p.second->content.object_id()) ==
+            _persistedContents.end())
         {
           p.second->content.load();
           _db->persist(*p.second->content);
+          _persistedContents.insert(p.second->content.object_id());
         }
 
         _db->persist(*p.second);

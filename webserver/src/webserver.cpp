@@ -7,7 +7,6 @@
 #include <boost/program_options.hpp>
 
 #include <util/logutil.h>
-#include <util/environment.h>
 #include <util/webserverutil.h>
 
 #include "threadedmongoose.h"
@@ -94,31 +93,24 @@ int main(int argc, char* argv[])
   vm.insert(std::make_pair("webguiDir", po::variable_value(
     binDir + "/../share/codecompass/webgui/", false)));
   vm.insert(std::make_pair("workspaceCfgFile", po::variable_value(
-      vm["workspace"].as<std::string>() + "/workspace.cfg", false)));
+    vm["workspace"].as<std::string>() + "/workspace.cfg", false)));
 
-  if (vm.count("workspace"))
+  //--- Process workspaces ---//
+
+  cc::util::WorkspaceOptions workspaceOptions
+    = cc::util::parseConfigFile(vm["workspaceCfgFile"].as<std::string>());
+
+  for (const auto& ws : workspaceOptions)
   {
-    cc::util::WorkspaceOptions workspaceOptions
-      = cc::util::parseConfigFile(vm["workspaceCfgFile"].as<std::string>());
+    const cc::util::WorkspaceOption& wsOpt = ws.second;
 
-    for (const auto& ws : workspaceOptions)
-    {
-      const cc::util::WorkspaceOption& wsOpt = ws.second;
-
-      BOOST_LOG_TRIVIAL(info)
-        << "Workspace" << std::endl
-        << "  id = " << ws.first << std::endl
-        << "  connection = " << wsOpt.connectionString << std::endl
-        << "  description = " << wsOpt.description << std::endl
-        << "  datadir = " << wsOpt.datadir << std::endl
-        << "  searchdir = " << wsOpt.searchdir << std::endl;
-    }
+    BOOST_LOG_TRIVIAL(info)
+      << "Workspace" << std::endl
+      << "  id = " << ws.first << std::endl
+      << "  connection = " << wsOpt.connectionString << std::endl
+      << "  datadir = " << wsOpt.datadir << std::endl
+      << "  description = " << wsOpt.description << std::endl;
   }
-
-
-  //--- Init environment ---//
-
-  cc::util::Environment::init();
 
   requestHandler.pluginHandler.configure(vm);
 

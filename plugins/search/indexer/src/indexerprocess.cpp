@@ -15,13 +15,11 @@
 #endif
 
 #ifdef __i386
-    //JVM won't start with -Xmx2g on 32-bit platforms
-    #define JAVAMEMORYAMOUNT "-Xmx1532m"
+  // JVM won't start with -Xmx2g on 32-bit platforms
+  #define JAVAMEMORYAMOUNT "-Xmx1532m"
 #else
-    #define JAVAMEMORYAMOUNT "-Xmx2g"
+  #define JAVAMEMORYAMOUNT "-Xmx2g"
 #endif
-
-namespace logger = boost::log;
 
 namespace cc
 {
@@ -45,12 +43,12 @@ IndexerProcess::IndexerProcess(
 
     auto fmtSeverity = util::getSeverityLevel();
 
-    if(fmtSeverity == boost::log::trivial::info)
+    if (fmtSeverity == boost::log::trivial::info)
       logLevelOpt += "INFO";
-    else if(fmtSeverity == boost::log::trivial::error ||
-            fmtSeverity == boost::log::trivial::warning)
+    else if (fmtSeverity == boost::log::trivial::error ||
+             fmtSeverity == boost::log::trivial::warning)
       logLevelOpt += "WARNING";
-    else if(fmtSeverity == boost::log::trivial::fatal)
+    else if (fmtSeverity == boost::log::trivial::fatal)
       logLevelOpt += "SEVERE";
     else
       logLevelOpt += "FINEST";
@@ -90,7 +88,7 @@ IndexerProcess::IndexerProcess(
     }
 
     execArguments.push_back(nullptr);
-    ::execvp("java", const_cast<char* const *>(execArguments.data()));
+    ::execvp("java", const_cast<char* const*>(execArguments.data()));
 
     BOOST_LOG_TRIVIAL(error) << "execlp failed!";
     // this shouldn't be executed by child process
@@ -119,9 +117,7 @@ IndexerProcess::IndexerProcess(
 IndexerProcess::~IndexerProcess()
 {
   if (_indexer && isAlive())
-  {
     _indexer->stop();
-  }
 
   closePipe(_pipeFd[0], _pipeFd[1]);
   closePipe(_pipeFd2[0], _pipeFd2[1]);

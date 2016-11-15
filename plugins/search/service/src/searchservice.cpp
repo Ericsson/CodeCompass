@@ -104,12 +104,7 @@ SearchServiceHandler::SearchServiceHandler(
   const boost::program_options::variables_map& config_) :
   _db(db_)
 {
-  std::string searchDir;
-  if (config_.count("searchdir"))
-  {
-    searchDir = config_["searchdir"].as<std::string>();
-  }
-
+  std::string searchDir = config_["datadir"].as<std::string>() + "/search";
   _javaProcess.reset(new ServiceProcess(searchDir));
 }
 
@@ -141,8 +136,7 @@ void SearchServiceHandler::searchFile(
     FileSearchResult& _return,
     const SearchParams&     params_)
 {
-  BOOST_LOG_TRIVIAL(info)
-    << "Search for file: query = " << params_.query.query;
+  BOOST_LOG_TRIVIAL(info) << "Search for file: query = " << params_.query;
 
   odb::transaction t(_db->begin());
 
@@ -150,7 +144,7 @@ void SearchServiceHandler::searchFile(
   typedef odb::result<model::File> fileResult;
   typedef odb::query<model::File> query;
 
-  validateRegexp(params_.query.query);
+  validateRegexp(params_.query);
 
   try
   {
@@ -158,7 +152,7 @@ void SearchServiceHandler::searchFile(
 
     parentIds parents = _db->query<model::ParentIdCollector>(
       query::type != model::File::DIRECTORY_TYPE &&
-      query::filename + SQL_REGEX + query::_val(params_.query.query));
+      query::filename + SQL_REGEX + query::_val(params_.query));
 
     std::vector<model::FileId> parentVector;
     for (const auto& parent : parents)
@@ -184,7 +178,7 @@ void SearchServiceHandler::searchFile(
 
     fileResult r (_db->query<model::File>(
       query::type != model::File::DIRECTORY_TYPE &&
-      query::filename + SQL_REGEX + query::_val(params_.query.query) &&
+      query::filename + SQL_REGEX + query::_val(params_.query) &&
       query::parent.in_range(parentVector.begin() + minIdx,
         parentVector.begin() + maxIdx)));
 

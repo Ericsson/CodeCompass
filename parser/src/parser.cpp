@@ -13,7 +13,6 @@
 
 #include <util/dbutil.h>
 #include <util/logutil.h>
-#include <util/environment.h>
 
 #include <parser/parsercontext.h>
 #include <parser/pluginhandler.h>
@@ -95,7 +94,8 @@ int main(int argc, char* argv[])
     logger->set_filter(boost::log::expressions::attr<
       trivial::severity_level>("Severity") >= loglevel);
     logger->add_global_attribute("Severity",
-      boost::log::attributes::mutable_constant<trivial::severity_level>(loglevel));
+      boost::log::attributes::mutable_constant<trivial::severity_level>(
+        loglevel));
   }
 
   if (vm.count("list"))
@@ -113,10 +113,6 @@ int main(int argc, char* argv[])
     BOOST_LOG_TRIVIAL(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
-
-  //--- Init environment ---//
-
-  cc::util::Environment::init();
 
   //--- Start parsers ---//
 

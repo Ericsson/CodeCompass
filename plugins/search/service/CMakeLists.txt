@@ -15,6 +15,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/search_constants.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/search_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/SearchService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
@@ -52,7 +53,6 @@ add_jar(searchthriftjava
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchFilter.java
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchOptions.java
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchParams.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchQuery.java
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchRange.java
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchResult.java
   ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/search/SearchResultEntry.java

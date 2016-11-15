@@ -1,7 +1,6 @@
-define([
+require([
   'dojo/dom-construct',
   'dojo/_base/declare',
-  'dojo/_base/array',
   'dojo/topic',
   'dojo/keys',
   'dojo/store/Memory',
@@ -18,9 +17,9 @@ define([
   'codecompass/viewHandler',
   'codecompass/view/component/IconTextBox',
   'codecompass/model'],
-function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
-  CheckBox, ComboBox, DropDownButton, Fieldset, Tooltip, TooltipDialog, Select,
-  popup, viewHandler, IconTextBox, model) {
+function (dom, declare, topic, keys, Memory, _WidgetBase, RadioButton, CheckBox,
+  ComboBox, DropDownButton, Fieldset, Tooltip, TooltipDialog, Select, popup,
+  viewHandler, IconTextBox, model) {
 
   //--- Register service ---//
 
@@ -28,12 +27,12 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
 
   SearchFields = declare(_WidgetBase, {
     _placeholders : {
-      text        : 'Search expression, like "foo AND bar"',
-      file        : 'File name regex (.*cpp$)',
-      log         : 'Arbitrary log message (e.g. ERROR: foobar.cpp something \
-                     went wrong at 12:34)',
-      fileFilter  : 'File name filter regex (.*cpp)',
-      dirFilter   : 'Path filter regex (click on a dir below)'
+      text : 'Search expression, like "foo AND bar".',
+      file : 'File name regex (.*cpp$).',
+      log  : 'Arbitrary log message (e.g. ERROR: foobar.cpp something went \
+              wrong at 12:34).',
+      fileFilter : 'File name filter regex (.*cpp).',
+      dirFilter  : 'Path filter regex (click on a dir below).'
     },
 
     _fileFilterTooltipLabel : 'This filter is a regular expression of file \
@@ -62,17 +61,17 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
         </li> \
         <li><b>Boolean Operators:</b> Boolean operators allow terms to be \
           combined through logic operators. <br> \
-          We support AND, "+", OR, NOT and "-" as Boolean operators \
+          We support AND, "+", OR, NOT and "-" as Boolean operators. \
           (<b>Note</b>: Boolean operators must be ALL CAPS) <br> \
           <ul> \
             <li><b>OR:</b> The OR operator links two terms and finds a \
-              matching document if either of the terms exist in a document.<br> \
-              <b>If there is no Boolean operator between two terms, the OR \
-              operator is used</b><br> \
+              matching document if either of the terms exist in a document. \
+              <br><b>If there is no Boolean operator between two terms, the OR \
+              operator is used.</b><br> \
               Example: "some text" OR other \
             </li> \
             <li><b>AND:</b> The AND operator matches documents where both \
-              terms exist anywhere in the text of a single document<br> \
+              terms exist anywhere in the text of a single document.<br> \
               Example: "some text" AND other \
             </li> \
           </ul> \
@@ -85,8 +84,8 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
           <b>The escape character is the "\\" (back slash).</b> \
         </li> \
       </ul> \
-      In <b>"File name search"</b> you can use a regular expression for matching \
-      on full (absolute) path of files in the database. <br> \
+      In <b>"File name search"</b> you can use a regular expression for \
+      matching on full (absolute) path of files in the database. <br> \
       Example: /path/.*/te?t\\.cpp <br><br> \
       For the documentation of <b>"Log search"</b> please see the user manual.',
 
@@ -162,26 +161,22 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       this._mimeComboBox = new ComboBox({ store : mimeTypes }); 
       
       this._langMap.mime = {
-        name      : this._mimeComboBox,
+        name : this._mimeComboBox,
         mimeTypes : []
       };
 
-      topic.subscribe('codecompass/fileClick', function (message) {
-        that._buildDirFilter(message.path);
-
-        if (message.display)
-          that._dirFilter.setValue(message.display);
-      });
-
       topic.subscribe('codecompass/openFile', function (message) {
-        that._buildDirFilter(model.project.getFileInfo(message.fileId).path);
+        that._setDirFilterTooltip(
+          model.project.getFileInfo(message.fileId).path);
       });
 
       topic.subscribe('codecompass/searchError', function (message) {
         var exception = message.exception;
 
         if (exception)
-          that._search.set('invalidMessage', exception.message || exception.what);
+          that._search.set(
+            'invalidMessage',
+            exception.message || exception.what);
 
         that._search.validator = function (value) {
           return !exception;
@@ -192,16 +187,18 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Create directory filter
-     * @param path - file path
+     * When hovering the directory filter, then a Tooltip contains the path of
+     * the opened file. The path items are clickable so filling the directory
+     * filter by the regex describing the clicked item can be easier.
+     * @param {String} path File path.
      */
-    _buildDirFilter : function(path) {
+    _setDirFilterTooltip : function (path) {
       var that = this;
 
       var result = dom.create('span');
       var string = '';
 
-      array.forEach(path.split('/').slice(1), function (file) {
+      path.split('/').slice(1).forEach(function (file) {
         string += '/' + file;
         var s = string; // This is needed because of closure affairs.
 
@@ -217,9 +214,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * @returns true if you can use the standard Lucene syntax.
+     * @returns True if you can use the standard Lucene syntax.
      */
-    _canUseLuceneSearchSyntax : function() {
+    _canUseLuceneSearchSyntax : function () {
       switch (this._searchType.get('value')) {
         case SearchOptions.SearchInSource:
         case SearchOptions.SearchInDefs:
@@ -231,10 +228,10 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
 
     /**
      * Text search query is established by a query string in a given format.
-     * This function assembes this query string based on the check state of
+     * This function assembles this query string based on the check state of
      * checkboxes in "typeCheckboxes" and "langCheckboxes" array.
      */
-    _assembleQueryText : function() {
+    _assembleQueryText : function () {
       var queryComponents = [],
           origQuery = this._search.get('displayedValue').trim(),
           finalQuery = "";
@@ -247,10 +244,10 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       if (this._searchType.get('value') === SearchOptions.SearchInDefs){
         finalQuery = 'defs:(' + origQuery + ')';
 
-        if (!typeCheckboxes.all.get('checked')) {
+        if (!this._typeCheckboxes.all.get('checked')) {
           finalQuery += ' AND ';
-          for (var field in typeCheckboxes) {
-            if (typeCheckboxes[field].get('checked') && field !== 'all') {
+          for (var field in this._typeCheckboxes) {
+            if (this._typeCheckboxes[field].get('checked') && field !== 'all') {
               queryComponents.push(field + ':(' + origQuery + ')');
             }
           }
@@ -263,15 +260,14 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
           }
           finalQuery += ')';
         }
-      }
-      else {
+      } else {
         finalQuery = origQuery;
       }
 
       if (!this._langRadios.all.get('checked')) {
         queryComponents = [];
         for (var lang in this._langMap) {
-          if (langRadios[lang].get('checked')) {
+          if (this._langRadios[lang].get('checked')) {
             this._langMap[lang].mimeTypes.forEach(function (mime) {
               queryComponents.push('mime:("' + mime + '")');
             });
@@ -279,7 +275,8 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
         }
 
         if (this._langRadios['mime'].get('checked'))
-          queryComponents.push('mime:("' + this._mimeComboBox.get('value') + '")');
+          queryComponents.push(
+            'mime:("' + this._mimeComboBox.get('value') + '")');
 
         if (finalQuery.length > 0){
           finalQuery += ' AND ';
@@ -298,7 +295,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
      * Updates the search history with the current ComboBox value, then sets
      * a new store for it.
      */
-    _updateSearchHistory : function() {
+    _updateSearchHistory : function () {
       var userInput = this._search.get('value').trim(),
           historyIndex = -1;
       this._searchHistory.every(function (item, index) {
@@ -332,15 +329,13 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
      * of the search text boxes.
      */
     _publishSearch : function() {
-      var that = this;
-
-      that._updateSearchHistory();
+      this._updateSearchHistory();
 
       topic.publish('codecompass/search', {
-        fileFilter : that._fileFilter.get('value').trim(),
-        dirFilter  : that._dirFilter.get('value').trim(),
-        searchType : that._searchType.get('value'),
-        text       : that._assembleQueryText()
+        fileFilter : this._fileFilter.get('value').trim(),
+        dirFilter  : this._dirFilter.get('value').trim(),
+        searchType : this._searchType.get('value'),
+        text       : this._assembleQueryText()
       });
     },
 
@@ -348,10 +343,8 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
      * Suggests a search text based on the current content of the search
      * ComboBox. The request is done via an async callback, so this function
      * returns quickly.
-     *
-     * @return nothing
      */
-    _suggestSearchText : function() {
+    _suggestSearchText : function () {
       var search = this._search,
           userInput = search.get('displayedValue').trim();
 
@@ -371,7 +364,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
 
       model.searchservice.suggest(params, function (result) {
         if (result.tag !== search.suggestTag) {
-          // There is an another call in progress so we just drop this result
+          // There is an another call in progress so we just drop this result.
           return;
         }
         
@@ -384,7 +377,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       });
     },
 
-    _addTypeCheckbox : function(text, container, radios) {
+    _addTypeCheckbox : function (text, container, radios) {
       function isBlocked() {
         for (var field in radios)
           if (radios[field].blockAllButton)
@@ -436,9 +429,11 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Create search settings drop down button
+     * Create search settings drop down button.
      */
-    _createSettingsButton : function(){
+    _createSettingsButton : function (){
+      var that = this;
+
       var advancedTooltip = new TooltipDialog();
 
       var optionsDiv = dom.create('div');
@@ -451,7 +446,8 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       });
 
       for (var lang in this._langMap) {
-        this._langRadios[lang] = this._addLangRadio(this._langMap[lang].name, langGroup);
+        this._langRadios[lang]
+          = this._addLangRadio(this._langMap[lang].name, langGroup);
       }
       this._langRadios.cpp.set('checked', true);
 
@@ -461,7 +457,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
         style    : 'margin-right: 5px; margin-bottom: 3px;',
         checked  : true,
         onChange : function (isOn) {
-          for (var field in this._langRadios)
+          for (var field in that._langRadios)
             if (field !== 'all')
               that._langRadios[field].set('disabled', isOn);
         }
@@ -472,8 +468,10 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       dom.place(dom.toDom('Any'), anyDiv);
       dom.place(anyDiv, langGroup.content);
 
-      dom.place(dom.toDom('<div style="font-size: 8pt; color: gray; margin: 5px">In case of\
-        <i>Any</i> search happens<br/>in every file, not only in listed ones.</div>'),
+      dom.place(dom.toDom(
+        '<div style="font-size: 8pt; color: gray; margin: 5px">In case of \
+        <i>Any</i> search happens<br/>in every file, not only in listed ones. \
+        </div>'),
         langGroup.domNode);
 
       dom.place(langGroup.domNode, optionsDiv);
@@ -485,18 +483,18 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
         style   : 'float: right'
       });
 
-      this._typeCheckboxes['type']     = this._addTypeCheckbox('Type',      typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['func']     = this._addTypeCheckbox('Function',  typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['const']    = this._addTypeCheckbox('Constant',  typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['var']      = this._addTypeCheckbox('Variable',  typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['field']    = this._addTypeCheckbox('Field',     typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['label']    = this._addTypeCheckbox('Label',     typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['macro']    = this._addTypeCheckbox('Macro',     typeGroup, this._typeCheckboxes, true);
-      this._typeCheckboxes['module']   = this._addTypeCheckbox('Module',    typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['type']   = this._addTypeCheckbox('Type',      typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['func']   = this._addTypeCheckbox('Function',  typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['const']  = this._addTypeCheckbox('Constant',  typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['var']    = this._addTypeCheckbox('Variable',  typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['field']  = this._addTypeCheckbox('Field',     typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['label']  = this._addTypeCheckbox('Label',     typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['macro']  = this._addTypeCheckbox('Macro',     typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['module'] = this._addTypeCheckbox('Module',    typeGroup, this._typeCheckboxes, true);
 
       dom.place(dom.toDom('<hr/>'), typeGroup.content);
 
-      this._typeCheckboxes['all']      = this._addTypeCheckbox('All',       typeGroup, this._typeCheckboxes, true);
+      this._typeCheckboxes['all']    = this._addTypeCheckbox('All',       typeGroup, this._typeCheckboxes, true);
 
       dom.place(typeGroup.domNode, optionsDiv);
 
@@ -511,7 +509,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       return advancedSettings;
     },
 
-    _addLangRadio: function(text, container) {
+    _addLangRadio: function (text, container) {
       var newDiv = dom.create('div');
       var radio = new RadioButton({
         name     : 'lang',
@@ -530,7 +528,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       return radio;
     },
 
-    _createSearchTypes : function(advancedSettings){
+    _createSearchTypes : function (advancedSettings){
       var that = this;
 
       var searchTypes = [];
@@ -554,7 +552,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
             that._typeCheckboxes.all.set('checked', true);
 
             for (var key in that._typeCheckboxes)
-             that._typeCheckboxes[key].set('disabled', newValue === SearchOptions.SearchInSource);
+              that._typeCheckboxes[key].set(
+                'disabled',
+                newValue === SearchOptions.SearchInSource);
 
             that._search.set('placeHolder', that._placeholders.text);
           } else if (newValue === SearchOptions.SearchForFileName) {
@@ -574,9 +574,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Create main search field
+     * Create main search field.
      */
-    _createMainSearchField : function(){
+    _createMainSearchField : function () {
       var that = this;
 
       return new ComboBox({
@@ -585,13 +585,13 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
           if (event.keyCode === keys.ENTER) {
             that._publishSearch();
           } else if (this.suggestTimer === undefined) {
-            this.suggestTimer = window.setTimeout( function(){
+            this.suggestTimer = window.setTimeout(function () {
               that._suggestSearchText();
             }, 300);
           }
           return true;
         },
-        store           : new Memory({data: that._searchHistory }),
+        store           : new Memory({ data : that._searchHistory }),
         searchAttr      : 'text',
         tooltipPosition : ['below'],
         autoComplete    : true,
@@ -602,9 +602,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Create directory filter
+     * Create directory filter.
      */
-    _createDirectoryFilter : function(){
+    _createDirectoryFilter : function () {
       var that = this;
 
       return new IconTextBox({
@@ -620,9 +620,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Set directory filter events
+     * Set directory filter events.
      */
-    _setDirectoryFilterEvents : function(dirFilter){
+    _setDirectoryFilterEvents : function (dirFilter) {
       var that = this;
 
       dirFilter.on('mouseover', function () {
@@ -641,15 +641,20 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
     },
 
     /**
-     * Create file filter
+     * Create file filter.
      */
-    _createFileFilter : function(){
+    _createFileFilter : function () {
+      var that = this;
+
       return new IconTextBox({
         id          : 'cc-search-filefilter',
         label       : 'File Filter:',
         icon        : 'icon icon-search',
-        placeHolder : this._placeholders.fileFilter,
-        onSubmit    : this._publishSearch
+        placeHolder : that._placeholders.fileFilter,
+        onSubmit    : function () {
+          popup.close(that._dirFilterDialogTooltip);
+          that._publishSearch();
+        }
       });
     },
 
@@ -661,6 +666,7 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
       var advancedSettings = this._createSettingsButton();
 
       //--- Query search types ---//
+
       this._searchType = this._createSearchTypes(advancedSettings);
 
       //--- Search fields ---//
@@ -691,7 +697,6 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
         position: ['below'],
         label : that._fileFilterTooltipLabel
       });
-
       var dirFilterTooltip  = new Tooltip({
         position: ['below'],
         label : that._dirFilterTooltipLabel
@@ -740,10 +745,9 @@ function (dom, declare, array, topic, keys, Memory, _WidgetBase, RadioButton,
   var searchFields = new SearchFields({
     id : 'searchfields'
   });
+
   viewHandler.registerModule(searchFields, {
     type : viewHandler.moduleType.Header,
     priority : 20
   });
-
-  return SearchFields;
 });
