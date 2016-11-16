@@ -3,6 +3,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>
+#include <boost/log/attributes.hpp>
 #include <boost/program_options.hpp>
 
 #include <util/logutil.h>
@@ -74,6 +75,8 @@ int main(int argc, char* argv[])
     boost::shared_ptr<boost::log::core> logger = boost::log::core::get();
     logger->set_filter(boost::log::expressions::attr<
       trivial::severity_level>("Severity") >= loglevel);
+    logger->add_global_attribute("Severity",
+      boost::log::attributes::mutable_constant<trivial::severity_level>(loglevel));
   }
 
   try
@@ -86,25 +89,28 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (vm.count("workspace"))
-  {
-    cc::util::WorkspaceOptions workspaceOptions
-      = cc::util::parseConfigFile(vm["workspace"].as<std::string>());
-
-    for (const auto& ws : workspaceOptions)
-    {
-      const cc::util::WorkspaceOption& wsOpt = ws.second;
-
-      BOOST_LOG_TRIVIAL(info)
-        << "Workspace" << std::endl
-        << "  id = " << ws.first << std::endl
-        << "  connection = " << wsOpt.connectionString << std::endl
-        << "  description = " << wsOpt.description << std::endl;
-    }
-  }
   vm.insert(std::make_pair("binDir", po::variable_value(binDir, false)));
   vm.insert(std::make_pair("webguiDir", po::variable_value(
     binDir + "/../share/codecompass/webgui/", false)));
+  vm.insert(std::make_pair("workspaceCfgFile", po::variable_value(
+    vm["workspace"].as<std::string>() + "/workspace.cfg", false)));
+
+  //--- Process workspaces ---//
+
+  cc::util::WorkspaceOptions workspaceOptions
+    = cc::util::parseConfigFile(vm["workspaceCfgFile"].as<std::string>());
+
+  for (const auto& ws : workspaceOptions)
+  {
+    const cc::util::WorkspaceOption& wsOpt = ws.second;
+
+    BOOST_LOG_TRIVIAL(info)
+      << "Workspace" << std::endl
+      << "  id = " << ws.first << std::endl
+      << "  connection = " << wsOpt.connectionString << std::endl
+      << "  datadir = " << wsOpt.datadir << std::endl
+      << "  description = " << wsOpt.description << std::endl;
+  }
 
   requestHandler.pluginHandler.configure(vm);
 

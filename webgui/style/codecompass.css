@@ -83,7 +83,7 @@ svg {
 /* Main header */
 
 #cc-mainheader{
-  height: 50px;
+  height: 60px;
 }
 
 #cc-headermenu{
@@ -107,21 +107,7 @@ svg {
   height: 100%;
   background-size: 200px;
   opacity: 0.8;
-}
-
-.searchtable {
-  width: 60%;
-  margin-left: 280px;
-}
-
-.searchlabel {
-  text-align: right;
-  padding-right: 5px;
-}
-
-.searchhelpcell {
-  padding-left: 5px;
-  width: 30px;
+  float: left;
 }
 
 .pathelement {
@@ -159,7 +145,8 @@ svg {
 }
 
 #infotree .icon,
-#filemanager .icon{
+#filemanager .icon,
+#queryresult .icon{
   color: #1855B6;
   font-size: 1.5em;
 }

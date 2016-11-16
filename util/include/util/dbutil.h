@@ -12,6 +12,13 @@
 #  define SQL_ILIKE "LIKE"
 #endif
 
+// Regex search
+#ifdef DATABASE_PGSQL
+#  define SQL_REGEX "~*"
+#else
+#  define SQL_REGEX "REGEXP"
+#endif
+
 namespace cc
 {
 namespace util

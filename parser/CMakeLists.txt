@@ -19,6 +19,7 @@ target_link_libraries(CodeCompass_parser
   boost_log
   ${ODB_LIBRARIES}    
   ${CMAKE_DL_LIBS}
+  magic
   pthread)
 
 install(TARGETS CodeCompass_parser

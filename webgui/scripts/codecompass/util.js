@@ -82,7 +82,18 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
           return i;
       return -1;
     },
-    
+
+    /**
+     * This function changes <, > and & characters respectively to &lt;, &gt and
+     * &amp;.
+     * @param {String} string Input string
+     */
+    escapeTags : function (string) {
+      return string.replace(/&/g, '&amp;')
+                   .replace(/</g, '&lt;')
+                   .replace(/>/g, '&gt;');
+    },
+
     /**
      *
      *  MD5 (Message-Digest Algorithm)

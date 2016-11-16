@@ -12,4 +12,9 @@ service PluginService
    * (eg. generated thrift files, modules)
    */
   list<string> getWebPlugins()
+  
+  /**
+   * Returns a list of css plugins from install web directory
+   */
+  list<string> getWebStylePlugins()
 }

@@ -19,10 +19,6 @@
     <link rel="stylesheet" href="scripts/node_modules/dojox/grid/resources/claroGrid.css" />
     <link rel="stylesheet" href="scripts/node_modules/jquery.fancytree/dist/skin-win7/ui.fancytree.min.css" />
 
-    <link rel="stylesheet" href="style/doxygen.css" />
-    <link rel="stylesheet" href="style/codecompass.css" />
-    <link rel="stylesheet" href="style/icons.css" />
-    
     <!-- Third party libraries -->
 
     <script type="text/javascript" src="scripts/node_modules/thrift/lib/js/src/thrift.js"></script>
@@ -86,8 +82,18 @@
       require(commonModules, function(){
         require([
           'dojo/_base/array',
+          'dojo/dom-construct',
           'codecompass/model'
-        ], function(array, model){
+        ], function(array, domConstruct, model){
+          var css = model.plugin.getWebStylePlugins();
+          array.forEach(css, function(file){
+            domConstruct.create("link", {
+              rel  :'stylesheet',
+              type :'text/css',
+              href : file,
+            }, document.getElementsByTagName('head')[0]);
+          });
+
           var modules = model.plugin.getWebPlugins();
           var diffModule = array.filter(modules, function(module){
             return commonModules.indexOf(module) < 0;

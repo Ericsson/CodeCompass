@@ -1,5 +1,26 @@
 #include <pluginservice/pluginservice.h>
 
+namespace
+{
+
+std::vector<std::string> getFiles(std::string dir_)
+{
+  std::vector<std::string> res;
+
+  boost::filesystem::recursive_directory_iterator it(dir_), end;
+  while (it != end)
+  {
+    if (!boost::filesystem::is_directory(it->path()))
+      res.push_back(it->path().string());
+
+    ++it;
+  }
+
+  return res;
+}
+
+}
+
 namespace cc
 { 
 namespace service
@@ -23,23 +44,28 @@ void PluginServiceHandler::getPlugins(std::vector<std::string>& return_)
 void PluginServiceHandler::getWebPlugins(std::vector<std::string>& return_)
 {
   std::string webrootDir = _configuration["webguiDir"].as<std::string>();
-  std::vector<std::string> dirs =
-  {
-    webrootDir + "/scripts/codecompass/generated",
-    webrootDir + "/scripts/codecompass/view"
-  };
 
-  for (const std::string& dir : dirs)
-  {
-    boost::filesystem::recursive_directory_iterator it(dir), end;
-    while (it != end)
-    {
-      if (!boost::filesystem::is_directory(it->path()))
-        return_.push_back(it->path().string().substr(webrootDir.size()));
+  std::vector<std::string> generatedFiles = getFiles(
+    webrootDir + "/scripts/codecompass/generated");
 
-      ++it;
-    }
-  }
+  std::vector<std::string> jsModules = getFiles(
+      webrootDir + "/scripts/codecompass/view");
+
+  for(std::string& file_ : generatedFiles)
+    return_.push_back(file_.substr(webrootDir.size()));
+  for(std::string& file_ : jsModules)
+    return_.push_back(file_.substr(webrootDir.size()));
+}
+
+void PluginServiceHandler::getWebStylePlugins(std::vector<std::string>& return_)
+{
+  std::string webrootDir = _configuration["webguiDir"].as<std::string>();
+
+  std::vector<std::string> cssFiles = getFiles(
+      webrootDir + "/style");
+
+  for(std::string& file_ : cssFiles)
+    return_.push_back(file_.substr(webrootDir.size()));
 }
 
 }

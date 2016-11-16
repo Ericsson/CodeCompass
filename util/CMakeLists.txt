@@ -12,7 +12,8 @@ add_library(util STATIC
   src/logutil.cpp
   src/graph.cpp
   src/legendbuilder.cpp
-  src/util.cpp)
+  src/util.cpp
+  src/pipedprocess.cpp)
 
 target_compile_options(util PUBLIC -fPIC)
 target_link_libraries(util

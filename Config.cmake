@@ -1,5 +1,5 @@
 # Installation directory for libraries
-set(INSTALL_LIB_DIR "lib")
+set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Installation directory for libraries
 set(INSTALL_PARSER_DIR "${INSTALL_LIB_DIR}/parserplugin")
@@ -18,6 +18,9 @@ set(INSTALL_SCRIPTS_DIR "${INSTALL_WEBROOT_DIR}/scripts/codecompass")
 
 # Installation directory of thrift api's
 set(INSTALL_GEN_DIR "${INSTALL_SCRIPTS_DIR}/generated")
+
+# Installation directory for java libraries
+set(INSTALL_JAVA_LIB_DIR "${INSTALL_LIB_DIR}/java")
 
 #Installation directory for executables
 set(INSTALL_BIN_DIR "bin")

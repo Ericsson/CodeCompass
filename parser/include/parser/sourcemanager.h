@@ -7,6 +7,8 @@
 #include <map>
 #include <unordered_set>
 
+#include <magic.h>
+
 #include <model/file.h>
 #include <model/file-odb.hxx>
 #include <model/filecontent.h>
@@ -20,6 +22,7 @@ class SourceManager
 {
 public:
   SourceManager(std::shared_ptr<odb::database> db_);
+  SourceManager(const SourceManager&) = delete;
   ~SourceManager();
 
   model::FilePtr getFile(const std::string& path_);
@@ -77,7 +80,9 @@ private:
   std::shared_ptr<odb::database> _db;
   std::map<std::string, model::FilePtr> _files;
   std::unordered_set<model::FileId> _persistedFiles;
+  std::unordered_set<std::string> _persistedContents;
   std::mutex _createFileMutex;
+  ::magic_t _magicCookie;
 };
 
 } // parser

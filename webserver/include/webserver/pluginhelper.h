@@ -25,14 +25,20 @@ inline void registerPluginSimple(
   ServiceFactoryT serviceFactory_,
   const std::string& serviceName_)
 {
+  namespace po = boost::program_options;
+
   const util::WorkspaceOptions workspaces
-    = util::parseConfigFile(vm_["workspace"].as<std::string>());
+    = util::parseConfigFile(vm_["workspaceCfgFile"].as<std::string>());
 
   // Create a handler instance for all workspaces.
   for (const auto& workspace : workspaces)
   {
     const std::string wsId = workspace.first;
     const util::WorkspaceOption& wsOpt = workspace.second;
+
+    po::variables_map vm = vm_;
+    vm.insert(std::make_pair("datadir", po::variable_value(
+      wsOpt.datadir, false)));
 
     std::shared_ptr<odb::database> db
       = util::createDatabase(wsOpt.connectionString);
@@ -50,7 +56,7 @@ inline void registerPluginSimple(
     try
     {
       // Create handler
-      std::shared_ptr<RequestHandlerT> servicePtr(serviceFactory_(db, vm_));
+      std::shared_ptr<RequestHandlerT> servicePtr(serviceFactory_(db, vm));
       
       // Create a key for the implementation
       std::string key = wsId + '/' + serviceName_;
