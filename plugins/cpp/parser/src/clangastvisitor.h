@@ -311,6 +311,23 @@ public:
             = util::fnvHash(getMangledName(_mngCtx, baseDecl));
           inheritance->isVirtual = it->isVirtual();
           inheritance->visibility = getVisibility(it->getAccessSpecifier());
+
+          //--- AST node for inherited class ---//
+
+          model::CppAstNodePtr baseNode = std::make_shared<model::CppAstNode>();
+
+          baseNode->astValue = baseDecl->getNameAsString();
+          baseNode->location = getFileLoc(it->getLocStart(), it->getLocEnd());
+          baseNode->mangledName
+            = getMangledName(_mngCtx, baseDecl, baseNode->location);
+          baseNode->mangledNameHash = util::fnvHash(baseNode->mangledName);
+          baseNode->symbolType = model::CppAstNode::SymbolType::Type;
+          baseNode->astType = model::CppAstNode::AstType::Usage;
+
+          baseNode->id = model::createIdentifier(*baseNode);
+
+          if (insertToCache(0, baseNode))
+            _astNodes.push_back(baseNode);
         }
       }
 
