@@ -53,11 +53,18 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
     if (!module)
       throw 'There is no center module with this id: ' + id;
 
+    if (module.onUnload)
+      module.onUnload(center);
+
     center.getChildren().forEach(function (child) {
       center.removeChild(child);
     });
 
     center.addChild(module);
+
+    if (module.onLoad)
+      module.onLoad(center, urlHandler.getState());
+
     setTimeout(function () { center.resize(); }, 0);
 
     currentCenterModuleId = id;
