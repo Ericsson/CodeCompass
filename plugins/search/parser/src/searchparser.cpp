@@ -223,6 +223,12 @@ SearchParser::~SearchParser()
 
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("Search Plugin");
+    return description;
+  }
+
   std::shared_ptr<SearchParser> make(ParserContext& ctx_)
   {
     return std::shared_ptr<SearchParser>(new SearchParser(ctx_));

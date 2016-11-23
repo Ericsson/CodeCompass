@@ -255,6 +255,12 @@ void MetricsParser::persistLoc(const Loc& loc_, model::FileId file_)
 
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("Metrics Plugin");
+    return description;
+  }
+
   std::shared_ptr<MetricsParser> make(ParserContext& ctx_)
   {
     return std::make_shared<MetricsParser>(ctx_);

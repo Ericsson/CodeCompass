@@ -68,16 +68,35 @@ po::options_description commandLineArguments()
 
 int main(int argc, char* argv[])
 {
-  std::string binDir = boost::filesystem::canonical(
-    boost::filesystem::path(argv[0]).parent_path()).string();
-
   cc::util::initLogger();
-  
+
   //--- Process command line arguments ---//
 
   po::options_description desc = commandLineArguments();
 
   po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+
+  std::string binDir = boost::filesystem::canonical(
+    boost::filesystem::path(argv[0]).parent_path()).string();
+  std::string pluginDir = binDir + "/../lib/parserplugin";
+
+  //--- Skip parser list ---//
+
+  std::vector<std::string> skipParserList;
+    if(vm.count("skip"))
+      skipParserList = vm["skip"].as<std::vector<std::string>>();
+
+  //--- Load parsers ---//
+
+  cc::parser::PluginHandler pHandler(pluginDir);
+  pHandler.loadPlugins(skipParserList);
+
+  //--- Add arguments of parsers ---//
+
+  po::options_description pluginOptions = pHandler.getOptions();
+  desc.add(pluginOptions);
+
   po::store(po::parse_command_line(argc, argv, desc), vm);
 
   if (argc < 2 || vm.count("help"))
@@ -127,10 +146,9 @@ int main(int argc, char* argv[])
   }
 
   cc::parser::SourceManager srcMgr(db);
-
   cc::parser::ParserContext ctx(db, srcMgr, vm);
-  cc::parser::PluginHandler pHandler(ctx);
-  pHandler.loadPluginsFromDir(binDir + "/../lib/parserplugin");
+
+  pHandler.createPlugins(ctx);
 
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())

@@ -112,6 +112,12 @@ GitParser::~GitParser()
 
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("Git Plugin");
+    return description;
+  }
+
   std::shared_ptr<GitParser> make(ParserContext& ctx_)
   {
     return std::make_shared<GitParser>(ctx_);
