@@ -30,6 +30,7 @@ function (lang, Deferred, model) {
       Diagram                :  5, /** Diagram (eg. CppDiagram)**/
       InfoTree               :  6, /** Info tree item (eg. CppInforTree)**/
       FileManagerContextMenu :  7, /** File manager context menu (eg. Diagram directory)**/
+      InfoPage               :  8, /** Info page (eg. Credit, User Guide) **/
     },
 
     /**
