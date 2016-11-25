@@ -13,6 +13,8 @@
 #include <model/file-odb.hxx>
 #include <model/filecontent.h>
 
+#include <util/odbtransaction.h>
+
 namespace cc
 {
 namespace parser
@@ -25,16 +27,26 @@ public:
   SourceManager(const SourceManager&) = delete;
   ~SourceManager();
 
+  /**
+   * This function returns a pointer to a model::File object. The object is
+   * persisted in the database or returned from cache if already persistent.
+   * @param path_ The file path to persist. Note that the parent directories
+   * will also be added automatically.
+   */
   model::FilePtr getFile(const std::string& path_);
 
   /**
-   * This function returns a pointer to the corresponding model::File object
-   * based on the given path_. The object is read from a cache. If the file is
-   * not in the cache yet then a model::File entry is created, persisted in the
-   * database and placed in the cache. If the file doesn't exist then it returns
-   * nullptr.
+   * This function updates the file given as parameter. Note that the file
+   * content is read-only, so it can't be changed.
+   * @param file_ A model::File object which is already persistent. The file
+   * content won't change even if the corresponding attribute is modified.
    */
-  model::FilePtr getCreateFile(const std::string& path_);
+  void updateFile(const model::File& file_);
+
+  /**
+   * This function returns true if the given file is a plain text file.
+   */
+  bool isPlainText(const std::string& path_) const;
 
   // TODO: Maybe this function shouldn't exist.
   void persistFiles();
@@ -51,6 +63,15 @@ private:
    * that contains the file content.
    */
   model::FileContentPtr createFileContent(const std::string& path_) const;
+
+  /**
+   * This function returns a pointer to the corresponding model::File object
+   * based on the given path_. The object is read from a cache. If the file is
+   * not in the cache yet then a model::File entry is created, persisted in the
+   * database and placed in the cache. If the file doesn't exist then it returns
+   * nullptr.
+   */
+  model::FilePtr getCreateFile(const std::string& path_);
 
   /**
    * This function creates a model::File object and fills its attributes based
@@ -72,12 +93,8 @@ private:
    */
   model::FilePtr getCreateParent(const std::string& path_);
 
-  /**
-   * This function returns true if the given file is a plain text file.
-   */
-  bool isPlainText(const std::string& path_) const;
-
   std::shared_ptr<odb::database> _db;
+  util::OdbTransaction _transaction;
   std::map<std::string, model::FilePtr> _files;
   std::unordered_set<model::FileId> _persistedFiles;
   std::unordered_set<std::string> _persistedContents;

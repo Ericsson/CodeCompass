@@ -2,6 +2,7 @@ include_directories(
   include
   gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
+  ${PROJECT_SOURCE_DIR}/service/project/include
   ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
@@ -44,6 +45,7 @@ target_link_libraries(metricsservice
   model
   metricsmodel
   projectthrift
+  projectservice
   commonthrift
   metricsthrift)
 

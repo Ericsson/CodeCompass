@@ -1,4 +1,4 @@
-define([
+require([
   'dojo/_base/declare',
   'dojo/dom-construct',
   'dojo/topic',
@@ -7,14 +7,12 @@ define([
   'dijit/form/Button',
   'dijit/form/CheckBox',
   'dijit/form/Select',
-  'dijit/form/DropDownButton',
   'dijit/layout/ContentPane',
-  'codecompass/view/component/ContextMenu',
   'codecompass/viewHandler',
   'codecompass/urlHandler',
   'codecompass/model'],
 function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
-  DropDownButton, ContentPane, ContextMenu, viewHandler, urlHandler, model) {
+  ContentPane, viewHandler, urlHandler, model) {
 
   model.addService('metricsservice', 'MetricsService', MetricsServiceClient);
 
@@ -132,43 +130,28 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
 
   var Metrics = declare(ContentPane, {
 
-    fileTypes : [
-      {id: 'Unknown'    , name : 'Unknown'},
-      {id: 'Dir'        , name : 'Directory'},
-      {id: 'CPP'        , name : 'Cxx'},
-      {id: 'Java'       , name : 'Java'},
-      {id: 'Ruby'       , name : 'Ruby'},
-      {id: 'Sql'        , name : 'Sql'},
-      {id: 'Python'     , name : 'Python'},
-      {id: 'ErlangBash' , name : 'ErlangBash'},
-      {id: 'Perl'       , name : 'Perl'}
-    ],
-
     _selectedFileTypes : {},
-  
+
     style : 'padding: 10px',
 
-    constructor : function() {
+    constructor : function () {
       var that = this;
 
       /**
        * This action loads the Metrics center module.
-       * @param fileId : 'The id of the file or directory of which we want 
+       * @param fileId : 'The id of the file or directory of which we want
        * to display metrics for.',
-       * @param fileTypes : 'Array of FileType values. If not given then it 
+       * @param fileTypes : 'Array of FileType values. If not given then it
        * behaves as all values were listed. Only the files of these types will
        * be included in the metric.',
        * @param metricsTypes : 'Array of MetricsType values. The array has to be
        * of length 2 which specify the size and color dimensions respectively.'
        */
-
       topic.subscribe('codecompass/metrics', function (message) {
         var fileInfo = message.fileInfo;
 
         topic.publish('codecompass/setCenterModule', 'metrics');
-        urlHandler.setStateValue({
-          center : 'metrics'
-        });
+        urlHandler.setStateValue({ center : 'metrics' });
 
         that._currentFileId = fileInfo.id;
 
@@ -179,6 +162,10 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
 
         that.loadMetrics(fileInfo.id, fileTypes, metricsTypes);
       });
+
+      this._fileTypes = model.project.getFileTypes().map(function (fileType) {
+        return { id : fileType, name : fileType };
+      })
     },
 
     postCreate : function () {
@@ -202,7 +189,10 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
       dom.place(dimensionRow2, dimensionTable);
       dom.place(dimensionRow3, dimensionTable);
 
-      var dimensionCol11 = dom.create('td', { style : 'padding-right: 10px', rowspan : 2 });
+      var dimensionCol11 = dom.create('td', {
+        style : 'padding-right: 10px',
+        rowspan : 2
+        });
       var dimensionCol12 = dom.create('td', { rowspan : 2 });
       var dimensionCol13 = dom.create('td', { style : 'padding-left: 10px' });
       var dimensionCol14 = dom.create('td', { style : 'padding-left: 10px' });
@@ -225,8 +215,8 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
 
       var fileTypeDiv = dom.create('div', { id : 'fileTypeDiv' });
 
-      for (var fileType in that.fileTypes) {
-        var fileTypeId = that.fileTypes[fileType].id;
+      for (var fileType in that._fileTypes) {
+        var fileTypeId = that._fileTypes[fileType].id;
         var cb = function (fileType) {
           that._selectedFileTypes[fileType] = fileTypeId;
           return new CheckBox({
@@ -240,7 +230,7 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
           });
         }(fileType);
 
-        var label = dom.toDom(that.fileTypes[fileType].name);
+        var label = dom.toDom(that._fileTypes[fileType].name);
 
         var div = dom.create('div');
         dom.place(cb.domNode, div);
@@ -264,8 +254,8 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
           that.loadMetrics(
             that._currentFileId,
             that.getSelectedFileTypes(),
-            [ that._metricsSelect1.get('value'),
-              that._metricsSelect2.get('value')]);
+            [that._metricsSelect1.get('value'),
+             that._metricsSelect2.get('value')]);
         }
       });
 
@@ -291,15 +281,16 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
         return;
 
       var fileInfo = model.project.getFileInfo(state.fid);
-      topic.publish('codecompass/metrics', {'fileInfo' : fileInfo });
+      topic.publish('codecompass/metrics', { 'fileInfo' : fileInfo });
     },
-    
-    getSelectedFileTypes : function(){
+
+    getSelectedFileTypes : function () {
       var that = this;
       return Object.keys(this._selectedFileTypes).map(function (x) {
         return that._selectedFileTypes[x];
       });
     },
+
     /**
      * This function loads the given metrics for the given file from the server
      * and redraws the TreeMap representation.
@@ -310,7 +301,7 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
      * the elements of the array specify the metrics in size and color
      * dimensions respectively.
      */
-    loadMetrics : function (fileId, fileTypes, metricsTypes) {  
+    loadMetrics : function (fileId, fileTypes, metricsTypes) {
       var metricsChart = document.getElementById('metrics_chart');
 
       function removeContent() {
@@ -321,7 +312,10 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
       //--- Remove previous metrics and play animgif ---//
 
       removeContent();
-      dom.place(dom.create('span', { class : 'diagram-loading' }), metricsChart);
+
+      dom.place(
+        dom.create('span', { class : 'diagram-loading' }),
+        metricsChart);
 
       //--- Get data from server ---//
 
@@ -331,7 +325,7 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
       function (colorValues) {
         root = JSON.parse(root);
         colorValues = JSON.parse(colorValues);
-        
+
         //--- Create SVG and TreeMap ---//
 
         var margin = { top : 20, right : 0, bottom : 0, left : 0 };
@@ -541,26 +535,18 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
         }
       });
       });
-      
-//      var root = JSON.parse(model.metricsservice.getMetrics(
-//        fileId, fileTypes, metricsTypes[0]));
-//      var colorValues = JSON.parse(model.metricsservice.getMetrics(
-//        fileId, fileTypes, metricsTypes[1]));
     }
   });
-  
-  var metrics = new Metrics({
-    id : 'metrics'
-  });
-  viewHandler.registerModule(metrics, {
+
+  viewHandler.registerModule(new Metrics({ id : 'metrics' }), {
     type : viewHandler.moduleType.Center
   });
 
   //--- Register Menu Points ---//
-  
+
   var metricsMenu = {
     id     : 'cppMetricsMenu',
-    render : function(fileInfo){
+    render : function (fileInfo) {
       return new MenuItem({
         label    : 'Metrics',
         onClick  : function () {
@@ -575,6 +561,4 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
   viewHandler.registerModule(metricsMenu, {
     type : viewHandler.moduleType.FileManagerContextMenu
   });
-
-  return Metrics;
 });

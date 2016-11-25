@@ -200,12 +200,12 @@ void CppParser::addCompileCommand(
       continue;
 
     model::BuildSource buildSource;
-    buildSource.file = _ctx.srcMgr.getCreateFile(srcTarget.first);
+    buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
     buildSource.action = buildAction;
     sources.push_back(std::move(buildSource));
 
     model::BuildTarget buildTarget;
-    buildTarget.file = _ctx.srcMgr.getCreateFile(srcTarget.second);
+    buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
     buildTarget.action = buildAction;
     targets.push_back(std::move(buildTarget));
   }

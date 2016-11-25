@@ -69,7 +69,7 @@ util::DirIterCallback MetricsParser::getParserCallback()
     if (boost::filesystem::is_regular_file(path))
     {
       model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
-      if(file)
+      if (file)
       {
         persistLoc(getLocFromFile(file), file->id);
       }
@@ -82,18 +82,15 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
 {
   Loc result;
 
-  //--- Get source code ---//
-
-  // TODO: Why doesn't it work? It gives empty string.
-  // std::string content = file->content.load()->content;
-
   BOOST_LOG_TRIVIAL(info) << "Count metrics for " << file_->path;
 
-  std::ifstream fileStream(file_->path);
-  std::string content(
-    (std::istreambuf_iterator<char>(fileStream)),
-    (std::istreambuf_iterator<char>()));
-  fileStream.close();
+  //--- Get source code ---//
+
+  std::string content
+    = file_->content ? file_->content.load()->content : std::string();
+
+  if (content.empty())
+    return result;
 
   //--- Original lines ---//
 
@@ -126,7 +123,7 @@ void MetricsParser::setCommentTypes(
   std::string& multiCommentEnd_) const
 {
   if (
-    fileType_ == "CXX" || // Should be updated together with C++ plugin.
+    fileType_ == "CPP" || // Should be updated together with C++ plugin.
     fileType_ == "Java")
   {
     singleComment_ = "//";
@@ -239,17 +236,26 @@ void MetricsParser::persistLoc(const Loc& loc_, model::FileId file_)
     model::Metrics metrics;
     metrics.file = file_;
 
-    metrics.type   = model::Metrics::CODE_LOC;
-    metrics.metric = loc_.codeLines;
-    _ctx.db->persist(metrics);
+    if (loc_.codeLines != 0)
+    {
+      metrics.type   = model::Metrics::CODE_LOC;
+      metrics.metric = loc_.codeLines;
+      _ctx.db->persist(metrics);
+    }
 
-    metrics.type   = model::Metrics::NONBLANK_LOC;
-    metrics.metric = loc_.nonblankLines;
-    _ctx.db->persist(metrics);
+    if (loc_.nonblankLines != 0)
+    {
+      metrics.type   = model::Metrics::NONBLANK_LOC;
+      metrics.metric = loc_.nonblankLines;
+      _ctx.db->persist(metrics);
+    }
 
-    metrics.type   = model::Metrics::ORIGINAL_LOC;
-    metrics.metric = loc_.originalLines;
-    _ctx.db->persist(metrics);
+    if (loc_.originalLines != 0)
+    {
+      metrics.type   = model::Metrics::ORIGINAL_LOC;
+      metrics.metric = loc_.originalLines;
+      _ctx.db->persist(metrics);
+    }
   });
 }
 

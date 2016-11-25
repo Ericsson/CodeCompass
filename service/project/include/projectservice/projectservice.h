@@ -37,6 +37,7 @@ public:
   void getParent(FileInfo& return_, const FileId& fileId_) override;
   void searchFile(std::vector<FileInfo>& return_, const std::string& text_, const bool onlyFile_) override;
   void getStatistics(std::vector<StatisticsInfo>& return_) override;
+  void getFileTypes(std::vector<std::string>& return_) override;
 
 private:
   /**

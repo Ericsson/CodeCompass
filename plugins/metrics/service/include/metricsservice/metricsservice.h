@@ -1,5 +1,5 @@
-#ifndef CC_SERVICE_METRICSSERVICE_H
-#define CC_SERVICE_METRICSSERVICE_H
+#ifndef CC_SERVICE_METRICS_H
+#define CC_SERVICE_METRICS_H
 
 #include <memory>
 #include <vector>
@@ -10,9 +10,10 @@
 
 #include <model/metrics.h>
 #include <model/metrics-odb.hxx>
-
 #include <model/file.h>
 #include <model/file-odb.hxx>
+
+#include <projectservice/projectservice.h>
 
 #include <util/odbtransaction.h>
 
@@ -43,21 +44,17 @@ public:
     std::vector<MetricsTypeName>& _return) override;
 
 private:
-  typedef odb::result<model::Metrics> MetricsResult;
-  typedef odb::query<model::Metrics> MetricsQuery;
-  
   std::string getMetricsFromDir(
     const core::FileInfo& fileInfo,
     const MetricsType::type metricsType,
     const std::vector<std::string>& fileTypeFilter);
 
-  core::FileInfo getFileInfo(const core::FileId& fileId);
-  core::FileInfo makeFileInfo(const model::File& f);
-
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
   const boost::program_options::variables_map& _config;
+
+  core::ProjectServiceHandler _projectService;
 };
 
 } // metrics

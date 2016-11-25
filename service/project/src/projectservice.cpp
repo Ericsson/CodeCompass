@@ -333,6 +333,21 @@ void ProjectServiceHandler::getStatistics(
   }
 }
 
+void ProjectServiceHandler::getFileTypes(
+  std::vector<std::string>& return_)
+{
+  typedef odb::result<model::FileTypeView> FileTypeResult;
+
+  _transaction([&, this](){
+    FileTypeResult result = _db->query<model::FileTypeView>();
+    std::transform(
+      result.begin(),
+      result.end(),
+      std::back_inserter(return_),
+      [](const model::FileTypeView& view) { return view.type; });
+  });
+}
+
 FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)
 {
   FileInfo fileInfo;

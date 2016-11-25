@@ -28,7 +28,6 @@ private:
   void postParse();
   util::DirIterCallback getParserCallback(const std::string& path_);
   bool shouldHandle(const std::string& path_);
-  bool isPlainText(const std::string& path_) const;
 
 private:
   /**

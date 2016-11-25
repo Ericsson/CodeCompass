@@ -5,7 +5,6 @@
 #include <boost/log/trivial.hpp>
 
 #include <parser/sourcemanager.h>
-#include <util/odbtransaction.h>
 #include <util/hash.h>
 
 namespace cc
@@ -14,10 +13,9 @@ namespace parser
 {
 
 SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
-  : _db(db_), _magicCookie(nullptr)
+  : _db(db_), _transaction(db_), _magicCookie(nullptr)
 {
-  util::OdbTransaction trans(_db);
-  trans([&, this]() {
+  _transaction([&, this]() {
 
     //--- Reload files from database ---//
 
@@ -37,7 +35,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
   {
     if (::magic_load(_magicCookie, 0) != 0)
     {
-      BOOST_LOG_TRIVIAL(error)
+      BOOST_LOG_TRIVIAL(warning)
         << "libmagic error: "
         << ::magic_error(_magicCookie);
 
@@ -185,27 +183,35 @@ model::FilePtr SourceManager::getCreateParent(const std::string& path_)
 
 bool SourceManager::isPlainText(const std::string& path_) const
 {
-//  const char* magic = ::magic_file(_magicCookie, path_.c_str());
-//
-//  if (!magic)
-//  {
-//    BOOST_LOG_TRIVIAL(error) << "Couldn't use magic on file: " << path_;
-//    return false;
-//  }
-//
-//  if (std::strstr(magic, "text"))
-//    return true;
-//
-//  return false;
-  return true;
+  const char* magic = ::magic_file(_magicCookie, path_.c_str());
+
+  if (!magic)
+  {
+    BOOST_LOG_TRIVIAL(error) << "Couldn't use magic on file: " << path_;
+    return false;
+  }
+
+  if (std::strstr(magic, "text"))
+    return true;
+
+  return false;
+}
+
+void SourceManager::updateFile(const model::File& file_)
+{
+  std::lock_guard<std::mutex> guard(_createFileMutex);
+
+  if (_persistedFiles.find(file_.id) != _persistedFiles.end())
+    _transaction([&, this]() {
+      _db->update(file_);
+    });
 }
 
 void SourceManager::persistFiles()
 {
   std::lock_guard<std::mutex> guard(_createFileMutex);
 
-  util::OdbTransaction trans(_db);
-  trans([&, this]() {
+  _transaction([&, this]() {
     for (const auto& p : _files)
     {
       if (_persistedFiles.find(p.second->id) == _persistedFiles.end())
@@ -227,7 +233,13 @@ void SourceManager::persistFiles()
 
         _db->persist(*p.second);
 
-        p.second->content.unload();
+        // TODO: The memory consumption should be checked to see if not
+        // unloading the lazy shared pointer keeps the file content in memory.
+        // If so then this line should be uncommented. The reason for not
+        // unloading is that some parsers may want to read the file contents and
+        // if this can be done through the File object then the file is not
+        // needed to be read from disk.
+//        p.second->content.unload();
       }
       catch (const odb::object_already_persistent&)
       {

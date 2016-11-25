@@ -5,10 +5,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include <util/dbutil.h>
-
 #include <metricsservice/metricsservice.h>
-#include <webserver/servicenotavailexception.h>
 
 namespace cc
 {
@@ -20,7 +17,10 @@ namespace metrics
 MetricsServiceHandler::MetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
   const boost::program_options::variables_map& config_)
-  : _db(db_), _transaction(db_), _config(config_)
+    : _db(db_),
+      _transaction(db_),
+      _config(config_),
+      _projectService(db_, config_)
 {
 }
 
@@ -30,7 +30,8 @@ void MetricsServiceHandler::getMetrics(
   const std::vector<std::string>& fileTypeFilter,
   const MetricsType::type metricsType)
 {
-  core::FileInfo fileInfo = getFileInfo(fileId);
+  core::FileInfo fileInfo;
+  _projectService.getFileInfo(fileInfo, fileId);
   _return = getMetricsFromDir(fileInfo, metricsType, fileTypeFilter);
 }
 
@@ -38,10 +39,6 @@ void MetricsServiceHandler::getMetricsTypeNames(
   std::vector<MetricsTypeName>& _return)
 {
   MetricsTypeName typeName;
-
-  typeName.type = MetricsType::McCabe;
-  typeName.name = "McCabe";
-  _return.push_back(typeName);
 
   typeName.type = MetricsType::OriginalLoc;
   typeName.name = "Original lines of code";
@@ -61,7 +58,7 @@ std::string MetricsServiceHandler::getMetricsFromDir(
   const MetricsType::type metricsType,
   const std::vector<std::string>& fileTypeFilter)
 {
-  if(fileTypeFilter.empty())
+  if (fileTypeFilter.empty())
     return "";
 
   using ptree = boost::property_tree::ptree;
@@ -70,6 +67,8 @@ std::string MetricsServiceHandler::getMetricsFromDir(
   _transaction([&, this](){
     typedef odb::result<model::File> FileResult;
     typedef odb::query<model::File> FileQuery;
+    typedef odb::result<model::Metrics> MetricsResult;
+    typedef odb::query<model::Metrics> MetricsQuery;
 
     //--- Get files under directory ---//
 
@@ -87,7 +86,7 @@ std::string MetricsServiceHandler::getMetricsFromDir(
       std::back_inserter(descendantFids),
       [](const model::File& file) { return file.id; });
 
-    if(descendantFids.empty())
+    if (descendantFids.empty())
       return "";
 
     //--- Get metrics for these files ---//
@@ -103,7 +102,10 @@ std::string MetricsServiceHandler::getMetricsFromDir(
     {
       core::FileId fileId = std::to_string(metric.file);
 
-      std::string path = getFileInfo(fileId).path.substr(1);
+      core::FileInfo fileInfo;
+      _projectService.getFileInfo(fileInfo, fileId);
+
+      std::string path = fileInfo.path.substr(1);
       pt.put(ptree::path_type{path, '/'}, metric.metric);
     }
   });
@@ -112,69 +114,6 @@ std::string MetricsServiceHandler::getMetricsFromDir(
   boost::property_tree::json_parser::write_json(ss, pt, false);
   
   return ss.str();
-}
-
-core::FileInfo MetricsServiceHandler::getFileInfo(const core::FileId& fileId)
-{
-  return _transaction([&, this](){
-    try
-    {
-      model::File f;
-      
-      if (!_db->find<model::File>(std::stoull(fileId), f))
-      {
-        core::InvalidId ex;
-        ex.__set_fid(fileId);
-        ex.__set_msg("Invalid file ID");
-        throw ex;
-      }
-      
-      return makeFileInfo(f);
-    }
-    catch (odb::exception &odbex)
-    {
-      BOOST_LOG_TRIVIAL(warning)
-        << "datasource exception occured: " << odbex.what();
-    }
-  });
-}
-
-// TODO: This function is copy-pasted from another service. This should be
-// written only once.
-core::FileInfo MetricsServiceHandler::makeFileInfo(const model::File& f)
-{    
-  core::FileInfo fileInfo;
-
-  fileInfo.id = std::to_string(f.id);
-  fileInfo.name = f.filename;
-  fileInfo.path = f.path;
-  fileInfo.isDirectory = f.type == model::File::DIRECTORY_TYPE;
-  fileInfo.type = static_cast<std::string>(f.type);
-
-  if (f.parent)
-    fileInfo.parent = std::to_string(f.parent.object_id());
-
-  switch (f.parseStatus)
-  {
-  case model::File::PSNone:
-    fileInfo.parseStatus = core::FileParseStatus::Nothing;
-    break;
-  case model::File::PSPartiallyParsed:
-    fileInfo.parseStatus = core::FileParseStatus::PartiallyParsed;
-    break;
-  case model::File::PSFullyParsed:
-    fileInfo.parseStatus = core::FileParseStatus::FullyParsed;
-    break;
-  default:
-    fileInfo.parseStatus = core::FileParseStatus::Nothing;
-    break;
-  }
-
-  if (fileInfo.parseStatus == core::FileParseStatus::Nothing &&
-      f.inSearchIndex)
-    fileInfo.parseStatus = core::FileParseStatus::OnlyInSearchIndex;
-  
-  return fileInfo;
 }
 
 }

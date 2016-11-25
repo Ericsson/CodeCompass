@@ -7,9 +7,7 @@ extern "C"
 
 boost::program_options::options_description getOptions()
 {
-  boost::program_options::options_description description("Metrics Plugin");
-
-  return description;
+  return boost::program_options::options_description("Metrics Plugin");
 }
 
 void registerPlugin(

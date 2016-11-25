@@ -14,8 +14,7 @@ require([
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/view/component/HtmlTree',
-  'codecompass/view/component/ContextMenu',
-  ],
+  'codecompass/view/component/ContextMenu'],
 function (on, query, style, topic, declare, Memory, Observable,
   NodeListTraverse, ContentPane, Tree, ObjectStoreModel, util, model,
   viewHandler, HtmlTree, ContextMenu) {
@@ -65,23 +64,22 @@ function (on, query, style, topic, declare, Memory, Observable,
     },
 
     /*
-     * Called after a widget and its children
-     * have been created and added to the page
+     * Called after a widget and its children have been created and added to the
+     * page.
      */
      startup : function () {
        this.inherited(arguments);
 
        var that = this;
 
-       //--- Menu ---//
        var contextmenu = new ContextMenu({
          targetNodeIds : [this.id],
          selector      : '.dijitTreeNode'
        });
 
        on(this, '.dijitTreeNode:contextmenu', function (event) {
-         var fileInfo = dijit.byNode(query(event.target)
-         .closest('.dijitTreeNode')[0]).item.fileInfo;
+         var fileInfo = dijit.byNode(
+          query(event.target).closest('.dijitTreeNode')[0]).item.fileInfo;
 
          that.buildContextMenu(contextmenu, fileInfo);
        });
