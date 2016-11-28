@@ -30,15 +30,19 @@ bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
   }
 
   fs::directory_iterator endIter;
-  for (fs::directory_iterator dirIter(_pluginDir); dirIter != endIter; ++dirIter)
+  for (fs::directory_iterator dirIter(_pluginDir);
+    dirIter != endIter;
+    ++dirIter)
   {
     if (fs::is_regular_file(dirIter->status()) &&
         fs::extension(*dirIter) == util::DynamicLibrary::extension())
     {
-      std::string filename = dirIter->path().stem().string(); // filename without extension
-      filename.erase(filename.begin(), filename.begin() + 3); // remove lib from filename
-      if (std::find(skipParserList_.begin(), skipParserList_.end(),
-         filename) == skipParserList_.end())
+      // Filename without extension.
+      std::string filename = dirIter->path().stem().string();
+      // Remove lib from filename.
+      filename.erase(filename.begin(), filename.begin() + 3);
+      if (std::find(skipParserList_.begin(), skipParserList_.end(), filename) ==
+        skipParserList_.end())
       {
         std::string dynamicLibraryPath = dirIter->path().string();
         _dynamicLibraries[filename] = util::DynamicLibraryPtr(
@@ -144,7 +148,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
 }
 
 std::shared_ptr<AbstractParser>& PluginHandler::getParser(
-  std::string parserName_)
+  const std::string& parserName_)
 {
   return _parsers.at(parserName_);
 }

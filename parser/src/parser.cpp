@@ -84,8 +84,8 @@ int main(int argc, char* argv[])
   //--- Skip parser list ---//
 
   std::vector<std::string> skipParserList;
-    if(vm.count("skip"))
-      skipParserList = vm["skip"].as<std::vector<std::string>>();
+  if (vm.count("skip"))
+    skipParserList = vm["skip"].as<std::vector<std::string>>();
 
   //--- Load parsers ---//
 
@@ -147,7 +147,6 @@ int main(int argc, char* argv[])
 
   cc::parser::SourceManager srcMgr(db);
   cc::parser::ParserContext ctx(db, srcMgr, vm);
-
   pHandler.createPlugins(ctx);
 
   // TODO: Handle errors returned by parse().

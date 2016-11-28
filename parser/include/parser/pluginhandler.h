@@ -20,7 +20,8 @@ class PluginHandler
 public:
   /**
    * Parser plugin handler constructor.
-   * @param pluginDir_ Parser plugin directory.
+   * @param pluginDir_ Parser plugin directory. The parser plugins as .so files
+   * are located in this directory.
    */
   PluginHandler(const std::string& pluginDir_);
 
@@ -48,9 +49,12 @@ public:
 
   /**
    * Get parser by parser name.
-   * @param parserName_ - Parser name (e.g.: dummyparser, cppparser)
+   * @param parserName_ Parser name (e.g.: dummyparser, cppparser). A parser is
+   * identified by its name. For example dummyparser is implemented in
+   * libdummyparser.so.
    */
-  std::shared_ptr<AbstractParser>& getParser(std::string parserName_);
+  std::shared_ptr<AbstractParser>& getParser(
+    const std::string& parserName_);
 
   /**
    * Get arguments for each parsers. (e.g.: dummy-arg)
