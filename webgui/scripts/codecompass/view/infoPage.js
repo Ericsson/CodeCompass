@@ -6,16 +6,16 @@ require([
   'dojox/image/Lightbox',
   'codecompass/viewHandler'],
 function (topic, declare, ContentPane, TabContainer, Lightbox, viewHandler) {
-    
+
   var InfoPage = declare(TabContainer, {
     constructor : function () {
       var that = this;
-      
+
       topic.subscribe('codecompass/infopage', function (page) {
         topic.publish('codecompass/setCenterModule', 'infopage');
         that.selectPage(page);
       });
-      
+
       this._startPage = new ContentPane({
         id    : 'startpage',
         href  : 'startpage.html',
@@ -36,18 +36,29 @@ function (topic, declare, ContentPane, TabContainer, Lightbox, viewHandler) {
         title : 'User Guide'
       });
     },
-    
+
     postCreate : function () {
       this.addChild(this._startPage);
       this.addChild(this._credits);
       this.addChild(this._userguide);
     },
 
+    startup : function(){
+      this.inherited(arguments);
+
+      var that = this;
+
+      viewHandler.getModules({
+        type : viewHandler.moduleType.InfoPage
+      }).forEach(function (item) {
+        that.addChild(item);
+      });
+    },
     selectPage : function (pageId) {
       this.selectChild(pageId);
     },
   });
-  
+
   var infoPage = new InfoPage({
     id : 'infopage'
   });
