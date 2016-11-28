@@ -359,6 +359,12 @@ CppParser::~CppParser()
 
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("C++ Plugin");
+    return description;
+  }
+
   std::shared_ptr<CppParser> make(ParserContext& ctx_)
   {
     return std::make_shared<CppParser>(ctx_);

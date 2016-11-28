@@ -14,36 +14,35 @@ namespace cc
 namespace parser
 {
 
-PluginHandler::PluginHandler(ParserContext& ctx_) : _ctx(ctx_)
+PluginHandler::PluginHandler(const std::string& pluginDir_)
+  : _pluginDir(pluginDir_)
 {
 }
 
-bool PluginHandler::loadPluginsFromDir(const std::string& path_)
+bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
 {
   namespace fs = ::boost::filesystem;
 
-  if (!fs::exists(path_) || !fs::is_directory(path_))
+  if (!fs::exists(_pluginDir) || !fs::is_directory(_pluginDir))
   {
-    BOOST_LOG_TRIVIAL(error) << path_ << " is not a directory";
+    BOOST_LOG_TRIVIAL(error) << _pluginDir << " is not a directory";
     return false;
   }
 
-  std::vector<std::string> skipParserList;
-  if (_ctx.options.count("skip"))
-  {
-    skipParserList = _ctx.options["skip"].as<std::vector<std::string>>();
-  }
-
   fs::directory_iterator endIter;
-  for (fs::directory_iterator dirIter(path_); dirIter != endIter; ++dirIter)
+  for (fs::directory_iterator dirIter(_pluginDir);
+    dirIter != endIter;
+    ++dirIter)
   {
     if (fs::is_regular_file(dirIter->status()) &&
         fs::extension(*dirIter) == util::DynamicLibrary::extension())
     {
-      std::string filename = dirIter->path().stem().string(); // filename without extension
-      filename.erase(filename.begin(), filename.begin() + 3); // remove lib from filename
-      if (std::find(skipParserList.begin(), skipParserList.end(),
-         filename) == skipParserList.end())
+      // Filename without extension.
+      std::string filename = dirIter->path().stem().string();
+      // Remove lib from filename.
+      filename.erase(filename.begin(), filename.begin() + 3);
+      if (std::find(skipParserList_.begin(), skipParserList_.end(), filename) ==
+        skipParserList_.end())
       {
         std::string dynamicLibraryPath = dirIter->path().string();
         _dynamicLibraries[filename] = util::DynamicLibraryPtr(
@@ -56,15 +55,37 @@ bool PluginHandler::loadPluginsFromDir(const std::string& path_)
     }
   }
 
+  return true;
+}
+
+bool PluginHandler::createPlugins(ParserContext& ctx_)
+{
   for (const auto& lib : _dynamicLibraries)
   {
     typedef std::shared_ptr<AbstractParser> (*makeParser)(ParserContext& _ctx);
     auto make = reinterpret_cast<makeParser>(lib.second->getSymbol("make"));
-    std::shared_ptr<AbstractParser> parser = make(_ctx);
+    std::shared_ptr<AbstractParser> parser = make(ctx_);
     _parsers[lib.first] = parser;
   }
-
   return true;
+}
+
+boost::program_options::options_description PluginHandler::getOptions() const
+{
+  namespace po = ::boost::program_options;
+
+  po::options_description desc("Options of plugins");
+  for (const auto& lib : _dynamicLibraries)
+  {
+    typedef po::options_description (*GetOptsFuncPtr)();
+
+    GetOptsFuncPtr getOptions = reinterpret_cast<GetOptsFuncPtr>(
+      lib.second->getSymbol("getOptions"));
+
+    desc.add(getOptions());
+  }
+
+  return desc;
 }
 
 std::vector<std::string> PluginHandler::getTopologicalOrder()
@@ -127,7 +148,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
 }
 
 std::shared_ptr<AbstractParser>& PluginHandler::getParser(
-  std::string parserName_)
+  const std::string& parserName_)
 {
   return _parsers.at(parserName_);
 }
