@@ -28,22 +28,6 @@ std::array<const char*, 15> excludedSuffixes{{
   ".Metrics.dat", ".pp"
 }};
 
-bool SearchParser::isPlainText(const std::string& path_) const
-{
-  const char* magic = ::magic_file(_fileMagic, path_.c_str());
-
-  if (!magic)
-  {
-    BOOST_LOG_TRIVIAL(warning) << "Couldn't use magic on file: " << path_;
-    return false;
-  }
-
-  if (std::strstr(magic, "text"))
-    return true;
-
-  return false;
-}
-
 SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
   _fileMagic(::magic_open(MAGIC_MIME_TYPE | MAGIC_SYMLINK))
 {
@@ -138,14 +122,14 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
       return true;
     }
 
-    if (!isPlainText(currPath_))
+    if (!_ctx.srcMgr.isPlainText(currPath_))
     {
       BOOST_LOG_TRIVIAL(info)
         << "Skipping " << currPath_ << " because it is not plain text.";
       return true;
     }
 
-    model::FilePtr file = _ctx.srcMgr.getCreateFile(currPath_);
+    model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
 
     if (file)
     {

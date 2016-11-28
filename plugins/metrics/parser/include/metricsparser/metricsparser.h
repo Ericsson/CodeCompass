@@ -23,6 +23,8 @@ private:
 
   struct Loc
   {
+    Loc() : originalLines(0), nonblankLines(0), codeLines(0) {}
+
     unsigned originalLines;
     unsigned nonblankLines;
     unsigned codeLines;

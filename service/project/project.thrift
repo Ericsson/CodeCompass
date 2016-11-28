@@ -65,4 +65,5 @@ service ProjectService
   list<BuildLog> getBuildLog(1:common.FileId fileId),
   list<FileInfo> searchFile(1:string text, 2:bool onlyFile),
   list<StatisticsInfo> getStatistics()
+  list<string> getFileTypes()
 }

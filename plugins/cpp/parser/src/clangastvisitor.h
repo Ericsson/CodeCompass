@@ -1088,7 +1088,10 @@ private:
     {
       fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
       if (fileLoc.file.load()->type != model::File::DIRECTORY_TYPE)
+      {
         fileLoc.file->type = _cppSourceType;
+        _ctx.srcMgr.updateFile(*fileLoc.file);
+      }
       return fileLoc;
     }
 
@@ -1103,6 +1106,7 @@ private:
     _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
     fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(realStart));
     fileLoc.file->type = _cppSourceType;
+    _ctx.srcMgr.updateFile(*fileLoc.file);
 
     return fileLoc;
   }

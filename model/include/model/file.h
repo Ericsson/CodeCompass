@@ -51,7 +51,15 @@ struct File
   #pragma db null
   std::uint64_t timestamp;
 
-  #pragma db null
+  // The reason why the file content attribute is read-only is that when a
+  // plugin adds a file through the SourceManager then the content is also added
+  // for the first time. When another plugin wants to modify the file type for
+  // example then it calls the SourceManager::updateFile() function. If the file
+  // object after the update doesn't contain the content because of its lazyness
+  // then the content field in the table for this file becomes null.
+  // If the source code will be editable sometime then this read-only state
+  // should be reconsidered.
+  #pragma db null readonly
   odb::lazy_shared_ptr<FileContent> content;
 
   #pragma db null
@@ -75,6 +83,12 @@ struct FileIdView
   FileId id;
 };
   
+#pragma db view object(File) query((?) + " GROUP BY " + File::type)
+struct FileTypeView
+{
+  std::string type;
+};
+
 #pragma db view object(File) \
   query ((?) +  " GROUP BY " + File::parent + " ORDER BY " + File::parent)
 struct ParentIdCollector
