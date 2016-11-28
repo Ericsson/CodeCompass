@@ -132,16 +132,24 @@ static void writeActions(FILE* stream_, char const* wd_, const LoggerVector* act
   fflush(stream_);
 }
 
-static int aquireLock(char const* logFile_)
+/**
+ * Create lock file on log file
+ *
+ * @param logFile_relative or absolute path to log file
+ * @return status of lock file creation success
+ */
+static int acquireLock(char const* logFile_)
 {
   char lockFilePath[PATH_MAX];
   int lockFile;
 
+  /* Resolve log file path if relative and make it to the path of lock file */
   if (!loggerMakePathAbs(logFile_, lockFilePath, 0))
   {
     return -1;
   }
 
+  /* Create lock file */
   strcat(lockFilePath, ".lock");
   lockFile = open(lockFilePath, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
   if (lockFile == -1)
@@ -149,6 +157,7 @@ static int aquireLock(char const* logFile_)
     return -1;
   }
 
+  /* Apply lock on open lock file */
   if (flock(lockFile, LOCK_EX) == -1)
   {
     close(lockFile);
@@ -158,6 +167,12 @@ static int aquireLock(char const* logFile_)
   return lockFile;
 }
 
+/**
+ * Remove lock file
+ *
+ * @param lockFile_ relative or absolute path to lock file
+ * @return status of lock file release success
+ */
 static void freeLock(int lockFile_)
 {
   if (lockFile_ != -1)
@@ -177,6 +192,7 @@ static void logProgramArgs(
   LoggerVector actions;
   char workingDir[PATH_MAX];
 
+  /* Resolve project directory to absolute path */
   if (!loggerMakePathAbs(".", workingDir, 1))
   {
     return;
@@ -196,8 +212,10 @@ static void logProgramArgs(
 
   loggerVectorInitAdv(&actions, 10, (LoggerFreeFuc) &loggerActionFree);
 
+  /* Collect build actions */
   loggerCollectActionsByProgName(prog_, argList, &actions);
 
+  /* Write collected build actions to JSON */
   writeActions(stream_, workingDir, &actions);
 
   loggerVectorClear(&actions);
@@ -226,18 +244,21 @@ int logExec(int argc_, char const* argv_[])
     return -1;
   }
 
+  /* Get location of log file from environment */
   logFileEnv = getenv("CC_LOGGER_FILE");
   if (!logFileEnv)
   {
     return -3;
   }
 
-  lockFd = aquireLock(logFileEnv);
+  /* Lock file */
+  lockFd = acquireLock(logFileEnv);
   if (lockFd == -1)
   {
     return -5;
   }
 
+  /* Open log file for read or write */
   logFd = open(logFileEnv, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if (logFd == -1)
   {
@@ -245,6 +266,7 @@ int logExec(int argc_, char const* argv_[])
     return -7;
   }
 
+  /* Create stream from file */
   stream = fdopen(logFd, "w+");
   if (!stream)
   {
@@ -253,6 +275,7 @@ int logExec(int argc_, char const* argv_[])
     return -9;
   }
 
+  /* Log parse arguments including name of build tool */
   logProgramArgs(stream, argv_[0], argc_ - 1, argv_ + 1);
 
   fclose(stream); /* fclose also calls close() */

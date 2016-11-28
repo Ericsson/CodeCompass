@@ -114,6 +114,7 @@ int loggerCollectActionsByProgName(
   const char* const argv_[],
   LoggerVector* actions_)
 {
+  /* Get program name */
   const char* toolName = strrchr(prog_, '/');
   if (toolName)
   {
@@ -126,6 +127,7 @@ int loggerCollectActionsByProgName(
     toolName = prog_;
   }
 
+  /* Collect actions based on tool */
   if (matchToProgramList("CC_LOGGER_GCC_LIKE", toolName))
   {
     int ret;

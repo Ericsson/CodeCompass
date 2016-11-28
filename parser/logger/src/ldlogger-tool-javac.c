@@ -185,7 +185,6 @@ static void processArg(const char* arg_, ParserData* data_)
 {
   size_t argToAddSize = PATH_MAX;
   char* argToAdd ;
-  char* ext;
 
   argToAdd = (char*) malloc(sizeof(char) * argToAddSize);
   if (!argToAdd)
@@ -196,6 +195,7 @@ static void processArg(const char* arg_, ParserData* data_)
 
   strcpy(argToAdd, arg_);
 
+  /* Argument is after -d */
   if (data_->state == InClassDir)
   {
     if (!loggerMakePathAbs(arg_, data_->classdir, 0))
@@ -206,43 +206,54 @@ static void processArg(const char* arg_, ParserData* data_)
     strcpy(argToAdd, data_->classdir);
     data_->state = Normal;
   }
+  /* Argument is after -cp or -classpath */
   else if (data_->state == InClassPath)
   {
     handleClassPath(&argToAdd, &argToAddSize, arg_);
     data_->state = Normal;
   }
+  /* Argument is -sourcepath itself */
   else if (strcmp(arg_, "-sourcepath") == 0)
   {
     data_->hasSourcePath = 1;
   }
+  /* Argument is -d itself */
   else if (strcmp(arg_, "-d") == 0)
   {
     data_->state = InClassDir;
   }
+  /* Argument is -cp or -classpath itself */
   else if (strcmp(arg_, "-cp") == 0 || strcmp(arg_, "-classpath") == 0)
   {
     data_->state = InClassPath;
   }
-  else if ((ext = loggerGetFileExt(arg_, 1)))
+  /* Other arguments or source files */
+  else
   {
-    int isSource = 0;
-    if (strcmp(ext, "java") == 0)
+    char fullPath[PATH_MAX];
+    if (loggerMakePathAbs(argToAdd, fullPath, 1))
     {
-      char path[PATH_MAX];
-      if (loggerMakePathAbs(arg_, path, 0))
+      int isSource = 0;
+      char* ext = loggerGetFileExt(fullPath, 1);
+      if (ext)
       {
-        loggerVectorAddUnique(&data_->sources,
-          loggerStrDup(path), (LoggerCmpFuc) &strcmp);
-        isSource = 1;
+        if (strcmp(ext, "java") == 0)
+        {
+            loggerVectorAddUnique(
+                &data_->sources,
+                loggerStrDup(fullPath),
+                (LoggerCmpFuc) &strcmp);
+            isSource = 1;
+        }
+
+        if (isSource)
+        {
+          argToAdd[0] = 0;
+        }
+
+        free(ext);
       }
     }
-
-    if (isSource)
-    {
-      argToAdd[0] = 0;
-    }
-
-    free(ext);
   }
 
   if (argToAdd[0])
@@ -272,8 +283,10 @@ int loggerJavacParserCollectActions(
 
   loggerVectorAdd(&data.commonArgs, loggerStrDup(toolName_));
 
+  /* Loop through program arguments */
   for (i = 1; argv_[i]; ++i)
   {
+    /* Process argument file starting with "@" */
     if (argv_[i][0] == '@')
     {
       size_t j;
@@ -289,6 +302,7 @@ int loggerJavacParserCollectActions(
 
       loggerVectorClear(&fargs);
     }
+    /* Arguments are from command line */
     else
     {
       processArg(argv_[i], &data);
