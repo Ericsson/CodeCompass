@@ -44,6 +44,17 @@ DummyParser::~DummyParser()
 
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("Dummy Plugin");
+
+    description.add_options()
+        ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),
+          "This argument will be used by the dummy parser.");
+
+    return description;
+  }
+
   std::shared_ptr<DummyParser> make(ParserContext& ctx_)
   {
     return std::make_shared<DummyParser>(ctx_);
