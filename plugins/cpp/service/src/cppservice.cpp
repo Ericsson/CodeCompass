@@ -307,6 +307,10 @@ void CppServiceHandler::getReferenceTypes(
     case model::CppAstNode::SymbolType::Typedef:
       return_["Underlying type"]       = UNDERLYING_TYPE;
       break;
+
+    case model::CppAstNode::SymbolType::Enum:
+      return_["Enum constants"]        = ENUM_CONSTANTS;
+      break;
   }
 }
 
