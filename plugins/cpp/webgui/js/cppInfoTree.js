@@ -46,35 +46,35 @@ function (model, viewHandler, util) {
       parentNode.refType);
 
     references.forEach(function (reference) {
-      if(parentNode.refType === refTypes['Caller'] ||
-         parentNode.refType === refTypes['Usage']){
+      if (parentNode.refType === refTypes['Caller'] ||
+          parentNode.refType === refTypes['Usage']) {
 
         //--- Group nodes by file name ---//
 
         var fileId = reference.range.file;
-        if(fileGroupsId[fileId] != undefined)
+        if (fileGroupsId[fileId])
           return;
 
         fileGroupsId[fileId] = parentNode.refType + fileId + reference.id;
 
-        var referenceInFile = references.filter(function (reference){
-          return reference.range.file == fileId;
+        var referenceInFile = references.filter(function (reference) {
+          return reference.range.file === fileId;
         });
 
         var fileInfo = model.project.getFileInfo(fileId);
         res.push({
           id          : fileGroupsId[fileId],
-          name        : fileInfo.name + " (" + referenceInFile.length + ")",
+          name        : fileInfo.name + ' (' + referenceInFile.length + ')',
           refType     : parentNode.refType,
           nodeInfo    : reference,
           hasChildren : true,
           cssClass    : util.getIconClass(fileInfo.path),
-          getChildren : function (){
+          getChildren : function () {
             var that = this;
             var res = [];
 
-            referenceInFile.forEach(function (reference){
-              if (parentNode.refType === refTypes['Caller']){
+            referenceInFile.forEach(function (reference) {
+              if (parentNode.refType === refTypes['Caller']) {
                 res.push({
                   id          : reference.id,
                   name        : createLabel(reference),
@@ -104,7 +104,8 @@ function (model, viewHandler, util) {
                       refTypes['This calls']);
 
                     calls.forEach(function (call) {
-                      if (call.mangledNameHash === parentNode.nodeInfo.mangledNameHash)
+                      if (call.mangledNameHash ===
+                          parentNode.nodeInfo.mangledNameHash)
                         res.push({
                           name        : createLabel(call),
                           refType     : parentNode.refType,
@@ -116,7 +117,7 @@ function (model, viewHandler, util) {
                     return res;
                   }
                 });
-              }else if (parentNode.refType === refTypes['Usage']){
+              } else if (parentNode.refType === refTypes['Usage']) {
                 res.push({
                   id          : fileGroupsId[fileId] + reference.id,
                   name        : createLabel(reference),
