@@ -26,62 +26,62 @@
 /** Properties **/
 
 .icon-Name::before{
-  content: 'a';
+  content: '\e001';
 }
 
 .icon-user::before{
-  content: 'a';
+  content: '\e001';
 }
 
 .icon-Qualified-name::before{
-  content: 'b';
+  content: '\e002';
 }
 
 .icon-Definition::before{
-  content: 'c';
+  content: '\e003';
 }
 
 /** Tags **/
 
 .icon-plus::before{
-  content: 'I';
+  content: '\e035';
   color: green;
 }
 
 .icon-minus::before{
-  content: 'J';
+  content: '\e036';
   color: red;
 }
 
 .icon-zero::before{
-  content: 'M';
+  content: '\e039';
   color: blue;
 }
 
 /** Icons * */
 
 .icon-question::before{
-  content: 'i';
+  content: '\e009';
 }
 
 .icon-search::before{
-  content: 'j';
+  content: '\e010';
 }
 
 .icon-right::before{
-  content: 'k';
+  content: '\e011';
 }
 
 .icon-left::before{
-  content: 'l';
+  content: '\e012';
 }
 
 .icon-bug::before{
-  content: 'm';
+  content: '\e013';
 }
 
 .icon-folder-up::before{
-  content: 'A';
+  content: '\e027';
   color: #43ba45;
   font-size: 0.9em;
 }
@@ -89,140 +89,159 @@
 /** Infotree icons * */
 
 .icon-info::before{
-  content : 'n'
+  content : '\e014'
 }
 
 .icon-Method::before{
-  content : 'o'
+  content : '\e015'
 }
 
 .icon-Local-variables::before{
-  content : 'p'
+  content : '\e016'
 }
 
 .icon-Declaration::before{
-  content : 'q'
+  content : '\e017'
 }
 
 .icon-Data-member::before{
-  content : 'r'
+  content : '\e018'
 }
 
-.icon-Callee::before,
+.icon-Callee::before{
+  content : '\e019'
+}
+
 .icon-This-calls::before{
-  content : 's'
+  content : '\e054'
 }
 
 .icon-Caller::before{
-  content : 'B'
+  content : '\e028'
 }
 
 .icon-Writes::before{
-  content : 't'
+  content : '\e020'
 }
 
 .icon-Friends::before{
-  content : 'u'
+  content : '\e021'
 }
 
 .icon-Points::before{
-  content : 'v'
+  content : '\e022'
 }
 
 .icon-Aliases::before{
-  content : 'w'
+  content : '\e023'
 }
 
 .icon-Reads::before{
-  content : 'x'
+  content : '\e024'
 }
 
 .icon-Macro::before{
-  content : 'y'
+  content : '\e025'
 }
 
 .icon-Usage::before{
-  content : 'z'
+  content : '\e026'
 }
 
 .icon-Abstract-type::before{
-  content : 'C'
+  content : '\e029'
 }
 
 .icon-Signature::before{
-  content : 'D'
+  content : '\e030'
 }
 
 .icon-POD-type::before{
-  content : 'E'
+  content : '\e031'
 }
 
 .icon-Parameters::before{
-  content : 'F'
+  content : '\e032'
 }
 
 .icon-Inherited-by::before{
-  content : 'G'
+  content : '\e033'
 }
 
 .icon-Inherits-from::before{
-  content : 'H'
+  content : '\e033'
 }
 
 .icon-Virtual-call::before{
-  content : 'K'
+  content : '\e037'
 }
 
 .icon-Function-pointer-call::before{
-  content : 'L'
+  content : '\e038'
+}
+
+.icon-Overridden-by::before{
+  content : '\e053'
+}
+
+.icon-Overrides::before{
+  content : '\e056'
 }
 
 .icon-Type::before{
-  content : 'N'
+  content : '\e040'
 }
 
 .icon-Underlying-type::before{
-  content : 'T'
+  content : '\e046'
+}
+
+.icon-Value::before{
+  content : '\e057'
 }
 
 .icon-project::before{
-  content : 'O'
+  content : '\e041'
 }
 
 .icon-file::before{
-  content : 'Q'
+  content : '\e043'
 }
 
 .icon-node::before{
-  content : 'R'
+  content : '\e044'
 }
 
 .icon-star::before{
-  content: 'U';
+  content: '\e047';
 }
 
 .icon-folder::before{
-  content: 'V';
+  content: '\e048';
 }
 
 .icon-folder-with-file::before{
-  content: 'W';
+  content: '\e049';
 }
 
 .icon-twoarrow-left::before{
-  content: 'X';
+  content: '\e050';
 }
 
 .icon-twoarrow-right::before{
-  content: 'Y';
+  content: '\e051';
 }
 
 .icon-arrowhead-right::before{
-  content: 'Z';
+  content: '\e052';
 }
 
 .icon-empty-file::before{
-  content: 'P';
+  content: '\e042';
+}
+
+.makefile::before{
+  content: '\e055';
 }
 
 /** File types **/
