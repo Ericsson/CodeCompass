@@ -1,7 +1,8 @@
 define([
   'codecompass/model',
-  'codecompass/viewHandler'],
-function (model, viewHandler) {
+  'codecompass/viewHandler',
+  'codecompass/util'],
+function (model, viewHandler, util) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
@@ -38,52 +39,94 @@ function (model, viewHandler) {
 
   function loadReferenceNodes(parentNode, refTypes) {
     var res = [];
+    var fileGroupsId = [];
 
     var references = model.cppservice.getReferences(
       parentNode.nodeInfo.id,
       parentNode.refType);
 
     references.forEach(function (reference) {
-      if (parentNode.refType === refTypes['Caller']) {
+      if(parentNode.refType === refTypes['Caller'] ||
+         parentNode.refType === refTypes['Usage']){
+
+        //--- Group nodes by file name ---//
+
+        var fileId = reference.range.file;
+        if(fileGroupsId[fileId] != undefined)
+          return;
+
+        fileGroupsId[fileId] = parentNode.refType + fileId + reference.id;
+
+        var referenceInFile = references.filter(function (reference){
+          return reference.range.file == fileId;
+        });
+
+        var fileInfo = model.project.getFileInfo(fileId);
         res.push({
-          id          : reference.id,
-          name        : createLabel(reference),
-          nodeInfo    : reference,
+          id          : fileGroupsId[fileId],
+          name        : fileInfo.name + " (" + referenceInFile.length + ")",
           refType     : parentNode.refType,
-          cssClass    : 'icon icon-Method',
+          nodeInfo    : reference,
           hasChildren : true,
-          getChildren : function () {
+          cssClass    : util.getIconClass(fileInfo.path),
+          getChildren : function (){
+            var that = this;
             var res = [];
 
-            //--- Recursive Node ---//
-
-            res.push({
-              id          : 'Caller-' + reference.id,
-              name        : parentNode.name,
-              nodeInfo    : reference,
-              refType     : parentNode.refType,
-              cssClass    : parentNode.cssClass,
-              hasChildren : true,
-              getChildren : parentNode.getChildren
-            });
-
-            //--- Call ---//
-
-            var calls = model.cppservice.getReferences(
-              this.nodeInfo.id,
-              refTypes['This calls']);
-
-            calls.forEach(function (call) {
-              if (call.mangledNameHash === parentNode.nodeInfo.mangledNameHash)
+            referenceInFile.forEach(function (reference){
+              if (parentNode.refType === refTypes['Caller']){
                 res.push({
-                  name        : createLabel(call),
+                  id          : reference.id,
+                  name        : createLabel(reference),
+                  nodeInfo    : reference,
                   refType     : parentNode.refType,
-                  nodeInfo    : call,
-                  hasChildren : false,
-                  cssClass    : getCssClass(call)
-                });
-            });
+                  cssClass    : 'icon icon-Method',
+                  hasChildren : true,
+                  getChildren : function () {
+                    var res = [];
 
+                    //--- Recursive Node ---//
+
+                    res.push({
+                      id          : 'Caller-' + reference.id,
+                      name        : parentNode.name,
+                      nodeInfo    : reference,
+                      refType     : parentNode.refType,
+                      cssClass    : parentNode.cssClass,
+                      hasChildren : true,
+                      getChildren : parentNode.getChildren
+                    });
+
+                    //--- Call ---//
+
+                    var calls = model.cppservice.getReferences(
+                      this.nodeInfo.id,
+                      refTypes['This calls']);
+
+                    calls.forEach(function (call) {
+                      if (call.mangledNameHash === parentNode.nodeInfo.mangledNameHash)
+                        res.push({
+                          name        : createLabel(call),
+                          refType     : parentNode.refType,
+                          nodeInfo    : call,
+                          hasChildren : false,
+                          cssClass    : getCssClass(call)
+                        });
+                    });
+                    return res;
+                  }
+                });
+              }else if (parentNode.refType === refTypes['Usage']){
+                res.push({
+                  id          : fileGroupsId[fileId] + reference.id,
+                  name        : createLabel(reference),
+                  refType     : parentNode.refType,
+                  nodeInfo    : reference,
+                  hasChildren : false,
+                  cssClass    : getCssClass(reference)
+                });
+              }
+            });
             return res;
           }
         });
