@@ -68,7 +68,7 @@
 }
 
 .cc-search-help:after{
-  content: 'i';
+  content: '\e009';
 }
 
 .pathelement {
