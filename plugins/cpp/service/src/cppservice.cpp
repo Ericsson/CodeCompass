@@ -463,6 +463,7 @@ void CppServiceHandler::getReferences(
 
       case OVERRIDE:
         nodes = queryOverrides(astNodeId_, true);
+        break;
 
       case OVERRIDDEN_BY:
         nodes = queryOverrides(astNodeId_, false);
@@ -870,17 +871,20 @@ std::vector<model::CppAstNode> CppServiceHandler::queryOverrides(
   std::unordered_set<std::uint64_t> overrides
     = transitiveClosureOfRel(
         model::CppRelation::Kind::Override,
-        node.id,
+        node.mangledNameHash,
         reverse_);
 
   std::transform(
     overrides.begin(),
     overrides.end(),
     std::back_inserter(nodes),
-    [this](std::uint64_t nodeId){
-      return queryCppAstNode(std::to_string(nodeId));
+    [this](std::uint64_t mnh){
+      AstResult result
+        = _db->query<model::CppAstNode>(AstQuery::mangledNameHash == mnh);
+
+      return *result.begin();
     });
-  
+
   return nodes;
 }
 
@@ -901,12 +905,12 @@ CppServiceHandler::transitiveClosureOfRel(
     q.pop();
 
     RelResult result = _db->query<model::CppRelation>(
-      (reverse_ ? RelQuery::rhs : RelQuery::lhs) == current &&
+      (reverse_ ? RelQuery::lhs : RelQuery::rhs) == current &&
       RelQuery::kind == kind_);
 
     for (const model::CppRelation relation : result)
     {
-      std::uint64_t otherSide = reverse_ ? relation.lhs : relation.rhs;
+      std::uint64_t otherSide = reverse_ ? relation.rhs : relation.lhs;
 
       if (ret.find(otherSide) == ret.end())
       {
