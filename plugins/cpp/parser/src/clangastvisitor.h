@@ -525,7 +525,7 @@ public:
 
     cppFunction->astNodeId = astNode->id;
     cppFunction->mangledNameHash = astNode->mangledNameHash;
-    cppFunction->name = fn_->getNameAsString();
+    cppFunction->name = getSignature(fn_);
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     cppFunction->qualifiedType = qualType.getAsString();

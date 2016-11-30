@@ -191,5 +191,60 @@ bool isFunction(const clang::Type* type_)
   return false;
 }
 
+// This function is from an earlier version of Clang code base. I couldn't find
+// this implementation in later versions.
+std::string getSignature(const clang::FunctionDecl* fn_)
+{
+  if (!fn_)
+    return "";
+
+  std::string signature;
+
+  if (!llvm::isa<clang::CXXConstructorDecl>(fn_) &&
+      !llvm::isa<clang::CXXDestructorDecl>(fn_) &&
+      !llvm::isa<clang::CXXConversionDecl>(fn_))
+    signature.append(fn_->getReturnType().getAsString()).append(" ");
+
+  signature.append(fn_->getQualifiedNameAsString()).append("(");
+
+  for (int i = 0, paramsCount = fn_->getNumParams(); i < paramsCount; ++i)
+  {
+    if (i)
+      signature.append(", ");
+    signature.append(fn_->getParamDecl(i)->getType().getAsString());
+  }
+
+  if (fn_->isVariadic())
+    signature.append(", ...");
+
+  signature.append(")");
+
+  const auto *targetT
+    = llvm::dyn_cast_or_null<clang::FunctionType>(fn_->getType().getTypePtr());
+
+  if (!targetT || !llvm::isa<clang::CXXMethodDecl>(fn_))
+    return signature;
+
+  if (targetT->isConst())
+    signature.append(" const");
+  if (targetT->isVolatile())
+    signature.append(" volatile");
+  if (targetT->isRestrict())
+    signature.append(" restrict");
+
+  if (const auto *targetPT = llvm::dyn_cast_or_null<clang::FunctionProtoType>(
+    fn_->getType().getTypePtr()))
+  {
+    switch (targetPT->getRefQualifier())
+    {
+      case clang::RQ_LValue: signature.append(" &");  break;
+      case clang::RQ_RValue: signature.append(" &&"); break;
+      default: break;
+    }
+  }
+
+  return signature;
+}
+
 }
 }
