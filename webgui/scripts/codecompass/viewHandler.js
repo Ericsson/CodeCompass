@@ -59,7 +59,7 @@ function (lang, Deferred, model) {
      * @returns {Array}
      */
     getModules : function (filter) {
-      var result = [];      
+      var result = [];
       var sortableModules = [];
 
       filter = filter || {};
@@ -74,7 +74,11 @@ function (lang, Deferred, model) {
             (filter.fileType === undefined ||
              modules[module].options.service === undefined ||
              modules[module].options.service ===
-               model.getLanguageService(filter.fileType)))
+               model.getLanguageService(filter.fileType)) &&
+            // Modules for the given center module
+            (filter.center === undefined ||
+             modules[module].options.center === undefined ||
+             modules[module].options.center === filter.center))
           sortableModules.push(modules[module]);
 
       //--- Sort modules by priority ---//

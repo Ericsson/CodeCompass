@@ -6,10 +6,13 @@ require([
   'dojo/topic',
   'dijit/layout/BorderContainer',
   'dijit/layout/ContentPane',
+  'dijit/form/Button',
+  'dijit/Dialog',
   'codecompass/urlHandler',
-  'codecompass/viewHandler'],
+  'codecompass/viewHandler',
+  'codecompass/model'],
 function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
-  urlHandler, viewHandler) {
+  Button, Dialog, urlHandler, viewHandler, model) {
 
   var Diagram = declare(BorderContainer, {
     constructor : function () {
@@ -220,5 +223,33 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
 
   viewHandler.registerModule(new Diagram({ id : 'diagram' }), {
     type : viewHandler.moduleType.Center
+  });
+
+  var legendButton = new Button({
+    label     : 'Legend',
+    render    : function () {
+      return this;
+    },
+    onClick   : function (fileInfo) {
+      var service = model.getLanguageService(fileInfo.type);
+
+      if (!service)
+        return;
+
+      var diagramType = urlHandler.getState('diagType');
+      var legend = service.getDiagramLegend(diagramType);
+
+      new Dialog({
+        title   : 'Diagram Legend',
+        content : legend || '<b>No Legend</b>',
+        style   : legend ? '' : 'width: 200px'
+      }).show();
+    }
+  });
+
+  viewHandler.registerModule(legendButton, {
+    type     : viewHandler.moduleType.ContextButton,
+    priority : 20,
+    center   : 'diagram'
   });
 });
