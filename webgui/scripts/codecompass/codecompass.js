@@ -78,7 +78,7 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
 
     var state = urlHandler.getState();
 
-    if(!state.fid)
+    if (!state.fid)
       return;
 
     var fileInfo = model.project.getFileInfo(state.fid);

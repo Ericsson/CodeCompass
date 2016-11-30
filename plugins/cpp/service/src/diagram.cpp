@@ -109,24 +109,12 @@ util::Graph::Node Diagram::addNode(
 std::string Diagram::getFunctionCallLegend()
 {
   util::LegendBuilder builder("Function Call Diagram");
-  builder.addNode("center function", {
-    {"style", centerNodeDecoration.at("style")},
-    {"fillcolor", centerNodeDecoration.at("fillcolor")}
-  });
-  builder.addNode("static called", {
-    {"style", calleeNodeDecoration.at("style")},
-    {"fillcolor", calleeNodeDecoration.at("fillcolor")}
-  });
-  builder.addNode("static caller", {
-    {"style", callerNodeDecoration.at("style")},
-    {"fillcolor", callerNodeDecoration.at("fillcolor")}
-  });
-  builder.addEdge("callee", {
-    {"color", calleeEdgeDecoration.at("color")}
-  });
-  builder.addEdge("caller", {
-    {"color", callerEdgeDecoration.at("color")}
-  });
+
+  builder.addNode("center function", centerNodeDecoration);
+  builder.addNode("called function", calleeNodeDecoration);
+  builder.addNode("caller function", callerNodeDecoration);
+  builder.addEdge("called", calleeEdgeDecoration);
+  builder.addEdge("caller", callerEdgeDecoration);
 
   return builder.getOutput();
 }
