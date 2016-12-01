@@ -560,6 +560,8 @@ public:
     //---            CppAstNode for class specifier in            ---//
     //--- CXXMethodDecl, CXXConstructorDecl and CXXDestructorDecl ---//
 
+    // TODO: What about nested qualifiers? void A::B::C::f() {}
+
     if (md && _typeStack.empty())
     {
       model::CppAstNodePtr classAstNode = std::make_shared<model::CppAstNode>();
@@ -570,7 +572,7 @@ public:
         = llvm::isa<clang::CXXConstructorDecl>(md) ||
           llvm::isa<clang::CXXDestructorDecl>(md)
         ? md->getLocStart()
-        : md->getReturnTypeSourceRange().getEnd();
+        : md->getQualifierLoc().getBeginLoc();
 
       classAstNode->astValue = parent->getNameAsString();
       // The lexed token length will be added to the end position.
