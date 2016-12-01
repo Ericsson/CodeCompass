@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <clang/AST/Decl.h>
 #include <clang/AST/Mangle.h>
 #include <clang/AST/Type.h>
 
@@ -26,6 +27,8 @@ std::string getMangledName(
   const model::FileLoc& fileLoc_ = model::FileLoc());
 
 bool isFunction(const clang::Type* type_);
+
+std::string getSignature(const clang::FunctionDecl* fn_);
 
 }
 }
