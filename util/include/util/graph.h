@@ -141,6 +141,13 @@ public:
     const std::string& value_);
 
   /**
+   * This function sets the label attribute in HTML format of a node.
+   */
+  void setHtmlLabel(
+      const Node& node_,
+      const std::string& value_);
+
+  /**
    * This function sets the attributes of an edge. These attributes are listed
    * at this link: http://www.graphviz.org/content/attrs.
    */

@@ -168,6 +168,20 @@ void Graph::setAttribute(
     const_cast<char*>(""));
 }
 
+void Graph::setHtmlLabel(
+  const Node& node_,
+  const std::string& value_)
+{
+  char* label = agstrdup_html(_graphPimpl->_graph,
+    const_cast<char*>(value_.c_str()));
+
+  agsafeset(
+    agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0),
+    "label",
+    label,
+    const_cast<char*>(""));
+}
+
 void Graph::setAttribute(
   const Edge& edge_,
   const std::string& key_,

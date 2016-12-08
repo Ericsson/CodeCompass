@@ -57,11 +57,14 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
       var diagramTypes = model.cppservice.getDiagramTypes(nodeInfo.id);
       for (diagramType in diagramTypes)
         submenu.addChild(new MenuItem({
-          label : diagramType,
+          label   : diagramType,
+          type    : diagramType,
           onClick : function () {
+            var that = this;
+
             topic.publish('codecompass/openDiagram', {
               handler : 'cpp-ast-diagram',
-              diagramType : diagramTypes[diagramType],
+              diagramType : diagramTypes[that.type],
               node : nodeInfo.id
             });
           }

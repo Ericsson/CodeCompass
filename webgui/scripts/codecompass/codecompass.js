@@ -76,9 +76,9 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
   /**
    * This function removes the current children of context button and shows the
    * actual items by center module id.
-   * @param id Center module id
+   * @param centerModuleId Center module ID.
    */
-  function setContextButton(id) {
+  function setContextButton(centerModuleId) {
     contextButtons.getChildren().forEach(function (child) {
       contextButtons.removeChild(child);
     });
@@ -92,7 +92,7 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
 
     viewHandler.getModules({
       type   : viewHandler.moduleType.ContextButton,
-      center : id
+      center : centerModuleId
     }).forEach(function (module) {
       var item = module.render(fileInfo);
       if (item) {
