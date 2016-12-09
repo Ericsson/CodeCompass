@@ -1089,7 +1089,8 @@ private:
     if (start_.isInvalid() || end_.isInvalid())
     {
       fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
-      if (fileLoc.file.load()->type != model::File::DIRECTORY_TYPE)
+      const std::string& type = fileLoc.file.load()->type;
+      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
       {
         fileLoc.file->type = _cppSourceType;
         _ctx.srcMgr.updateFile(*fileLoc.file);
@@ -1107,8 +1108,13 @@ private:
 
     _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
     fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(realStart));
-    fileLoc.file->type = _cppSourceType;
-    _ctx.srcMgr.updateFile(*fileLoc.file);
+
+    const std::string& type = fileLoc.file.load()->type;
+    if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+    {
+      fileLoc.file->type = _cppSourceType;
+      _ctx.srcMgr.updateFile(*fileLoc.file);
+    }
 
     return fileLoc;
   }
