@@ -159,50 +159,57 @@ void Graph::setAttribute(const std::string& key_, const std::string& value_)
 void Graph::setAttribute(
   const Node& node_,
   const std::string& key_,
-  const std::string& value_)
+  const std::string& value_,
+  bool html_)
 {
+  const char* value = value_.c_str();
+
+  if (html_)
+    value = agstrdup_html(_graphPimpl->_graph,
+      const_cast<char*>(value_.c_str()));
+
   agsafeset(
     agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0),
     const_cast<char*>(key_.c_str()),
-    const_cast<char*>(value_.c_str()),
-    const_cast<char*>(""));
-}
-
-void Graph::setHtmlLabel(
-  const Node& node_,
-  const std::string& value_)
-{
-  char* label = agstrdup_html(_graphPimpl->_graph,
-    const_cast<char*>(value_.c_str()));
-
-  agsafeset(
-    agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0),
-    "label",
-    label,
+    const_cast<char*>(value),
     const_cast<char*>(""));
 }
 
 void Graph::setAttribute(
   const Edge& edge_,
   const std::string& key_,
-  const std::string& value_)
+  const std::string& value_,
+  bool html_)
 {
+  const char* value = value_.c_str();
+
+  if (html_)
+    value = agstrdup_html(_graphPimpl->_graph,
+      const_cast<char*>(value_.c_str()));
+
   agsafeset(
     _graphPimpl->_edgeMap[edge_.id],
     const_cast<char*>(key_.c_str()),
-    const_cast<char*>(value_.c_str()),
+    const_cast<char*>(value),
     const_cast<char*>(""));
 }
 
 void Graph::setAttribute(
   const Subgraph& graph_,
   const std::string& key_,
-  const std::string& value_)
+  const std::string& value_,
+  bool html_)
 {
+  const char* value = value_.c_str();
+
+  if (html_)
+    value = agstrdup_html(_graphPimpl->_graph,
+      const_cast<char*>(value_.c_str()));
+
   agsafeset(
     _graphPimpl->_subgMap[graph_.id],
     const_cast<char*>(key_.c_str()),
-    const_cast<char*>(value_.c_str()),
+    const_cast<char*>(value),
     const_cast<char*>(""));
 }
 

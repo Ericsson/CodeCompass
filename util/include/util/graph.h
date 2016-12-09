@@ -134,36 +134,35 @@ public:
   /**
    * This function sets the attributes of a node. These attributes are listed at
    * this link: http://www.graphviz.org/content/attrs.
+   * @param html_ If true then the value_ is interpreted as HTML.
    */
   void setAttribute(
     const Node& node_,
     const std::string& key_,
-    const std::string& value_);
-
-  /**
-   * This function sets the label attribute in HTML format of a node.
-   */
-  void setHtmlLabel(
-      const Node& node_,
-      const std::string& value_);
+    const std::string& value_,
+    bool html_ = false);
 
   /**
    * This function sets the attributes of an edge. These attributes are listed
    * at this link: http://www.graphviz.org/content/attrs.
+   * @param html_ If true then the value_ is interpreted as HTML.
    */
   void setAttribute(
     const Edge& edge_,
     const std::string& key_,
-    const std::string& value_);
+    const std::string& value_,
+    bool html_ = false);
 
   /**
    * This function sets the attributes of a subgraph. These attributes are
    * listed at this link: http://www.graphviz.org/content/attrs.
+   * @param html_ If true then the value_ is interpreted as HTML.
    */
   void setAttribute(
     const Subgraph& graph_,
     const std::string& key_,
-    const std::string& value_);
+    const std::string& value_,
+    bool html_ = false);
 
   /**
    * This function copies the attributes of a node. These attributes are

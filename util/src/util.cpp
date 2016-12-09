@@ -57,5 +57,22 @@ std::string textRange(
 
   return res;
 }
+
+std::string escapeHtml(const std::string& str_)
+{
+  std::string ret;
+
+  for (char c : str_)
+    switch (c)
+    {
+      case '<': ret += "&lt;";  break;
+      case '>': ret += "&gt;";  break;
+      case '&': ret += "&amp;"; break;
+      default : ret += c;       break;
+    }
+
+  return ret;
+}
+
 }
 }

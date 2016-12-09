@@ -638,8 +638,6 @@ void CppServiceHandler::getDiagramTypes(
 
     case model::CppAstNode::SymbolType::Type:
       return_["Detailed class diagram"] = DETAILED_CLASS;
-      return_["UML class overview diagram"] = CLASS_OVERVIEW;
-      return_["Class collaboration diagram"] = CLASS_COLLABORATION;
       break;
 
     default: // Just to suppress warning of uncovered enum constants.
