@@ -270,3 +270,12 @@
 .icon-ext-h::after{
   content: 'h';
 }
+
+.icon-tag::before{
+  content: '\e058';
+  color: #e65959;
+}
+
+.icon-Enum-constants::before{
+  content: '\e059';
+}
