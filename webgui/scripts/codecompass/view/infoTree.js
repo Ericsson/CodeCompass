@@ -165,7 +165,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
         return;
 
       if (fileInfo.id === this.prevFileId)
-        return;
+        return this;
 
       this.prevFileId = fileInfo.id;
 

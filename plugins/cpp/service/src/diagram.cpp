@@ -113,6 +113,7 @@ std::string Diagram::getFunctionCallLegend()
   builder.addNode("center function", centerNodeDecoration);
   builder.addNode("called function", calleeNodeDecoration);
   builder.addNode("caller function", callerNodeDecoration);
+  builder.addNode("virtual function", virtualNodeDecoration);
   builder.addEdge("called", calleeEdgeDecoration);
   builder.addEdge("caller", callerEdgeDecoration);
 

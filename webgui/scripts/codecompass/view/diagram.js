@@ -226,11 +226,9 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
   });
 
   var legendButton = new Button({
-    label     : 'Legend',
-    render    : function () {
-      return this;
-    },
-    onClick   : function (fileInfo) {
+    label   : 'Legend',
+    render  : function () { return this; },
+    onClick : function (fileInfo) {
       var service = model.getLanguageService(fileInfo.type);
 
       if (!service)
