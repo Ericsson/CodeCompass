@@ -66,8 +66,12 @@ endfunction(install_js_thrift)
 # Install plugins webgui
 # @parameter _dir - webgui directory of the plugin
 function(install_webplugin _dir)
-  # Copy javascript files
-  file(GLOB _js "${_dir}/js/*.js")
+  # Copy javascript modules
+  file(GLOB _js "${_dir}/js/[A-Z]*.js")
+  install(FILES ${_js} DESTINATION "${INSTALL_SCRIPTS_DIR}/view/component" )
+
+  # Copy javascript plugins
+  file(GLOB _js "${_dir}/js/[^A-Z]*.js")
   install(FILES ${_js} DESTINATION "${INSTALL_SCRIPTS_DIR}/view" )
 
   # Copy css files
@@ -75,6 +79,6 @@ function(install_webplugin _dir)
   install(FILES ${_css} DESTINATION "${INSTALL_WEBROOT_DIR}/style" )
 
   # Copy images
-  file(GLOB _images "${_dir}/images/*.[png|jpg]")
+  file(GLOB _images "${_dir}/images/*.jpg" "${_dir}/images/*.png")
   install(FILES ${_images} DESTINATION "${INSTALL_WEBROOT_DIR}/images" )
 endfunction(install_webplugin)

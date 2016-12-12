@@ -45,21 +45,21 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
   function setCenterModule(id) {
     if (id === currentCenterModuleId)
       return;
-    
+
     var module = viewHandler.getModule(id);
-    
+
     if (!module)
       throw 'There is no center module with this id: ' + id;
-    
+
     center.getChildren().forEach(function (child) {
       center.removeChild(child);
     });
-    
+
     center.addChild(module);
     setTimeout(function () { center.resize(); }, 0);
-    
+
     currentCenterModuleId = id;
-    
+
     style.set(
       contextButtons.domNode, 'display', id === 'infopage' ? 'none' : 'block');
   }
