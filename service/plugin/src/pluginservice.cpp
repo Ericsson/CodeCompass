@@ -7,14 +7,9 @@ std::vector<std::string> getFiles(std::string dir_)
 {
   std::vector<std::string> res;
 
-  boost::filesystem::recursive_directory_iterator it(dir_), end;
-  while (it != end)
-  {
-    if (!boost::filesystem::is_directory(it->path()))
+  for(boost::filesystem::directory_iterator it(dir_), end; it != end; ++it)
+    if(!boost::filesystem::is_directory(it->path()))
       res.push_back(it->path().string());
-
-    ++it;
-  }
 
   return res;
 }
