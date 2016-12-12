@@ -21,28 +21,30 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
    * ContentPane for center modules.
    */
   var center;
-  
+
   /**
    * AccordionContainer for the selectable modules at the left side.
    */
   var accordion;
-  
+
   /**
    * This variable holds the ID of the current center module.
    */
   var currentCenterModuleId;
-  
+
   /**
    * This is a TitlePane object which contains operational buttons which are
    * provided context sensitively by the modules.
    */
   var contextButtons;
-  
+
   /**
    * This function places the center module in the center view with given ID.
    * @param {String} id ID of center module to place in the middle.
    */
   function setCenterModule(id) {
+    setContextButton(id);
+
     if (id === currentCenterModuleId)
       return;
 
@@ -62,6 +64,35 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
 
     style.set(
       contextButtons.domNode, 'display', id === 'infopage' ? 'none' : 'block');
+  }
+
+  /**
+   * This function removes the current children of context button and shows the
+   * actual items by center module id.
+   * @param id Center module id
+   */
+  function setContextButton(id) {
+    contextButtons.getChildren().forEach(function (child) {
+      contextButtons.removeChild(child);
+    });
+
+    var state = urlHandler.getState();
+
+    if (!state.fid)
+      return;
+
+    var fileInfo = model.project.getFileInfo(state.fid);
+
+    viewHandler.getModules({
+      type   : viewHandler.moduleType.ContextButton,
+      center : id
+    }).forEach(function (module) {
+      var item = module.render(fileInfo);
+      if (item) {
+        style.set(item.domNode, 'width', '100%');
+        contextButtons.addChild(item);
+      }
+    });
   }
 
   /**
@@ -154,22 +185,6 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
       setCenterModule(url.center);
   }
 
-//  function setContextButton() {
-//    var text = viewHandler.getModule('text');
-//    var fileInfo = text.getFileInfo();
-//
-//    viewHandler.getModules({
-//      type : viewHandler.moduleType.ContextButton
-//    }).forEach(function (module) {
-//      var text = viewHandler.getModule('text');
-//      var menuItem = module.render(fileInfo, text);
-//      if (menuItem) {
-//        style.set(menuItem.domNode, 'width', '100%');
-//        contextButtons.addChild(menuItem);
-//      };
-//    });
-//  }
-
   //--- Message and URL handling ---//
 
   topic.subscribe('codecompass/setCenterModule', function (moduleId) {
@@ -196,6 +211,5 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
   return function () {
     buildPage('infopage');
     initByUrl(urlHandler.getState());
-    //setContextButton();
   };
 });

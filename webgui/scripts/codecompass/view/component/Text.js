@@ -432,13 +432,13 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
           message.line || 0,
           message.selection ? message.selection[1] : 0);
 
-        topic.publish('codecompass/setCenterModule', that.id);
-
         urlHandler.setStateValue({
           fid    : message.fileId,
           select : message.selection.join('|'),
           center : that.id
         });
+
+        topic.publish('codecompass/setCenterModule', that.id);
       });
     },
 

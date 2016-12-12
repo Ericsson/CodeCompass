@@ -1,4 +1,6 @@
 #include <iostream>
+
+#include <util/legendbuilder.h>
 #include "diagram.h"
 
 namespace cc
@@ -102,6 +104,20 @@ util::Graph::Node Diagram::addNode(
   graph_.setAttribute(node, "label", nodeInfo_.astNodeValue);
 
   return node;
+}
+
+std::string Diagram::getFunctionCallLegend()
+{
+  util::LegendBuilder builder("Function Call Diagram");
+
+  builder.addNode("center function", centerNodeDecoration);
+  builder.addNode("called function", calleeNodeDecoration);
+  builder.addNode("caller function", callerNodeDecoration);
+  builder.addNode("virtual function", virtualNodeDecoration);
+  builder.addEdge("called", calleeEdgeDecoration);
+  builder.addEdge("caller", callerEdgeDecoration);
+
+  return builder.getOutput();
 }
 
 util::Graph::Subgraph Diagram::addSubgraph(

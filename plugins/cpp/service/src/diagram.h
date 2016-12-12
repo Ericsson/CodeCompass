@@ -23,8 +23,14 @@ public:
     util::Graph& graph_,
     const core::AstNodeId& astNodeId_);
 
+  /**
+   * This function creates legend for the Function call diagram.
+   * @return The generated legend as a string in SVG format.
+   */
+  std::string getFunctionCallLegend();
+
 private:
-  typedef std::map<std::string, std::string> Decoration;
+  typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
   /**
    * This function adds a node which represents an AST node. The label of the

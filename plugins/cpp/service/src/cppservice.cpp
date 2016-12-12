@@ -756,7 +756,14 @@ void CppServiceHandler::getDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_)
 {
-  // TODO
+  Diagram diagram(_db, _config);
+
+  switch (diagramId_)
+  {
+    case FUNCTION_CALL:
+      return_ = diagram.getFunctionCallLegend();
+      break;
+  }
 }
 
 void CppServiceHandler::getFileDiagramTypes(
