@@ -224,11 +224,11 @@ service LanguageService
    * @param fileId the file ID we want to get the references about.
    * @param referenceType Reference type (e.g. includes, provides, etc.).
    * Possible values can be queried by getFileReferenceTypes().
-   * @return List of referenced files.
+   * @return List of references.
    * @exception common.InvalidId Exception is thrown if no file belongs to the
    * given ID.
    */
-  list<project.FileInfo> getFileReferences(
+  list<AstNodeInfo> getFileReferences(
     1:common.FileId fileId,
     2:i32 referenceId)
       throws (1:common.InvalidId ex)

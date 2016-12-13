@@ -94,7 +94,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
       }).forEach(function (item) {
         item.render(elementInfo).forEach(function (infoNode) {
           infoNode.parent = 'root';
-          infoTree._store.put(infoNode);
+          that._store.put(infoNode);
         });
       });
     },

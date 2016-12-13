@@ -92,7 +92,8 @@
   content : '\e014'
 }
 
-.icon-Method::before{
+.icon-Method::before,
+.icon-Functions::before{
   content : '\e015'
 }
 
@@ -188,7 +189,8 @@
   content : '\e056'
 }
 
-.icon-Type::before{
+.icon-Type::before,
+.icon-Types::before{
   content : '\e040'
 }
 

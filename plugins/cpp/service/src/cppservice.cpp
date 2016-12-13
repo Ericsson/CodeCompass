@@ -647,11 +647,11 @@ void CppServiceHandler::getDiagramTypes(
 }
 
 void CppServiceHandler::getReferencesInFile(
-    std::vector<AstNodeInfo>& return_,
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_,
-    const core::FileId& fileId_,
-    const std::vector<std::string>& tags_)
+  std::vector<AstNodeInfo>& return_,
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_,
+  const core::FileId& fileId_,
+  const std::vector<std::string>& tags_)
 {
   // TODO
 }
@@ -670,15 +670,46 @@ void CppServiceHandler::getFileReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_)
 {
-  // TODO
+  return_["Types"]     = TYPE;
+  return_["Functions"] = FUNCTION;
 }
 
 void CppServiceHandler::getFileReferences(
-  std::vector<core::FileInfo>& return_,
-  const core::FileId& fileId,
+  std::vector<AstNodeInfo>& return_,
+  const core::FileId& fileId_,
   const std::int32_t referenceId_)
 {
-  // TODO
+  std::map<model::CppAstNodeId, std::vector<std::string>> tags;
+  std::vector<model::CppAstNode> nodes;
+
+  _transaction([&, this](){
+    switch (referenceId_)
+    {
+      case TYPE:
+      {
+        nodes = queryCppAstNodesInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Type &&
+          AstQuery::astType == model::CppAstNode::AstType::Definition);
+
+        break;
+      }
+
+      case FUNCTION :
+      {
+        nodes = queryCppAstNodesInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+          AstQuery::astType == model::CppAstNode::AstType::Definition);
+
+        break;
+      }
+    }
+
+    return_.reserve(nodes.size());
+    std::transform(
+      nodes.begin(), nodes.end(),
+      std::back_inserter(return_),
+      CreateAstNodeInfo(_db, getTags(nodes)));
+  });
 }
 
 void CppServiceHandler::getSyntaxHighlight(
@@ -778,6 +809,16 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodes(
     AstQuery::mangledNameHash == node.mangledNameHash &&
     AstQuery::location.range.end.line != model::Position::npos &&
     query_);
+
+  return std::vector<model::CppAstNode>(result.begin(), result.end());
+}
+
+std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodesInFile(
+  const core::FileId& fileId_,
+  const odb::query<model::CppAstNode>& query_)
+{
+  AstResult result = _db->query<model::CppAstNode>(
+    AstQuery::location.file == std::stoull(fileId_) && query_);
 
   return std::vector<model::CppAstNode>(result.begin(), result.end());
 }
