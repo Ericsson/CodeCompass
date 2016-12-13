@@ -68,7 +68,8 @@ public:
     clang::ASTContext& astContext_,
     std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
-    : _ctx(ctx_),
+    : _isImplicit(false),
+      _ctx(ctx_),
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
       _mngCtx(astContext_.createMangleContext()),
@@ -100,6 +101,18 @@ public:
 
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
+
+  bool TraverseDecl(clang::Decl* decl_)
+  {
+    bool prevIsImplicit = _isImplicit;
+    _isImplicit = decl_->isImplicit() || _isImplicit;
+
+    bool b = clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseDecl(decl_);
+
+    _isImplicit = prevIsImplicit;
+
+    return b;
+  }
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
@@ -1106,7 +1119,9 @@ private:
     if (_clangSrcMgr.isMacroArgExpansion(end_))
       realEnd = _clangSrcMgr.getSpellingLoc(end_);
 
-    _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+    if (!_isImplicit)
+      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+
     fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(realStart));
 
     const std::string& type = fileLoc.file.load()->type;
@@ -1255,6 +1270,7 @@ private:
   std::stack<model::CppTypePtr>     _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
 
+  bool _isImplicit;
   ParserContext& _ctx;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
