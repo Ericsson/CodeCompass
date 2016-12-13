@@ -491,18 +491,11 @@ void CppServiceHandler::getReferences(
       {
         node = queryCppAstNode(astNodeId_);
 
-        std::unordered_set<std::uint64_t> aliasSet
-          = transitiveClosureOfRel(
-              model::CppRelation::Kind::Alias,
-              node.mangledNameHash,
-              true);
+        TypedefResult result = _db->query<model::CppTypedef>(
+          TypedefQuery::typeHash == node.mangledNameHash);
 
-        for (std::uint64_t alias : aliasSet)
-        {
-          AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == alias);
-          nodes.insert(nodes.end(), result.begin(), result.end());
-        }
+        for (const auto& typeDef : result)
+          nodes.push_back(queryCppAstNode(std::to_string(typeDef.astNodeId)));
 
         break;
       }
