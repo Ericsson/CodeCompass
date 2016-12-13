@@ -264,7 +264,7 @@ private:
    * (e.g. public, static, virtual etc.)
    */
   std::map<model::CppAstNodeId, std::vector<std::string>> getTags(
-    const std::vector<model::CppAstNode>& nodes);
+    const std::vector<model::CppAstNode>& nodes_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

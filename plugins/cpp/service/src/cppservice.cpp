@@ -892,79 +892,84 @@ CppServiceHandler::transitiveClosureOfRel(
   return ret;
 }
 
-
 std::map<model::CppAstNodeId, std::vector<std::string>>
-  CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes)
+CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 {
   std::map<model::CppAstNodeId, std::vector<std::string>> tags;
 
-  for(const model::CppAstNode& node : nodes)
+  for (const model::CppAstNode& node : nodes_)
   {
     std::vector<cc::model::CppAstNode> defs
       = queryDefinitions(std::to_string(node.id));
 
-    model::CppAstNode defNode = node;
-    if (!defs.empty())
-      defNode = defs.front();
+    const model::CppAstNode& defNode = defs.empty() ? node : defs.front();
 
-    if(node.symbolType == model::CppAstNode::SymbolType::Function)
+    switch (node.symbolType)
     {
-      for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-         MemTypeQuery::memberAstNode == defNode.id &&
-         MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+      case model::CppAstNode::SymbolType::Function:
       {
-        cc::model::CppAstNodePtr astNode = mem.memberAstNode.load();
+        for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
+          MemTypeQuery::memberAstNode == defNode.id &&
+          MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+        {
+          //--- Visibility Tag---//
 
-        //--- Visibility Tag---//
+          std::string visibility
+            = cc::model::visibilityToString(mem.visibility);
 
-        std::string visibility = cc::model::visibilityToString(mem.visibility);
+          if (!visibility.empty())
+            tags[node.id].push_back(visibility);
 
-        if (!visibility.empty())
-          tags[node.id].push_back(visibility);
+          //--- Static Tag ---//
 
-        //--- Static Tag ---//
+          if (mem.isStatic)
+            tags[node.id].push_back("static");
+        }
 
-        if (mem.isStatic)
-          tags[node.id].push_back("static");
+        //--- Virtual Tag ---//
+
+        FuncResult funcNodes = _db->query<cc::model::CppFunction>(
+          FuncQuery::mangledNameHash == defNode.mangledNameHash);
+        const model::CppFunction& funcNode = *funcNodes.begin();
+        if (funcNode.isVirtual)
+          tags[node.id].push_back("virtual");
+
+        break;
       }
 
-      //--- Virtual Tag ---//
-
-      FuncResult funcNodes = _db->query<cc::model::CppFunction>(
-        FuncQuery::mangledNameHash == defNode.mangledNameHash);
-      model::CppFunction funcNode = *funcNodes.begin();
-      if (funcNode.isVirtual)
-        tags[node.id].push_back("virtual");
-    }
-    else if(node.symbolType == model::CppAstNode::SymbolType::Variable)
-    {
-      for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-         MemTypeQuery::memberAstNode == defNode.id &&
-         MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+      case model::CppAstNode::SymbolType::Variable:
       {
-        //--- Visibility Tag---//
+        for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
+          MemTypeQuery::memberAstNode == defNode.id &&
+          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+        {
+          //--- Visibility Tag---//
 
-        std::string visibility = model::visibilityToString(mem.visibility);
+          std::string visibility = model::visibilityToString(mem.visibility);
 
-        if (!visibility.empty())
-          tags[node.id].push_back(visibility);
+          if (!visibility.empty())
+            tags[node.id].push_back(visibility);
 
-        //--- Static Tag ---//
+          //--- Static Tag ---//
 
-        if (mem.isStatic)
-          tags[node.id].push_back("static");
+          if (mem.isStatic)
+            tags[node.id].push_back("static");
+        }
+
+        //--- Global Tag ---//
+
+        VarResult varNodes = _db->query<cc::model::CppVariable>(
+          VarQuery::mangledNameHash == defNode.mangledNameHash);
+        const model::CppVariable& varNode = *varNodes.begin();
+
+        if (varNode.isGlobal)
+          tags[node.id].push_back("global");
+
+        break;
       }
-
-      //--- Global Tag ---//
-
-      VarResult varNodes = _db->query<cc::model::CppVariable>(
-        VarQuery::mangledNameHash == defNode.mangledNameHash);
-      model::CppVariable varNode = *varNodes.begin();
-
-      if (varNode.isGlobal)
-        tags[node.id].push_back("global");
     }
   }
+
   return tags;
 }
 
