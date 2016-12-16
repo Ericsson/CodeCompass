@@ -279,3 +279,20 @@
 .icon-Enum-constants::before{
   content: '\e059';
 }
+
+.icon-x{
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  background-color: #335181;
+  border-radius: 30px;
+  color: white;
+  width: 15px;
+  height: 15px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.icon-x::after{
+  content: 'x';
+}

@@ -127,7 +127,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       dom.place(row, this._table);
     }
-
   });
 
   /**
@@ -243,7 +242,12 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
   return declare(ContentPane, {
     constructor : function () {
       this.class = 'editor';
+      this.firstLineNumber = 1;
       this._buildDialog = new BuildDialog({ textmodule : this });
+
+      this._marks = {};
+      this._markIdCounter = 0;
+
       this._subscribeTopics();
     },
 
@@ -269,6 +273,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this._codeMirror = new CodeMirror(this.domNode, {
         matchBrackets : true,
         lineNumbers : true,
+        firstLineNumber : that.firstLineNumber,
         readOnly : true,
         mode : 'text/x-c++src',
         foldGutter : true,
@@ -286,8 +291,10 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     startup : function () {
       this.inherited(arguments);
 
+      // TODO: if add new resizehandler it will not be the last node of domNode
+      var codeMirror = query('.CodeMirror', this.domNode)[0];
       this._contextMenu.bindDomNode(
-        query('.CodeMirror-scroll', this.domNode.lastChild)[0]);
+        query('.CodeMirror-scroll', codeMirror)[0]);
     },
 
     resize : function () {
@@ -309,15 +316,24 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.jumpToPos(selection[0], selection[1]);
     },
 
-    loadFile : function (fileId) {
-      // The same file shouldn't be loaded twice after each other.
-      if (this._fileInfo && fileId === this._fileInfo.id)
-        return;
+    /**
+     * This function loads a file in the Text module.
+     * @param {FileInfo | String} file This can be a FileInfo thrift object or a
+     * file ID.
+     */
+    loadFile : function (file) {
+      if (!(file instanceof FileInfo)) {
+        // The same file shouldn't be loaded twice after each other.
+        if (this._fileInfo && file === this._fileInfo.id)
+          return;
 
-      this._fileInfo = model.project.getFileInfo(fileId);
-      this.set('content', model.project.getFileContent(fileId));
-      dom.place(dom.toDom(this._fileInfo.name), this._header.filename, 'only');
-      dom.place(dom.toDom(this._fileInfo.path), this._header.path, 'only');
+        this._fileInfo = model.project.getFileInfo(file);
+      } else {
+        this._fileInfo = file;
+      }
+
+      this.set('content', model.project.getFileContent(this._fileInfo.id));
+      this.set('header', this._fileInfo);
     },
 
     /**
@@ -343,6 +359,48 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
                ? 10
                : selPosPixel.left + editorSize.width - 100
       });
+    },
+
+    /**
+     * This function calls the markText() function of CodeMirror, thus its
+     * options are the same except that 'from' and 'to' objects has to have
+     * 'line' and 'column' attributes.
+     * @param {Object} from Mark text from this position.
+     * @param {Object} to Mark text till this position.
+     * @param {Object} options Pass these options to CodeMirror's markText
+     * function.
+     * @return {Number} This function returns an id which can be passed to
+     * clearMark() function to remove this selection.
+     */
+    markText : function (from, to, options) {
+      var fln = this._codeMirror.options.firstLineNumber;
+
+      this._marks[this._markIdCounter] = this._codeMirror.markText(
+        { line : from.line - fln, ch : from.column - 1 },
+        { line : to.line   - fln, ch : to.column   - 1 },
+        options);
+
+      return this._markIdCounter++;
+    },
+
+    /**
+     * This function clears a text mark.
+     * @param {Number} markId Id of the selection to remove.
+     */
+    clearMark : function (markId) {
+      if (markId in this._marks) {
+        this._marks[markId].clear();
+        delete this._marks[markId];
+      }
+    },
+
+    /**
+     * This function clears all the text marks.
+     */
+    clearAllMarks : function () {
+      for (var markId in this._marks)
+        this.clearMark(markId);
+      this._marks = {};
     },
 
     _eventHandler : function (event) {
@@ -462,6 +520,11 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
     _setContentAttr : function (content) {
       this._codeMirror.doc.setValue(content);
+    },
+
+    _setHeaderAttr : function (fileInfo) {
+      dom.place(dom.toDom(fileInfo.name), this._header.filename, 'only');
+      dom.place(dom.toDom(fileInfo.path), this._header.path, 'only');
     }
   });
 });

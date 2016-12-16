@@ -67,6 +67,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
           }
         }));
 
+      submenu.addChild(new MenuItem({
+        label : "CodeBites",
+        onClick : function () {
+          topic.publish('codecompass/codebites', {
+            node : nodeInfo
+          });
+        }
+      }));
+
       if (Object.keys(diagramTypes).length !== 0)
         return new PopupMenuItem({
           label : 'Diagrams',
