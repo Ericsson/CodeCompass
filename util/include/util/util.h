@@ -22,6 +22,13 @@ std::string textRange(
   std::size_t startLine_, std::size_t startCol_,
   std::size_t endLine_, std::size_t endCol_);
 
+/**
+ * This function escapes a string using HTML escape characters.
+ * @param str_ String which will be escaped.
+ * @return Escaped HTML sequence.
+ */
+std::string escapeHtml(const std::string& str_);
+
 }
 }
 
