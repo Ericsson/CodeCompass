@@ -146,9 +146,14 @@ svg {
 
 #infotree .icon,
 #filemanager .icon,
-#queryresult .icon{
+#queryresult .icon,
+#fileoutline .icon{
   color: #1855B6;
   font-size: 1.5em;
+}
+
+#fileoutline{
+  width:300px;
 }
 
 .dijitTreeContentExpanded > .icon{

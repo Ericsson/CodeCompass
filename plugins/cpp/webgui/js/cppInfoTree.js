@@ -145,42 +145,87 @@ function (model, viewHandler, util) {
     return res;
   }
 
+  /**
+   * This function returns file references children.
+   * @param parentNode Reference type node in Info Tree.
+   */
+  function loadFileReferenceNodes(parentNode) {
+    var res = [];
+
+    var references = model.cppservice.getFileReferences(
+      parentNode.nodeInfo.id,
+      parentNode.refType);
+
+    references.forEach(function (reference) {
+      res.push({
+        name        : createLabel(reference),
+        refType     : parentNode.refType,
+        nodeInfo    : reference,
+        hasChildren : false,
+        cssClass    : getCssClass(reference)
+      });
+    });
+
+    return res;
+  }
+
   var cppInfoTree = {
-    render : function (astNodeInfo) {
+    render : function (elementInfo) {
       var ret = [];
 
-      //--- Properties ---//
+      if(elementInfo instanceof AstNodeInfo) {
+        //--- Properties ---//
 
-      var props = model.cppservice.getProperties(astNodeInfo.id);
-      for (var propName in props) {
-        var propId = propName.replace(/ /g, '-');
-        var label
-          = '<span class="label">' + propName + '</span>: '
-          + '<span class="value">' + props[propName] + '</span>';
+        var props = model.cppservice.getProperties(elementInfo.id);
+        for (var propName in props) {
+          var propId = propName.replace(/ /g, '-');
+          var label
+            = '<span class="label">' + propName + '</span>: '
+            + '<span class="value">' + props[propName] + '</span>';
 
-        ret.push({
-          name        : label,
-          nodeInfo    : astNodeInfo,
-          cssClass    : 'icon-' + propId,
-          hasChildren : false
-        });
+          ret.push({
+            name        : label,
+            nodeInfo    : elementInfo,
+            cssClass    : 'icon-' + propId,
+            hasChildren : false
+          });
+        }
+
+        //--- References ---//
+
+        var refTypes = model.cppservice.getReferenceTypes(elementInfo.id);
+        for (var refType in refTypes) {
+          ret.push({
+            name        : refType,
+            nodeInfo    : elementInfo,
+            refType     : refTypes[refType],
+            cssClass    : 'icon-' + refType.replace(/ /g, '-'),
+            hasChildren : true,
+            getChildren : function () {
+              return loadReferenceNodes(this, refTypes);
+            }
+          });
+        };
+
+      } else if (elementInfo instanceof FileInfo) {
+
+        //--- File references ---//
+
+        var refTypes = model.cppservice.getFileReferenceTypes(elementInfo.id);
+        for (var refType in refTypes) {
+          ret.push({
+            name        : refType,
+            nodeInfo    : elementInfo,
+            refType     : refTypes[refType],
+            cssClass    : 'icon-' + refType.replace(/ /g, '-'),
+            hasChildren : true,
+            getChildren : function () {
+              return loadFileReferenceNodes(this);
+            }
+          });
+        };
+
       }
-
-      //--- References ---//
-
-      var refTypes = model.cppservice.getReferenceTypes(astNodeInfo.id);
-      for (var refType in refTypes) {
-        ret.push({
-          name        : refType,
-          nodeInfo    : astNodeInfo,
-          refType     : refTypes[refType],
-          cssClass    : 'icon-' + refType.replace(/ /g, '-'),
-          hasChildren : true,
-          getChildren : function () {
-            return loadReferenceNodes(this, refTypes);
-          }
-        });
-      };
 
       return ret;
     }

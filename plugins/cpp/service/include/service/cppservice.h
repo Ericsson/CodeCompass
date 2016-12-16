@@ -110,8 +110,8 @@ public:
     const core::FileId& fileId_) override;
 
   void getFileReferences(
-    std::vector<core::FileInfo>& return_,
-    const core::FileId& fileId,
+    std::vector<AstNodeInfo>& return_,
+    const core::FileId& fileId_,
     const std::int32_t referenceId_) override;
 
   void getSyntaxHighlight(
@@ -146,7 +146,7 @@ private:
       the AST node is not unique then it returns the callees of one of them. */
 
     CALLER, /*!< Get caller functions. */
-    
+
     VIRTUAL_CALL, /*!< A function may be used virtually on a base type object.
       The exact type of the object is based on dynamic information, which can't
       be determined statically. Weak usage returns these possible calls. */
@@ -182,6 +182,16 @@ private:
     UNDERLYING_TYPE, /*!< Underlying type of a typedef. */
 
     ENUM_CONSTANTS, /*!< Enum constants. */
+  };
+
+  enum FileReferenceType
+  {
+    INCLUDE, /*!< Included source files in the current source file after the
+      inclusion directive. */
+
+    TYPE, /*!< User defined data types such as classes, structs etc. */
+
+    FUNCTION /*!< Functions in the current source file. */
   };
 
   enum DiagramType
@@ -222,6 +232,15 @@ private:
     const core::AstNodeId& astNodeId_,
     const odb::query<model::CppAstNode>& query_
       = odb::query<model::CppAstNode>(true));
+
+    /**
+     * This function returns the model::CppAstNode objects which meet the
+     * requirements of the given query in the given file.
+     */
+    std::vector<model::CppAstNode> queryCppAstNodesInFile(
+      const core::FileId& fileId_,
+      const odb::query<model::CppAstNode>& query_
+        = odb::query<model::CppAstNode>(true));
 
   /**
    * This function returns the model::CppAstNode objects which have the same
