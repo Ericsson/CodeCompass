@@ -686,22 +686,17 @@ void CppServiceHandler::getFileReferences(
     switch (referenceId_)
     {
       case TYPE:
-      {
         nodes = queryCppAstNodesInFile(fileId_,
           AstQuery::symbolType == model::CppAstNode::SymbolType::Type &&
           AstQuery::astType == model::CppAstNode::AstType::Definition);
-
         break;
-      }
 
-      case FUNCTION :
-      {
+      case FUNCTION:
         nodes = queryCppAstNodesInFile(fileId_,
-          AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
-          AstQuery::astType == model::CppAstNode::AstType::Definition);
-
+           AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+          (AstQuery::astType == model::CppAstNode::AstType::Definition ||
+           AstQuery::astType == model::CppAstNode::AstType::Declaration));
         break;
-      }
     }
 
     return_.reserve(nodes.size());

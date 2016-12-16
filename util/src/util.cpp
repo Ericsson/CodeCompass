@@ -1,3 +1,4 @@
+#include <iostream>
 #include <ctime>
 #include <sstream>
 #include <util/util.h>
@@ -27,6 +28,12 @@ std::string textRange(
   std::size_t endLine_, std::size_t endCol_)
 {
   std::string res;
+
+  if (startLine_ == static_cast<std::size_t>(-1) ||
+      startCol_  == static_cast<std::size_t>(-1) ||
+      endLine_   == static_cast<std::size_t>(-1) ||
+      endCol_    == static_cast<std::size_t>(-1))
+    return res;
 
   std::istringstream iss(text_);
   std::string lineStr;
