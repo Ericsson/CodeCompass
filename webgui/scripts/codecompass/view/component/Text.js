@@ -246,7 +246,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this._buildDialog = new BuildDialog({ textmodule : this });
 
       this._marks = {};
-      this._marksNonStatic = {}; /*< This stores selections, which can change */
       this._markIdCounter = 0;
 
       this._subscribeTopics();
@@ -274,7 +273,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this._codeMirror = new CodeMirror(this.domNode, {
         matchBrackets : true,
         lineNumbers : true,
-        firstLineNumber : this.firstLineNumber,
+        firstLineNumber : that.firstLineNumber,
         readOnly : true,
         mode : 'text/x-c++src',
         foldGutter : true,
@@ -317,22 +316,23 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.jumpToPos(selection[0], selection[1]);
     },
 
-    _setHeaderAttr : function(fileInfo){
-      dom.place(dom.toDom(fileInfo.name), this._header.filename, 'only');
-      dom.place(dom.toDom(fileInfo.path), this._header.path, 'only');
-    },
+    /**
+     * This function loads a file in the Text module.
+     * @param {FileInfo | String} file This can be a FileInfo thrift object or a
+     * file ID.
+     */
+    loadFile : function (file) {
+      if (!(file instanceof FileInfo)) {
+        // The same file shouldn't be loaded twice after each other.
+        if (this._fileInfo && file === this._fileInfo.id)
+          return;
 
-    loadFile : function (fileId) {
-      // The same file shouldn't be loaded twice after each other.
-      if (this._fileInfo && fileId === this._fileInfo.id)
-        return;
+        this._fileInfo = model.project.getFileInfo(file);
+      } else {
+        this._fileInfo = file;
+      }
 
-      this._fileInfo = model.project.getFileInfo(fileId);
-      this.set('content', model.project.getFileContent(fileId));
-
-      dom.place(dom.toDom(this._fileInfo.name), this._header.filename, 'only');
-      dom.place(dom.toDom(this._fileInfo.path), this._header.path, 'only');
-
+      this.set('content', model.project.getFileContent(this._fileInfo.id));
       this.set('header', this._fileInfo);
     },
 
@@ -369,21 +369,16 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
      * @param {Object} to Mark text till this position.
      * @param {Object} options Pass these options to CodeMirror's markText
      * function.
-     * @param {Boolean} isStatic If true then this mark won't be deleted by the
-     * clearAllMarks() function.
      * @return {Number} This function returns an id which can be passed to
      * clearMark() function to remove this selection.
      */
-    markText : function (from, to, options, isStatic) {
+    markText : function (from, to, options) {
       var fln = this._codeMirror.options.firstLineNumber;
 
       this._marks[this._markIdCounter] = this._codeMirror.markText(
         { line : from.line - fln, ch : from.column - 1 },
         { line : to.line   - fln, ch : to.column   - 1 },
         options);
-
-      if (!isStatic)
-        this._marksNonStatic[this._markIdCounter] = true;
 
       return this._markIdCounter++;
     },
@@ -400,11 +395,12 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     },
 
     /**
-     * This function clear all the text mark.
+     * This function clears all the text marks.
      */
     clearAllMarks : function () {
-      for (var markId in this._marksNonStatic)
+      for (var markId in this._marks)
         this.clearMark(markId);
+      this._marks = {};
     },
 
     _eventHandler : function (event) {
@@ -524,6 +520,11 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
     _setContentAttr : function (content) {
       this._codeMirror.doc.setValue(content);
+    },
+
+    _setHeaderAttr : function (fileInfo) {
+      dom.place(dom.toDom(fileInfo.name), this._header.filename, 'only');
+      dom.place(dom.toDom(fileInfo.path), this._header.path, 'only');
     }
   });
 });

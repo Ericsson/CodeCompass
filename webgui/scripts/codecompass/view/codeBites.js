@@ -1,22 +1,19 @@
-define([
+require([
   'dojo/_base/declare',
   'dojo/_base/array',
   'dojo/dom-construct',
   'dojo/dom-style',
   'dojo/topic',
   'dojo/on',
-  'dojo/query',
   'dijit/layout/ContentPane',
-  'dijit/MenuItem',
-  'dijit/PopupMenuItem',
   'dojox/layout/ResizeHandle',
   'codecompass/view/component/ContextMenu',
   'codecompass/view/component/Text',
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/urlHandler'],
-function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
-  PopupMenuItem, ResizeHandle, ContextMenu, Text, model, viewHandler, urlHandler) {
+function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
+  ContextMenu, Text, model, viewHandler, urlHandler) {
 
   /**
    * In CodeBites view every code box has the same languageService object. By
@@ -45,7 +42,7 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
    * When a token is clicked in a box then the token will be selected by one of
    * these colors as the edge too.
    */
-  var colors = ["#42a62c", "#2c34a5", "#e5801b", "#a0398f", "#c91010"];
+  var colors = ['#42a62c', '#2c34a5', '#e5801b', '#a0398f', '#c91010'];
 
   /**
    * Selection colors are going round. This variable contains the index of the
@@ -91,7 +88,14 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
    * @param {Object} parent CodeBitesElement object, the parent of this element.
    */
   function createCodeBitesElement(astNodeInfo, panel, parent) {
+
+    //--- Set content ---//
+
     var fileInfo = model.project.getFileInfo(astNodeInfo.range.file);
+
+    languageService = model.getLanguageService(fileInfo.type);
+    if (astNodeInfo.astNodeType !== 'Definition')
+      astNodeInfo = languageService.getReferences(astNodeInfo.id, 0)[0];
 
     var newElement = new CodeBitesElement({
       astNodeInfo     : astNodeInfo,
@@ -104,12 +108,8 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
       selection       : panel.selection
     });
 
-    //--- Set content ---//
-
     newElement.set('content', astNodeInfo.srcText);
     newElement.set('header', fileInfo);
-
-    languageService = model.getLanguageService(newElement.fileInfo.type);
 
     //--- Place node ---//
 
@@ -132,22 +132,21 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
   }
 
   /**
-   * CodeBites box element
+   * CodeBites box element.
    */
   var CodeBitesElement = declare(Text, {
     /**
      * Constructor of a box element.
-     * @param {Object} config CodeBitesElement class is inherited from Editor class, so
-     * its constructor expects the same attribute. Furthermore 'config'
-     * parameter has to contain these properties:
-     * - astNodeId: (Thrift object) Node id of the loaded AST node. If
-     * astNodeInfo is also given then this id is omitted.
+     * @param {Object} config CodeBitesElement class is inherited from Editor
+     * class, so its constructor expects the same attributes. Furthermore
+     * 'config' parameter has to contain these properties:
+     * - astNodeId: (Thrift object) Node ID of the loaded AST node. If
+     * astNodeInfo is also given then this ID is omitted.
      * - astNodeInfo: (Thrift object) Node info of the loaded AST node. If
      * astNodeId is also given then that's omitted.
      * - parent: (CodeBitesElement) Parent node of this element.
      */
     constructor : function (config) {
-      this.inherited(arguments);
 
       //--- Set properties ---//
 
@@ -204,7 +203,7 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
 
       //--- Close button ---//
 
-      var closeImg = dom.create('span',  { class : 'icon-x'});
+      var closeImg = dom.create('span', { class : 'icon-x' });
 
       dom.place(closeImg, this._header.header);
       on(closeImg, 'click', function () {
@@ -255,10 +254,10 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
 
       //--- Right click ---//
 
-      if (event.button === 0){
+      if (event.button === 0) {
         this._clickOnAstNode({
-          'line'    : pos.line + this._codeMirror.options.firstLineNumber,
-          'column'  : pos.ch + 1
+          'line'   : pos.line + this._codeMirror.options.firstLineNumber,
+          'column' : pos.ch + 1
         });
       }
     },
@@ -266,7 +265,7 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
     /**
      * Close a CodeBites window
      */
-    _onClose         : function () {
+    _onClose : function () {
 
       //--- Remove child elements recursively ---//
 
@@ -311,9 +310,9 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
       if (!this.parent) {
         var range = this.astNodeInfo.range.range;
         topic.publish('codecompass/openFile', {
-          fileId     : this.astNodeInfo.range.file,
-          line       : range.startpos.line,
-          selection  : [
+          fileId    : this.astNodeInfo.range.file,
+          line      : range.startpos.line,
+          selection : [
             range.startpos.line,
             range.startpos.column,
             range.endpos.line,
@@ -326,6 +325,7 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
      * Click on an AST node
      */
     _clickOnAstNode : function (pos) {
+
       //--- Get nodes by position ---//
 
       var mPos = new Position(),
@@ -371,7 +371,7 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
     /**
      * Resize a CodeBites item
      */
-    _onResize        : function (size) {
+    _onResize : function (size) {
       var that = this;
 
       array.forEach(elementMatrix, function (row) {
@@ -502,6 +502,4 @@ function (declare, array, dom, style, topic, on, query, ContentPane, MenuItem,
   viewHandler.registerModule(codebites, {
     type : viewHandler.moduleType.Center
   });
-
-  return CodeBites;
 });
