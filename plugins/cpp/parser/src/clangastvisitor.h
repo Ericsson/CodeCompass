@@ -800,6 +800,22 @@ public:
     variable->qualifiedType = qualType.getAsString();
     variable->isGlobal = _functionStack.empty();
 
+    //--- CppMemberType ---//
+
+    // If the stack is empty, then it's a global variable.
+    if (!_typeStack.empty())
+    {
+      model::CppMemberTypePtr member = std::make_shared<model::CppMemberType>();
+      _members.push_back(member);
+
+      member->typeHash = _typeStack.top()->mangledNameHash;
+      member->memberAstNode = astNode;
+      member->memberTypeHash = variable->typeHash;
+      member->kind = model::CppMemberType::Kind::Field;
+      member->visibility = getMemberVisibility(vd_);
+      member->isStatic = true;
+    }
+
     //--- Function parameters and local variables ---//
 
     // If the stack is empty, then it's a global variable.
