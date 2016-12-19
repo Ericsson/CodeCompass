@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
@@ -19,6 +21,16 @@ std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
       std::to_string(fileLoc_.file.object_id()) + ':'
     + std::to_string(fileLoc_.range.start.line) + ':'
     + std::to_string(fileLoc_.range.start.column);
+}
+
+/**
+ * This function removes the first occurence of what_ in str_ if any.
+ */
+void removeSubstring(std::string& str_, const std::string& what_)
+{
+  std::size_t pos = str.find(what_);
+  if (pos != std::string::npos)
+    str_.erase(pos, what_.size());
 }
 
 }
@@ -203,7 +215,12 @@ std::string getSignature(const clang::FunctionDecl* fn_)
   if (!llvm::isa<clang::CXXConstructorDecl>(fn_) &&
       !llvm::isa<clang::CXXDestructorDecl>(fn_) &&
       !llvm::isa<clang::CXXConversionDecl>(fn_))
-    signature.append(fn_->getReturnType().getAsString()).append(" ");
+  {
+    std::string returnType = fn_->getReturnType().getAsString();
+    removeSubstring(returnType, "struct ");
+    removeSubstring(returnType, "class ");
+    signature.append(returnType).append(" ");
+  }
 
   signature.append(fn_->getQualifiedNameAsString()).append("(");
 
@@ -211,7 +228,12 @@ std::string getSignature(const clang::FunctionDecl* fn_)
   {
     if (i)
       signature.append(", ");
-    signature.append(fn_->getParamDecl(i)->getType().getAsString());
+
+    std::string paramType = fn_->getParamDecl(i)->getType().getAsString();
+    removeSubstring(paramType, "struct ");
+    removeSubstring(paramType, "class ");
+
+    signature.append(paramType);
   }
 
   if (fn_->isVariadic())
