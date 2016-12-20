@@ -616,6 +616,7 @@ public:
       member->memberTypeHash = cppFunction->typeHash;
       member->kind = model::CppMemberType::Kind::Method;
       member->visibility = getMemberVisibility(md);
+      member->isStatic = md->isStatic();
     }
 
     return true;
@@ -804,8 +805,7 @@ public:
 
     //--- CppMemberType ---//
 
-    // If the stack is empty, then it's a global variable.
-    if (!_typeStack.empty())
+    if (!_typeStack.empty() && _functionStack.empty())
     {
       model::CppMemberTypePtr member = std::make_shared<model::CppMemberType>();
       _members.push_back(member);
