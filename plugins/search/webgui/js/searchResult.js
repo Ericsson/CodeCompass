@@ -52,6 +52,8 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
         };
 
         that._loadResults();
+
+        topic.publish('codecompass/selectAccordion', that.id);
       });
     },
 
@@ -302,10 +304,6 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
           that._moreMap[fileNode.id] = searchResultEntry.matchingLines;
         });
     }
-  });
-
-  topic.subscribe('codecompass/search', function (message) {
-    topic.publish('codecompass/selectAccordion', 'queryresult');
   });
 
   var searchResult = new SearchResult({
