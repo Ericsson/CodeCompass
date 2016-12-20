@@ -941,7 +941,8 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
       case model::CppAstNode::SymbolType::Function:
       {
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-          MemTypeQuery::memberAstNode == defNode.id &&
+          (MemTypeQuery::memberAstNode == defNode.id ||
+           MemTypeQuery::memberAstNode == node.id) &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Method))
         {
           //--- Visibility Tag---//
@@ -963,6 +964,7 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
           FuncQuery::mangledNameHash == defNode.mangledNameHash);
         const model::CppFunction& funcNode = *funcNodes.begin();
+
         if (funcNode.isVirtual)
           tags[node.id].push_back("virtual");
 
@@ -972,7 +974,8 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
       case model::CppAstNode::SymbolType::Variable:
       {
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-          MemTypeQuery::memberAstNode == defNode.id &&
+          (MemTypeQuery::memberAstNode == defNode.id ||
+           MemTypeQuery::memberAstNode == node.id) &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Field))
         {
           //--- Visibility Tag---//
