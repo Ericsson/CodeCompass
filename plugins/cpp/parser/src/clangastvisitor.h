@@ -105,7 +105,9 @@ public:
   bool TraverseDecl(clang::Decl* decl_)
   {
     bool prevIsImplicit = _isImplicit;
-    _isImplicit = decl_->isImplicit() || _isImplicit;
+
+    if (decl_)
+      _isImplicit = decl_->isImplicit() || _isImplicit;
 
     bool b = clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseDecl(decl_);
 
