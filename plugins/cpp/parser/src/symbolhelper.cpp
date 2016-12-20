@@ -28,7 +28,7 @@ std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
  */
 void removeSubstring(std::string& str_, const std::string& what_)
 {
-  std::size_t pos = str.find(what_);
+  std::size_t pos = str_.find(what_);
   if (pos != std::string::npos)
     str_.erase(pos, what_.size());
 }
