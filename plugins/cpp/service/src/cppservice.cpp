@@ -376,6 +376,8 @@ void CppServiceHandler::getReferences(
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::astType    == model::CppAstNode::AstType::Definition &&
             AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+            // Same file
+            AstQuery::location.file == astNode.location.file.object_id() &&
             // StartPos >= Pos
             ((AstQuery::location.range.start.line == start.line &&
               AstQuery::location.range.start.column <= start.column) ||
