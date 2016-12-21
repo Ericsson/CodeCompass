@@ -38,12 +38,12 @@ function (model, viewHandler, util) {
            null;
   }
 
-  function loadReferenceNodes(parentNode, refTypes) {
+  function loadReferenceNodes(parentNode, nodeInfo, refTypes) {
     var res = [];
     var fileGroupsId = [];
 
     var references = model.cppservice.getReferences(
-      parentNode.nodeInfo.id,
+      nodeInfo.id,
       parentNode.refType);
 
     references.forEach(function (reference) {
@@ -67,7 +67,6 @@ function (model, viewHandler, util) {
           id          : fileGroupsId[fileId],
           name        : fileInfo.name + ' (' + referenceInFile.length + ')',
           refType     : parentNode.refType,
-          nodeInfo    : reference,
           hasChildren : true,
           cssClass    : util.getIconClass(fileInfo.path),
           getChildren : function () {
@@ -106,7 +105,7 @@ function (model, viewHandler, util) {
 
                     calls.forEach(function (call) {
                       if (call.mangledNameHash ===
-                          parentNode.nodeInfo.mangledNameHash)
+                          nodeInfo.mangledNameHash)
                         res.push({
                           name        : createLabel(call),
                           refType     : parentNode.refType,
@@ -198,12 +197,11 @@ function (model, viewHandler, util) {
         for (var refType in refTypes) {
           ret.push({
             name        : refType,
-            nodeInfo    : elementInfo,
             refType     : refTypes[refType],
             cssClass    : 'icon-' + refType.replace(/ /g, '-'),
             hasChildren : true,
             getChildren : function () {
-              return loadReferenceNodes(this, refTypes);
+              return loadReferenceNodes(this, elementInfo, refTypes);
             }
           });
         };
