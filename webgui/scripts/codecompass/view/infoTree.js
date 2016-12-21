@@ -50,7 +50,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
       this._store.put(this._rootNode);
 
       this.set('model', dataModel);
-      this.set('openOnClick', true);
+      this.set('openOnClick', false);
     },
 
     /**
@@ -114,6 +114,9 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
             range.endpos.column]
         });
       }
+
+      if (item.hasChildren)
+        this._onExpandoClick({node: node});
     },
 
     getIconClass : function (item, opened) {
