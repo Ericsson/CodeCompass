@@ -285,6 +285,10 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         that._eventHandler(event);
       });
 
+      this._codeMirror.on('contextmenu', function (cm, event) {
+        event.preventDefault();
+      });
+
       this._contextMenu = new ContextMenu();
     },
 
