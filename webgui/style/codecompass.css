@@ -164,15 +164,38 @@ svg {
   color: #002661;
 }
 
+/* InfoTree tags */
+
 #infotree .tag{
-  color: white;
-  background-color: red;
-  width: 10px;
-  height: 10px;
-  display: inline-block;
+  padding: 0px 3px;
   text-align: center;
-  font-size: 0.7em;
-  margin-right: 1px;
+  margin-right: 2px;
+  font-weight: bold;
+}
+
+#infotree .tag-static{
+  background-color: #e84c3d;
+  color: #fff;
+}
+
+#infotree .tag-virtual{
+  background-color: #f1c40f;
+  color: #292828;
+}
+
+#infotree .tag-constructor{
+  background-color: #3598db;
+  color: #fff;
+}
+
+#infotree .tag-generated{
+  background-color: #7e8c8d;
+  color: #fff;
+}
+
+#infotree .tag-inherited{
+  background-color: #9a59b5;
+  color: #fff;
 }
 
 .dijitTreeRowHover, .dijitTreeContent:hover{

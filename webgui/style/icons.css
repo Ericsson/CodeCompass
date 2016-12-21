@@ -42,20 +42,24 @@
 }
 
 /** Tags **/
+.icon-visibility{
+  display: table-row;
+}
 
-.icon-plus::before{
-  content: '\e035';
+.icon-public::before{
+  content: '+';
   color: green;
 }
 
-.icon-minus::before{
-  content: '\e036';
+.icon-private::before{
+  content: '-';
   color: red;
 }
 
-.icon-zero::before{
-  content: '\e039';
+.icon-protected::before{
+  content: '#';
   color: blue;
+  font-size: 0.8em;
 }
 
 /** Icons * */

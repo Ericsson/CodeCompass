@@ -32,9 +32,10 @@ function (model, viewHandler, util) {
   function getCssClass(astNodeInfo) {
     var tags = astNodeInfo.tags;
 
-    return tags.indexOf('public')    > -1 ? 'icon-plus'  :
-           tags.indexOf('private')   > -1 ? 'icon-minus' :
-           tags.indexOf('protected') > -1 ? 'icon-zero'  : null;
+    return tags.indexOf('public')    > -1 ? 'icon-visibility icon-public'  :
+           tags.indexOf('private')   > -1 ? 'icon-visibility icon-private' :
+           tags.indexOf('protected') > -1 ? 'icon-visibility icon-protected' :
+           null;
   }
 
   function loadReferenceNodes(parentNode, refTypes) {
