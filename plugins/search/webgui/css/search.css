@@ -1,0 +1,80 @@
+#searchfields{
+  padding: 5px 0px 0px 300px;
+}
+
+.cc-search-group{
+  width: 640px;
+  padding-bottom: 3px;
+}
+
+#cc-filefilter-box,
+#cc-dirfilter-box{
+/*   width: 500px; */
+/*   margin-right: 10px; */
+  display: inline-block;
+}
+
+#cc-filefilter-box,
+#cc-dirfilter-box{
+  width: 320px;
+}
+
+#widget_cc-search-filefilter,
+#widget_cc-search-dirfilter{
+  width: 92%;
+}
+
+/* #widget_cc-search{ */
+/*   width: 300px; */
+/* } */
+
+#cc-search{
+  display: inline-block;
+  margin-left: 5px;
+}
+
+#widget_cc-search-filter{
+  padding-left: 70px;
+  width: 418px;
+}
+
+#cc-search > .dijitDropDownButton{
+  position: absolute;
+}
+
+
+#searchfields .icon-search{
+  font-size: large;
+  color: #335181;
+}
+
+#cc-search .dijitDropDownButton .dijitButtonNode{
+  border: 0px;
+  padding: 0px;
+  background-color: inherit;
+  webkit-box-shadow: unset;
+  -moz-box-shadow: unset;
+  box-shadow: unset;
+  background-color: #dbd6d6;
+  background-image: none;
+}
+
+.cc-search-help{
+  font-family:'CodeCompass',Sans-Serif;
+  color: #335181;
+  vertical-align: bottom;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.cc-search-help:after{
+  content: '\e009';
+}
+
+.pathelement {
+  cursor: pointer;
+}
+
+.pathelement:hover {
+  text-decoration: underline;
+}

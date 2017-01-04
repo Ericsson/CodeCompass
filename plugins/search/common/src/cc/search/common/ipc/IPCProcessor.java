@@ -1,0 +1,123 @@
+package cc.search.common.ipc;
+
+import cc.search.common.config.CommonOptions;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.thrift.TException;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
+
+/**
+ * Helper class for thrift based IPC communication.
+ */
+public class IPCProcessor implements AutoCloseable {
+  /**
+   * Logger.
+   */
+  private static final Logger _log  = Logger.getLogger(
+    IPCProcessor.class.getName());
+  /**
+   * Processor for thrift messages.
+   */
+  private final TProcessor _processor;
+  /**
+   * Transport object for incoming messages.
+   */
+  private final TTransport _inTransport;
+  /**
+   * Transport object for outgoing messages.
+   */
+  private final TTransport _outTransport;
+  /**
+   * Protocol object for incoming messages.
+   */
+  private final TProtocol _inProtocol;
+  /**
+   * Protocol object for outgoing messages.
+   */
+  private final TProtocol _outProtocol;
+  /**
+   * Ture if serving is enabled.
+   */
+  private boolean _continueServing = true;
+  
+  /**
+   * Creates a new processor.
+   * 
+   * @param options_ app options.
+   * @param processor_  a thrift processor.
+   * @throws java.io.FileNotFoundException 
+   */
+  public IPCProcessor(CommonOptions options_, TProcessor processor_)
+    throws FileNotFoundException {
+    _processor = processor_;
+    
+    TProtocolFactory factory = new TBinaryProtocol.Factory();
+    _inTransport = new TIOStreamTransport(
+      new FileInputStream(getFileNameFromFd(options_.ipcInFd)));
+    _outTransport = new TIOStreamTransport(
+      new FileOutputStream(getFileNameFromFd(options_.ipcOutFd)));
+    
+    _inProtocol = factory.getProtocol(_inTransport);
+    _outProtocol = factory.getProtocol(_outTransport);
+  }
+  
+  /**
+   * Serve IPC (thrift) messages.
+   */
+  public void serve() {
+    _continueServing = true;
+    
+    try {
+      _inTransport.open();
+      _outTransport.open();
+    } catch (TTransportException ex) {
+      _log.log(Level.SEVERE, "Opening transoprt failed!", ex);
+      return;
+    }
+    
+    boolean cont = _continueServing;
+    while (cont) {
+      try {
+        cont = _continueServing && _processor.process(_inProtocol, _outProtocol);
+      } catch (TTransportException ex) {
+        _log.log(Level.SEVERE, "Client died!", ex);
+        return;
+      } catch (TException ex) {
+        _log.log(Level.SEVERE, "Something went wrong!", ex);
+      }
+    }
+  }
+  
+  /**
+   * Stop serving.
+   */
+  public void stopServe() {
+    _continueServing = false;
+  }
+
+  /**
+   * Java does not supports using file descriptors so we have to cheat. It is a
+   * Linux only solution: give back a file that represents the given fid.
+   * 
+   * @param fd_ file descriptor.
+   * @return path to a file that represents the descriptor.
+   */
+  private String getFileNameFromFd(int fd_) {
+    return "/proc/self/fd/" + Integer.toString(fd_);
+  }
+
+  @Override
+  public void close() {
+    _inTransport.close();
+    _outTransport.close();
+  }
+}

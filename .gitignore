@@ -1,0 +1,19 @@
+# IDEs and editors
+
+nbproject
+*.swp
+
+# Generated files and directories
+
+**/*odb\.cxx
+**/*odb\.hxx
+**/*odb\.ixx
+**/*odb\.sql
+
+**/gen-cpp/
+**/gen-js/
+**/gen-java/
+
+# Other
+
+/build/

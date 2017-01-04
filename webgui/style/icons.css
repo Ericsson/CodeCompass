@@ -1,0 +1,304 @@
+@charset "UTF-8";
+
+@font-face {
+  font-family: "CodeCompass";
+  src:url("../fonts/codecompass.eot");
+  src:url("../fonts/codecompass.eot?#iefix") format("embedded-opentype"),
+    url("../fonts/codecompass.woff") format("woff"),
+    url("../fonts/codecompass.ttf") format("truetype"),
+    url("../fonts/codecompass.svg#codecompass") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.icon{
+    font-family:'CodeCompass',Sans-Serif;
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/** Properties **/
+
+.icon-Name::before{
+  content: '\e001';
+}
+
+.icon-user::before{
+  content: '\e001';
+}
+
+.icon-Qualified-name::before{
+  content: '\e002';
+}
+
+.icon-Definition::before{
+  content: '\e003';
+}
+
+/** Tags **/
+.icon-visibility{
+  display: table-row;
+}
+
+.icon-public::before{
+  content: '+';
+  color: green;
+}
+
+.icon-private::before{
+  content: '-';
+  color: red;
+}
+
+.icon-protected::before{
+  content: '#';
+  color: blue;
+  font-size: 0.8em;
+}
+
+/** Icons * */
+
+.icon-question::before{
+  content: '\e009';
+}
+
+.icon-search::before{
+  content: '\e010';
+}
+
+.icon-right::before{
+  content: '\e011';
+}
+
+.icon-left::before{
+  content: '\e012';
+}
+
+.icon-bug::before{
+  content: '\e013';
+}
+
+.icon-folder-up::before{
+  content: '\e027';
+  color: #43ba45;
+  font-size: 0.9em;
+}
+
+/** Infotree icons * */
+
+.icon-info::before{
+  content : '\e014'
+}
+
+.icon-Method::before,
+.icon-Functions::before{
+  content : '\e015'
+}
+
+.icon-Local-variables::before{
+  content : '\e016'
+}
+
+.icon-Declaration::before{
+  content : '\e017'
+}
+
+.icon-Data-member::before{
+  content : '\e018'
+}
+
+.icon-Callee::before{
+  content : '\e019'
+}
+
+.icon-This-calls::before{
+  content : '\e054'
+}
+
+.icon-Caller::before{
+  content : '\e028'
+}
+
+.icon-Writes::before{
+  content : '\e020'
+}
+
+.icon-Friends::before{
+  content : '\e021'
+}
+
+.icon-Points::before{
+  content : '\e022'
+}
+
+.icon-Aliases::before{
+  content : '\e023'
+}
+
+.icon-Reads::before{
+  content : '\e024'
+}
+
+.icon-Macro::before{
+  content : '\e025'
+}
+
+.icon-Usage::before{
+  content : '\e026'
+}
+
+.icon-Abstract-type::before{
+  content : '\e029'
+}
+
+.icon-Signature::before{
+  content : '\e030'
+}
+
+.icon-POD-type::before{
+  content : '\e031'
+}
+
+.icon-Parameters::before{
+  content : '\e032'
+}
+
+.icon-Inherited-by::before{
+  content : '\e033'
+}
+
+.icon-Inherits-from::before{
+  content : '\e033'
+}
+
+.icon-Virtual-call::before{
+  content : '\e037'
+}
+
+.icon-Function-pointer-call::before{
+  content : '\e038'
+}
+
+.icon-Overridden-by::before{
+  content : '\e053'
+}
+
+.icon-Overrides::before{
+  content : '\e056'
+}
+
+.icon-Type::before,
+.icon-Types::before{
+  content : '\e040'
+}
+
+.icon-Underlying-type::before{
+  content : '\e046'
+}
+
+.icon-Value::before{
+  content : '\e057'
+}
+
+.icon-project::before{
+  content : '\e041'
+}
+
+.icon-file::before{
+  content : '\e043'
+}
+
+.icon-node::before{
+  content : '\e044'
+}
+
+.icon-star::before{
+  content: '\e047';
+}
+
+.icon-folder::before{
+  content: '\e048';
+}
+
+.icon-folder-with-file::before{
+  content: '\e049';
+}
+
+.icon-twoarrow-left::before{
+  content: '\e050';
+}
+
+.icon-twoarrow-right::before{
+  content: '\e051';
+}
+
+.icon-arrowhead-right::before{
+  content: '\e052';
+}
+
+.icon-empty-file::before{
+  content: '\e042';
+}
+
+.makefile::before{
+  content: '\e055';
+}
+
+/** File types **/
+
+.icon-file-content::after{
+  font-family: initial;
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  font-size: 7px;
+  font-weight: bold;
+  width: 10px;
+  text-align: center;
+}
+
+.icon-ext-cpp::after{
+  content: 'C++';
+  font-size: 4px;
+}
+
+.icon-ext-json::after{
+  content: 'json';
+  font-size: 4px;
+}
+
+.icon-ext-h::after{
+  content: 'h';
+}
+
+.icon-tag::before{
+  content: '\e058';
+  color: #e65959;
+}
+
+.icon-Enum-constants::before{
+  content: '\e059';
+}
+
+.icon-x{
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  background-color: #335181;
+  border-radius: 30px;
+  color: white;
+  width: 15px;
+  height: 15px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.icon-x::after{
+  content: 'x';
+}
