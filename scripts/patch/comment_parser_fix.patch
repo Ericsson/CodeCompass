@@ -1,0 +1,14 @@
+--- tools/clang/lib/AST/CommentParser.cpp	2013-08-23 20:03:40.000000000 +0200
++++ tools/clang/lib/AST/CommentParser.cpp	2014-06-20 15:48:41.429515000 +0200
+@@ -592,7 +592,10 @@
+         consumeToken();
+         continue;
+       }
+-      assert(Info->IsInlineCommand);
++      if (!Info->IsInlineCommand) {
++        consumeToken();
++        continue;
++      }
+       Content.push_back(parseInlineCommand());
+       continue;
+     }

@@ -1,0 +1,171 @@
+<div style="width: 830px">
+  <h1>CodeCompass - Earhart</h1>
+  <i style="margin-top: 5px; display: block">
+    (Version: Earhart, Revision: <span id="revisionNo"></span>)
+  </i>
+
+  <p>
+    CodeCompass is a tool that helps you understand large scale software projects by providing many
+    navigation, visualization, query possibilities in the source code.
+  </p>
+
+  <h2>What's new, what's good?</h2>
+
+  <h2>Highlights of the Earhart Release</h2>
+
+  <div class="highlight">
+    <ul>
+      <li><b>Code Metrics</b> McCabe complexity, lines of code, number of codechecker bugs</li>
+      <li><b>C++ Class Catalogue</b> Shows all classes in your project organized by namespaces</li>
+      <li><b>Pointer Alias Detection</b> Shows which pointers and references point to a variable</li>
+      <li><b>UML Class overview diagram</b>Shows the UML class relationships between classes defined under a directory</li>
+    </ul>
+
+    <div class="image" style="width: 200px; position: absolute; top: 30px; right: 20px">
+      <a data-dojo-type="dojox.image.Lightbox" title="New features" href="/images/earhart.png">
+        <img src="/images/earhart.png" alt="New features" style="width: 200px" />
+      </a>
+      <div style="font-size: 10pt; font-style: italic">(Click on the image)</div>
+    </div>
+  </div>
+
+  <h3>New C/C++ Features</h3>
+  <ul>
+    <li><b>Pointer Aliases</b> Click on a variable and ask for "Pointer Aliases Diagram". This diagram shows which pointers and references point to a given variable. Using this feature
+    you can track where your variable may be modified. See also the aliases subtree in the info tree.</li>        
+    <li><b>UML Class overview diagram</b> If you click on a file or directory in the File Manager, you can ask for "UML class overview diagram", which shows the
+	inheritance and containment relationship between the classes defined in the selected directory.</li>
+    <li><b>Additional target support</b> Codecompass supports new gcc compilationt targets: powerpc, mips.</li>
+    <li><b>Class Collaboration Diagram</b> Class collaboration diagram for a class shows recursively the related classes and their inheritance and containmnet relationships.</li>
+  </ul>
+
+  <h3>Generic Features</h3>
+  <ul>
+    <li><b>Code Metrics</b> Spot your most problematic modules by asking for "Metrics" for a file or directory. A treemap view will show the the distribution of codechecker faults
+    or McCabe complexity organized by directory.</li>        
+  </ul>
+
+  <h3>GUI</h3>
+  <ul>
+    <li>New Icon set</li>
+  </ul>
+
+  
+  <h2>Dylan Release</h2>
+
+  <h3>New Language Support</h3>
+  <ul>
+    <li><b>Python:</b> 
+      <br>-show variable read/write 
+      <br>-type inference 
+      <br>-show function calls/callers </li>        
+  </ul>
+   
+  <h3>CLI</h3>
+  <ul>
+    <li>A new command line interface for parsing, webserver staring, workspace management (delete, rename), codechecker integration </li>
+  </ul>
+  
+  <h3>New C/C++ Features</h3>
+  <ul>
+    <li>Show C++ design rule violations symbolic execution steps/false positive suppress</li>        
+  </ul>
+  
+  <h3>New Java Functions</h3>
+  <ul>                
+    <li>Generics <br>-Show generic instantiations in info tree</li>
+  </ul>
+  
+  
+  
+  <h2>Carmack Release</h2>
+
+  <h3>Search</h3>
+  <ul>
+    <li><b>Real-time Search Suggestions:</b> <br>Shows suggestions of definitions and file names while typing.</li>    
+  </ul>
+<!--
+  <h3>New Language Support</h3>
+  <ul>
+    <li><b>Python:</b> <br>-show variable read/write <br>-type inference <br>-show function calls/callers </li>        
+  </ul>
+  -->
+  <h3>Diagrams</h3>
+  <ul>
+    <li><b>Diagram editor</b> for TSP CDF/MIs </li>
+    <li><b>Faster diagram</b> creation for the following diagrams: 
+      <br>-internal architecture
+      <!--not yet <br>-module users of/dependants-->
+      <br>-used components
+      <br>-component users</li>        
+  </ul>
+  
+  <h3>New Revision Control Features</h3>
+  <ul>
+    <li>Visualization of GIT branching</li>
+  </ul>
+  
+  <h3>New C/C++ Features</h3>
+  <ul>
+    <li><b>Show C++ design rule violations</b></li>
+    <li>Faster/Parallel parsing of C/C++ files</li>        
+    <li>Support of C++14</li>    
+  </ul>
+  
+  <h3>New Revision Control Features</h3>
+  <ul>
+    <li>-Show git branches       
+    </li>
+  </ul>
+
+  <h3>New Java Functions</h3>
+  <ul>
+    <li>Diagrams
+      <br>-Inheritance diagram</li>
+      <br>-Function call diagram</li>      
+    <li>Annotations <br>-Show annotations in info tree</li>
+  </ul>
+  
+  <h3>GUI</h3>
+  <ul>
+    <li>Yet more ergonomic design</li>
+  </ul>
+  
+  <h2>Brubeck Release</h2>
+
+  <h3>Search</h3>
+  <ul>
+    <li>Regular expression in text searches. <br>-Regex can be written between / / signs, like /.*ipsec.*/</li>
+    <li>Log message search: Support for searching the place where a log message (possibly) generated.<br>-Just copy paste a log message in the search bar</li>
+    <li>Searching for C++ qualified names in definition search. <br>-You can search for names such as “charging::process”</li>
+    <li>Filtering by programming language. <br>-Filter for languages in searches like Python, C++ </li>
+    <li>Filtering by definition type (function, type, etc.)</li>
+    <li>Faster search</li>
+  </ul>
+
+  <h3>New Language Support</h3>
+  <ul>
+    <li>Java: show variable read/write, show usages of types, show function calls/callers <br> -Ask for info tree after right clicking a java symbol</li>
+  </ul>
+
+  <h3>New C++ Functions</h3>
+  <ul>
+    <li>Function pointer based call chain exploration
+      <br>-Ask for info tree for a function and you can recursively ask for caller and called functions</li>
+    <li>Module dependency diagrams
+      <br>-Right click on a directory in the “Project Tree” and see the available diagrams
+      <br>-Internal Architecture of a module
+      <br>-Other modules a module depends on 
+      <br>-Users of a module    
+    </li>    
+    <li>Basic template support <br>-Show instantiations of templates</li>
+  </ul>
+  <h3>Revision Control</h3>
+  <ul>
+    <li>Searchable & Navigable GIT revision history
+      <br>-Search among GIT commits
+      <br>-Blame view: Show who changed a file line-by-line 
+    </li>
+  </ul>
+  
+</div>

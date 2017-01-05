@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Happy r6000 :-D
+
+java -Xmx1g cc.search.indexer.app.Indexer $@

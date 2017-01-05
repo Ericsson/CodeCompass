@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project>
+  <configurations default="xx">
+    <conf>
+      <name>xx</name>
+      <rootconf>
+        <root>source</root>
+        <path>dir1</path>
+      </rootconf>
+      <rootconf>
+        <root>bin</root>
+        <path>dir2</path>
+      </rootconf>
+    </conf>
+  </configurations>
+  <build>
+    <action>
+      <label>action1</label>
+      <sources>
+        <source>
+          <name>x.cpp</name>
+          <root>source</root>
+          <path>y</path>
+        </source>
+      </sources>
+      <targets>
+        <target>
+          <name>x.o</name>
+          <root>foo</root>
+          <path>z</path>
+        </target>
+      </targets>
+      <options>
+        <option>
+          <key>-W</key>
+          <value>all</value>
+        </option>
+        <option>
+          <key>-std=</key>
+          <value>c++11</value>
+        </option>
+        <option>
+          <key>-option_with_space </key>
+          <value>arg</value>
+        </option>
+      </options>
+    </action>
+  </build>
+</project>

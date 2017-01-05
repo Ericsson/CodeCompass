@@ -1,0 +1,11 @@
+CREATE OR REPLACE FUNCTION toCelcius(fahrenheit REAL) RETURNS REAL AS $$
+BEGIN
+  RETURN (5.0 / 9.0) * (fahrenheit - 32.0);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sayHello() RETURNS VOID AS $$
+BEGIN
+  RAISE INFO 'Hello!';
+END;
+$$ LANGUAGE plpgsql;

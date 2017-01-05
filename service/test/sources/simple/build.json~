@@ -1,0 +1,37 @@
+[
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/similarity.cpp"
+	}
+	,
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/tinystr.cpp"
+	}
+	,
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/tinyxml.cpp"
+	}
+	,
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp"
+	}
+	,
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp"
+	}
+	,
+	{
+		"directory": "/home/ecsomar/cc/projects/tinyxml",
+		"command": "g++ -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3 -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/x86_64-unknown-linux-gnu -I/home/ecsomar/cc/CodeCompass-deps/include/c++/4.9.3/backward -I/usr/local/include -I/home/ecsomar/cc/CodeCompass-deps/include -I/usr/include/x86_64-linux-gnu -I/usr/include /home/ecsomar/cc/projects/tinyxml/similarity.cpp /home/ecsomar/cc/projects/tinyxml/tinystr.cpp /home/ecsomar/cc/projects/tinyxml/tinyxml.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlerror.cpp /home/ecsomar/cc/projects/tinyxml/tinyxmlparser.cpp /home/ecsomar/cc/projects/tinyxml/xmltest.cpp",
+		"file": "/home/ecsomar/cc/projects/tinyxml/xmltest.cpp"
+	}
+]
