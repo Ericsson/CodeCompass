@@ -17,6 +17,7 @@ class Diagram
 public:
   Diagram(
     std::shared_ptr<odb::database> db_,
+    std::shared_ptr<std::string> datadir_,
     const boost::program_options::variables_map& config_);
 
   void getFunctionCallDiagram(

@@ -34,6 +34,7 @@ class CppServiceHandler : virtual public LanguageServiceIf
 public:
   CppServiceHandler(
     std::shared_ptr<odb::database> db_,
+    std::shared_ptr<std::string> datadir_,
     const boost::program_options::variables_map& config_
       = boost::program_options::variables_map());
 
@@ -288,6 +289,7 @@ private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
+  std::shared_ptr<std::string> _datadir;
   const boost::program_options::variables_map& _config;
 };
 

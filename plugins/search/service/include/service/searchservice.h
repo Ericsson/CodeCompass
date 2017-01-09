@@ -24,12 +24,10 @@ namespace search
 
 class SearchServiceHandler : virtual public SearchServiceIf {
 public:
-  /**
-   * @param db_ a database instance.
-   * @param config_ command line parameters
-   */
+
   SearchServiceHandler(
     std::shared_ptr<odb::database> db_,
+    std::shared_ptr<std::string> datadir_,
     const boost::program_options::variables_map& config_
       = boost::program_options::variables_map());
 

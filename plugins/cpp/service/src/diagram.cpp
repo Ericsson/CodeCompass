@@ -47,8 +47,10 @@ namespace language
 
 Diagram::Diagram(
   std::shared_ptr<odb::database> db_,
+  std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map& config_)
-    : _cppHandler(db_, config_), _projectHandler(db_, config_)
+    : _cppHandler(db_, datadir_, config_),
+      _projectHandler(db_, datadir_, config_)
 {
 }
 

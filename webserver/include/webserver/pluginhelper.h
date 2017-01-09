@@ -1,6 +1,8 @@
 #ifndef CC_WEBSERVER_PLUGINHELPER_H
 #define CC_WEBSERVER_PLUGINHELPER_H
 
+#include <memory>
+
 #include <boost/program_options/variables_map.hpp>
 #include <boost/log/trivial.hpp>
 
@@ -36,10 +38,6 @@ inline void registerPluginSimple(
     const std::string wsId = workspace.first;
     const util::WorkspaceOption& wsOpt = workspace.second;
 
-    po::variables_map vm = vm_;
-    vm.insert(std::make_pair("datadir", po::variable_value(
-      wsOpt.datadir, false)));
-
     std::shared_ptr<odb::database> db
       = util::createDatabase(wsOpt.connectionString);
 
@@ -56,11 +54,12 @@ inline void registerPluginSimple(
     try
     {
       // Create handler
-      std::shared_ptr<RequestHandlerT> servicePtr(serviceFactory_(db, vm));
-      
+      std::shared_ptr<RequestHandlerT> servicePtr(
+        serviceFactory_(db, std::make_shared<std::string>(wsOpt.datadir), vm_));
+
       // Create a key for the implementation
       std::string key = wsId + '/' + serviceName_;
-      
+
       // Register implementation
       pluginHandler_->registerImplementation(key, servicePtr);
     }
@@ -75,20 +74,22 @@ inline void registerPluginSimple(
 
 #define CODECOMPASS_SERVICE_FACTORY_WITH_CFG(serviceName, nspace) \
   [](std::shared_ptr<odb::database>& db_, \
+     std::shared_ptr<std::string> datadir_, \
      const boost::program_options::variables_map& cfg_) { \
     return new cc::webserver::ThriftHandler< \
       cc::service::nspace::serviceName##ServiceProcessor>( \
-        new cc::service::nspace::serviceName##ServiceHandler(db_, cfg_), \
-        cfg_["workspace"].as<std::string>()); \
+        new cc::service::nspace::serviceName##ServiceHandler( \
+          db_, datadir_, cfg_), cfg_["workspace"].as<std::string>()); \
   }
 
 #define CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(serviceName) \
   [](std::shared_ptr<odb::database>& db_, \
+     std::shared_ptr<std::string> datadir_, \
      const boost::program_options::variables_map& cfg_) { \
     return new cc::webserver::ThriftHandler< \
       cc::service::language::LanguageServiceProcessor>( \
-        new cc::service::language::serviceName##ServiceHandler(db_, cfg_), \
-        cfg_["workspace"].as<std::string>()); \
+        new cc::service::language::serviceName##ServiceHandler( \
+          db_, datadir_, cfg_), cfg_["workspace"].as<std::string>()); \
   }
 
 } // plugin

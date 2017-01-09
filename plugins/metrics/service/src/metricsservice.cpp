@@ -16,11 +16,12 @@ namespace metrics
 
 MetricsServiceHandler::MetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
+  std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map& config_)
     : _db(db_),
       _transaction(db_),
       _config(config_),
-      _projectService(db_, config_)
+      _projectService(db_, datadir_, config_)
 {
 }
 
@@ -112,7 +113,7 @@ std::string MetricsServiceHandler::getMetricsFromDir(
 
   std::stringstream ss;
   boost::property_tree::json_parser::write_json(ss, pt, false);
-  
+
   return ss.str();
 }
 

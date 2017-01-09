@@ -50,20 +50,27 @@ struct StatisticsInfo
 service ProjectService
 {
   FileInfo getFileInfo(1:common.FileId fileId)
-    throws (1:common.InvalidId ex),
+    throws (1:common.InvalidId ex)
   FileInfo getFileInfoByPath(1:string path)
-    throws (1:common.InvalidInput ex),
+    throws (1:common.InvalidInput ex)
   string getFileContent(1:common.FileId fileId)
-    throws (1:common.InvalidId ex),
+    throws (1:common.InvalidId ex)
   FileInfo getParent(1:common.FileId fileId)
-    throws (1:common.InvalidId ex),
-  list<FileInfo> getRootFiles(),
-  list<FileInfo> getChildFiles(1:common.FileId fileId),
+    throws (1:common.InvalidId ex)
+  list<FileInfo> getRootFiles()
+  list<FileInfo> getChildFiles(1:common.FileId fileId)
   list<FileInfo> getSubtree(1:common.FileId fileId)
-  list<FileInfo> getOpenTreeTillFile(1:common.FileId fileId),
-  list<FileInfo> getPathTillFile(1:common.FileId fileId),
-  list<BuildLog> getBuildLog(1:common.FileId fileId),
-  list<FileInfo> searchFile(1:string text, 2:bool onlyFile),
+  list<FileInfo> getOpenTreeTillFile(1:common.FileId fileId)
+  list<FileInfo> getPathTillFile(1:common.FileId fileId)
+  list<BuildLog> getBuildLog(1:common.FileId fileId)
+  list<FileInfo> searchFile(1:string text, 2:bool onlyFile)
   list<StatisticsInfo> getStatistics()
   list<string> getFileTypes()
+
+  /**
+  * This function returns with project labels which was added in parse time.
+  * It reads the labels from the labels.txt file which is located in the
+  * workspace data directory in an INI-like format.
+  */
+  map<string, string> getLabels()
 }

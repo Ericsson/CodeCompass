@@ -23,6 +23,7 @@ class ProjectServiceHandler : virtual public ProjectServiceIf {
 public:
   ProjectServiceHandler(
     std::shared_ptr<odb::database> db_,
+    std::shared_ptr<std::string> datadir_,
     const boost::program_options::variables_map& config_);
 
   void getFileInfo(FileInfo& return_, const FileId& fileId_) override;
@@ -38,6 +39,7 @@ public:
   void searchFile(std::vector<FileInfo>& return_, const std::string& text_, const bool onlyFile_) override;
   void getStatistics(std::vector<StatisticsInfo>& return_) override;
   void getFileTypes(std::vector<std::string>& return_) override;
+  void getLabels(std::map<std::string, std::string>& return_) override;
 
 private:
   /**
@@ -45,11 +47,12 @@ private:
    * ordered by their names, but directories are always precede files.
    */
   static bool fileInfoOrder(const FileInfo& left, const FileInfo& right);
-  
+
   FileInfo makeFileInfo(model::File &f_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
+  std::string _datadir;
 };
 
 } // project
