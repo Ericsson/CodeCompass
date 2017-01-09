@@ -56,6 +56,7 @@ IndexerProcess::IndexerProcess(
     std::vector<const char*> execArguments {
       "java", JAVAMEMORYAMOUNT,
       "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
+      "-Djava.util.logging.SimpleFormatter.format=[%4$s] %5$s%6$s%n",
       logLevelOpt.c_str(),
       "cc.search.indexer.app.Indexer",
       "-indexDB", indexDatabase_.c_str(),

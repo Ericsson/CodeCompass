@@ -61,6 +61,7 @@ public:
       ::execlp("java", "java", "-server",
         //"-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8666",
         "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
+        "-Djava.util.logging.SimpleFormatter.format=[%4$s] %5$s%6$s%n",
         logLevelOpt.c_str(),
         "cc.search.service.app.service.ServiceApp",
         "-indexDB", _indexDatabase.c_str(),

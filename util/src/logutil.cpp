@@ -16,6 +16,7 @@ void logFormatter(
   const boost::log::record_view& rec, boost::log::formatting_ostream& strm)
 {
   auto severity = rec[boost::log::trivial::severity];
+
   if (severity)
   {
     // Set the color
@@ -36,8 +37,10 @@ void logFormatter(
     }
   }
 
-  strm << "[" << rec[boost::log::trivial::severity] << "] "
-       << rec[boost::log::expressions::smessage];
+  std::string sLevel = boost::log::trivial::to_string(severity.get());
+  std::transform(sLevel.begin(), sLevel.end(), sLevel.begin(), ::toupper);
+
+  strm << "[" << sLevel << "] " << rec[boost::log::expressions::smessage];
 
   // Restore the default color
   if (severity)
