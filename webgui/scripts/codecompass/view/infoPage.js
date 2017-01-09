@@ -29,21 +29,14 @@ function (topic, declare, ContentPane, TabContainer, Lightbox, viewHandler) {
         title : 'Credits',
         style : 'padding: 10px'
       });
-
-      this._userguide = new ContentPane({
-        id    : 'userguide',
-        href  : 'userguide/userguide.html',
-        title : 'User Guide'
-      });
     },
 
     postCreate : function () {
       this.addChild(this._startPage);
       this.addChild(this._credits);
-      this.addChild(this._userguide);
     },
 
-    startup : function(){
+    startup : function () {
       this.inherited(arguments);
 
       var that = this;
@@ -54,6 +47,7 @@ function (topic, declare, ContentPane, TabContainer, Lightbox, viewHandler) {
         that.addChild(item);
       });
     },
+
     selectPage : function (pageId) {
       this.selectChild(pageId);
     },

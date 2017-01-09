@@ -10,6 +10,13 @@ set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/serviceplugin")
 # Installation directory of web gui
 set(INSTALL_WEBROOT_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/webgui")
 
+# Global variable to collect userguides
+define_property(GLOBAL PROPERTY USERGUIDES
+  BRIEF_DOCS "Global list of userguides"
+  FULL_DOCS  "Global list of userguides")
+set_property(GLOBAL PROPERTY USERGUIDES
+  "${CMAKE_CURRENT_SOURCE_DIR}/webgui/userguide/userguide.md")
+
 # Installation directory of scripts
 set(INSTALL_WEBPLUGIN_DIR "${INSTALL_WEBROOT_DIR}/scripts/plugins")
 

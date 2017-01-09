@@ -1,3 +1,5 @@
+add_subdirectory(userguide)
+
 install(DIRECTORY
   images scripts style fonts
   DESTINATION ${INSTALL_WEBROOT_DIR}
