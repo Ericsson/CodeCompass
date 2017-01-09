@@ -125,15 +125,16 @@ function (on, query, style, topic, declare, Memory, Observable,
 
       //--- Insert shortcuts ---//
 
-      // TODO: labels
-//      for (var key in projectInfo.paths)
-//        this._store.put({
-//          id       : key,
-//          name     : 'Jump to ' + key,
-//          fileInfo : { isDirectory : false },
-//          shortcut : projectInfo.paths[key],
-//          parent   : 'project'
-//        });
+      var labels = model.project.getLabels();
+      for (var key in labels) {
+        that._store.put({
+          id       : 'label_' + key,
+          name     : 'Jump to: <span class="cc-label-name">' + key + '</span>',
+          fileInfo : { isDirectory : false },
+          shortcut : labels[key],
+          parent   : 'project'
+        });
+      };
 
       //--- Insert root files under the project node ---//
 
@@ -166,6 +167,9 @@ function (on, query, style, topic, declare, Memory, Observable,
       if (item.id === 'project')
         return 'icon icon-project';
 
+      if (item.shortcut)
+        return 'icon icon-tag';
+
       if (cssClass)
         return 'icon ' + cssClass;
 
@@ -181,7 +185,7 @@ function (on, query, style, topic, declare, Memory, Observable,
       if (node.id === 'project')
         return this._store.query({ parent : 'project' });
 
-      if (node.isFolderUpElement)
+      if (node.isFolderUpElement || node.label)
         return [];
 
       var children = [];
@@ -261,10 +265,41 @@ function (on, query, style, topic, declare, Memory, Observable,
     },
 
     onClick : function (item, node, event) {
+      var that = this;
+
       if (item.isFolderUpElement) {
         var parent = node.getParent();
         var children = parent.getParent().getChildren();
         this._collapseNode(parent);
+        this._displayElements(children, true);
+      } else if (item.shortcut) { // Click on a label
+        if (this._previousPath === item.shortcut)
+          return;
+
+        this._previousPath = item.shortcut;
+
+        var currentNode = this.getChildren()[0];
+
+        var path = item.shortcut.split('/');
+        path[0] = '/';
+
+        path.forEach(function (directory) {
+          if (!directory.length)
+            return;
+
+          children = currentNode.getChildren();
+          index = util.findIf(children, function (child) {
+            return child.label.match(
+              /(<[^>]*>)?([^<]*)(<[^>]*>)?/)[2] === directory;
+          });
+          currentNode = children[index];
+          that._expandNode(currentNode);
+        });
+
+        var children = currentNode.getChildren();
+        children.forEach(function (child){
+          that._collapseNode(child);
+        });
         this._displayElements(children, true);
       } else {
         this.inherited(arguments);
@@ -273,8 +308,7 @@ function (on, query, style, topic, declare, Memory, Observable,
 
     _displayElements : function (nodes, display) {
       nodes.forEach(function (node) {
-        // TODO: shortcut
-        if (node.item.id !== 'project')
+        if (node.item.id !== 'project' && node.item.shortcut === undefined)
           style.set(node.rowNode, 'display', display ? 'block' : 'none');
       });
     }

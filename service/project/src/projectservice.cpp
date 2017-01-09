@@ -1,6 +1,9 @@
 #include <algorithm>
 
 #include <boost/log/trivial.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <odb/query.hxx>
 
@@ -25,8 +28,9 @@ namespace core
 
 ProjectServiceHandler::ProjectServiceHandler(
   std::shared_ptr<odb::database> db_,
+  std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map&)
-    : _db(db_), _transaction(db_)
+    : _db(db_), _transaction(db_), _datadir(*datadir_)
 {
 }
 
@@ -346,6 +350,21 @@ void ProjectServiceHandler::getFileTypes(
       std::back_inserter(return_),
       [](const model::FileTypeView& view) { return view.type; });
   });
+}
+
+void ProjectServiceHandler::getLabels(
+  std::map<std::string, std::string>& return_)
+{
+  const std::string fLabel = _datadir + "/labels.txt";
+
+  if (boost::filesystem::exists(fLabel))
+  {
+    boost::property_tree::ptree pt;
+    boost::property_tree::ini_parser::read_ini(fLabel, pt);
+
+    for (const auto& item : pt)
+      return_[item.first] = pt.get<std::string>(item.first);
+  }
 }
 
 FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)

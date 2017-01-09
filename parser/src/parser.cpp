@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -48,10 +49,10 @@ po::options_description commandLineArguments()
       "The parsers can use a directory to store information. In this directory "
       "the parsers should create an own subdirectory where they can store "
       "their arbitrary temporary files or local databases.")
-    ("labels", po::value<std::string>(),
+    ("label", po::value<std::vector<std::string>>(),
       "The submodules of a large project can be labeled so it can be easier "
       "later to locate them. With this flag you can provide a label list in "
-      "the following format: label1=/path/to/submodule1:/path/to/submodule2.")
+      "the following format: label1=/path/to/submodule1.")
     ("loglevel",
       po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
@@ -80,6 +81,15 @@ int main(int argc, char* argv[])
   std::string binDir = boost::filesystem::canonical(
     boost::filesystem::path(argv[0]).parent_path()).string();
   std::string pluginDir = binDir + "/../lib/parserplugin";
+
+  //--- Write out labels into a file to the data directory. ---//
+
+  if (vm.count("label"))
+  {
+    std::ofstream fLabels(vm["data-dir"].as<std::string>() + "/labels.txt");
+    for (const std::string& label : vm["label"].as<std::vector<std::string>>())
+      fLabels << label << std::endl;
+  }
 
   //--- Skip parser list ---//
 

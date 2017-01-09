@@ -10,6 +10,7 @@ namespace dummy
 
 DummyServiceHandler::DummyServiceHandler(
   std::shared_ptr<odb::database> db_,
+  std::shared_ptr<std::string> /*datadir_*/,
   const boost::program_options::variables_map& config_)
     : _db(db_), _transaction(db_), _config(config_)
 { 

@@ -114,8 +114,9 @@ namespace language
 
 CppServiceHandler::CppServiceHandler(
   std::shared_ptr<odb::database> db_,
+  std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map& config_)
-    : _db(db_), _transaction(db_), _config(config_)
+    : _db(db_), _transaction(db_), _datadir(datadir_), _config(config_)
 {
 }
 
@@ -720,7 +721,7 @@ void CppServiceHandler::getDiagram(
   const core::AstNodeId& astNodeId_,
   const std::int32_t diagramId_)
 {
-  Diagram diagram(_db, _config);
+  Diagram diagram(_db, _datadir, _config);
   util::Graph graph;
 
   switch (diagramId_)
@@ -742,7 +743,7 @@ void CppServiceHandler::getDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_)
 {
-  Diagram diagram(_db, _config);
+  Diagram diagram(_db, _datadir, _config);
 
   switch (diagramId_)
   {
