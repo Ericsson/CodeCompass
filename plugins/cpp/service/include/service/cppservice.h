@@ -92,6 +92,10 @@ public:
     const std::int32_t referenceId_,
     const std::vector<std::string>& tags_) override;
 
+  std::int32_t getReferenceCount(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_) override;
+
   void getReferencesInFile(
     std::vector<AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
@@ -252,14 +256,14 @@ private:
     const odb::query<model::CppAstNode>& query_
       = odb::query<model::CppAstNode>(true));
 
-    /**
-     * This function returns the model::CppAstNode objects which meet the
-     * requirements of the given query in the given file.
-     */
-    std::vector<model::CppAstNode> queryCppAstNodesInFile(
-      const core::FileId& fileId_,
-      const odb::query<model::CppAstNode>& query_
-        = odb::query<model::CppAstNode>(true));
+  /**
+   * This function returns the model::CppAstNode objects which meet the
+   * requirements of the given query in the given file.
+   */
+  std::vector<model::CppAstNode> queryCppAstNodesInFile(
+    const core::FileId& fileId_,
+    const odb::query<model::CppAstNode>& query_
+      = odb::query<model::CppAstNode>(true));
 
   /**
    * This function returns the model::CppAstNode objects which have the same
@@ -270,6 +274,13 @@ private:
    */
   std::vector<model::CppAstNode> queryDefinitions(
     const core::AstNodeId& astNodeId_);
+
+  /**
+   * This function returns an AST query to get the function calls in the given
+   * function.
+   */
+  odb::query<model::CppAstNode> astCallsQuery(
+    const model::CppAstNode& astNode_);
 
   /**
    * This function returns the function calls in a given function.
@@ -303,6 +314,31 @@ private:
    */
   std::map<model::CppAstNodeId, std::vector<std::string>> getTags(
     const std::vector<model::CppAstNode>& nodes_);
+
+  /*
+   * This function returns the number of corresponding model::CppAstNode objects
+   * to the given AST which meet the given query condition.
+   */
+  std::size_t queryCppAstNodeCount(
+    const core::AstNodeId& astNodeId_,
+    const odb::query<model::CppAstNode>& query_
+      = odb::query<model::CppAstNode>(true));
+
+  /**
+   * This function returns the number of function calls in a given function.
+   * @param astNodeId_ An AST node ID which belongs to a function.
+   */
+  std::size_t queryCallsCount(
+    const core::AstNodeId& astNodeId_);
+
+  /**
+   * This function returns the number of functions which override the given one.
+   * @param reverse_ If this parameter is true then the function returns the
+   * functions number which are overriden by the given one.
+   */
+  std::size_t queryOverridesCount(
+    const core::AstNodeId& astNodeId_,
+    bool reverse_ = false);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

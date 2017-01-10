@@ -33,6 +33,13 @@ struct CppFriendship
 
 typedef std::shared_ptr<CppFriendship> CppFriendshipPtr;
 
+#pragma db view object(CppFriendship)
+struct CppFriendshipCount
+{
+  #pragma db column("count(" + CppFriendship::id + ")")
+  std::size_t count;
+};
+
 }
 }
 

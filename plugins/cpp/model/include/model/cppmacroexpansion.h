@@ -41,6 +41,13 @@ struct CppMacroExpansion
 
 typedef std::shared_ptr<CppMacroExpansion> CppMacroExpansionPtr;
 
+#pragma db view object(CppMacroExpansion)
+struct CppMacroExpansionCount
+{
+  #pragma db column("count(" + CppMacroExpansion::id + ")")
+  std::size_t count;
+};
+
 } // model
 } // cc
 

@@ -63,6 +63,14 @@ struct CppEnum : CppEntity
 
 typedef std::shared_ptr<CppEnum> CppEnumPtr;
 
+#pragma db view \
+  object(CppEnum) object(CppEnumConstant = EnumConst : CppEnum::enumConstants)
+struct CppEnumConstantsCount
+{
+  #pragma db column("count(" + EnumConst::id + ")")
+  std::size_t count;
+};
+
 }
 }
 

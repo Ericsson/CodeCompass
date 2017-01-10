@@ -23,6 +23,13 @@ struct CppTypedef : CppTypedEntity
 
 typedef std::shared_ptr<CppTypedef> CppTypedefPtr;
 
+#pragma db view object(CppTypedef)
+struct CppTypedefCount
+{
+  #pragma db column("count(" + CppTypedef::id + ")")
+  std::size_t count;
+};
+
 }
 }
 
