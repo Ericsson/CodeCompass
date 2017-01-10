@@ -185,6 +185,10 @@ private:
     UNDERLYING_TYPE, /*!< Underlying type of a typedef. */
 
     ENUM_CONSTANTS, /*!< Enum constants. */
+
+    EXPANSION, /*!< Macro expansion. */
+
+    UNDEFINITION, /*!< Macro undefinition. */
   };
 
   enum FileReferenceType
@@ -194,7 +198,9 @@ private:
 
     TYPES, /*!< User defined data types such as classes, structs etc. */
 
-    FUNCTIONS /*!< Functions in the current source file. */
+    FUNCTIONS, /*!< Functions in the current source file. */
+
+    MACROS, /*!< Macros in the current source file. */
   };
 
   enum DiagramType

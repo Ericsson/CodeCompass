@@ -24,6 +24,8 @@
 
 #include "assignmentcollector.h"
 #include "clangastvisitor.h"
+#include "ppincludecallback.h"
+#include "ppmacrocallback.h"
 
 namespace cc
 {
@@ -90,6 +92,20 @@ private:
     {
     }
 
+    virtual bool BeginSourceFileAction(
+      clang::CompilerInstance& compiler_, llvm::StringRef) override
+    {
+      compiler_.createASTContext();
+      auto& pp = compiler_.getPreprocessor();
+
+      pp.addPPCallbacks(std::make_unique<PPIncludeCallback>(_ctx,
+        compiler_.getASTContext(), _mangledNameCache, pp));
+      pp.addPPCallbacks(std::make_unique<PPMacroCallback>(_ctx,
+        compiler_.getASTContext(), _mangledNameCache, pp));
+
+      return true;
+    }
+
     virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance& compiler_, llvm::StringRef) override
     {
@@ -98,6 +114,9 @@ private:
     }
 
   private:
+    static std::unordered_map<model::CppAstNodeId, std::uint64_t>
+      _mangledNameCache;
+
     ParserContext& _ctx;
   };
 
@@ -106,6 +125,9 @@ private:
 
 std::unordered_map<model::CppAstNodeId, std::uint64_t>
 VisitorActionFactory::MyConsumer::_mangledNameCache;
+
+std::unordered_map<model::CppAstNodeId, std::uint64_t>
+VisitorActionFactory::MyFrontendAction::_mangledNameCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
 {
