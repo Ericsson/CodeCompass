@@ -110,6 +110,16 @@ inline void registerPluginSimple(
           db_, datadir_, cfg_)); \
   }
 
+#define CODECOMPASS_SERVICE_FACTORY_WITH_CFG_NOPOSTFIXSERVICE(serviceName, implName, nspace) \
+  [](std::shared_ptr<odb::database>& db_, \
+     std::shared_ptr<std::string> datadir_, \
+     const boost::program_options::variables_map& cfg_) { \
+    return new cc::webserver::ThriftHandler< \
+      cc::service::nspace::serviceName##Processor>( \
+        new cc::service::nspace::implName##ServiceHandler( \
+          db_, datadir_, cfg_)); \
+  }
+
 } // plugin
 } // cc
 

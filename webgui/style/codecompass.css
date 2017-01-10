@@ -481,16 +481,6 @@ div.CodeMirror-linenumber {
   background-color: #eed;
 }
 
-.checkMsg {
-  background-color: #eed;
-  border: 1px solid #aaa;
-  display: inline-block;
-  padding: 5px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  border-radius: 5px;
-}
-
 .project-tree-file-manager .dijitTreeExpando{
     display:none;
 }

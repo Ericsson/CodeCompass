@@ -1,0 +1,92 @@
+.currentMark {
+  background-color: #cdf;
+}
+
+.cc-checker-message{
+  background-color: #335180;
+  color: white;
+  border: 1px solid #ffffff;
+  display: inline-block;
+  padding: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+#codecheckernavigator .icon{
+  font-size : 1.5em;
+}
+
+.dijitTreeContentExpanded .icon-severity.icon{
+  color: #fff !important;
+  opacity: 0.8;
+}
+
+#codecheckernavigator .icon-arrowhead-right{
+  color: #335180;
+}
+
+.cc-checker-checkedfile{
+  color: #335180;
+}
+
+.cc-checker-reportmessage{
+  color: #c13333;
+  font-weight: bold;
+}
+
+.icon-severity{
+  font-size: 1em;
+  color: #fff;
+  display: inline-block;
+  text-align: center;
+  margin-right: 1px;
+  font-family: monospace;
+}
+.icon-severity-low{
+  background-color: #02a903;
+}
+
+.icon-severity-low:after{
+ content : 'L';
+}
+
+.icon-severity-unspecified{
+  background-color: #8f96a0;
+}
+
+.icon-severity-unspecified:after{
+ content : 'U';
+}
+
+.icon-severity-style{
+  background-color: #79cc00;
+}
+
+.icon-severity-style:after{
+ content : 'S';
+}
+
+.icon-severity-medium{
+  background-color: #fff001;
+}
+
+.icon-severity-medium:after{
+ content : 'M';
+}
+
+.icon-severity-high{
+  background-color: #f67e03;
+}
+
+.icon-severity-high:after{
+ content : 'H';
+}
+
+.icon-severity-critical{
+  background-color: #e90101;
+}
+
+.icon-severity-critical:after{
+ content : 'C';
+}
