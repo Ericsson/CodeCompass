@@ -216,6 +216,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       this._marks = {};
       this._markIdCounter = 0;
+      this._syntaxHighlightStep = 500;
 
       this._subscribeTopics();
     },
@@ -315,6 +316,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       this.set('content', fileContent);
       this.set('header', this._fileInfo);
+
+      this._getSyntaxHighlight(this._fileInfo);
     },
 
     /**
@@ -491,6 +494,37 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       };
     },
 
+    /**
+     * This function gets syntax highlight information from server and
+     * highlights the elements in the text editor.
+     * @param fileInfo
+     */
+    _getSyntaxHighlight : function (fileInfo) {
+      var that = this;
+      setTimeout(function () {
+        that.clearAllMarks();
+        var service = model.getLanguageService(fileInfo.type);
+        var lines = urlHandler.getFileContent().split('\n').length;
+        for (var i = 0; i < lines; i += that._syntaxHighlightStep) {
+          var range = new FileRange({
+            file  : fileInfo.id,
+            range : new Range({
+              startpos : new Position({line : i}),
+              endpos   : new Position({line : i + that._syntaxHighlightStep}),
+            })
+          });
+
+          service.getSyntaxHighlight(range, function (syntax) {
+            syntax.forEach(function (s) {
+              this.markText(s.range.startpos, s.range.endpos, {
+                className: s.className
+              }, true);
+            }, that);
+          });
+        }
+      }, 500);
+    },
+
     _refresh : function () {
       var that = this;
       setTimeout(function () {
@@ -521,6 +555,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
           center : that.id
         });
 
+        topic.publish('codecompass/setCenterModule', that.id);
+
         that.loadFile(message.fileId);
 
         that.set('selection', message.selection);
@@ -528,8 +564,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         that.jumpToPos(
           message.line || 0,
           message.selection ? message.selection[1] : 0);
-
-        topic.publish('codecompass/setCenterModule', that.id);
       });
     },
 

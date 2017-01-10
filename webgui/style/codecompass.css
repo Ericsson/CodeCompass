@@ -656,6 +656,7 @@ div.CodeMirror-linenumber {
   color: #335180;
 }
 
+<<<<<<< HEAD
 /* Reparse */
 
 #cpp-ast {
@@ -696,3 +697,16 @@ div.CodeMirror-linenumber {
 .ansi.white {
   color: #666;
 }
+
+.CodeMirror-matchingbracket {
+  color: #fff;
+  background-color: #268;
+  font-weight: bold;
+}
+
+/* Syntax highlight */
+
+.cm-s-default .cm-Variable { color:rgb(128, 128, 128); }
+.cm-s-default .cm-Function { font-weight: bold; }
+.cm-s-default .cm-Type { color:rgb(43, 145, 175); }
+.cm-s-default .cm-Enum { color:rgb(47, 79, 79); }

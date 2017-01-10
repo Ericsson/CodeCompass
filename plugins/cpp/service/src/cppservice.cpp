@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <queue>
+#include <regex>
 
 #include <util/util.h>
 #include <util/logutil.h>
@@ -1106,10 +1107,100 @@ std::int32_t CppServiceHandler::getFileReferenceCount(
 }
 
 void CppServiceHandler::getSyntaxHighlight(
-  std::vector<SyntaxHighlight>& /* return_ */,
-  const core::FileId& /* fileId_ */)
+  std::vector<SyntaxHighlight>& return_,
+  const core::FileRange& range_)
 {
-  // TODO
+  std::vector <std::string> content;
+
+  _transaction([&, this]() {
+
+    //--- Load the file content and break it into lines ---//
+
+    model::FilePtr file = _db->query_one<model::File>(
+      FileQuery::id == stoull(range_.file));
+
+    if (!file->content.load())
+      return;
+
+    std::istringstream s(file->content->content);
+    std::string line;
+    while (std::getline(s, line))
+      content.push_back(line);
+
+    //--- Iterate over AST node elements ---//
+
+    for (const model::CppAstNode& node : _db->query<model::CppAstNode>(
+      AstQuery::location.file == stoull(range_.file) &&
+      AstQuery::location.range.start.line >= range_.range.startpos.line &&
+      AstQuery::location.range.end.line < range_.range.endpos.line &&
+      AstQuery::location.range.end.line != model::Position::npos &&
+      AstQuery::visibleInSourceCode == true))
+    {
+      if (node.astValue.empty())
+        continue;
+
+      std::string chrRgx = "([a-zA-Z0-9]?)";
+
+      // Regular expression to find element position
+      std::string reg;
+
+      // This variable tells which regex group has to be empty.
+      std::vector<int> emptyGroups;
+
+      if (node.symbolType == model::CppAstNode::SymbolType::Macro ||
+        node.symbolType == model::CppAstNode::SymbolType::Enum ||
+        node.symbolType == model::CppAstNode::SymbolType::EnumConstant)
+      {
+        reg = node.astValue;
+      }
+      else if (node.symbolType == model::CppAstNode::SymbolType::Function ||
+        node.symbolType == model::CppAstNode::SymbolType::Variable ||
+        node.symbolType == model::CppAstNode::SymbolType::Type ||
+        node.symbolType == model::CppAstNode::SymbolType::Typedef)
+      {
+        reg = chrRgx + "(" + node.astValue + ")" + chrRgx;
+        emptyGroups.push_back(1);
+        emptyGroups.push_back(3);
+      }
+
+      if (reg.empty())
+        continue;
+
+      for (std::size_t i = node.location.range.start.line - 1;
+           i < node.location.range.end.line && i < content.size();
+           ++i)
+      {
+        std::regex words_regex(reg);
+        auto words_begin = std::sregex_iterator(
+          content[i].begin(), content[i].end(),
+          words_regex);
+        auto words_end = std::sregex_iterator();
+
+        for (std::sregex_iterator ri = words_begin; ri != words_end; ++ri)
+        {
+          if (std::any_of(emptyGroups.begin(),emptyGroups.end(),
+            [&](int i_) { return !ri->str(i_).empty(); }))
+          {
+            continue;
+          }
+
+          SyntaxHighlight syntax;
+          syntax.range.startpos.line   = i + 1;
+          syntax.range.startpos.column = ri->position() + 1;
+          syntax.range.endpos.line     = i + 1;
+          syntax.range.endpos.column   = syntax.range.startpos.column +
+                                         node.astValue.length();
+
+          std::string symbolClass =
+            "cm-" + model::symbolTypeToString(node.symbolType);
+          syntax.className = symbolClass + " " +
+            symbolClass + "-" + model::astTypeToString(node.astType);
+
+          return_.push_back(std::move(syntax));
+        }
+      }
+    }
+  });
 }
 
 void CppServiceHandler::getDiagram(
