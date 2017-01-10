@@ -22,9 +22,11 @@
 
 #include <cppparser/cppparser.h>
 
+#include "pointeranalysiscollector.h"
 #include "clangastvisitor.h"
 #include "relationcollector.h"
 #include "manglednamecache.h"
+#include "idcache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
@@ -47,6 +49,11 @@ public:
     (util::OdbTransaction(ctx_.db))([&] {
       for (const model::CppAstNode& node : ctx_.db->query<model::CppAstNode>())
         MyFrontendAction::_mangledNameCache.insert(node);
+      for (const model::CppPointerAnalysis& node :
+        ctx_.db->query<model::CppPointerAnalysis>())
+      {
+        MyFrontendAction::_pointerAnalysisCache.insert(node.id);
+      }
     });
   }
 
@@ -66,8 +73,12 @@ private:
     MyConsumer(
       ParserContext& ctx_,
       clang::ASTContext& context_,
-      MangledNameCache& mangledNameCache_)
-        : _mangledNameCache(mangledNameCache_), _ctx(ctx_), _context(context_)
+      MangledNameCache& mangledNameCache_,
+      IdCache& pointerAnalysisCache_)
+        : _ctx(ctx_),
+          _context(context_),
+          _mangledNameCache(mangledNameCache_),
+          _pointerAnalysisCache(pointerAnalysisCache_)
     {
     }
 
@@ -93,14 +104,24 @@ private:
       }
       else
         LOG(info) << "C++ documentation parser has been skipped.";
+
+      if (!_ctx.options.count("skip-cpp-pointeranalysis"))
+      {
+        PointerAnalysisCollector pAnalysisCollector(_ctx, _context,
+          _mangledNameCache, _pointerAnalysisCache, _clangToAstNodeId);
+        pAnalysisCollector.TraverseDecl(context_.getTranslationUnitDecl());
+      }
+      else
+        LOG(info) << "C++ pointer analysis has been skipped.";
     }
 
   private:
-    MangledNameCache& _mangledNameCache;
     std::unordered_map<const void*, model::CppAstNodeId> _clangToAstNodeId;
 
     ParserContext& _ctx;
     clang::ASTContext& _context;
+    MangledNameCache& _mangledNameCache;
+    IdCache& _pointerAnalysisCache;
   };
 
   class MyFrontendAction : public clang::ASTFrontendAction
@@ -130,11 +151,13 @@ private:
       clang::CompilerInstance& compiler_, llvm::StringRef) override
     {
       return std::unique_ptr<clang::ASTConsumer>(
-        new MyConsumer(_ctx, compiler_.getASTContext(), _mangledNameCache));
+        new MyConsumer(_ctx, compiler_.getASTContext(), _mangledNameCache,
+          _pointerAnalysisCache));
     }
 
   private:
     static MangledNameCache _mangledNameCache;
+    static IdCache _pointerAnalysisCache;
 
     ParserContext& _ctx;
   };
@@ -143,6 +166,8 @@ private:
 };
 
 MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
+
+IdCache VisitorActionFactory::MyFrontendAction::_pointerAnalysisCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
 {
@@ -334,6 +359,9 @@ std::vector<std::string> CppParser::getDependentParsers() const
 
 bool CppParser::parse()
 {
+  if (_ctx.options.count("skip-cpp-pointeranalysis"))
+    LOG(info) << "C++ pointer analysis skipped.";
+
   VisitorActionFactory::init(_ctx);
 
   bool success = true;
@@ -438,7 +466,10 @@ extern "C"
     description.add_options()
       ("skip-doccomment",
        "If this flag is given the parser will skip parsing the documentation "
-       "comments.");
+       "comments.")
+      ("skip-cpp-pointeranalysis",
+       "Enable C++ pointer analysis.");
+
     return description;
   }
 

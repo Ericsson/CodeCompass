@@ -5,6 +5,8 @@
 
 #include <util/legendbuilder.h>
 #include <util/util.h>
+#include <util/logutil.h>
+
 #include "diagram.h"
 
 namespace
@@ -54,7 +56,9 @@ Diagram::Diagram(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map& config_)
-    : _cppHandler(db_, datadir_, config_),
+    : _db(db_),
+      _transaction(db_),
+      _cppHandler(db_, datadir_, config_),
       _projectHandler(db_, datadir_, config_)
 {
 }

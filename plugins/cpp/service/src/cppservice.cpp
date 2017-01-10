@@ -25,6 +25,7 @@
 
 #include <service/cppservice.h>
 
+#include <pointeranalysis/pointeranalysisdiagram.h>
 #include "diagram.h"
 #include "filediagram.h"
 
@@ -969,6 +970,14 @@ void CppServiceHandler::getDiagramTypes(
       return_["Class collaboration diagram"] = CLASS_COLLABORATION;
       break;
 
+    case model::CppAstNode::SymbolType::Variable:
+    case model::CppAstNode::SymbolType::FunctionPtr:
+      return_["Pointer analysis diagram (Andersen)"] =
+        POINTER_ANALYSIS_ANDERSEN;
+      return_["Pointer analysis diagram (Steensgaard)"] =
+        POINTER_ANALYSIS_STEENSGAARD;
+      break;
+
     default: // Just to suppress warning of uncovered enum constants.
       break;
   }
@@ -1117,6 +1126,20 @@ void CppServiceHandler::getDiagram(
     case CLASS_COLLABORATION:
       diagram.getClassCollaborationDiagram(graph, astNodeId_);
       break;
+
+    case POINTER_ANALYSIS_ANDERSEN:
+    {
+      PointerAnalysisDiagram diagram(_db, _datadir, _config);
+      diagram.getAndersenPointerAnalysisDiagram(graph, astNodeId_);
+      break;
+    }
+
+    case POINTER_ANALYSIS_STEENSGAARD:
+    {
+      PointerAnalysisDiagram diagram(_db, _datadir, _config);
+      diagram.getSteensgaardPointerAnalysisDiagram(graph, astNodeId_);
+      break;
+    }
   }
 
   if (graph.nodeCount() != 0)
@@ -1142,6 +1165,20 @@ void CppServiceHandler::getDiagramLegend(
     case DETAILED_CLASS:
       return_ = diagram.getDetailedClassLegend();
       break;
+
+    case POINTER_ANALYSIS_ANDERSEN:
+    {
+      PointerAnalysisDiagram diagram(_db, _datadir, _config);
+      return_ = diagram.getAndersenDiagramLegend();
+      break;
+    }
+
+    case POINTER_ANALYSIS_STEENSGAARD:
+    {
+      PointerAnalysisDiagram diagram(_db, _datadir, _config);
+      return_ = diagram.getSteensgaardDiagramLegend();
+      break;
+    }
   }
 }
 

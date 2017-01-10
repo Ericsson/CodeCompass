@@ -79,7 +79,7 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
         this._handler.getDiagram(diagramType, node, function (svg) {
           if (svg) {
             var svgDom = dom.toDom(svg);
-  
+
             // Remove default browser tooltips.
             // TODO: Sometimes the default browser tooltips are in an <a> tag
             // which contains an xlink:title attribute. This is the case for
@@ -89,15 +89,18 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
             query('.node title', svgDom).forEach(function (node) {
               dom.destroy(node);
             });
-  
+
             query('.edge title', svgDom).forEach(function (node) {
               dom.destroy(node);
             });
-  
+
             query('.graph title', svgDom).forEach(function (node) {
               dom.destroy(node);
             });
-  
+
+            if (that._handler.callback)
+              that._handler.callback(diagramType, node, svgDom)
+
             that._diagCont.set('content', svgDom);
             that._svg = svg;
 

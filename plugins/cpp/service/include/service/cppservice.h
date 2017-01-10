@@ -30,6 +30,7 @@ namespace language
 class CppServiceHandler : virtual public LanguageServiceIf
 {
   friend class Diagram;
+  friend class PointerAnalysisDiagram;
 
 public:
   CppServiceHandler(
@@ -254,6 +255,12 @@ private:
       between the subdirectories of the queried module. This diagram is useful
       to understand the relationships of the subdirectories (submodules)
       of a module. */
+
+    POINTER_ANALYSIS_ANDERSEN, /*!< This is an Andersen's style pointer analysis
+      diagram which shows the connections of the variables */
+
+    POINTER_ANALYSIS_STEENSGAARD, /*!< This is an Steensgaard's style pointer
+      analysis diagram which shows the connections of the variables */
   };
 
   static bool compareByPosition(

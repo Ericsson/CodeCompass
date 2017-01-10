@@ -1140,9 +1140,13 @@ public:
 
       model::CppRelationPtr rel = std::make_shared<model::CppRelation>();
       rel->kind = model::CppRelation::Kind::Override;
-      rel->lhs = _mangledNameCache.at(left->second);
-      rel->rhs = _mangledNameCache.at(right->second);
-      _relations.push_back(rel);
+      if (_mangledNameCache.contain(left->second) &&
+          _mangledNameCache.contain(right->second))
+      {
+        rel->lhs = _mangledNameCache.at(left->second);
+        rel->rhs = _mangledNameCache.at(right->second);
+        _relations.push_back(rel);
+      }
     }
 
     return true;

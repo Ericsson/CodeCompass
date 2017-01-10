@@ -116,7 +116,7 @@ public:
    * default. If an ID is given which is already used, then the function returns
    * the old subgraph, and doesn't add a new one.
    */
-  Subgraph getOrCreateSubgraph(const std::string& id_);
+  Subgraph getOrCreateSubgraph(const std::string& id_ = "");
 
   /**
    * This function returns true if the given node (its identifier) exists.

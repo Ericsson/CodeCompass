@@ -155,6 +155,9 @@ private:
 
   std::map<core::FileId, util::Graph::Subgraph> _subgraphs;
 
+  std::shared_ptr<odb::database> _db;
+  util::OdbTransaction _transaction;
+
   CppServiceHandler _cppHandler;
   core::ProjectServiceHandler _projectHandler;
 };

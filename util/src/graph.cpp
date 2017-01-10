@@ -112,11 +112,14 @@ Graph::Edge Graph::createEdge(const Node& from_, const Node& to_)
 
 Graph::Subgraph Graph::getOrCreateSubgraph(const std::string& id_)
 {
-  std::string id = id_.empty() ? generateId() : id_;
+  std::string id = "cluster_" + (id_.empty() ? generateId() : id_);
   _ids.insert(id);
 
   _graphPimpl->_subgMap[id]
     = agsubg(_graphPimpl->_graph, const_cast<char*>(id.c_str()), 1);
+
+  setSubgraphAttribute(id, "label", "");
+  setSubgraphAttribute(id, "style", "invis");
 
   return id;
 }
