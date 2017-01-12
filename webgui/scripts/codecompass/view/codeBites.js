@@ -460,11 +460,9 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
         ? state.select.split('|').map(function (x) { return parseInt(x); })
         : [1, 1, 1, 1];
 
-      var fileInfo = model.project.getFileInfo(state.fid);
-      var service = model.getLanguageService(fileInfo.type);
-      var astNodeInfo = service.getAstNodeInfo(state.node);
-
-      topic.publish('codecompass/codebites', {'node' : astNodeInfo});
+      topic.publish('codecompass/codebites', {
+        'node' : urlHandler.getAstNodeInfo()
+      });
     },
 
     /**

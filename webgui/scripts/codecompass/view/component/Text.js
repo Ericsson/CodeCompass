@@ -198,7 +198,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     //--- Get AST node info ---//
 
     var service = model.getLanguageService(fileInfo.type);
-    var astNodeInfo = service.getAstNodeInfoByPosition(fpos);
+    if (service)
+      var astNodeInfo = service.getAstNodeInfoByPosition(fpos);
 
     //--- Build menu ---//
 
@@ -326,17 +327,25 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
      * file ID.
      */
     loadFile : function (file) {
+      var urlFileInfo = urlHandler.getFileInfo();
+
       if (!(file instanceof FileInfo)) {
         // The same file shouldn't be loaded twice after each other.
         if (this._fileInfo && file === this._fileInfo.id)
           return;
 
-        this._fileInfo = model.project.getFileInfo(file);
+        this._fileInfo = urlFileInfo && urlFileInfo.id === file
+          ? urlFileInfo
+          : model.project.getFileInfo(file);
       } else {
         this._fileInfo = file;
       }
 
-      this.set('content', model.project.getFileContent(this._fileInfo.id));
+      var fileContent = urlFileInfo && urlFileInfo.id === this._fileInfo.id
+        ? urlHandler.getFileContent()
+        : model.project.getFileContent(this._fileInfo.id);
+
+      this.set('content', fileContent);
       this.set('header', this._fileInfo);
     },
 
@@ -483,22 +492,22 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //   and end column respectively.
       // - line (optional): The line number to jump to when the file is loaded.
       topic.subscribe('codecompass/openFile', function (message) {
-        that.loadFile(message.fileId);
-
         if (!message.selection)
           message.selection = [1, 1, 1, 1];
-
-        that.set('selection', message.selection);
-
-        that.jumpToPos(
-          message.line || 0,
-          message.selection ? message.selection[1] : 0);
 
         urlHandler.setStateValue({
           fid    : message.fileId,
           select : message.selection.join('|'),
           center : that.id
         });
+
+        that.loadFile(message.fileId);
+
+        that.set('selection', message.selection);
+
+        that.jumpToPos(
+          message.line || 0,
+          message.selection ? message.selection[1] : 0);
 
         topic.publish('codecompass/setCenterModule', that.id);
       });

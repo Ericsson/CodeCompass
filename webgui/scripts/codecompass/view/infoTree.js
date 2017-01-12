@@ -7,10 +7,11 @@ require([
   'dojo/mouse',
   'dojo/topic',
   'codecompass/model',
+  'codecompass/urlHandler',
   'codecompass/viewHandler',
   'codecompass/view/component/HtmlTree'],
 function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
-  topic, model, viewHandler, HtmlTree) {
+  topic, model, urlHandler, viewHandler, HtmlTree) {
 
   var InfoTree = declare(HtmlTree, {
     constructor : function () {
@@ -160,10 +161,10 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
     /**
      * This function populates file outline module if the file ID to be set
      * differs from the previously loaded one.
-     * @param {FileId} fileId FileId thrift object. If not set then file id is
-     * read from the url.
      */
-    render : function (fileInfo) {
+    render : function () {
+      var fileInfo = urlHandler.getFileInfo();
+
       if (!fileInfo)
         return;
 
