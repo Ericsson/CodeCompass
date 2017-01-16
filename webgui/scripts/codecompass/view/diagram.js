@@ -99,6 +99,7 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
             });
   
             that._diagCont.set('content', svgDom);
+            that._svg = svg;
 
             that._setDiagramZoomable();
             that._setMouseEvents();
@@ -221,7 +222,8 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
     }
   });
 
-  viewHandler.registerModule(new Diagram({ id : 'diagram' }), {
+  var diagram = new Diagram({ id : 'diagram' });
+  viewHandler.registerModule(diagram, {
     type : viewHandler.moduleType.Center
   });
 
@@ -248,6 +250,22 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
   viewHandler.registerModule(legendButton, {
     type     : viewHandler.moduleType.ContextButton,
     priority : 20,
+    center   : 'diagram'
+  });
+
+  var exportToSvgButton = new Button({
+    label : 'Export SVG',
+    render  : function () { return this; },
+    onClick : function(){
+      var w = window.open();
+      w.document.body.innerHTML = diagram._svg;
+      w.document.title = "CodeCompass Export SVG";
+    }
+  });
+
+  viewHandler.registerModule(exportToSvgButton, {
+    type     : viewHandler.moduleType.ContextButton,
+    priority : 30,
     center   : 'diagram'
   });
 });
