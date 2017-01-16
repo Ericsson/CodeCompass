@@ -17,7 +17,8 @@ add_library(cppparser SHARED
   src/symbolhelper.cpp
   src/manglednamecache.cpp
   src/ppincludecallback.cpp
-  src/ppmacrocallback.cpp)
+  src/ppmacrocallback.cpp
+  src/relationcollector.cpp)
 
 target_link_libraries(cppparser
   cppmodel

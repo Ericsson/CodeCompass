@@ -235,7 +235,10 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
         return;
 
       var diagramType = urlHandler.getState('diagType');
-      var legend = urlHandler.getLanguageService().getDiagramLegend(diagramType);
+      var handlerId   = urlHandler.getState('diagHandler');
+
+      var handler = viewHandler.getModule(handlerId);
+      var legend = handler.getDiagramLegend(diagramType);
 
       new Dialog({
         title   : 'Diagram Legend',
