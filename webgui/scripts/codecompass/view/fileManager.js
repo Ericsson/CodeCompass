@@ -12,12 +12,13 @@ require([
   'dijit/tree/ObjectStoreModel',
   'codecompass/util',
   'codecompass/model',
+  'codecompass/urlHandler',
   'codecompass/viewHandler',
   'codecompass/view/component/HtmlTree',
   'codecompass/view/component/ContextMenu'],
 function (on, query, style, topic, declare, Memory, Observable,
   NodeListTraverse, ContentPane, Tree, ObjectStoreModel, util, model,
-  viewHandler, HtmlTree, ContextMenu) {
+  urlHandler, viewHandler, HtmlTree, ContextMenu) {
 
   //--- No indent tree ---//
 
@@ -221,10 +222,10 @@ function (on, query, style, topic, declare, Memory, Observable,
     },
 
     setState : function (state) {
-      if (!state.fid)
-        return;
+      var fileInfo = urlHandler.getFileInfo();
 
-      var fileInfo = model.project.getFileInfo(state.fid);
+      if (!fileInfo)
+        return;
 
       var path = fileInfo.path.split('/');
       for (var i = 1; i < path.length; ++i)

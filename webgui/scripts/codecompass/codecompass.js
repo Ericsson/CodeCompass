@@ -83,18 +83,13 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
       contextButtons.removeChild(child);
     });
 
-    var state = urlHandler.getState();
-
-    if (!state.fid)
-      return;
-
-    var fileInfo = model.project.getFileInfo(state.fid);
+    //--- Render ContextButton items ---//
 
     viewHandler.getModules({
       type   : viewHandler.moduleType.ContextButton,
       center : centerModuleId
     }).forEach(function (module) {
-      var item = module.render(fileInfo);
+      var item = module.render();
       if (item) {
         style.set(item.domNode, 'width', '100%');
         contextButtons.addChild(item);
@@ -157,7 +152,7 @@ function (dom, style, topic, TitlePane, AccordionContainer, BorderContainer,
 
     center = new ContentPane({ region : 'center' });    
     center.addChild(viewHandler.getModule(defaultCenter));
-    
+
     layout.addChild(center);
 
     currentCenterModuleId = defaultCenter;

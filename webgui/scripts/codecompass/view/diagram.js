@@ -230,14 +230,12 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
   var legendButton = new Button({
     label   : 'Legend',
     render  : function () { return this; },
-    onClick : function (fileInfo) {
-      var service = model.getLanguageService(fileInfo.type);
-
-      if (!service)
+    onClick : function () {
+      if (!urlHandler.getLanguageService())
         return;
 
       var diagramType = urlHandler.getState('diagType');
-      var legend = service.getDiagramLegend(diagramType);
+      var legend = urlHandler.getLanguageService().getDiagramLegend(diagramType);
 
       new Dialog({
         title   : 'Diagram Legend',
