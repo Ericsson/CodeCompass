@@ -55,6 +55,26 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
     service : model.cppservice
   });
 
+  var infobox = {
+    id : 'cpp-text-infobox',
+    render : function (nodeInfo, fileInfo) {
+      return new MenuItem({
+        label : 'Info Box',
+        onClick : function () {
+          topic.publish('codecompass/documentation', {
+            fileType    : fileInfo.type,
+            elementInfo : nodeInfo
+          });
+        }
+      });
+    }
+  };
+
+  viewHandler.registerModule(infobox, {
+    type : viewHandler.moduleType.TextContextMenu,
+    service : model.cppservice
+  });
+
   var diagrams = {
     id : 'cpp-text-diagrams',
     render : function (nodeInfo, fileInfo) {

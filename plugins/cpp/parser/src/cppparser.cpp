@@ -27,6 +27,7 @@
 #include "manglednamecache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
+#include "doccommentcollector.h"
 
 namespace cc
 {
@@ -83,6 +84,15 @@ private:
           _ctx, _context, _mangledNameCache, _clangToAstNodeId);
         relationCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
+
+      if (!_ctx.options.count("skip-doccomment"))
+      {
+        DocCommentCollector docCommentCollector(
+          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+        docCommentCollector.TraverseDecl(context_.getTranslationUnitDecl());
+      }
+      else
+        LOG(debug) << "C++ documentation parser has been skipped.";
     }
 
   private:
@@ -425,6 +435,10 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("C++ Plugin");
+    description.add_options()
+      ("skip-doccomment",
+       "If this flag is given the parser will skip parsing the documentation"
+       "comments.");
     return description;
   }
 

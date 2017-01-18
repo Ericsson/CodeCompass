@@ -20,7 +20,8 @@ add_library(cppparser SHARED
   src/manglednamecache.cpp
   src/ppincludecallback.cpp
   src/ppmacrocallback.cpp
-  src/relationcollector.cpp)
+  src/relationcollector.cpp
+  src/doccommentformatter.cpp)
 
 target_link_libraries(cppparser
   cppmodel
