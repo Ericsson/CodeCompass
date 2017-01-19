@@ -170,7 +170,7 @@ function (lang, hash, topic, model) {
 
   //--- Init state by url ---//
 
-  urlHandler.setState(urlHandler.getState());
+  state = urlHandler.getState();
 
   /**
    * When "browser back" or "browser forward" button is pressed, then the global
