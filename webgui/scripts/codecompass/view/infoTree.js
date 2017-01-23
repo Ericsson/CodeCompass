@@ -102,18 +102,20 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
 
     onClick : function (item, node, event) {
       if (item.nodeInfo) {
-        var astNodeInfo = item.nodeInfo;
-        var range = astNodeInfo.range.range;
+        var nodeInfo = item.nodeInfo;
+        if (nodeInfo instanceof AstNodeInfo) {
+          var range = nodeInfo.range.range;
 
-        topic.publish('codecompass/openFile', {
-          fileId     : astNodeInfo.range.file,
-          line       : astNodeInfo.range.range.startpos.line,
-          selection  : [
-            range.startpos.line,
-            range.startpos.column,
-            range.endpos.line,
-            range.endpos.column]
-        });
+          topic.publish('codecompass/openFile', {
+            fileId     : nodeInfo.range.file,
+            line       : nodeInfo.range.range.startpos.line,
+            selection  : [
+              range.startpos.line,
+              range.startpos.column,
+              range.endpos.line,
+              range.endpos.column]
+          });
+        }
       }
 
       if (item.hasChildren)
