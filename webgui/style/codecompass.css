@@ -538,3 +538,11 @@ div.CodeMirror-linenumber {
 #userguide img{
   max-width: 100%;
 }
+
+.diagram-loading{
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: center center no-repeat url(/images/loading.gif);
+  background-size: 100px 100px;
+}
