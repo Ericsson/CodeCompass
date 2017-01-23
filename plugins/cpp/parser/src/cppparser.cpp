@@ -314,7 +314,7 @@ bool CppParser::parse()
     : _ctx.options["input"].as<std::vector<std::string>>())
     if (boost::filesystem::is_regular_file(input))
       success
-        = success && parseByJson(input, _ctx.options["threads"].as<int>());
+        = success && parseByJson(input, _ctx.options["jobs"].as<int>());
 
   VisitorActionFactory::cleanUp();
   _parsedCommandHashes.clear();

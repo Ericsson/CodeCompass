@@ -35,7 +35,7 @@ po::options_description commandLineArguments()
       po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging level of the parser. Possible values are: debug, info, warning, "
       "error, critical")
-    ("threads,t", po::value<int>()->default_value(4),
+    ("jobs,j", po::value<int>()->default_value(4),
       "Number of worker threads.");
 
   return desc;
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
 
   //--- Start mongoose server ---//
 
-  cc::webserver::ThreadedMongoose server(vm["threads"].as<int>());
+  cc::webserver::ThreadedMongoose server(vm["jobs"].as<int>());
   server.setOption("listening_port", std::to_string(vm["port"].as<int>()));
   server.setOption("document_root", vm["webguiDir"].as<std::string>());
 
