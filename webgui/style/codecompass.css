@@ -152,8 +152,8 @@ svg {
   font-size: 1.5em;
 }
 
-#fileoutline{
-  width:300px;
+#fileoutline .dijitTreeNodeContainer{
+  width: 300px;
 }
 
 .dijitTreeContentExpanded > .icon{
@@ -166,34 +166,34 @@ svg {
 
 /* InfoTree tags */
 
-#infotree .tag{
+.tag{
   padding: 0px 3px;
   text-align: center;
   margin-right: 2px;
   font-weight: bold;
 }
 
-#infotree .tag-static{
+.tag-static{
   background-color: #e84c3d;
   color: #fff;
 }
 
-#infotree .tag-virtual{
+.tag-virtual{
   background-color: #f1c40f;
   color: #292828;
 }
 
-#infotree .tag-constructor{
+.tag-constructor{
   background-color: #3598db;
   color: #fff;
 }
 
-#infotree .tag-generated{
+.tag-generated{
   background-color: #7e8c8d;
   color: #fff;
 }
 
-#infotree .tag-inherited{
+.tag-inherited{
   background-color: #9a59b5;
   color: #fff;
 }
