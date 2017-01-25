@@ -338,7 +338,6 @@ public:
           baseNode->mangledNameHash = util::fnvHash(baseNode->mangledName);
           baseNode->symbolType = model::CppAstNode::SymbolType::Type;
           baseNode->astType = model::CppAstNode::AstType::Usage;
-
           baseNode->id = model::createIdentifier(*baseNode);
 
           if (insertToCache(0, baseNode))
@@ -547,8 +546,25 @@ public:
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
 
+    //--- Tags ---//
+
     if (md)
-      cppFunction->isVirtual = md->isVirtual();
+    {
+      if (md->isVirtual())
+        cppFunction->tags.insert(model::Tag::Virtual);
+
+      if (md->isStatic())
+        cppFunction->tags.insert(model::Tag::Static);
+
+      if (llvm::isa<clang::CXXConstructorDecl>(md))
+        cppFunction->tags.insert(model::Tag::Constructor);
+
+      if (llvm::isa<clang::CXXDestructorDecl>(md))
+        cppFunction->tags.insert(model::Tag::Destructor);
+    }
+
+    if (_isImplicit)
+      cppFunction->tags.insert(model::Tag::Implicit);
 
     //--- CppAstNode for the return type ---//
 
@@ -616,7 +632,6 @@ public:
       member->memberTypeHash = cppFunction->typeHash;
       member->kind = model::CppMemberType::Kind::Method;
       member->visibility = getMemberVisibility(md);
-      member->isStatic = md->isStatic();
     }
 
     return true;
@@ -702,7 +717,6 @@ public:
     variable->qualifiedName = fd_->getQualifiedNameAsString();
     variable->typeHash = member->memberTypeHash;
     variable->qualifiedType = qualType.getAsString();
-    variable->isGlobal = false;
 
     //--- CppAstNode for the type ---//
 
@@ -801,12 +815,16 @@ public:
     variable->qualifiedName = vd_->getQualifiedNameAsString();
     variable->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     variable->qualifiedType = qualType.getAsString();
-    variable->isGlobal = _functionStack.empty();
+
+    if (_functionStack.empty())
+      variable->tags.insert(model::Tag::Global);
 
     //--- CppMemberType ---//
 
     if (!_typeStack.empty() && _functionStack.empty())
     {
+      variable->tags.insert(model::Tag::Static);
+
       model::CppMemberTypePtr member = std::make_shared<model::CppMemberType>();
       _members.push_back(member);
 
@@ -815,7 +833,6 @@ public:
       member->memberTypeHash = variable->typeHash;
       member->kind = model::CppMemberType::Kind::Field;
       member->visibility = getMemberVisibility(vd_);
-      member->isStatic = true;
     }
 
     //--- Function parameters and local variables ---//

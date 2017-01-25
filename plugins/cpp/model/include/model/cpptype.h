@@ -32,8 +32,6 @@ struct CppMemberType
   Kind kind;
   Visibility visibility;
 
-  bool isStatic = false;
-
   std::string toString() const
   {
     return std::string("CppMemberType")
@@ -41,8 +39,7 @@ struct CppMemberType
       .append("\ntypeHash = ").append(std::to_string(typeHash))
       .append("\nmemberTypeHash = ").append(std::to_string(memberTypeHash))
       .append("\nkind = ").append(kind == Field ? "Field" : "Method")
-      .append("\nvisibility = ").append(visibilityToString(visibility))
-      .append("\nisStatic = ").append(std::to_string(isStatic));
+      .append("\nvisibility = ").append(visibilityToString(visibility));
   }
 };
 

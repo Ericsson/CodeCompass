@@ -219,6 +219,13 @@ private:
     const model::CppAstNode& rhs);
 
   /**
+   * This function compares AST nodes alphabetically.
+   */
+  static bool compareByValue(
+    const model::CppAstNode& lhs,
+    const model::CppAstNode& rhs);
+
+  /**
    * This function returns the corresponding model::CppAstNode to the given AST
    * node.
    */

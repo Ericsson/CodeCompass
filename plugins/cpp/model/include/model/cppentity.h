@@ -6,6 +6,7 @@
 #include <odb/nullable.hxx>
 
 #include "cppastnode.h"
+#include "common.h"
 
 namespace cc
 {
@@ -29,6 +30,8 @@ struct CppEntity
 
   std::string name;
   std::string qualifiedName;
+
+  std::set<Tag> tags;
 
 #ifndef NO_INDICES
   #pragma db index member(mangledNameHash)
