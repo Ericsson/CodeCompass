@@ -251,10 +251,27 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
     center   : 'diagram'
   });
 
-  var exportToSvgButton = new Button({
-    label : 'Export SVG',
+  var textViewButton = new Button({
+    label   : 'Text View',
     render  : function () { return this; },
-    onClick : function(){
+    onClick : function () {
+      var fileInfo = urlHandler.getFileInfo();
+      topic.publish('codecompass/openFile', {
+        fileId : fileInfo.id
+      });
+    }
+  });
+
+  viewHandler.registerModule(textViewButton, {
+    type     : viewHandler.moduleType.ContextButton,
+    priority : 25,
+    center   : 'diagram'
+  });
+
+  var exportToSvgButton = new Button({
+    label   : 'Export SVG',
+    render  : function () { return this; },
+    onClick : function () {
       var w = window.open();
       w.document.body.innerHTML = diagram._svg;
       w.document.title = "CodeCompass Export SVG";
