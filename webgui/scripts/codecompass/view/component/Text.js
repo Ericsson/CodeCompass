@@ -8,12 +8,13 @@ define([
   'dijit/layout/ContentPane',
   'dijit/Dialog',
   'dijit/MenuItem',
+  'codecompass/util',
   'codecompass/model',
   'codecompass/urlHandler',
   'codecompass/viewHandler',
   'codecompass/view/component/ContextMenu'],
 function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
-  MenuItem, model, urlHandler, viewHandler, ContextMenu) {
+  MenuItem, util, model, urlHandler, viewHandler, ContextMenu) {
 
   var BuildDialog = declare(Dialog, {
 
@@ -128,25 +129,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       dom.place(row, this._table);
     }
   });
-
-  /**
-   * This function returns the full height of a DOM element which means the sum
-   * of its height, top and bottom margin, padding and border.
-   */
-  function getFullHeight(element) {
-    var computedStyle = style.getComputedStyle(element);
-
-    var height = parseFloat(computedStyle.height);
-    var paddingTop = parseFloat(computedStyle.paddingTop);
-    var paddingBottom = parseFloat(computedStyle.paddingBottom);
-    var borderTop = parseFloat(computedStyle.borderTopWidth);
-    var borderBottom = parseFloat(computedStyle.borderBottomWidth);
-    var marginTop = parseFloat(computedStyle.marginTop);
-    var marginBottom = parseFloat(computedStyle.marginBottom);
-
-    return height + paddingTop + paddingBottom + borderTop + borderBottom +
-      marginTop + marginBottom;
-  }
 
   /**
    * This function returns true if the given position is inside the given range.
@@ -475,7 +457,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       var that = this;
       setTimeout(function () {
         var fullHeight = parseInt(style.getComputedStyle(that.domNode).height);
-        var headerHeight = getFullHeight(that._header.header);
+        var headerHeight = util.getFullHeight(that._header.header);
 
         that._codeMirror.setSize('100%', (fullHeight - headerHeight) + 'px');
         that._codeMirror.refresh();

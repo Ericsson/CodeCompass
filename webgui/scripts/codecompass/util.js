@@ -16,7 +16,7 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
     getFilename : function (path) {
       return path.substr(path.lastIndexOf('/') + 1);
     },
-    
+
     /**
      * This function returns the file directory of a path string i.e. the part
      * before the last '/' character.
@@ -25,7 +25,7 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
     getDirectory : function (path) {
       return path.substr(0, path.lastIndexOf('/'));
     },
-    
+
     /**
      * This function returns the extenstion part of a file. The file can be
      * given with relative or absolute path. By file name we mean the part of
@@ -39,7 +39,7 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
       var pos = filename.lastIndexOf('.');
       return pos === -1 ? '' : filename.slice(pos + 1);
     },
-    
+
     /**
      * This function returns a css class based on the given path or file name.
      * @param {String} path File path or file name
@@ -68,7 +68,46 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
         case 'git':    return fileContentClass + ' icon-ext-git';
       }
     },
-    
+
+    /**
+     * This function returns the full height of a DOM element which means the
+     * sum of its height, top and bottom margin, padding and border.
+     */
+    getFullHeight : function (element) {
+      var computedStyle = style.getComputedStyle(element);
+
+      var height = parseFloat(computedStyle.height);
+      var paddingTop = parseFloat(computedStyle.paddingTop);
+      var paddingBottom = parseFloat(computedStyle.paddingBottom);
+      var borderTop = parseFloat(computedStyle.borderTopWidth);
+      var borderBottom = parseFloat(computedStyle.borderBottomWidth);
+      var marginTop = parseFloat(computedStyle.marginTop);
+      var marginBottom = parseFloat(computedStyle.marginBottom);
+
+      return height + paddingTop + paddingBottom + borderTop + borderBottom +
+        marginTop + marginBottom;
+    },
+
+    /**
+     * This function returns the full width of a DOM element which means the
+     * sum of its width, left and right margin, padding and border.
+     */
+    getFullWidth : function (element) {
+      var computedStyle = style.getComputedStyle(element);
+
+      console.log('computedStyle.width: ', computedStyle.width);
+      var width = parseFloat(computedStyle.width);
+      var paddingLeft = parseFloat(computedStyle.paddingLeft);
+      var paddingRight = parseFloat(computedStyle.paddingRight);
+      var borderLeft = parseFloat(computedStyle.borderLeftWidth);
+      var borderRight = parseFloat(computedStyle.borderRightWidth);
+      var marginLeft = parseFloat(computedStyle.marginLeft);
+      var marginRight = parseFloat(computedStyle.marginRight);
+
+      return width + paddingLeft + paddingRight + borderLeft + borderRight +
+        marginLeft + marginRight;
+    },
+
     /**
      * This function returns the index of the element in the array to which the
      * "f" predicate returns true. If no element is found then the function

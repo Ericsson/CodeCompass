@@ -530,7 +530,12 @@ div.CodeMirror-linenumber {
   margin: 0 auto;
 }
 
-#file-manager-path{
+#fileManagerTitle,
+#filemanagerButton {
+  white-space: nowrap;
+}
+
+#fileManagerPath {
   margin: 0px 5px;
   color: grey;
 }
