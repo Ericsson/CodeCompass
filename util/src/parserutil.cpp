@@ -1,8 +1,8 @@
 #include <chrono>
 
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 
+#include <util/logutil.h>
 #include <util/parserutil.h>
 
 namespace fs = boost::filesystem;
@@ -41,7 +41,7 @@ bool iterateDirectoryRecursive(
   if ((currTime - context_.lastReportTime) >= std::chrono::seconds(15))
   {
     // It's time to report
-    BOOST_LOG_TRIVIAL(info)
+    LOG(info)
       << "Recursive directory iteration: visited "
       << context_.numFilesVisited << " files in "
       << context_.numDirsVisited << " directories so far.";
@@ -52,7 +52,7 @@ bool iterateDirectoryRecursive(
 
   if (!fs::exists(p))
   {
-    BOOST_LOG_TRIVIAL(warning) << "Not found: " << p;
+    LOG(warning) << "Not found: " << p;
     return true;
   }
 

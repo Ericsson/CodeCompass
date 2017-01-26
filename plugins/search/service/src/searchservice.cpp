@@ -4,7 +4,6 @@
 #include <ctime>
 #include <chrono>
 
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 
 #include <odb/transaction.hxx>
@@ -14,6 +13,7 @@
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
+#include <util/logutil.h>
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
 
@@ -75,7 +75,7 @@ private:
     }
     catch (const boost::regex_error& err)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Search service threw an exception: " << err.what();
 
       return false;
@@ -123,11 +123,11 @@ void SearchServiceHandler::search(
     auto end = std::chrono::steady_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
 
-    BOOST_LOG_TRIVIAL(info) << "Search time: " << dur.count() << " milliseconds.";
+    LOG(info) << "Search time: " << dur.count() << " milliseconds.";
   }
   catch (const ServiceProcess::ProcessDied&)
   {
-    BOOST_LOG_TRIVIAL(error) << "Java search service died! Terminating server...";
+    LOG(error) << "Java search service died! Terminating server...";
     ::abort();
   }
 }
@@ -136,7 +136,7 @@ void SearchServiceHandler::searchFile(
     FileSearchResult& _return,
     const SearchParams&     params_)
 {
-  BOOST_LOG_TRIVIAL(info) << "Search for file: query = " << params_.query;
+  LOG(info) << "Search for file: query = " << params_.query;
 
   odb::transaction t(_db->begin());
 
@@ -200,7 +200,7 @@ void SearchServiceHandler::searchFile(
   }
   catch (odb::exception &odbex)
   {
-    BOOST_LOG_TRIVIAL(error)
+    LOG(error)
       << "Search service search in file exception: " << odbex.what();
 
     DatasourceError ex;
@@ -209,7 +209,7 @@ void SearchServiceHandler::searchFile(
   }
   catch (const boost::regex_error& err)
   {
-    BOOST_LOG_TRIVIAL(error) << "Regexp error: " << err.what();
+    LOG(error) << "Regexp error: " << err.what();
 
     SearchException ex;
     ex.message  = "Bad regular expression: ";
@@ -265,11 +265,11 @@ void SearchServiceHandler::suggest(SearchSuggestions& _return,
     auto end = std::chrono::steady_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
 
-    BOOST_LOG_TRIVIAL(info) << "Suggest time: " << dur.count() << " milliseconds.";
+    LOG(info) << "Suggest time: " << dur.count() << " milliseconds.";
   }
   catch (const ServiceProcess::ProcessDied&)
   {
-    BOOST_LOG_TRIVIAL(error) << "Java search service died! Terminating server...";
+    LOG(error) << "Java search service died! Terminating server...";
     ::abort();
   }
 }

@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>
 #include <boost/log/attributes.hpp>
@@ -85,7 +84,7 @@ int main(int argc, char* argv[])
   }
   catch (const po::error& e)
   {
-    BOOST_LOG_TRIVIAL(error) << "Error in command line arguments: " << e.what();
+    LOG(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
 
@@ -104,7 +103,7 @@ int main(int argc, char* argv[])
   {
     const cc::util::WorkspaceOption& wsOpt = ws.second;
 
-    BOOST_LOG_TRIVIAL(info)
+    LOG(info)
       << "Workspace" << std::endl
       << "  id = " << ws.first << std::endl
       << "  connection = " << wsOpt.connectionString << std::endl
@@ -120,18 +119,18 @@ int main(int argc, char* argv[])
   server.setOption("listening_port", std::to_string(vm["port"].as<int>()));
   server.setOption("document_root", vm["webguiDir"].as<std::string>());
 
-  BOOST_LOG_TRIVIAL(info) 
+  LOG(info)
     << "Mongoose web server starting on port "
     << server.getOption("listening_port");
 
   try
   {
     server.run(requestHandler);
-    BOOST_LOG_TRIVIAL(info) << "Exiting, waiting for all threads to finish...";
+    LOG(info) << "Exiting, waiting for all threads to finish...";
   }
   catch (const std::exception& ex)
   {
-    BOOST_LOG_TRIVIAL(error) << "Exited with exception: " << ex.what();
+    LOG(error) << "Exited with exception: " << ex.what();
     return 1;
   }
 

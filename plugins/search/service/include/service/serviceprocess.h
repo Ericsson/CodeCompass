@@ -3,8 +3,6 @@
 
 #include <memory>
 
-#include <boost/log/trivial.hpp>
-
 #include <thrift/transport/TFDTransport.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
@@ -71,8 +69,8 @@ public:
         "-cleanupLocks",
         nullptr);
 
-      BOOST_LOG_TRIVIAL(error) << "execlp failed!";
-      
+      LOG(error) << "execlp failed!";
+
       // This shouldn't be executed by child process
       ::abort();
     }
@@ -93,7 +91,7 @@ public:
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(warning) << "'pleaseStop' failed!";
+      LOG(warning) << "'pleaseStop' failed!";
     }
 
     _service.reset(nullptr);

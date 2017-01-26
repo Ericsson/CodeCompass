@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <sstream>
 
-#include <boost/log/trivial.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 

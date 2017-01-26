@@ -6,8 +6,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
+
+#include <util/logutil.h>
 
 #include <model/file.h>
 #include <model/file-odb.hxx>
@@ -33,11 +34,11 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
 {
   if (!_fileMagic)
   {
-    BOOST_LOG_TRIVIAL(warning) << "Failed to create a libmagic cookie!";
+    LOG(warning) << "Failed to create a libmagic cookie!";
   }
   else if (::magic_load(_fileMagic, nullptr) != 0)
   {
-    BOOST_LOG_TRIVIAL(warning)
+    LOG(warning)
       << "magic_load failed! libmagic error: "
       << ::magic_error(_fileMagic);
 
@@ -62,7 +63,7 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
   }
   catch (const IndexerProcess::Failure& ex_)
   {
-    BOOST_LOG_TRIVIAL(error) << "Indexer process failure: " << ex_.what();
+    LOG(error) << "Indexer process failure: " << ex_.what();
   }
 }
 
@@ -76,7 +77,7 @@ bool SearchParser::parse()
   for (const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
   {
-    BOOST_LOG_TRIVIAL(info) << "Search parse path: " << path;
+    LOG(info) << "Search parse path: " << path;
 
     try
     {
@@ -84,13 +85,13 @@ bool SearchParser::parse()
     }
     catch (const std::exception& ex_)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Search parser threw an exception: "
         << ex_.what();
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Search parser failed with unknown exception!";
     }
   }
@@ -104,7 +105,7 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
 {
   if (!_indexProcess)
   {
-    BOOST_LOG_TRIVIAL(warning)
+    LOG(warning)
       << "Indexer process is not available, skip path: " << path_;
     return [](const std::string&){ return false; };
   }
@@ -118,13 +119,13 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
 
     if (!shouldHandle(currPath_))
     {
-      BOOST_LOG_TRIVIAL(info) << "Skipping " << currPath_;
+      LOG(info) << "Skipping " << currPath_;
       return true;
     }
 
     if (!_ctx.srcMgr.isPlainText(currPath_))
     {
-      BOOST_LOG_TRIVIAL(info)
+      LOG(info)
         << "Skipping " << currPath_ << " because it is not plain text.";
       return true;
     }
@@ -141,7 +142,7 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
         if (mimeStr)
           mimeType = mimeStr;
         else
-          BOOST_LOG_TRIVIAL(warning)
+          LOG(warning)
             << "Failed to get mime type for file '"
             << currPath_ << "'. libmagic error: "
             << ::magic_error(_fileMagic);
@@ -195,7 +196,7 @@ void SearchParser::postParse()
   }
   catch (...)
   {
-    BOOST_LOG_TRIVIAL(warning) << "Unknown exception in endTravarse()!";
+    LOG(warning) << "Unknown exception in endTravarse()!";
   }
 }
 

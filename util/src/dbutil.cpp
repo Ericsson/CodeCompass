@@ -2,7 +2,6 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/regex.hpp>
 
 #ifdef DATABASE_SQLITE
@@ -13,6 +12,7 @@
 #  include <odb/pgsql/database.hxx>
 #endif
 
+#include <util/logutil.h>
 #include <util/dbutil.h>
 
 namespace
@@ -215,7 +215,7 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
   }
   catch (const odb::exception& ex)
   {
-    BOOST_LOG_TRIVIAL(error) << ex.what();
+    LOG(error) << ex.what();
     return nullptr;
   }
 
