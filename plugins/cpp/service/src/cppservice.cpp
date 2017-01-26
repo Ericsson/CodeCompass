@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <queue>
 
-#include <boost/log/trivial.hpp>
-
 #include <util/util.h>
 
 #include <model/cppfunction.h>

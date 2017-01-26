@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>
 #include <boost/log/attributes.hpp>
@@ -139,7 +138,7 @@ int main(int argc, char* argv[])
   }
   catch (const po::error& e)
   {
-    BOOST_LOG_TRIVIAL(error) << "Error in command line arguments: " << e.what();
+    LOG(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
 
@@ -149,7 +148,7 @@ int main(int argc, char* argv[])
     vm["database"].as<std::string>());
   if (!db)
   {
-    BOOST_LOG_TRIVIAL(error) 
+    LOG(error)
       << "Couldn't connect to database. Check the connection string.";
 
     return 1;
@@ -162,7 +161,7 @@ int main(int argc, char* argv[])
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())
   {
-    BOOST_LOG_TRIVIAL(info) << "[" << parserName << "] started!";
+    LOG(info) << "[" << parserName << "] started!";
     pHandler.getParser(parserName)->parse();
   }
 

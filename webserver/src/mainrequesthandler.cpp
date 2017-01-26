@@ -1,6 +1,6 @@
-#include <boost/log/trivial.hpp>
-
 #include <util/util.h>
+#include <util/logutil.h>
+
 #include "mainrequesthandler.h"
 
 namespace cc
@@ -13,7 +13,7 @@ int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
   // We advance ot by one because of the '/' character.
   const std::string& uri = conn_->uri + 1;
 
-  BOOST_LOG_TRIVIAL(debug)
+  LOG(debug)
     << util::getCurrentDate() << " Connection from " << conn_->remote_ip
     << ':' << conn_->remote_port << " requested URI: " << uri;
 
@@ -56,7 +56,7 @@ int MainRequestHandler::operator()(
       }
       else 
       {
-        BOOST_LOG_TRIVIAL(error)
+        LOG(error)
           << "Password file could not be opened: " << digestPasswdFile;
 
         // TODO: An internal server error response would be nicer.

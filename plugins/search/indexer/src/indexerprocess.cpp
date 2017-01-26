@@ -1,6 +1,5 @@
 #include <sstream>
 
-#include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 
 #include <thrift/transport/TFDTransport.h>
@@ -91,7 +90,7 @@ IndexerProcess::IndexerProcess(
     execArguments.push_back(nullptr);
     ::execvp("java", const_cast<char* const*>(execArguments.data()));
 
-    BOOST_LOG_TRIVIAL(error) << "execlp failed!";
+    LOG(error) << "execlp failed!";
     // this shouldn't be executed by child process
     ::abort();
   }
@@ -138,7 +137,7 @@ void IndexerProcess::indexFile(
 {
   if (!isAlive())
   {
-    BOOST_LOG_TRIVIAL(error) << "Index process is not alive!";
+    LOG(error) << "Index process is not alive!";
     ::abort();
   }
   
@@ -151,7 +150,7 @@ void IndexerProcess::addFieldValues(
 {
   if (!isAlive())
   {
-    BOOST_LOG_TRIVIAL(error) << "Index process is not alive!";
+    LOG(error) << "Index process is not alive!";
     ::abort();
   }
 
@@ -162,7 +161,7 @@ void IndexerProcess::buildSuggestions()
 {
   if (!isAlive())
   {
-    BOOST_LOG_TRIVIAL(error) << "Index process is not alive!";
+    LOG(error) << "Index process is not alive!";
     ::abort();
   }
 
@@ -173,7 +172,7 @@ void IndexerProcess::getStatistics(std::map<std::string, std::string>& stat_)
 {
   if (!isAlive())
   {
-    BOOST_LOG_TRIVIAL(error) << "Index process is not alive!";
+    LOG(error) << "Index process is not alive!";
     ::abort();
   }
 

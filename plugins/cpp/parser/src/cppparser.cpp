@@ -5,7 +5,6 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendAction.h>
@@ -19,6 +18,7 @@
 
 #include <util/hash.h>
 #include <util/odbtransaction.h>
+#include <util/logutil.h>
 
 #include <cppparser/cppparser.h>
 
@@ -246,7 +246,7 @@ void CppParser::worker()
 
     if (_parsedCommandHashes.find(hash) != _parsedCommandHashes.end())
     {
-      BOOST_LOG_TRIVIAL(info)
+      LOG(info)
         << '(' << index << '/' << _compileCommands.size() << ')'
         << " Already parsed " << command.Filename;
       mutex.unlock();
@@ -279,7 +279,7 @@ void CppParser::worker()
 
     VisitorActionFactory factory(_ctx);
 
-    BOOST_LOG_TRIVIAL(info)
+    LOG(info)
       << '(' << index << '/' << _compileCommands.size() << ')'
       << " Parsing " << command.Filename;
 
@@ -334,7 +334,7 @@ bool CppParser::parseByJson(
 
   if (!errorMsg.empty())
   {
-    BOOST_LOG_TRIVIAL(error) << errorMsg;
+    LOG(error) << errorMsg;
     return false;
   }
 

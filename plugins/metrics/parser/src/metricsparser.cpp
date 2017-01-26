@@ -3,8 +3,8 @@
 #include <memory>
 
 #include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
 
+#include <util/logutil.h>
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
 
@@ -30,10 +30,10 @@ std::vector<std::string> MetricsParser::getDependentParsers() const
 }
 
 bool MetricsParser::parse()
-{    
+{
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
-    BOOST_LOG_TRIVIAL(info) << "Metrics parse path: " << path;
+    LOG(info) << "Metrics parse path: " << path;
 
     util::OdbTransaction trans(_ctx.db);
     trans([&, this]() {
@@ -47,12 +47,12 @@ bool MetricsParser::parse()
       }
       catch (std::exception& ex_)
       {
-        BOOST_LOG_TRIVIAL(warning)
+        LOG(warning)
           << "Metrics parser threw an exception: " << ex_.what();
       }
       catch (...)
       {
-        BOOST_LOG_TRIVIAL(warning)
+        LOG(warning)
           << "Metrics parser failed with unknown exception!";
       }
 
@@ -82,7 +82,7 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
 {
   Loc result;
 
-  BOOST_LOG_TRIVIAL(info) << "Count metrics for " << file_->path;
+  LOG(info) << "Count metrics for " << file_->path;
 
   //--- Get source code ---//
 

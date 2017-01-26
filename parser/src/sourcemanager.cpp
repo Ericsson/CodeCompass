@@ -2,10 +2,11 @@
 #include <algorithm>
 
 #include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
+
+#include <util/hash.h>
+#include <util/logutil.h>
 
 #include <parser/sourcemanager.h>
-#include <util/hash.h>
 
 namespace cc
 {
@@ -35,7 +36,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
   {
     if (::magic_load(_magicCookie, 0) != 0)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "libmagic error: "
         << ::magic_error(_magicCookie);
 
@@ -44,7 +45,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
     }
   }
   else
-    BOOST_LOG_TRIVIAL(error) << "Failed to create a libmagic cookie!";
+    LOG(error) << "Failed to create a libmagic cookie!";
 }
 
 SourceManager::~SourceManager()
@@ -67,7 +68,7 @@ model::FileContentPtr SourceManager::createFileContent(
   std::ifstream ifs(path_);
   if (!ifs)
   {
-    BOOST_LOG_TRIVIAL(error) << "Failed to open '" << path_ << "'";
+    LOG(error) << "Failed to open '" << path_ << "'";
     return nullptr;
   }
 
@@ -132,12 +133,12 @@ model::FilePtr SourceManager::getCreateFileEntry(
   {
     if (!boost::filesystem::is_regular_file(path, ec))
     {
-      BOOST_LOG_TRIVIAL(debug)
+      LOG(debug)
         << "'" << path_ << "' is not a regular file! Skip saving content.";
     }
     else if (!isPlainText(path_))
     {
-      BOOST_LOG_TRIVIAL(debug)
+      LOG(debug)
         << "'" << path_ << "' is not a plain text file! Skip saving content.";
     }
     else
@@ -160,7 +161,7 @@ model::FilePtr SourceManager::getCreateFile(const std::string& path_)
   bool fileExists = true;
   if (ec)
   {
-    BOOST_LOG_TRIVIAL(debug) << "File doesn't exist: " << path_;
+    LOG(debug) << "File doesn't exist: " << path_;
     fileExists = false;
   }
 
@@ -187,7 +188,7 @@ bool SourceManager::isPlainText(const std::string& path_) const
 
   if (!magic)
   {
-    BOOST_LOG_TRIVIAL(error) << "Couldn't use magic on file: " << path_;
+    LOG(error) << "Couldn't use magic on file: " << path_;
     return false;
   }
 

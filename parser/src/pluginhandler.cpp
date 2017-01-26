@@ -1,11 +1,12 @@
 #include <parser/pluginhandler.h>
 
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
+
+#include <util/logutil.h>
 
 #include <iostream>
 
@@ -25,7 +26,7 @@ bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
 
   if (!fs::exists(_pluginDir) || !fs::is_directory(_pluginDir))
   {
-    BOOST_LOG_TRIVIAL(error) << _pluginDir << " is not a directory";
+    LOG(error) << _pluginDir << " is not a directory";
     return false;
   }
 
@@ -50,7 +51,7 @@ bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
       }
       else
       {
-        BOOST_LOG_TRIVIAL(info) << "[" << filename << "] skipped!";
+        LOG(info) << "[" << filename << "] skipped!";
       }
     }
   }
@@ -120,7 +121,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
       if(!parserNameToVertex.count(dependency))
       {
         // TODO: This shouldn't be tolerated so easy.
-        BOOST_LOG_TRIVIAL(warning) << dependency << " is not a real parser";
+        LOG(warning) << dependency << " is not a real parser";
         continue;
       }
 

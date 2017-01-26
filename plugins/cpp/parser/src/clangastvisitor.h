@@ -6,8 +6,6 @@
 #include <type_traits>
 #include <stack>
 
-#include <boost/log/trivial.hpp>
-
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/AST/Decl.h>
@@ -35,6 +33,8 @@
 #include <parser/sourcemanager.h>
 #include <util/hash.h>
 #include <util/odbtransaction.h>
+#include <util/logutil.h>
+
 #include "filelocutil.h"
 #include "symbolhelper.h"
 
@@ -1254,9 +1254,9 @@ private:
       }
       catch (const odb::object_already_persistent& ex)
       {
-        BOOST_LOG_TRIVIAL(debug)
+        LOG(debug)
           << item->toString();
-        BOOST_LOG_TRIVIAL(warning)
+        LOG(warning)
           << ex.what() << std::endl
           << "AST nodes in this translation unit will be ignored!";
       }

@@ -1,10 +1,10 @@
 #include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <git2.h>
 
 #include <util/parserutil.h>
 #include <util/hash.h>
+#include <util/logutil.h>
 
 #include <gitparser/gitparser.h>
 
@@ -39,14 +39,14 @@ util::DirIterCallback GitParser::getParserCallback()
     if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
       return true;
 
-    BOOST_LOG_TRIVIAL(info) << "Git parser found a git repo at: " << path;
+    LOG(info) << "Git parser found a git repo at: " << path;
 
     //--- Generate unique repository ---//
 
     std::uint64_t    repoId = util::fnvHash(path_);
     std::string clonedRepoPath = versionDataDir + "/" + std::to_string(repoId);
 
-    BOOST_LOG_TRIVIAL(info) << "GitParser cloning into " << clonedRepoPath;
+    LOG(info) << "GitParser cloning into " << clonedRepoPath;
 
     //--- Remove folder if exists ---//
 
@@ -64,7 +64,7 @@ util::DirIterCallback GitParser::getParserCallback()
     {
       const git_error* errDetails = giterr_last();
 
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Can't copy git repo from: " << path << " to: " << clonedRepoPath
         << "! Errcode: " << std::to_string(error)
         << "! Exception: " << errDetails->message;
@@ -81,7 +81,7 @@ bool GitParser::parse()
   for(const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
   {
-    BOOST_LOG_TRIVIAL(info) << "Git parse path: " << path;
+    LOG(info) << "Git parse path: " << path;
 
     auto cb = getParserCallback();
 
@@ -93,12 +93,12 @@ bool GitParser::parse()
     }
     catch (const std::exception& ex_)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Git parser threw an exception: " << ex_.what();
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Git parser failed with unknown exception!";
     }
   }

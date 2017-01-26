@@ -4,12 +4,13 @@
 #include <stdio.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TJSONProtocol.h>
+
+#include <util/logutil.h>
 
 #include "mongoose.h"
 
@@ -123,7 +124,7 @@ public:
     {
       std::string content = getContent(conn_);
       
-      BOOST_LOG_TRIVIAL(debug) << "Request content:\n" << content;
+      LOG(debug) << "Request content:\n" << content;
 
       boost::shared_ptr<TTransport> inputBuffer(
         new TMemoryBuffer((std::uint8_t*)content.c_str(), content.length()));
@@ -140,7 +141,7 @@ public:
 
       std::string response = mBuffer->getBufferAsString();
 
-      BOOST_LOG_TRIVIAL(debug)
+      LOG(debug)
         << "Response:\n" << response.c_str() << std::endl;
       
       // Send HTTP reply to the client
@@ -156,11 +157,11 @@ public:
     }
     catch (const std::exception& ex)
     {
-      BOOST_LOG_TRIVIAL(warning) << ex.what();
+      LOG(warning) << ex.what();
     }
     catch (...)
     {
-      BOOST_LOG_TRIVIAL(warning) << "Unknown exception has been caught";
+      LOG(warning) << "Unknown exception has been caught";
     }
 
     // Returning non-zero tells mongoose that our function has replied to

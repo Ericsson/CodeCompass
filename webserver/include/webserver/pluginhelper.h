@@ -4,10 +4,10 @@
 #include <memory>
 
 #include <boost/program_options/variables_map.hpp>
-#include <boost/log/trivial.hpp>
 
 #include <odb/database.hxx>
 
+#include <util/logutil.h>
 #include <util/util.h>
 #include <util/dbutil.h>
 #include <util/webserverutil.h>
@@ -43,7 +43,7 @@ inline void registerPluginSimple(
 
     if (!db)
     {
-      BOOST_LOG_TRIVIAL(error)
+      LOG(error)
         << "Wrong connection string: '" << wsOpt.connectionString << "' "
         << "for workspace: '" << wsId << "' "
         << "for service: '" << serviceName_ << "'";
@@ -65,7 +65,7 @@ inline void registerPluginSimple(
     }
     catch (const util::ServiceNotAvailException& ex)
     {
-      BOOST_LOG_TRIVIAL(warning)
+      LOG(warning)
         << "Exception: " << ex.what()
         << " in workspace " << wsId;
     }
