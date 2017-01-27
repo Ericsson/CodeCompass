@@ -11,20 +11,31 @@ function (model, viewHandler, util) {
 
     var label = '';
     if (tags.indexOf('static') > -1)
-      label += '<span class="tag tag-static">S</span>';
+      label += '<span class="tag tag-static" title="Static">S</span>';
     if (tags.indexOf('constructor') > -1)
-      label += '<span class="tag tag-constructor">C</span>';
-    if (tags.indexOf('generated') > -1)
-      label += '<span class="tag tag-generated">G</span>';
+      label += '<span class="tag tag-constructor" title="Constructor">C</span>';
+    if (tags.indexOf('destructor') > -1)
+      label += '<span class="tag tag-destructor" title="Destructor">D</span>';
+    if (tags.indexOf('implicit') > -1)
+      label += '<span class="tag tag-implicit" title="Implicit">I</span>';
     if (tags.indexOf('inherited') > -1)
-      label += '<span class="tag tag-inherited">I</span>';
+      label += '<span class="tag tag-inherited" title="Inherited">I</span>';
     if (tags.indexOf('virtual') > -1)
-      label += '<span class="tag tag-virtual">V</span>';
+      label += '<span class="tag tag-virtual" title="Virtual">V</span>';
+    if (tags.indexOf('global') > -1)
+      label += '<span class="tag tag-global" title="Global">G</span>';
+
+    var labelClass = '';
+
+    if (tags.indexOf('implicit') > -1)
+      labelClass = 'label-implicit';
 
     label
-      += astNodeInfo.range.range.startpos.line   + ':'
+      += '<span class="' + labelClass + '">'
+      +  astNodeInfo.range.range.startpos.line   + ':'
       +  astNodeInfo.range.range.startpos.column + ': '
-      +  astNodeInfo.astNodeValue;
+      +  astNodeInfo.astNodeValue
+      +  '</span>';
 
     return label;
   }

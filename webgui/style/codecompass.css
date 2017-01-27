@@ -188,14 +188,28 @@ svg {
   color: #fff;
 }
 
-.tag-generated{
-  background-color: #7e8c8d;
+.tag-destructor{
+  background-color: #000000;
+  color: #fff;
+}
+
+.tag-implicit{
+  background-color: #b1b1b1;
   color: #fff;
 }
 
 .tag-inherited{
   background-color: #9a59b5;
   color: #fff;
+}
+
+.tag-global{
+  background-color: #34496c;
+  color: #fff;
+}
+
+.label-implicit {
+  color: grey;
 }
 
 .dijitTreeRowHover, .dijitTreeContent:hover{

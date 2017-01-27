@@ -32,8 +32,6 @@ struct CppMemberType
   Kind kind;
   Visibility visibility;
 
-  bool isStatic = false;
-
   std::string toString() const
   {
     return std::string("CppMemberType")
@@ -41,8 +39,7 @@ struct CppMemberType
       .append("\ntypeHash = ").append(std::to_string(typeHash))
       .append("\nmemberTypeHash = ").append(std::to_string(memberTypeHash))
       .append("\nkind = ").append(kind == Field ? "Field" : "Method")
-      .append("\nvisibility = ").append(visibilityToString(visibility))
-      .append("\nisStatic = ").append(std::to_string(isStatic));
+      .append("\nvisibility = ").append(visibilityToString(visibility));
   }
 };
 
@@ -56,11 +53,23 @@ struct CppType : CppEntity
 
   std::string toString() const
   {
-    return std::string("id = ").append(std::to_string(id))
+    std::string ret("CppType");
+
+    ret
+      .append("\nid = ").append(std::to_string(id))
       .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nisAbstract = ").append(std::to_string(isAbstract))
       .append("\nisPOD = ").append(std::to_string(isPOD));
+
+    if (!tags.empty())
+    {
+      ret.append("\ntags =");
+      for (const Tag& tag : tags)
+        ret.append(' ' + tagToString(tag));
+    }
+
+    return ret;
   }
 };
 

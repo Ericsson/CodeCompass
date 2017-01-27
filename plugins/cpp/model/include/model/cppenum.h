@@ -15,11 +15,22 @@ struct CppEnumConstant : CppEntity
 
   std::string toString() const
   {
-    return std::string("CppEnumConstant")
+    std::string ret("CppEnumConstant");
+
+    ret
       .append("\nid = ").append(std::to_string(id))
       .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nvalue = ").append(std::to_string(value));
+
+    if (!tags.empty())
+    {
+      ret.append("\ntags =");
+      for (const Tag& tag : tags)
+        ret.append(' ' + tagToString(tag));
+    }
+
+    return ret;
   }
 };
 
@@ -32,10 +43,21 @@ struct CppEnum : CppEntity
 
   std::string toString() const
   {
-    return std::string("CppEnum")
+    std::string ret("CppEnum");
+
+    ret
       .append("\nid = ").append(std::to_string(id))
       .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
       .append("\nqualifiedName = ").append(qualifiedName);
+
+    if (!tags.empty())
+    {
+      ret.append("\ntags =");
+      for (const Tag& tag : tags)
+        ret.append(' ' + tagToString(tag));
+    }
+
+    return ret;
   }
 };
 

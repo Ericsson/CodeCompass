@@ -475,16 +475,12 @@ void CppServiceHandler::getReferences(
           astNodeId_,
           AstQuery::astType == model::CppAstNode::AstType::Read);
 
-        std::sort(nodes.begin(), nodes.end(), compareByPosition);
-
         break;
 
       case WRITE:
         nodes = queryCppAstNodes(
           astNodeId_,
           AstQuery::astType == model::CppAstNode::AstType::Write);
-
-        std::sort(nodes.begin(), nodes.end(), compareByPosition);
 
         break;
 
@@ -557,9 +553,7 @@ void CppServiceHandler::getReferences(
           // TODO: Filter by tags
         {
           model::CppAstNodePtr astNode = mem.memberAstNode.load();
-
-          if (astNode->location.range.end.line != model::Position::npos)
-            nodes.push_back(*astNode);
+          nodes.push_back(*astNode);
         }
 
         break;
@@ -616,6 +610,8 @@ void CppServiceHandler::getReferences(
         break;
       }
     }
+
+    std::sort(nodes.begin(), nodes.end(), compareByValue);
 
     return_.reserve(nodes.size());
     std::transform(
@@ -699,6 +695,8 @@ void CppServiceHandler::getFileReferences(
         break;
     }
 
+    std::sort(nodes.begin(), nodes.end(), compareByValue);
+
     return_.reserve(nodes.size());
     std::transform(
       nodes.begin(), nodes.end(),
@@ -780,6 +778,13 @@ bool CppServiceHandler::compareByPosition(
   return lhs.location.range.start < rhs.location.range.start;
 }
 
+bool CppServiceHandler::compareByValue(
+  const model::CppAstNode& lhs,
+  const model::CppAstNode& rhs)
+{
+  return lhs.astValue < rhs.astValue;
+}
+
 model::CppAstNode CppServiceHandler::queryCppAstNode(
   const core::AstNodeId& astNodeId_)
 {
@@ -858,7 +863,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCalls(
      AstQuery::location.range.end.line < end.line));
 
   nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
-  std::sort(nodes.begin(), nodes.end(), compareByPosition);
+
   return nodes;
 }
 
@@ -953,11 +958,6 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
           if (!visibility.empty())
             tags[node.id].push_back(visibility);
-
-          //--- Static Tag ---//
-
-          if (mem.isStatic)
-            tags[node.id].push_back("static");
         }
 
         //--- Virtual Tag ---//
@@ -966,8 +966,8 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
           FuncQuery::mangledNameHash == defNode.mangledNameHash);
         const model::CppFunction& funcNode = *funcNodes.begin();
 
-        if (funcNode.isVirtual)
-          tags[node.id].push_back("virtual");
+        for (const model::Tag& tag : funcNode.tags)
+          tags[node.id].push_back(model::tagToString(tag));
 
         break;
       }
@@ -985,11 +985,6 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
           if (!visibility.empty())
             tags[node.id].push_back(visibility);
-
-          //--- Static Tag ---//
-
-          if (mem.isStatic)
-            tags[node.id].push_back("static");
         }
 
         //--- Global Tag ---//
@@ -998,8 +993,8 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
           VarQuery::mangledNameHash == defNode.mangledNameHash);
         const model::CppVariable& varNode = *varNodes.begin();
 
-        if (varNode.isGlobal)
-          tags[node.id].push_back("global");
+        for (const model::Tag& tag : varNode.tags)
+          tags[node.id].push_back(model::tagToString(tag));
 
         break;
       }
