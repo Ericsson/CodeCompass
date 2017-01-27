@@ -53,11 +53,23 @@ struct CppType : CppEntity
 
   std::string toString() const
   {
-    return std::string("id = ").append(std::to_string(id))
+    std::string ret("CppType");
+
+    ret
+      .append("\nid = ").append(std::to_string(id))
       .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nisAbstract = ").append(std::to_string(isAbstract))
       .append("\nisPOD = ").append(std::to_string(isPOD));
+
+    if (!tags.empty())
+    {
+      ret.append("\ntags =");
+      for (const Tag& tag : tags)
+        ret.append(' ' + tagToString(tag));
+    }
+
+    return ret;
   }
 };
 

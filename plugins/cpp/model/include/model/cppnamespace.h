@@ -13,10 +13,21 @@ struct CppNamespace : CppEntity
 {
   std::string toString() const
   {
-    return std::string("CppNamespace")
+    std::string ret("CppNamespace");
+
+    ret
       .append("\nid = ").append(std::to_string(id))
       .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
       .append("\nqualifiedName = ").append(qualifiedName);
+
+    if (!tags.empty())
+    {
+      ret.append("\ntags =");
+      for (const Tag& tag : tags)
+        ret.append(' ' + tagToString(tag));
+    }
+
+    return ret;
   }
 };
 

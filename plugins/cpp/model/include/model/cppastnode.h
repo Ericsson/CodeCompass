@@ -145,10 +145,14 @@ inline std::string CppAstNode::toString() const
     .append("\nastValue = ").append(astValue)
     .append("\nmangledName = ").append(mangledName)
     .append("\nlocation = ").append(location.file->path).append(" (")
-    .append(std::to_string(location.range.start.line)).append(":")
-    .append(std::to_string(location.range.start.column)).append(" - ")
-    .append(std::to_string(location.range.end.line)).append(":")
-    .append(std::to_string(location.range.end.column)).append(")")
+    .append(std::to_string(
+      static_cast<signed>(location.range.start.line))).append(":")
+    .append(std::to_string(
+      static_cast<signed>(location.range.start.column))).append(" - ")
+    .append(std::to_string(
+      static_cast<signed>(location.range.end.line))).append(":")
+    .append(std::to_string(
+      static_cast<signed>(location.range.end.column))).append(")")
     .append("\nsymbolType = ").append(symbolTypeToString(symbolType))
     .append("\nastType = ").append(astTypeToString(astType));
 }
