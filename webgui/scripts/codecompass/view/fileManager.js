@@ -249,7 +249,7 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
       this._filePath = path;
 
       var paneWidth = util.getFullWidth(this.domNode);
-      var titleWidth = this.fileManagerTitle.offsetWidth;
+      var titleWidth = util.getFullWidth(this.fileManagerTitle);
       var restWidth = paneWidth - titleWidth;
 
       var title = this.fileManagerTitle.innerHTML;

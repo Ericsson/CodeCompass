@@ -74,15 +74,13 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
      * sum of its height, top and bottom margin, padding and border.
      */
     getFullHeight : function (element) {
-      var computedStyle = style.getComputedStyle(element);
-
-      var height = parseFloat(computedStyle.height);
-      var paddingTop = parseFloat(computedStyle.paddingTop);
-      var paddingBottom = parseFloat(computedStyle.paddingBottom);
-      var borderTop = parseFloat(computedStyle.borderTopWidth);
-      var borderBottom = parseFloat(computedStyle.borderBottomWidth);
-      var marginTop = parseFloat(computedStyle.marginTop);
-      var marginBottom = parseFloat(computedStyle.marginBottom);
+      var height = parseInt(style.get(element, 'height'));
+      var paddingTop = parseInt(style.get(element, 'paddingTop'));
+      var paddingBottom = parseInt(style.get(element, 'paddingBottom'));
+      var borderTop = parseInt(style.get(element, 'borderTop'));
+      var borderBottom = parseInt(style.get(element, 'borderBottom'));
+      var marginTop = parseInt(style.get(element, 'marginTop'));
+      var marginBottom = parseInt(style.get(element, 'marginBottom'));
 
       return height + paddingTop + paddingBottom + borderTop + borderBottom +
         marginTop + marginBottom;
@@ -93,16 +91,13 @@ function (Dialog, array, lang, style, ItemFileWriteStore, DataGrid, model) {
      * sum of its width, left and right margin, padding and border.
      */
     getFullWidth : function (element) {
-      var computedStyle = style.getComputedStyle(element);
-
-      console.log('computedStyle.width: ', computedStyle.width);
-      var width = parseFloat(computedStyle.width);
-      var paddingLeft = parseFloat(computedStyle.paddingLeft);
-      var paddingRight = parseFloat(computedStyle.paddingRight);
-      var borderLeft = parseFloat(computedStyle.borderLeftWidth);
-      var borderRight = parseFloat(computedStyle.borderRightWidth);
-      var marginLeft = parseFloat(computedStyle.marginLeft);
-      var marginRight = parseFloat(computedStyle.marginRight);
+      var width = parseInt(style.get(element, 'width'));
+      var paddingLeft = parseInt(style.get(element, 'paddingLeft'));
+      var paddingRight = parseInt(style.get(element, 'paddingRight'));
+      var borderLeft = parseInt(style.get(element, 'borderLeft'));
+      var borderRight = parseInt(style.get(element, 'borderRight'));
+      var marginLeft = parseInt(style.get(element, 'marginLeft'));
+      var marginRight = parseInt(style.get(element, 'marginRight'));
 
       return width + paddingLeft + paddingRight + borderLeft + borderRight +
         marginLeft + marginRight;
