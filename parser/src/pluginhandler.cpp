@@ -8,7 +8,24 @@
 
 #include <util/logutil.h>
 
-#include <iostream>
+namespace fs = ::boost::filesystem;
+
+namespace
+{
+  /**
+   * This function returns the real plugin name from path by removing the
+   * file extension and the `lib` prefix.
+   */
+  std::string getPluginName(const boost::filesystem::path& path_)
+  {
+    // Filename without extension.
+    std::string filename = path_.stem().string();
+    // Remove "lib" from filename.
+    filename.erase(filename.begin(), filename.begin() + 3);
+
+    return filename;
+  }
+}
 
 namespace cc
 {
@@ -18,18 +35,12 @@ namespace parser
 PluginHandler::PluginHandler(const std::string& pluginDir_)
   : _pluginDir(pluginDir_)
 {
+  if (!fs::exists(_pluginDir) || !fs::is_directory(_pluginDir))
+    throw std::runtime_error(_pluginDir + " is not a directory!");
 }
 
-bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
+void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
 {
-  namespace fs = ::boost::filesystem;
-
-  if (!fs::exists(_pluginDir) || !fs::is_directory(_pluginDir))
-  {
-    LOG(error) << _pluginDir << " is not a directory";
-    return false;
-  }
-
   fs::directory_iterator endIter;
   for (fs::directory_iterator dirIter(_pluginDir);
     dirIter != endIter;
@@ -38,10 +49,8 @@ bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
     if (fs::is_regular_file(dirIter->status()) &&
         fs::extension(*dirIter) == util::DynamicLibrary::extension())
     {
-      // Filename without extension.
-      std::string filename = dirIter->path().stem().string();
-      // Remove lib from filename.
-      filename.erase(filename.begin(), filename.begin() + 3);
+      std::string filename = getPluginName(dirIter->path());
+
       if (std::find(skipParserList_.begin(), skipParserList_.end(), filename) ==
         skipParserList_.end())
       {
@@ -55,8 +64,25 @@ bool PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
       }
     }
   }
+}
 
-  return true;
+std::vector<std::string> PluginHandler::getPluginNames() const
+{
+  std::vector<std::string> plugins;
+
+  fs::directory_iterator endIter;
+  for (fs::directory_iterator dirIter(_pluginDir);
+    dirIter != endIter;
+    ++dirIter)
+  {
+    if (fs::is_regular_file(dirIter->status()) &&
+        fs::extension(*dirIter) == util::DynamicLibrary::extension())
+    {
+      plugins.push_back(getPluginName(dirIter->path()));
+    }
+  }
+
+  return plugins;
 }
 
 bool PluginHandler::createPlugins(ParserContext& ctx_)
@@ -103,7 +129,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
   std::vector<std::string> vertexNames;
   std::map<std::string, boost::adjacency_list<>::vertex_descriptor>
     parserNameToVertex;
-  
+
   //--- Init data ---//
 
   for(const auto& parser : _parsers)
@@ -132,7 +158,7 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
       boost::tie(e, inserted) = boost::add_edge(
         parserNameToVertex.at(dependency), 
         parserNameToVertex.at(parser.first), g);
-    }      
+    }
   } 
 
   //--- Topological order of the graph ---//

@@ -34,7 +34,13 @@ public:
    * Load plugins from parser directory.
    * @param skipParserList_ These parsers will be skipped.
    */
-  bool loadPlugins(std::vector<std::string>& skipParserList_);
+  void loadPlugins(std::vector<std::string>& skipParserList_);
+
+  /**
+   * Return the list of available plugins based on the file names in the parser
+   * lib directory.
+   */
+  std::vector<std::string> getPluginNames() const;
 
   /**
    * Create parser plugins from shared object by calling make() method.

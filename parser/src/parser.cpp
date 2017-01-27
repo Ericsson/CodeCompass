@@ -29,8 +29,8 @@ po::options_description commandLineArguments()
     ("help,h",
       "Prints this help message.")
     ("list,l",
-      "List available plugins. Plugins come from shared objects stored in a "
-      "directory, given by --parser-plugin-dir flag.")
+      "List available plugins. Plugins come from shared objects stored in the "
+      "lib/parserplugin directory.")
     ("input,i", po::value<std::vector<std::string>>(),
       "The input of the parsers can be a compilation database (see: "
       "http://clang.llvm.org/docs/JSONCompilationDatabase.html) or a path of a "
@@ -128,7 +128,11 @@ int main(int argc, char* argv[])
 
   if (vm.count("list"))
   {
-    // TODO: List parsers.
+    std::cout << "Available plugins:" << std::endl;
+
+    for (const std::string& pluginName : pHandler.getPluginNames())
+      std::cout << " - " << pluginName << std::endl;
+
     return 0;
   }
 
