@@ -1,7 +1,9 @@
 require([
   'dojo/on',
   'dojo/query',
+  'dojo/dom',
   'dojo/dom-style',
+  'dojo/dom-construct',
   'dojo/topic',
   'dojo/_base/declare',
   'dojo/store/Memory',
@@ -16,9 +18,9 @@ require([
   'codecompass/viewHandler',
   'codecompass/view/component/HtmlTree',
   'codecompass/view/component/ContextMenu'],
-function (on, query, style, topic, declare, Memory, Observable,
-  NodeListTraverse, ContentPane, Tree, ObjectStoreModel, util, model,
-  urlHandler, viewHandler, HtmlTree, ContextMenu) {
+function (on, query, dom, style, domConstruct, topic, declare, Memory,
+  Observable, NodeListTraverse, ContentPane, Tree, ObjectStoreModel, util,
+  model, urlHandler, viewHandler, HtmlTree, ContextMenu) {
 
   //--- No indent tree ---//
 
@@ -237,6 +239,30 @@ function (on, query, style, topic, declare, Memory, Observable,
       path.unshift('project');
 
       this.set('path', path);
+      this._setFilePath(fileInfo.path);
+    },
+
+    _setFilePath : function (path) {
+      if (!path)
+        return;
+
+      this._filePath = path;
+
+      var paneWidth = util.getFullWidth(this.domNode);
+      var titleWidth = util.getFullWidth(this.fileManagerTitle);
+      var restWidth = paneWidth - titleWidth;
+
+      var title = this.fileManagerTitle.innerHTML;
+      var fontWidth = titleWidth / title.length;
+      var maxChar = restWidth / fontWidth;
+
+      var start = path.length - maxChar + 3;
+      if (start > 0) {
+        var correctWidth = path.slice(start, path.length);
+        path = "../" + correctWidth.replace(/[^\/]*\//, '');
+      }
+
+      this.fileManagerPath.innerHTML = path;
     }
   });
 
@@ -263,6 +289,7 @@ function (on, query, style, topic, declare, Memory, Observable,
 
     onOpen : function (item, node) {
       this._displayElements(node.getParent().getChildren(), false);
+      this._setFilePath(item.fileInfo.path);
     },
 
     onClick : function (item, node, event) {
@@ -273,6 +300,7 @@ function (on, query, style, topic, declare, Memory, Observable,
         var children = parent.getParent().getChildren();
         this._collapseNode(parent);
         this._displayElements(children, true);
+        this._setFilePath(parent.item.fileInfo.path);
       } else if (item.shortcut) { // Click on a label
         if (this._previousPath === item.shortcut)
           return;
@@ -301,7 +329,9 @@ function (on, query, style, topic, declare, Memory, Observable,
         children.forEach(function (child){
           that._collapseNode(child);
         });
+
         this._displayElements(children, true);
+        this._setFilePath(item.shortcut);
       } else {
         this.inherited(arguments);
       }
@@ -331,6 +361,26 @@ function (on, query, style, topic, declare, Memory, Observable,
 
     postCreate : function () {
       this.addChild(this.currentChild);
+    },
+
+    resize : function (changeSize, resultSize){
+      this.inherited(arguments);
+      this.currentChild._setFilePath(this.currentChild._filePath);
+    },
+
+    startup : function () {
+      var fileManagerTitleBox = domConstruct.create('span', {
+        id : 'filemanagerButton',
+      }, this.id + '_button_title', 'replace');
+
+      this.currentChild.fileManagerTitle = domConstruct.create('span', {
+        id : 'fileManagerTitle',
+        innerHTML : this.title
+      }, fileManagerTitleBox, 'last');
+
+      this.currentChild.fileManagerPath = domConstruct.create('span', {
+        id : 'fileManagerPath',
+      }, fileManagerTitleBox, 'last');
     },
 
     setState : function () {
