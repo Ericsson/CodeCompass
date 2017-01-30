@@ -168,6 +168,8 @@ private:
 
     WRITE, /*!< This option returns the places where a variable is written. */
 
+    TYPE, /*!< This option returns the type of a variable. */
+
     ALIAS, /*!< Types may have aliases, e.g. by typedefs. */
 
     INHERIT_FROM, /*!< Types from which the queried type inherits. */
@@ -187,12 +189,12 @@ private:
 
   enum FileReferenceType
   {
-    INCLUDE, /*!< Included source files in the current source file after the
+    INCLUDES, /*!< Included source files in the current source file after the
       inclusion directive. */
 
-    TYPE, /*!< User defined data types such as classes, structs etc. */
+    TYPES, /*!< User defined data types such as classes, structs etc. */
 
-    FUNCTION /*!< Functions in the current source file. */
+    FUNCTIONS /*!< Functions in the current source file. */
   };
 
   enum DiagramType
@@ -211,7 +213,8 @@ private:
       in the nodes, but the type of the member variables are indicated as
       aggregation relationship. */
 
-    CLASS_COLLABORATION /*!< This returns a class collaboration UML diagram. */
+    CLASS_COLLABORATION /*!< This returns a class collaboration diagram
+      which shows the individual class members and their inheritance hierarchy. */
   };
 
   static bool compareByPosition(

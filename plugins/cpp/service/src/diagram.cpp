@@ -1,3 +1,8 @@
+#include <model/cppvariable.h>
+#include <model/cppvariable-odb.hxx>
+#include <model/cpptype.h>
+#include <model/cpptype-odb.hxx>
+
 #include <util/legendbuilder.h>
 #include <util/util.h>
 #include "diagram.h"
@@ -52,6 +57,123 @@ Diagram::Diagram(
     : _cppHandler(db_, datadir_, config_),
       _projectHandler(db_, datadir_, config_)
 {
+}
+
+void Diagram::getClassCollaborationDiagram(
+  util::Graph& graph_,
+  const core::AstNodeId& astNodeId_)
+{
+  std::map<core::AstNodeId, util::Graph::Node> visitedNodes;
+  std::map<GraphNodePair, util::Graph::Edge> visitedEdges;
+  std::vector<AstNodeInfo> relatedNodes;
+  std::vector<AstNodeInfo> nodes;
+
+  graph_.setAttribute("rankdir", "BT");
+
+  //--- Center node ---//
+
+  _cppHandler.getReferences(
+    nodes, astNodeId_, CppServiceHandler::DEFINITION, {});
+
+  if (nodes.empty())
+    return;
+
+  AstNodeInfo nodeInfo = nodes.front();
+
+  util::Graph::Node centerNode = addNode(graph_, nodeInfo);
+  decorate(graph_, centerNode, centerClassNodeDecoration);
+  visitedNodes[nodeInfo.id] = centerNode;
+  relatedNodes.push_back(nodeInfo);
+
+  nodes.clear();
+
+  //--- Types from which the queried type inherits ---//
+
+  _cppHandler.getReferences(nodes, nodeInfo.id,
+    CppServiceHandler::INHERIT_FROM, {});
+
+  for (const AstNodeInfo& node : nodes)
+  {
+    util::Graph::Node inheritNode = addNode(graph_, node);
+    graph_.setAttribute(inheritNode, "label",
+      node.astNodeValue, true);
+    decorate(graph_, inheritNode, classNodeDecoration);
+
+    util::Graph::Edge edge = graph_.addEdge(centerNode, inheritNode);
+    decorate(graph_, edge, inheritClassEdgeDecoration);
+
+    visitedNodes[node.id] = inheritNode;
+    relatedNodes.push_back(node);
+  }
+
+  nodes.clear();
+
+  //--- Types by which the queried type is inherited ---//
+
+  _cppHandler.getReferences(nodes, nodeInfo.id,
+    CppServiceHandler::INHERIT_BY, {});
+
+  for (const AstNodeInfo& node : nodes)
+  {
+    util::Graph::Node inheritNode = addNode(graph_, node);
+    graph_.setAttribute(inheritNode, "label",
+      node.astNodeValue, true);
+    decorate(graph_, inheritNode, classNodeDecoration);
+
+    util::Graph::Edge edge = graph_.addEdge(inheritNode, centerNode);
+    decorate(graph_, edge, inheritClassEdgeDecoration);
+
+    visitedNodes[node.id] = inheritNode;
+    relatedNodes.push_back(node);
+  }
+
+  //--- Get related types for the current and related types ---//
+
+  for (const AstNodeInfo& relatedNode : relatedNodes)
+  {
+    std::vector<AstNodeInfo> dataMembers;
+    _cppHandler.getReferences(dataMembers, relatedNode.id,
+      CppServiceHandler::DATA_MEMBER, {});
+
+    for (const AstNodeInfo& node : dataMembers)
+    {
+      std::vector<AstNodeInfo> types;
+      _cppHandler.getReferences(types, node.id, CppServiceHandler::TYPE, {});
+
+      if (types.empty())
+        continue;
+
+      AstNodeInfo typeInfo = types.front();
+
+      util::Graph::Node typeNode;
+      auto it = visitedNodes.find(typeInfo.id);
+      if (it == visitedNodes.end())
+      {
+        typeNode = addNode(graph_, typeInfo);
+        decorate(graph_, typeNode, classNodeDecoration);
+        visitedNodes.insert(it, std::make_pair(typeInfo.id, typeNode));
+      }
+      else
+        typeNode = it->second;
+
+      GraphNodePair graphEdge(visitedNodes[relatedNode.id], typeNode);
+      auto edgeIt = visitedEdges.find(graphEdge);
+      if (edgeIt == visitedEdges.end())
+      {
+        util::Graph::Edge edge =
+          graph_.addEdge(visitedNodes[relatedNode.id], typeNode);
+        decorate(graph_, edge, usedClassEdgeDecoration);
+        graph_.setAttribute(edge, "label", node.astNodeValue);
+        visitedEdges.insert(edgeIt, std::make_pair(graphEdge, edge));
+      }
+      else
+      {
+        std::string oldLabel = graph_.getAttribute(edgeIt->second, "label");
+        graph_.setAttribute(edgeIt->second, "label",
+          oldLabel + ", " + node.astNodeValue);
+      }
+    }
+  }
 }
 
 void Diagram::getFunctionCallDiagram(
@@ -168,7 +290,7 @@ void Diagram::getDetailedClassDiagram(
     graph_.setAttribute(inheritNode, "shape", "none");
 
     util::Graph::Edge edge = graph_.addEdge(currentNode, inheritNode);
-    graph_.setAttribute(edge, "arrowhead", "empty");
+    decorate(graph_, edge, inheritClassEdgeDecoration);
   }
 
   nodes.clear();
@@ -186,7 +308,7 @@ void Diagram::getDetailedClassDiagram(
     graph_.setAttribute(inheritNode, "shape", "none");
 
     util::Graph::Edge edge = graph_.addEdge(inheritNode, currentNode);
-    graph_.setAttribute(edge, "arrowhead", "empty");
+    decorate(graph_, edge, inheritClassEdgeDecoration);
   }
 }
 
@@ -322,6 +444,17 @@ std::string Diagram::getFunctionCallLegend()
   return builder.getOutput();
 }
 
+std::string Diagram::getClassCollaborationLegend()
+{
+  util::LegendBuilder builder("Class Collaboration Diagram");
+
+  builder.addNode("center class", centerClassNodeDecoration);
+  builder.addNode("class", classNodeDecoration);
+  builder.addEdge("contained or used class", usedClassEdgeDecoration);
+
+  return builder.getOutput();
+}
+
 util::Graph::Subgraph Diagram::addSubgraph(
   util::Graph& graph_,
   const core::FileId& fileId_)
@@ -372,6 +505,25 @@ const Diagram::Decoration Diagram::calleeEdgeDecoration = {
 
 const Diagram::Decoration Diagram::callerEdgeDecoration = {
   {"color", "red"}
+};
+
+const Diagram::Decoration Diagram::centerClassNodeDecoration = {
+  {"style", "filled"},
+  {"fillcolor", "gold"},
+  {"shape", "box"}
+};
+
+const Diagram::Decoration Diagram::classNodeDecoration = {
+  {"shape", "box"}
+};
+
+const Diagram::Decoration Diagram::usedClassEdgeDecoration = {
+  {"style", "dashed"},
+  {"color", "mediumpurple"}
+};
+
+const Diagram::Decoration Diagram::inheritClassEdgeDecoration = {
+  {"arrowhead", "empty"}
 };
 
 }

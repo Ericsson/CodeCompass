@@ -291,6 +291,7 @@ void CppServiceHandler::getReferenceTypes(
     case model::CppAstNode::SymbolType::Variable:
       return_["Reads"]                 = READ;
       return_["Writes"]                = WRITE;
+      return_["Type"]                  = TYPE;
       break;
 
     case model::CppAstNode::SymbolType::Type:
@@ -500,6 +501,28 @@ void CppServiceHandler::getReferences(
         break;
       }
 
+      case TYPE:
+      {
+        node = queryCppAstNode(astNodeId_);
+
+        VarResult varNodes = _db->query<cc::model::CppVariable>(
+          VarQuery::mangledNameHash == node.mangledNameHash);
+
+        const model::CppVariable& variable = *varNodes.begin();
+
+        TypeResult result = _db->query<model::CppType>(
+          TypeQuery::mangledNameHash == variable.typeHash);
+
+        for (const model::CppType& type : result)
+        {
+          std::vector<model::CppAstNode> defs =
+            queryDefinitions(std::to_string(type.astNodeId));
+          nodes.insert(nodes.end(), defs.begin(), defs.end());
+        }
+
+        break;
+      }
+
       case INHERIT_FROM:
         node = queryCppAstNode(astNodeId_);
 
@@ -638,6 +661,7 @@ void CppServiceHandler::getDiagramTypes(
 
     case model::CppAstNode::SymbolType::Type:
       return_["Detailed class diagram"] = DETAILED_CLASS;
+      return_["Class collaboration diagram"] = CLASS_COLLABORATION;
       break;
 
     default: // Just to suppress warning of uncovered enum constants.
@@ -669,8 +693,8 @@ void CppServiceHandler::getFileReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_)
 {
-  return_["Types"]     = TYPE;
-  return_["Functions"] = FUNCTION;
+  return_["Types"]     = TYPES;
+  return_["Functions"] = FUNCTIONS;
 }
 
 void CppServiceHandler::getFileReferences(
@@ -684,13 +708,13 @@ void CppServiceHandler::getFileReferences(
   _transaction([&, this](){
     switch (referenceId_)
     {
-      case TYPE:
+      case TYPES:
         nodes = queryCppAstNodesInFile(fileId_,
           AstQuery::symbolType == model::CppAstNode::SymbolType::Type &&
           AstQuery::astType == model::CppAstNode::AstType::Definition);
         break;
 
-      case FUNCTION:
+      case FUNCTIONS:
         nodes = queryCppAstNodesInFile(fileId_,
            AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
           (AstQuery::astType == model::CppAstNode::AstType::Definition ||
@@ -732,6 +756,10 @@ void CppServiceHandler::getDiagram(
     case DETAILED_CLASS:
       diagram.getDetailedClassDiagram(graph, astNodeId_);
       break;
+
+    case CLASS_COLLABORATION:
+      diagram.getClassCollaborationDiagram(graph, astNodeId_);
+      break;
   }
 
   if (graph.nodeCount() != 0)
@@ -748,6 +776,10 @@ void CppServiceHandler::getDiagramLegend(
   {
     case FUNCTION_CALL:
       return_ = diagram.getFunctionCallLegend();
+      break;
+
+    case CLASS_COLLABORATION:
+      return_ = diagram.getClassCollaborationLegend();
       break;
   }
 }
