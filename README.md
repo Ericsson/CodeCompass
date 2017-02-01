@@ -2,7 +2,7 @@
 
 # The source-code navigator for programmers.
 
-![CodeCompass](https://raw.githubusercontent.com/Ericsson/codecompass/master/img/logo.jpg)
+![CodeCompass](https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/logo.jpg)
 
 #Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)
 
@@ -16,9 +16,9 @@
 
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot1.jpg" width="30%" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot2.jpg" width="30%" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/img/screenshot3.jpg" width="30%" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot1.jpg" width="30%" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot2.jpg" width="30%" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot3.jpg" width="30%" />
 
 ##Getting Started##
 
