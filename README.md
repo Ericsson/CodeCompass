@@ -20,6 +20,16 @@ CodeCompass
 
 CodeCompass is a pluginable code comprehension tool.
 
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/logo.png" width="250px;"/>
+
+# :bulb: Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)
+
+## Screenshots
+
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot1.jpg" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot2.jpg" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot3.jpg" height="100px" />
+
 Features
 --------
 
