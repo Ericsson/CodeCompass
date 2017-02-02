@@ -177,7 +177,7 @@ void CppServiceHandler::getAstNodeInfoByPosition(
       }
     }
 
-    return_ = CreateAstNodeInfo(_db)(min);
+    return_ = CreateAstNodeInfo(_db, getTags({min}))(min);
   });
 }
 
