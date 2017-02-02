@@ -396,13 +396,16 @@ void CppServiceHandler::getReferences(
 
       case VIRTUAL_CALL:
       {
-        std::vector<model::CppAstNode> calls = queryCalls(astNodeId_);
+        nodes = queryCppAstNodes(astNodeId_,
+          AstQuery::astType == model::CppAstNode::AstType::VirtualCall);
 
-        for (const model::CppAstNode& call : calls)
+        for (const model::CppAstNode& node : queryOverrides(astNodeId_, true))
         {
-          std::vector<model::CppAstNode> overrides
-            = queryOverrides(std::to_string(call.id));
-          nodes.insert(nodes.end(), overrides.begin(), overrides.end());
+          core::AstNodeId astNodeId = std::to_string(node.id);
+          std::vector<model::CppAstNode> calls = queryCppAstNodes(astNodeId,
+            AstQuery::astType == model::CppAstNode::AstType::VirtualCall);
+
+          nodes.insert(nodes.end(), calls.begin(), calls.end());
         }
 
         std::sort(nodes.begin(), nodes.end());
