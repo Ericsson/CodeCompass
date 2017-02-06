@@ -262,6 +262,54 @@ public:
     return b;
   }
 
+  bool VisitTypeLoc(clang::TypeLoc tl_)
+  {
+    clang::QualType t = tl_.getType();
+    const clang::Type* type = t.getTypePtrOrNull();
+    if (!type) return true;
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+    astNode->location = getFileLoc(tl_.getLocStart(), tl_.getLocEnd());
+    astNode->astType = model::CppAstNode::AstType::TypeLocation;
+    astNode->symbolType = model::CppAstNode::SymbolType::Type;
+
+    if (const clang::TypedefType* tdType = type->getAs<clang::TypedefType>())
+    {
+      if (const clang::TypedefNameDecl* td = tdType->getDecl())
+      {
+        astNode->astValue = td->getNameAsString();
+        astNode->mangledName = getMangledName(_mngCtx, td);
+        astNode->symbolType = model::CppAstNode::SymbolType::Typedef;
+      }
+    }
+    else if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
+    {
+      astNode->astValue = rd->getNameAsString();
+      astNode->mangledName = getMangledName(_mngCtx, rd);
+    }
+    else if (const clang::EnumType* enumType = type->getAs<clang::EnumType>())
+    {
+      if (const clang::EnumDecl* ed = enumType->getDecl())
+      {
+        astNode->astValue = ed->getNameAsString();
+        astNode->mangledName = getMangledName(_mngCtx, ed);
+        astNode->symbolType = model::CppAstNode::SymbolType::Enum;
+      }
+    }
+    else
+    {
+      return true;
+    }
+
+    astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
+    astNode->id = model::createIdentifier(*astNode);
+
+    if (insertToCache(0, astNode))
+      _astNodes.push_back(astNode);
+
+    return true;
+  }
+
   bool VisitRecordDecl(clang::RecordDecl* rd_)
   {
     //--- CppAstNode ---//
@@ -600,37 +648,6 @@ public:
 
       if (insertToCache(0, typeAstNode))
         _astNodes.push_back(typeAstNode);
-    }
-
-    //---            CppAstNode for class specifier in            ---//
-    //--- CXXMethodDecl, CXXConstructorDecl and CXXDestructorDecl ---//
-
-    // TODO: What about nested qualifiers? void A::B::C::f() {}
-
-    if (md && _typeStack.empty())
-    {
-      model::CppAstNodePtr classAstNode = std::make_shared<model::CppAstNode>();
-
-      clang::CXXRecordDecl* parent = md->getParent();
-
-      clang::SourceLocation start
-        = llvm::isa<clang::CXXConstructorDecl>(md) ||
-          llvm::isa<clang::CXXDestructorDecl>(md)
-        ? md->getLocStart()
-        : md->getQualifierLoc().getBeginLoc();
-
-      classAstNode->astValue = parent->getNameAsString();
-      // The lexed token length will be added to the end position.
-      classAstNode->location = getFileLoc(start, start);
-      classAstNode->mangledName = getMangledName(_mngCtx, parent);
-      classAstNode->mangledNameHash = util::fnvHash(classAstNode->mangledName);
-      classAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      classAstNode->astType = model::CppAstNode::AstType::Usage;
-
-      classAstNode->id = model::createIdentifier(*classAstNode);
-
-      if (insertToCache(0, classAstNode))
-        _astNodes.push_back(classAstNode);
     }
 
     //--- CppMemberType ---//
