@@ -38,6 +38,7 @@
 #include "manglednamecache.h"
 #include "filelocutil.h"
 #include "symbolhelper.h"
+#include "refcollector.h"
 
 namespace cc
 {
@@ -102,6 +103,20 @@ public:
 
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
+
+  bool TraverseStmt(clang::Stmt* s_)
+  {
+    if(!s_) return true;
+
+    bool writtenVars = collectWrittenVariables(s_);
+
+    bool b = clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseStmt(s_);
+
+    if(writtenVars)
+      _writtenNodes.pop_back();
+
+    return b;
+  }
 
   bool TraverseDecl(clang::Decl* decl_)
   {
@@ -1047,7 +1062,7 @@ public:
         ? model::CppAstNode::SymbolType::FunctionPtr
         : model::CppAstNode::SymbolType::Variable;
       astNode->astType
-        = isWritten(vd)
+        = isWritten(dr_)
         ? model::CppAstNode::AstType::Write
         : model::CppAstNode::AstType::Read;
 
@@ -1101,7 +1116,7 @@ public:
       ? model::CppAstNode::SymbolType::FunctionPtr
       : model::CppAstNode::SymbolType::Variable;
     astNode->astType
-      = isWritten(llvm::dyn_cast<clang::VarDecl>(vd))
+      = isWritten(me_)
       ? model::CppAstNode::AstType::Write
       : model::CppAstNode::AstType::Read;
 
@@ -1276,10 +1291,153 @@ private:
     return getVisibility(decl_->getAccess());
   }
 
-  bool isWritten(const clang::VarDecl* vd_) const
+  bool isWritten(const void* node_) const
   {
-    // TODO
-    return true;
+    for (const std::unordered_set<const void*>& s : _writtenNodes)
+      if (s.count(node_))
+        return true;
+
+    return false;
+  }
+
+  bool isWritable(const clang::QualType& param)
+  {
+    const clang::Type* typePtr = param.getTypePtr();
+    return ((typePtr->isReferenceType() ||
+             typePtr->isPointerType()) &&
+            !typePtr->getPointeeType().isConstQualified()) ||
+             typePtr->isRValueReferenceType();
+  };
+
+  bool collectWrittenVariables(clang::Stmt* s_)
+  {
+    std::vector<clang::Stmt*> collectFrom;
+
+    while (llvm::isa<clang::CaseStmt>(s_))
+    {
+      clang::CaseStmt* caseStmt = static_cast<clang::CaseStmt*>(s_);
+
+      if (caseStmt->getSubStmt())
+        s_ = caseStmt->getSubStmt();
+      else
+        break;
+    }
+
+    if (llvm::isa<clang::BinaryOperator>(s_))
+    {
+      clang::BinaryOperator* binop = static_cast<clang::BinaryOperator*>(s_);
+      if (binop->isAssignmentOp() ||
+          binop->isCompoundAssignmentOp() ||
+          binop->isShiftAssignOp())
+      {
+        collectFrom.push_back(binop->getLHS());
+      }
+    }
+    else if (llvm::isa<clang::UnaryOperator>(s_))
+    {
+      clang::UnaryOperator* unop = static_cast<clang::UnaryOperator*>(s_);
+      if(unop->isIncrementDecrementOp())
+        collectFrom.push_back(unop->getSubExpr());
+    }
+    else if (llvm::isa<clang::CXXOperatorCallExpr>(s_))
+    {
+      clang::CXXOperatorCallExpr* call =
+        static_cast<clang::CXXOperatorCallExpr*>(s_);
+
+      if(clang::FunctionDecl* decl = call->getDirectCallee())
+      {
+        if (llvm::isa<clang::CXXMethodDecl>(decl))
+        {
+          clang::CXXMethodDecl* method =
+            static_cast<clang::CXXMethodDecl*>(decl);
+
+          if (method && !method->isConst() && call->getNumArgs())
+            collectFrom.push_back(call->getArg(0));
+
+          for (int i=0;
+               i < (int)decl->getNumParams() &&
+               i < (int)(call->getNumArgs()) - 1;
+               ++i)
+          {
+            clang::QualType paramType = decl->getParamDecl(i)->getType();
+            if (isWritable(paramType))
+              collectFrom.push_back(call->getArg(i+1));
+          }
+        }
+        else
+        {
+          for (unsigned i = 0; i< call->getNumArgs() && i < decl->getNumParams(); ++i)
+          {
+            clang::QualType paramType = decl->getParamDecl(i)->getType();
+            if (isWritable(paramType))
+            {
+              collectFrom.push_back(call->getArg(i));
+            }
+          }
+        }
+      }
+    }
+    else if (llvm::isa<clang::CallExpr>(s_))
+    {
+      clang::CallExpr* call = static_cast<clang::CallExpr*>(s_);
+
+      if (clang::FunctionDecl* decl = call->getDirectCallee())
+      {
+        for (unsigned i = 0;
+            i < call->getNumArgs() && i < decl->getNumParams();
+            ++i)
+        {
+          clang::QualType paramType = decl->getParamDecl(i)->getType();
+          if (isWritable(paramType))
+            collectFrom.push_back(call->getArg(i));
+        }
+      }
+    }
+    else if (llvm::isa<clang::CXXConstructExpr>(s_))
+    {
+      clang::CXXConstructExpr* constructExpr =
+        static_cast<clang::CXXConstructExpr*>(s_);
+
+      if(clang::CXXConstructorDecl* decl = constructExpr->getConstructor())
+        for (unsigned i = 0;
+            i < constructExpr->getNumArgs() && i < decl->getNumParams();
+            ++i)
+        {
+          clang::QualType paramType = decl->getParamDecl(i)->getType();
+          if (isWritable(paramType))
+            collectFrom.push_back(constructExpr->getArg(i));
+        }
+    }
+    else if (llvm::isa<clang::MemberExpr>(s_))
+    {
+      clang::MemberExpr* memberExpr = static_cast<clang::MemberExpr*>(s_);
+      clang::ValueDecl*  memberDecl = memberExpr->getMemberDecl();
+
+      if (memberDecl && llvm::isa<clang::CXXMethodDecl>(memberDecl))
+      {
+        clang::CXXMethodDecl* cxxMethod =
+          static_cast<clang::CXXMethodDecl*>(memberDecl);
+
+        if (!cxxMethod->isConst())
+          collectFrom.push_back(memberExpr->getBase());
+      }
+    }
+    else if (llvm::isa<clang::CXXDeleteExpr>(s_))
+    {
+      collectFrom.push_back(s_);
+    }
+
+    if (!collectFrom.empty())
+    {
+      _writtenNodes.push_back(std::unordered_set<const void*>());
+      for (clang::Stmt* stmt : collectFrom)
+      {
+        RefCollector refCollector(_writtenNodes.back());
+        refCollector.collect(stmt);
+      }
+    }
+
+    return !collectFrom.empty();
   }
 
   // TODO: This should be in the model.
@@ -1327,6 +1485,8 @@ private:
   std::stack<model::CppFunctionPtr> _functionStack;
   std::stack<model::CppTypePtr>     _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
+
+  std::vector<std::unordered_set<const void*>> _writtenNodes;
 
   bool _isImplicit;
   ParserContext& _ctx;
