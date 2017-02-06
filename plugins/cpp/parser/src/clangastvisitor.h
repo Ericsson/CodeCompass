@@ -262,10 +262,10 @@ public:
     return b;
   }
 
-  bool TraverseTypeLoc(clang::TypeLoc tl_)
+  bool VisitTypeLoc(clang::TypeLoc tl_)
   {
-    clang::QualType T = tl_.getType();
-    const clang::Type *type = T.getTypePtrOrNull();
+    clang::QualType t = tl_.getType();
+    const clang::Type* type = t.getTypePtrOrNull();
     if (!type) return true;
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
@@ -278,36 +278,36 @@ public:
       if (const clang::TypedefNameDecl* td = tdType->getDecl())
       {
         astNode->astValue = td->getNameAsString();
-        astNode->mangledName = getMangledName(_mngCtx, td, astNode->location);
+        astNode->mangledName = getMangledName(_mngCtx, td);
         astNode->symbolType = model::CppAstNode::SymbolType::Typedef;
       }
     }
     else if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
     {
       astNode->astValue = rd->getNameAsString();
-      astNode->mangledName = getMangledName(_mngCtx, rd, astNode->location);
+      astNode->mangledName = getMangledName(_mngCtx, rd);
     }
     else if (const clang::EnumType* enumType = type->getAs<clang::EnumType>())
     {
       if (const clang::EnumDecl* ed = enumType->getDecl())
       {
         astNode->astValue = ed->getNameAsString();
-        astNode->mangledName = getMangledName(_mngCtx, ed, astNode->location);
+        astNode->mangledName = getMangledName(_mngCtx, ed);
         astNode->symbolType = model::CppAstNode::SymbolType::Enum;
       }
     }
     else
     {
-      return clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseTypeLoc(tl_);
+      return true;
     }
 
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->id = model::createIdentifier(*astNode);
 
-    if (insertToCache(&tl_, astNode))
+    if (insertToCache(0, astNode))
       _astNodes.push_back(astNode);
 
-    return clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseTypeLoc(tl_);
+    return true;
   }
 
   bool VisitRecordDecl(clang::RecordDecl* rd_)
