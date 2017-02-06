@@ -358,6 +358,8 @@ public:
 
         if (cxxRecordDecl)
         {
+          //--- Friend classes ---//
+
           model::CppFriendshipPtr friendship
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
@@ -365,6 +367,18 @@ public:
           friendship->target = cppType->mangledNameHash;
           friendship->theFriend
             = util::fnvHash(getMangledName(_mngCtx, cxxRecordDecl));
+        }
+        else if (clang::NamedDecl* friendDecl = (*it)->getFriendDecl())
+        {
+          //--- Friend functions ---//
+
+          model::CppFriendshipPtr friendship
+            = std::make_shared<model::CppFriendship>();
+          _friends.push_back(friendship);
+
+          friendship->target = cppType->mangledNameHash;
+          friendship->theFriend
+            = util::fnvHash(getMangledName(_mngCtx, friendDecl));
         }
       }
     }
