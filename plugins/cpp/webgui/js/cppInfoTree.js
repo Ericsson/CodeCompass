@@ -31,21 +31,22 @@ function (model, viewHandler, util) {
   }
 
   function createLabel(astNodeInfo) {
-    var tags = astNodeInfo.tags;
-
     var labelClass = '';
 
-    if (tags.indexOf('implicit') > -1)
+    if (astNodeInfo.tags.indexOf('implicit') > -1)
       labelClass = 'label-implicit';
 
     var labelValue = astNodeInfo.astNodeValue;
-    if (astNodeInfo.symbolType === "Function")
+    if (astNodeInfo.symbolType === 'Function')
     {
       var props = model.cppservice.getProperties(astNodeInfo.id);
-      labelValue = props['Signature'];
+      // TODO: This "if" won't be necessary when the parser is fixed. Currently
+      // no signature is generated for implicit functions.
+      if (props['Signature'])
+        labelValue = props['Signature'];
     }
 
-    var label = createTagLabels(tags)
+    var label = createTagLabels(astNodeInfo.tags)
       + '<span class="' + labelClass + '">'
       + astNodeInfo.range.range.startpos.line   + ':'
       + astNodeInfo.range.range.startpos.column + ': '
@@ -197,11 +198,11 @@ function (model, viewHandler, util) {
 
   function createRootNode(elementInfo) {
     var rootLabel
-    = '<span class="root label">'
-    + (elementInfo instanceof AstNodeInfo
-        ? elementInfo.symbolType
-        : 'File')
-    + '</span>';
+      = '<span class="root label">'
+      + (elementInfo instanceof AstNodeInfo
+          ? elementInfo.symbolType
+          : 'File')
+      + '</span>';
 
     var rootValue
       = '<span class="root value">'
@@ -212,7 +213,7 @@ function (model, viewHandler, util) {
 
     var label = createTagLabels(elementInfo.tags)
       + '<span class="root label">'
-      + rootLabel + ':' + rootValue
+      + rootLabel + ': ' + rootValue
       + '</span>';
 
     return {
@@ -232,7 +233,7 @@ function (model, viewHandler, util) {
 
       ret.push(createRootNode(elementInfo));
 
-      if(elementInfo instanceof AstNodeInfo) {
+      if (elementInfo instanceof AstNodeInfo) {
         //--- Properties ---//
 
         var props = model.cppservice.getProperties(elementInfo.id);
