@@ -38,7 +38,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
 
       //--- Tree ---//
 
-      this._rootNode = {
+      this._data.push({
         id          : 'root',
         name        : 'Info Tree',
         cssClass    : 'icon-info',
@@ -46,9 +46,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
         getChildren : function () {
           return that._store.query({ parent : 'root' });
         }
-      };
-
-      this._store.put(this._rootNode);
+      });
 
       this.set('model', dataModel);
       this.set('openOnClick', false);
@@ -68,25 +66,6 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
         that._store.remove(node.id);
       });
 
-      //--- Update root node label ---//
-
-      var rootLabel
-        = '<span class="root label">'
-        + (elementInfo instanceof AstNodeInfo
-            ? elementInfo.symbolType
-            : 'File')
-        + '</span>';
-
-      var rootValue
-        = '<span class="root value">'
-        + (elementInfo instanceof AstNodeInfo
-            ? elementInfo.astNodeValue
-            : elementInfo.name)
-        + '</span>';
-
-      this._rootNode.name = rootLabel + ': ' + rootValue;
-      this._store.put(this._rootNode);
-
       //--- Set first level nodes ---//
 
       viewHandler.getModules({ 
@@ -94,7 +73,6 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
         fileType : urlHandler.getFileInfo().type
       }).forEach(function (item) {
         item.render(elementInfo).forEach(function (infoNode) {
-          infoNode.parent = 'root';
           that._store.put(infoNode);
         });
       });

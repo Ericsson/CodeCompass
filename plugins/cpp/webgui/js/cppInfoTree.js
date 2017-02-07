@@ -6,10 +6,12 @@ function (model, viewHandler, util) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
-  function createLabel(astNodeInfo) {
-    var tags = astNodeInfo.tags;
-
+  function createTagLabels(tags) {
     var label = '';
+
+    if (!tags)
+      return label;
+
     if (tags.indexOf('static') > -1)
       label += '<span class="tag tag-static" title="Static">S</span>';
     if (tags.indexOf('constructor') > -1)
@@ -25,17 +27,31 @@ function (model, viewHandler, util) {
     if (tags.indexOf('global') > -1)
       label += '<span class="tag tag-global" title="Global">G</span>';
 
+    return label;
+  }
+
+  function createLabel(astNodeInfo) {
     var labelClass = '';
 
-    if (tags.indexOf('implicit') > -1)
+    if (astNodeInfo.tags.indexOf('implicit') > -1)
       labelClass = 'label-implicit';
 
-    label
-      += '<span class="' + labelClass + '">'
-      +  astNodeInfo.range.range.startpos.line   + ':'
-      +  astNodeInfo.range.range.startpos.column + ': '
-      +  astNodeInfo.astNodeValue
-      +  '</span>';
+    var labelValue = astNodeInfo.astNodeValue;
+    if (astNodeInfo.symbolType === 'Function')
+    {
+      var props = model.cppservice.getProperties(astNodeInfo.id);
+      // TODO: This "if" won't be necessary when the parser is fixed. Currently
+      // no signature is generated for implicit functions.
+      if (props['Signature'])
+        labelValue = props['Signature'];
+    }
+
+    var label = createTagLabels(astNodeInfo.tags)
+      + '<span class="' + labelClass + '">'
+      + astNodeInfo.range.range.startpos.line   + ':'
+      + astNodeInfo.range.range.startpos.column + ': '
+      + labelValue
+      + '</span>';
 
     return label;
   }
@@ -180,11 +196,44 @@ function (model, viewHandler, util) {
     return res;
   }
 
+  function createRootNode(elementInfo) {
+    var rootLabel
+      = '<span class="root label">'
+      + (elementInfo instanceof AstNodeInfo
+          ? elementInfo.symbolType
+          : 'File')
+      + '</span>';
+
+    var rootValue
+      = '<span class="root value">'
+      + (elementInfo instanceof AstNodeInfo
+          ? elementInfo.astNodeValue
+          : elementInfo.name)
+      + '</span>';
+
+    var label = createTagLabels(elementInfo.tags)
+      + '<span class="root label">'
+      + rootLabel + ': ' + rootValue
+      + '</span>';
+
+    return {
+      id          : 'root',
+      name        : label,
+      cssClass    : 'icon-info',
+      hasChildren : true,
+      getChildren : function () {
+        return that._store.query({ parent : 'root' });
+      }
+    };
+  }
+
   var cppInfoTree = {
     render : function (elementInfo) {
       var ret = [];
 
-      if(elementInfo instanceof AstNodeInfo) {
+      ret.push(createRootNode(elementInfo));
+
+      if (elementInfo instanceof AstNodeInfo) {
         //--- Properties ---//
 
         var props = model.cppservice.getProperties(elementInfo.id);
@@ -196,6 +245,7 @@ function (model, viewHandler, util) {
 
           ret.push({
             name        : label,
+            parent      : 'root',
             nodeInfo    : elementInfo,
             cssClass    : 'icon-' + propId,
             hasChildren : false
@@ -208,6 +258,7 @@ function (model, viewHandler, util) {
         for (var refType in refTypes) {
           ret.push({
             name        : refType,
+            parent      : 'root',
             refType     : refTypes[refType],
             cssClass    : 'icon-' + refType.replace(/ /g, '-'),
             hasChildren : true,
@@ -225,6 +276,7 @@ function (model, viewHandler, util) {
         for (var refType in refTypes) {
           ret.push({
             name        : refType,
+            parent      : 'root',
             nodeInfo    : elementInfo,
             refType     : refTypes[refType],
             cssClass    : 'icon-' + refType.replace(/ /g, '-'),
