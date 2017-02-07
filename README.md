@@ -1,20 +1,3 @@
-:exclamation::exclamation::exclamation: **Warning** :exclamation::exclamation::exclamation:
-=================================================================
-
-Major changes happened in CodeCompass architecture which caused a huge
-refactoring of the tool. The previous working version of CodeCompass is
-available in the branch `Earhart` and the current version is being
-developed on the `master` branch. The new version doesn't contain all
-the features but we are continuously porting them.
-
-**It is important that the Git hashes changed which breaks your local
-repository. Please fetch the new repository again.**
-
-You should use the `Earhart` version, but that won't be developed in the
-future except for minor fixes. Bugfixes and further developments will
-happen on `master` branch. User and development documentation will come
-soon.
-
 CodeCompass
 ===========
 
@@ -39,3 +22,17 @@ Features
 - Deep parsing for C, C++, Java and more is coming
 - Many diagrams: call path, inheritance, aggregation, CodeBites, etc.
 - Scalable: Quick response time even for large (100Mb) source code base
+
+Additional documentation
+--------
+- [Getting Started](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
+- [How To Parse A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Parse-A-Project)
+- [How To Manage Workspaces](https://github.com/Ericsson/CodeCompass/wiki/How-To-Manage-Workspaces)
+- [How To Start CodeCompass Webserver](https://github.com/Ericsson/CodeCompass/wiki/How-To-Start-CodeCompass-Webserver)
+- [How To Add CodeChecker To A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Add-CodeChecker-To-A-Project)
+- [Lazy Dog](https://github.com/Ericsson/CodeCompass/wiki/Lazy-Dog)
+
+Development
+--------
+- [Architecure refactoring](https://github.com/Ericsson/CodeCompass/wiki/Architecure-Refactoring)
+- [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
