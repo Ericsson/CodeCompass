@@ -89,9 +89,9 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
 
       //--- Set first level nodes ---//
 
-      // TODO: Get the module according to the file type.
       viewHandler.getModules({ 
-        type : viewHandler.moduleType.InfoTree
+        type     : viewHandler.moduleType.InfoTree,
+        fileType : urlHandler.getFileInfo().type
       }).forEach(function (item) {
         item.render(elementInfo).forEach(function (infoNode) {
           infoNode.parent = 'root';
