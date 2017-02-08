@@ -187,17 +187,13 @@ void CppServiceHandler::getProperties(
 {
   _transaction([&, this](){
     model::CppAstNode node = queryCppAstNode(astNodeId_);
-    std::vector<model::CppAstNode> defs = queryDefinitions(astNodeId_);
-
-    if (defs.empty())
-      return;
 
     switch (node.symbolType)
     {
       case model::CppAstNode::SymbolType::Variable:
       {
         VarResult variables = _db->query<model::CppVariable>(
-          VarQuery::mangledNameHash == defs.front().mangledNameHash);
+          VarQuery::mangledNameHash == node.mangledNameHash);
         model::CppVariable variable = *variables.begin();
 
         return_["Name"] = variable.name;
@@ -209,7 +205,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Function:
       {
         FuncResult functions = _db->query<model::CppFunction>(
-          FuncQuery::mangledNameHash == defs.front().mangledNameHash);
+          FuncQuery::mangledNameHash == node.mangledNameHash);
         model::CppFunction function = *functions.begin();
 
         return_["Name"] = function.qualifiedName.substr(
@@ -223,7 +219,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Type:
       {
         TypeResult types = _db->query<model::CppType>(
-          TypeQuery::mangledNameHash == defs.front().mangledNameHash);
+          TypeQuery::mangledNameHash == node.mangledNameHash);
         model::CppType type = *types.begin();
 
         if (type.isAbstract)
@@ -240,7 +236,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Typedef:
       {
         TypedefResult types = _db->query<model::CppTypedef>(
-          TypedefQuery::mangledNameHash == defs.front().mangledNameHash);
+          TypedefQuery::mangledNameHash == node.mangledNameHash);
         model::CppTypedef type = *types.begin();
 
         return_["Name"] = type.name;
@@ -253,7 +249,7 @@ void CppServiceHandler::getProperties(
       {
         EnumConstResult enumConsts
           = _db->query<model::CppEnumConstant>(
-              EnumConstQuery::mangledNameHash == defs.front().mangledNameHash);
+              EnumConstQuery::mangledNameHash == node.mangledNameHash);
         model::CppEnumConstant enumConst = *enumConsts.begin();
 
         return_["Name"] = enumConst.name;
