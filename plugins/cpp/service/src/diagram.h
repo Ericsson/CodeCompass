@@ -39,8 +39,23 @@ public:
     util::Graph& graph_,
     const core::AstNodeId& astNodeId_);
 
+  /**
+   * This diagram for a class shows recursively the related classes and their
+   * inheritance and containment relationships.
+   */
+  void getClassCollaborationDiagram(
+    util::Graph& graph_,
+    const core::AstNodeId& astNodeId_);
+
+  /**
+   * This function creates legend for the Class collaboration diagram.
+   * @return The generated legend as a string in SVG format.
+   */
+  std::string getClassCollaborationLegend();
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
+  typedef std::pair<util::Graph::Node, util::Graph::Node> GraphNodePair;
 
   /**
    * This function adds a node which represents an AST node. The label of the
@@ -110,6 +125,10 @@ private:
   static const Decoration virtualNodeDecoration;
   static const Decoration calleeEdgeDecoration;
   static const Decoration callerEdgeDecoration;
+  static const Decoration centerClassNodeDecoration;
+  static const Decoration classNodeDecoration;
+  static const Decoration usedClassEdgeDecoration;
+  static const Decoration inheritClassEdgeDecoration;
 
   std::map<core::FileId, util::Graph::Subgraph> _subgraphs;
 
