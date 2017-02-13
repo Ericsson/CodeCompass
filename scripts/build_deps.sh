@@ -48,19 +48,19 @@ download()
   if [ $# -gt 1 ];
   then
     local archive_file_name=$2
-    
+
     shift 2 # Drop the first two arguments to get access the rest via $@
     local archive_download_options=$@
   else
     local archive_file_name=$(basename "$1")
   fi
   local archive_download_master=$master_server_url/$archive_file_name
-  
+
   if [ "$comm_download" = false ];
   then
     return 2
   fi
-  
+
   echo_info "Downloading $archive_file_name"
   cd $CCMP_DEPS/deps
   if [ ! -f $archive_file_name ];
@@ -80,7 +80,7 @@ download()
       fi
     fi
     local extension=`echo $archive_file_name | awk -F . '{print $NF}'`
-    
+
     echo_info "Extracting $archive_file_name"
     case "$extension" in
       bz2)
@@ -124,7 +124,7 @@ should_build() {
 dep() {
   local dep_name=$1
   local avail_check=`declare -F build_$dep_name`
-  
+
   if [ ${#avail_check} -gt 0 ];
   then
     if [ "$comm_force" = true ] || [ "$comm_soft_force" = false ] || should_build $dep_name;
@@ -147,7 +147,7 @@ dep() {
 # param 2: output file
 createCommandWrapper() {
   local realCommand=$(which $1)
-  
+
   if [ -a "$2" ]; then
     #echo "Skipping $2 (already exists)!";
     return 0;
@@ -177,7 +177,7 @@ compile()
   local target_path=$3
   shift 3 # Drop the first three arguments to get access the rest via $@
   local compile_options=$@
-  
+
   if [ "$comm_build" = false ];
   then
     return 2
@@ -185,7 +185,7 @@ compile()
 
   echo_info "Compiling $script_name $src_dir $target_path $config_options"
   cd $CCMP_DEPS/deps/$src_dir
-  
+
   if [ ! -f $CCMP_DEPS/$target_path ] || [ "$comm_force" = true ] || [ "$comm_soft_force" = true ];
   then
     avail_check=`declare -F compile_$script_name`
@@ -208,16 +208,16 @@ compile_generic()
   local src_dir=$1
   shift # Drop the first argument to get access the rest via $@
   local config_options=$@
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   ./configure --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" $config_options || exit -1
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -227,14 +227,14 @@ compile_boost()
 {
   local src_dir=$1
   local boost_opts="--without-python --disable-icu boost.locale.icu=off"
-  
+
   echo_info "Cleaning $src_dir"
   ./b2 --clean
-  
+
   echo_info "Configuring $src_dir"
   ./bootstrap.sh --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib || exit -1
   ./b2 -j $cpu_count --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib --build-dir=$CCMP_DEPS $boost_opts || exit -1
-  
+
   echo_info "Making & Installing $src_dir"
   ./b2 install -j $cpu_count --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib $boost_opts || exit -1
   return 0
@@ -249,23 +249,22 @@ build_boost()
 compile_bzip2()
 {
   local src_dir=$1
-  
+
   echo_info "Cleaning $src_dir"
   make clean
   make -fMakefile-libbz2_so clean
 
-  
   #echo_info "Editing Makefile $src_dir"
   # Required when the compilation of the boost library fails, requesting to recompile the bzip2 library with -fPIC option.
   # sed -i 's/CFLAGS=/CFLAGS=-fPIC /1' Makefile
-  
+
   echo_info "Making & Installing $src_dir"
   make -fMakefile-libbz2_so PREFIX=$CCMP_DEPS || exit -1
   make bzip2 bzip2recover PREFIX=$CCMP_DEPS || exit -1
-  
+
   # MANUAL INSTALLATION
   install -dm755 $CCMP_DEPS/{bin,lib,include,share/man/man1}
-  
+
   install -m755 bzip2-shared $CCMP_DEPS/bin/bzip2
   install -m755 bzip2recover bzdiff bzgrep bzmore $CCMP_DEPS/bin
   ln -sf bzip2 $CCMP_DEPS/bin/bunzip2
@@ -275,30 +274,30 @@ compile_bzip2()
   ln -s libbz2.so.1.0.6 $CCMP_DEPS/lib/libbz2.so
   ln -s libbz2.so.1.0.6 $CCMP_DEPS/lib/libbz2.so.1
   ln -s libbz2.so.1.0.6 $CCMP_DEPS/lib/libbz2.so.1.0
-  
+
   install -m644 bzlib.h $CCMP_DEPS/include/
 
   install -m644 bzip2.1 $CCMP_DEPS/share/man/man1/
   ln -sf bzip2.1 $CCMP_DEPS/share/man/man1/bunzip2.1
   ln -sf bzip2.1 $CCMP_DEPS/share/man/man1/bzcat.1
   ln -sf bzip2.1 $CCMP_DEPS/share/man/man1/bzip2recover.1
-  
+
   return 0
 }
 
 compile_cmake()
 {
   local src_dir=$1
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   ./bootstrap --prefix=$CCMP_DEPS || exit -1
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -307,20 +306,20 @@ compile_cmake()
 compile_gtest()
 {
   local src_dir=$1
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   find -name \*.py -exec sed -i 's/#!\/usr\/bin\/env python$/#!\/usr\/bin\/env python2/' {} \; 
   ./configure --prefix=$CCMP_DEPS $CONFIG_OPTIONS --libdir=$CCMP_DEPS/lib CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" || exit -1
   # We need to fix the libtool script because there will be syntax error in the generated script; 
   # should rather fix the libtool.m4 file in gtest?
   sed -i "s/\/lib'/lib/g" libtool
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   #echo_info "Installing $src_dir"
   #make install || exit -1
   return 0
@@ -329,20 +328,19 @@ compile_gtest()
 compile_libgit2()
 {
   local src_dir=$1
-  
-  echo_info "Cleaning $src_dir"
-  make clean
-  
+
   echo_info "CMaking $src_dir"
   mkdir -p build && cd build
+  make clean
+
   CC="$CCMP_DEPS/bin/gcc"
   CXX="$CCMP_DEPS/bin/g++"
   CMAKE_PREFIX_PATH="$CCMP_DEPS"
-  $CCMP_DEPS/bin/cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR=OFF -DTHREADSAFE=ON -DUSE_SSH=OFF -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DOPENSSL_SSL_LIBRARY=$CCMP_DEPS
-  
+  $CCMP_DEPS/bin/cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR=OFF -DTHREADSAFE=ON -DUSE_SSH=OFF -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DCMAKE_USE_OPENSSL=OFF -DCURL=OFF -DUSE_OPENSSL=OFF
+
   echo_info "Making $src_dir"
   make PREFIX=$CCMP_DEPS -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -351,42 +349,16 @@ compile_libgit2()
 compile_thrift()
 {
   local src_dir=$1
-  
-  echo_info "Cleaning $src_dir"
-  make clean
-  
-  echo_info "Configuring $src_dir"
-  find -name \*.py -exec sed -i 's/#!\/usr\/bin\/env python$/#!\/usr\/bin\/env python2/' {} \;
-  # TRIFT-2386
-  #sed -i 's/^int yylex(void)\;/extern "C" int yylex(void)\;/' compiler/cpp/src/main.h
-  ./bootstrap.sh
-  ./configure --prefix=$CCMP_DEPS $CONFIG_OPTIONS --libdir=$CCMP_DEPS/lib CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" --with-boost="$BOOST_ROOT" --with-qt4=no --with-csharp=no --with-c_glib=no --with-java=no --with-erlang=no --with-php=no --with-ruby=no --with-haskell=no --with-go=no --with-d=no --with-python=no --with-perl=no --with-lua=no --with-nodejs=no --with-tests=no --enable-libtool-lock PY_PREFIX=$CCMP_DEPS/usr || exit -1
-  
-  echo_info "Making $src_dir"
-  make -j1 || exit -1
-  
-  echo_info "Installing $src_dir"
-  make install || exit -1
-  return 0
-}
 
-compile_xercesc()
-{
-  local src_dir=$1
-  
   echo_info "Cleaning $src_dir"
   make clean
-  
-  echo_info "Configuring $src_dir"
-  ./configure --prefix=$CCMP_DEPS $CONFIG_OPTIONS --libdir=$CCMP_DEPS/lib \
-    --disable-network --without-icu CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" || exit -1
-  # We need to fix the libtool script because there will be syntax error in the generated script; 
-  # should rather fix the libtool.m4 file in gtest?
-  sed -i "s/\/lib'/lib/g" libtool
-  
+
+  LD_LIBRARY_PATH="$CCMP_DEPS/lib:$LD_LIBRARY_PATH"
+  ./configure --with-openssl="$CCMP_DEPS/deps/openssl-1.1.0" --prefix=$CCMP_DEPS $CONFIG_OPTIONS --libdir=$CCMP_DEPS/lib CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" --with-boost="$BOOST_ROOT" --with-qt4=no --with-csharp=no --with-c_glib=no --with-java=no --with-erlang=no --with-php=no --with-ruby=no --with-haskell=no --with-go=no --with-d=no --with-python=no --with-perl=no --with-lua=no --with-nodejs=no --with-tests=no --enable-libtool-lock PY_PREFIX=$CCMP_DEPS/usr || exit -1
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -402,27 +374,27 @@ compile_openssl()
 
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   if [ "$arch_type" == 'x86_64' ]; then
-		openssltarget='linux-x86_64'
-		#optflags='enable-ec_nistp_64_gcc_128'
-	elif [ "$arch_type" == 'i686' ]; then
-		openssltarget='linux-elf'
-	fi
+    openssltarget='linux-x86_64'
+    #optflags='enable-ec_nistp_64_gcc_128'
+  elif [ "$arch_type" == 'i686' ]; then
+    openssltarget='linux-elf'
+  fi
 
   echo "Target: $openssltarget"
   echo "Opt flags: $optflags"
 
   ./Configure --prefix=$CCMP_DEPS --libdir=lib --openssldir=$CCMP_DEPS/lib/ssl\
-    ${optflags} ${openssltarget} \
-    shared no-idea no-mdc2 no-rc5 no-zlib enable-tlsext no-ssl2 \
+    ${optflags} ${openssltarget}\
+    shared no-idea no-mdc2 no-rc5 no-zlib\
     "${CPPFLAGS} ${LDFLAGS}" || exit -1
 
   echo_info "Making $src_dir"
   make depend || exit -1
   make || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
 
@@ -434,16 +406,16 @@ compile_perl()
   local src_dir=$1
   shift # Drop the first argument to get access the rest via $@
   local config_options=$@
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   ./Configure -des -Dprefix=$CCMP_DEPS -Dnoextensions=ODBM_File || exit -1
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -454,16 +426,16 @@ compile_zlib()
   local src_dir=$1
   shift # Drop the first argument to get access the rest via $@
   local config_options=$@
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   ./configure --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib $config_options || exit -1
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -474,16 +446,16 @@ compile_doxygen()
   local src_dir=$1
   shift # Drop the first argument to get access the rest via $@
   local config_options=$@
-  
+
   echo_info "Cleaning $src_dir"
   make clean
-  
+
   echo_info "Configuring $src_dir"
   LDFLAGS="$LDFLAGS" ./configure --prefix=$CCMP_DEPS $config_options || exit -1
-  
+
   echo_info "Making $src_dir"
   make -j$cpu_count || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -500,7 +472,7 @@ compile_CLAN()
 build_autoconf()
 {
   dep m4
-  
+
   download http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz
   compile generic autoconf-2.69 bin/autoconf
 }
@@ -508,7 +480,7 @@ build_autoconf()
 build_automake()
 {
   dep autoconf
-  
+
   download http://ftp.gnu.org/gnu/automake/automake-1.15.tar.gz
   compile generic automake-1.15 bin/automake
 }
@@ -516,7 +488,7 @@ build_automake()
 build_bzip2()
 {
   dep gcc
-  
+
   download http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
   compile bzip2 bzip2-1.0.6 bin/bzip2
 }
@@ -524,7 +496,7 @@ build_bzip2()
 build_cmake()
 {
   dep gcc
-  
+
   download http://www.cmake.org/files/v3.2/cmake-3.2.3.tar.gz
   compile cmake cmake-3.2.3 bin/cmake
 }
@@ -532,7 +504,7 @@ build_cmake()
 build_ctags()
 {
   dep gcc
-  
+
   download http://netcologne.dl.sourceforge.net/project/ctags/ctags/5.8/ctags-5.8.tar.gz
   compile generic ctags-5.8 bin/ctags
 }
@@ -540,7 +512,7 @@ build_ctags()
 build_file()
 {
   dep gcc
-  
+
   download ftp://ftp.astron.com/pub/file/file-5.22.tar.gz
   compile generic file-5.22 bin/file
 }
@@ -561,7 +533,7 @@ build_gdb()
 {
   dep gcc
   dep ncurses
-  
+
   download http://ftp.gnu.org/gnu/gdb/gdb-7.9.tar.gz
   compile generic gdb-7.9 bin/gdb
 }
@@ -570,7 +542,7 @@ build_gmp()
 {
   dep gcc
   dep m4
-  
+
   download ftp://ftp.gmplib.org/pub/gmp/gmp-6.0.0a.tar.bz2
   compile generic gmp-6.0.0 lib/libgmp.so
 }
@@ -579,7 +551,7 @@ build_graphviz()
 {
   dep gcc
   dep zlib
-  
+
   download http://www.graphviz.org/pub/graphviz/stable/SOURCES/graphviz-2.38.0.tar.gz
   compile generic graphviz-2.38.0 bin/dot --with-webp=no --with-poppler=no \
     --with-rsvg=no --with-ghostscript=no --with-visio=no --with-pangocairo=no \
@@ -597,7 +569,7 @@ build_gtest()
 {
   dep gcc
   dep python2
-  
+
   download http://github.com/google/googletest/archive/release-1.7.0.zip gtest-1.7.0.zip 
   compile gtest gtest-1.7.0 deps/gtest-1.7.0/lib/libgtest.la
   
@@ -620,7 +592,7 @@ build_jdk()
 build_libcutl()
 {
   dep boost
-  
+
   download http://www.codesynthesis.com/download/libcutl/1.9/libcutl-1.9.0.tar.gz
   compile generic libcutl-1.9.0 lib/libcutl.so
 }
@@ -631,15 +603,15 @@ build_libgit2()
   dep cmake
   dep openssl
   dep pkgconfig
-  
-  download https://github.com/libgit2/libgit2/archive/v0.22.2.tar.gz libgit2-v0.22.2.tar.gz --no-check-certificate
-  compile libgit2 libgit2-0.22.2 lib/libgit2.so
+
+  download https://github.com/libgit2/libgit2/archive/v0.25.1.tar.gz libgit2-v0.25.1.tar.gz --no-check-certificate
+  compile libgit2 libgit2-0.25.1 lib/libgit2.so
 }
 
 build_libodb()
 {
   dep gcc
-  
+
   download http://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.zip
   compile generic libodb-2.4.0 lib/libodb.so
 }
@@ -648,7 +620,7 @@ build_libodb_pgsql()
 {
   dep libodb
   dep pgsql
-  
+
   download http://www.codesynthesis.com/download/odb/2.4/libodb-pgsql-2.4.0.zip
   compile generic libodb-pgsql-2.4.0 lib/libodb-pgsql.so
 }
@@ -657,7 +629,7 @@ build_libodb_sqlite()
 {
   dep libodb
   dep sqlite
-  
+
   download http://www.codesynthesis.com/download/odb/2.4/libodb-sqlite-2.4.0.zip
   compile generic libodb-sqlite-2.4.0 lib/libodb-sqlite.so
 }
@@ -665,7 +637,7 @@ build_libodb_sqlite()
 build_libtool()
 {
   dep gcc
-  
+
   download http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz
   compile generic libtool-2.4.6 bin/libtool
 }
@@ -673,7 +645,9 @@ build_libtool()
 build_llvm()
 {
   dep gcc
-  
+  dep zlib
+  dep python2
+
   export REQUIRES_RTTI=1
   download http://llvm.org/releases/3.8.0/llvm-3.8.0.src.tar.xz
   download http://llvm.org/releases/3.8.0/cfe-3.8.0.src.tar.xz
@@ -694,25 +668,23 @@ compile_llvm()
   local src_dir=$1
   shift # Drop the first argument to get access the rest via $@
   local config_options=$@
-  
+
   cd ..
 
   if [ ! -d llvm_build ]; then
     mkdir llvm_build
+    cd llvm_build
+  else
+    echo_info "Cleaning $llvm_build"
+    cd llvm_build
+    make clean
   fi
 
-  cd llvm_build
+  cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DCMAKE_INSTALL_LIBDIR=$CCMP_DEPS/lib -DCMAKE_CXX_FLAGS="$CPPFLAGS" -DCMAKE_CXX_COMPILER=$CCMP_DEPS/bin/g++ -DCMAKE_C_COMPILER=$CCMP_DEPS/bin/gcc -DLLVM_ENABLE_RTTI=ON $config_options ../$src_dir || exit -1
 
-  echo_info "Cleaning $src_dir"
-  #make clean
-  
-  echo_info "Configuring $src_dir"
-  cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DCMAKE_INSTALL_LIBDIR=$CCMP_DEPS/lib -DCMAKE_CXX_FLAGS="$CPPFLAGS" -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DLLVM_ENABLE_RTTI=ON $config_options ../$src_dir || exit -1
-#  ./configure --prefix=$CCMP_DEPS --libdir=$CCMP_DEPS/lib CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" $config_options || exit -1
-  
   echo_info "Making $src_dir"
   make -j$cpu_count REQUIRES_RTTI=1 || exit -1
-  
+
   echo_info "Installing $src_dir"
   make install || exit -1
   return 0
@@ -721,7 +693,7 @@ compile_llvm()
 build_m4()
 {
   dep gcc
-  
+
   download http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.bz2 
   compile generic m4-1.4.17 bin/m4
 }
@@ -729,47 +701,25 @@ build_m4()
 build_ncurses()
 {
   dep gcc
-  
+
   # TODO: use offical source
   # Use a snapshot for gcc 5.1, http://trac.sagemath.org/ticket/18301
-  download ftp://invisible-island.net/ncurses/ncurses-5.9.tgz
+  #download ftp://invisible-island.net/ncurses/ncurses-5.9.tgz
+  download https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.0.tar.gz
+  CPPFLAGS="$CPPFLAGS -P"
   #download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
-  compile generic ncurses-5.9 lib/libncurses.a --without-ada --with-shared
+  compile generic ncurses-6.0 lib/libncurses.a --without-ada --with-shared
 }
 
 build_odb()
 {
   dep libcutl
   dep gmp
-  
+
   download http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.zip
-  # For some reason some headers are searched for in the c-family directory by odb.
-  # Create symlinks to them.
-  #ln -fs $CCMP_DEPS/lib64/gcc/x86_64-unknown-linux-gnu/4.6.3/plugin/include/*.h $CCMP_DEPS/lib64/gcc/x86_64-unknown-linux-gnu/4.6.3/plugin/include/c-family
- 
-  # WORKAROUND FOR GCC 4.9.1:
-  #if [ $? -eq 0 ];
-  #then
-  #  download http://codesynthesis.com/~boris/tmp/odb/odb-2.3.0-gcc-4.9.0.patch
-  #  pushd ./odb-2.3.0
-  #  patch -p1 < "../odb-2.3.0-gcc-4.9.0.patch"
-  #  popd
-  #fi
- 
   # -fno-devirtualize is an anouther workaround for gcc 4.9.x
-  CXXFLAGS="$CXXFLAGS -fno-devirtualize" compile generic odb-2.4.0 bin/odb
-  #compile generic odb-2.4.0 bin/odb
-}
-
-build_openldap()
-{
-  dep gcc
-  dep zlib
-  dep openssl
-  dep sasl
-
-  download ftp://ftp.openldap.org/pub/OpenLDAP/openldap-release/openldap-2.4.40.tgz
-  compile generic openldap-2.4.40 lib/libldap.so --disable-slapd --disable-slurpd
+  CXXFLAGS="$CXXFLAGS -fno-devirtualize"
+  compile generic odb-2.4.0 bin/odb
 }
 
 build_sasl()
@@ -777,7 +727,7 @@ build_sasl()
   local cpu_count_save=$cpu_count
 
   dep gcc
-  
+
   download ftp://ftp.cyrusimap.org/cyrus-sasl/cyrus-sasl-2.1.26.tar.gz
   cpu_count=1
   compile generic cyrus-sasl-2.1.26 lib/libsasl2.so --with-dblib=none \
@@ -797,7 +747,7 @@ build_pgsql()
 {
   dep gcc
   dep readline
-  
+
   download http://ftp.postgresql.org/pub/source/v9.4.1/postgresql-9.4.1.tar.bz2
   compile generic postgresql-9.4.1 bin/psql
 }
@@ -814,7 +764,7 @@ build_sqlite()
 build_flex()
 {
   dep gcc
-  
+
   download http://optimate.dl.sourceforge.net/project/flex/flex-2.5.39.tar.gz
   compile generic flex-2.5.39 lib/libfl.so
 }
@@ -822,7 +772,7 @@ build_flex()
 build_bison()
 {
   dep gcc
-  
+
   download http://ftp.gnu.org/gnu/bison/bison-3.0.4.tar.gz
   compile generic bison-3.0.4 bin/bison
 }
@@ -830,7 +780,7 @@ build_bison()
 build_perl()
 {
   dep gcc
-  
+
   # PLEASE DO NOT UPGRADE
   # Openssl does not compiles with a newer version!!!one!!111!!!
   download http://www.cpan.org/src/5.0/perl-5.16.3.tar.gz
@@ -842,9 +792,9 @@ build_openssl()
   dep gcc
   dep perl
   dep zlib
-  
-  download ftp://ftp.openssl.org/source/old/1.0.2/openssl-1.0.2a.tar.gz
-  compile openssl openssl-1.0.2a lib/libssl.so
+
+  download ftp://ftp.openssl.org/source/old/1.1.0/openssl-1.1.0.tar.gz
+  compile openssl openssl-1.1.0 lib/libssl.so
 }
 
 build_pkgconfig()
@@ -859,8 +809,8 @@ build_libevent()
 {
   dep gcc
 
-  download https://sourceforge.net/projects/levent/files/libevent/libevent-2.0/libevent-2.0.22-stable.tar.gz
-  compile generic libevent-2.0.22-stable lib/libevent.so
+  download https://github.com/libevent/libevent/releases/download/release-2.1.8-stable/libevent-2.1.8-stable.tar.gz
+  compile generic libevent-2.1.8-stable lib/libevent.so
 }
 
 build_thrift()
@@ -873,23 +823,15 @@ build_thrift()
   dep pkgconfig
   dep libevent
   dep python2
-  
-  download https://dist.apache.org/repos/dist/release/thrift/0.9.3/thrift-0.9.3.tar.gz
-  compile generic thrift-0.9.3 bin/thrift --with-boost="$BOOST_ROOT" --with-openssl="$CCMP_DEPS/deps/openssl-1.0.2a" --with-qt4=no --with-csharp=no --with-c_glib=no --with-java=yes --with-erlang=no --with-php=no --with-ruby=no --with-haskell=no --with-go=no --with-d=no --with-python=yes --with-perl=no --with-lua=no --with-nodejs=no --with-tests=no --enable-libtool-lock PY_PREFIX=$CCMP_DEPS/usr JAVA_PREFIX=$CCMP_DEPS/usr/local/lib
-}
 
-build_xercesc()
-{
-  dep gcc
-  
-  download http://xenia.sote.hu/ftp/mirrors/www.apache.org//xerces/c/3/sources/xerces-c-3.1.1.tar.gz 
-  compile xercesc xerces-c-3.1.1 bin/SAX2Print
+  download https://dist.apache.org/repos/dist/release/thrift/0.10.0/thrift-0.10.0.tar.gz           
+  compile thrift thrift-0.10.0 bin/thrift
 }
 
 build_zlib()
 {
   dep gcc
-  
+
   download http://zlib.net/zlib-1.2.8.tar.gz
   compile zlib zlib-1.2.8 lib/libz.so
 }
@@ -926,7 +868,7 @@ build_python2()
   dep openssl
   dep readline
   dep ncurses
-  
+
   download https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz
   compile generic Python-2.7.9 bin/python
 }
@@ -941,10 +883,10 @@ generate_env()
 {
   local envf=$1
   echo_info "Preparing environment script to $CCMP_ROOT/$envf"
-  
-  mkdir -p $CCMP_ROOT || exit -1
-  cd $CCMP_ROOT
-  
+
+  mkdir -p $CCMP_DEPS || exit -1
+  cd $CCMP_DEPS
+
   echo -e "#!/bin/bash\n">$envf
   echo -e \
     "if [ -z \"\$grocker_env_set\" ]; then\n"\
@@ -955,12 +897,12 @@ generate_env()
     "  export CCMP_ROOT=\"$CCMP_ROOT\"\n"\
     "  export BOOST_ROOT=\"$BOOST_ROOT\"\n"\
     "  export PATH=\"$CCMP_DEPS/bin:$CCMP_ROOT/bin:\$PATH\"\n"\
-    "  export LD_LIBRARY_PATH=\"$CCMP_DEPS/lib:$CCMP_ROOT/lib:$CCMP_DEPS/lib64:$CCMP_ROOT/lib64:\$LD_LIBRARY_PATH\"\n"\
+    "  export LD_LIBRARY_PATH=\"$CCMP_DEPS/lib:$CCMP_ROOT/lib:$CCMP_ROOT/lib/parserplugin:$CCMP_ROOT/lib/serviceplugin/:$CCMP_DEPS/lib64:$CCMP_ROOT/lib64:\$LD_LIBRARY_PATH\"\n"\
+    "  export CLASSPATH=\"$CCMP_ROOT/lib/java/*\"\n"\
     "  export CPPFLAGS=\"$CPPFLAGS\"\n"\
     "  export CXXFLAGS=\"$CXXFLAGS\"\n"\
     "  export LDFLAGS=\"$LDFLAGS\"\n"\
     "  export GTEST_CONFIG=\"$CCMP_DEPS/deps/gtest-1.7.0/scripts/gtest-config\"\n"\
-    "  export XERCES_PREFIX=\"$CCMP_DEPS\"\n"\
     "  export SASL_PATH=\"$CCMP_DEPS/lib/sasl2\"\n"\
     "  export MAGIC=\"$CCMP_DEPS/share/misc/magic.mgc\"\n"\
     "  export grocker_env_set=1\n" \
@@ -980,7 +922,6 @@ export LIBRARY_PATH=\"\${LIBRARY_PATH}\$(((\${#LIBRARY_PATH} > 0)) && echo \":\"
   echo_success "Environment script generated"
   echo_info "Source it by executing 'source $envf'"
 }
-
 
 # BUILD SCRIPT
 
@@ -1214,4 +1155,3 @@ do
 done
 
 generate_env $env_file
-
