@@ -24,6 +24,7 @@ Features
 - Scalable: Quick response time even for large (100Mb) source code base
 
 Documentations (New version - **Flash**)
+--------
 - [Requirements, external source dependencies](docs/deps.md)
 - [User guide](docs/usage.md)
 
