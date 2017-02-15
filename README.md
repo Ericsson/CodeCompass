@@ -23,7 +23,11 @@ Features
 - Many diagrams: call path, inheritance, aggregation, CodeBites, etc.
 - Scalable: Quick response time even for large (100Mb) source code base
 
-Additional documentation
+Documentations (New version - **Flash**)
+- [Requirements, external source dependencies](docs/deps.md)
+- [User guide](docs/usage.md)
+
+Documentations (Earhart)
 --------
 - [Getting Started](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
 - [How To Parse A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Parse-A-Project)
@@ -31,8 +35,8 @@ Additional documentation
 - [How To Start CodeCompass Webserver](https://github.com/Ericsson/CodeCompass/wiki/How-To-Start-CodeCompass-Webserver)
 - [How To Add CodeChecker To A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Add-CodeChecker-To-A-Project)
 - [Lazy Dog](https://github.com/Ericsson/CodeCompass/wiki/Lazy-Dog)
+- [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
 
 Development
 --------
 - [Architecure refactoring](https://github.com/Ericsson/CodeCompass/wiki/Architecure-Refactoring)
-- [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
