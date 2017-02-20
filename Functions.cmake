@@ -81,4 +81,8 @@ function(install_webplugin _dir)
   # Copy images
   file(GLOB _images "${_dir}/images/*.jpg" "${_dir}/images/*.png")
   install(FILES ${_images} DESTINATION "${INSTALL_WEBROOT_DIR}/images" )
+
+  # Collect userguides
+  file(GLOB _userguides "${_dir}/userguide/*.md")
+  set_property(GLOBAL APPEND PROPERTY USERGUIDES "${_userguides}")
 endfunction(install_webplugin)
