@@ -430,6 +430,26 @@ util::Graph::Node Diagram::addNode(
   return node;
 }
 
+std::string Diagram::getDetailedClassLegend()
+{
+  util::LegendBuilder builder("Detailed Class Diagram");
+
+  builder.addNode("class", classNodeDecoration);
+  builder.addNode("public data member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "+", "color='green'")}}, true);
+  builder.addNode("private data member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "-", "color='red'")}}, true);
+  builder.addNode("protected data member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "#", "color='blue'")}}, true);
+  builder.addNode("static method or data member", {{"shape", "none"},
+    {"label", "<b>static</b>"}}, true);
+  builder.addNode("virtual method", {{"shape", "none"},
+    {"label", "<i>virtual</i>"}}, true);
+  builder.addEdge("inheritance", inheritClassEdgeDecoration);
+
+  return builder.getOutput();
+}
+
 std::string Diagram::getFunctionCallLegend()
 {
   util::LegendBuilder builder("Function Call Diagram");
@@ -451,6 +471,7 @@ std::string Diagram::getClassCollaborationLegend()
   builder.addNode("center class", centerClassNodeDecoration);
   builder.addNode("class", classNodeDecoration);
   builder.addEdge("contained or used class", usedClassEdgeDecoration);
+  builder.addEdge("inheritance", inheritClassEdgeDecoration);
 
   return builder.getOutput();
 }

@@ -36,7 +36,8 @@ std::string LegendBuilder::getOutput() const
 
 void LegendBuilder::addNode(
   const std::string& label_,
-  const std::vector<std::pair<std::string, std::string>>& attrs_)
+  const std::vector<std::pair<std::string, std::string>>& attrs_,
+  bool html_)
 {
   Graph::Subgraph sub = _graph.addSubgraph(label_);
 
@@ -56,13 +57,14 @@ void LegendBuilder::addNode(
   _graph.setAttribute(invis, "style", "invis");
 
   for (const auto& attr : attrs_)
-    _graph.setAttribute(node, attr.first, attr.second);
+    _graph.setAttribute(node, attr.first, attr.second, html_);
 }
 
 
 void LegendBuilder::addEdge(
   const std::string& label_,
-  const std::vector<std::pair<std::string, std::string>>& attrs_)
+  const std::vector<std::pair<std::string, std::string>>& attrs_,
+  bool html_)
 {
   Graph::Subgraph sub = _graph.addSubgraph(label_);
   _graph.setAttribute(sub, "rankdir", "LR");
@@ -83,7 +85,7 @@ void LegendBuilder::addEdge(
   _graph.setAttribute(invis, "style", "invis");
 
   for (const auto& attr : attrs_)
-    _graph.setAttribute(edge, attr.first, attr.second);
+    _graph.setAttribute(edge, attr.first, attr.second, html_);
 }
 
 Graph::Subgraph LegendBuilder::addSubgraph(
@@ -100,18 +102,20 @@ Graph::Subgraph LegendBuilder::addSubgraph(
 
 void LegendBuilder::setStyle(
   const Graph::Node& node_,
-  const std::vector<std::pair<std::string, std::string>>& attrs_)
+  const std::vector<std::pair<std::string, std::string>>& attrs_,
+  bool html_)
 {
   for (const auto& attr : attrs_)
-    _graph.setAttribute(node_, attr.first, attr.second);
+    _graph.setAttribute(node_, attr.first, attr.second, html_);
 }
 
 void LegendBuilder::setStyle(
   const Graph::Edge& edge_,
-  const std::vector<std::pair<std::string, std::string>>& attrs_)
+  const std::vector<std::pair<std::string, std::string>>& attrs_,
+  bool html_)
 {
   for (const auto& attr : attrs_)
-    _graph.setAttribute(edge_, attr.first, attr.second);
+    _graph.setAttribute(edge_, attr.first, attr.second, html_);
 }
 
 } // util

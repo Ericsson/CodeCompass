@@ -19,21 +19,25 @@ public:
 
   void addNode(
     const std::string& label_,
-    const std::vector<std::pair<std::string, std::string>>& attrs_);
+    const std::vector<std::pair<std::string, std::string>>& attrs_,
+    bool html_ = false);
 
   void addEdge(
     const std::string& label_,
-    const std::vector<std::pair<std::string, std::string>>& attrs_);
+    const std::vector<std::pair<std::string, std::string>>& attrs_,
+    bool html_ = false);
 
   Graph::Subgraph addSubgraph(const std::string& label_, Graph::Node& hook_);
 
   void setStyle(
     const Graph::Node& node_,
-    const std::vector<std::pair<std::string, std::string>>& attrs_);
+    const std::vector<std::pair<std::string, std::string>>& attrs_,
+    bool html_ = false);
 
   void setStyle(
     const Graph::Edge& edge_,
-    const std::vector<std::pair<std::string, std::string>>& attrs_);
+    const std::vector<std::pair<std::string, std::string>>& attrs_,
+    bool html_ = false);
 
 private:
   Graph::Node registerSubgraph(const Graph::Subgraph& sub_);
