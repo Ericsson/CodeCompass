@@ -40,6 +40,12 @@ public:
     const core::AstNodeId& astNodeId_);
 
   /**
+   * This function creates legend for the Detailed class diagram.
+   * @return The generated legend as a string in SVG format.
+   */
+  std::string getDetailedClassLegend();
+
+  /**
    * This diagram for a class shows recursively the related classes and their
    * inheritance and containment relationships.
    */

@@ -777,6 +777,10 @@ void CppServiceHandler::getDiagramLegend(
     case CLASS_COLLABORATION:
       return_ = diagram.getClassCollaborationLegend();
       break;
+
+    case DETAILED_CLASS:
+      return_ = diagram.getDetailedClassLegend();
+      break;
   }
 }
 
