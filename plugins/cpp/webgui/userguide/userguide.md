@@ -28,3 +28,10 @@ Visibilities:
 The meaning of special text format:
  - <b>static methods and variables</b>
  - <i>virtual methods</i>
+
+\subsection userguide_cpp_diagrams_collaboration Class Collaboration Diagram
+
+This returns a class collaboration diagram which shows the individual class
+members and their inheritance hierarchy.
+
+![Diagram view](images/cpp_collaboration_diagram.png)
