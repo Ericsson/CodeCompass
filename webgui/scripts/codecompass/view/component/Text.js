@@ -240,13 +240,15 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //--- Header ---//
 
       this._header = {
-        header   : dom.create('div',  { class : 'header'   }),
-        filename : dom.create('span', { class : 'filename' }),
-        path     : dom.create('span', { class : 'path'     }),
-        colons   : dom.toDom('<span class="colons">::</span>')
+        header      : dom.create('div',  { class : 'header'      }),
+        parsestatus : dom.create('span', { class : 'parsestatus' }),
+        filename    : dom.create('span', { class : 'filename'    }),
+        path        : dom.create('span', { class : 'path'        }),
+        colons      : dom.toDom('<span class="colons">::</span>')
       };
 
       dom.place(this._header.header, this.domNode);
+      dom.place(this._header.parsestatus, this._header.header);
       dom.place(this._header.filename, this._header.header);
       dom.place(this._header.colons, this._header.header);
       dom.place(this._header.path, this._header.header);
@@ -518,6 +520,25 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     },
 
     _setHeaderAttr : function (fileInfo) {
+      var statusClasses = ['fullyparsed', 'partiallyparsed', 'notparsed'];
+      domClass.remove(this._header.parsestatus, statusClasses);
+
+      switch (fileInfo.parseStatus) {
+        case FileParseStatus.FullyParsed:
+          domClass.add(this._header.parsestatus, statusClasses[0]);
+          dom.place(dom.toDom('(Fully parsed)'), this._header.parsestatus, 'only');
+          break;
+
+        case FileParseStatus.PartiallyParsed:
+          domClass.add(this._header.parsestatus, statusClasses[1]);
+          dom.place(dom.toDom('(Partially parsed)'), this._header.parsestatus, 'only');
+          break;
+
+        default:
+          domClass.add(this._header.parsestatus, statusClasses[2]);
+          dom.place(dom.toDom('(Not parsed)'), this._header.parsestatus, 'only');
+      }
+
       dom.place(dom.toDom(fileInfo.name), this._header.filename, 'only');
       dom.place(dom.toDom(fileInfo.path), this._header.path, 'only');
     }

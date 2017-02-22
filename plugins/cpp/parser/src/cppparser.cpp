@@ -170,7 +170,8 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
 }
 
 void CppParser::addCompileCommand(
-  const clang::tooling::CompileCommand& command_)
+  const clang::tooling::CompileCommand& command_,
+  bool error_)
 {
   util::OdbTransaction transaction(_ctx.db);
 
@@ -195,12 +196,12 @@ void CppParser::addCompileCommand(
 
   for (const auto& srcTarget : extractInputOutputs(command_))
   {
-    if (!boost::filesystem::exists(srcTarget.first) ||
-        !boost::filesystem::exists(srcTarget.second))
-      continue;
-
     model::BuildSource buildSource;
     buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
+    buildSource.file->parseStatus = error_
+      ? model::File::PSPartiallyParsed
+      : model::File::PSFullyParsed;
+    _ctx.srcMgr.updateFile(*buildSource.file);
     buildSource.action = buildAction;
     sources.push_back(std::move(buildSource));
 
@@ -226,7 +227,7 @@ void CppParser::worker()
 
   while (true)
   {
-    //--- Select nect compilation command ---//
+    //--- Select next compilation command ---//
 
     mutex.lock();
 
@@ -285,11 +286,16 @@ void CppParser::worker()
 
     clang::tooling::ClangTool tool(*compilationDb, command.Filename);
 
-    tool.run(&factory);
+    int error = tool.run(&factory);
+
+    if (error)
+      LOG(warning)
+        << '(' << index << '/' << _compileCommands.size() << ')'
+        << " Parsing " << command.Filename << " has been failed.";
 
     //--- Save build command ---//
 
-    addCompileCommand(command);
+    addCompileCommand(command, error);
   }
 }
 

@@ -39,7 +39,10 @@ private:
   std::map<std::string, std::string> extractInputOutputs(
     const clang::tooling::CompileCommand& command_) const;
 
-  void addCompileCommand(const clang::tooling::CompileCommand& command_);
+  void addCompileCommand(
+    const clang::tooling::CompileCommand& command_,
+    bool error_ = false);
+
   bool isParsed(const clang::tooling::CompileCommand& command_);
   bool isSourceFile(const std::string& file_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
