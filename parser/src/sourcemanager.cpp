@@ -167,7 +167,7 @@ model::FilePtr SourceManager::getCreateFile(const std::string& path_)
 
   //--- Create file entry ---//
 
-  std::string canonical = canonicalPath.native();
+  std::string canonical = ec ? path_ : canonicalPath.native();
   return _files[canonical] = getCreateFileEntry(canonical, fileExists);
 }
 

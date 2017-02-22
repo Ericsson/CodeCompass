@@ -208,6 +208,12 @@ void CppParser::addCompileCommand(
     model::BuildTarget buildTarget;
     buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
     buildTarget.action = buildAction;
+    if (buildTarget.file->type != model::File::BINARY_TYPE)
+    {
+      buildTarget.file->type = model::File::BINARY_TYPE;
+      _ctx.srcMgr.updateFile(*buildTarget.file);
+    }
+
     targets.push_back(std::move(buildTarget));
   }
 
@@ -299,7 +305,7 @@ void CppParser::worker()
   }
 }
 
-CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
+CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_), _index(0)
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
