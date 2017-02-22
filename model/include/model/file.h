@@ -29,8 +29,7 @@ struct File
   {
     PSNone = 0,
     PSPartiallyParsed = 1,
-    PSFullyParsed = 2,
-    PSVCView = 10000, //dummy for "Version Control View" in the editor
+    PSFullyParsed = 2
   };
 
   static constexpr const char* DIRECTORY_TYPE = "Dir";

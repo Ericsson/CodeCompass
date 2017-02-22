@@ -242,6 +242,23 @@ svg {
 .editor .header .parsestatus {
   white-space: nowrap;
   cursor: pointer;
+  font-weight: bold;
+  padding: 2px;
+}
+
+.editor .header .notparsed {
+  background-color: #c13333;
+  color: #fff;
+}
+
+.editor .header .fullyparsed {
+  background-color: #43ba45;
+  color: #fff;
+}
+
+.editor .header .partiallyparsed {
+  background-color: #ffa500;
+  color: #fff;
 }
 
 .editor .header .filename {
