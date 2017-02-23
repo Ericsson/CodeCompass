@@ -110,10 +110,10 @@ private:
   ParserContext& _ctx;
   clang::Preprocessor& _pp;
   const std::string _cppSourceType;
-  const clang::SourceManager& _clangSrcMgr;
+  clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
 
-  bool disabled = false;
+  bool _disabled = false;
 
   std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
   std::vector<model::CppAstNodePtr>        _astNodes;

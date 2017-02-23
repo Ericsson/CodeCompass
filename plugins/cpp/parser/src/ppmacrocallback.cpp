@@ -4,19 +4,6 @@
 #include "filelocutil.h"
 #include "ppmacrocallback.h"
 
-namespace
-{
-
-clang::PresumedLoc getPresumedLocation(
-  const clang::SourceManager &sm,
-  clang::SourceLocation loc)
-{
-  auto expLoc = sm.getExpansionLoc(loc);
-  return sm.getPresumedLoc(expLoc);
-}
-
-}
-
 namespace cc
 {
 namespace parser
@@ -26,13 +13,13 @@ PPMacroCallback::PPMacroCallback(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
   std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
-  clang::Preprocessor& pp_):
-  _ctx(ctx_),
-  _pp(pp_),
-  _cppSourceType("CPP"),
-  _clangSrcMgr(astContext_.getSourceManager()),
-  _fileLocUtil(astContext_.getSourceManager()),
-  _mangledNameCache(mangledNameCache_)
+  clang::Preprocessor& pp_) :
+    _ctx(ctx_),
+    _pp(pp_),
+    _cppSourceType("CPP"),
+    _clangSrcMgr(astContext_.getSourceManager()),
+    _fileLocUtil(astContext_.getSourceManager()),
+    _mangledNameCache(mangledNameCache_)
 {
 }
 
@@ -53,22 +40,22 @@ void PPMacroCallback::MacroExpands(
   clang::SourceRange range_,
   const clang::MacroArgs*)
 {
-  if (disabled)
+  if (_disabled)
     return;
 
   clang::SourceLocation loc = macroNameTok_.getLocation();
-  if (!loc.isValid() || !loc.isFileID())
-      return;
+  if (loc.isInvalid() || !loc.isFileID())
+    return;
 
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
   if (!mi || getMangledName(mi).empty())
     return;
 
-  const char *begin = _pp.getSourceManager().getCharacterData(range_.getBegin());
-  int len = _pp.getSourceManager().getCharacterData(range_.getEnd()) - begin +
-    clang::Lexer::MeasureTokenLength(range_.getEnd(),
-      _pp.getSourceManager(), _pp.getLangOpts());
+  const char* begin = _clangSrcMgr.getCharacterData(range_.getBegin());
+  int len = _clangSrcMgr.getCharacterData(range_.getEnd()) - begin +
+    clang::Lexer::MeasureTokenLength(
+      range_.getEnd(), _clangSrcMgr, _pp.getLangOpts());
 
   std::string copy(begin, len);
   begin = copy.c_str();
@@ -108,9 +95,9 @@ void PPMacroCallback::MacroExpands(
     _pp.getDiagnostics().getDiagnosticIDs(),
     &_pp.getDiagnostics().getDiagnosticOptions(),
     new clang::IgnoringDiagConsumer);
-  TmpDiags.setSourceManager(&_pp.getSourceManager());
+  TmpDiags.setSourceManager(&_clangSrcMgr);
 
-  disabled = true;
+  _disabled = true;
   clang::DiagnosticsEngine *OldDiags = &_pp.getDiagnostics();
   _pp.setDiagnostics(TmpDiags);
   _pp.EnterTokenStream(tokens.data(), tokens.size(), false, false);
@@ -130,7 +117,7 @@ void PPMacroCallback::MacroExpands(
   }
 
   _pp.setDiagnostics(*OldDiags);
-  disabled = false;
+  _disabled = false;
 
   model::CppAstNodePtr astNode = createMacroAstNode(macroNameTok_, mi);
   astNode->astType = model::CppAstNode::AstType::Usage;
@@ -209,66 +196,53 @@ model::CppAstNodePtr PPMacroCallback::createMacroAstNode(
 }
 
 void PPMacroCallback::addFileLoc(
-  model::CppAstNodePtr& astNode,
-  const clang::SourceLocation& start,
-  const clang::SourceLocation& end)
+  model::CppAstNodePtr& astNode_,
+  const clang::SourceLocation& start_,
+  const clang::SourceLocation& end_)
 {
-  if (start.isValid() && end.isValid())
-  {
-    model::FileLoc fileLoc;
-    _fileLocUtil.setRange(start, end, fileLoc.range);
-    fileLoc.file = _ctx.srcMgr.getFile(
-      _fileLocUtil.getFilePath(start));
+  if (start_.isInvalid() || end_.isInvalid())
+    return;
 
-    const std::string& type = fileLoc.file.load()->type;
-    if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
-    {
-      fileLoc.file->type = _cppSourceType;
-      _ctx.srcMgr.updateFile(*fileLoc.file);
-    }
-    astNode->location = fileLoc;
+  model::FileLoc fileLoc;
+  _fileLocUtil.setRange(start_, end_, fileLoc.range);
+  fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
+
+  const std::string& type = fileLoc.file.load()->type;
+  if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+  {
+    fileLoc.file->type = _cppSourceType;
+    _ctx.srcMgr.updateFile(*fileLoc.file);
   }
+
+  astNode_->location = fileLoc;
 }
 
 bool PPMacroCallback::isBuiltInMacro(const clang::MacroInfo* mi_) const
 {
-  clang::PresumedLoc presLoc = getPresumedLocation(
-    _pp.getSourceManager(), mi_->getDefinitionLoc());
-
-  std::string fileName = presLoc.getFilename();
+  std::string fileName = _clangSrcMgr.getPresumedLoc(
+    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc())).getFilename();
 
   return fileName == "<built-in>" || fileName == "<command line>";
 }
 
-std::string PPMacroCallback::getMangledName(const clang::MacroInfo *mi_)
+std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
 {
-  std::string mangledName;
+  clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
+    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));
 
-  clang::SourceManager& srcMan = _pp.getSourceManager();
-  clang::PresumedLoc presLoc =
-    getPresumedLocation(srcMan, mi_->getDefinitionLoc());
+  const char* fileName = presLoc.getFilename();
 
-  if (!presLoc.getFilename())
-  {
+  if (!fileName)
     return std::string();
-  }
 
-  std::string fileName = presLoc.getFilename();
+  std::string locStr
+     = std::to_string(presLoc.getLine())   + ":" +
+       std::to_string(presLoc.getColumn()) + ":";
 
-  if (isBuiltInMacro(mi_))
-     return
-       std::to_string(presLoc.getLine()) + ":" +
-       std::to_string(presLoc.getColumn())
-        + ":" + fileName;
-
-  model::FilePtr file = _ctx.srcMgr.getFile(fileName);
-  if (!file)
-    return std::to_string(presLoc.getLine())   + ":" +
-           std::to_string(presLoc.getColumn()) + ":" + fileName;
-  return
-    std::to_string(presLoc.getLine())   + ":" +
-    std::to_string(presLoc.getColumn()) + ":" +
-    std::to_string(file->id);
+  return locStr
+    + (isBuiltInMacro(mi_)
+    ? fileName
+    : std::to_string(_ctx.srcMgr.getFile(fileName)->id));
 }
 
 bool PPMacroCallback::insertToCache(const model::CppAstNodePtr node_)

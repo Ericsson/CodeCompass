@@ -84,7 +84,6 @@ private:
   }
 
   ParserContext& _ctx;
-  clang::Preprocessor& _pp;
   const std::string _cppSourceType;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;

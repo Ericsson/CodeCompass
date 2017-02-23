@@ -103,12 +103,12 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       if (astNodeInfos.length === 0) {
         var astNodeInfo = service.getAstNodeInfo(astNodeId);
 
-        // If the symbolType is File, the astNodeValue contain the path of it.
-        if (astNodeInfo.symbolType == 'File') {
+        // If the symbolType is File, the astNodeValue contains the path of it.
+        if (astNodeInfo.symbolType === 'File') {
           var fileInfo = model.project.getFileInfoByPath(
             astNodeInfo.astNodeValue);
           topic.publish('codecompass/openFile', {
-            fileId    : fileInfo.id
+            fileId : fileInfo.id
           });
         } else {
           console.warn("Can't find definition to this node");

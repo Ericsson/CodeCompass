@@ -37,7 +37,7 @@ class VisitorActionFactory : public clang::tooling::FrontendActionFactory
 public:
   static void cleanUp()
   {
-    MyConsumer::_mangledNameCache.clear();
+    MyFrontendAction::_mangledNameCache.clear();
   }
 
   VisitorActionFactory(ParserContext& ctx_) : _ctx(ctx_)
@@ -52,11 +52,12 @@ public:
 private:
   class MyConsumer : public clang::ASTConsumer
   {
-    friend class VisitorActionFactory;
-
   public:
-    MyConsumer(ParserContext& ctx_, clang::ASTContext& context_)
-      : _ctx(ctx_), _context(context_)
+    MyConsumer(
+      ParserContext& ctx_,
+      clang::ASTContext& context_,
+      std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_)
+        : _mangledNameCache(mangledNameCache_), _ctx(ctx_), _context(context_)
     {
     }
 
@@ -76,10 +77,8 @@ private:
     }
 
   private:
-    static std::unordered_map<model::CppAstNodeId, std::uint64_t>
-      _mangledNameCache;
-    std::unordered_map<const void*, model::CppAstNodeId>
-      _clangToAstNodeId;
+    std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+    std::unordered_map<const void*, model::CppAstNodeId> _clangToAstNodeId;
 
     ParserContext& _ctx;
     clang::ASTContext& _context;
@@ -87,6 +86,8 @@ private:
 
   class MyFrontendAction : public clang::ASTFrontendAction
   {
+    friend class VisitorActionFactory;
+
   public:
     MyFrontendAction(ParserContext& ctx_) : _ctx(ctx_)
     {
@@ -98,10 +99,10 @@ private:
       compiler_.createASTContext();
       auto& pp = compiler_.getPreprocessor();
 
-      pp.addPPCallbacks(std::make_unique<PPIncludeCallback>(_ctx,
-        compiler_.getASTContext(), _mangledNameCache, pp));
-      pp.addPPCallbacks(std::make_unique<PPMacroCallback>(_ctx,
-        compiler_.getASTContext(), _mangledNameCache, pp));
+      pp.addPPCallbacks(std::make_unique<PPIncludeCallback>(
+        _ctx, compiler_.getASTContext(), _mangledNameCache, pp));
+      pp.addPPCallbacks(std::make_unique<PPMacroCallback>(
+        _ctx, compiler_.getASTContext(), _mangledNameCache, pp));
 
       return true;
     }
@@ -110,7 +111,7 @@ private:
       clang::CompilerInstance& compiler_, llvm::StringRef) override
     {
       return std::unique_ptr<clang::ASTConsumer>(
-        new MyConsumer(_ctx, compiler_.getASTContext()));
+        new MyConsumer(_ctx, compiler_.getASTContext(), _mangledNameCache));
     }
 
   private:
@@ -122,9 +123,6 @@ private:
 
   ParserContext& _ctx;
 };
-
-std::unordered_map<model::CppAstNodeId, std::uint64_t>
-VisitorActionFactory::MyConsumer::_mangledNameCache;
 
 std::unordered_map<model::CppAstNodeId, std::uint64_t>
 VisitorActionFactory::MyFrontendAction::_mangledNameCache;

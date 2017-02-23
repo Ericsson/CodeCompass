@@ -2,6 +2,7 @@
 #define CC_MODEL_HEADERINCLUSION_H
 
 #include <string>
+#include <memory>
 
 #include <odb/core.hxx>
 #include <odb/lazy-ptr.hxx>
@@ -29,7 +30,9 @@ struct CppHeaderInclusion
   std::string toString() const
   {
     return std::string("CppHeaderInclusion")
-      .append("\nid = ").append(std::to_string(id));
+      .append("\nid = ").append(std::to_string(id))
+      .append("\nincluder = ").append(std::to_string(includer->id))
+      .append("\nincluded = ").append(std::to_string(included->id));
   }
 
 #ifndef NO_INDICES
@@ -38,7 +41,7 @@ struct CppHeaderInclusion
 #endif
 };
 
-typedef odb::lazy_shared_ptr<CppHeaderInclusion> CppHeaderInclusionPtr;
+typedef std::shared_ptr<CppHeaderInclusion> CppHeaderInclusionPtr;
 
 } // model
 } // cc

@@ -1,5 +1,3 @@
-#include <boost/log/trivial.hpp>
-
 #include <parser/sourcemanager.h>
 #include <util/odbtransaction.h>
 
@@ -15,13 +13,12 @@ PPIncludeCallback::PPIncludeCallback(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
   std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
-  clang::Preprocessor& pp_):
-  _ctx(ctx_),
-  _pp(pp_),
-  _cppSourceType("CPP"),
-  _clangSrcMgr(astContext_.getSourceManager()),
-  _fileLocUtil(astContext_.getSourceManager()),
-  _mangledNameCache(mangledNameCache_)
+  clang::Preprocessor&) :
+    _ctx(ctx_),
+    _cppSourceType("CPP"),
+    _clangSrcMgr(astContext_.getSourceManager()),
+    _fileLocUtil(astContext_.getSourceManager()),
+    _mangledNameCache(mangledNameCache_)
 {
 }
 
@@ -48,7 +45,8 @@ model::CppAstNodePtr PPIncludeCallback::createFileAstNode(
   astNode->astType = model::CppAstNode::AstType::Usage;
 
   model::FileLoc fileLoc;
-  _fileLocUtil.setRange(srcRange_.getBegin(), srcRange_.getEnd(), fileLoc.range);
+  _fileLocUtil.setRange(
+    srcRange_.getBegin(), srcRange_.getEnd(), fileLoc.range);
   fileLoc.file = _ctx.srcMgr.getFile(
     _fileLocUtil.getFilePath(srcRange_.getBegin()));
 
@@ -66,34 +64,33 @@ model::CppAstNodePtr PPIncludeCallback::createFileAstNode(
 }
 
 void PPIncludeCallback::InclusionDirective(
-  clang::SourceLocation hashLoc,
+  clang::SourceLocation hashLoc_,
   const clang::Token&,
-  clang::StringRef FileName,
+  clang::StringRef fileName_,
   bool,
-  clang::CharSourceRange FilenameRange,
-  const clang::FileEntry *,
-  clang::StringRef SearchPath,
+  clang::CharSourceRange filenameRange_,
+  const clang::FileEntry*,
+  clang::StringRef searchPath_,
   clang::StringRef,
-  const clang::Module *)
+  const clang::Module*)
 {
-  if (SearchPath.empty())
+  if (searchPath_.empty())
     return;
 
-  clang::SourceManager& srcMgr = _pp.getSourceManager();
-  clang::SourceLocation expLoc = srcMgr.getExpansionLoc(hashLoc);
-  clang::PresumedLoc presLoc = srcMgr.getPresumedLoc(expLoc);
+  clang::SourceLocation expLoc = _clangSrcMgr.getExpansionLoc(hashLoc_);
+  clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(expLoc);
 
-  std::string includedPath = SearchPath.str() + '/' + FileName.str();
+  std::string includedPath = searchPath_.str() + '/' + fileName_.str();
   model::FilePtr included = _ctx.srcMgr.getFile(includedPath);
   included->type = _cppSourceType;
 
   std::string includerPath = presLoc.getFilename();
   model::FilePtr includer = _ctx.srcMgr.getFile(includerPath);
-  included->type = _cppSourceType;
+  includer->type = _cppSourceType;
 
   //--- CppAstNode ---//
 
-  auto fileNode = createFileAstNode(included, FilenameRange.getAsRange());
+  auto fileNode = createFileAstNode(included, filenameRange_.getAsRange());
   if (insertToCache(fileNode))
     _astNodes.push_back(fileNode);
 

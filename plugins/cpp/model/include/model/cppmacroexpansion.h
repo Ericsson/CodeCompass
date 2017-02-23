@@ -2,6 +2,7 @@
 #define CC_MODEL_MACROEXPANSION_H
 
 #include <string>
+#include <memory>
 
 #include <odb/core.hxx>
 #include <odb/lazy-ptr.hxx>
@@ -38,7 +39,7 @@ struct CppMacroExpansion
   }
 };
 
-typedef odb::lazy_shared_ptr<CppMacroExpansion> CppMacroExpansionPtr;
+typedef std::shared_ptr<CppMacroExpansion> CppMacroExpansionPtr;
 
 } // model
 } // cc
