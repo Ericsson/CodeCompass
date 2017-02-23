@@ -1,0 +1,268 @@
+.icon-branch::before {
+  content: '\e064';
+}
+
+.icon-repository::before {
+  content: '\e065';
+}
+
+.icon-commit::before {
+  content: '\e066';
+}
+
+.icon-commits-in::before {
+  content: '\e059';
+}
+
+.icon-branchview::before {
+  content: '\e067';
+}
+
+.icon-head::before {
+  content: '\e068';
+  color: #399c39;
+}
+
+.icon-list::before {
+  content: '\e069';
+}
+
+.icon-expand::before {
+  content: '\e070';
+  color: #6d7075;
+}
+
+/* Highlight */
+
+.string,
+.function .title,
+.class .title, 
+.tag .attribute .value,
+.css .rules .value,
+.preprocessor {
+  color: rgb(163, 21, 21);
+}
+
+.comment {
+  color: rgb(0, 128, 0)
+}
+
+.number,
+.regexp {
+  color: #164;
+}
+
+.keyword {
+  color: #a71d5d;
+}
+
+.function .title,
+.class .title {
+  color: #0086b3;
+}
+
+.git-commit {
+  display: inline-table;
+}
+
+.git-avatar {
+  display: inline-block;
+  float: left;
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+}
+
+.git-message {
+  color: #4e575b;
+}
+.git-author {
+  color: #767676;
+}
+
+.git-commit-tooltip .git-sha {
+  color: #335180;
+  font-weight: bold;
+}
+
+.git-commit-tooltip .git-message {
+  padding: 5px 0px 10px 0px;
+  font-weight: 600;
+}
+
+.git-commit-tooltip .git-author {
+  font-weight: 600;
+}
+
+.git-commit-tooltip .git-time {
+  color: #767676;
+}
+
+.git-commit-tooltip .commit-meta {
+  border-top: 1px solid #eee;
+}
+
+#gitnavigator .icon{
+  color: #1855B6;
+  font-size: 1.5em;
+}
+
+#git-visutaldiff .header {
+  background: #335180;
+  border: 1px solid #c5d5dd;
+  border-radius: 3px;
+}
+
+#git-visutaldiff .message {
+  color: white;
+  font-weight: 600;
+  font-size: 1.5em;
+  padding: 10px;
+}
+
+#git-visutaldiff .meta {
+  clear: both;
+  padding: 10px;
+  background: #fff;
+  border-top: 1px solid #d8e6ec;
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+#git-visutaldiff .author {
+  display: inline-block;
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+#git-visutaldiff .avatar {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 30px;
+  color: white;
+  font-size: 1.5em;
+  border-radius: 10px;
+}
+
+#git-visutaldiff .sha-blocks {
+  float: right;
+  padding: 10px;
+}
+
+#git-visutaldiff .time {
+  color: #767676;
+}
+
+#git-visutaldiff .parent {
+  padding-right: 10px;
+  color: #335180;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#git-visutaldiff .sha {
+  color: #c13333;
+  font-weight: 600;
+}
+
+/* Diff table. */
+
+.diff-containertable {
+  font-size: 10pt;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.diff-fileheader {
+  font-family: Consolas, courier, fixed;
+  white-space: pre-wrap;
+}
+
+.diff-linecontainer {
+  white-space: pre-wrap;
+}
+
+.diff-linenumber {
+  width: 40px;
+  color: #999999;
+  text-align: right;
+  padding-right: 10px;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.diff-expander {
+  text-align: center;
+  font-weight: 600;
+  background-color: #edf2f9;
+}
+
+.diff-expander .dijitButtonNode {
+  border: 0px !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.inline-btn.selected .dijitButtonNode,
+.side-by-side-btn.selected .dijitButtonNode {
+  background-color: #fff !important;
+}
+
+.diff-linenumber.old {
+  background-color: #ffdddd;
+  border-color: #f1c0c0;
+}
+
+.diff-linenumber.new {
+  background-color: #dbffdb;
+  border-color: #c1e9c1;
+}
+
+.diff-linecontainer > td {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.diff-linetext {
+  font-family: Consolas, courier, fixed;
+  white-space: pre-wrap;
+  color: #333;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.diff-linetext.old {
+  background-color: #ffecec;
+}
+
+.diff-linetext.new {
+  background-color: #eaffea;
+}
+
+.diff-linetext.both {
+  background-color: #ffffff;
+}
+
+.diff-linetext.remark {
+  background-color: #ffffff;
+  color: #bbbbbb;
+}
+
+.diff-rowheader {
+  color: #b1a7a7;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background-color: #f4f7fb;
+  border-width: 1px 0;
+}
+
+.diff-linetext-sidebyside-side {
+  width: 50%;
+  word-break: break-all;
+}

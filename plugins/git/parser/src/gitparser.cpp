@@ -41,10 +41,8 @@ util::DirIterCallback GitParser::getParserCallback()
 
     LOG(info) << "Git parser found a git repo at: " << path;
 
-    //--- Generate unique repository ---//
-
-    std::uint64_t    repoId = util::fnvHash(path_);
-    std::string clonedRepoPath = versionDataDir + "/" + std::to_string(repoId);
+    std::string clonedRepoPath = versionDataDir + "/"
+      + path.parent_path().filename().string();
 
     LOG(info) << "GitParser cloning into " << clonedRepoPath;
 
