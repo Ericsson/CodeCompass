@@ -100,9 +100,20 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       var astNodeInfos = service.getReferences(
         astNodeId, refTypes['Definition']);
 
-      if (astNodeInfos.length === 0)
-        console.warning("Can't find definition to this node");
-      else if (astNodeInfos.length === 1)
+      if (astNodeInfos.length === 0) {
+        var astNodeInfo = service.getAstNodeInfo(astNodeId);
+
+        // If the symbolType is File, the astNodeValue contains the path of it.
+        if (astNodeInfo.symbolType === 'File') {
+          var fileInfo = model.project.getFileInfoByPath(
+            astNodeInfo.astNodeValue);
+          topic.publish('codecompass/openFile', {
+            fileId : fileInfo.id
+          });
+        } else {
+          console.warn("Can't find definition to this node");
+        }
+      } else if (astNodeInfos.length === 1)
         jump(astNodeInfos[0]);
       else
         buildAmbiguousRefPage(astNodeInfos);

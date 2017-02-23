@@ -14,7 +14,9 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_library(cppparser SHARED
   src/cppparser.cpp
-  src/symbolhelper.cpp)
+  src/symbolhelper.cpp
+  src/ppincludecallback.cpp
+  src/ppmacrocallback.cpp)
 
 target_link_libraries(cppparser
   cppmodel

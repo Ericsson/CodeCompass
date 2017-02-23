@@ -17,6 +17,8 @@
 #include <model/cppfriendship-odb.hxx>
 #include <model/cppenum.h>
 #include <model/cppenum-odb.hxx>
+#include <model/cppmacroexpansion.h>
+#include <model/cppmacroexpansion-odb.hxx>
 
 #include <service/cppservice.h>
 
@@ -46,6 +48,8 @@ namespace
   typedef odb::result<cc::model::CppEnum> EnumResult;
   typedef odb::query<cc::model::CppEnumConstant> EnumConstQuery;
   typedef odb::result<cc::model::CppEnumConstant> EnumConstResult;
+  typedef odb::query<cc::model::CppMacroExpansion> MacroExpansionQuery;
+  typedef odb::result<cc::model::CppMacroExpansion> MacroExpansionResult;
 
   /**
    * This struct transforms a model::CppAstNode to an AstNodeInfo Thrift
@@ -306,6 +310,11 @@ void CppServiceHandler::getReferenceTypes(
 
     case model::CppAstNode::SymbolType::Enum:
       return_["Enum constants"]        = ENUM_CONSTANTS;
+      break;
+
+    case model::CppAstNode::SymbolType::Macro:
+      return_["Expansions"]            = EXPANSION;
+      return_["Undefinitions"]         = UNDEFINITION;
       break;
   }
 }
@@ -631,6 +640,29 @@ void CppServiceHandler::getReferences(
 
         break;
       }
+
+      case EXPANSION:
+      {
+        node = queryCppAstNode(astNodeId_);
+
+        MacroExpansionResult mExpansions = _db->query<model::CppMacroExpansion>(
+          MacroExpansionQuery::astNodeId == node.id);
+
+        for (const auto& expansion : mExpansions)
+        {
+          node = queryCppAstNode(std::to_string(expansion.astNodeId));
+          node.astValue = expansion.expansion;
+          nodes.push_back(node);
+        }
+
+        break;
+      }
+
+      case UNDEFINITION:
+        nodes = queryCppAstNodes(
+          astNodeId_,
+          AstQuery::astType == model::CppAstNode::AstType::UnDefinition);
+        break;
     }
 
     std::sort(nodes.begin(), nodes.end(), compareByValue);
@@ -691,6 +723,8 @@ void CppServiceHandler::getFileReferenceTypes(
 {
   return_["Types"]     = TYPES;
   return_["Functions"] = FUNCTIONS;
+  return_["Includes"]  = INCLUDES;
+  return_["Macros"]    = MACROS;
 }
 
 void CppServiceHandler::getFileReferences(
@@ -715,6 +749,17 @@ void CppServiceHandler::getFileReferences(
            AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
           (AstQuery::astType == model::CppAstNode::AstType::Definition ||
            AstQuery::astType == model::CppAstNode::AstType::Declaration));
+        break;
+
+      case INCLUDES:
+        nodes = queryCppAstNodesInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::File);
+        break;
+
+      case MACROS:
+        nodes = queryCppAstNodesInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Macro &&
+          AstQuery::astType == model::CppAstNode::AstType::Definition);
         break;
     }
 
