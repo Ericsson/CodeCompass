@@ -242,6 +242,9 @@ compile_boost()
 
 build_boost()
 {
+  dep bzip2
+  dep zlib
+
   download http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.bz2/download boost_1_58_0.tar.bz2
   compile boost boost_1_58_0 lib/libboost_iostreams.so
 }
@@ -527,15 +530,6 @@ build_gcc()
     contrib/download_prerequisites || exit -1
   fi
   compile generic gcc-4.9.3 bin/gcc --enable-languages=c,c++ --disable-multilib
-}
-
-build_gdb()
-{
-  dep gcc
-  dep ncurses
-
-  download http://ftp.gnu.org/gnu/gdb/gdb-7.9.tar.gz
-  compile generic gdb-7.9 bin/gdb
 }
 
 build_gmp()
@@ -824,7 +818,9 @@ build_thrift()
   dep libevent
   dep python2
 
-  download https://dist.apache.org/repos/dist/release/thrift/0.10.0/thrift-0.10.0.tar.gz           
+  ln -s $CCMP_DEPS/lib/libboost_unit_test_framework.a $CCMP_DEPS/lib64/
+
+  download https://dist.apache.org/repos/dist/release/thrift/0.10.0/thrift-0.10.0.tar.gz
   compile thrift thrift-0.10.0 bin/thrift
 }
 
@@ -882,7 +878,7 @@ build_python2()
 generate_env() 
 {
   local envf=$1
-  echo_info "Preparing environment script to $CCMP_ROOT/$envf"
+  echo_info "Preparing environment script to $CCMP_DEPS/$envf"
 
   mkdir -p $CCMP_DEPS || exit -1
   cd $CCMP_DEPS
