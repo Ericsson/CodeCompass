@@ -286,6 +286,22 @@
   content: '\e059';
 }
 
+.icon-Macros::before {
+  content: '\e060';
+}
+
+.icon-Includes::before {
+  content: '\e061';
+}
+
+.icon-Expansions::before {
+  content: '\e062';
+}
+
+.icon-Undefinitions::before {
+  content: '\e063';
+}
+
 .icon-x{
   position: absolute;
   right: 5px;
