@@ -98,10 +98,16 @@ make install
   project has libraries compiled with an earlier version of `gcc`.
 
   In the official Ubuntu 16.04 LTS package repository ODB is stored with the
-  earlier ABI, not like other dependencies such as Boost. The solution is to
-  download and recompile ODB using a new C++ compiler.
+  earlier ABI, not like other dependencies such as Boost.
 
-```
+  CodeCompass also makes use of a small fix that has yet to be included in
+  a newer release version of ODB. Because of this, two patches must be applied
+  manually, before building ODB.
+
+  The solution is to download and recompile ODB using a new C++ compiler, as
+  seen below:
+
+```bash
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.tar.gz
 tar -xvf libodb-2.4.0.tar.gz
 cd libodb-2.4.0
@@ -109,22 +115,32 @@ cd libodb-2.4.0
 make install
 cd ..
 
-# If you use SQLite
+#
+# If you use SQLite:
+#
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-sqlite-2.4.0.tar.gz
 tar -xvf libodb-sqlite-2.4.0.tar.gz
 cd libodb-sqlite-2.4.0
+wget http://raw.githubusercontent.com/Ericsson/CodeCompass/master/scripts/patch/odb_sqlite_cte.patch
+patch -p0 < odb_sqlite_cte.patch
 ./configure --prefix=<odb_install_dir>
 make install
 cd ..
+#
 
-# If you use PostgreSQL
+#
+# If you use PostgreSQL:
+#
 sudo apt-get install postgresql-server-dev-<version> # Needed for this step
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-pgsql-2.4.0.tar.gz
 tar -xvf libodb-pgsql-2.4.0.tar.gz
 cd libodb-pgsql-2.4.0
+wget http://raw.githubusercontent.com/Ericsson/CodeCompass/master/scripts/patch/odb_pgsql_cte.patch
+patch -p0 < odb_pgsql_cte.patch
 ./configure --prefix=<odb_install_dir>
 make install
 cd ..
+#
 
 sudo apt-get install gcc-<version>-plugin-dev
 sudo apt-get install libcutl-dev

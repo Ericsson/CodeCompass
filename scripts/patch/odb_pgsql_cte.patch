@@ -1,0 +1,13 @@
+--- odb/pgsql/query.cxx	2015-02-06 09:31:46.000000000 +0100
++++ odb/pgsql/query.cxx	2016-08-01 17:29:29.994574807 +0200
+@@ -271,7 +271,9 @@
+           s.compare (0, (n = 8), "GROUP BY") == 0 ||
+           s.compare (0, (n = 8), "group by") == 0 ||
+           s.compare (0, (n = 6), "HAVING") == 0 ||
+-          s.compare (0, (n = 6), "having") == 0)
++          s.compare (0, (n = 6), "having") == 0 ||
++          s.compare (0, (n = 4), "WITH") == 0 ||
++          s.compare (0, (n = 4), "with") == 0)
+       {
+         // It either has to be an exact match, or there should be
+         // a whitespace following the keyword.
