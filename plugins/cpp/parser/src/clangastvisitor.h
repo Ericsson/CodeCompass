@@ -35,6 +35,7 @@
 #include <util/odbtransaction.h>
 #include <util/logutil.h>
 
+#include "manglednamecache.h"
 #include "filelocutil.h"
 #include "symbolhelper.h"
 
@@ -66,7 +67,7 @@ public:
   ClangASTVisitor(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+    MangledNameCache& mangledNameCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
     : _isImplicit(false),
       _ctx(ctx_),
@@ -1151,12 +1152,8 @@ private:
    */
   bool insertToCache(const void* clangPtr_, model::CppAstNodePtr node_)
   {
-    static std::mutex cacheMutex;
-    std::lock_guard<std::mutex> guard(cacheMutex);
-
     _clangToAstNodeId[clangPtr_] = node_->id;
-    return _mangledNameCache.insert(
-      std::make_pair(node_->id, node_->mangledNameHash)).second;
+    return _mangledNameCache.insert(*node_);
   }
 
   model::FileLoc getFileLoc(
@@ -1343,7 +1340,7 @@ private:
   clang::MangleContext* _mngCtx;
   const std::string _cppSourceType;
 
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+  MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 };
 

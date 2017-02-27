@@ -12,7 +12,7 @@ namespace parser
 PPIncludeCallback::PPIncludeCallback(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+  MangledNameCache& mangledNameCache_,
   clang::Preprocessor&) :
     _ctx(ctx_),
     _cppSourceType("CPP"),
@@ -83,15 +83,19 @@ void PPIncludeCallback::InclusionDirective(
   std::string includedPath = searchPath_.str() + '/' + fileName_.str();
   model::FilePtr included = _ctx.srcMgr.getFile(includedPath);
   included->type = _cppSourceType;
+  included->parseStatus = model::File::PSFullyParsed;
 
   std::string includerPath = presLoc.getFilename();
   model::FilePtr includer = _ctx.srcMgr.getFile(includerPath);
   includer->type = _cppSourceType;
+  includer->parseStatus = model::File::PSFullyParsed;
 
   //--- CppAstNode ---//
 
-  auto fileNode = createFileAstNode(included, filenameRange_.getAsRange());
-  if (insertToCache(fileNode))
+  model::CppAstNodePtr fileNode =
+    createFileAstNode(included, filenameRange_.getAsRange());
+
+  if (_mangledNameCache.insert(*fileNode))
     _astNodes.push_back(fileNode);
 
   model::CppHeaderInclusionPtr inclusion(new model::CppHeaderInclusion);
@@ -99,15 +103,6 @@ void PPIncludeCallback::InclusionDirective(
   inclusion->included = included;
 
   _headerIncs.push_back(inclusion);
-}
-
-bool PPIncludeCallback::insertToCache(const model::CppAstNodePtr node_)
-{
-  static std::mutex cacheMutex;
-  std::lock_guard<std::mutex> guard(cacheMutex);
-
-  return _mangledNameCache.insert(
-    std::make_pair(node_->id, node_->mangledNameHash)).second;
 }
 
 } // parser

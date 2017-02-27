@@ -16,6 +16,8 @@
 
 #include <util/logutil.h>
 
+#include "manglednamecache.h"
+
 namespace cc
 {
 namespace parser
@@ -27,7 +29,7 @@ public:
   PPMacroCallback(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+    MangledNameCache& mangledNameCache_,
     clang::Preprocessor& pp_);
 
   ~PPMacroCallback();
@@ -73,15 +75,6 @@ private:
     const clang::SourceLocation& start,
     const clang::SourceLocation& end);
 
-  /**
-   * This function inserts a model::CppAstNodeId to a cache in a thread-safe
-   * way. The cache is static so the parsers in each thread can use the same.
-   *
-   * @return If the insertion was successful (i.e. the cache didn't contain the
-   * id before) then the function returns true.
-   */
-  bool insertToCache(const model::CppAstNodePtr node_);
-
   template <typename Cont>
   void persistAll(Cont& cont_)
   {
@@ -115,7 +108,7 @@ private:
 
   bool _disabled = false;
 
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+  MangledNameCache& _mangledNameCache;
   std::vector<model::CppAstNodePtr>        _astNodes;
   std::vector<model::CppMacroPtr>          _macros;
   std::vector<model::CppMacroExpansionPtr> _macrosExpansion;
