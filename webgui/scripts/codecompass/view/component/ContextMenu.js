@@ -8,7 +8,7 @@ define([
   'dijit/_WidgetBase'],
 function (declare, domClass, Menu, MenuItem, PopupMenuItem, Tooltip,
   _WidgetBase) {
-    
+
   return declare(Menu, {
     /**
      * This function adds an item to the popup menu.
@@ -28,17 +28,17 @@ function (declare, domClass, Menu, MenuItem, PopupMenuItem, Tooltip,
         this.inherited(arguments);
         return;
       }
-      
+
       var path = item.path || [];
-      
+
       var current = this;
       for (var levelIdx = 0; levelIdx < path.length; ++levelIdx) {
         var menuItems = current.getChildren();
-        
+
         for (var itemIdx = 0; itemIdx < menuItems.length; ++itemIdx)
           if (menuItems[itemIdx].label === path[levelIdx])
             break;
-        
+
         if (itemIdx == menuItems.length) {
             var subMenu = new Menu();
             current.addChild(new PopupMenuItem({
@@ -52,24 +52,24 @@ function (declare, domClass, Menu, MenuItem, PopupMenuItem, Tooltip,
           current = menuItems[itemIdx].popup;
         }
       }
-      
+
       current.addChild(new MenuItem({
         label     : item.label,
         onClick   : item.onClick,
         iconClass : item.helpText ? 'menuicon helpicon' : undefined,
         accelKey  : item.shortcut,
-        
+
         onMouseOver : function (node) {
           if (domClass.contains(node.target, 'helpicon'))
             Tooltip.show(item.helpText, node.target, ['above']);
         },
-        
+
         onMouseOut : function (node) {
           Tooltip.hide(node.target);
         }
       }));
     },
-    
+
     /**
      * This function removes all items from the context menu.
      */

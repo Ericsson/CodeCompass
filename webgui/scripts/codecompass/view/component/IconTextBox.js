@@ -7,15 +7,15 @@ define([
   'dojo/keys',
   'dijit/form/ValidationTextBox'],
 function (dom, style, declare, query, on, keys, ValidationTextBox) {
-  
+
   return declare(ValidationTextBox, {
     constructor : function (params) {
       this._button = dom.create('span', { class : params.icon });
     },
-    
+
     postCreate : function () {
       var that = this;
-      
+
       var inputContainer = query('.dijitInputContainer', this.domNode)[0];
       var inputField = query('input', inputContainer)[0];
 
@@ -39,7 +39,7 @@ function (dom, style, declare, query, on, keys, ValidationTextBox) {
 
       dom.place(this._button, inputContainer);
     },
-    
+
     /**
      * The onSubmit callback function is called when Enter key is pressed or
      * icon is clicked.
@@ -47,7 +47,7 @@ function (dom, style, declare, query, on, keys, ValidationTextBox) {
      * text box as parameter.
      */
     onSubmit : function (value) {},
-    
+
     /**
      * This function sets the icon image.
      * @param {type} icon Icon image file.
@@ -55,14 +55,14 @@ function (dom, style, declare, query, on, keys, ValidationTextBox) {
     _setIconAttr : function (icon) {
       this._button.setAttribute('src', icon);
     },
-    
+
     /**
      * This function returns the icon file name.
      */
     _getIconAttr : function () {
       return this._button.getAttribute('src');
     },
-    
+
     /**
      * This function sets the placeholder attribute directly to the input html
      * tag.

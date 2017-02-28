@@ -12,7 +12,7 @@ define([
   'dijit/form/Select'],
 function (array, declare, dom, style, keys, _WidgetBase, Toolbar,
   ToolbarSeparator, Button, NumberTextBox, Select) {
-    
+
   var Total = declare(_WidgetBase, {
     buildRendering : function () {
       this.domNode = dom.create('span', {
@@ -20,12 +20,12 @@ function (array, declare, dom, style, keys, _WidgetBase, Toolbar,
         style     : 'margin-left: 5px;'
       });
     },
-    
+
     _setValueAttr : function (value) {
       this.value = value;
       this.domNode.innerHTML = 'of ' + value;
     },
-    
+
     value : 1
   });
 
@@ -69,10 +69,10 @@ function (array, declare, dom, style, keys, _WidgetBase, Toolbar,
         if (that._prevSize === that._pageSize.get('value') &&
             that._prevPage === that._pageNumber.get('value'))
           return;
-        
+
         that._prevSize = that._pageSize.get('value');
         that._prevPage = that._pageNumber.get('value');
-        
+
         if (that._pageNumber.isInRange())
           that.onChange(
             that._pageNumber.get('value'),
