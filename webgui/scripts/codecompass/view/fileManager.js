@@ -369,6 +369,8 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
     },
 
     startup : function () {
+      this.inherited(arguments);
+
       var fileManagerTitleBox = domConstruct.create('span', {
         id : 'filemanagerButton',
       }, this.id + '_button_title', 'replace');
