@@ -17,6 +17,7 @@
 
 #include <util/odbtransaction.h>
 #include "symbolhelper.h"
+#include "manglednamecache.h"
 
 namespace cc
 {
@@ -144,7 +145,7 @@ public:
   AssignmentCollector(
     ParserContext& ctx_,
     clang::ASTContext&,
-    std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+    MangledNameCache& mangledNameCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
     : _ctx(ctx_),
       _mangledNameCache(mangledNameCache_),
@@ -275,7 +276,7 @@ private:
   }
 
   ParserContext& _ctx;
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+  MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
   std::vector<model::CppRelation> _relations;
 };

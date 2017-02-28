@@ -24,6 +24,7 @@
 
 #include "assignmentcollector.h"
 #include "clangastvisitor.h"
+#include "manglednamecache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 
@@ -38,6 +39,14 @@ public:
   static void cleanUp()
   {
     MyFrontendAction::_mangledNameCache.clear();
+  }
+
+  static void init(ParserContext& ctx_)
+  {
+    (util::OdbTransaction(ctx_.db))([&] {
+      for (const model::CppAstNode& node : ctx_.db->query<model::CppAstNode>())
+        MyFrontendAction::_mangledNameCache.insert(node);
+    });
   }
 
   VisitorActionFactory(ParserContext& ctx_) : _ctx(ctx_)
@@ -56,7 +65,7 @@ private:
     MyConsumer(
       ParserContext& ctx_,
       clang::ASTContext& context_,
-      std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_)
+      MangledNameCache& mangledNameCache_)
         : _mangledNameCache(mangledNameCache_), _ctx(ctx_), _context(context_)
     {
     }
@@ -77,7 +86,7 @@ private:
     }
 
   private:
-    std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+    MangledNameCache& _mangledNameCache;
     std::unordered_map<const void*, model::CppAstNodeId> _clangToAstNodeId;
 
     ParserContext& _ctx;
@@ -115,8 +124,7 @@ private:
     }
 
   private:
-    static std::unordered_map<model::CppAstNodeId, std::uint64_t>
-      _mangledNameCache;
+    static MangledNameCache _mangledNameCache;
 
     ParserContext& _ctx;
   };
@@ -124,8 +132,7 @@ private:
   ParserContext& _ctx;
 };
 
-std::unordered_map<model::CppAstNodeId, std::uint64_t>
-VisitorActionFactory::MyFrontendAction::_mangledNameCache;
+MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
 {
@@ -340,6 +347,8 @@ std::vector<std::string> CppParser::getDependentParsers() const
 
 bool CppParser::parse()
 {
+  VisitorActionFactory::init(_ctx);
+
   bool success = true;
 
   for (const std::string& input

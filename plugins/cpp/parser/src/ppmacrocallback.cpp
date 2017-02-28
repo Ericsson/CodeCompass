@@ -12,7 +12,7 @@ namespace parser
 PPMacroCallback::PPMacroCallback(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+  MangledNameCache& mangledNameCache_,
   clang::Preprocessor& pp_) :
     _ctx(ctx_),
     _pp(pp_),
@@ -124,7 +124,7 @@ void PPMacroCallback::MacroExpands(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (insertToCache(astNode))
+  if (_mangledNameCache.insert(*astNode))
   {
     _astNodes.push_back(astNode);
 
@@ -150,7 +150,7 @@ void PPMacroCallback::MacroDefined(
   addFileLoc(astNode, mi->getDefinitionLoc(), mi->getDefinitionEndLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (insertToCache(astNode))
+  if (_mangledNameCache.insert(*astNode))
   {
     _astNodes.push_back(astNode);
 
@@ -177,7 +177,7 @@ void PPMacroCallback::MacroUndefined(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (insertToCache(astNode))
+  if (_mangledNameCache.insert(*astNode))
     _astNodes.push_back(astNode);
 }
 
@@ -243,15 +243,6 @@ std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
     + (isBuiltInMacro(mi_)
     ? fileName
     : std::to_string(_ctx.srcMgr.getFile(fileName)->id));
-}
-
-bool PPMacroCallback::insertToCache(const model::CppAstNodePtr node_)
-{
-  static std::mutex cacheMutex;
-  std::lock_guard<std::mutex> guard(cacheMutex);
-
-  return _mangledNameCache.insert(
-    std::make_pair(node_->id, node_->mangledNameHash)).second;
 }
 
 } // parser
