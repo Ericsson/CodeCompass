@@ -34,6 +34,7 @@ struct File
 
   static constexpr const char* DIRECTORY_TYPE = "Dir";
   static constexpr const char* UNKNOWN_TYPE   = "Unknown";
+  static constexpr const char* BINARY_TYPE    = "Binary";
 
   #pragma db id
   FileId id;
