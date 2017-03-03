@@ -8,9 +8,7 @@ extern "C"
 boost::program_options::options_description getOptions()
 {
   namespace po = boost::program_options;
-
   po::options_description description("Git Plugin");
-
   return description;
 }
 

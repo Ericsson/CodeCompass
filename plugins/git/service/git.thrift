@@ -194,7 +194,7 @@ service GitService
   /**
    * Return a list with all the branches that can be found in the repository.
    */
-  list<string> getBrancheList(
+  list<string> getBranchList(
     1:string repoId_)
 
   /**

@@ -68,7 +68,7 @@ public:
     std::vector<std::string>& return_,
     const std::string& repoId_) override;
 
-  virtual void getBrancheList(
+  virtual void getBranchList(
     std::vector<std::string>& return_,
     const std::string& repoId_) override;
 
@@ -165,7 +165,6 @@ private:
   void setCommitData(
     GitCommit& return_,
     const std::string& repoId_,
-    const std::string& oid_,
     git_commit* commit_);
 
   /**
@@ -176,7 +175,7 @@ private:
   /**
    * Iterate over a diff generating formatted text output.
    */
-  std::string gitDiffToString(git_diff* diff_, const bool isCompact_ = false);
+  std::string gitDiffToString(git_diff* diff_, bool isCompact_ = false);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

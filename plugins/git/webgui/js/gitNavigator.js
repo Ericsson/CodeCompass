@@ -4,31 +4,29 @@ define([
   'dojo/_base/declare',
   'dojo/store/Memory',
   'dojo/store/Observable',
-  'dojo/date/locale',
-  'dojo/mouse',
   'dojo/topic',
   'codecompass/view/component/HtmlTree',
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/util'],
-function (Tooltip, ObjectStoreModel, declare, Memory, Observable, locale, mouse,
-  topic, HtmlTree, model, viewHandler, util) {
+function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
+  HtmlTree, model, viewHandler, util) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
   /**
    * This function creates a html label for a git commit.
    * @param {GitCommit} commit Thrift git commit object.
-   * @return HTML Commit label
+   * @return HTML Commit label.
    */
   function createLabel(commit) {
     var avatarLabel = commit.author.charAt(0).toUpperCase();
     return '<div class="git-commit">'
-         + '<div class="git-avatar" style="background-color:'
-         + util.strToColor(commit.author)   + '">' + avatarLabel  + '</div>'
-         + '<div class="git-message">' + commit.summary + '</div>'
-         + '<div class="git-author">'  + commit.author  + '</div>'
-         + '</div>';
+      + '<div class="git-avatar" style="background-color:'
+      + util.strToColor(commit.author) + '">' + avatarLabel + '</div>'
+      + '<div class="git-message">' + commit.summary + '</div>'
+      + '<div class="git-author">' + commit.author + '</div>'
+      + '</div>';
   }
 
   /**
@@ -39,13 +37,13 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, locale, mouse,
   function createTooltip(commit) {
     var time = util.timeAgo(new Date(commit.time * 1000));
     return '<div class="git-commit-tooltip">'
-         + '<div class="git-sha">#'     + commit.oid.substr(0,8) + '</div>'
-         + '<div class="git-message">'  + commit.message + '</div>'
-         + '<div class="commit-meta">'
-         +   '<div class="git-author">'   + commit.author + '</div>'
-         +   '<div class="git-committed-on"> committed on '
-         +     '<span class="git-time">' + time  + '</span></div>'
-         + '</div></div>';
+      + '<div class="git-sha">#' + commit.oid.substr(0,8) + '</div>'
+      + '<div class="git-message">' + commit.message + '</div>'
+      + '<div class="commit-meta">'
+      +   '<div class="git-author">' + commit.author + '</div>'
+      +   '<div class="git-committed-on"> committed on '
+      +     '<span class="git-time">' + time  + '</span></div>'
+      + '</div></div>';
   }
 
   /**
@@ -248,7 +246,7 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, locale, mouse,
 
       var ret = [];
 
-      model.gitservice.getBrancheList(repo.id).forEach(function (branchName) {
+      model.gitservice.getBranchList(repo.id).forEach(function (branchName) {
         var branchCommitsId = repo.id + '_branches_' + branchName;
         ret.push({
           id          : branchCommitsId,
@@ -383,8 +381,8 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, locale, mouse,
   });
 
   var navigator = new GitNavigator({
-    id      : 'gitnavigator',
-    title   : 'Revision Control Navigator'
+    id    : 'gitnavigator',
+    title : 'Revision Control Navigator'
   });
 
   viewHandler.registerModule(navigator, {

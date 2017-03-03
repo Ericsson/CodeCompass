@@ -1,17 +1,15 @@
 define([
   'dojo/_base/declare',
-  'dojo/_base/lang',
   'dojo/dom-class',
   'dojo/dom-construct',
-  'dojox/html/entities',
   'dijit/TitlePane',
   'dijit/layout/ContentPane',
   'dijit/form/Button',
   'codecompass/model',
   'dojox/highlight',
   'dojox/highlight/languages/cpp',],
-function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
-  Button, model, highlight) {
+function (declare, domClass, dom, TitlePane, ContentPane, Button, model,
+  highlight) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
@@ -40,16 +38,17 @@ function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
      * Create an expand button. When the user clicks on it, it will increase the
      * context line size and reload the content of the actual file.
      * @param refNode The DOM node where the node should be placed.
-     * If a string, it is assumed to be the ID of the node
-     * @param path
-     * @param sideBySide
+     * If a string, it is assumed to be the ID of the node.
+     * @param {String} path
+     * @param {Boolean} sideBySide This variable sets whether side-by-side view
+     * should be generated or not.
      */
     _createExpanderBtn : function (refNode, path, sideBySide) {
       var that = this;
 
       var expanderBox = dom.create('th', {
-        colspan   : sideBySide ? 1 : 2,
-        class     : 'diff-expander'
+        colspan : sideBySide ? 1 : 2,
+        class   : 'diff-expander'
       }, refNode);
 
       var expandBtn = new Button({
@@ -79,7 +78,7 @@ function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
      * @param {Boolean} sideBySide This variable sets whether side-by-side view
      * should be generated or not.
      */
-    parseSingleDiffFile : function(path, lines, i, sideBySide) {
+    parseSingleDiffFile : function (path, lines, i, sideBySide) {
       var fileDiffDom = dom.create('table', { class : 'diff-containertable'});
 
       for (++i; i < lines.length && lines[i][0] !== '@'; ++i)
@@ -138,7 +137,7 @@ function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
      * @param {Boolean} sideBySide This variable sets whether side-by-side view
      * should be generated or not.
      */
-    parseSingleDiffSection : function(lines, i, fileDiffDom, oldlinenumber,
+    parseSingleDiffSection : function (lines, i, fileDiffDom, oldlinenumber,
       newlinenumber, sideBySide) {
 
       --oldlinenumber;
@@ -179,24 +178,24 @@ function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
             break;
 
           case '@':
-            return i;
-
           case 'd':
             return i;
 
           default:
-            console.log('Error at line ' + i + ' of ' + lines.length + ': ' + line);
+            console.log(
+              'Error at line ' + i + ' of ' + lines.length + ': ' + line);
             throw 'Error in _parseSingleDiffSection';
         }
 
         content = highlight.processString(content).result;
 
         var lineContainer = dom.create('tr', {
-          class: 'diff-linecontainer'
+          class : 'diff-linecontainer'
         }, fileDiffDom);
 
         dom.create('td', {
-          class : 'diff-linenumber ' + (mode === 'old' && oldlinenumber ? 'old' :
+          class : 'diff-linenumber ' +
+            (mode === 'old' && oldlinenumber ? 'old' :
             !sideBySide && mode === 'new' && newlinenumber ? 'new' : ''),
           innerHTML : ('old' == mode || 'both' == mode
             ? oldlinenumber : '&nbsp;')
@@ -236,23 +235,23 @@ function (declare, lang, domClass, dom, entities, TitlePane, ContentPane,
 
     /**
      * Get changes between commit.
-     * @param {String} path File path
-     * @param {Number} contextLines Context line size
+     * @param {String} path File path.
+     * @param {Number} contextLines Context line size.
      */
     getFileDiff : function (path, contextLines) {
       var options = new GitDiffOptions();
       options.contextLines = contextLines;
-      options.pathspec = [ path ];
+      options.pathspec = [path];
 
       var diff = model.gitservice.getCommitDiffAsString(
         this._repoId, this._commitId, options).split(/\r?\n/);
 
-      return this.parseSingleDiffFile(path, diff, 1, this._sideBySide)
+      return this.parseSingleDiffFile(path, diff, 1, this._sideBySide);
     },
 
     /**
-     * @param {Number} repoId Repository id
-     * @param {String} commitId Commit hash
+     * @param {Number} repoId Repository id.
+     * @param {String} commitId Commit hash.
      */
     load : function (repoId, commitId, sideBySide) {
       this._titlePanelCache = {};

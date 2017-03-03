@@ -3,16 +3,14 @@ define([
   'dojo/dom-construct',
   'dojo/topic',
   'dojo/dom-style',
-  'dojo/date/locale',
   'dijit/layout/ContentPane',
-  'dijit/layout/LayoutContainer',
   'dijit/layout/TabContainer',
   'codecompass/view/component/GitDiff',
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/urlHandler',
   'codecompass/util'],
-function (declare, dom, topic, style, locale, ContentPane, LayoutContainer,
+function (declare, dom, topic, style, ContentPane,
   TabContainer, GitDiff, model, viewHandler, urlHandler, util) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
@@ -36,7 +34,8 @@ function (declare, dom, topic, style, locale, ContentPane, LayoutContainer,
       //--- Commit header ---//
 
       var header = dom.create('div', { class : 'header'}, this._header.domNode);
-      dom.create('div', { class : 'message', innerHTML: commit.message }, header);
+      dom.create(
+        'div', { class : 'message', innerHTML: commit.message }, header);
 
       //--- Commit meta information ---//
 
@@ -68,10 +67,10 @@ function (declare, dom, topic, style, locale, ContentPane, LayoutContainer,
           onclick : function () {
             var that = this;
             topic.publish('codecompass/gitCommitView', {
-              center     : 'gitcommitview',
-              gitrepo    : repoId,
-              gitcommit  : parentId,
-              gitbranch  : branchId
+              center    : 'gitcommitview',
+              gitrepo   : repoId,
+              gitcommit : parentId,
+              gitbranch : branchId
             });
           }
         }, shaBlocks);
@@ -93,8 +92,8 @@ function (declare, dom, topic, style, locale, ContentPane, LayoutContainer,
       var that = this;
 
       this._vdiff = new VisualDiff({
-        id     : 'git-visutaldiff',
-        title  : 'Visual diff'
+        id    : 'git-visutaldiff',
+        title : 'Visual diff'
       });
 
       this._subscribeTopics();
@@ -114,7 +113,7 @@ function (declare, dom, topic, style, locale, ContentPane, LayoutContainer,
      * @param {Object} state Key-value pairs of state.
      */
     setState : function (state) {
-      if ( state.center !== this.id || !state.gitrepo || !state.gitcommit)
+      if (state.center !== this.id || !state.gitrepo || !state.gitcommit)
         return;
 
       this.loadCommitView(state.gitrepo, state.gitcommit, state.gitbranch);
