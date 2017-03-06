@@ -75,7 +75,8 @@ int main(int argc, char* argv[])
   po::options_description desc = commandLineArguments();
 
   po::variables_map vm;
-  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::store(po::command_line_parser(argc, argv)
+    .options(desc).allow_unregistered().run(), vm);
 
   std::string binDir = boost::filesystem::canonical(
     boost::filesystem::path(argv[0]).parent_path()).string();
