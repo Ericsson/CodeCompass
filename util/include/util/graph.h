@@ -7,6 +7,9 @@
 #include <vector>
 #include <queue>
 #include <functional>
+#include <unordered_set>
+
+#include <util/logutil.h>
 
 namespace cc 
 {
@@ -26,9 +29,9 @@ class Graph
 public:
   enum Format {DOT, SVG};
 
-  struct Node     { std::string id; };
-  struct Edge     { std::string id; };
-  struct Subgraph { std::string id; };
+  typedef std::string Node;
+  typedef std::string Edge;
+  typedef std::string Subgraph;
 
   /**
    * By this constructor you can set the default properties of the graph. This
@@ -87,7 +90,17 @@ public:
    * the root graph.
    * @return Node object.
    */
-  Node addNode(const Subgraph& subgraph_ = Subgraph());
+  Node createNode(const Subgraph& subgraph_ = Subgraph());
+
+  /**
+   * This function adds a node to the graph.
+   * @param id_ Graph node unique id.
+   * @param subgraph_ Subgraph to which the node will be added. If a default
+   * constructed graph is given (i.e. its ID is empty) then the node is added to
+   * the root graph.
+   * @return Node object.
+   */
+  Node getOrCreateNode(const Node& id_, const Subgraph& subgraph_ = Subgraph());
 
   /**
    * This function adds an edge to the graph.
@@ -95,7 +108,7 @@ public:
    * @param to_ Target node.
    * @return Edge object.
    */
-  Edge addEdge(const Node& from_, const Node& to_);
+  Edge createEdge(const Node& from_, const Node& to_);
 
   /**
    * This function adds a subgraph to the graph.
@@ -103,7 +116,7 @@ public:
    * default. If an ID is given which is already used, then the function returns
    * the old subgraph, and doesn't add a new one.
    */
-  Subgraph addSubgraph(const std::string& id_);
+  Subgraph getOrCreateSubgraph(const std::string& id_);
 
   /**
    * This function returns true if the given node (its identifier) exists.
@@ -136,7 +149,7 @@ public:
    * this link: http://www.graphviz.org/content/attrs.
    * @param html_ If true then the value_ is interpreted as HTML.
    */
-  void setAttribute(
+  void setNodeAttribute(
     const Node& node_,
     const std::string& key_,
     const std::string& value_,
@@ -147,7 +160,7 @@ public:
    * at this link: http://www.graphviz.org/content/attrs.
    * @param html_ If true then the value_ is interpreted as HTML.
    */
-  void setAttribute(
+  void setEdgeAttribute(
     const Edge& edge_,
     const std::string& key_,
     const std::string& value_,
@@ -158,7 +171,7 @@ public:
    * listed at this link: http://www.graphviz.org/content/attrs.
    * @param html_ If true then the value_ is interpreted as HTML.
    */
-  void setAttribute(
+  void setSubgraphAttribute(
     const Subgraph& graph_,
     const std::string& key_,
     const std::string& value_,
@@ -168,25 +181,25 @@ public:
    * This function copies the attributes of a node. These attributes are
    * listed at this link: http://www.graphviz.org/content/attrs.
    */
-  void setAttribute(const Node& targetNode_, const Node& sourceNode_);
+  void setNodeAttribute(const Node& targetNode_, const Node& sourceNode_);
 
   /**
    * This function copies the attributes of an edge. These attributes are
    * listed at this link: http://www.graphviz.org/content/attrs.
    */
-  void setAttribute(const Edge& targetEdge_, const Edge& sourceEdge_);
+  void setEdgeAttribute(const Edge& targetEdge_, const Edge& sourceEdge_);
 
   /**
    * This function retrieves an attribute of a node. These attributes are
    * listed at this link: http://www.graphviz.org/content/attrs.
    */
-  std::string getAttribute(const Node& node_, const std::string& key_);
+  std::string getNodeAttribute(const Node& node_, const std::string& key_);
 
   /**
    * This function retrieves an attribute of an edge. These attributes are
    * listed at this link: http://www.graphviz.org/content/attrs.
    */
-  std::string getAttribute(const Edge& edge_, const std::string& key_);
+  std::string getEdgeAttribute(const Edge& edge_, const std::string& key_);
 
   /**
    * This function generates the string representation of the graph in the
@@ -221,7 +234,7 @@ private:
   {
     std::size_t operator()(const Node& node) const
     {
-      return std::hash<std::string>()(node.id);
+      return std::hash<std::string>()(node);
     }
   };
 
@@ -230,7 +243,8 @@ private:
    * The graph elements need a char* identifier.
    */
   std::string generateId();
-  std::string currentId;
+  std::unordered_set<std::string> _ids;
+  std::string _currentId;
 
   GraphPimpl* _graphPimpl;
 
@@ -238,14 +252,6 @@ private:
   bool _strict;
   bool _isSubgraph;
 };
-
-bool operator<(const Graph::Node& n1, const Graph::Node& n2);
-bool operator<(const Graph::Edge& e1, const Graph::Edge& e2);
-bool operator<(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
-
-bool operator==(const Graph::Node& n1, const Graph::Node& n2);
-bool operator==(const Graph::Edge& e1, const Graph::Edge& e2);
-bool operator==(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
 
 /**
  * This function builds a graph in the order of breadth-first search. If style
@@ -273,38 +279,47 @@ bool operator==(const Graph::Subgraph& s1, const Graph::Subgraph& s2);
 inline std::set<Graph::Node> bfsBuild(
   Graph& graph_,
   const Graph::Node& startNode_,
-  std::function<std::vector<Graph::Node>(const Graph::Node&)> relations_,
-  const std::map<std::string, std::string>& nodeDecoration_
-    = std::map<std::string, std::string>(),
-  const std::map<std::string, std::string>& edgeDecoration_
-    = std::map<std::string, std::string>())
+  std::function<std::vector<Graph::Node>(Graph&, const Graph::Node&)> relations_,
+  const std::vector<std::pair<std::string, std::string>>& nodeDecoration_
+    = std::vector<std::pair<std::string, std::string>>(),
+  const std::vector<std::pair<std::string, std::string>>& edgeDecoration_
+    = std::vector<std::pair<std::string, std::string>>(),
+  const int level_ = -1)
 {
   std::set<Graph::Node> visitedNodes;
 
+  if (level_ < -1)
+    return visitedNodes;
+
+  int level = 0;
   std::queue<Graph::Node> queue;
   queue.push(startNode_);
 
-  while (!queue.empty())
+  bool walkLevel = true;
+  while (!queue.empty() && walkLevel)
   {
     Graph::Node current = queue.front();
     queue.pop();
 
-    for (const Graph::Node& to : relations_(current))
+    for (const Graph::Node& to : relations_(graph_, current))
     {
-      Graph::Edge edge = graph_.addEdge(current, to);
-
-      for (const auto& decoration : edgeDecoration_)
-        graph_.setAttribute(edge, decoration.first, decoration.second);
-
       if (visitedNodes.find(to) == visitedNodes.end())
       {
         queue.push(to);
         visitedNodes.insert(to);
 
         for (const auto& decoration : nodeDecoration_)
-          graph_.setAttribute(to, decoration.first, decoration.second);
+          graph_.setNodeAttribute(to, decoration.first, decoration.second);
       }
+
+      Graph::Edge edge = graph_.createEdge(current, to);
+      for (const auto& decoration : edgeDecoration_)
+        graph_.setEdgeAttribute(edge, decoration.first, decoration.second);
     }
+
+    ++level;
+    if (level_ != -1)
+      walkLevel = level != level_;
   }
 
   return visitedNodes;

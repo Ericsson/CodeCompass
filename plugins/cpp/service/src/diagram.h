@@ -110,20 +110,37 @@ private:
     const std::string& property_);
 
   /**
-   * This function decorates a graph element.
+   * This function decorates a graph node.
    * @param graph_ A graph object.
-   * @param elem_ A graph element: node, edge or subgraph.
+   * @param elem_ A graph node
    * @param decoration_ A map which describes the style attributes.
    */
-  template <typename T>
-  void decorate(
+  void decorateNode(
     util::Graph& graph_,
-    const T& elem_,
-    const Decoration& decoration_) const
-  {
-    for (const auto& attr : decoration_)
-      graph_.setAttribute(elem_, attr.first, attr.second);
-  }
+    const util::Graph::Node& node_,
+    const Decoration& decoration_) const;
+
+  /**
+   * This function decorates a graph edge.
+   * @param graph_ A graph object.
+   * @param elem_ A graph edge
+   * @param decoration_ A map which describes the style attributes.
+   */
+  void decorateEdge(
+    util::Graph& graph_,
+    const util::Graph::Edge& edge_,
+    const Decoration& decoration_) const;
+
+  /**
+   * This function decorates a graph subgraph.
+   * @param graph_ A graph object.
+   * @param elem_ A graph subgraph
+   * @param decoration_ A map which describes the style attributes.
+   */
+  void decorateSubgraph(
+    util::Graph& graph_,
+    const util::Graph::Subgraph& subgrap_,
+    const Decoration& decoration_) const;
 
   static const Decoration centerNodeDecoration;
   static const Decoration calleeNodeDecoration;
