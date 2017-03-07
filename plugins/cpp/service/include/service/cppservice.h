@@ -1,11 +1,11 @@
 #ifndef CC_SERVICE_LANGUAGE_CPPSERVICE_H
 #define CC_SERVICE_LANGUAGE_CPPSERVICE_H
 
-#include <memory>
-#include <vector>
 #include <map>
-#include <unordered_set>
+#include <memory>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <boost/program_options/variables_map.hpp>
 
@@ -126,6 +126,8 @@ public:
   void getSyntaxHighlight(
     std::vector<SyntaxHighlight>& return_,
     const core::FileId& fileId) override;
+
+  typedef std::map<cc::model::CppAstNodeId, std::vector<std::string>> TagMap;
 
 private:
   enum ReferenceType

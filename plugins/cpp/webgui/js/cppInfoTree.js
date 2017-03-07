@@ -35,10 +35,14 @@ function (model, viewHandler, util) {
   }
 
   function createLabel(astNodeInfo) {
-    var labelClass = '';
+    var labelClass = [];
 
     if (astNodeInfo.tags.indexOf('implicit') > -1)
-      labelClass = 'label-implicit';
+      labelClass.push('label-implicit');
+    if (astNodeInfo.tags.indexOf('match-strong') > -1)
+      labelClass.push('label-match-strong');
+    if (astNodeInfo.tags.indexOf('match-weak') > -1)
+      labelClass.push('label-match-weak');
 
     var labelValue = astNodeInfo.astNodeValue;
 
@@ -61,7 +65,7 @@ function (model, viewHandler, util) {
     }
 
     var label = createTagLabels(astNodeInfo.tags)
-      + '<span class="' + labelClass + '">'
+      + '<span class="' + labelClass.join(' ') + '">'
       + astNodeInfo.range.range.startpos.line   + ':'
       + astNodeInfo.range.range.startpos.column + ': '
       + labelValue

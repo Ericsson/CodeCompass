@@ -230,6 +230,28 @@ svg {
   cursor:pointer;
 }
 
+.label-match-strong {
+  color: #4F7942;
+  font-weight: bold;
+}
+
+.label-match-weak {
+  color: #696969;
+  font-style: italic;
+}
+
+.ambiguouspage-match-strong {
+  color: #4F7942;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.ambiguouspage-match-weak {
+  color: #696969;
+  font-size: 10px;
+  font-style: italic;
+}
+
 /* Browsing history */
 
 .jumpfrom, .jumpto {

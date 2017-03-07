@@ -29,11 +29,28 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
    * This function builds and displays a modal dialog which contains the given
    * elements. These elements are clickable so the user can jump to the location
    * of the elements.
-   * @param {Array} elems Array of AstNodeInfo Thrift objects.
+   * @param {Array}     elems     Array of AstNodeInfo Thrift objects.
+   * @param {Function}  decorator A callback function which can specify a class
+   * to be used on the filename of the reference.
    */
-  function buildAmbiguousRefPage(elems) {
+  function buildAmbiguousRefPage(elems, decorator) {
     function formatter(content) {
-      return '<div style="cursor: pointer">' + content + '</div>';
+        return '<div style="cursor: pointer">' + content + '</div>';
+    }
+
+    function filenameFormatter(item) {
+      // Call the decorator function (if exists) to give us decoration
+      // for the filename.
+
+      var decoration;
+      if (decorator)
+        decoration = decorator(item);
+
+      return '<div style="cursor: pointer">' +
+        (decoration ? '<span class="' + decoration.class + '">' : '') +
+        item.filename +
+        (decoration ? '</span>' : '') +
+        '</div>';
     }
 
     var layout = [{
@@ -42,9 +59,9 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       hidden    : true
     }, {
       name      : 'File name',
-      field     : 'filename',
-      width     : 30,
-      formatter : formatter
+      field     : '_item',
+      width     : 40,
+      formatter : filenameFormatter
     }, {
       name      : 'Position',
       field     : 'position',
@@ -65,7 +82,8 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       store.newItem({
         id       : Math.random(),
         filename : fileInfo.path,
-        position : 'line: ' + nodeInfo.range.range.startpos.line
+        position : 'line: ' + nodeInfo.range.range.startpos.line,
+        tags     : nodeInfo.tags
       });
       infos.push(nodeInfo);
     });
@@ -87,7 +105,7 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       content : datagrid
     });
 
-    style.set(dialog.get('containerNode'), 'width', '500px');
+    style.set(dialog.get('containerNode'), 'width', '600px');
     style.set(dialog.get('containerNode'), 'max-height', '300px');
     style.set(dialog.get('containerNode'), 'overflow-y', 'auto');
 
@@ -95,7 +113,7 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
   }
 
   return {
-    jumpToDef : function (astNodeId, service) {
+    jumpToDef : function (astNodeId, service, ambiguousPageDecorator) {
       var refTypes = service.getReferenceTypes(astNodeId);
       var astNodeInfos = service.getReferences(
         astNodeId, refTypes['Definition']);
@@ -116,7 +134,7 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
       } else if (astNodeInfos.length === 1)
         jump(astNodeInfos[0]);
       else
-        buildAmbiguousRefPage(astNodeInfos);
+        buildAmbiguousRefPage(astNodeInfos, ambiguousPageDecorator);
     },
 
     /**

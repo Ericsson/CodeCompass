@@ -2,6 +2,7 @@ set(ODB_SOURCES
   include/model/cppastnode.h
   include/model/cppentity.h
   include/model/cppenum.h
+  include/model/cppclusterinfo.h
   include/model/cppfriendship.h
   include/model/cppfunction.h
   include/model/cppinheritance.h

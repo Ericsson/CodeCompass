@@ -27,6 +27,7 @@
 
 #include "diagram.h"
 #include "filediagram.h"
+#include "symbolclusterer.h"
 
 namespace
 {
@@ -65,9 +66,10 @@ namespace
    */
   struct CreateAstNodeInfo
   {
-    typedef std::map<cc::model::CppAstNodeId, std::vector<std::string>> TagMap;
-
-    CreateAstNodeInfo(const TagMap& tags_ = {}) : _tags(tags_)
+    CreateAstNodeInfo(
+      std::shared_ptr<odb::database> db_,
+      const cc::service::language::CppServiceHandler::TagMap& tags_ = {}) :
+      _db(db_), _tags(tags_)
     {
     }
 
@@ -91,22 +93,25 @@ namespace
       {
         ret.range.file = std::to_string(astNode_.location.file.object_id());
 
-        ret.__set_srcText(cc::util::textRange(
-          astNode_.location.file.load()->content.load()->content,
-          astNode_.location.range.start.line,
-          astNode_.location.range.start.column,
-          astNode_.location.range.end.line,
-          astNode_.location.range.end.column));
+        (cc::util::OdbTransaction(_db))([&ret, &astNode_](){
+          ret.__set_srcText(cc::util::textRange(
+            astNode_.location.file.load()->content.load()->content,
+            astNode_.location.range.start.line,
+            astNode_.location.range.start.column,
+            astNode_.location.range.end.line,
+            astNode_.location.range.end.column));
+        });
       }
 
-      TagMap::const_iterator it = _tags.find(astNode_.id);
+      cc::service::language::CppServiceHandler::TagMap::const_iterator it =
+        _tags.find(astNode_.id);
       if (it != _tags.end())
         ret.__set_tags(it->second);
 
       return ret;
     }
 
-    const std::map<cc::model::CppAstNodeId, std::vector<std::string>>& _tags;
+    const cc::service::language::CppServiceHandler::TagMap& _tags;
     std::shared_ptr<odb::database> _db;
   };
 }
@@ -579,15 +584,17 @@ void CppServiceHandler::getReferences(
   const std::int32_t referenceId_,
   const std::vector<std::string>& tags_)
 {
-  std::map<model::CppAstNodeId, std::vector<std::string>> tags;
+  CppServiceHandler::TagMap tags;
   std::vector<model::CppAstNode> nodes;
   model::CppAstNode node;
+  bool shouldCheckClusters = false;
 
   _transaction([&, this](){
     switch (referenceId_)
     {
       case DEFINITION:
         nodes = queryDefinitions(astNodeId_);
+        shouldCheckClusters = true;
         break;
 
       case DECLARATION:
@@ -595,20 +602,24 @@ void CppServiceHandler::getReferences(
           astNodeId_,
           AstQuery::astType == model::CppAstNode::AstType::Declaration &&
           AstQuery::visibleInSourceCode == true);
+        shouldCheckClusters = true;
         break;
 
       case USAGE: // TODO: Filter by tags
         nodes = queryCppAstNodes(astNodeId_);
+        shouldCheckClusters = true;
         break;
 
       case THIS_CALLS:
         nodes = queryCalls(astNodeId_);
+        shouldCheckClusters = true;
         break;
 
       case CALLS_OF_THIS:
         nodes = queryCppAstNodes(
           astNodeId_,
           AstQuery::astType == model::CppAstNode::AstType::Usage);
+        shouldCheckClusters = true;
         break;
 
       case CALLEE:
@@ -621,6 +632,7 @@ void CppServiceHandler::getReferences(
 
         std::sort(nodes.begin(), nodes.end());
         nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
+        shouldCheckClusters = true;
 
         break;
 
@@ -651,6 +663,7 @@ void CppServiceHandler::getReferences(
 
         std::sort(nodes.begin(), nodes.end());
         nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
+        shouldCheckClusters = true;
 
         break;
 
@@ -800,6 +813,7 @@ void CppServiceHandler::getReferences(
           nodes.insert(nodes.end(), defs.begin(), defs.end());
         }
 
+        shouldCheckClusters = true;
         break;
       }
 
@@ -941,13 +955,25 @@ void CppServiceHandler::getReferences(
     }
 
     std::sort(nodes.begin(), nodes.end(), compareByValue);
+    CppServiceHandler::TagMap tags = getTags(nodes);
+
+    if (shouldCheckClusters && nodes.size() > 1)
+    {
+      if (node.id == 0)
+        // Some query paths do not populate the node variable due to
+        // optimisation reasons, but SymbolClusterer needs it, so we have to
+        // do the population now.
+        node = queryCppAstNode(astNodeId_);
+
+      SymbolClusterer::addClusterTags(_db, node, nodes, tags);
+    }
 
     return_.reserve(nodes.size());
     _transaction([this, &return_, &nodes](){
       std::transform(
         nodes.begin(), nodes.end(),
         std::back_inserter(return_),
-        CreateAstNodeInfo(getTags(nodes)));
+        CreateAstNodeInfo(_db, tags));
     });
   });
 }
@@ -1009,7 +1035,7 @@ void CppServiceHandler::getFileReferences(
   const core::FileId& fileId_,
   const std::int32_t referenceId_)
 {
-  std::map<model::CppAstNodeId, std::vector<std::string>> tags;
+  CppServiceHandler::TagMap tags;
   std::vector<model::CppAstNode> nodes;
 
   _transaction([&, this](){
@@ -1309,6 +1335,11 @@ std::uint32_t CppServiceHandler::queryCppAstNodeCountInFile(
 std::vector<model::CppAstNode> CppServiceHandler::queryDefinitions(
   const core::AstNodeId& astNodeId_)
 {
+  // A definition node's "jump to definition" is itself.
+  model::CppAstNode node = queryCppAstNode(astNodeId_);
+  if (node.astType == model::CppAstNode::AstType::Definition)
+    return std::vector<model::CppAstNode>(1, node);
+
   return queryCppAstNodes(
     astNodeId_,
     AstQuery::astType == model::CppAstNode::AstType::Definition);
@@ -1413,10 +1444,10 @@ CppServiceHandler::transitiveClosureOfRel(
   return ret;
 }
 
-std::map<model::CppAstNodeId, std::vector<std::string>>
+CppServiceHandler::TagMap
 CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 {
-  std::map<model::CppAstNodeId, std::vector<std::string>> tags;
+  CppServiceHandler::TagMap tags;
 
   for (const model::CppAstNode& node : nodes_)
   {

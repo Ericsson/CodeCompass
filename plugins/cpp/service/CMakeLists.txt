@@ -15,7 +15,8 @@ add_library(cppservice SHARED
   src/cppservice.cpp
   src/plugin.cpp
   src/diagram.cpp
-  src/filediagram.cpp)
+  src/filediagram.cpp
+  src/symbolclusterer.cpp)
 
 target_compile_options(cppservice PUBLIC -Wno-unknown-pragmas)
 

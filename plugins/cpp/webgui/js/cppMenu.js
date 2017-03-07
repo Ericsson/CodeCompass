@@ -21,7 +21,22 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
             return;
 
           var languageService = model.getLanguageService(fileInfo.type);
-          astHelper.jumpToDef(nodeInfo.id, model.cppservice);
+
+          function clusteringDecorator(item) {
+            // Tell the ambiguous definition window to decorate strong and
+            // weak matches specially.
+            if (item.tags.indexOf("match-strong") > -1)
+              return {
+                class : 'ambiguouspage-match-strong'
+              };
+            else if (item.tags.indexOf("match-weak") > -1)
+              return {
+                class : 'ambiguouspage-match-weak'
+              };
+          }
+
+          astHelper.jumpToDef(nodeInfo.id, model.cppservice,
+                              clusteringDecorator);
         }
       });
     }

@@ -35,3 +35,28 @@ This returns a class collaboration diagram which shows the individual class
 members and their inheritance hierarchy.
 
 ![Diagram view](images/cpp_collaboration_diagram.png)
+
+\subsection userguide_cpp_cluster Navigation aid based on linkage resolution
+
+Sometimes projects contain ambiguity when viewed as a whole, e.g. there can be
+multiple <i>f()</i> functions defined.
+
+![Jump to definition window with nagivation aid](images/cpp_cluster_refpage.png)
+
+The above view shows how CodeCompass aids navigation from a call to <i>f()</i>
+to the possible (multiple) definitions.
+
+ - A file indicated in <span style="color: #4F7942; font-weight: bold">bold,
+green</span> is a file which contains a definition that has been built into the
+same binary as the call you are jumping from.
+ - A file indicated in <span style="color: #696969; font-style: italic">grey,
+italic</span> is a file which contains a definition matching the call you are
+jumping from, but a common binary for the two has not been found.
+
+In most cases, the actual definition you want to see, that is, the definition
+which contains the executed code to the call, is in the
+<span style="color: #4F7942; font-weight: bold">bold, green</span> files.
+
+![InfoTree window with navigation aid](images/cpp_cluster_infotree.png)
+
+The same highlighting rules apply to the Info Tree as well.
