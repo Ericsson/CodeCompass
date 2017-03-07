@@ -85,7 +85,10 @@ void GitServiceHandler::getRepositoryList(std::vector<GitRepository>& return_)
 {
   namespace fs = ::boost::filesystem;
 
-  std::string versionDataDir = *_datadir + "/version";
+  fs::path versionDataDir(*_datadir + "/version");
+
+  if (!fs::is_directory(versionDataDir))
+    return;
 
   fs::directory_iterator endIter;
   for (fs::directory_iterator dirIter(versionDataDir);
