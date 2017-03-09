@@ -72,8 +72,8 @@ public:
     if (loc_.isInvalid())
       return false;
 
-    position_.line = _clangSrcMan.getSpellingLineNumber(loc_);
-    position_.column = _clangSrcMan.getSpellingColumnNumber(loc_);
+    position_.line = _clangSrcMan.getPresumedLineNumber(loc_);
+    position_.column = _clangSrcMan.getPresumedColumnNumber(loc_);
 
     return true;
   }
