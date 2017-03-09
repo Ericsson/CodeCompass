@@ -777,7 +777,7 @@ public:
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
     astNode->astValue = vd_->getNameAsString();
-    astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocEnd());
+    astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocation());
     astNode->mangledName = getMangledName(_mngCtx, vd_, astNode->location);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType
