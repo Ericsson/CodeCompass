@@ -119,11 +119,6 @@ public:
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
-    // There are some built-in functions, generally prefixed by __builtin, like
-    // __builtin_memmove. Here we skip these functions.
-    if (fd_->getBuiltinID() != 0)
-      return true;
-
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = clang::RecursiveASTVisitor<
