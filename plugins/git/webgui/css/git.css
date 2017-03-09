@@ -266,3 +266,53 @@
   width: 50%;
   word-break: break-all;
 }
+
+.blame-gutter {
+	 width: 400px;
+	 background-color: white;
+}
+
+.blame-line {
+}
+
+#gitblame .CodeMirror
+{
+  line-height:21px;
+}
+
+.blame-line .git-message {
+  max-width: 190px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.blame-line .git-time {
+  color: #6a737d;
+  float: right;
+  padding-right: 5px;
+}
+
+.blame-commit-info {
+  display: inline-block;
+  width: 330px;
+  min-width: 330px;
+  max-width: 330px;
+}
+
+.blame-line-number {
+  min-width: 50px;
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 10px;
+  color: #4e524e;
+  font-weight: bold;
+  position: absolute;
+  right: 0;
+}
+
+.blame-line-full {
+	 border-top: 1px solid #bdbaba;
+}

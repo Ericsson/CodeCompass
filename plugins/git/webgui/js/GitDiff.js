@@ -294,7 +294,6 @@ function (declare, domClass, dom, TitlePane, ContentPane, Button, model,
           });
 
           this.addChild(this._titlePanelCache[fileNameText]);
-          
         }
       }
     }

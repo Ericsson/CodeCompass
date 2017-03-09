@@ -1,4 +1,6 @@
 #include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <git2.h>
 
@@ -42,8 +44,8 @@ util::DirIterCallback GitParser::getParserCallback()
 
     LOG(info) << "Git parser found a git repo at: " << path;
 
-    std::string clonedRepoPath = versionDataDir + "/"
-      + std::to_string(util::fnvHash(path_));
+    std::string repoId = std::to_string(util::fnvHash(path_));
+    std::string clonedRepoPath = versionDataDir + "/" + repoId;
 
     LOG(info) << "GitParser cloning into " << clonedRepoPath;
 
@@ -70,6 +72,18 @@ util::DirIterCallback GitParser::getParserCallback()
 
       return false;
     }
+
+    //--- Write repository options to an .INI file in the data directory. ---//
+
+    boost::property_tree::ptree pt;
+    std::string repoFile(versionDataDir + "/repositories.txt");
+
+    if (boost::filesystem::is_regular(repoFile))
+      boost::property_tree::read_ini(repoFile, pt);
+
+    pt.put(repoId + ".name", path.parent_path().filename().string());
+    pt.put(repoId + ".path", path.parent_path().string());
+    boost::property_tree::write_ini(repoFile, pt);
 
     return true;
   };

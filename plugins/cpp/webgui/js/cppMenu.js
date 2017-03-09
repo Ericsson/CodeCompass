@@ -17,6 +17,9 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
         label : 'Jump to definition',
         accelKey : 'ctrl - click',
         onClick : function () {
+          if (!nodeInfo || !fileInfo)
+            return;
+
           var languageService = model.getLanguageService(fileInfo.type);
           astHelper.jumpToDef(nodeInfo.id, model.cppservice);
         }
@@ -35,6 +38,9 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
       return new MenuItem({
         label : 'Info Tree',
         onClick : function () {
+          if (!nodeInfo || !fileInfo)
+            return;
+
           topic.publish('codecompass/infotree', {
             fileType : fileInfo.type,
             elementInfo : nodeInfo
@@ -52,6 +58,9 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
   var diagrams = {
     id : 'cpp-text-diagrams',
     render : function (nodeInfo, fileInfo) {
+      if (!nodeInfo || !fileInfo)
+        return;
+
       var submenu = new Menu();
 
       var diagramTypes = model.cppservice.getDiagramTypes(nodeInfo.id);

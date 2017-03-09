@@ -203,15 +203,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
     contextMenu.clear();
 
-    if (astNodeInfo)
-      viewHandler.getModules({
-        type : viewHandler.moduleType.TextContextMenu,
-        fileType : fileInfo.type
-      }).forEach(function (menuItem) {
-        var item = menuItem.render(astNodeInfo, fileInfo);
-        if (item)
-          contextMenu.addChild(item);
-      });
+    viewHandler.getModules({
+      type : viewHandler.moduleType.TextContextMenu,
+      fileType : fileInfo.type
+    }).forEach(function (menuItem) {
+      var item = menuItem.render(astNodeInfo, fileInfo);
+      if (item)
+        contextMenu.addChild(item);
+    });
 
     contextMenu.addChild(new MenuItem({
       label : 'Get permalink to selection',

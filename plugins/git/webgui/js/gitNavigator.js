@@ -8,43 +8,12 @@ define([
   'codecompass/view/component/HtmlTree',
   'codecompass/model',
   'codecompass/viewHandler',
-  'codecompass/util'],
+  'codecompass/util',
+  'codecompass/view/gitUtil'],
 function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
-  HtmlTree, model, viewHandler, util) {
+  HtmlTree, model, viewHandler, util, gitUtil) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
-
-  /**
-   * This function creates a html label for a git commit.
-   * @param {GitCommit} commit Thrift git commit object.
-   * @return HTML Commit label.
-   */
-  function createLabel(commit) {
-    var avatarLabel = commit.author.charAt(0).toUpperCase();
-    return '<div class="git-commit">'
-      + '<div class="git-avatar" style="background-color:'
-      + util.strToColor(commit.author) + '">' + avatarLabel + '</div>'
-      + '<div class="git-message">' + commit.summary + '</div>'
-      + '<div class="git-author">' + commit.author + '</div>'
-      + '</div>';
-  }
-
-  /**
-   * This functions creates a html tooltip message for a git commit.
-   * @param {GitCommit} commit Thrift git commit object.
-   * @return HTML Commit tooltip content.
-   */
-  function createTooltip(commit) {
-    var time = util.timeAgo(new Date(commit.time * 1000));
-    return '<div class="git-commit-tooltip">'
-      + '<div class="git-sha">#' + commit.oid.substr(0,8) + '</div>'
-      + '<div class="git-message">' + commit.message + '</div>'
-      + '<div class="commit-meta">'
-      +   '<div class="git-author">' + commit.author + '</div>'
-      +   '<div class="git-committed-on"> committed on '
-      +     '<span class="git-time">' + time  + '</span></div>'
-      + '</div></div>';
-  }
 
   /**
    * VersionNavigator is the navigation panel on the left side that shows
@@ -100,7 +69,7 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
 
         that._store.put({
           id          : repo.id,
-          name        : 'Repository ' + repo.id + " (" + repo.path + ")",
+          name        : 'Repository ' + repo.name + " (" + repo.path + ")",
           cssClass    : 'icon-repository',
           hasChildren : true,
           loaded      : true,
@@ -190,21 +159,23 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
 
       //--- Search the current commit in the tree ---//
 
-      var path = ['Repository ' + state.gitrepo];
+      var path = [state.gitrepo];
       var branchName = state.gitbranch;
       if (branchName) {
-        branchName.indexOf('refs/tags') === -1 
-          ? path.push('Branches')
-          : path.push('Tags');
+        var type = branchName.indexOf('refs/tags') === -1 
+          ? state.gitrepo + '_branches'
+          : state.gitrepo + '_tags';
 
-        path.push(branchName);
+        path.push(type);
+        path.push(type + '_' + branchName);
       }
 
       var currentNode = this.getChildren()[0];
       path.forEach(function (directory) {
+        console.log(directory);
         children = currentNode.getChildren();
         index = util.findIf(children, function (child) {
-          return child.label.indexOf(directory) !== -1;
+          return child.item.id === directory;
         });
         currentNode = children[index];
         that._expandNode(currentNode);
@@ -339,9 +310,9 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
           id            : parentid + '_commit' + commit.oid,
           oid           : commit.oid,
           parent        : parentid,
-          name          : createLabel(commit),
+          name          : gitUtil.createLabel(commit),
           cssClass      : 'icon-commit',
-          tooltip       : createTooltip(commit),
+          tooltip       : gitUtil.createTooltip(commit),
           hasChildren   : false,
           onClick       : function (item, node, event) {
             topic.publish('codecompass/gitCommitView', {
