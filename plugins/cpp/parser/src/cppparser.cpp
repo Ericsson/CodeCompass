@@ -233,7 +233,7 @@ model::BuildActionPtr CppParser::addBuildAction(
   buildAction->command = boost::algorithm::join(command_.CommandLine, " ");
   buildAction->type
     = extension == ".o" || extension == ".so" || extension == ".a"
-    ? model::BuildAction::Link
+    ? (linkCommandFound = true, model::BuildAction::Link)
     : model::BuildAction::Compile;
 
   transaction([&, this]{ _ctx.db->persist(buildAction); });
@@ -322,7 +322,8 @@ int CppParser::worker(const clang::tooling::CompileCommand& command_)
   return error;
 }
 
-CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
+CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_),
+                                            linkCommandFound(false)
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
@@ -337,6 +338,7 @@ std::vector<std::string> CppParser::getDependentParsers() const
 
 bool CppParser::parse()
 {
+  size_t threadCount = _ctx.options["jobs"].as<int>();
   VisitorActionFactory::init(_ctx);
 
   bool success = true;
@@ -345,27 +347,45 @@ bool CppParser::parse()
     : _ctx.options["input"].as<std::vector<std::string>>())
     if (boost::filesystem::is_regular_file(input))
       success
-        = success && parseByJson(input, _ctx.options["jobs"].as<int>());
+        = success && parseByJson(input, threadCount);
 
 
   std::unique_ptr<SymbolClusterer> clusterer;
   SymbolClusterer::cluster_collection initialClusters;
   if (!_ctx.options["cpp-no-linkage-accuracy"].as<bool>())
   {
-    clusterer = std::make_unique<SymbolClusterer>(
-      _ctx, _ctx.options["jobs"].as<int>());
-    LOG(info) << "Enhancing linkage accuracy based on build information...";
-    initialClusters = clusterer->retrieveInitialClusters();
-    clusterer->performClusterisation(initialClusters);
+    if (linkCommandFound)
+    {
+      clusterer = std::make_unique<SymbolClusterer>(_ctx);
+      LOG(info) << "Enhancing linkage accuracy based on build information...";
+      initialClusters = clusterer->retrieveInitialClusters(threadCount);
+      clusterer->performClusterisation(initialClusters, threadCount);
+    }
+    else
+      LOG(warning) << "Skipping linkage accuracy enhancement as input compile "
+                      "command databases didn't contain any linker commands.";
   }
 
   // performClusterisation just schedules calculations and execution is
   // done in at least one parallel thread (unless --jobs 1 was specified!).
   // So some other work can continue here.
+
+  if (clusterer)
+  {
+    // Fetch statistics from the clusterer on the main thread.
+    std::vector<std::pair<std::string, std::string>> stats =
+      clusterer->statistics();
+
+    LOG(info) << "Accuracy enhancements statistics";
+    LOG(info) << "--------------------------------";
+    for (auto& it : stats)
+      LOG(info) << it.first << ": " << it.second;
+  }
+
   VisitorActionFactory::cleanUp();
   _parsedCommandHashes.clear();
 
-  if (!_ctx.options["cpp-no-linkage-accuracy"].as<bool>())
+  if (clusterer)
   {
     LOG(debug) << "Waiting for accurancy enhancement to finish...";
     clusterer->waitForClusters();

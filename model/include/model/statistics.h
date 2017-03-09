@@ -26,6 +26,16 @@ struct Statistics
   int         value;
 };
 
+/**
+ * Represents a view over a query which results in a single transient unsigned
+ * number, such as a "SELECT COUNT(*) FROM something;".
+ */
+#pragma db view
+struct SingleCountView
+{
+  size_t value;
+};
+
 } // model
 } // cc
 

@@ -19,7 +19,7 @@ namespace model
  * cluster, if the file's contents has been built into the cluster. This build
  * can take arbitrary number of commands to conclude, forming a chain.
  */
-#pragma db object
+#pragma db object no_id
 struct CppClusterInfo
 {
   #pragma db not_null
@@ -34,8 +34,6 @@ struct CppClusterInfo
   #pragma db index member(file)
 #endif
 };
-
-typedef std::shared_ptr<CppClusterInfo> CppClusterInfoPtr;
 
 #pragma db view
 /**

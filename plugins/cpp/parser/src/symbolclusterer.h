@@ -55,11 +55,8 @@ public:
    *
    * @param ctx_         The current parse context in which the clusterer
    * is executed.
-   * @param threadCount  SymbolClusterer runs some parts multi-thread (if
-   * possible) to ensure some efficiency. This variable controls the maximum
-   * number of threads to use.
    */
-  SymbolClusterer(ParserContext& ctx_, size_t threadCount);
+  SymbolClusterer(ParserContext& ctx_);
 
   /**
    * @brief Calculate the initial set: the file-cluster relation on which query
@@ -68,8 +65,10 @@ public:
    * SymbolClusterer uses a set of rules to decide whether a file contains a
    * symbol which is "problematic". If it does, the file is marked for
    * clusterisation and this method will calculate an "initial" cluster for it.
+   *
+   * @param threadCount     Number of threads to use for the calculation.
    */
-  cluster_collection retrieveInitialClusters();
+  cluster_collection retrieveInitialClusters(size_t threadCount);
 
   /**
    * @brief Perform clusterisation on the given initial cluster map.
@@ -82,8 +81,10 @@ public:
    *
    * @param clusterMap  The File-to-BuildAction-collection map. The result is
    * calculated in this data structure.
+   * @param threadCount Number of threads to use for the calculation.
    */
-  void performClusterisation(cluster_collection& clusterMap);
+  void performClusterisation(cluster_collection& clusterMap,
+                             size_t threadCount);
 
   /**
    * On multithreaded systems, performClusterisation() is executed in a
@@ -91,6 +92,15 @@ public:
    * the caller thread until the entire clusterisation process has finished.
    */
   void waitForClusters();
+
+  /**
+   * Calculate and return some statictics about the project, such as the number
+   * of AST nodes that were ambiguous, etc.
+   *
+   * Return values are organised in a way that the pair's key is the metric's
+   * name and the value is the value transformed to a string.
+   */
+  std::vector<std::pair<std::string, std::string>> statistics() const;
 
 private:
   /**
@@ -134,7 +144,7 @@ private:
    * Helper function which returns a set of MangledNameMarker objects which
    * contain queries for SymbolClusterer::retrieveInitialClusters.
    */
-  marker_map getMangledNameMarkers() const;
+  static marker_map getMangledNameMarkers();
 
   /**
    * Helper function which creates a verbatim SQL query string to use in
@@ -144,7 +154,7 @@ private:
    * SymbolClusterer::retrieveInitialClusters.
    * @return The query string.
    */
-  std::string buildViewQuery(const marker_map& markers) const;
+  static std::string buildViewQuery(const marker_map& markers);
 
   /**
    * @brief Calculate the eliminated transitive closure of the
@@ -246,11 +256,6 @@ private:
    * The context object in which the parser is running.
    */
   ParserContext& _ctx;
-
-  /**
-   * The number of threads allowed to run the calculations in parallel.
-   */
-  size_t _threadCount;
 
   /**
    * Reference wrapper over elements of SymbolClusterer::cluster_collection.

@@ -11,6 +11,8 @@
 #include <model/file-odb.hxx>
 #include <model/cppastnode.h>
 #include <model/cppclusterinfo-odb.hxx>
+#include <model/statistics.h>
+#include <model/statistics-odb.hxx>
 
 #include "symbolclusterer.h"
 
@@ -44,14 +46,14 @@ namespace parser
 {
 
 /** SymbolClusterer **/
-SymbolClusterer::SymbolClusterer(ParserContext& ctx, size_t threadCount)
+SymbolClusterer::SymbolClusterer(ParserContext& ctx)
   : _ctx(ctx)
-  , _threadCount(threadCount)
   , _calculatorPool(nullptr)
 {
 }
 
-SymbolClusterer::cluster_collection SymbolClusterer::retrieveInitialClusters()
+SymbolClusterer::cluster_collection
+SymbolClusterer::retrieveInitialClusters(size_t threadCount)
 {
   // For optimisation reasons, this method builds a huge SQL query to
   // put as much calculation load as possible on the database.
@@ -80,7 +82,7 @@ SymbolClusterer::cluster_collection SymbolClusterer::retrieveInitialClusters()
 
   std::unique_ptr<util::JobQueueThreadPool<HeaderPropagation>>
     headerPropagator;
-  if (_threadCount == 1)
+  if (threadCount == 1)
   {
     // The single-threaded code can NOT create a transaction as it would
     // result in an error. We branch here instead of inside the lambda so that
@@ -92,7 +94,7 @@ SymbolClusterer::cluster_collection SymbolClusterer::retrieveInitialClusters()
     };
 
     headerPropagator = util::make_thread_pool<HeaderPropagation>(
-      _threadCount, headerPropagation);
+      threadCount, headerPropagation);
   }
   else
   {
@@ -104,7 +106,7 @@ SymbolClusterer::cluster_collection SymbolClusterer::retrieveInitialClusters()
     };
 
     headerPropagator = util::make_thread_pool<HeaderPropagation>(
-      _threadCount, headerPropagation);
+      threadCount, headerPropagation);
   }
 
   for (auto row : res)
@@ -144,7 +146,8 @@ SymbolClusterer::cluster_collection SymbolClusterer::retrieveInitialClusters()
   return map;
 }
 
-void SymbolClusterer::performClusterisation(cluster_collection& clusterMap)
+void SymbolClusterer::performClusterisation(cluster_collection& clusterMap,
+                                            size_t threadCount)
 {
   if (_calculatorPool)
     return;
@@ -157,7 +160,7 @@ void SymbolClusterer::performClusterisation(cluster_collection& clusterMap)
   };
 
   _calculatorPool = util::make_thread_pool<SymbolClusterer::cluster_vref>(
-    _threadCount, calculator);
+    threadCount, calculator);
 
   for (auto& it : clusterMap)
     _calculatorPool->enqueue(std::ref(it));
@@ -171,7 +174,7 @@ void SymbolClusterer::waitForClusters()
   _calculatorPool->wait();
 }
 
-SymbolClusterer::marker_map SymbolClusterer::getMangledNameMarkers() const
+SymbolClusterer::marker_map SymbolClusterer::getMangledNameMarkers()
 {
   // Register the list of mangled name markers.
   // These markers will point us in the direction of mangled names on which
@@ -189,7 +192,10 @@ SymbolClusterer::marker_map SymbolClusterer::getMangledNameMarkers() const
     auto it = mnMarkers.emplace("function",
       SymbolClusterer::MangledNameMarker(R"end(
 SELECT
-  "ALL"."mangledName" AS "mangledName"
+  "ALL"."mangledName" AS "mangledName",
+  "ALL"."count" AS "count_all",
+  "Decls"."count" AS "count_decl",
+  "Defs"."count" AS "def_count"
 FROM
 (
   SELECT COUNT(*) AS "count", "mangledName"
@@ -241,7 +247,8 @@ ORDER BY "mangledName" ASC)end")).first;
 
     auto it = mnMarkers.emplace(std::make_pair("type",
       SymbolClusterer::MangledNameMarker(std::string(R"end(SELECT
-  COUNT(*) AS "count", "mangledName"
+  "mangledName",
+  COUNT(*) AS "count"
 FROM "CppAstNode"
   WHERE "symbolType" = $SYMTYPE_TYPE$
     AND "astType" = $ASTTYPE_DEF$
@@ -250,7 +257,7 @@ HAVING COUNT(*) > 1
 ORDER BY "mangledName" ASC)end")))).first;
 
     it->second.addReplaceRule("$SYMTYPE_TYPE$", std::to_string(
-      static_cast<size_t>(model::CppAstNode::SymbolType::Function)));
+      static_cast<size_t>(model::CppAstNode::SymbolType::Type)));
     it->second.addReplaceRule("$ASTTYPE_DEF$", std::to_string(
       static_cast<size_t>(model::CppAstNode::AstType::Definition)));
   }
@@ -259,7 +266,7 @@ ORDER BY "mangledName" ASC)end")))).first;
 }
 
 std::string SymbolClusterer::buildViewQuery(
-  const SymbolClusterer::marker_map& markers) const
+  const SymbolClusterer::marker_map& markers)
 {
   std::ostringstream queryString;
   bool isFirst = true;
@@ -529,6 +536,142 @@ WHERE "file" IN ()end";
   {
     actions.emplace(actions.end(), id.id);
   });
+}
+
+std::vector<std::pair<std::string, std::string>> SymbolClusterer::statistics() const
+{
+  odb::transaction t(_ctx.db->begin());
+
+  // To build the statistics we will use the previously put together
+  // mangled name equivalence set markers at some places.
+  SymbolClusterer::marker_map markers = getMangledNameMarkers();
+
+  // Build the queries that will give us the statistics.
+  std::vector<std::pair<std::string, std::string>> metricToQuery;
+
+  metricToQuery.emplace_back(std::make_pair(
+    "Total # of files", "SELECT COUNT(*) FROM \"File\""));
+  metricToQuery.emplace_back(std::make_pair(
+    "Total # of build actions", "SELECT COUNT(*) FROM \"BuildAction\""));
+
+  {
+    // Total count of functions
+    metricToQuery.emplace_back(std::make_pair(
+      "Function nodes (total, incl. calls)",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_FUNC$);"));
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Function definitions",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_FUNC$
+  AND "astType" = $ASTTYPE_DEF$);"));
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Function declarations",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_FUNC$
+  AND "astType" = $ASTTYPE_DECL$);"));
+
+    // Ambiguous function nodes and mangled name groups
+    std::string ambiguous = markers.at("function")();
+    std::ostringstream query;
+    query << "WITH \"funcs\" AS ("
+          << ambiguous << ")\n"
+          << "SELECT COUNT(*) FROM \"funcs\"";
+    metricToQuery.emplace_back(std::make_pair(
+      "Ambiguous function names", query.str()));
+
+    query.str("");
+    query << "WITH \"funcs\" AS ("
+          << ambiguous << ")\n"
+          << "SELECT CAST(SUM(\"count_all\") AS BIGINT) FROM \"funcs\"";
+    metricToQuery.emplace_back(std::make_pair(
+      "Ambiguous function nodes", query.str()));
+  }
+
+  {
+    // Total count of types
+    metricToQuery.emplace_back(std::make_pair(
+      "Type nodes (total, incl. usage)",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_TYPE$);"));
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Type definitions",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_TYPE$
+  AND "astType" = $ASTTYPE_DEF$);"));
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Type declarations",
+      R";(SELECT COUNT(*) FROM "CppAstNode"
+WHERE "symbolType" = $SYMTYPE_TYPE$
+  AND "astType" = $ASTTYPE_DECL$);"));
+
+    // Ambiguous type nodes and mangled name groups
+    std::ostringstream query;
+    query << R"end(WITH "types" AS (
+SELECT
+  "ALL"."count" AS "ALL",
+  "Defs"."count" AS "defs",
+  COALESCE("Defs"."mangledName", "ALL"."mangledName") AS "mangledName"
+FROM
+    (
+      SELECT COUNT(*), "mangledName"
+      FROM "CppAstNode"
+      WHERE "symbolType" = 3
+      GROUP BY "mangledName"
+      ORDER BY "count" DESC
+    ) "ALL"
+  FULL OUTER JOIN
+    (
+      SELECT COUNT(*), "mangledName"
+      FROM "CppAstNode"
+      WHERE "symbolType" = 3
+      AND "astType" = 3
+      GROUP BY "mangledName"
+      ORDER BY "count" DESC
+    ) "Defs" ON "ALL"."mangledName" = "Defs"."mangledName"
+WHERE "Defs"."count" != 1
+))end";
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Ambiguous type names",
+      query.str() + std::string("\nSELECT COUNT(*) FROM \"types\"")));
+
+    metricToQuery.emplace_back(std::make_pair(
+      "Ambiguous type nodes",
+      query.str() + std::string("\nSELECT CAST(SUM(\"ALL\") AS BIGINT)"
+                                "FROM \"types\"")));
+  }
+
+  // Calculate the staticstics.
+  std::vector<std::pair<std::string, std::string>> stats;
+
+  for (auto& it : metricToQuery)
+  {
+    using namespace boost::algorithm;
+    replace_all(it.second, "$SYMTYPE_FUNC$", std::to_string(
+      static_cast<size_t>(model::CppAstNode::SymbolType::Function)));
+    replace_all(it.second, "$SYMTYPE_TYPE$", std::to_string(
+      static_cast<size_t>(model::CppAstNode::SymbolType::Type)));
+    replace_all(it.second, "$ASTTYPE_DECL$", std::to_string(
+      static_cast<size_t>(model::CppAstNode::AstType::Declaration)));
+    replace_all(it.second, "$ASTTYPE_DEF$", std::to_string(
+      static_cast<size_t>(model::CppAstNode::AstType::Definition)));
+
+    odb::result<model::SingleCountView> value =
+      _ctx.db->query<model::SingleCountView>(it.second);
+
+    if (value.empty())
+      LOG(error) << "Couldn't query value for '" << it.first << "'";
+    else
+      stats.emplace_back(std::make_pair(it.first,
+                                        std::to_string(value.begin()->value)));
+  }
+
+  return stats;
 }
 
 /** MangledNameMarker **/
