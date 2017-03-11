@@ -69,7 +69,7 @@ std::string getMangledName(
   const clang::NamedDecl* nd_,
   const model::FileLoc& fileLoc_)
 {
-  if (llvm::isa<clang::VarDecl>(nd_))
+  if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(nd_))
   {
     std::string result = nd_->getQualifiedNameAsString();
 
@@ -83,6 +83,9 @@ std::string getMangledName(
           llvm::dyn_cast<clang::ParmVarDecl>(nd_))
         result += ':' + std::to_string(pvd->getFunctionScopeIndex());
     }
+
+    if (vd->isLocalVarDecl() || llvm::isa<clang::ParmVarDecl>(nd_))
+      result += ':' + getSuffixFromLoc(fileLoc_);
 
     return result;
   }

@@ -1037,10 +1037,12 @@ public:
 
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
+      model::FileLoc location =
+        getFileLoc(vd->getLocation(), vd->getLocation());
+
       astNode->astValue = vd->getNameAsString();
       astNode->location = getFileLoc(dr_->getLocStart(), dr_->getLocEnd());
-      astNode->mangledName
-        = getMangledName(_mngCtx, vd, astNode->location);
+      astNode->mangledName = getMangledName(_mngCtx, vd, location);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
       astNode->symbolType
         = isFunctionPointer(vd)
