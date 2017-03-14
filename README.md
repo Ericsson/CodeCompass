@@ -9,9 +9,11 @@ CodeCompass is a pluginable code comprehension tool.
 
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot1.jpg" height="100px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot2.jpg" height="100px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot3.jpg" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/home.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/codebites.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/infotree.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_function_call_diagram.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_detailed_class_diagram.png" height="100px" />
 
 Features
 --------
