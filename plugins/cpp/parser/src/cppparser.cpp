@@ -165,7 +165,10 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   {
     if (state == OParam)
     {
-      output = arg;
+      boost::filesystem::path absolutePath =
+        boost::filesystem::absolute(arg, command_.Directory);
+
+      output = absolutePath.native();
       state = None;
     }
     else if (isSourceFile(arg))
