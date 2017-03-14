@@ -36,7 +36,7 @@ mkdir -p /home/<username>/cc/projects
 cd /home/<username>/cc/projects
 
 # Clone an example cmake based project
-git clone https://github.com/dartsim/tinyxml <project_name>
+git clone https://github.com/leethomason/tinyxml2 <project_name>
 mkdir -p <project_name>/build
 cd <project_name>/build
 ```
