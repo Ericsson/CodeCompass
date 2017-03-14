@@ -81,7 +81,7 @@ void Diagram::getClassCollaborationDiagram(
   AstNodeInfo nodeInfo = nodes.front();
 
   util::Graph::Node centerNode = addNode(graph_, nodeInfo);
-  decorate(graph_, centerNode, centerClassNodeDecoration);
+  decorateNode(graph_, centerNode, centerClassNodeDecoration);
   visitedNodes[nodeInfo.id] = centerNode;
   relatedNodes.push_back(nodeInfo);
 
@@ -95,12 +95,12 @@ void Diagram::getClassCollaborationDiagram(
   for (const AstNodeInfo& node : nodes)
   {
     util::Graph::Node inheritNode = addNode(graph_, node);
-    graph_.setAttribute(inheritNode, "label",
+    graph_.setNodeAttribute(inheritNode, "label",
       node.astNodeValue, true);
-    decorate(graph_, inheritNode, classNodeDecoration);
+    decorateNode(graph_, inheritNode, classNodeDecoration);
 
-    util::Graph::Edge edge = graph_.addEdge(centerNode, inheritNode);
-    decorate(graph_, edge, inheritClassEdgeDecoration);
+    util::Graph::Edge edge = graph_.createEdge(centerNode, inheritNode);
+    decorateEdge(graph_, edge, inheritClassEdgeDecoration);
 
     visitedNodes[node.id] = inheritNode;
     relatedNodes.push_back(node);
@@ -116,12 +116,12 @@ void Diagram::getClassCollaborationDiagram(
   for (const AstNodeInfo& node : nodes)
   {
     util::Graph::Node inheritNode = addNode(graph_, node);
-    graph_.setAttribute(inheritNode, "label",
+    graph_.setNodeAttribute(inheritNode, "label",
       node.astNodeValue, true);
-    decorate(graph_, inheritNode, classNodeDecoration);
+    decorateNode(graph_, inheritNode, classNodeDecoration);
 
-    util::Graph::Edge edge = graph_.addEdge(inheritNode, centerNode);
-    decorate(graph_, edge, inheritClassEdgeDecoration);
+    util::Graph::Edge edge = graph_.createEdge(inheritNode, centerNode);
+    decorateEdge(graph_, edge, inheritClassEdgeDecoration);
 
     visitedNodes[node.id] = inheritNode;
     relatedNodes.push_back(node);
@@ -150,7 +150,7 @@ void Diagram::getClassCollaborationDiagram(
       if (it == visitedNodes.end())
       {
         typeNode = addNode(graph_, typeInfo);
-        decorate(graph_, typeNode, classNodeDecoration);
+        decorateNode(graph_, typeNode, classNodeDecoration);
         visitedNodes.insert(it, std::make_pair(typeInfo.id, typeNode));
       }
       else
@@ -161,15 +161,15 @@ void Diagram::getClassCollaborationDiagram(
       if (edgeIt == visitedEdges.end())
       {
         util::Graph::Edge edge =
-          graph_.addEdge(visitedNodes[relatedNode.id], typeNode);
-        decorate(graph_, edge, usedClassEdgeDecoration);
-        graph_.setAttribute(edge, "label", node.astNodeValue);
+          graph_.createEdge(visitedNodes[relatedNode.id], typeNode);
+        decorateEdge(graph_, edge, usedClassEdgeDecoration);
+        graph_.setEdgeAttribute(edge, "label", node.astNodeValue);
         visitedEdges.insert(edgeIt, std::make_pair(graphEdge, edge));
       }
       else
       {
-        std::string oldLabel = graph_.getAttribute(edgeIt->second, "label");
-        graph_.setAttribute(edgeIt->second, "label",
+        std::string oldLabel = graph_.getEdgeAttribute(edgeIt->second, "label");
+        graph_.setEdgeAttribute(edgeIt->second, "label",
           oldLabel + ", " + node.astNodeValue);
       }
     }
@@ -194,7 +194,7 @@ void Diagram::getFunctionCallDiagram(
     return;
 
   util::Graph::Node centerNode = addNode(graph_, nodes.front());
-  decorate(graph_, centerNode, centerNodeDecoration);
+  decorateNode(graph_, centerNode, centerNodeDecoration);
   visitedNodes[astNodeId_] = centerNode;
 
   //--- Callees ---//
@@ -210,7 +210,7 @@ void Diagram::getFunctionCallDiagram(
     if (it == visitedNodes.end())
     {
       calleeNode = addNode(graph_, node);
-      decorate(graph_, calleeNode, calleeNodeDecoration);
+      decorateNode(graph_, calleeNode, calleeNodeDecoration);
       visitedNodes.insert(it, std::make_pair(node.id, calleeNode));
     }
     else
@@ -218,8 +218,8 @@ void Diagram::getFunctionCallDiagram(
 
     if (!graph_.hasEdge(centerNode, calleeNode))
     {
-      util::Graph::Edge edge = graph_.addEdge(centerNode, calleeNode);
-      decorate(graph_, edge, calleeEdgeDecoration);
+      util::Graph::Edge edge = graph_.createEdge(centerNode, calleeNode);
+      decorateEdge(graph_, edge, calleeEdgeDecoration);
     }
   }
 
@@ -236,7 +236,7 @@ void Diagram::getFunctionCallDiagram(
     if (it == visitedNodes.end())
     {
       callerNode = addNode(graph_, node);
-      decorate(graph_, callerNode, callerNodeDecoration);
+      decorateNode(graph_, callerNode, callerNodeDecoration);
       visitedNodes.insert(it, std::make_pair(node.id, callerNode));
     }
     else
@@ -244,8 +244,8 @@ void Diagram::getFunctionCallDiagram(
 
     if (!graph_.hasEdge(callerNode, centerNode))
     {
-      util::Graph::Edge edge = graph_.addEdge(callerNode, centerNode);
-      decorate(graph_, edge, callerEdgeDecoration);
+      util::Graph::Edge edge = graph_.createEdge(callerNode, centerNode);
+      decorateEdge(graph_, edge, callerEdgeDecoration);
     }
   }
 
@@ -271,9 +271,9 @@ void Diagram::getDetailedClassDiagram(
   AstNodeInfo nodeInfo = nodes.front();
 
   util::Graph::Node currentNode = addNode(graph_, nodeInfo);
-  graph_.setAttribute(currentNode, "label",
+  graph_.setNodeAttribute(currentNode, "label",
     getDetailedClassNodeLabel(nodeInfo), true);
-  graph_.setAttribute(currentNode, "shape", "none");
+  graph_.setNodeAttribute(currentNode, "shape", "none");
 
   nodes.clear();
 
@@ -285,12 +285,12 @@ void Diagram::getDetailedClassDiagram(
   for (const AstNodeInfo& node : nodes)
   {
     util::Graph::Node inheritNode = addNode(graph_, node);
-    graph_.setAttribute(inheritNode, "label",
+    graph_.setNodeAttribute(inheritNode, "label",
       getDetailedClassNodeLabel(node), true);
-    graph_.setAttribute(inheritNode, "shape", "none");
+    graph_.setNodeAttribute(inheritNode, "shape", "none");
 
-    util::Graph::Edge edge = graph_.addEdge(currentNode, inheritNode);
-    decorate(graph_, edge, inheritClassEdgeDecoration);
+    util::Graph::Edge edge = graph_.createEdge(currentNode, inheritNode);
+    decorateEdge(graph_, edge, inheritClassEdgeDecoration);
   }
 
   nodes.clear();
@@ -303,12 +303,12 @@ void Diagram::getDetailedClassDiagram(
   for (const AstNodeInfo& node : nodes)
   {
     util::Graph::Node inheritNode = addNode(graph_, node);
-    graph_.setAttribute(inheritNode, "label",
+    graph_.setNodeAttribute(inheritNode, "label",
       getDetailedClassNodeLabel(node), true);
-    graph_.setAttribute(inheritNode, "shape", "none");
+    graph_.setNodeAttribute(inheritNode, "shape", "none");
 
-    util::Graph::Edge edge = graph_.addEdge(inheritNode, currentNode);
-    decorate(graph_, edge, inheritClassEdgeDecoration);
+    util::Graph::Edge edge = graph_.createEdge(inheritNode, currentNode);
+    decorateEdge(graph_, edge, inheritClassEdgeDecoration);
   }
 }
 
@@ -422,10 +422,10 @@ util::Graph::Node Diagram::addNode(
   const AstNodeInfo& nodeInfo_)
 {
   util::Graph::Node node
-    = graph_.addNode(addSubgraph(graph_, nodeInfo_.range.file));
+    = graph_.getOrCreateNode(nodeInfo_.id,
+      addSubgraph(graph_, nodeInfo_.range.file));
 
-  graph_.setAttribute(node, "id", nodeInfo_.id);
-  graph_.setAttribute(node, "label", nodeInfo_.astNodeValue);
+  graph_.setNodeAttribute(node, "label", nodeInfo_.astNodeValue);
 
   return node;
 }
@@ -489,14 +489,41 @@ util::Graph::Subgraph Diagram::addSubgraph(
   _projectHandler.getFileInfo(fileInfo, fileId_);
 
   util::Graph::Subgraph subgraph
-    = graph_.addSubgraph("cluster_" + fileInfo.path);
+    = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
 
-  graph_.setAttribute(subgraph, "id", fileInfo.id);
-  graph_.setAttribute(subgraph, "label", fileInfo.path);
+  graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
+  graph_.setSubgraphAttribute(subgraph, "label", fileInfo.path);
 
   _subgraphs.insert(it, std::make_pair(fileInfo.path, subgraph));
 
   return subgraph;
+}
+
+void Diagram::decorateNode(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  const Decoration& decoration_) const
+{
+  for (const auto& attr : decoration_)
+    graph_.setNodeAttribute(node_, attr.first, attr.second);
+}
+
+void Diagram::decorateEdge(
+  util::Graph& graph_,
+  const util::Graph::Edge& edge_,
+  const Decoration& decoration_) const
+{
+  for (const auto& attr : decoration_)
+    graph_.setEdgeAttribute(edge_, attr.first, attr.second);
+}
+
+void Diagram::decorateSubgraph(
+  util::Graph& graph_,
+  const util::Graph::Subgraph& subgraph_,
+  const Decoration& decoration_) const
+{
+  for (const auto& attr : decoration_)
+    graph_.setSubgraphAttribute(subgraph_, attr.first, attr.second);
 }
 
 const Diagram::Decoration Diagram::centerNodeDecoration = {

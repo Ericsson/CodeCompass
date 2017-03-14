@@ -29,12 +29,12 @@ public:
 
   Graph::Subgraph addSubgraph(const std::string& label_, Graph::Node& hook_);
 
-  void setStyle(
+  void setNodeStyle(
     const Graph::Node& node_,
     const std::vector<std::pair<std::string, std::string>>& attrs_,
     bool html_ = false);
 
-  void setStyle(
+  void setEdgeStyle(
     const Graph::Edge& edge_,
     const std::vector<std::pair<std::string, std::string>>& attrs_,
     bool html_ = false);

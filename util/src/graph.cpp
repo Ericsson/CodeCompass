@@ -68,72 +68,81 @@ int Graph::edgeCount() const
   return agnedges(_graphPimpl->_graph);
 }
 
-Graph::Node Graph::addNode(const Subgraph& subgraph_)
+Graph::Node Graph::createNode(const Subgraph& subgraph_)
 {
-  std::string id = generateId();
+  return getOrCreateNode(generateId(), subgraph_);
+}
+
+Graph::Node Graph::getOrCreateNode(
+  const Graph::Node& id_,
+  const Subgraph& subgraph_)
+{
+  std::string id = id_.empty() ? generateId() : id_;
+  _ids.insert(id);
 
   agnode(
-    subgraph_.id.empty()
+    subgraph_.empty()
       ? _graphPimpl->_graph
-      : _graphPimpl->_subgMap[subgraph_.id],
+      : _graphPimpl->_subgMap[subgraph_],
     const_cast<char*>(id.c_str()),
     1);
 
-  Node node;
-  node.id = id;
-  setAttribute(node, "fontsize", "11");
+  setNodeAttribute(id_, "fontsize", "11");
+  setNodeAttribute(id_, "id", id);
 
-  return node;
+  return id;
 }
 
-Graph::Edge Graph::addEdge(const Node& from_, const Node& to_)
+Graph::Edge Graph::createEdge(const Node& from_, const Node& to_)
 {
   std::string id = generateId();
 
   _graphPimpl->_edgeMap[id] = agedge(
     _graphPimpl->_graph,
-    agnode(_graphPimpl->_graph, const_cast<char*>(from_.id.c_str()), 0),
-    agnode(_graphPimpl->_graph, const_cast<char*>(to_.id.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(from_.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(to_.c_str()), 0),
     const_cast<char*>(id.c_str()),
     1);
 
-  Edge edge;
-  edge.id = id;
-  setAttribute(edge, "fontsize", "11");
+  setEdgeAttribute(id, "fontsize", "11");
+  setEdgeAttribute(id, "id", id);
 
-  return edge;
+  return id;
 }
 
-Graph::Subgraph Graph::addSubgraph(const std::string& id_)
+Graph::Subgraph Graph::getOrCreateSubgraph(const std::string& id_)
 {
   std::string id = id_.empty() ? generateId() : id_;
+  _ids.insert(id);
 
   _graphPimpl->_subgMap[id]
     = agsubg(_graphPimpl->_graph, const_cast<char*>(id.c_str()), 1);
 
-  return {id};
+  return id;
 }
 
 bool Graph::hasEdge(const Node& from_, const Node& to_) const
 {
   return agedge(
     _graphPimpl->_graph,
-    agnode(_graphPimpl->_graph, const_cast<char*>(from_.id.c_str()), 0),
-    agnode(_graphPimpl->_graph, const_cast<char*>(to_.id.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(from_.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(to_.c_str()), 0),
     0,
     0);
 }
 
 bool Graph::hasNode(const Node& node_) const
 {
-  return agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0);
+  return agnode(_graphPimpl->_graph, const_cast<char*>(node_.c_str()), 0);
 }
 
 void Graph::delNode(const Node& node_)
 {
   agdelnode(
     _graphPimpl->_graph,
-    agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0));
+    agnode(_graphPimpl->_graph, const_cast<char*>(node_.c_str()), 0));
+
+  _ids.erase(node_);
 }
 
 void Graph::delEdge(const Node& from_, const Node& to_)
@@ -141,8 +150,8 @@ void Graph::delEdge(const Node& from_, const Node& to_)
   agdeledge(
     _graphPimpl->_graph,
     agedge(_graphPimpl->_graph,
-      agnode(_graphPimpl->_graph, const_cast<char*>(from_.id.c_str()), 0),
-      agnode(_graphPimpl->_graph, const_cast<char*>(to_.id.c_str()), 0),
+      agnode(_graphPimpl->_graph, const_cast<char*>(from_.c_str()), 0),
+      agnode(_graphPimpl->_graph, const_cast<char*>(to_.c_str()), 0),
       0,
       0));
 }
@@ -156,7 +165,7 @@ void Graph::setAttribute(const std::string& key_, const std::string& value_)
     const_cast<char*>(""));
 }
 
-void Graph::setAttribute(
+void Graph::setNodeAttribute(
   const Node& node_,
   const std::string& key_,
   const std::string& value_,
@@ -169,13 +178,13 @@ void Graph::setAttribute(
       const_cast<char*>(value_.c_str()));
 
   agsafeset(
-    agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(node_.c_str()), 0),
     const_cast<char*>(key_.c_str()),
     const_cast<char*>(value),
     const_cast<char*>(""));
 }
 
-void Graph::setAttribute(
+void Graph::setEdgeAttribute(
   const Edge& edge_,
   const std::string& key_,
   const std::string& value_,
@@ -188,13 +197,13 @@ void Graph::setAttribute(
       const_cast<char*>(value_.c_str()));
 
   agsafeset(
-    _graphPimpl->_edgeMap[edge_.id],
+    _graphPimpl->_edgeMap[edge_],
     const_cast<char*>(key_.c_str()),
     const_cast<char*>(value),
     const_cast<char*>(""));
 }
 
-void Graph::setAttribute(
+void Graph::setSubgraphAttribute(
   const Subgraph& graph_,
   const std::string& key_,
   const std::string& value_,
@@ -207,45 +216,45 @@ void Graph::setAttribute(
       const_cast<char*>(value_.c_str()));
 
   agsafeset(
-    _graphPimpl->_subgMap[graph_.id],
+    _graphPimpl->_subgMap[graph_],
     const_cast<char*>(key_.c_str()),
     const_cast<char*>(value),
     const_cast<char*>(""));
 }
 
-void Graph::setAttribute(
+void Graph::setNodeAttribute(
   const Node& targetNode_,
   const Node& sourceNode_)
 {
   agcopyattr(
-    agnode(_graphPimpl->_graph, const_cast<char*>(sourceNode_.id.c_str()), 0),
-    agnode(_graphPimpl->_graph, const_cast<char*>(targetNode_.id.c_str()), 0));
+    agnode(_graphPimpl->_graph, const_cast<char*>(sourceNode_.c_str()), 0),
+    agnode(_graphPimpl->_graph, const_cast<char*>(targetNode_.c_str()), 0));
 }
 
-void Graph::setAttribute(
+void Graph::setEdgeAttribute(
   const Edge& targetEdge_,
   const Edge& sourceEdge_)
 {
   agcopyattr(
-    _graphPimpl->_edgeMap[sourceEdge_.id],
-    _graphPimpl->_edgeMap[targetEdge_.id]);
+    _graphPimpl->_edgeMap[sourceEdge_],
+    _graphPimpl->_edgeMap[targetEdge_]);
 }
 
-std::string Graph::getAttribute(
+std::string Graph::getNodeAttribute(
   const Node& node_,
   const std::string& key_)
 {
   auto ret =
-    agget(agnode(_graphPimpl->_graph, const_cast<char*>(node_.id.c_str()), 0),
+    agget(agnode(_graphPimpl->_graph, const_cast<char*>(node_.c_str()), 0),
       const_cast<char*>(key_.c_str()));
 
   return ret ? ret : "";
 }
 
-std::string Graph::getAttribute(const Edge& edge_, const std::string& key_)
+std::string Graph::getEdgeAttribute(const Edge& edge_, const std::string& key_)
 {
   auto ret =
-    agget(_graphPimpl->_edgeMap[edge_.id], const_cast<char*>(key_.c_str()));
+    agget(_graphPimpl->_edgeMap[edge_], const_cast<char*>(key_.c_str()));
 
   return ret ? ret : "";
 }
@@ -282,7 +291,7 @@ std::vector<Graph::Node> Graph::getChildren(const Node& node) const
   std::vector<Graph::Node> result;
 
   Agnode_t* n
-    = agnode(_graphPimpl->_graph, const_cast<char*>(node.id.c_str()), 0);
+    = agnode(_graphPimpl->_graph, const_cast<char*>(node.c_str()), 0);
 
   if (!n)
     return result;
@@ -290,7 +299,7 @@ std::vector<Graph::Node> Graph::getChildren(const Node& node) const
   for (Agedge_t* edge = agfstout(_graphPimpl->_graph, n);
        edge;
        edge = agnxtout(_graphPimpl->_graph, edge))
-    result.push_back({std::string(agnameof(aghead(edge)))});
+    result.push_back(std::string(agnameof(aghead(edge))));
 
   return result;
 }
@@ -300,7 +309,7 @@ std::vector<Graph::Node> Graph::getParents(const Node& node) const
   std::vector<Graph::Node> result;
 
   Agnode_t* n
-    = agnode(_graphPimpl->_graph, const_cast<char*>(node.id.c_str()), 0);
+    = agnode(_graphPimpl->_graph, const_cast<char*>(node.c_str()), 0);
 
   if (!n)
     return result;
@@ -308,53 +317,26 @@ std::vector<Graph::Node> Graph::getParents(const Node& node) const
   for (Agedge_t* edge = agfstin(_graphPimpl->_graph, n);
        edge;
        edge = agnxtin(_graphPimpl->_graph, edge))
-    result.push_back({std::string(agnameof(agtail(edge)))});
+    result.push_back(std::string(agnameof(agtail(edge))));
 
   return result;
 }
 
 std::string Graph::generateId()
 {
-  size_t i;
-  for (i = 0; i < currentId.size() && currentId[i] == 'z'; ++i)
-    currentId[i] = 'a';
+  do
+  {
+    std::size_t i;
+    for (i = 0; i < _currentId.size() && _currentId[i] == 'z'; ++i)
+      _currentId[i] = 'a';
 
-  if (i == currentId.size())
-    currentId.push_back('a');
-  else
-    ++currentId[i];
+    if (i == _currentId.size())
+      _currentId.push_back('a');
+    else
+      ++_currentId[i];
+  } while (_ids.find(_currentId) != _ids.end());
 
-  return currentId;
-}
-
-bool operator<(const Graph::Node& n1, const Graph::Node& n2)
-{
-  return n1.id < n2.id;
-}
-
-bool operator<(const Graph::Edge& e1, const Graph::Edge& e2)
-{
-  return e1.id < e2.id;
-}
-
-bool operator<(const Graph::Subgraph& s1, const Graph::Subgraph& s2)
-{
-  return s1.id < s2.id;
-}
-
-bool operator==(const Graph::Node& n1, const Graph::Node& n2)
-{
-  return n1.id == n2.id;
-}
-
-bool operator==(const Graph::Edge& e1, const Graph::Edge& e2)
-{
-  return e1.id == e2.id;
-}
-
-bool operator==(const Graph::Subgraph& s1, const Graph::Subgraph& s2)
-{
-  return s1.id == s2.id;
+  return _currentId;
 }
 
 } // util
