@@ -84,11 +84,9 @@ struct CppAstNode
   bool operator< (const CppAstNode& other) const { return id <  other.id; }
   bool operator==(const CppAstNode& other) const { return id == other.id; }
 
-#ifndef NO_INDICES
-  #pragma db index("location_file_idx") member(location.file)
-  #pragma db index("mangledNameHash_astType_idx") members(mangledNameHash, astType)
-  #pragma db index("astType_symbolType_idx") members(astType, symbolType)
-#endif
+#pragma db index("location_file_idx") member(location.file)
+#pragma db index("mangledNameHash_astType_idx") members(mangledNameHash, astType)
+#pragma db index("astType_symbolType_idx") members(astType, symbolType)
 };
 
 typedef std::shared_ptr<CppAstNode> CppAstNodePtr;

@@ -1,8 +1,7 @@
 #include <algorithm>
 
-#include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <odb/query.hxx>
 
@@ -354,16 +353,16 @@ void ProjectServiceHandler::getFileTypes(
 void ProjectServiceHandler::getLabels(
   std::map<std::string, std::string>& return_)
 {
-  const std::string fLabel = _datadir + "/labels.txt";
+  namespace pt = boost::property_tree;
 
-  if (boost::filesystem::exists(fLabel))
-  {
-    boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini(fLabel, pt);
+  const std::string projInfo = _datadir + "/project_info.json";
 
-    for (const auto& item : pt)
-      return_[item.first] = pt.get<std::string>(item.first);
-  }
+  pt::ptree root;
+  pt::read_json(projInfo, root);
+
+  if (boost::optional<pt::ptree&> labels = root.get_child_optional("labels"))
+    for (const pt::ptree::value_type& label : *labels)
+      return_[label.first] = label.second.data();
 }
 
 FileInfo ProjectServiceHandler::makeFileInfo(model::File& f)

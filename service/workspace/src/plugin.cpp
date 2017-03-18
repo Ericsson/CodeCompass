@@ -18,12 +18,10 @@ void registerPlugin(
   const boost::program_options::variables_map& vm_,
   cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
 {
-  const cc::util::WorkspaceOptions workspaces
-    = cc::util::parseConfigFile(vm_["workspaceCfgFile"].as<std::string>());
-
   std::shared_ptr<cc::webserver::RequestHandler> handler(
     new cc::webserver::ThriftHandler<cc::service::workspace::WorkspaceServiceProcessor>(
-      new cc::service::workspace::WorkspaceServiceHandler(workspaces)));
+      new cc::service::workspace::WorkspaceServiceHandler(
+        vm_["workspace"].as<std::string>())));
 
   pluginHandler_->registerImplementation("WorkspaceService", handler);
 }

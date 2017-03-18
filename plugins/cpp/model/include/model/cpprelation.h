@@ -38,10 +38,8 @@ struct CppRelation
         kind == Kind::Assign ? "Assign" : "DeclContext");
   }
 
-#ifndef NO_INDICES
-  #pragma db index member(lhs)
-  #pragma db index member(rhs)
-#endif
+#pragma db index member(lhs)
+#pragma db index member(rhs)
 };
 
 typedef std::shared_ptr<CppRelation> CppRelationPtr;

@@ -70,11 +70,8 @@ struct File
   
   bool inSearchIndex = false;
 
-#ifndef NO_INDICES
-  #pragma db index member(path)
-  #pragma db index member(parent)
-#endif
-
+#pragma db index member(path)
+#pragma db index member(parent)
 };
 
 #pragma db view object(File)

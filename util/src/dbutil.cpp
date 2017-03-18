@@ -1,7 +1,9 @@
+#include <fstream>
 #include <map>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
 #ifdef DATABASE_SQLITE
@@ -11,6 +13,8 @@
 #ifdef DATABASE_PGSQL
 #  include <odb/pgsql/database.hxx>
 #endif
+
+#include <odb/connection.hxx>
 
 #include <util/logutil.h>
 #include <util/dbutil.h>
@@ -123,6 +127,66 @@ void sqliteRegexImpl(
 }
 #endif
 
+/**
+ * This function removes all parts from the s_ string between begin_ and end_.
+ * For example removeByRegex("abc(def)ghi", "(", ")") == "abcghi";
+ */
+std::string removeByRegex(
+  const std::string& s_,
+  const std::string& begin_,
+  const std::string& end_)
+{
+  boost::regex expr(begin_ + "([\\s\\S]*?)" + end_ + "\\n?");
+  return boost::regex_replace(s_, expr, "");
+}
+
+/**
+ * This function runs all .sql files which are produced by ODB.
+ * @param db_ A database object.
+ * @param sqlDir_ Path of the directory containing .sql files.
+ * @param replacer_ A function can be given which will be applied to the .sql
+ * file content before execution.
+ * @param logMessage_ This log message is printed before the .sql file
+ * execution followed by the file name.
+ */
+void runSqlFiles(
+  std::shared_ptr<odb::database> db_,
+  const std::string& sqlDir_,
+  std::function<std::string(const std::string&)> replacer_,
+  const std::string& logMessage_)
+{
+  odb::connection_ptr connection = db_->connection();
+
+  for (
+    boost::filesystem::directory_iterator it(sqlDir_);
+    it != boost::filesystem::directory_iterator();
+    ++it)
+  {
+    if (!boost::filesystem::is_regular_file(it->path()))
+      continue;
+
+    std::string fileName = boost::filesystem::canonical(it->path()).native();
+    LOG(info) << logMessage_ << ' ' << fileName;
+
+    std::ifstream file(fileName);
+
+    std::string fileContent(
+      (std::istreambuf_iterator<char>(file)),
+      (std::istreambuf_iterator<char>()));
+
+    file.close();
+
+    try
+    {
+      connection->execute(replacer_(fileContent));
+    }
+    catch (const odb::exception& ex)
+    {
+      LOG(warning) << "Exception when running SQL command: " << ex.what();
+    }
+  }
+}
+
 }
 
 namespace cc
@@ -222,6 +286,93 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
   databasePool[connStr_] = db;
 
   return db;
+}
+
+void createTables(
+  std::shared_ptr<odb::database> db_,
+  const std::string& sqlDir_)
+{
+  runSqlFiles(db_, sqlDir_,
+    [](const std::string& s_){
+      return removeByRegex(removeByRegex(removeByRegex(removeByRegex(s_,
+        "CREATE UNIQUE INDEX", ";"),
+        "CREATE INDEX", ";"),
+        "ALTER TABLE", ";"),
+        "DROP", ";");
+    },
+    "Creating tables from file");
+}
+
+void removeTables(
+  std::shared_ptr<odb::database> db_,
+  const std::string& sqlDir_)
+{
+  runSqlFiles(db_, sqlDir_,
+    [](const std::string& s_){
+      return removeByRegex(removeByRegex(s_,
+        "CREATE", ";"),
+        "ALTER TABLE", ";");
+    },
+    "Dropping tables from file");
+}
+
+void createIndexes(
+  std::shared_ptr<odb::database> db_,
+  const std::string& sqlDir_)
+{
+  runSqlFiles(db_, sqlDir_,
+    [](const std::string& s_){
+      return removeByRegex(removeByRegex(s_,
+        "CREATE TABLE", ";"),
+        "DROP", ";");
+    },
+    "Creating indexes from file");
+}
+
+std::string updateConnectionString(
+  std::string connStr_,
+  const std::string& key_,
+  const std::string& value_)
+{
+  std::string prefix = key_ + '=';
+  std::size_t pos1 = connStr_.find(prefix);
+
+  if (pos1 == std::string::npos)
+  {
+    if (connStr_.back() != ':' && !connStr_.empty())
+      connStr_.push_back(';');
+    connStr_.append(prefix + value_);
+  }
+  else
+  {
+    std::size_t pos2 = connStr_.find(';', pos1 + 1);
+    if (pos2 == std::string::npos)
+      pos2 = connStr_.length();
+
+    int pos3 = pos1 + prefix.length();
+    connStr_.replace(pos3, pos2 - pos3, value_);
+  }
+
+  return connStr_;
+}
+
+std::string connStrComponent(
+  const std::string& connStr_,
+  const std::string& key_)
+{
+  std::string prefix = key_ + '=';
+  std::size_t pos1 = connStr_.find(prefix);
+
+  if (pos1 == std::string::npos)
+    return std::string();
+
+  std::size_t pos2 = connStr_.find(';', pos1 + 1);
+  std::size_t pos3 = pos1 + prefix.length();
+
+  if (pos2 == std::string::npos)
+    pos2 = connStr_.length();
+
+  return connStr_.substr(pos3, pos2 - pos3);
 }
 
 } // util

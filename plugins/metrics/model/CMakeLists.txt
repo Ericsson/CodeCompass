@@ -1,7 +1,6 @@
 include_directories(  
   include
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${ODB_INCLUDE_DIRS})
+  ${PROJECT_SOURCE_DIR}/model/include)
 
 set(ODB_SOURCES
   include/model/metrics.h)

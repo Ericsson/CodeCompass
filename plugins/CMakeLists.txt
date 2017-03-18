@@ -1,3 +1,7 @@
+# Common things
+include_directories(
+  ${ODB_INCLUDE_DIRS})
+
 # Add all subdirectories to the build
 file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
 message(STATUS "Adding new plugins:")

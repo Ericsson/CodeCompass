@@ -36,6 +36,7 @@ target_compile_options(dummyservice PUBLIC -Wno-unknown-pragmas)
 target_link_libraries(dummyservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
+  ${ODB_LIBRARIES}
   dummythrift)
 
 install(TARGETS dummyservice DESTINATION ${INSTALL_SERVICE_DIR})

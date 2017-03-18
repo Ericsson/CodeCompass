@@ -25,10 +25,8 @@ struct CppFriendship
       .append("\ntheFriend = ").append(std::to_string(theFriend));
   }
 
-#ifndef NO_INDICES
-  #pragma db index member(target)
-  #pragma db index member(theFriend)
-#endif
+#pragma db index member(target)
+#pragma db index member(theFriend)
 };
 
 typedef std::shared_ptr<CppFriendship> CppFriendshipPtr;

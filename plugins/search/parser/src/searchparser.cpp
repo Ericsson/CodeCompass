@@ -48,8 +48,9 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
 
   try
   {
-    std::string indexDir
-      = ctx_.options["data-dir"].as<std::string>() + "/search";
+    std::string wsDir = ctx_.options["workspace"].as<std::string>();
+    std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
+    std::string indexDir = projDir + "/search";
 
     //--- Close last instance (if any) ---//
 

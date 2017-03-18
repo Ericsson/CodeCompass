@@ -4,7 +4,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
+  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
+  ${ODB_INCLUDE_DIRS})
 
 add_custom_command(
   OUTPUT

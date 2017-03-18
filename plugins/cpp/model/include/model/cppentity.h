@@ -33,9 +33,7 @@ struct CppEntity
 
   std::set<Tag> tags;
 
-#ifndef NO_INDICES
-  #pragma db index member(mangledNameHash)
-#endif
+#pragma db index member(mangledNameHash)
 };
 
 typedef std::shared_ptr<CppEntity> CppEntityPtr;

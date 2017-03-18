@@ -14,7 +14,6 @@ namespace cc
 namespace model
 {
 
-
 #pragma db object
 struct CppHeaderInclusion
 {
@@ -35,10 +34,8 @@ struct CppHeaderInclusion
       .append("\nincluded = ").append(std::to_string(included->id));
   }
 
-#ifndef NO_INDICES
-  #pragma db index member(includer)
-  #pragma db index member(included)
-#endif
+#pragma db index member(includer)
+#pragma db index member(included)
 };
 
 typedef std::shared_ptr<CppHeaderInclusion> CppHeaderInclusionPtr;
