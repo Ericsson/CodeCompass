@@ -121,7 +121,7 @@ std::string prepareProjectDir(const po::variables_map& vm_)
       return std::string();
     }
   }
-  else if (vm_.count("force"))
+  else
   {
     LOG(error) << projDir << " already exists. Use -f for reparsing!";
     return std::string();
