@@ -194,7 +194,8 @@
 }
 
 .icon-Type::before,
-.icon-Types::before{
+.icon-Types::before,
+.icon-Return-type::before{
   content : '\e040'
 }
 
