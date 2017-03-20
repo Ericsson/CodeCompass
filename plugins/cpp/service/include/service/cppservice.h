@@ -159,6 +159,8 @@ private:
 
     LOCAL_VAR, /*!< This option returns the local variables of a function. */
 
+    RETURN_TYPE, /*!< This option returns the return type of a function. */
+
     OVERRIDE, /*!< This option returns the functions which the given function
       overrides. */
 

@@ -286,6 +286,7 @@ void CppServiceHandler::getReferenceTypes(
       return_["Local variables"]       = LOCAL_VAR;
       return_["Overrides"]             = OVERRIDE;
       return_["Overridden by"]         = OVERRIDDEN_BY;
+      return_["Return type"]           = RETURN_TYPE;
       break;
 
     case model::CppAstNode::SymbolType::Variable:
@@ -467,6 +468,27 @@ void CppServiceHandler::getReferences(
         for (auto var : function.locals)
           nodes.push_back(queryCppAstNode(
             std::to_string(var.load()->astNodeId)));
+
+        break;
+      }
+
+      case RETURN_TYPE:
+      {
+        node = queryCppAstNode(astNodeId_);
+
+        FuncResult functions = _db->query<model::CppFunction>(
+          FuncQuery::mangledNameHash == node.mangledNameHash);
+        model::CppFunction function = *functions.begin();
+
+        TypeResult result = _db->query<model::CppType>(
+          TypeQuery::mangledNameHash == function.typeHash);
+
+        for (const model::CppType& type : result)
+        {
+          std::vector<model::CppAstNode> defs =
+            queryDefinitions(std::to_string(type.astNodeId));
+          nodes.insert(nodes.end(), defs.begin(), defs.end());
+        }
 
         break;
       }
