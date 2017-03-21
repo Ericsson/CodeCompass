@@ -155,8 +155,8 @@ int main(int argc, char* argv[])
 
   //--- Load parsers ---//
 
-  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
-  pHandler.loadPlugins(skipParserList);
+  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR, skipParserList);
+  pHandler.loadPlugins();
 
   //--- Add arguments of parsers ---//
 

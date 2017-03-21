@@ -32,14 +32,17 @@ namespace cc
 namespace parser
 {
 
-PluginHandler::PluginHandler(const std::string& pluginDir_)
-  : _pluginDir(pluginDir_)
+PluginHandler::PluginHandler(
+  const std::string& pluginDir_,
+  const std::vector<std::string>& skipParserList_)
+  : _pluginDir(pluginDir_),
+    _skipParserList(skipParserList_)
 {
   if (!fs::exists(_pluginDir) || !fs::is_directory(_pluginDir))
     throw std::runtime_error(_pluginDir + " is not a directory!");
 }
 
-void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
+void PluginHandler::loadPlugins()
 {
   fs::directory_iterator endIter;
   for (fs::directory_iterator dirIter(_pluginDir);
@@ -51,8 +54,8 @@ void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
     {
       std::string filename = getPluginName(dirIter->path());
 
-      if (std::find(skipParserList_.begin(), skipParserList_.end(), filename) ==
-        skipParserList_.end())
+      if (std::find(_skipParserList.begin(), _skipParserList.end(), filename) ==
+        _skipParserList.end())
       {
         std::string dynamicLibraryPath = dirIter->path().string();
         _dynamicLibraries[filename] = util::DynamicLibraryPtr(
@@ -147,7 +150,13 @@ std::vector<std::string> PluginHandler::getTopologicalOrder()
       if(!parserNameToVertex.count(dependency))
       {
         // TODO: This shouldn't be tolerated so easy.
-        LOG(warning) << dependency << " is not a real parser";
+        if (std::find(_skipParserList.begin(), _skipParserList.end(),
+          dependency) != _skipParserList.end())
+          LOG(warning) << dependency << " is dependency of " << parser.first
+                       << " but it has been skipped!";
+        else
+          LOG(warning) << dependency << " is not a real parser";
+
         continue;
       }
 

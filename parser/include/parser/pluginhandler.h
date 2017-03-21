@@ -22,8 +22,11 @@ public:
    * Parser plugin handler constructor.
    * @param pluginDir_ Parser plugin directory. The parser plugins as .so files
    * are located in this directory.
+   * @param skipParserList_ These parsers will be skipped.
    */
-  PluginHandler(const std::string& pluginDir_);
+  PluginHandler(
+    const std::string& pluginDir_,
+    const std::vector<std::string>& skipParserList_);
 
   /**
    * Plugin handler destructor.
@@ -32,9 +35,8 @@ public:
 
   /**
    * Load plugins from parser directory.
-   * @param skipParserList_ These parsers will be skipped.
    */
-  void loadPlugins(std::vector<std::string>& skipParserList_);
+  void loadPlugins();
 
   /**
    * Return the list of available plugins based on the file names in the parser
@@ -71,6 +73,7 @@ private:
   std::map<std::string, std::shared_ptr<AbstractParser> > _parsers;
   std::map<std::string, util::DynamicLibraryPtr> _dynamicLibraries;
   const std::string& _pluginDir;
+  const std::vector<std::string>& _skipParserList;
 };
 
 } // plugin
