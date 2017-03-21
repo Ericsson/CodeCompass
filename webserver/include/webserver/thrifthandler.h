@@ -69,12 +69,8 @@ protected:
   {
   public:
     template <typename IFaceType>
-    LoggingProcessor(
-      boost::shared_ptr<IFaceType> handler_,
-      const std::string workspaceName_) :
-        Processor(handler_),
-        _workspaceName(workspaceName_),
-        _serviceName(getTypeName(typeid(*handler_.get())))
+    LoggingProcessor(boost::shared_ptr<IFaceType> handler_)
+      : Processor(handler_)
     {
     }
 
@@ -90,22 +86,18 @@ protected:
 
       return Processor::dispatchCall(in_, out_, fname_, seqid_, ctx.nextCtx);
     }
-
-  private:
-    std::string _workspaceName;
-    std::string _serviceName;
   };
 
 public:
   template<class Handler>
-  ThriftHandler(Handler *handler_, const std::string& workspaceName_)
-    : _processor(::boost::shared_ptr<Handler>(handler_), workspaceName_)
+  ThriftHandler(Handler *handler_)
+    : _processor(::boost::shared_ptr<Handler>(handler_))
   {
   }
 
   template<class Handler>
-  ThriftHandler(Handler handler_, const std::string& workspaceName_)
-    : _processor(handler_, workspaceName_)
+  ThriftHandler(Handler handler_)
+    : _processor(handler_)
   {
   }
 
@@ -119,11 +111,11 @@ public:
     using namespace ::apache::thrift;
     using namespace ::apache::thrift::transport;
     using namespace ::apache::thrift::protocol;
-    
+
     try
     {
       std::string content = getContent(conn_);
-      
+
       LOG(debug) << "Request content:\n" << content;
 
       boost::shared_ptr<TTransport> inputBuffer(
@@ -131,8 +123,10 @@ public:
 
       boost::shared_ptr<TTransport> outputBuffer(new TMemoryBuffer(4096));
 
-      boost::shared_ptr<TProtocol> inputProtocol(new TJSONProtocol(inputBuffer));
-      boost::shared_ptr<TProtocol> outputProtocol(new TJSONProtocol(outputBuffer));
+      boost::shared_ptr<TProtocol> inputProtocol(
+        new TJSONProtocol(inputBuffer));
+      boost::shared_ptr<TProtocol> outputProtocol(
+        new TJSONProtocol(outputBuffer));
 
       CallContext ctx{conn_, nullptr};
       _processor.process(inputProtocol, outputProtocol, &ctx);
@@ -143,16 +137,16 @@ public:
 
       LOG(debug)
         << "Response:\n" << response.c_str() << std::endl;
-      
-      // Send HTTP reply to the client
-      // create headers
-      mg_send_header(conn_, "Content-Type", "application/x-thrift");
-      mg_send_header(conn_, "Content-Length", std::to_string(response.length()).c_str());
 
-      // terminate headers
+      // Send HTTP reply to the client create headers
+      mg_send_header(conn_, "Content-Type", "application/x-thrift");
+      mg_send_header(
+        conn_, "Content-Length", std::to_string(response.length()).c_str());
+
+      // Terminate headers
       mg_write(conn_, "\r\n", 2);
 
-      // send content
+      // Send content
       mg_write(conn_, response.c_str(), response.length());
     }
     catch (const std::exception& ex)

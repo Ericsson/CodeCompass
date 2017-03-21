@@ -79,7 +79,7 @@ inline void registerPluginSimple(
     return new cc::webserver::ThriftHandler< \
       cc::service::nspace::serviceName##ServiceProcessor>( \
         new cc::service::nspace::serviceName##ServiceHandler( \
-          db_, datadir_, cfg_), cfg_["workspace"].as<std::string>()); \
+          db_, datadir_, cfg_)); \
   }
 
 #define CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(serviceName) \
@@ -89,7 +89,7 @@ inline void registerPluginSimple(
     return new cc::webserver::ThriftHandler< \
       cc::service::language::LanguageServiceProcessor>( \
         new cc::service::language::serviceName##ServiceHandler( \
-          db_, datadir_, cfg_), cfg_["workspace"].as<std::string>()); \
+          db_, datadir_, cfg_)); \
   }
 
 } // plugin

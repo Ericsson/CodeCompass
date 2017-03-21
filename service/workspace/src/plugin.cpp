@@ -23,7 +23,7 @@ void registerPlugin(
 
   std::shared_ptr<cc::webserver::RequestHandler> handler(
     new cc::webserver::ThriftHandler<cc::service::workspace::WorkspaceServiceProcessor>(
-      new cc::service::workspace::WorkspaceServiceHandler(workspaces), "*"));
+      new cc::service::workspace::WorkspaceServiceHandler(workspaces)));
 
   pluginHandler_->registerImplementation("WorkspaceService", handler);
 }
