@@ -541,10 +541,17 @@ build_gmp()
   compile generic gmp-6.0.0 lib/libgmp.so
 }
 
+build_expat()
+{
+  download https://sourceforge.net/projects/expat/files/expat/2.1.0/expat-2.1.0.tar.gz
+  compile generic expat-2.1.0 lib/libexpat.so
+}
+
 build_graphviz()
 {
   dep gcc
   dep zlib
+  dep expat
 
   download http://www.graphviz.org/pub/graphviz/stable/SOURCES/graphviz-2.38.0.tar.gz
   compile generic graphviz-2.38.0 bin/dot --with-webp=no --with-poppler=no \
@@ -556,7 +563,7 @@ build_graphviz()
     --without-x --enable-swig=no --enable-sharp=no --enable-guile=no \
     --enable-java=no --enable-lua=no --enable-ocaml=no --enable-perl=no \
     --enable-php=no --enable-python=no --enable-r=no --enable-ruby=no --enable-tcl=no \
-    --with-expat=no
+    --with-expat=yes
 }
 
 build_gtest()
