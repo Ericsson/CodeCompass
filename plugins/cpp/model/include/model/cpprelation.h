@@ -46,6 +46,13 @@ struct CppRelation
 
 typedef std::shared_ptr<CppRelation> CppRelationPtr;
 
+#pragma db view object(CppRelation)
+struct CppRelationCount
+{
+  #pragma db column("count(" + CppRelation::id + ")")
+  std::size_t count;
+};
+
 }
 }
 

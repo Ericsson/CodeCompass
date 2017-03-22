@@ -30,6 +30,10 @@ function (model, viewHandler, util) {
     return label;
   }
 
+  function createReferenceCountLabel(label, count) {
+    return label + '<span class="reference-count">(' + count + ')</span>';
+  }
+
   function createLabel(astNodeInfo) {
     var labelClass = '';
 
@@ -92,7 +96,8 @@ function (model, viewHandler, util) {
         var fileInfo = model.project.getFileInfo(fileId);
         res.push({
           id          : fileGroupsId[fileId],
-          name        : fileInfo.name + ' (' + referenceInFile.length + ')',
+          name        : createReferenceCountLabel(
+                          fileInfo.name, referenceInFile.length),
           refType     : parentNode.refType,
           hasChildren : true,
           cssClass    : util.getIconClass(fileInfo.path),
@@ -114,15 +119,20 @@ function (model, viewHandler, util) {
 
                     //--- Recursive Node ---//
 
-                    res.push({
-                      id          : 'Caller-' + reference.id,
-                      name        : parentNode.name,
-                      nodeInfo    : reference,
-                      refType     : parentNode.refType,
-                      cssClass    : parentNode.cssClass,
-                      hasChildren : true,
-                      getChildren : parentNode.getChildren
-                    });
+                    var refCount = model.cppservice.getReferenceCount(
+                      reference.id, parentNode.refType);
+
+                    if (refCount)
+                      res.push({
+                        id          : 'Caller-' + reference.id,
+                        name        : createReferenceCountLabel(
+                                        parentNode.name, refCount),
+                        nodeInfo    : reference,
+                        refType     : parentNode.refType,
+                        cssClass    : parentNode.cssClass,
+                        hasChildren : true,
+                        getChildren : parentNode.getChildren
+                      });
 
                     //--- Call ---//
 
@@ -256,16 +266,20 @@ function (model, viewHandler, util) {
 
         var refTypes = model.cppservice.getReferenceTypes(elementInfo.id);
         for (var refType in refTypes) {
-          ret.push({
-            name        : refType,
-            parent      : 'root',
-            refType     : refTypes[refType],
-            cssClass    : 'icon-' + refType.replace(/ /g, '-'),
-            hasChildren : true,
-            getChildren : function () {
-              return loadReferenceNodes(this, elementInfo, refTypes);
-            }
-          });
+          var refCount =
+            model.cppservice.getReferenceCount(elementInfo.id, refTypes[refType]);
+
+          if (refCount)
+            ret.push({
+              name        : createReferenceCountLabel(refType, refCount),
+              parent      : 'root',
+              refType     : refTypes[refType],
+              cssClass    : 'icon-' + refType.replace(/ /g, '-'),
+              hasChildren : true,
+              getChildren : function () {
+                return loadReferenceNodes(this, elementInfo, refTypes);
+              }
+            });
         };
 
       } else if (elementInfo instanceof FileInfo) {

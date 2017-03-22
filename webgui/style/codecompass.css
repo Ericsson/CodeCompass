@@ -144,6 +144,15 @@ svg {
   color: #8D2222;
 }
 
+#infotree .reference-count {
+  font-size: .83em;
+  line-height: 0.5em;
+  vertical-align: baseline;
+  position: relative;
+  top: -0.4em;
+  color: grey;
+}
+
 #infotree .icon,
 #filemanager .icon,
 #queryresult .icon,

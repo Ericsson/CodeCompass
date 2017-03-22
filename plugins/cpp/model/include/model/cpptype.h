@@ -75,6 +75,20 @@ struct CppType : CppEntity
 
 typedef std::shared_ptr<CppType> CppTypePtr;
 
+#pragma db view object(CppMemberType)
+struct CppMemberTypeCount
+{
+  #pragma db column("count(" + CppMemberType::id + ")")
+  std::size_t count;
+};
+
+#pragma db view object(CppType)
+struct CppTypeCount
+{
+  #pragma db column("count(" + CppType::id + ")")
+  std::size_t count;
+};
+
 }
 }
 

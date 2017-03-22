@@ -39,6 +39,13 @@ struct CppInheritance
 
 typedef std::shared_ptr<CppInheritance> CppInheritancePtr;
 
+#pragma db view object(CppInheritance)
+struct CppInheritanceCount
+{
+  #pragma db column("count(" + CppInheritance::id + ")")
+  std::size_t count;
+};
+
 }
 }
 

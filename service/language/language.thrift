@@ -152,6 +152,17 @@ service LanguageService
     throws (1:common.InvalidId ex)
 
   /**
+   * Returns reference count to the AST node identified by astNodeId.
+   * @param astNodeId The AST node to be queried.
+   * @param referenceId Reference type (such as derivedClasses, definition,
+   * usages etc.). Possible values can be queried by getReferenceTypes().
+   * @return Number of rereferences
+   */
+  i32 getReferenceCount(
+    1:common.AstNodeId astNodeId,
+    2:i32 referenceId)
+
+  /**
    * Returns references to the AST node identified by astNodeId.
    * @param astNodeId The AST node to be queried.
    * @param referenceId Reference type (such as derivedClasses, definition,
