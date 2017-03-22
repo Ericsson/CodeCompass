@@ -332,7 +332,7 @@ compile_libgit2()
   CC="$CCMP_DEPS/bin/gcc"
   CXX="$CCMP_DEPS/bin/g++"
   CMAKE_PREFIX_PATH="$CCMP_DEPS"
-  $CCMP_DEPS/bin/cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR=OFF -DTHREADSAFE=ON -DUSE_SSH=OFF -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DOPENSSL_SSL_LIBRARY=$CCMP_DEPS
+  $CCMP_DEPS/bin/cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR=OFF -DTHREADSAFE=ON -DUSE_SSH=OFF -DCMAKE_INSTALL_PREFIX=$CCMP_DEPS -DCMAKE_USE_OPENSSL=OFF -DCURL=OFF -DUSE_OPENSSL=OFF
   
   echo_info "Making $src_dir"
   make PREFIX=$CCMP_DEPS -j$cpu_count || exit -1
@@ -629,8 +629,8 @@ build_libgit2()
   dep openssl
   dep pkgconfig
   
-  download https://github.com/libgit2/libgit2/archive/v0.22.2.tar.gz libgit2-v0.22.2.tar.gz --no-check-certificate
-  compile libgit2 libgit2-0.22.2 lib/libgit2.so
+  download https://github.com/libgit2/libgit2/archive/v0.25.1.tar.gz libgit2-v0.25.1.tar.gz --no-check-certificate
+  compile libgit2 libgit2-0.25.1 lib/libgit2.so
 }
 
 build_libodb()
@@ -880,15 +880,6 @@ build_doxygen()
 
   download http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.9.1.src.tar.gz
   compile doxygen doxygen-1.8.9.1 bin/doxygen "--english-only --static"
-}
-
-build_tcsh()
-{
-  dep gcc
-  dep ncurses
-
-  download ftp://ftp.astron.com/pub/tcsh/tcsh-6.18.01.tar.gz
-  CFLAGS="-O1" compile generic tcsh-6.18.01 bin/tcsh --disable-nls --disable-nls-catalogs
 }
 
 build_python2()

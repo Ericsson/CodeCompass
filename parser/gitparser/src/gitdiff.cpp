@@ -219,6 +219,7 @@ std::vector<GitDiff::GitDiffDelta> GitDiff::getDeltaList()
     gitdiff_getDeltaList_file_cb,
     nullptr, 
     nullptr,
+    nullptr,
     &ret
   );
   GitException::hadleError(error);
