@@ -245,6 +245,17 @@ service LanguageService
       throws (1:common.InvalidId ex)
 
   /**
+   * Returns reference count to the File node identified by fileId.
+   * @param fileId The file ID we want to get the references count about.
+   * @param referenceId Reference type (such as includes, functions, macros,
+   * files etc.). Possible values can be queried by getFileReferenceTypes().
+   * @return Number of references.
+   */
+  i32 getFileReferenceCount(
+    1:common.FileId fileId,
+    2:i32 referenceId)
+
+  /**
    * Returns the syntax highlight elements for a whole file.
    * @param fileId ID of the file in which we get syntax elements.
    * @return Elements' position and CSS class name.

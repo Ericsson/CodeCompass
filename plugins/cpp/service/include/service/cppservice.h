@@ -119,6 +119,10 @@ public:
     const core::FileId& fileId_,
     const std::int32_t referenceId_) override;
 
+  std::int32_t getFileReferenceCount(
+    const core::FileId& fileId_,
+    const std::int32_t referenceId_) override;
+
   void getSyntaxHighlight(
     std::vector<SyntaxHighlight>& return_,
     const core::FileId& fileId) override;
@@ -261,6 +265,15 @@ private:
    * requirements of the given query in the given file.
    */
   std::vector<model::CppAstNode> queryCppAstNodesInFile(
+    const core::FileId& fileId_,
+    const odb::query<model::CppAstNode>& query_
+      = odb::query<model::CppAstNode>(true));
+
+  /**
+   * This function returns the count of model::CppAstNode objects which meet the
+   * requirements of the given query in the given file.
+   */
+  std::uint32_t queryCppAstNodeCountInFile(
     const core::FileId& fileId_,
     const odb::query<model::CppAstNode>& query_
       = odb::query<model::CppAstNode>(true));
