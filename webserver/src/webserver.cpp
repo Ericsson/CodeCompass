@@ -24,10 +24,6 @@ po::options_description commandLineArguments()
     ("workspace,w", po::value<std::string>()->required(),
       "Path to a workspace file which contains information of the parsed "
       "project in an INI-like format.")
-    ("database,d", po::value<std::string>()->required(),
-      // TODO: Provide a full connection string example.
-      "A connection string to the relational database with the following "
-      "format: pgsql:database=name;user=user_name.")
     ("port,p", po::value<int>()->default_value(8080),
       "Port number of the webserver to listen on.")
     ("loglevel",
