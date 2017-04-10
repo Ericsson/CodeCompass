@@ -3,7 +3,10 @@
 
 #include <memory>
 
+#include <boost/filesystem.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <odb/database.hxx>
 
@@ -27,25 +30,37 @@ inline void registerPluginSimple(
   ServiceFactoryT serviceFactory_,
   const std::string& serviceName_)
 {
+  namespace fs = boost::filesystem;
   namespace po = boost::program_options;
+  namespace pt = boost::property_tree;
 
-  const util::WorkspaceOptions workspaces
-    = util::parseConfigFile(vm_["workspaceCfgFile"].as<std::string>());
-
-  // Create a handler instance for all workspaces.
-  for (const auto& workspace : workspaces)
+  for (fs::directory_iterator it(vm_["workspace"].as<std::string>());
+    it != fs::directory_iterator();
+    ++it)
   {
-    const std::string wsId = workspace.first;
-    const util::WorkspaceOption& wsOpt = workspace.second;
+    std::string project = it->path().filename().native();
 
-    std::shared_ptr<odb::database> db
-      = util::createDatabase(wsOpt.connectionString);
+    fs::path projectInfo = it->path();
+    projectInfo += "/project_info.json";
+    pt::ptree root;
+    pt::read_json(projectInfo.native(), root);
+
+    std::string dbName = root.get<std::string>("database", "");
+    if (dbName.empty())
+      dbName = project;
+
+    std::string connStr = util::updateConnectionString(
+      vm_["database"].as<std::string>(),
+      "database",
+      dbName);
+
+    std::shared_ptr<odb::database> db = util::createDatabase(connStr);
 
     if (!db)
     {
       LOG(error)
-        << "Wrong connection string: '" << wsOpt.connectionString << "' "
-        << "for workspace: '" << wsId << "' "
+        << "Wrong connection string: '" << connStr << "' "
+        << "for project: '" << project << "' "
         << "for service: '" << serviceName_ << "'";
 
       throw std::runtime_error("Wrong database!");
@@ -55,10 +70,13 @@ inline void registerPluginSimple(
     {
       // Create handler
       std::shared_ptr<RequestHandlerT> servicePtr(
-        serviceFactory_(db, std::make_shared<std::string>(wsOpt.datadir), vm_));
+        serviceFactory_(
+          db,
+          std::make_shared<std::string>(fs::canonical(it->path()).native()),
+          vm_));
 
       // Create a key for the implementation
-      std::string key = wsId + '/' + serviceName_;
+      std::string key = project + '/' + serviceName_;
 
       // Register implementation
       pluginHandler_->registerImplementation(key, servicePtr);
@@ -67,7 +85,7 @@ inline void registerPluginSimple(
     {
       LOG(warning)
         << "Exception: " << ex.what()
-        << " in workspace " << wsId;
+        << " in workspace " << project;
     }
   }
 }

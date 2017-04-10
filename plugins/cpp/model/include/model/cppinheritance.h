@@ -31,10 +31,8 @@ struct CppInheritance
       .append("\nvisibility = ").append(visibilityToString(visibility));
   }
 
-#ifndef NO_INDICES
-  #pragma db index member(derived)
-  #pragma db index member(base)
-#endif
+#pragma db index member(derived)
+#pragma db index member(base)
 };
 
 typedef std::shared_ptr<CppInheritance> CppInheritancePtr;

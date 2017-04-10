@@ -38,6 +38,7 @@ target_compile_options(gitservice PUBLIC -Wno-unknown-pragmas)
 target_link_libraries(gitservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
+  ${ODB_LIBRARIES}
   gitthrift
   git2)
 

@@ -27,8 +27,9 @@ std::vector<std::string> GitParser::getDependentParsers()  const
 
 util::DirIterCallback GitParser::getParserCallback()
 {
-  std::string projectDataDir = _ctx.options["data-dir"].as<std::string>();
-  std::string versionDataDir = projectDataDir + "/version";
+  std::string wsDir = _ctx.options["workspace"].as<std::string>();
+  std::string projDir = wsDir + '/' + _ctx.options["name"].as<std::string>();
+  std::string versionDataDir = projDir + "/version";
 
   return [&, versionDataDir](const std::string& path_)
   {

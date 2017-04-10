@@ -21,6 +21,7 @@ function(generate_odb_files _src)
         -I ${CMAKE_CURRENT_SOURCE_DIR}/include
         -I ${CMAKE_SOURCE_DIR}/model/include
         -I ${CMAKE_SOURCE_DIR}/util/include
+        -I ${ODB_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
       DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
@@ -49,7 +50,7 @@ endfunction(add_odb_library)
 function(install_sql _dir)
   install(
     DIRECTORY ${_dir}
-    DESTINATION share/codecompass/sql
+    DESTINATION ${INSTALL_SQL_DIR}
     FILES_MATCHING PATTERN "*.sql")
 endfunction(install_sql)
 

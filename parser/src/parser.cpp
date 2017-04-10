@@ -7,6 +7,8 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>
 #include <boost/log/attributes.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -19,6 +21,7 @@
 #include <parser/sourcemanager.h>
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 namespace trivial = boost::log::trivial;
 
 po::options_description commandLineArguments()
@@ -28,6 +31,18 @@ po::options_description commandLineArguments()
   desc.add_options()
     ("help,h",
       "Prints this help message.")
+    ("workspace,w", po::value<std::string>()->required(),
+      "Path to a workspace directory. Project log files and plugin specific "
+      "databases go under this directory.")
+    ("name,n", po::value<std::string>()->required(),
+      "Project name.")
+    ("description", po::value<std::string>(),
+      "Short description of the project.")
+    ("force,f",
+      "If the project already exists with the given name in the workspace, "
+      "then by default CodeCompass skips all parsing actions. Force parsing "
+      "removes all previous results from the workspace and from the database "
+      "for the project.")
     ("list,l",
       "List available plugins. Plugins come from shared objects stored in the "
       "lib/parserplugin directory.")
@@ -44,10 +59,6 @@ po::options_description commandLineArguments()
       "database type depends on the CodeCompass executable. CodeCompass can be "
       "build to support PostgreSQL or SQLite. Connection string has the "
       "following format: pgsql:database=name;user=user_name.")
-    ("data-dir", po::value<std::string>()->required(),
-      "The parsers can use a directory to store information. In this directory "
-      "the parsers should create an own subdirectory where they can store "
-      "their arbitrary temporary files or local databases.")
     ("label", po::value<std::vector<std::string>>(),
       "The submodules of a large project can be labeled so it can be easier "
       "later to locate them. With this flag you can provide a label list in "
@@ -66,8 +77,66 @@ po::options_description commandLineArguments()
   return desc;
 }
 
+/**
+ * This function prepares the workspace and project directory based on the given
+ * command line arguments. If the project directory can't be created because of
+ * permission issues or the directory already exists and "--force" flag is not
+ * provided then empty string returns which indicates the problem.
+ * @return The path of the project directory.
+ */
+std::string prepareProjectDir(const po::variables_map& vm_)
+{
+  const std::string projDir
+    = vm_["workspace"].as<std::string>() + '/'
+    + vm_["name"].as<std::string>();
+
+  boost::system::error_code ec;
+
+  bool isNewProject = fs::create_directories(projDir, ec);
+
+  if (ec)
+  {
+    LOG(error) << "Permission denied to create " + projDir;
+    return std::string();
+  }
+
+  if (isNewProject)
+    return projDir;
+
+  if (vm_.count("force"))
+  {
+    fs::remove_all(projDir, ec);
+
+    if (ec)
+    {
+      LOG(error) << "Permission denied to remove " + projDir;
+      return std::string();
+    }
+
+    fs::create_directory(projDir, ec);
+
+    if (ec)
+    {
+      LOG(error) << "Permission denied to create " + projDir;
+      return std::string();
+    }
+  }
+  else if (vm_.count("force"))
+  {
+    LOG(error) << projDir << " already exists. Use -f for reparsing!";
+    return std::string();
+  }
+
+  return projDir;
+}
+
 int main(int argc, char* argv[])
 {
+  std::string binDir = fs::canonical(fs::path(argv[0]).parent_path()).string();
+
+  const std::string PARSER_PLUGIN_DIR = binDir + "/../lib/parserplugin";
+  const std::string SQL_DIR = binDir + "/../share/codecompass/sql";
+
   cc::util::initLogger();
 
   //--- Process command line arguments ---//
@@ -78,19 +147,6 @@ int main(int argc, char* argv[])
   po::store(po::command_line_parser(argc, argv)
     .options(desc).allow_unregistered().run(), vm);
 
-  std::string binDir = boost::filesystem::canonical(
-    boost::filesystem::path(argv[0]).parent_path()).string();
-  std::string pluginDir = binDir + "/../lib/parserplugin";
-
-  //--- Write out labels into a file to the data directory. ---//
-
-  if (vm.count("label"))
-  {
-    std::ofstream fLabels(vm["data-dir"].as<std::string>() + "/labels.txt");
-    for (const std::string& label : vm["label"].as<std::vector<std::string>>())
-      fLabels << label << std::endl;
-  }
-
   //--- Skip parser list ---//
 
   std::vector<std::string> skipParserList;
@@ -99,7 +155,7 @@ int main(int argc, char* argv[])
 
   //--- Load parsers ---//
 
-  cc::parser::PluginHandler pHandler(pluginDir);
+  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
   pHandler.loadPlugins(skipParserList);
 
   //--- Add arguments of parsers ---//
@@ -147,17 +203,30 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  //--- Start parsers ---//
+  //--- Check workspace and project directory ---//
+
+  std::string projDir = prepareProjectDir(vm);
+  if (projDir.empty())
+    return 1;
+
+  //--- Create and init database ---//
 
   std::shared_ptr<odb::database> db = cc::util::createDatabase(
     vm["database"].as<std::string>());
+
   if (!db)
   {
     LOG(error)
       << "Couldn't connect to database. Check the connection string.";
-
     return 1;
   }
+
+  if (vm.count("force"))
+    cc::util::removeTables(db, SQL_DIR);
+
+  cc::util::createTables(db, SQL_DIR);
+
+  //--- Start parsers ---//
 
   cc::parser::SourceManager srcMgr(db);
   cc::parser::ParserContext ctx(db, srcMgr, vm);
@@ -169,6 +238,45 @@ int main(int argc, char* argv[])
     LOG(info) << "[" << parserName << "] started!";
     pHandler.getParser(parserName)->parse();
   }
+
+  //--- Add indexes to the database ---//
+
+  cc::util::createIndexes(db, SQL_DIR);
+
+  //--- Create project config file ---//
+
+  boost::property_tree::ptree pt;
+
+  if (vm.count("label"))
+  {
+    boost::property_tree::ptree labels;
+
+    for (const std::string& label : vm["label"].as<std::vector<std::string>>())
+    {
+      std::size_t pos = label.find('=');
+
+      if (pos == std::string::npos)
+        LOG(warning)
+          << "Label doesn't contain '=' for separating label and the path: "
+          << label;
+      else
+        labels.put(label.substr(0, pos), label.substr(pos + 1));
+    }
+
+    pt.add_child("labels", labels);
+  }
+
+  std::string database
+    = cc::util::connStrComponent(vm["database"].as<std::string>(), "database");
+
+  pt.put(
+    "database",
+    database.empty() ? vm["name"].as<std::string>() : database);
+
+  if (vm.count("description"))
+    pt.put("description", vm["description"].as<std::string>());
+
+  boost::property_tree::write_json(projDir + "/project_info.json", pt);
 
   // TODO: Print statistics.
 

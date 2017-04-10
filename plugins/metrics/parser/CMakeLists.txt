@@ -3,8 +3,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
-  ${PLUGIN_DIR}/model/include
-  ${ODB_INCLUDE_DIRS} )
+  ${PLUGIN_DIR}/model/include)
 
 set(SOURCES
   src/metricsparser.cpp )

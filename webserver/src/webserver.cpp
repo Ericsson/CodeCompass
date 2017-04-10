@@ -22,8 +22,9 @@ po::options_description commandLineArguments()
     ("help,h",
       "Prints this help message.")
     ("workspace,w", po::value<std::string>()->required(),
-      "Path to a workspace file which contains information of the parsed "
-      "project in an INI-like format.")
+      "Path to a workspace directory which contains the parsed projects and an "
+      "INI-like format workspace.cfg file with information of the parsed "
+      "projects.")
     ("database,d", po::value<std::string>()->required(),
       // TODO: Provide a full connection string example.
       "A connection string to the relational database with the following "
@@ -45,10 +46,13 @@ int main(int argc, char* argv[])
   std::string binDir = boost::filesystem::canonical(
     boost::filesystem::path(argv[0]).parent_path()).string();
 
+  const std::string SERVICE_PLUGIN_DIR = binDir + "/../lib/serviceplugin";
+  const std::string WEBGUI_DIR = binDir + "/../share/codecompass/webgui/";
+
   cc::util::initLogger();
  
   cc::webserver::MainRequestHandler requestHandler;
-  requestHandler.pluginHandler.addDirectory(binDir + "/../lib/serviceplugin");
+  requestHandler.pluginHandler.addDirectory(SERVICE_PLUGIN_DIR);
 
   //--- Process command line arguments ---//
 
@@ -88,28 +92,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  vm.insert(std::make_pair("binDir", po::variable_value(binDir, false)));
-  vm.insert(std::make_pair("webguiDir", po::variable_value(
-    binDir + "/../share/codecompass/webgui/", false)));
-  vm.insert(std::make_pair("workspaceCfgFile", po::variable_value(
-    vm["workspace"].as<std::string>() + "/workspace.cfg", false)));
+  vm.insert(std::make_pair("webguiDir", po::variable_value(WEBGUI_DIR, false)));
 
   //--- Process workspaces ---//
-
-  cc::util::WorkspaceOptions workspaceOptions
-    = cc::util::parseConfigFile(vm["workspaceCfgFile"].as<std::string>());
-
-  for (const auto& ws : workspaceOptions)
-  {
-    const cc::util::WorkspaceOption& wsOpt = ws.second;
-
-    LOG(info)
-      << "Workspace" << std::endl
-      << "  id = " << ws.first << std::endl
-      << "  connection = " << wsOpt.connectionString << std::endl
-      << "  datadir = " << wsOpt.datadir << std::endl
-      << "  description = " << wsOpt.description << std::endl;
-  }
 
   requestHandler.pluginHandler.configure(vm);
 

@@ -2,12 +2,12 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/model/include
   ${LLVM_INCLUDE_DIRS}
-  ${BOOST_INCLUDE_DIRS})
+  ${BOOST_INCLUDE_DIRS}
+  ${ODB_INCLUDE_DIRS})
 
 add_library(util STATIC
   src/dbutil.cpp
   src/parserutil.cpp
-  src/webserverutil.cpp
   src/dynamiclibrary.cpp
   src/logutil.cpp
   src/graph.cpp
