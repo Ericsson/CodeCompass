@@ -5,7 +5,7 @@
 Before the first use, you have to setup PostgreSQL (included in the binary package). PostgreSQL stores it's data files in a data directory, so before you start the PostgreSQL server you have to create and init this data directory.
 
 ```bash
-source /home/<username>/cc/CodeCompass-install/env.sh
+source /home/<username>/cc/CodeCompass-deps/env.sh
 
 mkdir -p /home/<username>/cc/database
 initdb -D /home/<username>/cc/database -E "SQL_ASCII"
@@ -22,11 +22,9 @@ cd /home/<username>/cc/database
 postgres -D . -p <port>
 ```
 
-### Create database and tables
+### Create database
 ```bash
 createdb <db_name> -p <port>
-cd /home/<username>/cc/CodeCompass
-find -name *.sql | while read -r line; do psql -f $line -d <db_name> -p <port> -h localhost; done
 ```
 
 ### Prepare an example project for parse
@@ -53,9 +51,9 @@ cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 For parsing a project with CodeCompass, the following command has to be emitted:
 
 ```bash
-CodeCompass_parser --data-dir <datadir> -n <name> -i <input1> -i <input2> -d <connection_string>
+CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connection_string>
 ```
-- **Data directory**: This is a directory where the parsed project and different config and log files are located.
+- **Workspace**: This is a directory where the parsed project and different config and log files are located.
 - **Input**: Several inputs can be given with -i flags. An input can be a directory or a compilation database. The plugins iterate these inputs and decide if it can use it. For example the C++ parser will consume the given compilation databases and the text search parser will consume the files under the given directories. It is entirely up to the parser what it does with the input parameters.
 - **Database**: The plugins can use an SQL database as storage. By the connection string the user can give the location of a running database system. 
 
@@ -63,25 +61,15 @@ CodeCompass_parser --data-dir <datadir> -n <name> -i <input1> -i <input2> -d <co
 ```bash
 cp -avr /home/<username>/cc/CodeCompass-deps/lib/clang /home/<username>/cc/CodeCompass-install/lib/
 ```
+*Note:* it will be automatized later.
 
 ### Using example:
 ```bash
 # Parse the prepared project
-./home/<username>/cc/CodeCompass-install/bin/CodeCompass_parser -d "pgsql:database=<db_name>;port=<port>" --data-dir /home/<username>/cc/workdir/<project_name>/data -i /home/<username>/cc/projects/<project_name>/build/compile_commands.json -j<num_of_threads>
+./home/<username>/cc/CodeCompass-install/bin/CodeCompass_parser -d "pgsql:database=<db_name>;port=<port>" -w /home/<username>/cc/workdir -i /home/<username>/cc/projects/<project_name>/build/compile_commands.json -j<num_of_threads>
 ```
 
 ## 2. Start the webserver
-
-### Create workspace config file in the workspace directory
-
-The content of this file (`/home/<username>/cc/workdir/workspace.cfg`) should be:
-```
-[workspace.<project_name>]
-connection = pgsql:host=localhost;database=<db_name>;user=<username>;port=<port>
-description = <project_name> project
-datadir = /home/<username>/cc/workdir/CodeCompass/data
-```
-*Note:* it will be automatized later.
 
 ### Start the webserver
 You can start the CodeCompass weserver with `bin/CodeCompass_webserver` binary in the CodeCompass installation directory.
