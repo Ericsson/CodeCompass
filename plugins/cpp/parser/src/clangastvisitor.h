@@ -24,6 +24,8 @@
 #include <model/cppinheritance-odb.hxx>
 #include <model/cppnamespace.h>
 #include <model/cppnamespace-odb.hxx>
+#include <model/cpprelation.h>
+#include <model/cpprelation-odb.hxx>
 #include <model/cpptype.h>
 #include <model/cpptype-odb.hxx>
 #include <model/cpptypedef.h>
@@ -73,6 +75,7 @@ public:
       _ctx(ctx_),
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
+      _astContext(astContext_),
       _mngCtx(astContext_.createMangleContext()),
       _cppSourceType("CPP"),
       _mangledNameCache(mangledNameCache_),
@@ -1049,7 +1052,7 @@ public:
         ? model::CppAstNode::SymbolType::FunctionPtr
         : model::CppAstNode::SymbolType::Variable;
       astNode->astType
-        = isWritten(vd)
+        = isWritten(dr_)
         ? model::CppAstNode::AstType::Write
         : model::CppAstNode::AstType::Read;
 
@@ -1103,7 +1106,7 @@ public:
       ? model::CppAstNode::SymbolType::FunctionPtr
       : model::CppAstNode::SymbolType::Variable;
     astNode->astType
-      = isWritten(llvm::dyn_cast<clang::VarDecl>(vd))
+      = isWritten(me_)
       ? model::CppAstNode::AstType::Write
       : model::CppAstNode::AstType::Read;
 
@@ -1278,10 +1281,105 @@ private:
     return getVisibility(decl_->getAccess());
   }
 
-  bool isWritten(const clang::VarDecl* vd_) const
+  /**
+   * This function returns true if the given type makes it possible to modify
+   * (write) the value, i.e. if it is a non-const reference or pointer.
+   */
+  bool isWritable(const clang::QualType& type_) const
   {
-    // TODO
-    return true;
+    const clang::Type* typePtr = type_.getTypePtr();
+
+    return
+      ((typePtr->isReferenceType() || typePtr->isPointerType()) &&
+       !typePtr->getPointeeType().isConstQualified()) ||
+      typePtr->isRValueReferenceType();
+  }
+
+  /**
+   * This function returns true if the given expression (which is usually a
+   * DeclRefExpr) is in writing context, i.e. on the left hand side of an
+   * assignment or as a function call argument passed by reference, etc.
+   */
+  bool isWritten(const clang::Expr* expr_) const
+  {
+    while (expr_)
+    {
+      clang::ASTContext::DynTypedNodeList parents
+        = _astContext.getParents(*expr_);
+
+      const clang::ast_type_traits::DynTypedNode& parent = parents[0];
+
+      if (const clang::BinaryOperator* op = parent.get<clang::BinaryOperator>())
+      {
+        return
+          (op->isAssignmentOp() ||
+           op->isCompoundAssignmentOp() ||
+           op->isShiftAssignOp()) &&
+          op->getLHS() == expr_;
+      }
+      else if (const clang::UnaryOperator* op
+        = parent.get<clang::UnaryOperator>())
+      {
+        return op->isIncrementDecrementOp() && op->getSubExpr() == expr_;
+      }
+      else if (const clang::CallExpr* call = parent.get<clang::CallExpr>())
+      {
+        const clang::FunctionDecl* decl = call->getDirectCallee();
+
+        if (!decl)
+          return false;
+
+        const clang::CXXMethodDecl* method
+          = llvm::dyn_cast<clang::CXXMethodDecl>(decl);
+
+        if (method && !method->isConst() &&
+            call->getNumArgs() && call->getArg(0) == expr_)
+          return true;
+
+        // The first argument of CallExpr is "this" if it's a CXXMethodDecl.
+        unsigned x = method != nullptr;
+
+        for (unsigned i = 0;
+             i + x < call->getNumArgs() && i < decl->getNumParams();
+             ++i)
+        {
+          clang::QualType paramType = decl->getParamDecl(i)->getType();
+          if (isWritable(paramType) && call->getArg(i + x) == expr_)
+            return true;
+        }
+
+        return false;
+      }
+      else if (const clang::CXXConstructExpr* call
+        = parent.get<clang::CXXConstructExpr>())
+      {
+        const clang::CXXConstructorDecl* decl = call->getConstructor();
+
+        if (!decl)
+          return false;
+
+        for (unsigned i = 0;
+             i < call->getNumArgs() && i < decl->getNumParams();
+             ++i)
+        {
+          clang::QualType paramType = decl->getParamDecl(i)->getType();
+          if (isWritable(paramType) && call->getArg(i) == expr_)
+            return true;
+        }
+
+        return false;
+      }
+      else if (
+        parent.get<clang::CXXDeleteExpr>() ||
+        parent.get<clang::ArraySubscriptExpr>())
+      {
+        return true;
+      }
+
+      expr_ = parent.get<clang::Expr>();
+    }
+
+    return false;
   }
 
   // TODO: This should be in the model.
@@ -1334,6 +1432,7 @@ private:
   ParserContext& _ctx;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
+  clang::ASTContext& _astContext;
   clang::MangleContext* _mngCtx;
   const std::string _cppSourceType;
 

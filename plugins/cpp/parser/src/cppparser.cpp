@@ -22,7 +22,6 @@
 
 #include <cppparser/cppparser.h>
 
-#include "assignmentcollector.h"
 #include "clangastvisitor.h"
 #include "manglednamecache.h"
 #include "ppincludecallback.h"
@@ -76,12 +75,6 @@ private:
         ClangASTVisitor clangAstVisitor(
           _ctx, _context, _mangledNameCache, _clangToAstNodeId);
         clangAstVisitor.TraverseDecl(context_.getTranslationUnitDecl());
-      }
-
-      {
-        AssignmentCollector assignmentCollector(
-          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
-        assignmentCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
     }
 
