@@ -293,11 +293,11 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
     },
 
     /**
-     * Iterate over the shortcut and call callback function on each directory.
-     * {String } shortcut Directory path.
-     * {Function} cb Callback function.
+     * Iterate over the path and call callback function on each directory.
+     * @param {String} shortcut Directory path.
+     * @param {Function} cb Callback function.
      */
-    shortcutVisitor : function (shortcut, cb) {
+    pathVisitor : function (shortcut, cb) {
       var that = this;
 
       var currentNode = this.getChildren()[0];
@@ -336,11 +336,11 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
           return;
 
         if (this._previousPath)
-          this.shortcutVisitor(this._previousPath, function (node) {
+          this.pathVisitor(this._previousPath, function (node) {
             that._collapseNode(node);
           });
 
-        var currentNode = this.shortcutVisitor(item.shortcut, function (node) {
+        var currentNode = this.pathVisitor(item.shortcut, function (node) {
           that._expandNode(node);
         });
 
