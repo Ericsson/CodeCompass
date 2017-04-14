@@ -292,6 +292,36 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
       this._setFilePath(item.fileInfo.path);
     },
 
+    /**
+     * Iterate over the path and call callback function on each directory.
+     * @param {String} shortcut Directory path.
+     * @param {Function} cb Callback function.
+     */
+    pathVisitor : function (shortcut, cb) {
+      var that = this;
+
+      var currentNode = this.getChildren()[0];
+
+      var path = shortcut.split('/');
+      path[0] = '/';
+
+      path.forEach(function (directory) {
+        if (!directory.length)
+          return;
+
+        children = currentNode.getChildren();
+        index = util.findIf(children, function (child) {
+          return child.label.match(
+            /(<[^>]*>)?([^<]*)(<[^>]*>)?/)[2] === directory;
+        });
+        currentNode = children[index];
+
+        cb(currentNode);
+      });
+
+      return currentNode;
+    },
+
     onClick : function (item, node, event) {
       var that = this;
 
@@ -305,33 +335,19 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
         if (this._previousPath === item.shortcut)
           return;
 
-        this._previousPath = item.shortcut;
-
-        var currentNode = this.getChildren()[0];
-
-        var path = item.shortcut.split('/');
-        path[0] = '/';
-
-        path.forEach(function (directory) {
-          if (!directory.length)
-            return;
-
-          children = currentNode.getChildren();
-          index = util.findIf(children, function (child) {
-            return child.label.match(
-              /(<[^>]*>)?([^<]*)(<[^>]*>)?/)[2] === directory;
+        if (this._previousPath)
+          this.pathVisitor(this._previousPath, function (node) {
+            that._collapseNode(node);
           });
-          currentNode = children[index];
-          that._expandNode(currentNode);
+
+        var currentNode = this.pathVisitor(item.shortcut, function (node) {
+          that._expandNode(node);
         });
 
         var children = currentNode.getChildren();
-        children.forEach(function (child){
-          that._collapseNode(child);
-        });
-
         this._displayElements(children, true);
         this._setFilePath(item.shortcut);
+        this._previousPath = item.shortcut;
       } else {
         this.inherited(arguments);
       }
