@@ -288,17 +288,21 @@ function (model, viewHandler, util) {
 
         var refTypes = model.cppservice.getFileReferenceTypes(elementInfo.id);
         for (var refType in refTypes) {
-          ret.push({
-            name        : refType,
-            parent      : 'root',
-            nodeInfo    : elementInfo,
-            refType     : refTypes[refType],
-            cssClass    : 'icon-' + refType.replace(/ /g, '-'),
-            hasChildren : true,
-            getChildren : function () {
-              return loadFileReferenceNodes(this);
-            }
-          });
+          var refCount = model.cppservice.getFileReferenceCount(
+            elementInfo.id, refTypes[refType]);
+
+          if (refCount)
+            ret.push({
+              name        : createReferenceCountLabel(refType, refCount),
+              parent      : 'root',
+              nodeInfo    : elementInfo,
+              refType     : refTypes[refType],
+              cssClass    : 'icon-' + refType.replace(/ /g, '-'),
+              hasChildren : true,
+              getChildren : function () {
+                return loadFileReferenceNodes(this);
+              }
+            });
         };
 
       }

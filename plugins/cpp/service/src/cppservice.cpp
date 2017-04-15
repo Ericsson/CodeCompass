@@ -984,6 +984,43 @@ void CppServiceHandler::getFileReferences(
   });
 }
 
+std::int32_t CppServiceHandler::getFileReferenceCount(
+  const core::FileId& fileId_,
+  const std::int32_t referenceId_)
+{
+  return _transaction([&, this]() -> std::int32_t {
+    switch (referenceId_)
+    {
+      case TYPES:
+        return queryCppAstNodeCountInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Type &&
+          AstQuery::astType == model::CppAstNode::AstType::Definition);
+        break;
+
+      case FUNCTIONS:
+        return queryCppAstNodeCountInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+          (AstQuery::astType == model::CppAstNode::AstType::Definition ||
+           AstQuery::astType == model::CppAstNode::AstType::Declaration));
+        break;
+
+      case INCLUDES:
+        return queryCppAstNodeCountInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::File);
+        break;
+
+      case MACROS:
+        return queryCppAstNodeCountInFile(fileId_,
+          AstQuery::symbolType == model::CppAstNode::SymbolType::Macro &&
+          AstQuery::astType == model::CppAstNode::AstType::Definition);
+        break;
+
+      default:
+        return 0;
+    }
+  });
+}
+
 void CppServiceHandler::getSyntaxHighlight(
   std::vector<SyntaxHighlight>& return_,
   const core::FileId& fileId)
@@ -1116,6 +1153,14 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodesInFile(
     AstQuery::location.file == std::stoull(fileId_) && query_);
 
   return std::vector<model::CppAstNode>(result.begin(), result.end());
+}
+
+std::uint32_t CppServiceHandler::queryCppAstNodeCountInFile(
+  const core::FileId& fileId_,
+  const odb::query<model::CppAstNode>& query_)
+{
+  return _db->query_value<model::CppAstCount>(
+    AstQuery::location.file == std::stoull(fileId_) && query_).count;
 }
 
 std::vector<model::CppAstNode> CppServiceHandler::queryDefinitions(
