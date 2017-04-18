@@ -5,6 +5,8 @@
 #include <string>
 #include <tuple>
 
+#include <util/hash.h>
+
 #include "cppnode.h"
 
 namespace cc
@@ -74,6 +76,14 @@ inline std::string CppEdge::toString() const
     .append("\ntype = ").append(typeToString(type));
 }
 
+inline std::uint64_t createIdentifier(const CppEdge& edge_)
+{
+  return util::fnvHash(
+    std::to_string(edge_.from->id) +
+    std::to_string(edge_.to->id) +
+    typeToString(edge_.type));
+}
+
 typedef std::uint64_t CppEdgeAttributeId;
 
 #pragma db object
@@ -102,6 +112,12 @@ inline std::string CppEdgeAttribute::toString() const
     .append("\nid = ").append(std::to_string(id))
     .append("\nkey = ").append(key)
     .append("\nvalue = ").append(value);
+}
+
+inline std::uint64_t createIdentifier(const CppEdgeAttribute& attr_)
+{
+  return util::fnvHash(
+    std::to_string(attr_.edge->id) + attr_.key + attr_.value);
 }
 
 } // model

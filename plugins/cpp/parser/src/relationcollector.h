@@ -29,10 +29,7 @@ public:
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
     MangledNameCache& mangledNameCache_,
-    std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_,
-    std::unordered_set<model::CppNodeId>& nodeCache_,
-    std::unordered_set<model::CppEdgeId>& edgeCache_,
-    std::unordered_set<model::CppEdgeAttributeId>&  edgeAttrCache_);
+    std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_);
 
   ~RelationCollector();
 
@@ -42,11 +39,14 @@ public:
 
   bool VisitCallExpr(clang::CallExpr* ce_);
 
+  static void cleanUp();
+
 private:
-  std::shared_ptr<model::CppEdge> addEdge(
+  void addEdge(
     const model::FileId& from_,
     const model::FileId& to_,
-    model::CppEdge::Type type_);
+    model::CppEdge::Type type_,
+    model::CppEdgeAttributePtr attr_ = nullptr);
 
   template <typename Cont>
   void persistAll(Cont& cont_)
@@ -73,24 +73,13 @@ private:
     }
   }
 
-  template <typename K, typename T>
-  bool insertToCache(
-    std::unordered_set<K>& container_,
-    const T& value_)
-  {
-    static std::mutex cacheMutex;
-    std::lock_guard<std::mutex> guard(cacheMutex);
-
-    return container_.insert(value_.id).second;
-  }
-
   ParserContext& _ctx;
   MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 
-  std::unordered_set<model::CppNodeId>& _nodeCache;
-  std::unordered_set<model::CppEdgeId>& _edgeCache;
-  std::unordered_set<model::CppEdgeAttributeId>& _edgeAttrCache;
+  static std::unordered_set<model::CppNodeId> _nodeCache;
+  static std::unordered_set<model::CppEdgeId> _edgeCache;
+  static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
 
   std::vector<model::CppNodePtr> _nodes;
   std::vector<model::CppEdgePtr> _edges;

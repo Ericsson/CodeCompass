@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include <util/hash.h>
+
 namespace cc
 {
 namespace model
@@ -34,7 +36,7 @@ struct CppNode
 
 typedef std::shared_ptr<CppNode> CppNodePtr;
 
-inline std::string domainTypeToString(CppNode::Domain type_)
+inline std::string domainToString(CppNode::Domain type_)
 {
   switch (type_)
   {
@@ -49,8 +51,13 @@ inline std::string CppNode::toString() const
 {
   return std::string("CppNode")
     .append("\nid = ").append(std::to_string(id))
-    .append("\ndomain = ").append(domainTypeToString(domain))
+    .append("\ndomain = ").append(domainToString(domain))
     .append("\ndomainId = ").append(domainId);
+}
+
+inline std::uint64_t createIdentifier(const CppNode& node_)
+{
+  return util::fnvHash(domainToString(node_.domain) + node_.domainId);
 }
 
 typedef std::uint64_t CppNodeAttributeId;

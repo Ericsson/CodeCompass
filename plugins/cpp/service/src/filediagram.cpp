@@ -552,6 +552,7 @@ std::vector<util::Graph::Node> FileDiagram::getRevContains(
   const util::Graph::Node& node_)
 {
   std::vector<util::Graph::Node> contained;
+  std::set<model::FileId> files;
 
   _transaction([&, this]{
     SourceResult sources = _db->query<model::BuildSource>(
@@ -560,6 +561,10 @@ std::vector<util::Graph::Node> FileDiagram::getRevContains(
       for (const auto& target : source.action->targets)
       {
         model::FileId fileId = target.lock().load()->file->id;
+
+        if (!files.insert(fileId))
+          continue;
+
         core::FileInfo fileInfo;
         _projectHandler.getFileInfo(fileInfo, std::to_string(fileId));
         contained.push_back(addNode(graph_, fileInfo));

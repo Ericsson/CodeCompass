@@ -23,6 +23,7 @@
 #include <cppparser/cppparser.h>
 
 #include "clangastvisitor.h"
+#include "relationcollector.h"
 #include "manglednamecache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
@@ -76,15 +77,17 @@ private:
           _ctx, _context, _mangledNameCache, _clangToAstNodeId);
         clangAstVisitor.TraverseDecl(context_.getTranslationUnitDecl());
       }
+
+      {
+        RelationCollector relationCollector(
+          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+        relationCollector.TraverseDecl(context_.getTranslationUnitDecl());
+      }
     }
 
   private:
     MangledNameCache& _mangledNameCache;
     std::unordered_map<const void*, model::CppAstNodeId> _clangToAstNodeId;
-
-    static std::unordered_set<model::CppNodeId> _nodeCache;
-    static std::unordered_set<model::CppEdgeId> _edgeCache;
-    static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
 
     ParserContext& _ctx;
     clang::ASTContext& _context;
@@ -130,15 +133,6 @@ private:
 };
 
 MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
-
-std::unordered_set<model::CppNodeId>
-  VisitorActionFactory::MyConsumer::_nodeCache;
-
-std::unordered_set<model::CppEdgeId>
-  VisitorActionFactory::MyConsumer::_edgeCache;
-
-std::unordered_set<model::CppEdgeAttributeId>
-  VisitorActionFactory::MyConsumer::_edgeAttrCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
 {

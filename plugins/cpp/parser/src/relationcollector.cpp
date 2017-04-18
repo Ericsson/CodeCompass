@@ -1,3 +1,4 @@
+#include <iostream>
 #include <clang/AST/ASTContext.h>
 
 #include <parser/sourcemanager.h>
@@ -11,20 +12,18 @@ namespace cc
 namespace parser
 {
 
+std::unordered_set<model::CppNodeId> RelationCollector::_nodeCache;
+std::unordered_set<model::CppEdgeId> RelationCollector::_edgeCache;
+std::unordered_set<model::CppEdgeAttributeId> RelationCollector::_edgeAttrCache;
+
 RelationCollector::RelationCollector(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
   MangledNameCache& mangledNameCache_,
-  std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_,
-  std::unordered_set<model::CppNodeId>& nodeCache_,
-  std::unordered_set<model::CppEdgeId>& edgeCache_,
-  std::unordered_set<model::CppEdgeAttributeId>& edgeAttrCache_)
+  std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
   : _ctx(ctx_),
     _mangledNameCache(mangledNameCache_),
     _clangToAstNodeId(clangToAstNodeId_),
-    _nodeCache(nodeCache_),
-    _edgeCache(edgeCache_),
-    _edgeAttrCache(edgeAttrCache_),
     _fileLocUtil(astContext_.getSourceManager())
 {
 }
@@ -69,31 +68,25 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
 
   if (declFile->id != defFile->id)
   {
-    model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-    attr->edge  = addEdge(defFile->id, declFile->id, model::CppEdge::PROVIDE);
+    model::CppEdgeAttributePtr attr
+      = std::make_shared<model::CppEdgeAttribute>();
+
     attr->key   = "provide";
     attr->value = fd_->getNameAsString();
-    attr->id = util::fnvHash(
-      std::to_string(attr->edge->id) + attr->key + attr->value);
 
-    if (insertToCache(_edgeAttrCache, *attr))
-      _edgeAttributes.push_back(attr);
+    addEdge(defFile->id, declFile->id, model::CppEdge::PROVIDE, attr);
   }
 
-  model::CppEdgePtr edge = addEdge(
-    defFile->parent.object_id(),
-    declFile->parent.object_id(),
-    model::CppEdge::IMPLEMENT);
-
   model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-  attr->edge  = edge;
+
   attr->key   = "implement";
   attr->value = defFile->filename + " -> " + declFile->filename;
-  attr->id = util::fnvHash(
-    std::to_string(attr->edge->id) + attr->key + attr->value);
 
-  if (insertToCache(_edgeAttrCache, *attr))
-    _edgeAttributes.push_back(attr);
+  addEdge(
+    defFile->parent.object_id(),
+    declFile->parent.object_id(),
+    model::CppEdge::IMPLEMENT,
+    attr);
 
   return true;
 }
@@ -127,20 +120,16 @@ bool RelationCollector::VisitValueDecl(clang::ValueDecl* vd_)
   if (userFile->id != usedFile->id)
     addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
 
-  std::shared_ptr<model::CppEdge> edge = addEdge(
-    userFile->parent.object_id(),
-    usedFile->parent.object_id(),
-    model::CppEdge::DEPEND);
-
   model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-  attr->edge  = edge;
+
   attr->key   = "depend";
   attr->value = userFile->filename + " -> " + usedFile->filename;
-  attr->id = util::fnvHash(
-    std::to_string(attr->edge->id) + attr->key + attr->value);
 
-  if (insertToCache(_edgeAttrCache, *attr))
-    _edgeAttributes.push_back(attr);
+  addEdge(
+    userFile->parent.object_id(),
+    usedFile->parent.object_id(),
+    model::CppEdge::DEPEND,
+    attr);
 
   return true;
 }
@@ -171,32 +160,38 @@ bool RelationCollector::VisitCallExpr(clang::CallExpr* ce_)
   //--- Create use and depend relations ---//
 
   if (userFile->id != usedFile->id)
-    std::shared_ptr<model::CppEdge> edge
-      = addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
-
-  std::shared_ptr<model::CppEdge> edge = addEdge(
-    userFile->parent.object_id(),
-    usedFile->parent.object_id(),
-    model::CppEdge::DEPEND);
+    addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
 
   model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-  attr->edge  = edge;
+
   attr->key   = "depend";
   attr->value = userFile->filename + " -> " + usedFile->filename;
-  attr->id = util::fnvHash(
-    std::to_string(attr->edge->id) + attr->key + attr->value);
 
-  if (insertToCache(_edgeAttrCache, *attr))
-    _edgeAttributes.push_back(attr);
+  addEdge(
+    userFile->parent.object_id(),
+    usedFile->parent.object_id(),
+    model::CppEdge::DEPEND,
+    attr);
 
   return true;
 }
 
-std::shared_ptr<model::CppEdge> RelationCollector::addEdge(
+void RelationCollector::cleanUp()
+{
+  _nodeCache.clear();
+  _edgeCache.clear();
+  _edgeAttrCache.clear();
+}
+
+void RelationCollector::addEdge(
   const model::FileId& from_,
   const model::FileId& to_,
-  model::CppEdge::Type type_)
+  model::CppEdge::Type type_,
+  model::CppEdgeAttributePtr attr_)
 {
+  static std::mutex m;
+  std::lock_guard<std::mutex> guard(m);
+
   std::string fromStr     = std::to_string(from_);
   std::string toStr       = std::to_string(to_);
   std::string nodeTypeStr = std::to_string(model::CppNode::FILE);
@@ -206,17 +201,17 @@ std::shared_ptr<model::CppEdge> RelationCollector::addEdge(
   model::CppNodePtr fromNode = std::make_shared<model::CppNode>();
   fromNode->domain = model::CppNode::FILE;
   fromNode->domainId = fromStr;
-  fromNode->id = util::fnvHash(fromStr + nodeTypeStr);
+  fromNode->id = createIdentifier(*fromNode);
 
-  if (insertToCache(_nodeCache, *fromNode))
+  if (_nodeCache.insert(fromNode->id).second)
     _nodes.push_back(fromNode);
 
   model::CppNodePtr toNode = std::make_shared<model::CppNode>();
   toNode->domain = model::CppNode::FILE;
   toNode->domainId = toStr;
-  toNode->id = util::fnvHash(toStr + nodeTypeStr);
+  toNode->id = createIdentifier(*toNode);
 
-  if (insertToCache(_nodeCache, *toNode))
+  if (_nodeCache.insert(toNode->id).second)
     _nodes.push_back(toNode);
 
   //--- Add edge ---//
@@ -225,15 +220,23 @@ std::shared_ptr<model::CppEdge> RelationCollector::addEdge(
   edge->from = fromNode;
   edge->to   = toNode;
   edge->type = type_;
-  edge->id = util::fnvHash(
-    std::to_string(fromNode->id) +
-    std::to_string(toNode->id) +
-    std::to_string(type_));
+  edge->id   = createIdentifier(*edge);
 
-  if (insertToCache(_edgeCache, *edge))
+  if (_edgeCache.insert(edge->id).second)
+  {
     _edges.push_back(edge);
 
-  return edge;
+    //--- Add edge attribute ---//
+
+    if (attr_)
+    {
+      attr_->edge = edge;
+      attr_->id = model::createIdentifier(*attr_);
+
+      if (_edgeAttrCache.insert(attr_->id).second)
+        _edgeAttributes.push_back(attr_);
+    }
+  }
 }
 
 } // parser
