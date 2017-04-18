@@ -198,6 +198,10 @@ void CppServiceHandler::getProperties(
       {
         VarResult variables = _db->query<model::CppVariable>(
           VarQuery::mangledNameHash == node.mangledNameHash);
+
+        if (variables.empty())
+          return;
+
         model::CppVariable variable = *variables.begin();
 
         return_["Name"] = variable.name;
@@ -210,6 +214,10 @@ void CppServiceHandler::getProperties(
       {
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == node.mangledNameHash);
+
+        if (functions.empty())
+          return;
+
         model::CppFunction function = *functions.begin();
 
         return_["Name"] = function.qualifiedName.substr(
@@ -224,6 +232,10 @@ void CppServiceHandler::getProperties(
       {
         TypeResult types = _db->query<model::CppType>(
           TypeQuery::mangledNameHash == node.mangledNameHash);
+
+        if (types.empty())
+          return;
+
         model::CppType type = *types.begin();
 
         if (type.isAbstract)
@@ -241,6 +253,10 @@ void CppServiceHandler::getProperties(
       {
         TypedefResult types = _db->query<model::CppTypedef>(
           TypedefQuery::mangledNameHash == node.mangledNameHash);
+
+        if (types.empty())
+          return;
+
         model::CppTypedef type = *types.begin();
 
         return_["Name"] = type.name;
@@ -254,6 +270,10 @@ void CppServiceHandler::getProperties(
         EnumConstResult enumConsts
           = _db->query<model::CppEnumConstant>(
               EnumConstQuery::mangledNameHash == node.mangledNameHash);
+
+        if (enumConsts.empty())
+          return;
+
         model::CppEnumConstant enumConst = *enumConsts.begin();
 
         return_["Name"] = enumConst.name;
@@ -637,6 +657,10 @@ void CppServiceHandler::getReferences(
 
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == node.mangledNameHash);
+
+        if (functions.empty())
+          return;
+
         model::CppFunction function = *functions.begin();
 
         for (auto var : function.parameters)
@@ -652,6 +676,10 @@ void CppServiceHandler::getReferences(
 
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::mangledNameHash == node.mangledNameHash);
+
+        if (functions.empty())
+          return;
+
         model::CppFunction function = *functions.begin();
 
         for (auto var : function.locals)
@@ -723,6 +751,9 @@ void CppServiceHandler::getReferences(
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::mangledNameHash == node.mangledNameHash);
+
+        if (varNodes.empty())
+          return;
 
         const model::CppVariable& variable = *varNodes.begin();
 
@@ -821,6 +852,10 @@ void CppServiceHandler::getReferences(
 
         TypedefResult types = _db->query<model::CppTypedef>(
           TypedefQuery::mangledNameHash == node.mangledNameHash);
+
+        if (types.empty())
+          return;
+
         model::CppTypedef type = *types.begin();
 
         AstResult result = _db->query<model::CppAstNode>(
@@ -838,6 +873,10 @@ void CppServiceHandler::getReferences(
 
         EnumResult cppEnums = _db->query<model::CppEnum>(
           EnumQuery::mangledNameHash == node.mangledNameHash);
+
+        if (cppEnums.empty())
+          return;
+
         model::CppEnum cppEnum = *cppEnums.begin();
 
         std::transform(
@@ -1304,11 +1343,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
           FuncQuery::mangledNameHash == defNode.mangledNameHash);
-        const model::CppFunction& funcNode = *funcNodes.begin();
 
-        for (const model::Tag& tag : funcNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+        if (!funcNodes.empty())
+        {
+          const model::CppFunction& funcNode = *funcNodes.begin();
 
+          for (const model::Tag& tag : funcNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
         break;
       }
 
@@ -1331,10 +1373,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::mangledNameHash == defNode.mangledNameHash);
-        const model::CppVariable& varNode = *varNodes.begin();
 
-        for (const model::Tag& tag : varNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+        if (!varNodes.empty())
+        {
+          const model::CppVariable& varNode = *varNodes.begin();
+
+          for (const model::Tag& tag : varNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
 
         break;
       }
