@@ -44,20 +44,12 @@ model::CppAstNodePtr PPIncludeCallback::createFileAstNode(
   astNode->symbolType = model::CppAstNode::SymbolType::File;
   astNode->astType = model::CppAstNode::AstType::Usage;
 
-  model::FileLoc fileLoc;
+  model::FileLoc& fileLoc = astNode->location;
   _fileLocUtil.setRange(
     srcRange_.getBegin(), srcRange_.getEnd(), fileLoc.range);
   fileLoc.file = _ctx.srcMgr.getFile(
     _fileLocUtil.getFilePath(srcRange_.getBegin()));
 
-  const std::string& type = fileLoc.file.load()->type;
-  if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
-  {
-    fileLoc.file->type = _cppSourceType;
-    _ctx.srcMgr.updateFile(*fileLoc.file);
-  }
-
-  astNode->location = fileLoc;
   astNode->id = model::createIdentifier(*astNode);
 
   return astNode;
@@ -80,15 +72,29 @@ void PPIncludeCallback::InclusionDirective(
   clang::SourceLocation expLoc = _clangSrcMgr.getExpansionLoc(hashLoc_);
   clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(expLoc);
 
+  //--- Included file ---//
+
   std::string includedPath = searchPath_.str() + '/' + fileName_.str();
   model::FilePtr included = _ctx.srcMgr.getFile(includedPath);
-  included->type = _cppSourceType;
   included->parseStatus = model::File::PSFullyParsed;
+  if (included->type != model::File::DIRECTORY_TYPE &&
+      included->type != _cppSourceType)
+  {
+    included->type = _cppSourceType;
+    _ctx.srcMgr.updateFile(*included);
+  }
+
+  //--- Includer file ---//
 
   std::string includerPath = presLoc.getFilename();
   model::FilePtr includer = _ctx.srcMgr.getFile(includerPath);
-  includer->type = _cppSourceType;
   includer->parseStatus = model::File::PSFullyParsed;
+  if (includer->type != model::File::DIRECTORY_TYPE &&
+      includer->type != _cppSourceType)
+  {
+    includer->type = _cppSourceType;
+    _ctx.srcMgr.updateFile(*includer);
+  }
 
   //--- CppAstNode ---//
 
