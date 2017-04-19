@@ -223,6 +223,15 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
         });
     },
 
+    onShow : function () {
+      var fileInfo = urlHandler.getFileInfo();
+
+      if (!fileInfo)
+        return;
+
+      this.openPath(fileInfo.path);
+    },
+
     setState : function (state) {
       var fileInfo = urlHandler.getFileInfo();
 
@@ -247,6 +256,7 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
         return;
 
       this._filePath = path;
+      this._previousPath = path;
 
       var paneWidth = util.getFullWidth(this.domNode);
       var titleWidth = util.getFullWidth(this.fileManagerTitle);
@@ -270,6 +280,11 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
    * Midnight Commander style File Manager.
    */
   var ProjectTreeMC = declare([FileBrowser, HtmlTreeNoIndent], {
+    constructor : function () {
+      this.inherited(arguments);
+      this._subscribeTopics();
+    },
+
     loadChildren : function (node) {
       var children = this.inherited(arguments);
 
@@ -289,6 +304,7 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
 
     onOpen : function (item, node) {
       this._displayElements(node.getParent().getChildren(), false);
+      this._displayElements(node.getChildren(), true);
       this._setFilePath(item.fileInfo.path);
     },
 
@@ -322,9 +338,31 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
       return currentNode;
     },
 
-    onClick : function (item, node, event) {
+    openPath : function (path) {
       var that = this;
 
+      if (this._previousPath === path)
+        return;
+
+      if (this._previousPath)
+        this.pathVisitor(this._previousPath, function (node) {
+          that._collapseNode(node);
+        });
+
+      var currentNode = this.pathVisitor(path, function (node) {
+        that._expandNode(node);
+      });
+
+      var children = currentNode.item.fileInfo.isDirectory
+        ? currentNode.getChildren()
+        : currentNode.getParent().getChildren();
+
+      this._displayElements(children, true);
+      this._setFilePath(path);
+    },
+
+    onClick : function (item, node, event) {
+      var that = this;
       if (item.isFolderUpElement) {
         var parent = node.getParent();
         var children = parent.getParent().getChildren();
@@ -332,22 +370,7 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
         this._displayElements(children, true);
         this._setFilePath(parent.item.fileInfo.path);
       } else if (item.shortcut) { // Click on a label
-        if (this._previousPath === item.shortcut)
-          return;
-
-        if (this._previousPath)
-          this.pathVisitor(this._previousPath, function (node) {
-            that._collapseNode(node);
-          });
-
-        var currentNode = this.pathVisitor(item.shortcut, function (node) {
-          that._expandNode(node);
-        });
-
-        var children = currentNode.getChildren();
-        this._displayElements(children, true);
-        this._setFilePath(item.shortcut);
-        this._previousPath = item.shortcut;
+        this.openPath(item.shortcut);
       } else {
         this.inherited(arguments);
       }
@@ -358,7 +381,14 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
         if (node.item.id !== 'project' && node.item.shortcut === undefined)
           style.set(node.rowNode, 'display', display ? 'block' : 'none');
       });
-    }
+    },
+
+    _subscribeTopics : function () {
+      var that = this;
+      topic.subscribe('codecompass/openPath', function (path) {
+        that.openPath(path);
+      });
+    },
   });
 
   /**
@@ -403,6 +433,10 @@ function (on, query, dom, style, domConstruct, topic, declare, Memory,
 
     setState : function () {
       this.currentChild.setState.apply(this.currentChild, arguments);
+    },
+
+    onShow : function () {
+      this.currentChild.onShow(arguments);
     }
   });
 

@@ -150,6 +150,7 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
                 range.endpos.line,
                 range.endpos.column]
             });
+            topic.publish('codecompass/openPath', item.parent);
           }
         }
       });
