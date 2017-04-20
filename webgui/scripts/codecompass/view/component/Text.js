@@ -519,6 +519,26 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this._codeMirror.doc.setValue(content);
     },
 
+    _setHeaderPathAttr : function (path) {
+      path = path.split('/').slice(1);
+      var pathElements = dom.create('span');
+      var string = '';
+
+      path.forEach(function (file) {
+        string += '/' + file;
+        var s = string; // This is needed because of closure affairs.
+
+        dom.place(dom.toDom('/'), pathElements);
+        dom.place(dom.create('span', {
+          innerHTML : file,
+          class     : 'pathelement',
+          onclick   : function () { topic.publish('codecompass/openPath', s); }
+        }), pathElements);
+      });
+
+      dom.place(pathElements, this._header.path, 'only');
+    },
+
     _setHeaderAttr : function (fileInfo) {
       var statusClasses = ['fullyparsed', 'partiallyparsed', 'notparsed'];
       domClass.remove(this._header.parsestatus, statusClasses);
@@ -540,7 +560,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       }
 
       dom.place(dom.toDom(fileInfo.name), this._header.filename, 'only');
-      dom.place(dom.toDom(fileInfo.path), this._header.path, 'only');
+      this.set('headerPath', fileInfo.path);
     }
   });
 });

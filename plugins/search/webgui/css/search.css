@@ -70,11 +70,3 @@
 .cc-search-help:after{
   content: '\e009';
 }
-
-.pathelement {
-  cursor: pointer;
-}
-
-.pathelement:hover {
-  text-decoration: underline;
-}

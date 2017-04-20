@@ -592,3 +592,12 @@ div.CodeMirror-linenumber {
   background: center center no-repeat url(/images/loading.gif);
   background-size: 100px 100px;
 }
+
+.pathelement {
+  cursor: pointer;
+}
+
+.pathelement:hover {
+  text-decoration: underline;
+  color: #335180;
+}
