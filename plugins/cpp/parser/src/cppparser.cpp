@@ -272,7 +272,7 @@ void CppParser::worker()
     //--- Add compile command hash ---//
 
     auto hash = util::fnvHash(
-      boost::algorithm::join(command.CommandLine, ""));
+      boost::algorithm::join(command.CommandLine, " "));
 
     if (_parsedCommandHashes.find(hash) != _parsedCommandHashes.end())
     {
