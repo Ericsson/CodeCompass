@@ -25,6 +25,8 @@ add_subdirectory(parser)
 add_subdirectory(plugins)
 add_subdirectory(webserver)
 add_subdirectory(service)
+add_subdirectory(logger)
+add_subdirectory(scripts)
 add_subdirectory(webgui)
 
 # Install java libraries

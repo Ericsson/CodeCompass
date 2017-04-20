@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <output.json> \"<build command>\"" >&2
+  exit 1
+fi
+
+binDir=$(dirname $(realpath $0))
+jsonFile=$1
+shift
+
+if [ -f $jsonFile ]; then
+  echo "The compilation database already exists!" >&2
+  exit 1
+fi
+
+export LDLOGGER_HOME=$binDir
+
+source $binDir/../share/codecompass/setldlogenv.sh $jsonFile; \
+  bash -c "$@"
+
+if [ ! -f $jsonFile ]; then
+  echo "Failed to log the build commands!" >&2
+  exit 1
+elif [ $(wc -c <$jsonFile) -le 5 ]; then
+  echo "Failed to log the build commands: the build log is empty!" >&2
+  exit 1
+fi
