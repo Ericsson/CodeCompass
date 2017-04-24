@@ -127,6 +127,8 @@ private:
 
 MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
 
+std::vector<std::string> CppParser::_sNonSourceFlags = {"-Wl,"};
+
 bool CppParser::isSourceFile(const std::string& file_) const
 {
   const std::vector<std::string> cppExts{
@@ -136,6 +138,15 @@ bool CppParser::isSourceFile(const std::string& file_) const
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
   return std::find(cppExts.begin(), cppExts.end(), ext) != cppExts.end();
+}
+
+bool CppParser::isNonSourceFlag(const std::string& arg_) const
+{
+  return std::any_of(_sNonSourceFlags.begin(), _sNonSourceFlags.end(),
+    [&](const std::string& skip_)
+  {
+    return arg_.find(skip_) != std::string::npos;
+  });
 }
 
 std::map<std::string, std::string> CppParser::extractInputOutputs(
@@ -164,8 +175,12 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
       output = absolutePath.native();
       state = None;
     }
-    else if (isSourceFile(arg))
-      sources.insert(arg);
+    else if (isSourceFile(arg) && !isNonSourceFlag(arg))
+    {
+      boost::filesystem::path absolutePath =
+        boost::filesystem::absolute(arg, command_.Directory);
+      sources.insert(absolutePath.native());
+    }
     else if (arg == "-c")
       hasCParam = true;
     else if (arg == "-o")
