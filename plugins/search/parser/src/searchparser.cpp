@@ -50,7 +50,7 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
   {
     std::string wsDir = ctx_.options["workspace"].as<std::string>();
     std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
-    std::string indexDir = projDir + "/search";
+    _searchDatabase = projDir + "/search";
 
     //--- Close last instance (if any) ---//
 
@@ -59,7 +59,7 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     //--- Open a new process ---//
 
     _indexProcess.reset(new IndexerProcess(
-      indexDir,
+      _searchDatabase,
       IndexerProcess::OpenMode::Create));
   }
   catch (const IndexerProcess::Failure& ex_)
@@ -75,6 +75,20 @@ std::vector<std::string> SearchParser::getDependentParsers() const
 
 bool SearchParser::parse()
 {
+  if (boost::filesystem::is_directory(_searchDatabase))
+    if (_ctx.options.count("force"))
+    {
+      boost::filesystem::remove_all(_searchDatabase);
+      boost::filesystem::create_directory(_searchDatabase);
+    }
+    else
+    {
+      LOG(info)
+        << "Skipping search parser, because search database already exists. "
+           "Use -f flag for forcing reparse.";
+      return true;
+    }
+
   for (const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
   {
