@@ -36,9 +36,14 @@ private:
   std::unique_ptr<IndexerProcess> _indexProcess;
 
   /**
-  * libmagic handler for mime types.
-  */
+   * libmagic handler for mime types.
+   */
   ::magic_t _fileMagic;
+
+  /**
+   * Directory of search database.
+   */
+  std::string _searchDatabase;
 };
 
 } // parser
