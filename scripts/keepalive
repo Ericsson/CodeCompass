@@ -17,7 +17,6 @@ fi
 
 export LD_LIBRARY_PATH=$CODECOMPASS_HOME/lib:$CODECOMPASS_HOME/lib/serviceplugin:$LD_LIBRARY_PATH
 export CLASSPATH=$CODECOMPASS_HOME/lib/java/*
-export MAGIC=$CODECOMPASS_HOME/share/misc/magic.mgc
 
 while true; do
   $@ &
