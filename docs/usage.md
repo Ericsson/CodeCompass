@@ -22,11 +22,6 @@ cd /home/<username>/cc/database
 postgres -D . -p <port>
 ```
 
-### Create database
-```bash
-createdb <db_name> -p <port>
-```
-
 ### Prepare an example project for parse
 ```bash
 # Create a project folder

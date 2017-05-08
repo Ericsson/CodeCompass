@@ -127,6 +127,45 @@ void sqliteRegexImpl(
 }
 #endif
 
+#ifdef DATABASE_PGSQL
+/**
+ * This function creates a postgres database if the database doesn't exists.
+ */
+void createPsqlDatbase(const std::string& connStr_, const std::string dbName_)
+{
+  std::size_t colonPos = connStr_.find(':');
+  std::string database = connStr_.substr(0, colonPos);
+  std::string options  = connStr_.substr(colonPos + 1);
+
+  std::vector<std::string> odbOpts = createOdbOptions(options);
+  char** cStyleOptions = createCStyleOptions(odbOpts);
+
+  int size = odbOpts.size();
+  odb::pgsql::database db(size, cStyleOptions);
+
+  odb::connection_ptr connection = db.connection();
+  try
+  {
+    if (!connection->execute(
+      "SELECT 1 FROM pg_database WHERE datname = '" + dbName_ + "'"))
+    {
+      std::string createCmd = "CREATE DATABASE " + dbName_
+        + " ENCODING = 'SQL_ASCII'"
+        + " LC_COLLATE='C'"
+        + " TEMPLATE template0;";
+
+      connection->execute(createCmd);
+
+      LOG(info) << "Creating database: " << dbName_;
+    }
+  }
+  catch (const odb::exception& ex)
+  {
+    LOG(warning) << ex.what();
+  }
+}
+#endif
+
 /**
  * This function removes all parts from the s_ string between begin_ and end_.
  * For example removeByRegex("abc(def)ghi", "(", ")") == "abcghi";
@@ -205,7 +244,7 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
   if (iter != databasePool.end())
   {
     auto db = iter->second;
-    
+
     if (db)
       return db;
 
@@ -260,6 +299,12 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
 #ifdef DATABASE_PGSQL
   if (database == "pgsql")
   {
+    std::string defaultPsqlConnStr =
+      updateConnectionString(connStr_, "database", "postgres");
+    std::string dbName = connStrComponent(connStr_, "database");
+
+    createPsqlDatbase(defaultPsqlConnStr, dbName);
+
     int size = odbOpts.size();
     db.reset(new odb::pgsql::database(size, cStyleOptions),
       [](odb::database*){});
