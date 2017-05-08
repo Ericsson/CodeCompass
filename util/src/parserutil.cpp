@@ -81,10 +81,7 @@ bool iterateDirectoryRecursive(
       std::string path = it->path().c_str();
 
       if (!iterateDirectoryRecursive(context_, path , callback_))
-      {
-        // Stop iteration
-        return false;
-      }
+        continue;
     }
   }
 

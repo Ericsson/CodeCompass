@@ -44,6 +44,11 @@ private:
    * Directory of search database.
    */
   std::string _searchDatabase;
+
+  /**
+   * Directories which has to be skipped during the parse.
+   */
+  std::vector<std::string> _skipDirectories;
 };
 
 } // parser

@@ -17,6 +17,8 @@
 #include <indexer/indexerprocess.h>
 #include <searchparser/searchparser.h>
 
+namespace fs = boost::filesystem;
+
 namespace cc
 {
 namespace parser
@@ -46,12 +48,19 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     _fileMagic = nullptr;
   }
 
+  std::string wsDir = ctx_.options["workspace"].as<std::string>();
+  std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
+  _searchDatabase = projDir + "/search";
+
+  if (_ctx.options.count("search-skip-directory"))
+    for (const std::string& path
+      : _ctx.options["search-skip-directory"].as<std::vector<std::string>>())
+    {
+    _skipDirectories.push_back(fs::canonical(fs::absolute(path)).string());
+    }
+
   try
   {
-    std::string wsDir = ctx_.options["workspace"].as<std::string>();
-    std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
-    _searchDatabase = projDir + "/search";
-
     //--- Close last instance (if any) ---//
 
     _indexProcess.reset();
@@ -75,11 +84,11 @@ std::vector<std::string> SearchParser::getDependentParsers() const
 
 bool SearchParser::parse()
 {
-  if (boost::filesystem::is_directory(_searchDatabase))
+  if (fs::is_directory(_searchDatabase))
     if (_ctx.options.count("force"))
     {
-      boost::filesystem::remove_all(_searchDatabase);
-      boost::filesystem::create_directory(_searchDatabase);
+      fs::remove_all(_searchDatabase);
+      fs::create_directory(_searchDatabase);
     }
     else
     {
@@ -127,10 +136,22 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
 
   return [this](const std::string& currPath_)
   {
-    boost::filesystem::path path(currPath_);
+    fs::path path(currPath_);
 
-    if (!boost::filesystem::is_regular(path))
+    if (!fs::is_regular(path))
+    {
+      if (std::find(_skipDirectories.begin(), _skipDirectories.end(),
+          path) != _skipDirectories.end())
+      {
+        LOG(info)
+          << "Skipping " << path << " because it was listed in the skipping "
+          << "directory flag of the search parser.";
+
+        return false;
+      }
+
       return true;
+    }
 
     if (!shouldHandle(currPath_))
     {
@@ -226,6 +247,12 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("Search Plugin");
+
+    description.add_options()
+      ("search-skip-directory", po::value<std::vector<std::string>>(),
+       "Directories can be skipped during the parse. Here you can list the "
+       "paths of the directories.");
+
     return description;
   }
 
