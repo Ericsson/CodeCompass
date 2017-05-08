@@ -9,6 +9,8 @@
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
+#include <model/buildaction.h>
+
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
 
@@ -39,8 +41,12 @@ private:
   std::map<std::string, std::string> extractInputOutputs(
     const clang::tooling::CompileCommand& command_) const;
 
+  model::BuildActionPtr addBuildAction(
+    const clang::tooling::CompileCommand& command_);
+
   void addCompileCommand(
     const clang::tooling::CompileCommand& command_,
+    model::BuildActionPtr buildAction_,
     bool error_ = false);
 
   bool isParsed(const clang::tooling::CompileCommand& command_);

@@ -192,13 +192,10 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   return inToOut;
 }
 
-void CppParser::addCompileCommand(
-  const clang::tooling::CompileCommand& command_,
-  bool error_)
+model::BuildActionPtr CppParser::addBuildAction(
+  const clang::tooling::CompileCommand& command_)
 {
   util::OdbTransaction transaction(_ctx.db);
-
-  //--- BuildAction ---//
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
@@ -212,7 +209,15 @@ void CppParser::addCompileCommand(
 
   transaction([&, this]{ _ctx.db->persist(buildAction); });
 
-  //--- BuildSource, BuildTarget ---//
+  return buildAction;
+}
+
+void CppParser::addCompileCommand(
+  const clang::tooling::CompileCommand& command_,
+  model::BuildActionPtr buildAction_,
+  bool error_)
+{
+  util::OdbTransaction transaction(_ctx.db);
 
   std::vector<model::BuildSource> sources;
   std::vector<model::BuildTarget> targets;
@@ -225,12 +230,12 @@ void CppParser::addCompileCommand(
       ? model::File::PSPartiallyParsed
       : model::File::PSFullyParsed;
     _ctx.srcMgr.updateFile(*buildSource.file);
-    buildSource.action = buildAction;
+    buildSource.action = buildAction_;
     sources.push_back(std::move(buildSource));
 
     model::BuildTarget buildTarget;
     buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
-    buildTarget.action = buildAction;
+    buildTarget.action = buildAction_;
     if (buildTarget.file->type != model::File::BINARY_TYPE)
     {
       buildTarget.file->type = model::File::BINARY_TYPE;
@@ -305,6 +310,10 @@ void CppParser::worker()
         argc,
         commandLine.data()));
 
+    //--- Save build action ---//
+
+    model::BuildActionPtr buildAction = addBuildAction(command);
+
     //--- Start the tool ---//
 
     VisitorActionFactory factory(_ctx);
@@ -324,7 +333,7 @@ void CppParser::worker()
 
     //--- Save build command ---//
 
-    addCompileCommand(command, error);
+    addCompileCommand(command, buildAction, error);
   }
 }
 
