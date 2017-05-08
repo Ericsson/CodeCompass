@@ -57,12 +57,6 @@ CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connecti
 - **Input**: Several inputs can be given with -i flags. An input can be a directory or a compilation database. The plugins iterate these inputs and decide if it can use it. For example the C++ parser will consume the given compilation databases and the text search parser will consume the files under the given directories. It is entirely up to the parser what it does with the input parameters.
 - **Database**: The plugins can use an SQL database as storage. By the connection string the user can give the location of a running database system. 
 
-### Copy clang include directory to install
-```bash
-cp -avr /home/<username>/cc/CodeCompass-deps/lib/clang /home/<username>/cc/CodeCompass-install/lib/
-```
-*Note:* it will be automatized later.
-
 ### Using example:
 ```bash
 # Parse the prepared project
