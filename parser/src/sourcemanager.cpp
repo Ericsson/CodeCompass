@@ -45,7 +45,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
     }
   }
   else
-    LOG(error) << "Failed to create a libmagic cookie!";
+    LOG(warning) << "Failed to create a libmagic cookie!";
 }
 
 SourceManager::~SourceManager()
@@ -188,7 +188,7 @@ bool SourceManager::isPlainText(const std::string& path_) const
 
   if (!magic)
   {
-    LOG(error) << "Couldn't use magic on file: " << path_;
+    LOG(warning) << "Couldn't use magic on file: " << path_;
     return false;
   }
 
