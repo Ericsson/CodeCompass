@@ -33,3 +33,8 @@ add_subdirectory(webgui)
 install(DIRECTORY
   lib/java/
   DESTINATION "${INSTALL_JAVA_LIB_DIR}")
+
+# Install Clang additional files
+install(DIRECTORY
+  ${LLVM_LIBRARY_DIRS}/clang
+  DESTINATION "${INSTALL_LIB_DIR}")
