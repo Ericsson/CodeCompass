@@ -47,6 +47,8 @@ private:
     const std::string& multiCommentEnd_) const;
 
   void persistLoc(const Loc& loc_, model::FileId file_);
+
+  std::unordered_set<model::FileId> _fileIdCache;
 };
 
 } // namespace parser

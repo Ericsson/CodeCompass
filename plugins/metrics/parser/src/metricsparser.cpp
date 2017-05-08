@@ -22,6 +22,13 @@ namespace parser
 
 MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  (util::OdbTransaction(_ctx.db))([&, this] {
+    for (const model::MetricsFileIdView& mf
+      : _ctx.db->query<model::MetricsFileIdView>())
+    {
+      _fileIdCache.insert(mf.file);
+    }
+  });
 }
 
 std::vector<std::string> MetricsParser::getDependentParsers() const
@@ -71,7 +78,10 @@ util::DirIterCallback MetricsParser::getParserCallback()
       model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
       if (file)
       {
-        persistLoc(getLocFromFile(file), file->id);
+        if (_fileIdCache.find(file->id) == _fileIdCache.end())
+          persistLoc(getLocFromFile(file), file->id);
+        else
+          LOG(info) << "Metrics already counted for file: " << file->path;
       }
     }
     return true;

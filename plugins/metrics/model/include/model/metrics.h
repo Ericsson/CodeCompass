@@ -38,6 +38,12 @@ struct Metrics
   Type type;
 };
 
+#pragma db view object(Metrics) query(distinct)
+struct MetricsFileIdView
+{
+  FileId file;
+};
+
 } //model
 } //cc
 
