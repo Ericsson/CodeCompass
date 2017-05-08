@@ -15,10 +15,12 @@ namespace util
 typedef std::function<bool (const std::string&)> DirIterCallback;
 
 /**
- * Recursively iterate over the given directory
- * @param path_ - directory or a regular file
- * @param callback_ - callback function which will be called on each existing path_
- * @return false if the iteration stops, otherwise true
+ * Recursively iterate over the given directory.
+ * @param path_ Directory or a regular file.
+ * @param callback_ Callback function which will be called on each existing
+ * path_. If this callback returns false then the files under the current
+ * directory won't be iterated.
+ * @return false if the callback_ returns false on the given path_.
  */
 bool iterateDirectoryRecursive(
   const std::string& path_,

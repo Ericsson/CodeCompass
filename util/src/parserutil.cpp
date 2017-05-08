@@ -73,17 +73,13 @@ bool iterateDirectoryRecursive(
   //--- Iterate over directory content ---//
 
   if (fs::is_directory(p))
-  {
-    fs::directory_iterator end_iter;
-    fs::directory_iterator it(p);
-    for (; it != end_iter; ++it)
+    for (fs::directory_iterator it(p), end_iter; it != end_iter; ++it)
     {
       std::string path = it->path().c_str();
 
       if (!iterateDirectoryRecursive(context_, path , callback_))
         continue;
     }
-  }
 
   return true;
 }
