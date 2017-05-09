@@ -127,8 +127,6 @@ private:
 
 MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
 
-std::vector<std::string> CppParser::_sNonSourceFlags = {"-Wl,"};
-
 bool CppParser::isSourceFile(const std::string& file_) const
 {
   const std::vector<std::string> cppExts{
@@ -142,11 +140,7 @@ bool CppParser::isSourceFile(const std::string& file_) const
 
 bool CppParser::isNonSourceFlag(const std::string& arg_) const
 {
-  return std::any_of(_sNonSourceFlags.begin(), _sNonSourceFlags.end(),
-    [&](const std::string& skip_)
-  {
-    return arg_.find(skip_) != std::string::npos;
-  });
+  return arg_.find("-Wl,") == 0;
 }
 
 std::map<std::string, std::string> CppParser::extractInputOutputs(

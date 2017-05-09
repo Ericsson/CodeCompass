@@ -49,8 +49,6 @@ private:
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   void worker();
 
-  static std::vector<std::string> _sNonSourceFlags;
-
   std::vector<clang::tooling::CompileCommand> _compileCommands;
   std::size_t _index;
 
