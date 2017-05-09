@@ -22,6 +22,8 @@ namespace cc
 namespace parser
 {
 
+namespace fs = boost::filesystem;
+
 // TODO: These should come from command line arguments.
 std::array<const char*, 15> excludedSuffixes{{
   ".doc", ".rtf", ".htm", ".html", ".xml", ".cc.d", ".cc.opts", ".bin",
@@ -46,12 +48,19 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     _fileMagic = nullptr;
   }
 
+  std::string wsDir = ctx_.options["workspace"].as<std::string>();
+  std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
+  _searchDatabase = projDir + "/search";
+
+  if (_ctx.options.count("search-skip-directory"))
+    for (const std::string& path
+      : _ctx.options["search-skip-directory"].as<std::vector<std::string>>())
+    {
+      _skipDirectories.push_back(fs::canonical(fs::absolute(path)).string());
+    }
+
   try
   {
-    std::string wsDir = ctx_.options["workspace"].as<std::string>();
-    std::string projDir = wsDir + '/' + ctx_.options["name"].as<std::string>();
-    _searchDatabase = projDir + "/search";
-
     //--- Close last instance (if any) ---//
 
     _indexProcess.reset();
@@ -75,11 +84,11 @@ std::vector<std::string> SearchParser::getDependentParsers() const
 
 bool SearchParser::parse()
 {
-  if (boost::filesystem::is_directory(_searchDatabase))
+  if (fs::is_directory(_searchDatabase))
     if (_ctx.options.count("force"))
     {
-      boost::filesystem::remove_all(_searchDatabase);
-      boost::filesystem::create_directory(_searchDatabase);
+      fs::remove_all(_searchDatabase);
+      fs::create_directory(_searchDatabase);
     }
     else
     {
@@ -100,14 +109,11 @@ bool SearchParser::parse()
     }
     catch (const std::exception& ex_)
     {
-      LOG(warning)
-        << "Search parser threw an exception: "
-        << ex_.what();
+      LOG(warning) << "Search parser threw an exception: " << ex_.what();
     }
     catch (...)
     {
-      LOG(warning)
-        << "Search parser failed with unknown exception!";
+      LOG(warning) << "Search parser failed with unknown exception!";
     }
   }
 
@@ -120,30 +126,25 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
 {
   if (!_indexProcess)
   {
-    LOG(warning)
-      << "Indexer process is not available, skip path: " << path_;
+    LOG(warning) << "Indexer process is not available, skip path: " << path_;
     return [](const std::string&){ return false; };
   }
 
   return [this](const std::string& currPath_)
   {
-    boost::filesystem::path path(currPath_);
-
-    if (!boost::filesystem::is_regular(path))
-      return true;
+    if (fs::is_directory(currPath_))
+    {
+      if (std::find(_skipDirectories.begin(), _skipDirectories.end(),
+            currPath_) != _skipDirectories.end())
+      {
+        LOG(info) << "Skipping " << currPath_ << " because it was listed in "
+          "the skipping directory flag of the search parser.";
+        return false;
+      }
+    }
 
     if (!shouldHandle(currPath_))
-    {
-      LOG(info) << "Skipping " << currPath_;
       return true;
-    }
-
-    if (!_ctx.srcMgr.isPlainText(currPath_))
-    {
-      LOG(info)
-        << "Skipping " << currPath_ << " because it is not plain text.";
-      return true;
-    }
 
     model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
 
@@ -175,6 +176,11 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
 
 bool SearchParser::shouldHandle(const std::string& path_)
 {
+  //--- The file is not regular. ---//
+
+  if (!fs::is_regular(path_))
+    return false;
+
   //--- The file is excluded by suffix. ---//
 
   std::string normPath(path_);
@@ -186,7 +192,10 @@ bool SearchParser::shouldHandle(const std::string& path_)
 
     if (normPath.length() >= sufflen &&
         normPath.compare(normPath.length() - sufflen, sufflen, suff) == 0)
+    {
+      LOG(info) << "Skipping " << path_;
       return false;
+    }
   }
 
   //--- The file is larger than one megabyte. ---//
@@ -197,6 +206,14 @@ bool SearchParser::shouldHandle(const std::string& path_)
 
   if (statbuf.st_size > (1024 * 1024))
     return false;
+
+  //--- The file is not plain text. ---//
+
+  if (!_ctx.srcMgr.isPlainText(path_))
+  {
+    LOG(info) << "Skipping " << path_ << " because it is not plain text.";
+    return false;
+  }
 
   return true;
 }
@@ -226,6 +243,12 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("Search Plugin");
+
+    description.add_options()
+      ("search-skip-directory", po::value<std::vector<std::string>>(),
+       "Directories can be skipped during the parse. Here you can list the "
+       "paths of the directories.");
+
     return description;
   }
 
