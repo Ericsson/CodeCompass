@@ -51,6 +51,7 @@ private:
 
   bool isParsed(const clang::tooling::CompileCommand& command_);
   bool isSourceFile(const std::string& file_) const;
+  bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   void worker();
 

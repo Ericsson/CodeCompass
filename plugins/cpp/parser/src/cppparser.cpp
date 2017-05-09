@@ -138,6 +138,11 @@ bool CppParser::isSourceFile(const std::string& file_) const
   return std::find(cppExts.begin(), cppExts.end(), ext) != cppExts.end();
 }
 
+bool CppParser::isNonSourceFlag(const std::string& arg_) const
+{
+  return arg_.find("-Wl,") == 0;
+}
+
 std::map<std::string, std::string> CppParser::extractInputOutputs(
   const clang::tooling::CompileCommand& command_) const
 {
@@ -164,8 +169,12 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
       output = absolutePath.native();
       state = None;
     }
-    else if (isSourceFile(arg))
-      sources.insert(arg);
+    else if (isSourceFile(arg) && !isNonSourceFlag(arg))
+    {
+      boost::filesystem::path absolutePath =
+        boost::filesystem::absolute(arg, command_.Directory);
+      sources.insert(absolutePath.native());
+    }
     else if (arg == "-c")
       hasCParam = true;
     else if (arg == "-o")
