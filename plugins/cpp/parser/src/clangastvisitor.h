@@ -1156,6 +1156,24 @@ private:
     return _mangledNameCache.insert(*node_);
   }
 
+  /**
+   * This function returns a pointer to the corresponding model::File object
+   * based on the given source location. The object is read from the cache of
+   * the actual translation unit. If the file is not in the cache of the actual
+   * translation unit yet then it will get the file from the Source Manager.
+   */
+  model::FilePtr getFile(const clang::SourceLocation& loc_)
+  {
+    std::string path = _fileLocUtil.getFilePath(loc_);
+
+    std::unordered_map<std::string, model::FilePtr>::const_iterator it =
+      _files.find(path);
+
+    return _files[path] = it != _files.end()
+      ? it->second
+      : _ctx.srcMgr.getFile(path);
+  }
+
   model::FileLoc getFileLoc(
     const clang::SourceLocation& start_,
     const clang::SourceLocation& end_)
@@ -1164,7 +1182,7 @@ private:
 
     if (start_.isInvalid() || end_.isInvalid())
     {
-      fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
+      fileLoc.file = getFile(start_);
       const std::string& type = fileLoc.file.load()->type;
       if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
       {
@@ -1185,7 +1203,7 @@ private:
     if (!_isImplicit)
       _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
 
-    fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(realStart));
+    fileLoc.file = getFile(realStart);
 
     const std::string& type = fileLoc.file.load()->type;
     if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
@@ -1435,6 +1453,7 @@ private:
   clang::ASTContext& _astContext;
   clang::MangleContext* _mngCtx;
   const std::string _cppSourceType;
+  std::unordered_map<std::string, model::FilePtr> _files;
 
   MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;

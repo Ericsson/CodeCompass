@@ -192,7 +192,9 @@ model::FilePtr SourceManager::getCreateParent(const std::string& path_)
 
 bool SourceManager::isPlainText(const std::string& path_) const
 {
-  std::lock_guard<std::mutex> guard(_createFileMutex);
+  static std::mutex _magicFileMutex;
+  std::lock_guard<std::mutex> guard(_magicFileMutex);
+
   const char* magic = ::magic_file(_magicCookie, path_.c_str());
 
   if (!magic)
@@ -251,7 +253,7 @@ void SourceManager::persistFiles()
         // unloading is that some parsers may want to read the file contents and
         // if this can be done through the File object then the file is not
         // needed to be read from disk.
-//        p.second->content.unload();
+        p.second->content.unload();
       }
       catch (const odb::object_already_persistent&)
       {

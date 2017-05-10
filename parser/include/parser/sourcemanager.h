@@ -90,7 +90,7 @@ private:
   std::map<std::string, model::FilePtr> _files;
   std::unordered_set<model::FileId> _persistedFiles;
   std::unordered_set<std::string> _persistedContents;
-  mutable std::mutex _createFileMutex;
+  std::mutex _createFileMutex;
   ::magic_t _magicCookie;
 };
 
