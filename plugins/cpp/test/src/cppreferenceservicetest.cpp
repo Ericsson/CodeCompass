@@ -1,8 +1,6 @@
 #define GTEST_HAS_TR1_TUPLE 1
 #define GTEST_USE_OWN_TR1_TUPLE 0
 
-#include <boost/log/trivial.hpp>
-
 #include <gtest/gtest.h>
 
 #include <service/cppservice.h>
@@ -21,7 +19,9 @@ public:
   CppReferenceServiceTest() :
     _db(cc::util::createDatabase(dbConnectionString)),
     _transaction(_db),
-    _cppservice( new CppServiceHandler(_db, std::make_shared<std::string>(""),
+    _cppservice( new CppServiceHandler(
+      _db,
+      std::make_shared<std::string>(""),
       boost::program_options::variables_map())),
     _helper(_db, _cppservice)
   {
@@ -33,12 +33,6 @@ public:
 
     _inheritanceClassHeader = _helper.getFileId("inheritance.h");
     _inheritanceClassSrc = _helper.getFileId("inheritance.cpp");
-  }
-
-  virtual void TearDown() override
-  {
-    _db.reset();
-    _cppservice.reset();
   }
 
   /**

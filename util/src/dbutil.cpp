@@ -236,7 +236,7 @@ namespace util
 /**
  * Global connection string -> database map to avoid too many live connections.
  */
-std::map<std::string, std::shared_ptr<odb::database>> databasePool;
+static std::map<std::string, std::shared_ptr<odb::database>> databasePool;
 
 std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
 {

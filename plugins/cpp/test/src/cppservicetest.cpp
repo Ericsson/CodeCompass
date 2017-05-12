@@ -2,7 +2,6 @@
 #define GTEST_USE_OWN_TR1_TUPLE 0
 
 #include <gtest/gtest.h>
-#include "servicehelper.h"
 
 const char* dbConnectionString;
 

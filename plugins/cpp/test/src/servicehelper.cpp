@@ -28,12 +28,12 @@ ServiceHelper::ServiceHelper(
 model::FileId ServiceHelper::getFileId(const std::string& fileName_)
 {
   return _transaction([&, this](){
-    typedef odb::query<model::File>  FQuery;
+    typedef odb::query<model::File> FQuery;
 
     odb::result<model::File> res =
-      _db->query<model::File>( FQuery::filename == fileName_);
+      _db->query<model::File>(FQuery::filename == fileName_);
 
-    return (*res.begin()).id;
+    return res.begin()->id;
   });
 }
 
@@ -77,12 +77,12 @@ void ServiceHelper::checkReferences(
   core::FileId fileId = std::to_string(fid_);
   std::map<std::string, std::int32_t> refType = getReferenceType(anFrom.id);
 
-  for(const auto& exp: expectedValues_)
+  for (const auto& exp: expectedValues_)
   {
-    if(refType.count(exp.first))
+    if (refType.count(exp.first))
     {
-      std::string expectedType = exp.first;
-      std::vector<int> expectedValues = exp.second;
+      const std::string& expectedType = exp.first;
+      const std::vector<int>& expectedValues = exp.second;
 
       std::vector<AstNodeInfo> references;
       _transaction([&, this]()
@@ -103,7 +103,7 @@ void ServiceHelper::checkReferences(
         bool contain = std::find(expectedValues.begin(), expectedValues.end(),
           ref.range.range.startpos.line) != expectedValues.end();
 
-        if(!contain)
+        if (!contain)
           LOG(error)
             << "\nReference: " << exp.first
             << "\nAstNodeValue: " << ref.astNodeValue

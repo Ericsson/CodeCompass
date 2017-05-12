@@ -1,13 +1,12 @@
 #define GTEST_HAS_TR1_TUPLE 1
 #define GTEST_USE_OWN_TR1_TUPLE 0
 
-#include <boost/log/trivial.hpp>
-
 #include <gtest/gtest.h>
 
 #include <service/cppservice.h>
 
 #include <util/dbutil.h>
+#include <util/logutil.h>
 
 #include "servicehelper.h"
 
@@ -19,7 +18,9 @@ public:
   CppPropertiesServiceTest() :
     _db(cc::util::createDatabase(dbConnectionString)),
     _transaction(_db),
-    _cppservice( new CppServiceHandler(_db, std::make_shared<std::string>(""),
+    _cppservice(new CppServiceHandler(
+      _db,
+      std::make_shared<std::string>(""),
       boost::program_options::variables_map())),
     _helper(_db, _cppservice)
   {
@@ -33,12 +34,6 @@ public:
     _inheritanceClassSrc = _helper.getFileId("inheritance.cpp");
   }
 
-  virtual void TearDown() override
-  {
-    _db.reset();
-    _cppservice.reset();
-  }
-
   void checkProperties(model::FileId fid_, int line_, int col_,
     std::map<std::string, std::string>& expectedLines_)
   {
@@ -46,22 +41,19 @@ public:
 
     AstNodeInfo anFrom = _helper.getAstNodeInfoByPos(line_, col_, fid_);
 
-    cc::service::core::FileId fileId = std::to_string(fid_);
-
     _transaction([&, this]()
     {
       _cppservice->getProperties(props, anFrom.id);
     });
 
     if (props.size() < expectedLines_.size())
-      BOOST_LOG_TRIVIAL(debug)
-        << "Position: " << line_ << ":" << col_;
+      LOG(debug) << "Position: " << line_ << ":" << col_;
 
     EXPECT_LE(expectedLines_.size(), props.size());
     for (const auto& prop : props)
     {
       if (expectedLines_[prop.first] != prop.second)
-        BOOST_LOG_TRIVIAL(error)
+        LOG(error)
           << "AstNode properties " << prop.first
           << " doesn't match. Expected value is: " << expectedLines_[prop.first]
           << ". Current value is: " << prop.second << "!";
@@ -96,7 +88,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"Qualified name", "cc::test::SimpleClass"}
     };
 
-    checkProperties(_simpleClassHeader, 9, 10, expected); // SimpleClass
+    checkProperties(_simpleClassHeader, 9, 10, expected);
   }
 
   {
@@ -107,7 +99,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"POD type", "true"}
     };
 
-    checkProperties(_nestedClassHeader, 9, 10, expected); // NestedClass
+    checkProperties(_nestedClassHeader, 9, 10, expected);
   }
 
   {
@@ -118,7 +110,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"POD type", "true"}
     };
 
-    checkProperties(_nestedClassHeader, 13, 15, expected); // InnerClass
+    checkProperties(_nestedClassHeader, 13, 15, expected);
   }
 }
 
@@ -132,7 +124,7 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
       {"Abstract type", "true"}
     };
 
-    checkProperties(_inheritanceClassHeader, 9, 10, expected); // BaseClass1
+    checkProperties(_inheritanceClassHeader, 9, 10, expected);
   }
 
   {
@@ -142,6 +134,6 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
       {"Qualified name", "cc::test::DerivedClass"}
     };
 
-    checkProperties(_inheritanceClassHeader, 31, 15, expected); // DerivedClass
+    checkProperties(_inheritanceClassHeader, 31, 15, expected);
   }
 }

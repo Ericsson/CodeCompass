@@ -32,7 +32,7 @@ public:
     std::shared_ptr<CppServiceHandler> cppservice_);
 
   /**
-   * Return a file id for the file name.
+   * Return a file ID for the file name.
    */
   model::FileId getFileId(const std::string& fileName_);
 
@@ -40,7 +40,7 @@ public:
    * Get AST node info by position.
    * @param line_ Line number of the clicked node.
    * @param col_ Column number of the clicked node.
-   * @param fid_ File id where it looks the ast node.
+   * @param fid_ File id where it looks the AST node.
    */
   AstNodeInfo getAstNodeInfoByPos(int line_, int col_, model::FileId fid_);
 

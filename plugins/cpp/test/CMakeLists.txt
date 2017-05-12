@@ -30,7 +30,7 @@ add_test(NAME allCppTest COMMAND cpptest
   "mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/sources/build &&\
   cd ${CMAKE_CURRENT_SOURCE_DIR}/sources/build &&\
   cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
-  "${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
+  "${CMAKE_INSTALL_PREFIX}/bin/keepalive ${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
   -d \"${TEST_DB}\"\
   -n cpptest \
   -i ${CMAKE_CURRENT_SOURCE_DIR}/sources/build/compile_commands.json \
