@@ -1,7 +1,6 @@
 #include <algorithm>
-#include <unordered_map>
 #include <memory>
-#include <thread>
+#include <unordered_map>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -17,8 +16,9 @@
 #include <model/file-odb.hxx>
 
 #include <util/hash.h>
-#include <util/odbtransaction.h>
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
+#include <util/threadpool.h>
 
 #include <cppparser/cppparser.h>
 
@@ -264,89 +264,45 @@ void CppParser::addCompileCommand(
   });
 }
 
-void CppParser::worker()
+int CppParser::worker(const clang::tooling::CompileCommand& command_)
 {
-  static std::mutex mutex;
+  //--- Assemble compiler command line ---//
 
-  while (true)
-  {
-    //--- Select next compilation command ---//
+  std::vector<const char*> commandLine;
+  commandLine.reserve(command_.CommandLine.size());
+  commandLine.push_back("--");
+  std::transform(
+    command_.CommandLine.begin() + 1, // Skip compiler name
+    command_.CommandLine.end(),
+    std::back_inserter(commandLine),
+    [](const std::string& s){ return s.c_str(); });
 
-    mutex.lock();
+  int argc = commandLine.size();
 
-    if (_index == _compileCommands.size())
-    {
-      mutex.unlock();
-      break;
-    }
+  std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
+    clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
+      argc,
+      commandLine.data()));
 
-    const clang::tooling::CompileCommand& command = _compileCommands[_index];
-    std::size_t index = ++_index;
+  //--- Save build action ---//
 
-    //--- Add compile command hash ---//
+  model::BuildActionPtr buildAction = addBuildAction(command_);
 
-    auto hash = util::fnvHash(
-      boost::algorithm::join(command.CommandLine, " "));
+  //--- Start the tool ---//
 
-    if (_parsedCommandHashes.find(hash) != _parsedCommandHashes.end())
-    {
-      LOG(info)
-        << '(' << index << '/' << _compileCommands.size() << ')'
-        << " Already parsed " << command.Filename;
-      mutex.unlock();
-      continue;
-    }
+  VisitorActionFactory factory(_ctx);
+  clang::tooling::ClangTool tool(*compilationDb, command_.Filename);
 
-    _parsedCommandHashes.insert(hash);
+  int error = tool.run(&factory);
 
-    mutex.unlock();
+  //--- Save build command ---//
 
-    //--- Assemble compiler command line ---//
+  addCompileCommand(command_, buildAction, error);
 
-    std::vector<const char*> commandLine;
-    commandLine.reserve(command.CommandLine.size());
-    commandLine.push_back("--");
-    std::transform(
-      command.CommandLine.begin() + 1, // Skip compiler name
-      command.CommandLine.end(),
-      std::back_inserter(commandLine),
-      [](const std::string& s){ return s.c_str(); });
-
-    int argc = commandLine.size();
-
-    std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
-      clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
-        argc,
-        commandLine.data()));
-
-    //--- Save build action ---//
-
-    model::BuildActionPtr buildAction = addBuildAction(command);
-
-    //--- Start the tool ---//
-
-    VisitorActionFactory factory(_ctx);
-
-    LOG(info)
-      << '(' << index << '/' << _compileCommands.size() << ')'
-      << " Parsing " << command.Filename;
-
-    clang::tooling::ClangTool tool(*compilationDb, command.Filename);
-
-    int error = tool.run(&factory);
-
-    if (error)
-      LOG(warning)
-        << '(' << index << '/' << _compileCommands.size() << ')'
-        << " Parsing " << command.Filename << " has been failed.";
-
-    //--- Save build command ---//
-
-    addCompileCommand(command, buildAction, error);
-  }
+  return error;
 }
 
-CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_), _index(0)
+CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
@@ -393,17 +349,62 @@ bool CppParser::parseByJson(
     return false;
   }
 
-  _compileCommands = compDb->getAllCompileCommands();
-  _index = 0;
+  //--- Read the compilation commands compile database ---//
 
-  std::vector<std::thread> workers;
-  workers.reserve(threadNum_);
+  std::vector<clang::tooling::CompileCommand> compileCommands =
+    compDb->getAllCompileCommands();
+  std::size_t numCompileCommands = compileCommands.size();
 
-  for (std::size_t i = 0; i < threadNum_; ++i)
-    workers.emplace_back(&cc::parser::CppParser::worker, this);
+  //--- Create a thread pool for the current commands ---//
+  std::unique_ptr<
+    util::JobQueueThreadPool<ParseJob>> pool =
+    util::make_thread_pool<ParseJob>(
+      threadNum_, [this, &numCompileCommands](ParseJob& job_)
+      {
+        const clang::tooling::CompileCommand& command = job_.command;
 
-  for (std::thread& worker : workers)
-    worker.join();
+        LOG(info)
+          << '(' << job_.index << '/' << numCompileCommands << ')'
+          << " Parsing " << command.Filename;
+
+        int error = this->worker(command);
+
+        if (error)
+          LOG(warning)
+            << '(' << job_.index << '/' << numCompileCommands << ')'
+            << " Parsing " << command.Filename << " has been failed.";
+      });
+
+  //--- Push all commands into the thread pool's queue ---//
+  std::size_t index = 0;
+
+  for (const auto& command : compileCommands)
+  {
+    ParseJob job(command, ++index);
+
+    auto hash = util::fnvHash(
+      boost::algorithm::join(command.CommandLine, " "));
+
+    if (_parsedCommandHashes.find(hash) != _parsedCommandHashes.end())
+    {
+      LOG(info)
+        << '(' << index << '/' << numCompileCommands << ')'
+        << " Already parsed " << command.Filename;
+
+      continue;
+    }
+
+    //--- Add compile command hash ---//
+
+    _parsedCommandHashes.insert(hash);
+
+    //--- Push the job ---//
+
+    pool->enqueue(job);
+  }
+
+  // Block execution until every job is finished.
+  pool->wait();
 
   return true;
 }
