@@ -134,8 +134,10 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
   {
     if (fs::is_directory(currPath_))
     {
+      fs::path canonicalPath = fs::canonical(currPath_);
+
       if (std::find(_skipDirectories.begin(), _skipDirectories.end(),
-            currPath_) != _skipDirectories.end())
+            canonicalPath) != _skipDirectories.end())
       {
         LOG(info) << "Skipping " << currPath_ << " because it was listed in "
           "the skipping directory flag of the search parser.";
