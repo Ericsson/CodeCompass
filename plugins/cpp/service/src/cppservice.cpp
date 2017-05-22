@@ -88,10 +88,8 @@ namespace
         (cc::util::OdbTransaction(_db))([&ret, &astNode_](){
           ret.__set_srcText(cc::util::textRange(
             astNode_.location.file.load()->content.load()->content,
-            astNode_.location.range.start.line,
-            astNode_.location.range.start.column,
-            astNode_.location.range.end.line,
-            astNode_.location.range.end.column));
+            astNode_.location.range.start.line,     1,
+            astNode_.location.range.start.line + 1, 1));
         });
       }
 

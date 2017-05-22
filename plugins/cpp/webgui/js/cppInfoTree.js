@@ -34,15 +34,17 @@ function (model, viewHandler, util) {
     return label + '<span class="reference-count">(' + count + ')</span>';
   }
 
-  function createLabel(astNodeInfo) {
+  function createLabel(astNodeInfo, useSrcText) {
     var labelClass = '';
 
     if (astNodeInfo.tags.indexOf('implicit') > -1)
       labelClass = 'label-implicit';
 
-    var labelValue = astNodeInfo.astNodeValue;
-    if (astNodeInfo.symbolType === 'Function')
-    {
+    var labelValue = useSrcText
+      ? astNodeInfo.srcText
+      : astNodeInfo.astNodeValue;
+
+    if (!useSrcText && astNodeInfo.symbolType === 'Function') {
       var props = model.cppservice.getProperties(astNodeInfo.id);
       // TODO: This "if" won't be necessary when the parser is fixed. Currently
       // no signature is generated for implicit functions.
@@ -157,7 +159,7 @@ function (model, viewHandler, util) {
               } else if (parentNode.refType === refTypes['Usage']) {
                 res.push({
                   id          : fileGroupsId[fileId] + reference.id,
-                  name        : createLabel(reference),
+                  name        : createLabel(reference, true),
                   refType     : parentNode.refType,
                   nodeInfo    : reference,
                   hasChildren : false,
