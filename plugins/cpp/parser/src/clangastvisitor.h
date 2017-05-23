@@ -261,6 +261,72 @@ public:
     return b;
   }
 
+  bool TraverseParmVarDecl(clang::ParmVarDecl* pd_)
+  {
+    _tlState.inParmVar = true;
+
+    bool b = clang::RecursiveASTVisitor<
+      ClangASTVisitor>::TraverseParmVarDecl(pd_);
+
+    _tlState.inParmVar = false;
+
+    return b;
+  }
+
+  bool TraverseVarDecl(clang::VarDecl* vd_)
+  {
+    _tlState.inVar = true;
+
+    bool b = clang::RecursiveASTVisitor<ClangASTVisitor>::TraverseVarDecl(vd_);
+
+    _tlState.inVar = false;
+
+    return b;
+  }
+
+  bool TraverseFieldDecl(clang::FieldDecl* fd_)
+  {
+    _tlState.inField = true;
+
+    bool b = clang::RecursiveASTVisitor<
+      ClangASTVisitor>::TraverseFieldDecl(fd_);
+
+    _tlState.inField = false;
+
+    return b;
+  }
+
+  bool TraverseFunctionProtoTypeLoc(clang::FunctionProtoTypeLoc fp_)
+  {
+    _tlState.inFunctionProto = true;
+
+    bool b = clang::RecursiveASTVisitor<
+      ClangASTVisitor>::TraverseFunctionProtoTypeLoc(fp_);
+
+    _tlState.inFunctionProto = false;
+
+    return b;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt* cs_)
+  {
+    bool didISwitchitOn = false;
+
+    if (!_tlState.inCompoundStmt)
+    {
+      _tlState.inCompoundStmt = true;
+      didISwitchitOn = true;
+    }
+
+    bool b = clang::RecursiveASTVisitor<
+      ClangASTVisitor>::TraverseCompoundStmt(cs_);
+
+    if (didISwitchitOn)
+      _tlState.inCompoundStmt = false;
+
+    return b;
+  }
+
   bool VisitTypeLoc(clang::TypeLoc tl_)
   {
     clang::QualType t = tl_.getType();
@@ -295,11 +361,8 @@ public:
         astNode->symbolType = model::CppAstNode::SymbolType::Enum;
       }
     }
-    else
-    {
-      return true;
-    }
 
+    astNode->astType = _tlState.getTypeLocType();
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->id = model::createIdentifier(*astNode);
 
@@ -373,22 +436,6 @@ public:
             = util::fnvHash(getMangledName(_mngCtx, baseDecl));
           inheritance->isVirtual = it->isVirtual();
           inheritance->visibility = getVisibility(it->getAccessSpecifier());
-
-          //--- AST node for inherited class ---//
-
-          model::CppAstNodePtr baseNode = std::make_shared<model::CppAstNode>();
-
-          baseNode->astValue = baseDecl->getNameAsString();
-          baseNode->location = getFileLoc(it->getLocStart(), it->getLocEnd());
-          baseNode->mangledName
-            = getMangledName(_mngCtx, baseDecl, baseNode->location);
-          baseNode->mangledNameHash = util::fnvHash(baseNode->mangledName);
-          baseNode->symbolType = model::CppAstNode::SymbolType::Type;
-          baseNode->astType = model::CppAstNode::AstType::Usage;
-          baseNode->id = model::createIdentifier(*baseNode);
-
-          if (insertToCache(0, baseNode))
-            _astNodes.push_back(baseNode);
         }
       }
 
@@ -627,28 +674,6 @@ public:
     if (_isImplicit)
       cppFunction->tags.insert(model::Tag::Implicit);
 
-    //--- CppAstNode for the return type ---//
-
-    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
-
-    const clang::Type* type = getStrippedType(qualType);
-    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
-    {
-      typeAstNode->astValue = rd->getNameAsString();
-      typeAstNode->location = getFileLoc(
-        fn_->getReturnTypeSourceRange().getBegin(),
-        fn_->getReturnTypeSourceRange().getEnd());
-      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
-      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
-      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      typeAstNode->astType = model::CppAstNode::AstType::ReturnTypeLoc;
-
-      typeAstNode->id = model::createIdentifier(*typeAstNode);
-
-      if (insertToCache(0, typeAstNode))
-        _astNodes.push_back(typeAstNode);
-    }
-
     //--- CppMemberType ---//
 
     // If empty then this is a global declaration.
@@ -748,28 +773,6 @@ public:
     variable->typeHash = member->memberTypeHash;
     variable->qualifiedType = qualType.getAsString();
 
-    //--- CppAstNode for the type ---//
-
-    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
-
-    const clang::Type* type = getStrippedType(qualType);
-    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
-    {
-      typeAstNode->astValue = rd->getNameAsString();
-      // The lexed token length will be added.
-      typeAstNode->location = getFileLoc(
-        fd_->getLocStart(),
-        fd_->getLocStart());
-      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
-      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
-      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      typeAstNode->astType = model::CppAstNode::AstType::FieldTypeLoc;
-
-      typeAstNode->id = model::createIdentifier(*typeAstNode);
-
-      if (insertToCache(0, typeAstNode))
-        _astNodes.push_back(typeAstNode);
-    }
     return true;
   }
 
@@ -798,39 +801,6 @@ public:
       _astNodes.push_back(astNode);
     else
       return true;
-
-    //--- CppAstNode for the type ---//
-
-    model::CppAstNodePtr typeAstNode = std::make_shared<model::CppAstNode>();
-
-    const clang::Type* type = getStrippedType(vd_->getType());
-    if (const clang::CXXRecordDecl* rd = type->getAsCXXRecordDecl())
-    {
-      typeAstNode->astValue = rd->getNameAsString();
-      typeAstNode->location = getFileLoc(
-        vd_->getSourceRange().getBegin(),
-        vd_->getSourceRange().getEnd());
-      typeAstNode->mangledName = getMangledName(_mngCtx, rd);
-      typeAstNode->mangledNameHash = util::fnvHash(typeAstNode->mangledName);
-      typeAstNode->symbolType = model::CppAstNode::SymbolType::Type;
-      typeAstNode->astType
-        = _functionStack.empty()
-        ? model::CppAstNode::AstType::GlobalTypeLoc
-        : llvm::isa<clang::ParmVarDecl>(vd_)
-        ? model::CppAstNode::AstType::ParameterTypeLoc
-        : model::CppAstNode::AstType::LocalTypeLoc;
-
-      typeAstNode->id = model::createIdentifier(*typeAstNode);
-
-      // For compiler generated copy and move constructors have one parameter
-      // with the same type without name. Since these parameters and their types
-      // are invisible in the source code, all properties of the variable types
-      // are the same. This is the reason why it is checked whether the cache
-      // contains the non-existing AST node which belongs to the arguments'
-      // type.
-      if (insertToCache(0, typeAstNode))
-        _astNodes.push_back(typeAstNode);
-    }
 
     //--- CppVariable ---//
 
@@ -1141,6 +1111,38 @@ public:
   }
 
 private:
+  /**
+   * This is a helper class which store information about type locations.
+   */
+  struct TypeLocState
+  {
+    bool inVar = false;
+    bool inParmVar = false;
+    bool inField = false;
+    bool inFunctionProto = false;
+    bool inCompoundStmt = false;
+
+    model::CppAstNode::AstType getTypeLocType()
+    {
+      if (inParmVar)
+        return model::CppAstNode::AstType::ParameterTypeLoc;
+
+      if (inField)
+        return model::CppAstNode::AstType::FieldTypeLoc;
+
+      if (inFunctionProto)
+        return model::CppAstNode::AstType::ReturnTypeLoc;
+
+      if (inCompoundStmt)
+        return model::CppAstNode::AstType::LocalTypeLoc;
+
+      if (inVar)
+        return model::CppAstNode::AstType::GlobalTypeLoc;
+
+      return model::CppAstNode::AstType::TypeLocation;
+    }
+  };
+
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
    * way. The cache is static so the parsers in each thread can use the same.
@@ -1454,6 +1456,7 @@ private:
   clang::MangleContext* _mngCtx;
   const std::string _cppSourceType;
   std::unordered_map<std::string, model::FilePtr> _files;
+  TypeLocState _tlState;
 
   MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
