@@ -151,29 +151,22 @@ model::FilePtr SourceManager::getCreateFileEntry(
 
 model::FilePtr SourceManager::getFile(const std::string& path_)
 {
-  //--- Create canonical form of the path ---//
-
-  boost::system::error_code ec;
-  boost::filesystem::path canonicalPath
-    = boost::filesystem::canonical(path_, ec);
-
   //--- If the file can't be found on disk then return nullptr ---//
 
-  bool fileExists = true;
-  if (ec)
-  {
-    LOG(debug) << "File doesn't exist: " << path_;
-    fileExists = false;
-  }
+  bool fileExists = boost::filesystem::exists(path_);
+
+  if (!fileExists)
+    LOG(warning) << "File doesn't exist: " << path_;
 
   //--- Create file entry ---//
 
-  std::string canonical = ec ? path_ : canonicalPath.native();
+  boost::filesystem::path path(path_);
+  std::string filePath = fileExists ? path_ : path.native();
 
-  model::FilePtr file = getCreateFileEntry(canonical, fileExists);
+  model::FilePtr file = getCreateFileEntry(filePath, fileExists);
 
   _createFileMutex.lock();
-  _files[canonical] = file;
+  _files[filePath] = file;
   _createFileMutex.unlock();
 
   return file;
