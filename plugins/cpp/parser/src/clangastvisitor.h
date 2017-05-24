@@ -104,7 +104,7 @@ public:
   }
 
   bool shouldVisitImplicitCode() const { return true; }
-  bool shouldVisitTemplateInstantiations() const { return true; }
+  bool shouldVisitTemplateInstantiations() const { return false; }
 
   bool TraverseDecl(clang::Decl* decl_)
   {
