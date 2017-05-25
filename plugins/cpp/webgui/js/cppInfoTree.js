@@ -68,6 +68,46 @@ function (model, viewHandler, util) {
            null;
   }
 
+  function groupReferencesByVisibilities(references, parentNode, nodeInfo) {
+    var res = [];
+    var visibilities = ['public', 'private', 'protected'];
+
+    visibilities.forEach(function (visibility) {
+      var nodes = references.filter(function (reference) {
+        return reference.tags.indexOf(visibility) > -1;
+      });
+
+      if (!nodes.length)
+        return;
+
+      res.push({
+        id          : nodeInfo.id + visibility + parentNode.refType,
+        name        : createReferenceCountLabel(visibility, nodes.length),
+        refType     : parentNode.refType,
+        hasChildren : true,
+        cssClass    : 'icon-visibility icon-' + visibility,
+        getChildren : function () {
+          var res = [];
+
+          nodes.forEach(function (reference) {
+            res.push({
+              id          : visibility + reference.id,
+              name        : createLabel(reference),
+              refType     : parentNode.refType,
+              nodeInfo    : reference,
+              hasChildren : false,
+              cssClass    : getCssClass(reference)
+            });
+          });
+
+          return res;
+        }
+      });
+    });
+
+    return res;
+  }
+
   function loadReferenceNodes(parentNode, nodeInfo, refTypes) {
     var res = [];
     var fileGroupsId = [];
@@ -76,11 +116,9 @@ function (model, viewHandler, util) {
       nodeInfo.id,
       parentNode.refType);
 
-    // For functions we get the properties because for these nodes we show their
-    // signatures which can be gathered from properties.
-    if (references[0] && references[0].symbolType === 'Function')
-      var nodesProps = model.cppservice.getProperties(
-        references.map(function (ref) { return ref.id; }));
+    if (parentNode.refType === refTypes['Method'] ||
+        parentNode.refType === refTypes['Data member'])
+      return groupReferencesByVisibilities(references, parentNode, nodeInfo);
 
     references.forEach(function (reference) {
       var props = nodesProps ? nodesProps[reference.id] : null;
