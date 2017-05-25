@@ -34,16 +34,15 @@ function (model, viewHandler, util) {
     return label + '<span class="reference-count">(' + count + ')</span>';
   }
 
-  function createLabel(astNodeInfo) {
+  function createLabel(astNodeInfo, props) {
     var labelClass = '';
 
     if (astNodeInfo.tags.indexOf('implicit') > -1)
       labelClass = 'label-implicit';
 
     var labelValue = astNodeInfo.astNodeValue;
-    if (astNodeInfo.symbolType === 'Function')
+    if (astNodeInfo.symbolType === 'Function' && props)
     {
-      var props = model.cppservice.getProperties(astNodeInfo.id);
       // TODO: This "if" won't be necessary when the parser is fixed. Currently
       // no signature is generated for implicit functions.
       if (props['Signature'])
@@ -77,7 +76,15 @@ function (model, viewHandler, util) {
       nodeInfo.id,
       parentNode.refType);
 
+    // For functions we get the properties because for these nodes we show their
+    // signatures which can be gathered from properties.
+    if (references[0] && references[0].symbolType === 'Function')
+      var nodesProps = model.cppservice.getProperties(
+        references.map(function (ref) { return ref.id; }));
+
     references.forEach(function (reference) {
+      var props = nodesProps ? nodesProps[reference.id] : null;
+
       if (parentNode.refType === refTypes['Caller'] ||
           parentNode.refType === refTypes['Usage']) {
 
@@ -109,7 +116,7 @@ function (model, viewHandler, util) {
               if (parentNode.refType === refTypes['Caller']) {
                 res.push({
                   id          : reference.id,
-                  name        : createLabel(reference),
+                  name        : createLabel(reference, props),
                   nodeInfo    : reference,
                   refType     : parentNode.refType,
                   cssClass    : 'icon icon-Method',
@@ -144,7 +151,7 @@ function (model, viewHandler, util) {
                       if (call.mangledNameHash ===
                           nodeInfo.mangledNameHash)
                         res.push({
-                          name        : createLabel(call),
+                          name        : createLabel(call, props),
                           refType     : parentNode.refType,
                           nodeInfo    : call,
                           hasChildren : false,
@@ -157,7 +164,7 @@ function (model, viewHandler, util) {
               } else if (parentNode.refType === refTypes['Usage']) {
                 res.push({
                   id          : fileGroupsId[fileId] + reference.id,
-                  name        : createLabel(reference),
+                  name        : createLabel(reference, props),
                   refType     : parentNode.refType,
                   nodeInfo    : reference,
                   hasChildren : false,
@@ -170,7 +177,7 @@ function (model, viewHandler, util) {
         });
       } else {
         res.push({
-          name        : createLabel(reference),
+          name        : createLabel(reference, props),
           refType     : parentNode.refType,
           nodeInfo    : reference,
           hasChildren : false,
@@ -193,9 +200,17 @@ function (model, viewHandler, util) {
       parentNode.nodeInfo.id,
       parentNode.refType);
 
+    // For functions we get the properties because for these nodes we show their
+    // signatures which can be gathered from properties.
+    if (references[0] && references[0].symbolType === 'Function')
+      var nodesProps = model.cppservice.getProperties(
+        references.map(function (ref) { return ref.id; }));
+
     references.forEach(function (reference) {
+      var props = nodesProps ? nodesProps[reference.id] : null;
+
       res.push({
-        name        : createLabel(reference),
+        name        : createLabel(reference, props),
         refType     : parentNode.refType,
         nodeInfo    : reference,
         hasChildren : false,
@@ -246,7 +261,9 @@ function (model, viewHandler, util) {
       if (elementInfo instanceof AstNodeInfo) {
         //--- Properties ---//
 
-        var props = model.cppservice.getProperties(elementInfo.id);
+        var nodesProps = model.cppservice.getProperties([elementInfo.id]);
+        var props = nodesProps[elementInfo.id];
+
         for (var propName in props) {
           var propId = propName.replace(/ /g, '-');
           var label

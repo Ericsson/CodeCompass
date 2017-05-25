@@ -103,11 +103,10 @@ private:
     const std::string& content_);
 
   /**
-   * This function returns the property of an AST node.
+   * This function returns properties for each AST node.
    */
-  std::string getProperty(
-    const core::AstNodeId& astNodeId_,
-    const std::string& property_);
+  std::map<core::AstNodeId, std::map<std::string, std::string>> getProperties(
+    const std::vector<AstNodeInfo>& astNodeId_);
 
   /**
    * This function decorates a graph node.

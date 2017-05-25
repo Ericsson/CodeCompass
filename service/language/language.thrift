@@ -64,14 +64,16 @@ service LanguageService
     throws (1:common.InvalidId ex)
 
   /**
-   * Returns a set of properties which can be known about the given AST node.
-   * @param astNodeId ID of an AST node.
-   * @return A collection which maps the property name to the property value.
+   * Returns a set of properties for each AST node.
+   * @param astNodeIds IDs of the AST nodes.
+   * @return A collection which maps the AST node ID to a property (key, value)
+   * pair.
    * @exception common.InvalidId Exception is thrown if no AST node belongs to
-   * the given ID.
+   * a given node ID.
    */
-  map<string, string> getProperties(1:common.AstNodeId astNodeId)
-    throws (1:common.InvalidId ex)
+  map<common.AstNodeId, map<string, string>> getProperties(
+    1:list<common.AstNodeId> astNodeIds)
+      throws (1:common.InvalidId ex)
 
   /**
    * Returns the diagram types which can be passed to getDiagram() function for
@@ -218,7 +220,7 @@ service LanguageService
     3:i32 pageSize,
     4:i32 pageNo)
       throws (1:common.InvalidId ex)
- 
+
   /**
    * Returns a list of reference types that can be listed for the requested file
    * (such as includes, included by, etc.).
