@@ -59,9 +59,7 @@ namespace
   {
     typedef std::map<cc::model::CppAstNodeId, std::vector<std::string>> TagMap;
 
-    CreateAstNodeInfo(
-      std::shared_ptr<odb::database> db_,
-      const TagMap& tags_ = {}) : _db(db_), _tags(tags_)
+    CreateAstNodeInfo(const TagMap& tags_ = {}) : _tags(tags_)
     {
     }
 
@@ -85,14 +83,12 @@ namespace
       {
         ret.range.file = std::to_string(astNode_.location.file.object_id());
 
-        (cc::util::OdbTransaction(_db))([&ret, &astNode_](){
-          ret.__set_srcText(cc::util::textRange(
-            astNode_.location.file.load()->content.load()->content,
-            astNode_.location.range.start.line,
-            astNode_.location.range.start.column,
-            astNode_.location.range.end.line,
-            astNode_.location.range.end.column));
-        });
+        ret.__set_srcText(cc::util::textRange(
+          astNode_.location.file.load()->content.load()->content,
+          astNode_.location.range.start.line,
+          astNode_.location.range.start.column,
+          astNode_.location.range.end.line,
+          astNode_.location.range.end.column));
       }
 
       TagMap::const_iterator it = _tags.find(astNode_.id);
@@ -131,7 +127,9 @@ void CppServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
-  return_ = CreateAstNodeInfo(_db)(queryCppAstNode(astNodeId_));
+  return_ = _transaction([this, &astNodeId_](){
+    return CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+  });
 }
 
 void CppServiceHandler::getDocumentation(
@@ -181,7 +179,9 @@ void CppServiceHandler::getAstNodeInfoByPosition(
       }
     }
 
-    return_ = CreateAstNodeInfo(_db, getTags({min}))(min);
+    return_ = _transaction([this, &min](){
+      return CreateAstNodeInfo(getTags({min}))(min);
+    });
   });
 }
 
@@ -879,10 +879,12 @@ void CppServiceHandler::getReferences(
     std::sort(nodes.begin(), nodes.end(), compareByValue);
 
     return_.reserve(nodes.size());
-    std::transform(
-      nodes.begin(), nodes.end(),
-      std::back_inserter(return_),
-      CreateAstNodeInfo(_db, getTags(nodes)));
+    _transaction([this, &return_, &nodes](){
+      std::transform(
+        nodes.begin(), nodes.end(),
+        std::back_inserter(return_),
+        CreateAstNodeInfo(getTags(nodes)));
+    });
   });
 }
 
@@ -977,10 +979,12 @@ void CppServiceHandler::getFileReferences(
     std::sort(nodes.begin(), nodes.end(), compareByValue);
 
     return_.reserve(nodes.size());
-    std::transform(
-      nodes.begin(), nodes.end(),
-      std::back_inserter(return_),
-      CreateAstNodeInfo(_db, getTags(nodes)));
+    _transaction([this, &return_, &nodes](){
+      std::transform(
+        nodes.begin(), nodes.end(),
+        std::back_inserter(return_),
+        CreateAstNodeInfo(getTags(nodes)));
+    });
   });
 }
 
