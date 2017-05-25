@@ -329,8 +329,8 @@ std::string Diagram::getDetailedClassNodeLabel(const AstNodeInfo& nodeInfo_)
   _cppHandler.getReferences(nodes, nodeInfo_.id,
     CppServiceHandler::DATA_MEMBER, {});
 
-  std::map<core::AstNodeId, std::map<std::string, std::string>> props =
-    getProperties(nodes);
+  std::map<core::AstNodeId, std::map<std::string, std::string>> props
+    = getProperties(nodes);
 
   for (auto it = nodes.begin(); it != nodes.end(); ++it)
   {
@@ -421,9 +421,7 @@ Diagram::getProperties(const std::vector<AstNodeInfo>& astNodes_)
     astNodes_.begin(),
     astNodes_.end(),
     std::back_inserter(astNodeIds),
-    [this](const AstNodeInfo& nodeInfo) {
-      return nodeInfo.id;
-    });
+    [](const AstNodeInfo& nodeInfo) { return nodeInfo.id; });
 
   std::map<core::AstNodeId, std::map<std::string, std::string>> properties;
   _cppHandler.getProperties(properties, astNodeIds);

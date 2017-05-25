@@ -189,6 +189,8 @@ void CppServiceHandler::getProperties(
   std::map<core::AstNodeId, std::map<std::string, std::string>>& return_,
   const std::vector<core::AstNodeId>& astNodeIds_)
 {
+  using PropMap = std::map<std::string, std::string>;
+
   _transaction([&, this](){
     for (const core::AstNodeId astNodeId : astNodeIds_)
     {
@@ -202,9 +204,10 @@ void CppServiceHandler::getProperties(
             VarQuery::mangledNameHash == node.mangledNameHash);
           model::CppVariable variable = *variables.begin();
 
-          return_[astNodeId]["Name"] = variable.name;
-          return_[astNodeId]["Qualified name"] = variable.qualifiedName;
-          return_[astNodeId]["Type"] = variable.qualifiedType;
+          PropMap& props = return_[astNodeId];
+          props["Name"] = variable.name;
+          props["Qualified name"] = variable.qualifiedName;
+          props["Type"] = variable.qualifiedType;
           break;
         }
 
@@ -214,10 +217,11 @@ void CppServiceHandler::getProperties(
             FuncQuery::mangledNameHash == node.mangledNameHash);
           model::CppFunction function = *functions.begin();
 
-          return_[astNodeId]["Name"] = function.qualifiedName.substr(
+          PropMap& props = return_[astNodeId];
+          props["Name"] = function.qualifiedName.substr(
             function.qualifiedName.find_last_of(':') + 1);
-          return_[astNodeId]["Qualified name"] = function.qualifiedName;
-          return_[astNodeId]["Signature"] = function.name;
+          props["Qualified name"] = function.qualifiedName;
+          props["Signature"] = function.name;
 
           break;
         }
@@ -233,8 +237,9 @@ void CppServiceHandler::getProperties(
           if (type.isPOD)
             return_[astNodeId]["POD type"] = "true";
 
-          return_[astNodeId]["Name"] = type.name;
-          return_[astNodeId]["Qualified name"] = type.qualifiedName;
+          PropMap& props = return_[astNodeId];
+          props["Name"] = type.name;
+          props["Qualified name"] = type.qualifiedName;
 
           break;
         }
@@ -245,8 +250,9 @@ void CppServiceHandler::getProperties(
             TypedefQuery::mangledNameHash == node.mangledNameHash);
           model::CppTypedef type = *types.begin();
 
-          return_[astNodeId]["Name"] = type.name;
-          return_[astNodeId]["Qualified name"] = type.qualifiedName;
+          PropMap& props = return_[astNodeId];
+          props["Name"] = type.name;
+          props["Qualified name"] = type.qualifiedName;
 
           break;
         }
@@ -258,9 +264,10 @@ void CppServiceHandler::getProperties(
                 EnumConstQuery::mangledNameHash == node.mangledNameHash);
           model::CppEnumConstant enumConst = *enumConsts.begin();
 
-          return_[astNodeId]["Name"] = enumConst.name;
-          return_[astNodeId]["Qualified name"] = enumConst.qualifiedName;
-          return_[astNodeId]["Value"] = std::to_string(enumConst.value);
+          PropMap& props = return_[astNodeId];
+          props["Name"] = enumConst.name;
+          props["Qualified name"] = enumConst.qualifiedName;
+          props["Value"] = std::to_string(enumConst.value);
         }
       }
     }

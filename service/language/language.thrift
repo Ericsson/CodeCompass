@@ -64,7 +64,7 @@ service LanguageService
     throws (1:common.InvalidId ex)
 
   /**
-   * Returns a set of properties for each AST nodes.
+   * Returns a set of properties for each AST node.
    * @param astNodeIds IDs of the AST nodes.
    * @return A collection which maps the AST node ID to a property (key, value)
    * pair.
@@ -220,7 +220,7 @@ service LanguageService
     3:i32 pageSize,
     4:i32 pageNo)
       throws (1:common.InvalidId ex)
- 
+
   /**
    * Returns a list of reference types that can be listed for the requested file
    * (such as includes, included by, etc.).

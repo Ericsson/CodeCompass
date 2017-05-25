@@ -76,6 +76,8 @@ function (model, viewHandler, util) {
       nodeInfo.id,
       parentNode.refType);
 
+    // For functions we get the properties because for these nodes we show their
+    // signatures which can be gathered from properties.
     if (references[0] && references[0].symbolType === 'Function')
       var nodesProps = model.cppservice.getProperties(
         references.map(function (ref) { return ref.id; }));
@@ -198,6 +200,8 @@ function (model, viewHandler, util) {
       parentNode.nodeInfo.id,
       parentNode.refType);
 
+    // For functions we get the properties because for these nodes we show their
+    // signatures which can be gathered from properties.
     if (references[0] && references[0].symbolType === 'Function')
       var nodesProps = model.cppservice.getProperties(
         references.map(function (ref) { return ref.id; }));
