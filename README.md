@@ -26,8 +26,8 @@ Features
 
 Documentations (New version - **Flash**)
 --------
-- [Requirements, external source dependencies](docs/deps.md)
-- [User guide](docs/usage.md)
+- [Requirements, external source dependencies](doc/deps.md)
+- [User guide](doc/usage.md)
 
 Documentations (Earhart)
 --------
