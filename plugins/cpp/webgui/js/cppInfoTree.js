@@ -120,6 +120,10 @@ function (model, viewHandler, util) {
         parentNode.refType === refTypes['Data member'])
       return groupReferencesByVisibilities(references, parentNode, nodeInfo);
 
+    if (references[0] && references[0].symbolType === 'Function')
+      var nodesProps = model.cppservice.getProperties(
+        references.map(function (ref) { return ref.id; }));
+
     references.forEach(function (reference) {
       var props = nodesProps ? nodesProps[reference.id] : null;
 
