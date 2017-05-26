@@ -186,89 +186,81 @@ void CppServiceHandler::getAstNodeInfoByPosition(
 }
 
 void CppServiceHandler::getProperties(
-  std::map<core::AstNodeId, std::map<std::string, std::string>>& return_,
-  const std::vector<core::AstNodeId>& astNodeIds_)
+  std::map<std::string, std::string>& return_,
+  const core::AstNodeId& astNodeId_)
 {
   using PropMap = std::map<std::string, std::string>;
 
   _transaction([&, this](){
-    for (const core::AstNodeId astNodeId : astNodeIds_)
+    model::CppAstNode node = queryCppAstNode(astNodeId_);
+
+    switch (node.symbolType)
     {
-      model::CppAstNode node = queryCppAstNode(astNodeId);
-
-      switch (node.symbolType)
+      case model::CppAstNode::SymbolType::Variable:
       {
-        case model::CppAstNode::SymbolType::Variable:
-        {
-          VarResult variables = _db->query<model::CppVariable>(
-            VarQuery::mangledNameHash == node.mangledNameHash);
-          model::CppVariable variable = *variables.begin();
+        VarResult variables = _db->query<model::CppVariable>(
+          VarQuery::mangledNameHash == node.mangledNameHash);
+        model::CppVariable variable = *variables.begin();
 
-          PropMap& props = return_[astNodeId];
-          props["Name"] = variable.name;
-          props["Qualified name"] = variable.qualifiedName;
-          props["Type"] = variable.qualifiedType;
-          break;
-        }
+        return_["Name"] = variable.name;
+        return_["Qualified name"] = variable.qualifiedName;
+        return_["Type"] = variable.qualifiedType;
+        break;
+      }
 
-        case model::CppAstNode::SymbolType::Function:
-        {
-          FuncResult functions = _db->query<model::CppFunction>(
-            FuncQuery::mangledNameHash == node.mangledNameHash);
-          model::CppFunction function = *functions.begin();
+      case model::CppAstNode::SymbolType::Function:
+      {
+        FuncResult functions = _db->query<model::CppFunction>(
+          FuncQuery::mangledNameHash == node.mangledNameHash);
+        model::CppFunction function = *functions.begin();
 
-          PropMap& props = return_[astNodeId];
-          props["Name"] = function.qualifiedName.substr(
-            function.qualifiedName.find_last_of(':') + 1);
-          props["Qualified name"] = function.qualifiedName;
-          props["Signature"] = function.name;
+        return_["Name"] = function.qualifiedName.substr(
+          function.qualifiedName.find_last_of(':') + 1);
+        return_["Qualified name"] = function.qualifiedName;
+        return_["Signature"] = function.name;
 
-          break;
-        }
+        break;
+      }
 
-        case model::CppAstNode::SymbolType::Type:
-        {
-          TypeResult types = _db->query<model::CppType>(
-            TypeQuery::mangledNameHash == node.mangledNameHash);
-          model::CppType type = *types.begin();
+      case model::CppAstNode::SymbolType::Type:
+      {
+        TypeResult types = _db->query<model::CppType>(
+          TypeQuery::mangledNameHash == node.mangledNameHash);
+        model::CppType type = *types.begin();
 
-          if (type.isAbstract)
-            return_[astNodeId]["Abstract type"] = "true";
-          if (type.isPOD)
-            return_[astNodeId]["POD type"] = "true";
+        if (type.isAbstract)
+          return_["Abstract type"] = "true";
+        if (type.isPOD)
+          return_["POD type"] = "true";
 
-          PropMap& props = return_[astNodeId];
-          props["Name"] = type.name;
-          props["Qualified name"] = type.qualifiedName;
+        return_["Name"] = type.name;
+        return_["Qualified name"] = type.qualifiedName;
 
-          break;
-        }
+        break;
+      }
 
-        case model::CppAstNode::SymbolType::Typedef:
-        {
-          TypedefResult types = _db->query<model::CppTypedef>(
-            TypedefQuery::mangledNameHash == node.mangledNameHash);
-          model::CppTypedef type = *types.begin();
+      case model::CppAstNode::SymbolType::Typedef:
+      {
+        TypedefResult types = _db->query<model::CppTypedef>(
+          TypedefQuery::mangledNameHash == node.mangledNameHash);
+        model::CppTypedef type = *types.begin();
 
-          PropMap& props = return_[astNodeId];
-          props["Name"] = type.name;
-          props["Qualified name"] = type.qualifiedName;
+        return_["Name"] = type.name;
+        return_["Qualified name"] = type.qualifiedName;
 
-          break;
-        }
+        break;
+      }
 
-        case model::CppAstNode::SymbolType::EnumConstant:
-        {
-          EnumConstResult enumConsts
-            = _db->query<model::CppEnumConstant>(
-                EnumConstQuery::mangledNameHash == node.mangledNameHash);
-          model::CppEnumConstant enumConst = *enumConsts.begin();
+      case model::CppAstNode::SymbolType::EnumConstant:
+      {
+        EnumConstResult enumConsts
+          = _db->query<model::CppEnumConstant>(
+              EnumConstQuery::mangledNameHash == node.mangledNameHash);
+        model::CppEnumConstant enumConst = *enumConsts.begin();
 
-          PropMap& props = return_[astNodeId];
-          props["Name"] = enumConst.name;
-          props["Qualified name"] = enumConst.qualifiedName;
-          props["Value"] = std::to_string(enumConst.value);
-        }
+        return_["Name"] = enumConst.name;
+        return_["Qualified name"] = enumConst.qualifiedName;
+        return_["Value"] = std::to_string(enumConst.value);
       }
     }
   });

@@ -329,14 +329,11 @@ std::string Diagram::getDetailedClassNodeLabel(const AstNodeInfo& nodeInfo_)
   _cppHandler.getReferences(nodes, nodeInfo_.id,
     CppServiceHandler::DATA_MEMBER, {});
 
-  std::map<core::AstNodeId, std::map<std::string, std::string>> props
-    = getProperties(nodes);
-
   for (auto it = nodes.begin(); it != nodes.end(); ++it)
   {
     std::string visibility = visibilityToHtml(*it);
     std::string content = memberContentToHtml(*it,
-      util::escapeHtml(it->astNodeValue + " : " + props[it->id]["Type"]));
+      util::escapeHtml(it->astNodeValue + " : " + getProperty(it->id, "Type")));
 
     std::string attr = colAttr;
     if (it == nodes.end() - 1)
@@ -354,14 +351,12 @@ std::string Diagram::getDetailedClassNodeLabel(const AstNodeInfo& nodeInfo_)
   _cppHandler.getReferences(nodes, nodeInfo_.id,
     CppServiceHandler::METHOD, {});
 
-  props = getProperties(nodes);
-
   for (const AstNodeInfo& node : nodes)
   {
     std::string visibility = visibilityToHtml(node);
 
     // TODO: Constructor and Destructor signatures can be empty.
-    std::string signature = props[node.id]["Signature"];
+    std::string signature = getProperty(node.id, "Signature");
 
     if (!signature.empty())
     {
@@ -413,20 +408,13 @@ std::string Diagram::memberContentToHtml(
   return startTags + util::escapeHtml(content_) + endTags;
 }
 
-std::map<core::AstNodeId, std::map<std::string, std::string>>
-Diagram::getProperties(const std::vector<AstNodeInfo>& astNodes_)
+std::string Diagram::getProperty(
+  const core::AstNodeId& astNodeId_,
+  const std::string& property_)
 {
-  std::vector<core::AstNodeId> astNodeIds;
-  std::transform(
-    astNodes_.begin(),
-    astNodes_.end(),
-    std::back_inserter(astNodeIds),
-    [](const AstNodeInfo& nodeInfo) { return nodeInfo.id; });
-
-  std::map<core::AstNodeId, std::map<std::string, std::string>> properties;
-  _cppHandler.getProperties(properties, astNodeIds);
-
-  return properties;
+  std::map<std::string, std::string> properties;
+  _cppHandler.getProperties(properties, astNodeId_);
+  return properties[property_];
 }
 
 util::Graph::Node Diagram::addNode(
