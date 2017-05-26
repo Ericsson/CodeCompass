@@ -42,3 +42,4 @@ Documentations (Earhart)
 Development
 --------
 - [Architecure refactoring](https://github.com/Ericsson/CodeCompass/wiki/Architecure-Refactoring)
+- [Coding conventions](doc/coding_conventions.md)
