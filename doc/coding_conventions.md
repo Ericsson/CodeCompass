@@ -7,7 +7,8 @@ Formatting
 - **Length** of a line should not be longer than **80** characters. In the rare
   cases when we need a longer line (e.g. in a preprocessor macro) use backslash
   character to mark a continuation.
-- **Tab characters** are **not** welcome in the source. Replace them with spaces.
+- **Tab characters** are **not** welcome in the source. Replace them with
+  spaces.
 - **Indentation** is 2 characters. Two characters are enough to visually
   emphasize code structure, but do not cause too long lines.
 - **Parameter list** is a frequent place, when a line tends to be longer than
@@ -54,10 +55,9 @@ Formatting
 Naming
 ------
 
-- **File names** should contain lower case ASCII characters, and the
-  underscore (_) character. Avoid other characters, like dash (-). Header file
-  extension is `.h`, shource file extension is `.cpp`. Example:
-  `cxxparser.cpp`.
+- **File names** should contain lower case ASCII characters. Avoid other
+  characters, like dash (-). Header file extension is `.h`, source file
+  extension is `.cpp`. Example: `cxxparser.cpp`.
 - **Class and Type names** are written in CamelCase. Avoid underscore in class
   or type names. Pointers to major types should be typedef-ed, and should be
   called according the pointed type with a `Ptr` suffix. Example: `Semantic`,
@@ -91,10 +91,14 @@ Headers
   ~~~
   cpp
     |-service
-      |-src
-        |-cppservice.cpp
-        |-diagram.h
-        `-diagram.cpp
+    | |-src
+    | | |-cppservice.cpp
+    | | |-diagram.h
+    | | `-diagram.cpp
+    | `-include
+    |   `-service
+    |     `-cppservice.h
+    `-...
   ~~~
 - **Include guards** are mandatory for all headers. The guard names are all
   capital letters, and should contain the module hierarchy related to
