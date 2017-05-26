@@ -53,8 +53,8 @@ public:
     const core::AstNodeId& astNodeId_) override;
 
   void getProperties(
-    std::map<core::AstNodeId, std::map<std::string, std::string>>& return_,
-    const std::vector<core::AstNodeId>& astNodeIds_) override;
+    std::map<std::string, std::string>& return_,
+    const core::AstNodeId& astNodeId_) override;
 
   void getDiagramTypes(
     std::map<std::string, std::int32_t>& return_,

@@ -37,17 +37,15 @@ public:
   void checkProperties(model::FileId fid_, int line_, int col_,
     std::map<std::string, std::string>& expectedLines_)
   {
-    std::map<cc::service::core::AstNodeId,
-      std::map<std::string, std::string>> properties;
+    std::map<std::string, std::string> props;
 
     AstNodeInfo anFrom = _helper.getAstNodeInfoByPos(line_, col_, fid_);
 
     _transaction([&, this]()
     {
-      _cppservice->getProperties(properties, {anFrom.id});
+      _cppservice->getProperties(props, anFrom.id);
     });
 
-    std::map<std::string, std::string>& props = properties[anFrom.id];
     if (props.size() < expectedLines_.size())
       LOG(debug) << "Position: " << line_ << ":" << col_;
 

@@ -64,16 +64,14 @@ service LanguageService
     throws (1:common.InvalidId ex)
 
   /**
-   * Returns a set of properties for each AST node.
-   * @param astNodeIds IDs of the AST nodes.
-   * @return A collection which maps the AST node ID to a property (key, value)
-   * pair.
+   * Returns a set of properties which can be known about the given AST node.
+   * @param astNodeId ID of an AST node.
+   * @return A collection which maps the property name to the property value.
    * @exception common.InvalidId Exception is thrown if no AST node belongs to
-   * a given node ID.
+   * the given ID.
    */
-  map<common.AstNodeId, map<string, string>> getProperties(
-    1:list<common.AstNodeId> astNodeIds)
-      throws (1:common.InvalidId ex)
+  map<string, string> getProperties(1:common.AstNodeId astNodeIds)
+    throws (1:common.InvalidId ex)
 
   /**
    * Returns the diagram types which can be passed to getDiagram() function for

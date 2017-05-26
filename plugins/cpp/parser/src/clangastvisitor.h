@@ -104,7 +104,7 @@ public:
   }
 
   bool shouldVisitImplicitCode() const { return true; }
-  bool shouldVisitTemplateInstantiations() const { return false; }
+  bool shouldVisitTemplateInstantiations() const { return true; }
 
   bool TraverseDecl(clang::Decl* decl_)
   {
@@ -575,7 +575,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = fn_->getNameAsString();
+    astNode->astValue = getSignature(fn_);
     astNode->location = getFileLoc(fn_->getLocStart(), fn_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, fn_);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -600,7 +600,7 @@ public:
 
     cppFunction->astNodeId = astNode->id;
     cppFunction->mangledNameHash = astNode->mangledNameHash;
-    cppFunction->name = getSignature(fn_);
+    cppFunction->name = astNode->astValue;
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     cppFunction->qualifiedType = qualType.getAsString();
@@ -679,7 +679,7 @@ public:
 
       model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-      astNode->astValue = member->getNameAsString();
+      astNode->astValue = getSignature(cd_);
       astNode->location = getFileLoc(
         init->getSourceRange().getBegin(),
         init->getSourceRange().getEnd());
@@ -927,7 +927,7 @@ public:
 
     const clang::CXXConstructorDecl* ctor = ce_->getConstructor();
 
-    astNode->astValue = ctor->getNameAsString();
+    astNode->astValue = getSignature(ctor);
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, ctor);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -956,7 +956,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = functionDecl->getNameAsString();
+    astNode->astValue = getSignature(functionDecl);
     astNode->location = getFileLoc(ne_->getLocStart(), ne_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -984,7 +984,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = functionDecl->getNameAsString();
+    astNode->astValue = getSignature(functionDecl);
     astNode->location = getFileLoc(de_->getLocStart(), de_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1009,9 +1009,15 @@ public:
     const clang::NamedDecl* namedCallee
       = llvm::dyn_cast<clang::NamedDecl>(callee);
 
+    const clang::FunctionDecl* funcCallee
+      = llvm::dyn_cast<clang::FunctionDecl>(callee);
+
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = namedCallee->getNameAsString();
+    astNode->astValue
+      = funcCallee
+      ? getSignature(funcCallee)
+      : namedCallee->getNameAsString();
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(
       _mngCtx,
@@ -1073,7 +1079,7 @@ public:
     else if (const clang::FunctionDecl* fd
       = llvm::dyn_cast<clang::FunctionDecl>(decl))
     {
-      astNode->astValue = fd->getNameAsString();
+      astNode->astValue = getSignature(fd);
       astNode->location = getFileLoc(fd->getLocStart(), fd->getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, fd);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1092,15 +1098,17 @@ public:
   bool VisitMemberExpr(clang::MemberExpr* me_)
   {
     const clang::ValueDecl* vd = me_->getMemberDecl();
+    const clang::CXXMethodDecl* method
+      = llvm::dyn_cast<clang::CXXMethodDecl>(vd);
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = vd->getNameAsString();
+    astNode->astValue = method ? getSignature(method) : vd->getNameAsString();
     astNode->location = getFileLoc(me_->getLocStart(), me_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, vd);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType
-      = llvm::isa<clang::CXXMethodDecl>(vd)
+      = method
       ? model::CppAstNode::SymbolType::Function
       : isFunctionPointer(vd)
       ? model::CppAstNode::SymbolType::FunctionPtr
