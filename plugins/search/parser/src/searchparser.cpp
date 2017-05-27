@@ -56,7 +56,7 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     for (const std::string& path
       : _ctx.options["search-skip-directory"].as<std::vector<std::string>>())
     {
-      _skipDirectories.push_back(fs::canonical(fs::absolute(path)).string());
+      _skipDirectories.push_back(fs::absolute(path).string());
     }
 
   try
@@ -134,10 +134,8 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
   {
     if (fs::is_directory(currPath_))
     {
-      fs::path canonicalPath = fs::canonical(currPath_);
-
       if (std::find(_skipDirectories.begin(), _skipDirectories.end(),
-            canonicalPath) != _skipDirectories.end())
+        currPath_) != _skipDirectories.end())
       {
         LOG(info) << "Skipping " << currPath_ << " because it was listed in "
           "the skipping directory flag of the search parser.";
