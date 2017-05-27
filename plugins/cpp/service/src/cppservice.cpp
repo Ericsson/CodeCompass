@@ -1310,10 +1310,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
           FuncQuery::mangledNameHash == defNode.mangledNameHash);
-        const model::CppFunction& funcNode = *funcNodes.begin();
 
-        for (const model::Tag& tag : funcNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+        if (!funcNodes.empty())
+        {
+          const model::CppFunction& funcNode = *funcNodes.begin();
+
+          for (const model::Tag& tag : funcNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
 
         break;
       }
@@ -1337,10 +1341,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::mangledNameHash == defNode.mangledNameHash);
-        const model::CppVariable& varNode = *varNodes.begin();
 
-        for (const model::Tag& tag : varNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+        if (!varNodes.empty())
+        {
+          const model::CppVariable& varNode = *varNodes.begin();
+
+          for (const model::Tag& tag : varNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
 
         break;
       }
