@@ -600,7 +600,7 @@ public:
 
     cppFunction->astNodeId = astNode->id;
     cppFunction->mangledNameHash = astNode->mangledNameHash;
-    cppFunction->name = astNode->astValue;
+    cppFunction->name = fn_->getNameAsString();
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
     cppFunction->qualifiedType = qualType.getAsString();

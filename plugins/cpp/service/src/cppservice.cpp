@@ -189,8 +189,6 @@ void CppServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_)
 {
-  using PropMap = std::map<std::string, std::string>;
-
   _transaction([&, this](){
     model::CppAstNode node = queryCppAstNode(astNodeId_);
 
