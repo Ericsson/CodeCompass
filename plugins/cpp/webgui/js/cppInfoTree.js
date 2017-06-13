@@ -40,11 +40,31 @@ function (model, viewHandler, util) {
     if (astNodeInfo.tags.indexOf('implicit') > -1)
       labelClass = 'label-implicit';
 
+    var labelValue = astNodeInfo.astNodeValue;
+
+    // Create dom node for return type of a function and place it at the end of
+    // signature.
+    if (astNodeInfo.symbolType === 'Function') {
+      var init = labelValue.slice(0, labelValue.indexOf('('));
+      var returnTypeEnd = init.lastIndexOf(' ');
+
+      //--- Constructor, destructor doesn't have return type ---//
+
+      if (returnTypeEnd !== -1) {
+        var funcSignature = init.slice(returnTypeEnd);
+
+        labelValue = funcSignature
+          + ' : <span class="label-return-type">'
+          + init.slice(0, returnTypeEnd)
+          + "</span>";
+      }
+    }
+
     var label = createTagLabels(astNodeInfo.tags)
       + '<span class="' + labelClass + '">'
       + astNodeInfo.range.range.startpos.line   + ':'
       + astNodeInfo.range.range.startpos.column + ': '
-      + astNodeInfo.astNodeValue
+      + labelValue
       + '</span>';
 
     return label;
