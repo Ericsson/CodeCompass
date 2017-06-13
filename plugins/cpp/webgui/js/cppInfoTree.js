@@ -280,8 +280,7 @@ function (model, viewHandler, util) {
       if (elementInfo instanceof AstNodeInfo) {
         //--- Properties ---//
 
-        var nodesProps = model.cppservice.getProperties(elementInfo.id);
-        var props = nodesProps[elementInfo.id];
+        var props = model.cppservice.getProperties(elementInfo.id);
 
         for (var propName in props) {
           var propId = propName.replace(/ /g, '-');
