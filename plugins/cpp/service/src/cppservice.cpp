@@ -226,6 +226,11 @@ void CppServiceHandler::getProperties(
       {
         TypeResult types = _db->query<model::CppType>(
           TypeQuery::mangledNameHash == node.mangledNameHash);
+
+        // We don't add type information for builtin types.
+        if (types.empty())
+          break;
+
         model::CppType type = *types.begin();
 
         if (type.isAbstract)

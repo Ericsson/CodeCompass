@@ -541,7 +541,7 @@ public:
     cppTypedef->mangledNameHash = astNode->mangledNameHash;
     cppTypedef->name = td_->getNameAsString();
     cppTypedef->qualifiedName = td_->getQualifiedNameAsString();
-    cppTypedef->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    cppTypedef->typeHash = getTypeHash(qualType);
     cppTypedef->qualifiedType = qualType.getAsString();
 
     //--- CppAstNode for aliased type ---//
@@ -602,7 +602,7 @@ public:
     cppFunction->mangledNameHash = astNode->mangledNameHash;
     cppFunction->name = astNode->astValue;
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
-    cppFunction->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    cppFunction->typeHash = getTypeHash(qualType);
     cppFunction->qualifiedType = qualType.getAsString();
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
@@ -732,7 +732,7 @@ public:
 
     member->typeHash = _typeStack.top()->mangledNameHash;
     member->memberAstNode = astNode;
-    member->memberTypeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    member->memberTypeHash = getTypeHash(qualType);
     member->kind = model::CppMemberType::Kind::Field;
     member->visibility = getMemberVisibility(fd_);
 
@@ -843,7 +843,7 @@ public:
     variable->mangledNameHash = astNode->mangledNameHash;
     variable->name = vd_->getNameAsString();
     variable->qualifiedName = vd_->getQualifiedNameAsString();
-    variable->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    variable->typeHash = getTypeHash(qualType);
     variable->qualifiedType = qualType.getAsString();
 
     if (_functionStack.empty())
@@ -1087,6 +1087,20 @@ public:
       astNode->astType = model::CppAstNode::AstType::Read;
 
       astNode->id = model::createIdentifier(*astNode);
+    }
+    else if (const clang::NonTypeTemplateParmDecl* td
+      = llvm::dyn_cast<clang::NonTypeTemplateParmDecl>(decl))
+    {
+      // TODO: We should handle non-template parameter declarations.
+      return true;
+    }
+    else
+    {
+      LOG(debug)
+        << decl->getQualifiedNameAsString()
+        << " didn't handled in DeclRef Visitor!";
+
+      return true;
     }
 
     if (insertToCache(dr_, astNode))
@@ -1406,6 +1420,21 @@ private:
     }
 
     return false;
+  }
+
+  /**
+   * Creates type hash value for a clang QualType.
+   * If the mangled name is an empty string we return with an npos variable
+   * which indicates that there is no type information can be found in the
+   * database.
+   */
+  std::uint64_t getTypeHash(const clang::QualType& type_)
+  {
+    std::string mangledName = getMangledName(_mngCtx, type_);
+
+    return mangledName.empty()
+      ? model::CppTypedEntity::npos
+      : util::fnvHash(mangledName);
   }
 
   // TODO: This should be in the model.

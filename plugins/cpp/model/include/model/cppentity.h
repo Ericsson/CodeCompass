@@ -41,6 +41,10 @@ typedef std::shared_ptr<CppEntity> CppEntityPtr;
 #pragma db object
 struct CppTypedEntity : CppEntity
 {
+  // npos variable indicates that no type information can be found in the
+  // database for the entity.
+  enum : std::uint64_t { npos = static_cast<std::uint64_t>(-1) };
+
   std::uint64_t typeHash;
   std::string qualifiedType;
 };
