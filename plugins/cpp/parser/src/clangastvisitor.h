@@ -378,7 +378,7 @@ public:
 
           model::CppAstNodePtr baseNode = std::make_shared<model::CppAstNode>();
 
-          baseNode->astValue = baseDecl->getNameAsString();
+          baseNode->astValue = getSourceLine(it->getLocStart());
           baseNode->location = getFileLoc(it->getLocStart(), it->getLocEnd());
           baseNode->mangledName
             = getMangledName(_mngCtx, baseDecl, baseNode->location);
@@ -553,7 +553,9 @@ public:
 
       model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-      astNode->astValue = rd->getNameAsString();
+      astNode->astValue = getSourceLine(loc.getLocStart());
+      if (astNode->astValue.empty())
+        astNode->astValue = rd->getNameAsString();
       astNode->location = getFileLoc(loc.getLocStart(), loc.getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, rd);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -927,7 +929,7 @@ public:
 
     const clang::CXXConstructorDecl* ctor = ce_->getConstructor();
 
-    astNode->astValue = getSignature(ctor);
+    astNode->astValue = getSourceLine(ce_->getLocStart());
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, ctor);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -956,7 +958,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSignature(functionDecl);
+    astNode->astValue = getSourceLine(ne_->getLocStart());
     astNode->location = getFileLoc(ne_->getLocStart(), ne_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -984,7 +986,7 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSignature(functionDecl);
+    astNode->astValue = getSourceLine(de_->getLocStart());
     astNode->location = getFileLoc(de_->getLocStart(), de_->getLocEnd());
     astNode->mangledName = getMangledName(_mngCtx, functionDecl);
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1014,10 +1016,19 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue
-      = funcCallee
-      ? getSignature(funcCallee)
-      : namedCallee->getNameAsString();
+    if (isVirtualCall(ce_))
+    {
+      astNode->astValue = funcCallee
+        ? getSignature(funcCallee)
+        : namedCallee->getNameAsString();
+      astNode->astType = model::CppAstNode::AstType::VirtualCall;
+    }
+    else
+    {
+      astNode->astValue = getSourceLine(ce_->getLocStart());
+      astNode->astType = model::CppAstNode::AstType::Usage;
+    }
+
     astNode->location = getFileLoc(ce_->getLocStart(), ce_->getLocEnd());
     astNode->mangledName = getMangledName(
       _mngCtx,
@@ -1025,10 +1036,6 @@ public:
       getFileLoc(namedCallee->getLocStart(), namedCallee->getLocEnd()));
     astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
-    astNode->astType
-      = isVirtualCall(ce_)
-      ? model::CppAstNode::AstType::VirtualCall
-      : model::CppAstNode::AstType::Usage;
 
     astNode->id = model::createIdentifier(*astNode);
 
@@ -1043,13 +1050,12 @@ public:
     const clang::ValueDecl* decl = dr_->getDecl();
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
-
+    astNode->astValue = getSourceLine(dr_->getLocStart());
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
       model::FileLoc location =
         getFileLoc(vd->getLocation(), vd->getLocation());
 
-      astNode->astValue = vd->getNameAsString();
       astNode->location = getFileLoc(dr_->getLocStart(), dr_->getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, vd, location);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1067,7 +1073,6 @@ public:
     else if (const clang::EnumConstantDecl* ec
       = llvm::dyn_cast<clang::EnumConstantDecl>(decl))
     {
-      astNode->astValue = ec->getNameAsString();
       astNode->location = getFileLoc(ec->getLocStart(), ec->getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, ec);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1079,7 +1084,6 @@ public:
     else if (const clang::FunctionDecl* fd
       = llvm::dyn_cast<clang::FunctionDecl>(decl))
     {
-      astNode->astValue = getSignature(fd);
       astNode->location = getFileLoc(fd->getLocStart(), fd->getLocEnd());
       astNode->mangledName = getMangledName(_mngCtx, fd);
       astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
@@ -1406,6 +1410,42 @@ private:
     }
 
     return false;
+  }
+
+  std::string getSourceLine(const clang::SourceLocation& begin_)
+  {
+    if (begin_.isInvalid())
+      return std::string();
+
+    clang::SourceLocation begin = _clangSrcMgr.translateLineCol(
+      _clangSrcMgr.getFileID(begin_),
+      _clangSrcMgr.getSpellingLineNumber(begin_), 1);
+
+    clang::SourceLocation end = _clangSrcMgr.translateLineCol(
+      _clangSrcMgr.getFileID(begin_),
+      _clangSrcMgr.getSpellingLineNumber(begin_) + 1, 1);
+
+    return getSourceText(begin, end);
+  }
+
+  std::string getSourceText(
+    const clang::SourceLocation& begin_,
+    const clang::SourceLocation& end_)
+  {
+    clang::CharSourceRange range = clang::CharSourceRange::getTokenRange(
+    _clangSrcMgr.getSpellingLoc(begin_), _clangSrcMgr.getSpellingLoc(end_));
+
+    if (range.isInvalid())
+      return std::string();
+
+    clang::LangOptions langOpts;
+    clang::StringRef src =
+      clang::Lexer::getSourceText(range, _clangSrcMgr, langOpts);
+
+    // Some reason `src` can contain null terminated string  character(\0)
+    // on which pgsql will throw an error: invalid byte sequence for
+    // encoding "SQL_ASCII": 0x00. For this reason we call c_str on the string.
+    return src.str().c_str();
   }
 
   // TODO: This should be in the model.
