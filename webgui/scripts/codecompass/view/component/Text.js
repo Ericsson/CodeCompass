@@ -8,13 +8,14 @@ define([
   'dijit/layout/ContentPane',
   'dijit/Dialog',
   'dijit/MenuItem',
+  'codecompass/astHelper',
   'codecompass/util',
   'codecompass/model',
   'codecompass/urlHandler',
   'codecompass/viewHandler',
   'codecompass/view/component/ContextMenu'],
 function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
-  MenuItem, util, model, urlHandler, viewHandler, ContextMenu) {
+  MenuItem, astHelper, util, model, urlHandler, viewHandler, ContextMenu) {
 
   var BuildDialog = declare(Dialog, {
 
@@ -155,17 +156,16 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
   }
 
   /**
-   * This function adds menu items to the given context menu. The menu items
-   * come from the language service which are applicable for the AST node at
-   * the given position. Moreover some client-side menu items are also added.
+   * This function returns the AST node info object which belongs to the given
+   * position in the given file.
    * @param {Array} position An array with two elements: line and column
    * respectively.
    * @param {FileInfo} fileInfo A Thrift object which contains the information
    * of the file in which the click happens.
-   * @param {ContextMenu} contextMenu A Menu which will be filled with menu
-   * items.
+   * @return {AstNodeInfo} Thrift object which describes the AST node at the
+   * clicked position.
    */
-  function buildContextMenu(position, fileInfo, contextMenu) {
+  function getAstNodeInfoByPosition(position, fileInfo) {
 
     //--- File position ---//
 
@@ -181,7 +181,23 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
     var service = model.getLanguageService(fileInfo.type);
     if (service)
-      var astNodeInfo = service.getAstNodeInfoByPosition(fpos);
+      return service.getAstNodeInfoByPosition(fpos);
+  }
+
+  /**
+   * This function adds menu items to the given context menu. The menu items
+   * come from the language service which are applicable for the AST node at
+   * the given position. Moreover some client-side menu items are also added.
+   * @param {Array} position An array with two elements: line and column
+   * respectively.
+   * @param {FileInfo} fileInfo A Thrift object which contains the information
+   * of the file in which the click happens.
+   * @param {ContextMenu} contextMenu A Menu which will be filled with menu
+   * items.
+   */
+  function buildContextMenu(position, fileInfo, contextMenu) {
+
+    var astNodeInfo = getAstNodeInfoByPosition(position, fileInfo);
 
     //--- Build menu ---//
 
@@ -421,6 +437,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       if (event.button === 2)
         buildContextMenu(pos, this._fileInfo, this._contextMenu);
+
+      //--- Ctrl-click ---//
+
+      if (event.button === 0 && event.ctrlKey) {
+        var astNodeInfo = getAstNodeInfoByPosition(pos, this._fileInfo);
+        var service = model.getLanguageService(this._fileInfo.type);
+        astHelper.jumpToDef(astNodeInfo.id, service);
+      }
     },
 
     /**
