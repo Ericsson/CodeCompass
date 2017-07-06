@@ -356,12 +356,10 @@ std::string Diagram::getDetailedClassNodeLabel(const AstNodeInfo& nodeInfo_)
     std::string visibility = visibilityToHtml(node);
 
     // TODO: Constructor and Destructor signatures can be empty.
-    std::string signature = getProperty(node.id, "Signature");
-
-    if (!signature.empty())
+    if (!node.astNodeValue.empty())
     {
       std::string content = memberContentToHtml(node,
-        util::escapeHtml(signature));
+        util::escapeHtml(node.astNodeValue));
 
       label += graphHtmlTag("tr",
         graphHtmlTag("td", visibility, colAttr) +
