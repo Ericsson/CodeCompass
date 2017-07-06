@@ -117,6 +117,35 @@ function (Dialog, topic, style, ItemFileWriteStore, DataGrid, model) {
         jump(astNodeInfos[0]);
       else
         buildAmbiguousRefPage(astNodeInfos);
+    },
+
+    /**
+     * This function returns the AST node info object which belongs to the given
+     * position in the given file.
+     * @param {Array} position An array with two elements: line and column
+     * respectively.
+     * @param {FileInfo} fileInfo A Thrift object which contains the information
+     * of the file in which the click happens.
+     * @return {AstNodeInfo} Thrift object which describes the AST node at the
+     * clicked position.
+     */
+    getAstNodeInfoByPosition : function (position, fileInfo) {
+
+      //--- File position ---//
+
+      var fpos = new FilePosition();
+      var  pos = new Position();
+
+      pos.line = position[0];
+      pos.column = position[1];
+      fpos.file = fileInfo.id;
+      fpos.pos = pos;
+
+      //--- Get AST node info ---//
+
+      var service = model.getLanguageService(fileInfo.type);
+      if (service)
+        return service.getAstNodeInfoByPosition(fpos);
     }
   };
 });
