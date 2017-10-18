@@ -23,6 +23,7 @@
 #include <service/cppservice.h>
 
 #include "diagram.h"
+#include "filediagram.h"
 
 namespace
 {
@@ -50,6 +51,8 @@ namespace
   typedef odb::result<cc::model::CppEnumConstant> EnumConstResult;
   typedef odb::query<cc::model::CppMacroExpansion> MacroExpansionQuery;
   typedef odb::result<cc::model::CppMacroExpansion> MacroExpansionResult;
+  typedef odb::query<cc::model::File> FileQuery;
+  typedef odb::result<cc::model::File> FileResult;
 
   /**
    * This struct transforms a model::CppAstNode to an AstNodeInfo Thrift
@@ -1085,7 +1088,23 @@ void CppServiceHandler::getFileDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_)
 {
-  // TODO
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+      FileQuery::id == stoull(fileId_));
+  });
+
+  if (file->type == model::File::DIRECTORY_TYPE)
+  {
+    return_["Internal architecture of this module"] = SUBSYSTEM_DEPENDENCY;
+    return_["This module depends on"]               = EXTERNAL_DEPENDENCY;
+    return_["Users of this module"]                 = EXTERNAL_USERS;
+  }
+  else
+  {
+    return_["Include Dependency"]                   = INCLUDE_DEPENDENCY;
+    return_["Component Users"]                      = COMPONENT_USERS;
+    return_["Interface Diagram"]                    = INTERFACE;
+  }
 }
 
 void CppServiceHandler::getFileDiagram(
@@ -1093,14 +1112,73 @@ void CppServiceHandler::getFileDiagram(
   const core::FileId& fileId_,
   const int32_t diagramId_)
 {
-  // TODO
+  FileDiagram diagram(_db, _datadir, _config);
+  util::Graph graph;
+  graph.setAttribute("rankdir", "LR");
+
+  switch (diagramId_)
+  {
+    case COMPONENT_USERS:
+      diagram.getComponentUsersDiagram(graph, fileId_);
+      break;
+
+    case EXTERNAL_DEPENDENCY:
+      diagram.getExternalDependencyDiagram(graph, fileId_);
+      break;
+
+    case EXTERNAL_USERS:
+      diagram.getExternalUsersDiagram(graph, fileId_);
+      break;
+
+    case INCLUDE_DEPENDENCY:
+      diagram.getIncludeDependencyDiagram(graph, fileId_);
+      break;
+
+    case INTERFACE:
+      diagram.getInterfaceDiagram(graph, fileId_);
+      break;
+
+    case SUBSYSTEM_DEPENDENCY:
+      diagram.getSubsystemDependencyDiagram(graph, fileId_);
+      break;
+  }
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
 }
 
 void CppServiceHandler::getFileDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_)
 {
-  // TODO
+  FileDiagram diagram(_db, _datadir, _config);
+
+  switch (diagramId_)
+  {
+    case COMPONENT_USERS:
+      return_ = diagram.getComponentUsersDiagramLegend();
+        break;
+
+      case EXTERNAL_DEPENDENCY:
+        return_ = diagram.getExternalDependencyDiagramLegend();
+        break;
+
+      case EXTERNAL_USERS:
+        return_ = diagram.getExternalUsersDiagramLegend();
+        break;
+
+      case INCLUDE_DEPENDENCY:
+        return_ = diagram.getIncludeDependencyDiagramLegend();
+        break;
+
+      case INTERFACE:
+        return_ = diagram.getInterfaceDiagramLegend();
+        break;
+
+      case SUBSYSTEM_DEPENDENCY:
+        return_ = diagram.getSubsystemDependencyDiagramLegend();
+        break;
+  }
 }
 
 bool CppServiceHandler::compareByPosition(

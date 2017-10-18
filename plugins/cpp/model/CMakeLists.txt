@@ -12,7 +12,9 @@ set(ODB_SOURCES
   include/model/cppvariable.h
   include/model/cppheaderinclusion.h
   include/model/cppmacro.h
-  include/model/cppmacroexpansion.h)
+  include/model/cppmacroexpansion.h
+  include/model/cppnode.h
+  include/model/cppedge.h)
 
 generate_odb_files("${ODB_SOURCES}")
 

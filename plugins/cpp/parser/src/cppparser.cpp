@@ -23,6 +23,7 @@
 #include <cppparser/cppparser.h>
 
 #include "clangastvisitor.h"
+#include "relationcollector.h"
 #include "manglednamecache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
@@ -75,6 +76,12 @@ private:
         ClangASTVisitor clangAstVisitor(
           _ctx, _context, _mangledNameCache, _clangToAstNodeId);
         clangAstVisitor.TraverseDecl(context_.getTranslationUnitDecl());
+      }
+
+      {
+        RelationCollector relationCollector(
+          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+        relationCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
     }
 
