@@ -1,5 +1,7 @@
 include_directories(
-  include
+  include)
+
+include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
 set(ODB_SOURCES

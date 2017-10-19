@@ -3,7 +3,9 @@ include_directories(
   gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/webserver/include
+  ${PROJECT_SOURCE_DIR}/webserver/include)
+
+include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
   ${ODB_INCLUDE_DIRS})
 
