@@ -562,7 +562,7 @@ std::vector<util::Graph::Node> FileDiagram::getRevContains(
       {
         model::FileId fileId = target.lock().load()->file->id;
 
-        if (!files.insert(fileId))
+        if (!files.insert(fileId).second)
           continue;
 
         core::FileInfo fileInfo;
