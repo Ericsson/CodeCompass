@@ -1,5 +1,5 @@
 # Common things
-include_directories(
+include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
 # Add all subdirectories to the build

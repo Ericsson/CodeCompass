@@ -1,7 +1,9 @@
 include_directories(
   include
   gen-cpp
-  ${PROJECT_SOURCE_DIR}/util/include
+  ${PROJECT_SOURCE_DIR}/util/include)
+
+include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(

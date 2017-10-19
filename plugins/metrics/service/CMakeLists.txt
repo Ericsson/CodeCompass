@@ -5,7 +5,9 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/webserver/include
+  ${PROJECT_SOURCE_DIR}/webserver/include)
+
+include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(

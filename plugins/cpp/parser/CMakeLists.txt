@@ -5,7 +5,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/parser/include
   ${CMAKE_SOURCE_DIR}/util/include
   ${CMAKE_SOURCE_DIR}/model/include
-  ${PLUGIN_DIR}/model/include
+  ${PLUGIN_DIR}/model/include)
+
+include_directories(SYSTEM
   ${LLVM_INCLUDE_DIRS})
 
 link_directories(${LLVM_LIBRARY_DIRS})

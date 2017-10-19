@@ -3,7 +3,9 @@ include_directories(
   gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${PLUGIN_DIR}/model/include
+  ${PLUGIN_DIR}/model/include)
+
+include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(
