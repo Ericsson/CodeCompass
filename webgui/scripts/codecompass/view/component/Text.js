@@ -156,35 +156,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
   }
 
   /**
-   * This function returns the AST node info object which belongs to the given
-   * position in the given file.
-   * @param {Array} position An array with two elements: line and column
-   * respectively.
-   * @param {FileInfo} fileInfo A Thrift object which contains the information
-   * of the file in which the click happens.
-   * @return {AstNodeInfo} Thrift object which describes the AST node at the
-   * clicked position.
-   */
-  function getAstNodeInfoByPosition(position, fileInfo) {
-
-    //--- File position ---//
-
-    var fpos = new FilePosition();
-    var  pos = new Position();
-
-    pos.line = position[0];
-    pos.column = position[1];
-    fpos.file = fileInfo.id;
-    fpos.pos = pos;
-
-    //--- Get AST node info ---//
-
-    var service = model.getLanguageService(fileInfo.type);
-    if (service)
-      return service.getAstNodeInfoByPosition(fpos);
-  }
-
-  /**
    * This function adds menu items to the given context menu. The menu items
    * come from the language service which are applicable for the AST node at
    * the given position. Moreover some client-side menu items are also added.
@@ -197,7 +168,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
    */
   function buildContextMenu(position, fileInfo, contextMenu) {
 
-    var astNodeInfo = getAstNodeInfoByPosition(position, fileInfo);
+    var astNodeInfo = astHelper.getAstNodeInfoByPosition(position, fileInfo);
 
     //--- Build menu ---//
 
@@ -432,6 +403,10 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         this.set('selection', [pos[0], token.start, pos[0], token.end]);
       }
 
+      //--- Highlighting the same occurrence of the selected entity ---//
+
+      this._markUsages(pos, this._fileInfo);
+
       //--- Right click ---//
 
       if (event.button === 2)
@@ -444,6 +419,45 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
+    },
+
+    /**
+     * This function marks the usages of an AST node.
+     */
+    _markUsages : function (position, fileInfo) {
+      var that = this;
+
+      var astNodeInfo = astHelper.getAstNodeInfoByPosition(position, fileInfo);
+
+      var refTypes = model.cppservice.getReferenceTypes(astNodeInfo.id);
+      var usages = model.cppservice.getReferences(
+        astNodeInfo.id,
+        refTypes['Usage']);
+
+      this.clearAllMarks();
+
+      var fl = that._codeMirror.options.firstLineNumber;
+      usages.forEach(function (astNodeInfo) {
+        // TODO: getReferencesInFile() should be called when it will be
+        // implemented and then this check won't be necessary.
+        if (astNodeInfo.range.file !== fileInfo.id)
+          return;
+
+        var range = astNodeInfo.range.range;
+
+        if (range.endpos.line !== range.startpos.line) {
+          range.endpos.line = range.startpos.line;
+
+          var line = that._codeMirror.getLine(range.startpos.line - fl);
+
+          if (line)
+            range.endpos.column = line.length + 1;
+        }
+
+        that.markText(range.startpos, range.endpos, {
+          className : 'cb-marked-select'
+        });
+      }, this);
     },
 
     /**
