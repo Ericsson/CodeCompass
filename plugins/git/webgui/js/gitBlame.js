@@ -1,8 +1,6 @@
 define([
   'dojo/on',
-  'dojo/mouse',
   'dojo/topic',
-  'dojo/query',
   'dojo/_base/declare',
   'dojo/_base/Color',
   'dojo/dom-construct',
@@ -13,8 +11,8 @@ define([
   'codecompass/urlHandler',
   'codecompass/util',
   'codecompass/view/gitUtil'],
-function (on, mouse, topic, query, declare, Color, dom, Tooltip, Text, model,
-  viewHandler, urlHandler, util, gitUtil) {
+function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
+  urlHandler, util, gitUtil) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
@@ -46,16 +44,6 @@ function (on, mouse, topic, query, declare, Color, dom, Tooltip, Text, model,
         Tooltip.hide(domNode);
       })
     });
-  }
-
-  /**
-   * This function concatenates str string n times.
-   * @param {Number} n This many times will str be replicated.
-   * @param {String} str This string will be replicated. If not given, then ' '
-   * is replicated n times.
-   */
-  function replicate(n, str) {
-    return Array(n + 1).join(str || " ");
   }
 
   /**

@@ -170,7 +170,7 @@ void GitServiceHandler::getRepositoryByProjectPath(
       break;
     }
 
-    auto suffixStart = path_.find('/', repo.path.size() - 1) + 1;
+    std::size_t suffixStart = path_.find('/', repo.path.size() - 1) + 1;
     std::string pathSuffix = path_.substr(suffixStart);
 
     std::string blob;

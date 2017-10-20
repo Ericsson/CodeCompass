@@ -15,14 +15,12 @@ namespace cc
 namespace parser
 {
 
-GitParser::GitParser(ParserContext& ctx_): AbstractParser(ctx_)
+GitParser::GitParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
-  //--- Init git library ---//
-
   git_libgit2_init();
 }
 
-std::vector<std::string> GitParser::getDependentParsers()  const
+std::vector<std::string> GitParser::getDependentParsers() const
 {
   return std::vector<std::string>{};
 }
@@ -41,6 +39,8 @@ util::DirIterCallback GitParser::getParserCallback()
 
     if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
       return true;
+
+    path = boost::filesystem::canonical(path);
 
     LOG(info) << "Git parser found a git repo at: " << path;
 
@@ -61,7 +61,7 @@ util::DirIterCallback GitParser::getParserCallback()
     git_repository *out;
     int error = git_clone(&out, path_.c_str(), clonedRepoPath.c_str(), &opts);
 
-    if(error)
+    if (error)
     {
       const git_error* errDetails = giterr_last();
 
@@ -91,7 +91,7 @@ util::DirIterCallback GitParser::getParserCallback()
 
 bool GitParser::parse()
 {
-  for(const std::string& path :
+  for (const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
   {
     LOG(info) << "Git parse path: " << path;
@@ -106,13 +106,11 @@ bool GitParser::parse()
     }
     catch (const std::exception& ex_)
     {
-      LOG(warning)
-        << "Git parser threw an exception: " << ex_.what();
+      LOG(warning) << "Git parser threw an exception: " << ex_.what();
     }
     catch (...)
     {
-      LOG(warning)
-        << "Git parser failed with unknown exception!";
+      LOG(warning) << "Git parser failed with unknown exception!";
     }
   }
   return true;

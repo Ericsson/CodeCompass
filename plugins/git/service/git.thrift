@@ -21,130 +21,44 @@ struct GitSignature
 
 struct GitCommit
 {
-  /**
-   * Repository id.
-   */
-  1:string repoId,
-
-  /**
-   * Unique identity of the commit.
-   */
-  2:string oid,
-
-  /**
-   * Full message of the commit.
-   */
-  3:string message,
-
-  /**
-   * Short summary of the git commit message.
-   */
-  4:string summary,
-
-  /**
-   * UTC time.
-   */
-  5:i64 time,
-
-  /**
-   * Author signature.
-   */
-  6:GitSignature author,
-
-  /**
-   * Committer signature.
-   */
-  7:GitSignature committer,
-
-  /**
-   * Id of the tree pointed to by a commit.
-   */
-  8:string treeOid,
-
-  /**
-   * Specified parent of the commit.
-   */
-  9:list<string> parentOids,
+  1:string repoId,           /**< Repository ID. */
+  2:string oid,              /**< Unique identity of the commit. */
+  3:string message,          /**< Full message of the commit. */
+  4:string summary,          /**< Short summary of the git commit message. */
+  5:i64 time,                /**< UTC time. */
+  6:GitSignature author,     /**< Author signature. */
+  7:GitSignature committer,  /**< Committer signature. */
+  8:string treeOid,          /**< Id of the tree pointed to by a commit. */
+  9:list<string> parentOids, /**< Specified parent of the commit. */
 }
 
 struct GitTag
 {
-  /**
-   * Repository id.
-   */
-  1:string repoId,
-
-  /**
-   * Unique identity of the tag.
-   */
-  2:string oid,
-
-  /**
-   * Full message of the tag.
-   */
-  3:string message,
-
-  /**
-   * The name of the tag.
-   */
-  4:string name,
-
-  /**
-   * The tagger (author) of the tag.
-   */
-  5:string tagger,
-
-  /**
-   * OID of the tagged object of the tag.
-   */
-  6:string targetOid,
+  1:string repoId,    /**< Repository ID. */
+  2:string oid,       /**< Unique identity of the tag. */
+  3:string message,   /**< Full message of the tag. */
+  4:string name,      /**< The name of the tag. */
+  5:string tagger,    /**< The tagger (author) of the tag. */
+  6:string targetOid, /**< OID of the tagged object of the tag. */
 }
 
 struct GitDiffOptions
 {
-  /**
-   * Number of context lines.
-   */
-  1:i32 contextLines,
-
-  /**
-   * If non-empty, only the diff of the filenames matched by one of
-   * this list will be returned.
-   */
-  2:list<string> pathspec,
-
-  /**
-   * Use this commit as starting point instead of parent commit.
-   */
-  3:string fromCommit
+  1:i32 contextLines,      /**< Number of context lines. */
+  2:list<string> pathspec, /**< If non-empty, only the diff of the filenames
+                                matched by one of this list will be returned.
+                           */
+  3:string fromCommit      /**< Use this commit as starting point instead of
+                                parent commit. */
 }
 
 struct GitRepository
 {
-  /**
-   * Unique id of the repository
-   */
-  1:string id,
-
-  /**
-   * Path of the repository.
-   */
-  2:string path,
-
-  /**
-   * True if a repository's HEAD is detached.
-   */
-  3:bool isHeadDetached,
-
-  /**
-   * Full name of a head reference.
-   */
-  4:string head,
-
-  /**
-   * Name of the repository.
-   */
-  5:string name
+  1:string id,           /**< Unique ID of the repository. */
+  2:string path,         /**< Path of the repository. */
+  3:bool isHeadDetached, /**< True if a repository's HEAD is detached. */
+  4:string head,         /**< Full name of a head reference. */
+  5:string name          /**< Name of the repository. */
 }
 
 struct ReferenceTopObjectResult
@@ -162,10 +76,7 @@ struct CommitListFilteredResult
 
 struct RepositoryByProjectPathResult
 {
-  /**
-   * True if path is in repository.
-   */
-  1:bool isInRepository;
+  1:bool isInRepository; /**< True if path is in repository. */
   2:string repoId;
   3:string repoPath;
   4:string commitId;
@@ -174,63 +85,34 @@ struct RepositoryByProjectPathResult
 
 struct GitBlameHunk
 {
-  /**
-   * The number of lines in this hunk.
-   */
-  1:i32 linesInHunk,
-
-  /**
-   * The OID of the commit where this line was last changed.
-   */
-  2:string finalCommitId,
-
-  /**
-   * Commit message of the commit specified by finalCommitId.
-   */
-  3:string finalCommitMessage,
-
-  /**
-   * The 1-based line number where this hunk begins, in the final version of
-   * the file
-   */
-  4:i32 finalStartLineNumber;
-
-  /**
-   * Signature of the commit who this line last changed.
-   */
-  5:GitSignature finalSignature;
-
-  /**
-  * The OID of the commit where this hunk was found. This will usually be
-  * the same as final_commit_id, except when
-  * GIT_BLAME_TRACK_COPIES_ANY_COMMIT_COPIES has been specified.
-  * 
-  * TODO implement blame flags
-  */
-  6:string origCommitId;
-
-  /**
-   * The path to the file where this hunk originated, as of the commit
-   * specified by origCommitId.
-   */
-  7:string origPath;
-
-  /**
-  * The 1-based line number where this hunk begins in the file named by
-  * orig_path in the commit specified by origCommitId.
-  */
-  8:i32 origStartLineNumber;
-
-  /**
-   * Signature of the commit who this line last changed.
-   */
-  9:GitSignature origSignature;
-
-  /**
-  * true if the hunk has been tracked to a boundary commit (the root, or the
-  * commit specified in git_blame_options.oldest_commit).
-  */
-  10:bool boundary;
+  1:i32 linesInHunk,             /**< The number of lines in this hunk. */
+  2:string finalCommitId,        /**< The OID of the commit where this line was
+                                      last changed. */
+  3:string finalCommitMessage,   /**< Commit message of the commit specified by
+                                      finalCommitId. */
+  4:i32 finalStartLineNumber;    /**< The 1-based line number where this hunk
+                                      begins, in the final version of the file.
+                                 */
+  5:GitSignature finalSignature; /**< Signature of the commit who this line
+                                      last changed. */
+  6:string origCommitId;         /**< The OID of the commit where this hunk was
+                                      found. This will usually be the same as
+                                      final_commit_id, except when
+                                      GIT_BLAME_TRACK_COPIES_ANY_COMMIT_COPIES
+                                      has been specified.
+                                      TODO: implement blame flags. */
+  7:string origPath;             /**< The path to the file where this hunk
+                                      originated, as of the commit specified by
+                                      origCommitId. */
+  8:i32 origStartLineNumber;     /**< The 1-based line number where this hunk
+                                      begins in the file named by orig_path in
+                                      the commit specified by origCommitId. */
+  9:GitSignature origSignature;  /**< Signature of the commit who thisline last
+                                      changed. */
+  10:bool boundary;              /**< True if the hunk has been tracked to a
+                                      boundary commit (the root, or the commit
+                                      specified in
+                                      git_blame_options.oldest_commit). */
 }
 
 service GitService
