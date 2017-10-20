@@ -439,6 +439,11 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       var fl = that._codeMirror.options.firstLineNumber;
       usages.forEach(function (astNodeInfo) {
+        // TODO: getReferencesInFile() should be called when it will be
+        // implemented and then this check won't be necessary.
+        if (astNodeInfo.range.file !== fileInfo.id)
+          return;
+
         var range = astNodeInfo.range.range;
 
         if (range.endpos.line !== range.startpos.line) {
