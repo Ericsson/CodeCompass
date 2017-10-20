@@ -9,9 +9,10 @@ define([
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/urlHandler',
-  'codecompass/util'],
-function (declare, dom, topic, style, ContentPane,
-  TabContainer, GitDiff, model, viewHandler, urlHandler, util) {
+  'codecompass/util',
+  'codecompass/view/gitUtil'],
+function (declare, dom, topic, style, ContentPane, TabContainer, GitDiff,
+  model, viewHandler, urlHandler, util, gitUtil) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
@@ -43,12 +44,14 @@ function (declare, dom, topic, style, ContentPane,
 
       //--- Author and author avatar ---//
 
-      var avatarLabel = commit.author.charAt(0).toUpperCase();
+      var avatarLabel = commit.author.name.charAt(0).toUpperCase();
       var avatar =
         dom.create('div', { class : 'avatar', innerHTML: avatarLabel}, meta);
-      style.set(avatar, 'background-color', util.strToColor(commit.author));
+      style.set(avatar, 'background-color',
+        util.strToColor(commit.author.name));
 
-      dom.create('div', { class : 'author', innerHTML: commit.author }, meta);
+      dom.create('div', { class : 'author',
+        innerHTML: gitUtil.getSignature(commit.author) }, meta);
 
       dom.create('span', { innerHTML: 'committed on ' }, meta);
       var time = util.timeAgo(new Date(commit.time * 1000));

@@ -12,145 +12,107 @@ enum GitObjectType
   GIT_OBJ_REF_DELTA = 7,  /**< A delta, base is given by object id. */
 }
 
+struct GitSignature
+{
+  1:string name,
+  2:string email,
+  3:i64 time
+}
+
 struct GitCommit
 {
-  /**
-   * Repository id.
-   */
-  1:string repoId,
-
-  /**
-   * Unique identity of the commit.
-   */
-  2:string oid,
-
-  /**
-   * Full message of the commit.
-   */
-  3:string message,
-
-  /**
-   * Short summary of the git commit message.
-   */
-  4:string summary,
-
-  /**
-   * UTC time.
-   */
-  5:i64 time,
-
-  /**
-   * Commit timezone offset.
-   */
-  6:i32 timeOffset,
-
-  /**
-   * Commit author
-   */
-  7:string author,
-
-  /**
-   * Committer of the commit.
-   */
-  8:string committer,
-
-  /**
-   * Id of the tree pointed to by a commit
-   */
-  9:string treeOid,
-
-  /**
-   * Specified parent of the commit.
-   */
-  10:list<string> parentOids,
+  1:string repoId,           /**< Repository ID. */
+  2:string oid,              /**< Unique identity of the commit. */
+  3:string message,          /**< Full message of the commit. */
+  4:string summary,          /**< Short summary of the git commit message. */
+  5:i64 time,                /**< UTC time. */
+  6:GitSignature author,     /**< Author signature. */
+  7:GitSignature committer,  /**< Committer signature. */
+  8:string treeOid,          /**< Id of the tree pointed to by a commit. */
+  9:list<string> parentOids, /**< Specified parent of the commit. */
 }
 
 struct GitTag
 {
-  /**
-   * Repository id.
-   */
-  1: string repoId,
-
-  /**
-   * Unique identity of the tag.
-   */
-  2:string oid,
-
-  /**
-   * Full message of the tag.
-   */
-  3:string message,
-
-  /**
-   * The name of the tag.
-   */
-  4: string name,
-
-  /**
-   * The tagger (author) of the tag.
-   */
-  5: string tagger,
-
-  /**
-   * OID of the tagged object of the tag.
-   */
-  6: string targetOid,
+  1:string repoId,    /**< Repository ID. */
+  2:string oid,       /**< Unique identity of the tag. */
+  3:string message,   /**< Full message of the tag. */
+  4:string name,      /**< The name of the tag. */
+  5:string tagger,    /**< The tagger (author) of the tag. */
+  6:string targetOid, /**< OID of the tagged object of the tag. */
 }
 
 struct GitDiffOptions
 {
-  /**
-   * Number of context lines.
-   */
-  1: i32 contextLines,
-
-  /**
-   * If non-empty, only the diff of the filenames matched by one of
-   * this list will be returned.
-   */
-  2: list<string> pathspec,
-
-  /**
-   * Use this commit as starting point instead of parent commit.
-   */
-  3: string fromCommit
+  1:i32 contextLines,      /**< Number of context lines. */
+  2:list<string> pathspec, /**< If non-empty, only the diff of the filenames
+                                matched by one of this list will be returned.
+                           */
+  3:string fromCommit      /**< Use this commit as starting point instead of
+                                parent commit. */
 }
 
 struct GitRepository
 {
-  /**
-   * Unique id of the repository
-   */
-  1: string id,
-
-  /**
-   * Path of the repository.
-   */
-  2: string path,
-
-  /**
-   * True if a repository's HEAD is detached.
-   */
-  3: bool isHeadDetached,
-
-  /**
-   * Full name of a head reference.
-   */
-  4: string head,
+  1:string id,           /**< Unique ID of the repository. */
+  2:string path,         /**< Path of the repository. */
+  3:bool isHeadDetached, /**< True if a repository's HEAD is detached. */
+  4:string head,         /**< Full name of a head reference. */
+  5:string name          /**< Name of the repository. */
 }
 
 struct ReferenceTopObjectResult
 {
-  1: string oid;
-  2: GitObjectType type;
+  1:string oid;
+  2:GitObjectType type;
 }
 
 struct CommitListFilteredResult
 {
-  1: i32 newOffset;
-  2: bool hasRemaining;
-  3: list<GitCommit> result;
+  1:i32 newOffset;
+  2:bool hasRemaining;
+  3:list<GitCommit> result;
+}
+
+struct RepositoryByProjectPathResult
+{
+  1:bool isInRepository; /**< True if path is in repository. */
+  2:string repoId;
+  3:string repoPath;
+  4:string commitId;
+  5:string activeReference;
+}
+
+struct GitBlameHunk
+{
+  1:i32 linesInHunk,             /**< The number of lines in this hunk. */
+  2:string finalCommitId,        /**< The OID of the commit where this line was
+                                      last changed. */
+  3:string finalCommitMessage,   /**< Commit message of the commit specified by
+                                      finalCommitId. */
+  4:i32 finalStartLineNumber;    /**< The 1-based line number where this hunk
+                                      begins, in the final version of the file.
+                                 */
+  5:GitSignature finalSignature; /**< Signature of the commit who this line
+                                      last changed. */
+  6:string origCommitId;         /**< The OID of the commit where this hunk was
+                                      found. This will usually be the same as
+                                      final_commit_id, except when
+                                      GIT_BLAME_TRACK_COPIES_ANY_COMMIT_COPIES
+                                      has been specified.
+                                      TODO: implement blame flags. */
+  7:string origPath;             /**< The path to the file where this hunk
+                                      originated, as of the commit specified by
+                                      origCommitId. */
+  8:i32 origStartLineNumber;     /**< The 1-based line number where this hunk
+                                      begins in the file named by orig_path in
+                                      the commit specified by origCommitId. */
+  9:GitSignature origSignature;  /**< Signature of the commit who thisline last
+                                      changed. */
+  10:bool boundary;              /**< True if the hunk has been tracked to a
+                                      boundary commit (the root, or the commit
+                                      specified in
+                                      git_blame_options.oldest_commit). */
 }
 
 service GitService
@@ -159,6 +121,12 @@ service GitService
    * This function returns the available repositories.
    */
   list<GitRepository> getRepositoryList()
+
+  /**
+   * Returns if a given project path is in an indexed repository.
+   */
+  RepositoryByProjectPathResult getRepositoryByProjectPath(
+    1:string path_)
 
   /**
    * Returns a commit object from the repository.
@@ -218,4 +186,28 @@ service GitService
     2:string hexOid_,
     3:GitDiffOptions options_,
     4:bool isCompact)
+
+  /**
+   * Retrieves the object id of the blob of a path in a commit.
+   */
+  string getBlobOidByPath(
+    1:string repoId_,
+    2:string hexOid_,
+    3:string path_)
+
+  /**
+   * Retrieves a blob content.
+   */
+  string getBlobContent(
+    1:string repoId_,
+    2:string hexOid_),
+
+  /**
+   * Retrieves blame for a file in a commit.
+   */
+  list<GitBlameHunk> getBlameInfo(
+    1:string repoId_,
+    2:string hexOid_,
+    3:string path_,
+    4:string localModificationsFileId_)
 }

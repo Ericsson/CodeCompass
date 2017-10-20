@@ -3,6 +3,9 @@ include_directories(
   gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
+  ${PLUGIN_DIR}/model/include
+  ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
+  ${PROJECT_SOURCE_DIR}/service/project/include
   ${PLUGIN_DIR}/model/include)
 
 include_directories(SYSTEM
@@ -39,6 +42,7 @@ target_compile_options(gitservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(gitservice
   util
+  projectservice
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   ${ODB_LIBRARIES}
   gitthrift

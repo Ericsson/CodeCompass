@@ -100,27 +100,28 @@ function (Dialog, array, lang, locale, style, ItemFileWriteStore, DataGrid,
       var fuzzy;
 
       if (delta < 30) {
-        fuzzy = 'just then.';
+        fuzzy = 'just then';
       } else if (delta < minute) {
-        fuzzy = delta + ' seconds ago.';
+        fuzzy = delta + ' seconds ago';
       } else if (delta < 2 * minute) {
-        fuzzy = 'a minute ago.'
+        fuzzy = 'a minute ago'
       } else if (delta < hour) {
-        fuzzy = Math.floor(delta / minute) + ' minutes ago.';
+        fuzzy = Math.floor(delta / minute) + ' minutes ago';
       } else if (Math.floor(delta / hour) == 1) {
-        fuzzy = '1 hour ago.'
+        fuzzy = '1 hour ago'
       } else if (delta < day) {
-        fuzzy = Math.floor(delta / hour) + ' hours ago.';
+        fuzzy = Math.floor(delta / hour) + ' hours ago';
       } else if (delta < day * 2) {
         fuzzy = 'yesterday';
       } else if (delta < week) {
-        fuzzy = Math.floor(delta / day) + ' days ago.';
-      } else if (delta < day * 8) {
-        fuzzy = '1 week ago.';
+        fuzzy = Math.floor(delta / day) + ' days ago';
+      } else if (delta < 2 * week) {
+        fuzzy = '1 week ago';
       } else if (delta < month) {
-        fuzzy = Math.floor(delta / week) + ' weeks ago.';
+        fuzzy = Math.floor(delta / week) + ' weeks ago';
       } else {
-        fuzzy = 'on ' + locale.format(date, "yyyy-MM-dd HH:mm");
+        fuzzy = 'on ' + locale.format(date, {
+          datePattern: 'yyyy. MM. dd', selector: 'date'});
       }
 
       return fuzzy;

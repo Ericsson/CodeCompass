@@ -1,5 +1,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <util/dbutil.h>
 #include <util/logutil.h>
@@ -71,7 +73,11 @@ GitServiceHandler::GitServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const boost::program_options::variables_map& config_)
-    : _db(db_), _transaction(db_), _config(config_), _datadir(datadir_)
+    : _db(db_),
+      _transaction(db_),
+      _config(config_),
+      _datadir(datadir_),
+      _projectHandler(db_, datadir_, config_)
 {
   git_libgit2_init();
 }
@@ -90,6 +96,17 @@ void GitServiceHandler::getRepositoryList(std::vector<GitRepository>& return_)
   if (!fs::is_directory(versionDataDir))
     return;
 
+  std::string repoFile(versionDataDir.string() + "/repositories.txt");
+  boost::property_tree::ptree pt;
+
+  if (!fs::is_regular(repoFile))
+  {
+    LOG(warning) << "Repository file not found in data directory: " << repoFile;
+    return;
+  }
+
+  boost::property_tree::read_ini(repoFile, pt);
+
   fs::directory_iterator endIter;
   for (fs::directory_iterator dirIter(versionDataDir);
        dirIter != endIter;
@@ -100,7 +117,8 @@ void GitServiceHandler::getRepositoryList(std::vector<GitRepository>& return_)
 
     GitRepository gitRepo;
     gitRepo.id = dirIter->path().filename().string();
-    gitRepo.path = dirIter->path().string();
+    gitRepo.path = pt.get<std::string>(gitRepo.id + ".path");
+    gitRepo.name = pt.get<std::string>(gitRepo.id + ".name");
 
     RepositoryPtr repo = createRepository(gitRepo.id);
 
@@ -128,6 +146,172 @@ void GitServiceHandler::getRepositoryList(std::vector<GitRepository>& return_)
 
     return_.push_back(std::move(gitRepo));
   }
+}
+
+void GitServiceHandler::getRepositoryByProjectPath(
+  RepositoryByProjectPathResult& return_,
+  const std::string& path_)
+{
+  return_.isInRepository = false;
+
+  std::vector<GitRepository> repositories;
+  getRepositoryList(repositories);
+
+  for (const GitRepository& repo : repositories)
+  {
+    if (!boost::starts_with(path_, repo.path))
+      continue;
+
+    ReferenceTopObjectResult top;
+    getReferenceTopObject(top, repo.id, repo.head);
+
+    if (top.type != GitObjectType::GIT_OBJ_COMMIT) {
+      LOG(warning) << "Head is not a commit";
+      break;
+    }
+
+    std::size_t suffixStart = path_.find('/', repo.path.size() - 1) + 1;
+    std::string pathSuffix = path_.substr(suffixStart);
+
+    std::string blob;
+    getBlobOidByPath(blob, repo.id, top.oid, pathSuffix);
+
+    if (!blob.empty())
+    {
+      return_.isInRepository = true;
+      return_.repoId = repo.id;
+      return_.repoPath = pathSuffix;
+      return_.commitId = top.oid;
+      return_.activeReference = (repo.isHeadDetached ? "" : repo.head);
+      return;
+    }
+  }
+}
+
+void GitServiceHandler::getBlobOidByPath(
+  std::string& return_,
+  const std::string& repoId_,
+  const std::string& hexOid_,
+  const std::string& path_)
+{
+  RepositoryPtr repo = createRepository(repoId_);
+
+  if (!repo)
+    return;
+
+  CommitPtr commit = createCommit(repo.get(), gitOidFromStr(hexOid_));
+
+  std::vector<std::string> pathElements;
+  boost::split(pathElements, path_, boost::is_any_of("/"));
+
+  if (pathElements.size() == 1u && pathElements[0].empty())
+  {
+    const git_oid* treeId = git_commit_tree_id(commit.get());
+    return_ = gitOidToString(treeId);
+    return;
+  }
+
+  TreePtr tree = createTree(commit.get());
+  TreeEntryPtr entry = createTreeEntry(tree.get(), path_);
+
+  if (entry)
+  {
+    const git_oid* oid = git_tree_entry_id(entry.get());
+    return_ = gitOidToString(oid);
+  }
+}
+
+void GitServiceHandler::getBlobContent(
+  std::string& return_,
+  const std::string& repoId_,
+  const std::string& hexOid_)
+{
+  RepositoryPtr repo = createRepository(repoId_);
+
+  if (!repo)
+    return;
+
+  git_oid oid = gitOidFromStr(hexOid_);
+  BlobPtr blob = createBlob(repo.get(), &oid);
+
+  const char* content =
+    static_cast<const char*>(git_blob_rawcontent(blob.get()));
+  git_off_t size = git_blob_rawsize(blob.get());
+  std::string data(content, size);
+
+  return_ = data;
+}
+
+void GitServiceHandler::getBlameInfo(
+  std::vector<GitBlameHunk>& return_,
+  const std::string& repoId_,
+  const std::string& hexOid_,
+  const std::string& path_,
+  const std::string& localModificationsFileId_)
+{
+  RepositoryPtr repo = createRepository(repoId_);
+
+  if (!repo)
+    return;
+
+  BlameOptsPtr opt = createBlameOpts(gitOidFromStr(hexOid_));
+  BlamePtr blame = createBlame(repo.get(), path_.c_str(), opt.get());
+
+  if (!localModificationsFileId_.empty())
+  {
+    std::string fileContent;
+    _projectHandler.getFileContent(fileContent, localModificationsFileId_);
+    blame = getBlameData(blame, fileContent);
+  }
+
+  for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+  {
+    const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
+
+    GitBlameHunk blameHunk;
+    blameHunk.linesInHunk = hunk->lines_in_hunk;
+    blameHunk.boundary = hunk->boundary;
+    blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
+    blameHunk.finalStartLineNumber = hunk->final_start_line_number;
+
+    // If files are locally changed, final_signature will be null pointer.
+    // I think it will be a `libgit2` bug.
+    if (hunk->final_signature)
+    {
+      blameHunk.finalSignature.name = hunk->final_signature->name;
+      blameHunk.finalSignature.email = hunk->final_signature->email;
+      blameHunk.finalSignature.time = hunk->final_signature->when.time;
+    }
+    else if (!git_oid_iszero(&hunk->final_commit_id))
+    {
+      CommitPtr commit = createCommit(repo.get(), hunk->final_commit_id);
+      const git_signature* author = git_commit_author(commit.get());
+      blameHunk.finalSignature.name = author->name;
+      blameHunk.finalSignature.email = author->email;
+      blameHunk.finalSignature.time = author->when.time;
+    }
+
+    //--- If the changes are not committed yet ---//
+
+    if (blameHunk.finalSignature.time)
+    {
+      CommitPtr commit = createCommit(repo.get(), hunk->final_commit_id);
+      blameHunk.finalCommitMessage = git_commit_message(commit.get());
+    }
+
+    blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
+    blameHunk.origPath = hunk->orig_path;
+    blameHunk.origStartLineNumber = hunk->orig_start_line_number;
+    if (hunk->orig_signature)
+    {
+      blameHunk.origSignature.name = hunk->orig_signature->name;
+      blameHunk.origSignature.email = hunk->orig_signature->email;
+      blameHunk.origSignature.time = hunk->orig_signature->when.time;
+    }
+
+    return_.push_back(std::move(blameHunk));
+  }
+
 }
 
 void GitServiceHandler::getCommit(
@@ -206,8 +390,8 @@ void GitServiceHandler::getCommitListFiltered(
     setCommitData(gcommit, repoId_, commit.get());
 
     if (boost::icontains(gcommit.message, filter_) ||
-        boost::icontains(gcommit.author, filter_) ||
-        boost::icontains(gcommit.committer, filter_))
+        boost::icontains(gcommit.author.name, filter_) ||
+        boost::icontains(gcommit.committer.name, filter_))
     {
       return_.result.push_back(gcommit);
       ++cnt;
@@ -331,16 +515,17 @@ void GitServiceHandler::getCommitDiffAsString(
   {
     std::vector<std::string> parents = getParents(currCommit.get());
 
-    if (parents.empty())
-      return;
-
-    fromCommitId = parents.front();
+    if (!parents.empty())
+      fromCommitId = parents.front();
   }
 
-  git_oid fromCommitOid = gitOidFromStr(fromCommitId);
-  CommitPtr fromCommit = createCommit(repo.get(), fromCommitOid);
-
-  TreePtr treeOld = createTree(fromCommit.get());
+  TreePtr treeOld {nullptr, &git_tree_free};
+  if (!fromCommitId.empty())
+  {
+    git_oid fromCommitOid = gitOidFromStr(fromCommitId);
+    CommitPtr fromCommit = createCommit(repo.get(), fromCommitOid);
+    treeOld = createTree(fromCommit.get());
+  }
 
   git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
   opts.context_lines = options_.contextLines;
@@ -396,13 +581,14 @@ void GitServiceHandler::setCommitData(
   return_.message = git_commit_message(commit_);
   return_.summary = git_commit_summary(commit_);
   return_.time = git_commit_time(commit_);
-  return_.timeOffset = git_commit_time_offset(commit_);
 
   const git_signature* author = git_commit_author(commit_);
-  return_.author = gitSignatureToString(author);
+  return_.author.name = author->name;
+  return_.author.email = author->email;
 
   const git_signature* cmtter = git_commit_committer(commit_);
-  return_.committer = gitSignatureToString(cmtter);
+  return_.committer.name = cmtter->name;
+  return_.committer.email = cmtter->email;
 
   const git_oid* treeId = git_commit_tree_id(commit_);
   return_.treeOid = gitOidToString(treeId);
@@ -443,7 +629,7 @@ std::string GitServiceHandler::gitDiffToString(git_diff* diff_, bool isCompact_)
 RepositoryPtr GitServiceHandler::createRepository(const std::string& repoId_)
 {
   std::string repoPath = getRepoPath(repoId_);
-  git_repository* repository;
+  git_repository* repository = nullptr;
   int error = git_repository_open(&repository, repoPath.c_str());
 
   if (error)
@@ -454,7 +640,7 @@ RepositoryPtr GitServiceHandler::createRepository(const std::string& repoId_)
 
 ReferencePtr GitServiceHandler::createRepositoryHead(git_repository* repo_)
 {
-  git_reference* ref;
+  git_reference* ref = nullptr;
   int error = git_repository_head(&ref, repo_);
 
   if (error)
@@ -465,7 +651,7 @@ ReferencePtr GitServiceHandler::createRepositoryHead(git_repository* repo_)
 
 RevWalkPtr GitServiceHandler::createRevWalk(git_repository* repo)
 {
-  git_revwalk* walker;
+  git_revwalk* walker = nullptr;
   int error = git_revwalk_new(&walker, repo);
 
   if (error)
@@ -478,7 +664,7 @@ CommitPtr GitServiceHandler::createCommit(
   git_repository *repo_,
   const git_oid& id_)
 {
-  git_commit* commit;
+  git_commit* commit = nullptr;
   int error = git_commit_lookup(&commit, repo_, &id_);
 
   if (error)
@@ -489,7 +675,7 @@ CommitPtr GitServiceHandler::createCommit(
 
 TreePtr GitServiceHandler::createTree(git_commit* commit_)
 {
-  git_tree* tree;
+  git_tree* tree = nullptr;
   int error = git_commit_tree(&tree, commit_);
 
   if (error)
@@ -500,7 +686,7 @@ TreePtr GitServiceHandler::createTree(git_commit* commit_)
 
 TreePtr GitServiceHandler::createTree(git_repository* repo_, const git_oid& id_)
 {
-  git_tree* tree;
+  git_tree* tree = nullptr;
   int error = git_tree_lookup(&tree, repo_, &id_);
 
   if (error)
@@ -509,9 +695,23 @@ TreePtr GitServiceHandler::createTree(git_repository* repo_, const git_oid& id_)
   return TreePtr { tree, &git_tree_free };
 }
 
+TreeEntryPtr GitServiceHandler::createTreeEntry(
+  git_tree* tree_,
+  const std::string& path_)
+{
+  git_tree_entry *entry = nullptr;
+  int error = git_tree_entry_bypath(&entry, tree_, path_.c_str());
+
+  if (error)
+  {
+    LOG(error) << "Getting tree entry failed: " << error;
+  }
+
+  return TreeEntryPtr { entry, &git_tree_entry_free };
+}
 TagPtr GitServiceHandler::createTag(git_repository* repo, const git_oid& oid_)
 {
-  git_tag* tag;
+  git_tag* tag = nullptr;
   int error = git_tag_lookup(&tag, repo, &oid_);
 
   if (error)
@@ -524,7 +724,7 @@ ObjectPtr GitServiceHandler::createObject(
   git_repository* repo_,
   const git_oid& oid_)
 {
-  git_object* obj;
+  git_object* obj = nullptr;
   int error = git_object_lookup(&obj, repo_, &oid_, GIT_OBJ_ANY);
 
   if (error)
@@ -539,13 +739,64 @@ DiffPtr GitServiceHandler::createDiff(
   git_tree* newTree_,
   git_diff_options* opts_)
 {
-  git_diff* diff;
+  git_diff* diff = nullptr;
   int error = git_diff_tree_to_tree(&diff, repo_, oldTree_, newTree_, opts_);
 
   if (error)
     LOG(error) << "Create diff failed: " << error;
 
   return DiffPtr { diff, &git_diff_free };
+}
+
+
+BlobPtr GitServiceHandler::createBlob(git_repository* repo_, git_oid* oid_)
+{
+  git_blob* blob = nullptr;
+  int error = git_blob_lookup(&blob, repo_, oid_);
+
+  if (error)
+    LOG(error) << "Getting blob object failed: " << error;
+
+  return BlobPtr { blob, &git_blob_free };
+}
+
+BlamePtr GitServiceHandler::createBlame(
+  git_repository* repo_,
+  const std::string& path_,
+  git_blame_options* opts_)
+{
+  git_blame* blame = nullptr;
+  int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
+
+  if (error)
+    LOG(error) << "Getting blame object failed: " << error;
+
+  return BlamePtr { blame, &git_blame_free };
+}
+
+BlamePtr GitServiceHandler::getBlameData(
+  const BlamePtr& blame_,
+  const std::string content_)
+{
+  git_blame *blame = nullptr;
+  int error = git_blame_buffer(
+    &blame,
+    blame_.get(),
+    content_.data(),
+    content_.size());
+
+  if (error)
+    LOG(error) << "Getting blame data failed: " << error;
+
+  return BlamePtr { blame, &git_blame_free };
+}
+
+BlameOptsPtr GitServiceHandler::createBlameOpts(const git_oid& newCommitOid_)
+{
+  git_blame_options* blameOpts = new git_blame_options;
+  *blameOpts = GIT_BLAME_OPTIONS_INIT;
+  blameOpts->newest_commit = newCommitOid_;
+  return BlameOptsPtr { blameOpts };
 }
 
 GitServiceHandler::~GitServiceHandler()
