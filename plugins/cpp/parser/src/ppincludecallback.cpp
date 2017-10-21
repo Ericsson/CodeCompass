@@ -27,8 +27,8 @@ PPIncludeCallback::~PPIncludeCallback()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    persistAll(_astNodes);
-    persistAll(_headerIncs);
+    util::persistAll(_astNodes, _ctx.db);
+    util::persistAll(_headerIncs, _ctx.db);
   });
 }
 

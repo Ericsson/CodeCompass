@@ -9,6 +9,8 @@
 #include <odb/tracer.hxx>
 #include <odb/session.hxx>
 
+#include "logutil.h"
+
 namespace cc
 {
 namespace util
@@ -156,6 +158,31 @@ private:
   odb::database& _db;
   bool _switchCurrent;
 };
+
+template <typename Cont>
+void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
+{
+  for (typename Cont::value_type& item : cont_)
+  {
+    try
+    {
+      db_->persist(*item);
+    }
+    catch (const odb::object_already_persistent& ex)
+    {
+      LOG(debug)
+        << item->toString();
+      LOG(warning)
+        << ex.what() << std::endl
+        << "AST nodes in this translation unit will be ignored!";
+    }
+    catch (const odb::database_exception& ex)
+    {
+      // TODO: Error code should be checked and rethrow if it is not unique
+      // constraint error. Error code may be database specific.
+    }
+  }
+}
 
 } // util
 } // cc

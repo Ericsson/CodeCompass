@@ -88,18 +88,18 @@ public:
     _ctx.srcMgr.persistFiles();
 
     (util::OdbTransaction(_ctx.db))([this]{
-      persistAll(_astNodes);
-      persistAll(_enumConstants);
-      persistAll(_enums);
-      persistAll(_types);
-      persistAll(_typedefs);
-      persistAll(_variables);
-      persistAll(_namespaces);
-      persistAll(_members);
-      persistAll(_inheritances);
-      persistAll(_friends);
-      persistAll(_functions);
-      persistAll(_relations);
+      util::persistAll(_astNodes, _ctx.db);
+      util::persistAll(_enumConstants, _ctx.db);
+      util::persistAll(_enums, _ctx.db);
+      util::persistAll(_types, _ctx.db);
+      util::persistAll(_typedefs, _ctx.db);
+      util::persistAll(_variables, _ctx.db);
+      util::persistAll(_namespaces, _ctx.db);
+      util::persistAll(_members, _ctx.db);
+      util::persistAll(_inheritances, _ctx.db);
+      util::persistAll(_friends, _ctx.db);
+      util::persistAll(_functions, _ctx.db);
+      util::persistAll(_relations, _ctx.db);
     });
   }
 
@@ -1406,32 +1406,6 @@ private:
     }
 
     return false;
-  }
-
-  // TODO: This should be in the model.
-  template <typename Cont>
-  void persistAll(Cont& cont_)
-  {
-    for (typename Cont::value_type& item : cont_)
-    {
-      try
-      {
-        _ctx.db->persist(*item);
-      }
-      catch (const odb::object_already_persistent& ex)
-      {
-        LOG(debug)
-          << item->toString();
-        LOG(warning)
-          << ex.what() << std::endl
-          << "AST nodes in this translation unit will be ignored!";
-      }
-      catch (const odb::database_exception& ex)
-      {
-        // TODO: Error code should be checked and rethrow if it is not unique
-        // constraint error. Error code may be database specific.
-      }
-    }
   }
 
   std::vector<model::CppAstNodePtr>      _astNodes;

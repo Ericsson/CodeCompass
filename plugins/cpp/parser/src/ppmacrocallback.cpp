@@ -28,9 +28,9 @@ PPMacroCallback::~PPMacroCallback()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    persistAll(_astNodes);
-    persistAll(_macros);
-    persistAll(_macrosExpansion);
+    util::persistAll(_astNodes, _ctx.db);
+    util::persistAll(_macros, _ctx.db);
+    util::persistAll(_macrosExpansion, _ctx.db);
   });
 }
 
