@@ -51,31 +51,6 @@ private:
     const model::FilePtr& file_,
     const clang::SourceRange& srcRange_);
 
-  template <typename Cont>
-  void persistAll(Cont& cont_)
-  {
-    for (typename Cont::value_type& item : cont_)
-    {
-      try
-      {
-        _ctx.db->persist(*item);
-      }
-      catch (const odb::object_already_persistent& ex)
-      {
-        LOG(warning)
-          << item->toString() << std::endl
-          << ex.what() << std::endl
-          << "AST nodes in this translation unit will be ignored!";
-      }
-      catch (const odb::database_exception& ex)
-      {
-        LOG(debug) << ex.what();
-        // TODO: Error code should be checked and rethrow if it is not unique
-        // constraint error. Error code may be database specific.
-      }
-    }
-  }
-
   ParserContext& _ctx;
   const std::string _cppSourceType;
   const clang::SourceManager& _clangSrcMgr;

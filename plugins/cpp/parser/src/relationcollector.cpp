@@ -33,9 +33,9 @@ RelationCollector::~RelationCollector()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    persistAll(_nodes);
-    persistAll(_edges);
-    persistAll(_edgeAttributes);
+    util::persistAll(_nodes, _ctx.db);
+    util::persistAll(_edges, _ctx.db);
+    util::persistAll(_edgeAttributes, _ctx.db);
   });
 }
 
