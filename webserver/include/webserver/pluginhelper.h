@@ -88,6 +88,10 @@ inline void registerPluginSimple(
         << " in workspace " << project;
     }
   }
+
+  if (pluginHandler_->getImplementationMap().empty())
+    throw std::runtime_error(
+      "There are no parsed projects in the given workspace directory.");
 }
 
 #define CODECOMPASS_SERVICE_FACTORY_WITH_CFG(serviceName, nspace) \
