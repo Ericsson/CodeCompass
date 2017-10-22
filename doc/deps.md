@@ -9,6 +9,7 @@ following packages are necessary for building CodeCompass:
 
 - **git**: For fetching and managing CodeCompass source code.
 - **cmake**: For building CodeCompass.
+- **make**: For building CodeCompass.
 - **g++**: For compiling CodeCompass. We use C++14 features, so the compiler
   has to be able to compile it.
 - **libboost-all-dev**: Boost can be used during the development.
@@ -26,7 +27,7 @@ following packages are necessary for building CodeCompass:
 - **libgraphviz-dev**: GraphViz is used for generating diagram visualitaions.
 - **libmagic-dev**: For detecting file types.
 - **libgit2-dev**: For compiling Git plugin in CodeCompass.
-- **npm**: For handling JavaScript dependencies for CdoeCompass web GUI.
+- **npm**: For handling JavaScript dependencies for CodeCompass web GUI.
 - **ctags**: For search parsing.
 - **libgtest-dev**: For testing CodeCompass.
   ***See [Known issues](#known-issues)!***
@@ -34,7 +35,7 @@ following packages are necessary for building CodeCompass:
 The following command installs the packages except for those which have some
 known issues:
 ```bash
-sudo apt-get install git cmake g++ libboost-all-dev openjdk-8-jdk libssl-dev libsqlite3-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags libgtest-dev
+sudo apt-get install git cmake make g++ libboost-all-dev openjdk-8-jdk libssl-dev libsqlite3-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags libgtest-dev
 ```
 
 CodeCompass needs [Thrift](httos://thrift.apache.org/) which provides Remote
