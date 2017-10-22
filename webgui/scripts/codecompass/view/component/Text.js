@@ -415,7 +415,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //--- Ctrl-click ---//
 
       if (event.button === 0 && event.ctrlKey) {
-        var astNodeInfo = getAstNodeInfoByPosition(pos, this._fileInfo);
+        var astNodeInfo
+          = astHelper.getAstNodeInfoByPosition(pos, this._fileInfo);
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
