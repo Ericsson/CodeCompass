@@ -26,20 +26,12 @@ target_link_libraries(cppparser
   cppmodel
   model
   clangTooling
-  clangFrontendTool
   clangFrontend
   clangDriver
   clangSerialization
-  clangCodeGen
   clangParse
   clangSema
-  clangStaticAnalyzerFrontend
-  clangStaticAnalyzerCheckers
-  clangStaticAnalyzerCore
   clangAnalysis
-  clangARCMigrate
-  clangRewrite
-  clangRewriteFrontend
   clangEdit
   clangAST
   clangLex
