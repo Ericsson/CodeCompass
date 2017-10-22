@@ -222,6 +222,10 @@ svg {
   color: grey;
 }
 
+.label-return-type {
+  color: #957d47;
+}
+
 .dijitTreeRowHover, .dijitTreeContent:hover{
   cursor:pointer;
 }
