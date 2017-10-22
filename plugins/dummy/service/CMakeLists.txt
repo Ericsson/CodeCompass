@@ -27,6 +27,7 @@ add_library(dummythrift STATIC
   gen-cpp/dummy_constants.cpp
   gen-cpp/dummy_types.cpp
   gen-cpp/DummyService.cpp)
+
 target_compile_options(dummythrift PUBLIC -fPIC)
 
 add_library(dummyservice SHARED
