@@ -544,11 +544,13 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       var that = this;
       this.selection = range;
 
+      this.clearAllMarks();
+
       setTimeout(function () {
         var fl = that._codeMirror.options.firstLineNumber;
         that._codeMirror.doc.setSelection(
           { line : range[2] - fl, ch : range[3] - 1 },
-          { line : range[0] - fl, ch : range[1] - 1 })
+          { line : range[0] - fl, ch : range[1] - 1 });
       }, 0);
     },
 
