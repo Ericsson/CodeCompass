@@ -2,6 +2,7 @@
 #include <queue>
 
 #include <util/util.h>
+#include <util/logutil.h>
 
 #include <model/cppfunction.h>
 #include <model/cppfunction-odb.hxx>
@@ -19,6 +20,8 @@
 #include <model/cppenum-odb.hxx>
 #include <model/cppmacroexpansion.h>
 #include <model/cppmacroexpansion-odb.hxx>
+#include <model/cppdoccomment.h>
+#include <model/cppdoccomment-odb.hxx>
 
 #include <service/cppservice.h>
 
@@ -53,6 +56,8 @@ namespace
   typedef odb::result<cc::model::CppMacroExpansion> MacroExpansionResult;
   typedef odb::query<cc::model::File> FileQuery;
   typedef odb::result<cc::model::File> FileResult;
+  typedef odb::query<cc::model::CppDocComment> DocCommentQuery;
+  typedef odb::result<cc::model::CppDocComment> DocCommentResult;
 
   /**
    * This struct transforms a model::CppAstNode to an AstNodeInfo Thrift
@@ -139,7 +144,63 @@ void CppServiceHandler::getDocumentation(
     std::string& return_,
     const core::AstNodeId& astNodeId_)
 {
-  // TODO
+  _transaction([&, this](){
+    model::CppAstNode node = queryCppAstNode(astNodeId_);
+
+    DocCommentResult docComment = _db->query<model::CppDocComment>(
+      DocCommentQuery::mangledNameHash == node.mangledNameHash);
+
+    if (!docComment.empty())
+      return_ = "<div class=\"main-doc\">" + docComment.begin()->contentHTML
+        + "</div>";
+
+    switch (node.symbolType)
+    {
+      case model::CppAstNode::SymbolType::Type:
+      {
+        //--- Data members ---//
+
+        std::vector<AstNodeInfo> methods;
+        getReferences(methods, astNodeId_, METHOD, {});
+
+        for (const AstNodeInfo& method : methods)
+        {
+          std::map<std::string, std::string> properties;
+          getProperties(properties, method.id);
+
+          return_ += "<div class=\"group\"><div class=\"signature\">";
+
+          //--- Add tags ---/
+
+          for (const std::string& tag : method.tags)
+            if (tag == "public" || tag == "private" || tag == "protected")
+              return_ += "<span class=\"icon-visibility icon-" + tag
+                      +  "\"></span>";
+            else
+              return_ += "<span class=\"tag tag-" + tag +"\" title=\""
+                      +  tag + "\">" + (char)std::toupper(tag[0]) + "</span>";
+
+          auto signature = properties.find("Signature");
+          return_
+            += signature == properties.end()
+            ?  method.astNodeValue
+            :  signature->second;
+
+          return_ += "</div>";
+
+          //--- Query documentation of members ---//
+
+          DocCommentResult doc = _db->query<model::CppDocComment>(
+            DocCommentQuery::mangledNameHash == method.mangledNameHash);
+
+          if (!doc.empty())
+            return_ += doc.begin()->contentHTML;
+
+          return_ += "</div>";
+        }
+      }
+    }
+  });
 }
 
 void CppServiceHandler::getAstNodeInfoByPosition(

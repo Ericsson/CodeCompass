@@ -14,7 +14,8 @@ set(ODB_SOURCES
   include/model/cppmacro.h
   include/model/cppmacroexpansion.h
   include/model/cppnode.h
-  include/model/cppedge.h)
+  include/model/cppedge.h
+  include/model/cppdoccomment.h)
 
 generate_odb_files("${ODB_SOURCES}")
 

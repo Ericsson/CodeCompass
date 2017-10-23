@@ -345,6 +345,56 @@ svg {
 
 /* InfoBox */
 
+.documentation dl.param > dt,
+.documentation dl.tparam > dt {
+  font-weight: bold;
+}
+
+.documentation .param dd > div,
+.documentation .tparam dd > div {
+  display: inline-block;
+  padding-right: 5px;
+}
+
+.documentation .param .dir {
+  font-style: italic;
+}
+
+.documentation .signature {
+  padding: 5px;
+  margin-bottom: 10px;
+  color: #3D578C;
+  border: 1px solid #C4CFE5;
+  background-color: #EBEFF6;
+}
+
+.documentation .group > div.comment {
+  padding-left: 10px;
+}
+
+.documentation .group {
+  padding-bottom: 10px;
+}
+
+.documentation .icon-visibility {
+  display: inline-block;
+  padding-right: 5px;
+}
+
+.documentation .main-doc {
+  padding: 10px;
+}
+
+.documentation div {
+  margin: 0px;
+}
+
+.documentation .main-doc > div,
+.documentation .comment {
+  line-height: 1.5em;
+  display: inline-block;
+}
+
 .infobox {
   position: absolute !important;
   top: 100px;
@@ -364,7 +414,7 @@ svg {
 }
 
 .infobox dt, 
-.tooltip-info dt{
+.tooltip-info dt {
   font-size: 12pt;
 }
 
@@ -376,7 +426,7 @@ svg {
   margin-top: 5px;
 }
 
-.infobox .param dd, 
+.infobox .param dd,
 .tooltip-info .param dd{
   margin-left: 20px;
 }
