@@ -16,6 +16,7 @@
 #include <model/cppdoccomment-odb.hxx>
 
 #include "doccommentformatter.h"
+#include "manglednamecache.h"
 
 namespace cc
 {
@@ -29,13 +30,13 @@ public:
   DocCommentCollector(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    std::unordered_map<model::CppAstNodeId, std::uint64_t>& mangledNameCache_,
+    MangledNameCache& mangledNameCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
-    : _ctx(ctx_),
-      _astContext(astContext_),
-      _clangSrcMgr(astContext_.getSourceManager()),
-      _mangledNameCache(mangledNameCache_),
-      _clangToAstNodeId(clangToAstNodeId_)
+      : _ctx(ctx_),
+        _astContext(astContext_),
+        _clangSrcMgr(astContext_.getSourceManager()),
+        _mangledNameCache(mangledNameCache_),
+        _clangToAstNodeId(clangToAstNodeId_)
   {
   }
 
@@ -45,10 +46,10 @@ public:
       return true;
 
     auto it = _clangToAstNodeId.find(decl);
-    if(it == _clangToAstNodeId.end())
+    if (it == _clangToAstNodeId.end())
       return true;
 
-    clang::comments::FullComment *fc =
+    clang::comments::FullComment* fc =
       decl->getASTContext().getCommentForDecl(decl, nullptr);
 
     if (!fc) return true;
@@ -68,7 +69,7 @@ public:
   ~DocCommentCollector()
   {
     (util::OdbTransaction(_ctx.db))([this]{
-      for (auto cmt: _docComments)
+      for (auto cmt : _docComments)
       {
         _ctx.db->persist(*(cmt.second));
       }
@@ -82,7 +83,7 @@ private:
   ParserContext& _ctx;
   const clang::ASTContext& _astContext;
   const clang::SourceManager& _clangSrcMgr;
-  std::unordered_map<model::CppAstNodeId, std::uint64_t>& _mangledNameCache;
+  MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 };
 

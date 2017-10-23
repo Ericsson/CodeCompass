@@ -17,8 +17,8 @@ function (declare, dom, style, topic, ContentPane, FloatingPane, TabContainer,
       this._subscribeTopics();
       this.width  = window.innerWidth  / 2;
       this.height = window.innerHeight / 2;
-      this.posX   = (window.innerWidth   - this.width )/2;
-      this.posY   = (window.innerHeight  - this.height)/2;
+      this.posX   = (window.innerWidth  - this.width ) / 2;
+      this.posY   = (window.innerHeight - this.height) / 2;
     },
 
     postCreate : function () {
@@ -34,10 +34,10 @@ function (declare, dom, style, topic, ContentPane, FloatingPane, TabContainer,
       this.startup();
     },
 
-    resize: function () {
+    resize : function () {
       this.inherited(arguments);
       var pos = arguments[0];
-      if(pos && pos.w > 0){
+      if (pos && pos.w > 0) {
         this.width = pos.w;
         this.height = pos.h;
         this.posX = pos.x;
@@ -92,7 +92,7 @@ function (declare, dom, style, topic, ContentPane, FloatingPane, TabContainer,
 
   var infobox = new InfoBox({
     id : 'infobox',
-    title: "Info Box",
+    title: "Documentation",
     resizable: true,
     dockable: false
   }, dom.create("div", null, window.document.body));

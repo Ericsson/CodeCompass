@@ -92,7 +92,7 @@ private:
         docCommentCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
       else
-        LOG(debug) << "C++ documentation parser has been skipped.";
+        LOG(info) << "C++ documentation parser has been skipped.";
     }
 
   private:
@@ -437,7 +437,7 @@ extern "C"
     boost::program_options::options_description description("C++ Plugin");
     description.add_options()
       ("skip-doccomment",
-       "If this flag is given the parser will skip parsing the documentation"
+       "If this flag is given the parser will skip parsing the documentation "
        "comments.");
     return description;
   }

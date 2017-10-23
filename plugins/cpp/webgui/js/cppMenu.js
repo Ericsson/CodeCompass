@@ -59,7 +59,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
     id : 'cpp-text-infobox',
     render : function (nodeInfo, fileInfo) {
       return new MenuItem({
-        label : 'Info Box',
+        label : 'Documentation',
         onClick : function () {
           topic.publish('codecompass/documentation', {
             fileType    : fileInfo.type,

@@ -19,16 +19,16 @@ typedef odb::lazy_shared_ptr<CppDocComment> CppDocCommentPtr;
 struct CppDocComment
 {
 
-#pragma db id auto
+  #pragma db id auto
   int id;
 
-#pragma db not_null index
+  #pragma db not_null index
   unsigned long long contentHash;
 
-#pragma db not_null
+  #pragma db not_null
   std::string contentHTML;
 
-#pragma db not_null index
+  #pragma db not_null index
   unsigned long long mangledNameHash;
 };
 

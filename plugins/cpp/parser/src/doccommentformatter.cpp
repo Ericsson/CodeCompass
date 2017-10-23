@@ -19,37 +19,39 @@ namespace
 /**
  * Separate parts of a FullComment.
  */
-struct FullCommentParts {
+struct FullCommentParts
+{
   /**
    * Take a full comment apart and initialize members accordingly.
    */
-  FullCommentParts(const FullComment* c_,
-                   const CommandTraits& traits_);
+  FullCommentParts(
+    const FullComment* c_,
+    const CommandTraits& traits_);
 
-  const BlockContentComment *brief; /*!< A paragraph that serves as a brief
+  const BlockContentComment* _brief; /*!< A paragraph that serves as a _brief
     description. For more information see:
-    http://www.stack.nl/~dimitri/doxygen/manual/commands.html#cmdbrief*/
+    http://www.stack.nl/~dimitri/doxygen/manual/commands.html#cmd_brief*/
 
-  const BlockContentComment *headerfile;
-  const ParagraphComment *firstParagraph;
-  std::vector<const BlockCommandComment *> returns;
-  std::vector<const ParamCommandComment *> params;
-  std::vector<const TParamCommandComment *> tParams;
-  llvm::TinyPtrVector<const BlockCommandComment *> exceptions;
-  std::vector<const BlockContentComment *> miscBlocks;
+  const BlockContentComment* _headerfile;
+  const ParagraphComment* _firstParagraph;
+  std::vector<const BlockCommandComment*> _returns;
+  std::vector<const ParamCommandComment*> _params;
+  std::vector<const TParamCommandComment*> _tParams;
+  llvm::TinyPtrVector<const BlockCommandComment*> _exceptions;
+  std::vector<const BlockContentComment*> _miscBlocks;
 };
 
 FullCommentParts::FullCommentParts(
-  const FullComment *c_,
-  const CommandTraits &traits_)
-  : brief(nullptr),
-    headerfile(nullptr),
-    firstParagraph(nullptr)
+  const FullComment* c_,
+  const CommandTraits& traits_)
+    : _brief(nullptr),
+      _headerfile(nullptr),
+      _firstParagraph(nullptr)
 {
   for (Comment::child_iterator it = c_->child_begin(), end = c_->child_end();
        it != end; ++it)
   {
-    const Comment *child = *it;
+    const Comment* child = *it;
 
     if (!child)
       continue;
@@ -61,62 +63,55 @@ FullCommentParts::FullCommentParts(
 
       case Comment::ParagraphCommentKind:
       {
-        const ParagraphComment *pc = llvm::cast<ParagraphComment>(child);
+        const ParagraphComment* pc = llvm::cast<ParagraphComment>(child);
 
         if (pc->isWhitespace())
           break;
 
-        if (!firstParagraph)
-          firstParagraph = pc;
+        if (!_firstParagraph)
+          _firstParagraph = pc;
 
-        miscBlocks.push_back(pc);
+        _miscBlocks.push_back(pc);
         break;
       }
 
       case Comment::BlockCommandCommentKind:
       {
-        const BlockCommandComment *bcc = llvm::cast<BlockCommandComment>(child);
-        const CommandInfo *Info = traits_.getCommandInfo(bcc->getCommandID());
-        if (!brief && Info->IsBriefCommand) {
-          brief = bcc;
-          break;
-        }
-        if (!headerfile && Info->IsHeaderfileCommand)
-        {
-          headerfile = bcc;
-          break;
-        }
-        if (Info->IsReturnsCommand)
-        {
-          returns.push_back(bcc);
-          break;
-        }
-        if (Info->IsThrowsCommand)
-        {
-          exceptions.push_back(bcc);
-          break;
-        }
-        miscBlocks.push_back(bcc);
+        const BlockCommandComment* bcc = llvm::cast<BlockCommandComment>(child);
+        const CommandInfo* Info = traits_.getCommandInfo(bcc->getCommandID());
+
+        if (!_brief && Info->IsBriefCommand)
+          _brief = bcc;
+        else if (!_headerfile && Info->IsHeaderfileCommand)
+          _headerfile = bcc;
+        else if (Info->IsReturnsCommand)
+          _returns.push_back(bcc);
+        else if (Info->IsThrowsCommand)
+          _exceptions.push_back(bcc);
+        else
+          _miscBlocks.push_back(bcc);
+
         break;
       }
 
       case Comment::ParamCommandCommentKind:
       {
-        const ParamCommandComment *pcc = llvm::cast<ParamCommandComment>(child);
+        const ParamCommandComment* pcc = llvm::cast<ParamCommandComment>(child);
+
         if (!pcc->hasParamName())
           break;
 
         if (!pcc->isDirectionExplicit() && !pcc->hasNonWhitespaceParagraph())
           break;
 
-        params.push_back(pcc);
+        _params.push_back(pcc);
         break;
       }
 
       case Comment::TParamCommandCommentKind:
       {
-        const TParamCommandComment *tpcc =
-          llvm::cast<TParamCommandComment>(child);
+        const TParamCommandComment* tpcc
+          = llvm::cast<TParamCommandComment>(child);
 
         if (!tpcc->hasParamName())
           break;
@@ -124,46 +119,47 @@ FullCommentParts::FullCommentParts(
         if (!tpcc->hasNonWhitespaceParagraph())
           break;
 
-        tParams.push_back(tpcc);
+        _tParams.push_back(tpcc);
         break;
       }
 
       case Comment::VerbatimBlockCommentKind:
-        miscBlocks.push_back(cast<BlockCommandComment>(child));
+        _miscBlocks.push_back(cast<BlockCommandComment>(child));
         break;
 
       case Comment::VerbatimLineCommentKind:
       {
-        const VerbatimLineComment *vlc = llvm::cast<VerbatimLineComment>(child);
-        const CommandInfo *Info = traits_.getCommandInfo(vlc->getCommandID());
+        const VerbatimLineComment* vlc = llvm::cast<VerbatimLineComment>(child);
+        const CommandInfo* Info = traits_.getCommandInfo(vlc->getCommandID());
 
         if (!Info->IsDeclarationCommand)
-          miscBlocks.push_back(vlc);
+          _miscBlocks.push_back(vlc);
 
         break;
       }
 
       default:
-        LOG(warning) << "AST node of this kind can't be a child of a "
-                        "FullComment!";
+        LOG(debug)
+          << "AST node of this kind can't be a child of a FullComment!";
     }
   }
 }
 
 // https://llvm.org/svn/llvm-project/cfe/trunk/lib/Index/CommentToXML.cpp
-class CommentToHTMLConverter :
-    public ConstCommentVisitor<CommentToHTMLConverter> {
+class CommentToHTMLConverter
+  : public ConstCommentVisitor<CommentToHTMLConverter>
+{
 public:
   CommentToHTMLConverter(
     const FullComment* fullComment_,
     const CommandTraits& traits_,
     std::stringstream& res_)
-    : _fullComment(fullComment_),
-      _traits(traits_),
-      _res(res_)
+      : _fullComment(fullComment_),
+        _traits(traits_),
+        _res(res_)
   { }
 
-  /*
+  /**
    * This function visits only the documentation part of the comment.
    */
   void visitTextComment(const TextComment* c_);
@@ -195,7 +191,7 @@ public:
   void visitParagraphComment(const ParagraphComment* c_);
 
   /**
-   * This function visits the block commands such as \brief, \date, \author etc.
+   * This function visits the block commands such as \_brief, \date, \author etc.
    */
   void visitBlockCommandComment(const BlockCommandComment* c_);
 
@@ -249,36 +245,15 @@ void CommentToHTMLConverter::appendToResultWithHTMLEscaping(
   for (clang::StringRef::iterator it = str_.begin(), end = str_.end();
     it != end; ++it)
   {
-    const char C = *it;
-    switch (C)
+    switch (*it)
     {
-      case '&':
-        _res << "&amp;";
-        break;
-
-      case '<':
-        _res << "&lt;";
-        break;
-
-      case '>':
-        _res << "&gt;";
-        break;
-
-      case '"':
-        _res << "&quot;";
-        break;
-
-      case '\'':
-        _res << "&#39;";
-        break;
-
-      case '/':
-        _res << "&#47;";
-        break;
-
-      default:
-        _res << C;
-        break;
+      case '&':  _res << "&amp;";  break;
+      case '<':  _res << "&lt;";   break;
+      case '>':  _res << "&gt;";   break;
+      case '"':  _res << "&quot;"; break;
+      case '\'': _res << "&#39;";  break;
+      case '/':  _res << "&#47;";  break;
+      default:   _res << *it;      break;
     }
   }
 }
@@ -293,8 +268,7 @@ void CommentToHTMLConverter::visitTextComment(const TextComment* c_)
 void CommentToHTMLConverter::visitInlineCommandComment(
   const InlineCommandComment* c_)
 {
-  //--- Nothing to render if argument is empty. ---//
-
+  // Nothing to render if argument is empty.
   if (!c_->getNumArgs())
     return;
 
@@ -397,7 +371,7 @@ void CommentToHTMLConverter::visitBlockCommandComment(
     return;
   }
 
-  // We don't know anything about this command.  Just render the paragraph.
+  // We don't know anything about this command. Just render the paragraph.
   visit(c_->getParagraph());
 }
 
@@ -406,19 +380,14 @@ void CommentToHTMLConverter::visitParamCommandComment(
 {
   _res << "<dl class=\"param\"><dt>Parameter</dt><dd>";
   _res << "<div class=\"dir\">";
-  switch (c_->getDirection()) {
-    case ParamCommandComment::In:
-      _res << "in";
-      break;
 
-    case ParamCommandComment::Out:
-      _res << "out";
-      break;
-
-    case ParamCommandComment::InOut:
-      _res << "in,out";
-      break;
+  switch (c_->getDirection())
+  {
+    case ParamCommandComment::In:    _res << "in";     break;
+    case ParamCommandComment::Out:   _res << "out";    break;
+    case ParamCommandComment::InOut: _res << "in,out"; break;
   }
+
   _res << "</div><div class=\"name\">";
 
   appendToResultWithHTMLEscaping(c_->isParamIndexValid()
@@ -452,8 +421,9 @@ void CommentToHTMLConverter::visitVerbatimBlockComment(
   if (!numLines)
     return;
 
-  _res << "<divre>";
-  for (unsigned i = 0; i != numLines; ++i) {
+  _res << "<pre>";
+  for (unsigned i = 0; i != numLines; ++i)
+  {
     appendToResultWithHTMLEscaping(c_->getText(i));
     if (i + 1 != numLines)
       _res << '\n';
@@ -464,7 +434,7 @@ void CommentToHTMLConverter::visitVerbatimBlockComment(
 void CommentToHTMLConverter::visitVerbatimLineComment(
   const VerbatimLineComment* c_)
 {
-  _res << "<divre>";
+  _res << "<pre>";
   appendToResultWithHTMLEscaping(c_->getText());
   _res << "</pre>";
 }
@@ -473,58 +443,58 @@ void CommentToHTMLConverter::visitFullComment(const FullComment* c_)
 {
   FullCommentParts parts(c_, _traits);
 
-  bool firstParagraphIsBrief = false;
+  bool _firstParagraphIsBrief = false;
 
-  if (parts.headerfile)
-    visit(parts.headerfile);
+  if (parts._headerfile)
+    visit(parts._headerfile);
 
-  if (parts.brief)
-    visit(parts.brief);
+  if (parts._brief)
+    visit(parts._brief);
 
-  else if (parts.firstParagraph)
+  else if (parts._firstParagraph)
   {
-    _res << "<div class=\"para-brief\">";
-    visitNonStandaloneParagraphComment(parts.firstParagraph);
+    _res << "<div class=\"para-_brief\">";
+    visitNonStandaloneParagraphComment(parts._firstParagraph);
     _res << "</div>";
-    firstParagraphIsBrief = true;
+    _firstParagraphIsBrief = true;
   }
 
-  for (unsigned i = 0, e = parts.miscBlocks.size(); i != e; ++i)
+  for (unsigned i = 0, e = parts._miscBlocks.size(); i != e; ++i)
   {
-    const Comment *C = parts.miscBlocks[i];
+    const Comment *C = parts._miscBlocks[i];
 
-    if (firstParagraphIsBrief && C == parts.firstParagraph)
+    if (_firstParagraphIsBrief && C == parts._firstParagraph)
       continue;
 
     visit(C);
   }
 
-  if (parts.tParams.size() != 0)
+  if (parts._tParams.size() != 0)
   {
     _res << "<dl>";
 
-    for (unsigned i = 0, e = parts.tParams.size(); i != e; ++i)
-      visit(parts.tParams[i]);
+    for (unsigned i = 0, e = parts._tParams.size(); i != e; ++i)
+      visit(parts._tParams[i]);
 
     _res << "</dl>";
   }
 
-  if (parts.params.size() != 0)
+  if (parts._params.size() != 0)
   {
     _res << "<dl>";
 
-    for (unsigned i = 0, e = parts.params.size(); i != e; ++i)
-      visit(parts.params[i]);
+    for (unsigned i = 0, e = parts._params.size(); i != e; ++i)
+      visit(parts._params[i]);
 
     _res << "</dl>";
   }
 
-  if (parts.returns.size() != 0)
+  if (parts._returns.size() != 0)
   {
     _res << "<div class=\"result-discussion\">";
 
-    for (unsigned i = 0, e = parts.returns.size(); i != e; ++i)
-      visit(parts.returns[i]);
+    for (unsigned i = 0, e = parts._returns.size(); i != e; ++i)
+      visit(parts._returns[i]);
 
     _res << "</div>";
   }
@@ -538,8 +508,7 @@ void CommentToHTMLConverter::visitNonStandaloneParagraphComment(
 
   for (Comment::child_iterator it = c_->child_begin(), end = c_->child_end();
        it != end; ++it)
-
-  visit(*it);
+    visit(*it);
 }
 
 
@@ -553,7 +522,8 @@ std::string DocCommentFormatter::format(
   const clang::ASTContext& ctx_)
 {
   std::stringstream res;
-  CommentToHTMLConverter htmlConverter(fc_, ctx_.getCommentCommandTraits(), res);
+  CommentToHTMLConverter htmlConverter(
+    fc_, ctx_.getCommentCommandTraits(), res);
   htmlConverter.visit(fc_);
 
   return res.str();

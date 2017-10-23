@@ -150,7 +150,7 @@ void CppServiceHandler::getDocumentation(
     DocCommentResult docComment = _db->query<model::CppDocComment>(
       DocCommentQuery::mangledNameHash == node.mangledNameHash);
 
-    if(!docComment.empty())
+    if (!docComment.empty())
       return_ = "<div class=\"main-doc\">" + docComment.begin()->contentHTML
         + "</div>";
 
@@ -159,6 +159,7 @@ void CppServiceHandler::getDocumentation(
       case model::CppAstNode::SymbolType::Type:
       {
         //--- Data members ---//
+
         std::vector<AstNodeInfo> methods;
         getReferences(methods, astNodeId_, METHOD, {});
 
@@ -171,7 +172,7 @@ void CppServiceHandler::getDocumentation(
 
           //--- Add tags ---/
 
-          for (const std::string tag : method.tags)
+          for (const std::string& tag : method.tags)
             if (tag == "public" || tag == "private" || tag == "protected")
               return_ += "<span class=\"icon-visibility icon-" + tag
                       +  "\"></span>";
@@ -179,22 +180,23 @@ void CppServiceHandler::getDocumentation(
               return_ += "<span class=\"tag tag-" + tag +"\" title=\""
                       +  tag + "\">" + (char)std::toupper(tag[0]) + "</span>";
 
-          std::string signature = method.astNodeValue;
-          if (properties.count("Signature"))
-            signature = properties["Signature"];
+          auto signature = properties.find("Signature");
+          return_
+            += signature == properties.end()
+            ?  method.astNodeValue
+            :  signature->second;
 
-          return_ += signature + "</div>";
+          return_ += "</div>";
 
           //--- Query documentation of members ---//
 
           DocCommentResult doc = _db->query<model::CppDocComment>(
             DocCommentQuery::mangledNameHash == method.mangledNameHash);
 
-          if(!doc.empty())
+          if (!doc.empty())
             return_ += doc.begin()->contentHTML;
 
           return_ += "</div>";
-
         }
       }
     }

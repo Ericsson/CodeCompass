@@ -9,22 +9,20 @@ namespace parser
 {
 
 /**
- * Converts a clang::comments::FullComment into an
- * HTML text
+ * Converts a clang::comments::FullComment into an HTML text.
  */
 class DocCommentFormatter
 {
 public:
 
   /**
-   * Converts a clang::comments::FullComment into an
-   * HTML text
+   * Converts a clang::comments::FullComment into an HTML text.
    *
-   * @param fc the comment to be formatted
-   * @return the HTML-formatted string
+   * @param fc The comment to be formatted.
+   * @return the HTML-formatted string.
    */
   std::string format(
-    clang::comments::FullComment *fc,
+    clang::comments::FullComment* fc,
     const clang::ASTContext& ctx_);
 };
 
