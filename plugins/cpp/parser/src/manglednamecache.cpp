@@ -14,6 +14,7 @@ bool MangledNameCache::insert(const model::CppAstNode& node_)
 
 std::uint64_t MangledNameCache::at(const model::CppAstNodeId& id_) const
 {
+  std::lock_guard<std::mutex> guard(_cacheMutex);
   return _mangledNameCache.at(id_);
 }
 

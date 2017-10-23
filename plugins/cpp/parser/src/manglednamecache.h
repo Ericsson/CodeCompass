@@ -39,7 +39,7 @@ public:
 
 private:
   std::unordered_map<model::CppAstNodeId, std::uint64_t> _mangledNameCache;
-  std::mutex _cacheMutex;
+  mutable std::mutex _cacheMutex;
 };
 
 } // parser
