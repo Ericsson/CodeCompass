@@ -1,4 +1,4 @@
-define([
+require([
   'dojo/topic',
   'dijit/Menu',
   'dijit/MenuItem',
