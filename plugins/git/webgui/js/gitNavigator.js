@@ -1,4 +1,4 @@
-define([
+require([
   'dijit/Tooltip',
   'dijit/tree/ObjectStoreModel',
   'dojo/_base/declare',

@@ -1,4 +1,4 @@
-define([
+require([
   'dojo/_base/declare',
   'dojo/dom-construct',
   'dojo/topic',

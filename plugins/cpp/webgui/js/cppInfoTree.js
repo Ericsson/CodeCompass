@@ -1,4 +1,4 @@
-define([
+require([
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/util'],
