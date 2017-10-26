@@ -22,9 +22,7 @@ po::options_description commandLineArguments()
     ("help,h",
       "Prints this help message.")
     ("workspace,w", po::value<std::string>()->required(),
-      "Path to a workspace directory which contains the parsed projects and an "
-      "INI-like format workspace.cfg file with information of the parsed "
-      "projects.")
+      "Path to a workspace directory which contains the parsed projects.")
     ("database,d", po::value<std::string>()->required(),
       // TODO: Provide a full connection string example.
       "A connection string to the relational database with the following "
