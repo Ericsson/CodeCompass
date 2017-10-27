@@ -132,13 +132,15 @@ function (Dialog, array, lang, locale, style, ItemFileWriteStore, DataGrid,
      * sum of its height, top and bottom margin, padding and border.
      */
     getFullHeight : function (element) {
-      var height = parseFloat(style.get(element, 'height'));
-      var paddingTop = parseFloat(style.get(element, 'paddingTop'));
-      var paddingBottom = parseFloat(style.get(element, 'paddingBottom'));
-      var borderTop = parseFloat(style.get(element, 'borderTop'));
-      var borderBottom = parseFloat(style.get(element, 'borderBottom'));
-      var marginTop = parseFloat(style.get(element, 'marginTop'));
-      var marginBottom = parseFloat(style.get(element, 'marginBottom'));
+      var computedStyle = style.getComputedStyle(element);
+
+      var height = parseInt(computedStyle.height);
+      var paddingTop = parseInt(computedStyle.paddingTop);
+      var paddingBottom = parseInt(computedStyle.paddingBottom);
+      var borderTop = parseInt(computedStyle.borderTopWidth);
+      var borderBottom = parseInt(computedStyle.borderBottomWidth);
+      var marginTop = parseInt(computedStyle.marginTop);
+      var marginBottom = parseInt(computedStyle.marginBottom);
 
       return height + paddingTop + paddingBottom + borderTop + borderBottom +
         marginTop + marginBottom;
