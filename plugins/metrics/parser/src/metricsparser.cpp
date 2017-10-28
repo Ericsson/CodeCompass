@@ -7,6 +7,7 @@
 #include <util/logutil.h>
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
+#include <util/threadpool.h>
 
 #include <parser/sourcemanager.h>
 
@@ -29,6 +30,20 @@ MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
       _fileIdCache.insert(mf.file);
     }
   });
+
+  int threadNum = _ctx.options["jobs"].as<int>();
+  _pool = util::make_thread_pool<std::string>(
+    threadNum, [this](const std::string& path_)
+    {
+      model::FilePtr file = _ctx.srcMgr.getFile(path_);
+      if (file)
+      {
+        if (_fileIdCache.find(file->id) == _fileIdCache.end())
+          this->persistLoc(getLocFromFile(file), file->id);
+        else
+          LOG(info) << "Metrics already counted for file: " << file->path;
+      }
+    });
 }
 
 std::vector<std::string> MetricsParser::getDependentParsers() const
@@ -65,6 +80,9 @@ bool MetricsParser::parse()
 
     });
   }
+
+  _pool->wait();
+
   return true;
 }
 
@@ -73,17 +91,10 @@ util::DirIterCallback MetricsParser::getParserCallback()
   return [this](const std::string& currPath_)
   {
     boost::filesystem::path path(currPath_);
+
     if (boost::filesystem::is_regular_file(path))
-    {
-      model::FilePtr file = _ctx.srcMgr.getFile(currPath_);
-      if (file)
-      {
-        if (_fileIdCache.find(file->id) == _fileIdCache.end())
-          persistLoc(getLocFromFile(file), file->id);
-        else
-          LOG(info) << "Metrics already counted for file: " << file->path;
-      }
-    }
+      _pool->enqueue(currPath_);
+
     return true;
   };
 }
