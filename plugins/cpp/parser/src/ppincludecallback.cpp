@@ -101,7 +101,8 @@ void PPIncludeCallback::InclusionDirective(
   model::CppAstNodePtr fileNode =
     createFileAstNode(included, filenameRange_.getAsRange());
 
-  if (_mangledNameCache.insert(*fileNode))
+  if (_mangledNameCache.insert(
+        std::make_pair(fileNode->id, fileNode->mangledNameHash)))
     _astNodes.push_back(fileNode);
 
   model::CppHeaderInclusionPtr inclusion(new model::CppHeaderInclusion);

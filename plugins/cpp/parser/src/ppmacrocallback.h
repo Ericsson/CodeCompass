@@ -16,7 +16,7 @@
 
 #include <util/logutil.h>
 
-#include "manglednamecache.h"
+#include "cachetypes.h"
 
 namespace cc
 {

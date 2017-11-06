@@ -22,6 +22,8 @@
 #include <model/cppmacroexpansion-odb.hxx>
 #include <model/cppdoccomment.h>
 #include <model/cppdoccomment-odb.hxx>
+#include <model/cpppointeranalysis.h>
+#include <model/cpppointeranalysis-odb.hxx>
 
 #include <service/cppservice.h>
 
@@ -972,10 +974,13 @@ void CppServiceHandler::getDiagramTypes(
 
     case model::CppAstNode::SymbolType::Variable:
     case model::CppAstNode::SymbolType::FunctionPtr:
-      return_["Pointer analysis diagram (Andersen)"] =
-        POINTER_ANALYSIS_ANDERSEN;
-      return_["Pointer analysis diagram (Steensgaard)"] =
-        POINTER_ANALYSIS_STEENSGAARD;
+      if (_db->query_value<model::CppPointerAnalysisCount>().count != 0)
+      {
+        return_["Pointer analysis diagram (Andersen)"] =
+          POINTER_ANALYSIS_ANDERSEN;
+        return_["Pointer analysis diagram (Steensgaard)"] =
+          POINTER_ANALYSIS_STEENSGAARD;
+      }
       break;
 
     default: // Just to suppress warning of uncovered enum constants.

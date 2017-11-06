@@ -124,7 +124,8 @@ void PPMacroCallback::MacroExpands(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_mangledNameCache.insert(
+        std::make_pair(astNode->id, astNode->mangledNameHash)))
   {
     _astNodes.push_back(astNode);
 
@@ -150,7 +151,8 @@ void PPMacroCallback::MacroDefined(
   addFileLoc(astNode, mi->getDefinitionLoc(), mi->getDefinitionEndLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_mangledNameCache.insert(
+        std::make_pair(astNode->id, astNode->mangledNameHash)))
   {
     _astNodes.push_back(astNode);
 
@@ -177,7 +179,8 @@ void PPMacroCallback::MacroUndefined(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_mangledNameCache.insert(
+        std::make_pair(astNode->id, astNode->mangledNameHash)))
     _astNodes.push_back(astNode);
 }
 

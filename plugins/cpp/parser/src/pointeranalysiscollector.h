@@ -19,10 +19,9 @@
 #include <util/odbtransaction.h>
 #include <util/logutil.h>
 
-#include "symbolhelper.h"
-#include "manglednamecache.h"
-#include "idcache.h"
+#include "cachetypes.h"
 #include "filelocutil.h"
+#include "symbolhelper.h"
 
 namespace cc
 {
@@ -43,22 +42,20 @@ public:
     const std::string& astValue_,
     const std::string& mangledName_,
     const clang::SourceLocation& start_,
-    const clang::SourceLocation& end_,
-    bool addSuffixToMangledName_ = true);
+    const clang::SourceLocation& end_) const;
 
 private:
 
   /**
    * Set AST node file location.
    */
-  bool addFileLoc(
-    cc::model::CppAstNodePtr& astNode_,
+  bool setFileLoc(
+    cc::model::FileLoc& fileLoc_,
     const clang::SourceLocation& start_,
-    const clang::SourceLocation& end_);
+    const clang::SourceLocation& end_) const;
 
   cc::parser::SourceManager& _srcMgr;
   cc::parser::FileLocUtil _fileLocUtil;
-  const std::string _cppSourceType;
 };
 
 /**
@@ -220,8 +217,8 @@ private:
    */
   void addStmtSide(
     std::uint64_t mangledNameHash_,
-    const std::string operators_,
-    std::set<model::CppPointerAnalysis::Options> options_ = {});
+    model::CppPointerAnalysis::Options_t options_,
+    const std::string& operators_);
 
   /**
    * Returns a string for the source that the range encompasses.
@@ -238,16 +235,15 @@ private:
     const std::string& astValue_,
     const std::string& mangledName_,
     const clang::SourceLocation& start_,
-    const clang::SourceLocation& end_,
-    bool addSuffixToMangledName_ = true);
+    const clang::SourceLocation& end_);
 
   template <typename T>
   std::uint64_t getStmtMangledName(T* t_)
   {
     auto it = _clangToAstNodeId.find(t_);
-    if (it != _clangToAstNodeId.end())
-       if (_mangledNameCache.contain(it->second))
-        return _mangledNameCache.at(it->second);
+    if (it != _clangToAstNodeId.end() &&
+        _mangledNameCache.contains(it->second))
+      return _mangledNameCache.at(it->second);
 
     return 0;
   }
@@ -261,19 +257,14 @@ private:
   const int _maxReturnCount = 5;
 
   std::set<model::CppPointerAnalysis::StmtSide>& _collected;
-  ParserContext& _ctx;
-  clang::ASTContext& _astContext;
   MangledNameCache& _mangledNameCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
   std::vector<model::CppAstNodePtr>& _astNodes;
   std::unordered_map<clang::CXXMethodDecl*,
-    std::unordered_set<clang::CXXMethodDecl*>> _overridens;
+    std::unordered_set<clang::CXXMethodDecl*>> _overriddens;
   const clang::SourceManager& _clangSrcMgr;
   AstNodeCreator _astNodeCreator;
-  FileLocUtil _fileLocUtil;
   clang::MangleContext* _mngCtx;
-  bool _shouldCollect;
-  const std::string _cppSourceType;
   std::string _operators;
   bool _isReturnType;
   int _returnCollectorCallCount;
@@ -345,8 +336,7 @@ private:
     const std::string& astValue_,
     const std::string& mangledName_,
     const clang::SourceLocation& start_,
-    const clang::SourceLocation& end_,
-    bool addSuffixToMangledName_ = true);
+    const clang::SourceLocation& end_);
 
   void makeUndefinedRels(clang::VarDecl* lhs_);
 
@@ -356,7 +346,7 @@ private:
     std::set<model::CppPointerAnalysis::StmtSide> ret;
 
     StmtSideCollector rc(ret, _ctx, _astContext, _mangledNameCache,
-      _clangToAstNodeId, _astNodes, _overridens);
+      _clangToAstNodeId, _astNodes, _overriddens);
 
     rc.collect(s_);
 
@@ -372,36 +362,11 @@ private:
     createPointerAnalysis(lhs, rhs);
   }
 
-  template <typename Cont>
-  void persistAll(Cont& cont_)
-  {
-    for (typename Cont::value_type& item : cont_)
-    {
-      try
-      {
-        _ctx.db->persist(*item);
-      }
-      catch (const odb::object_already_persistent& ex)
-      {
-        LOG(debug)
-          << item->toString();
-        LOG(warning)
-          << ex.what() << std::endl
-          << "AST nodes in this translation unit will be ignored!";
-      }
-      catch (const odb::database_exception& ex)
-      {
-        // TODO: Error code should be checked and rethrow if it is not unique
-        // constraint error. Error code may be database specific.
-      }
-    }
-  }
-
-  std::vector<model::CppAstNodePtr>         _astNodes;
+  std::vector<model::CppAstNodePtr> _astNodes;
   std::vector<model::CppPointerAnalysisPtr> _pAnalysis;
 
   std::unordered_map<clang::CXXMethodDecl*,
-    std::unordered_set<clang::CXXMethodDecl*>> _overridens;
+    std::unordered_set<clang::CXXMethodDecl*>> _overriddens;
   static std::unordered_set<std::uint64_t> _sIdCache;
   ParserContext& _ctx;
   clang::ASTContext& _astContext;

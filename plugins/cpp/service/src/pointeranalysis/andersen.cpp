@@ -97,8 +97,10 @@ std::set<model::CppPointerAnalysis::StmtSide> Andersen::evalLHS(
     for (const model::CppPointerAnalysis::StmtSide& e : _PT[lhs_])
     {
       for (const model::CppPointerAnalysis::StmtSide& stmtSide : evalLHS(
-        model::CppPointerAnalysis::StmtSide{e.mangledNameHash, operators,
-        e.options}))
+        model::CppPointerAnalysis::StmtSide{
+          e.mangledNameHash,
+          e.options,
+          operators}))
       {
         ret.insert(stmtSide);
       }
@@ -122,7 +124,7 @@ std::set<model::CppPointerAnalysis::StmtSide> Andersen::evalRHS(
       return {rhs_};
 
     return evalRHS(model::CppPointerAnalysis::StmtSide{
-      rhs_.mangledNameHash, operators, rhs_.options});
+      rhs_.mangledNameHash, rhs_.options, operators});
   }
   else
   {
@@ -131,8 +133,10 @@ std::set<model::CppPointerAnalysis::StmtSide> Andersen::evalRHS(
     for (const model::CppPointerAnalysis::StmtSide& e : _PT[rhs_])
     {
       for (const model::CppPointerAnalysis::StmtSide& stmtSide : evalRHS(
-        model::CppPointerAnalysis::StmtSide{e.mangledNameHash, operators,
-        e.options}))
+        model::CppPointerAnalysis::StmtSide{
+          e.mangledNameHash,
+          e.options,
+          operators}))
       {
         ret.insert(stmtSide);
       }

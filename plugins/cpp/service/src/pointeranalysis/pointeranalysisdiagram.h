@@ -78,10 +78,10 @@ private:
    * @param addToSubraphs_ If true it will create graph node in the correct
    * subgraph which determined by the options_ parameter.
    */
-  void cratePointerAnalysisNode(
+  void createPointerAnalysisNode(
     util::Graph& graph_,
     const std::string& nodeId_,
-    const std::set<model::CppPointerAnalysis::Options>& options_,
+    model::CppPointerAnalysis::Options_t options_,
     bool addToSubraphs_ = false);
 
   /**
@@ -90,8 +90,8 @@ private:
   void decoratePointerAnalysisEdge(
     util::Graph& graph_,
     const util::Graph::Edge& edge_,
-    const std::set<model::CppPointerAnalysis::Options>& lhsOptions_,
-    const std::set<model::CppPointerAnalysis::Options>& rhsOptions_);
+    model::CppPointerAnalysis::Options_t lhsOptions_,
+    model::CppPointerAnalysis::Options_t rhsOptions_);
 
   /**
    * Decorate pointer analysis graph node.
@@ -99,7 +99,7 @@ private:
   void decoratePointerAnalysisNode(
     util::Graph& graph_,
     const model::CppAstNode& astNode,
-    const std::set<model::CppPointerAnalysis::Options>& options_);
+    model::CppPointerAnalysis::Options_t options_);
 
   /**
    * This function decorates a graph node.

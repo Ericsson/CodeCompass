@@ -128,7 +128,7 @@ Steensgaard::TypeNodePtr Steensgaard::evalLhs(
     if (!t)
       return  nullptr;
 
-    return evalLhs({t->value.mangledNameHash, operators, lhs_.options});
+    return evalLhs({t->value.mangledNameHash, lhs_.options, operators});
   }
 }
 
@@ -147,7 +147,7 @@ Steensgaard::TypeNodePtr Steensgaard::evalRhs(
     if (operators.empty())
       return _type.at(rhs_);
 
-    return evalRhs({rhs_.mangledNameHash, operators, rhs_.options});
+    return evalRhs({rhs_.mangledNameHash, rhs_.options, operators});
   }
   else
   {
@@ -157,7 +157,7 @@ Steensgaard::TypeNodePtr Steensgaard::evalRhs(
     if (!t)
       return  nullptr;
 
-    return evalRhs({t->value.mangledNameHash, operators, rhs_.options});
+    return evalRhs({t->value.mangledNameHash, rhs_.options, operators});
   }
 }
 

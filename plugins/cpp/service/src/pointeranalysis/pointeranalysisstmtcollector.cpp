@@ -16,10 +16,8 @@ bool skipStmt(
   const cc::model::CppPointerAnalysis::StmtSide& current_)
 {
   return current_.mangledNameHash == stmt_.rhs.mangledNameHash &&
-    (current_.options.find(cc::model::CppPointerAnalysis::Options::Return) !=
-      current_.options.end() ||
-    current_.options.find(cc::model::CppPointerAnalysis::Options::FunctionCall) !=
-      current_.options.end());
+    (current_.options & cc::model::CppPointerAnalysis::Options::Return ||
+     current_.options & cc::model::CppPointerAnalysis::Options::FunctionCall);
 }
 
 }
@@ -46,7 +44,7 @@ std::vector<model::CppPointerAnalysis> PointerAnalysisStmtCollector::collect(
   std::unordered_set<std::uint64_t> skipVariable;
 
   std::deque<model::CppPointerAnalysis::StmtSide> q;
-  q.push_back({start_, "", {}});
+  q.push_back({start_, 0, ""});
 
   while (!q.empty())
   {
@@ -63,8 +61,8 @@ std::vector<model::CppPointerAnalysis> PointerAnalysisStmtCollector::collect(
         if (skipStmt(stmt, current))
           continue;
 
-        if (stmt.lhs.options.find(model::CppPointerAnalysis::Options::Param) !=
-          stmt.lhs.options.end() && start_ != stmt.lhs.mangledNameHash)
+        if (stmt.lhs.options & model::CppPointerAnalysis::Options::Param &&
+            start_ != stmt.lhs.mangledNameHash)
         {
           if (!skipVariable.count(stmt.lhs.mangledNameHash))
             funcParams.insert(stmt.lhs.mangledNameHash);

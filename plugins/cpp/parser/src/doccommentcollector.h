@@ -15,8 +15,8 @@
 #include <model/cppdoccomment.h>
 #include <model/cppdoccomment-odb.hxx>
 
+#include "cachetypes.h"
 #include "doccommentformatter.h"
-#include "manglednamecache.h"
 
 namespace cc
 {

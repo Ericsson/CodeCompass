@@ -37,7 +37,7 @@
 #include <util/odbtransaction.h>
 #include <util/logutil.h>
 
-#include "manglednamecache.h"
+#include "cachetypes.h"
 #include "filelocutil.h"
 #include "symbolhelper.h"
 
@@ -1140,8 +1140,8 @@ public:
 
       model::CppRelationPtr rel = std::make_shared<model::CppRelation>();
       rel->kind = model::CppRelation::Kind::Override;
-      if (_mangledNameCache.contain(left->second) &&
-          _mangledNameCache.contain(right->second))
+      if (_mangledNameCache.contains(left->second) &&
+          _mangledNameCache.contains(right->second))
       {
         rel->lhs = _mangledNameCache.at(left->second);
         rel->rhs = _mangledNameCache.at(right->second);
@@ -1165,7 +1165,8 @@ private:
   bool insertToCache(const void* clangPtr_, model::CppAstNodePtr node_)
   {
     _clangToAstNodeId[clangPtr_] = node_->id;
-    return _mangledNameCache.insert(*node_);
+    return _mangledNameCache.insert(
+      std::make_pair(node_->id, node_->mangledNameHash));
   }
 
   /**

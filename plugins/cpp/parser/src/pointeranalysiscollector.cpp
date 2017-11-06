@@ -17,13 +17,20 @@ const std::vector<std::string> allocators =
 };
 
 /**
- * Determine whether constructor declaration is a smart pointer.
- * @param cd_ C++ constructor declaration.
- * @return True if the
+ * This function returns true if the given type name contains a smart pointer
+ * from smartPointers vector.
+ *
+ * TODO: What if the given name is a template type which contains a smart
+ * pointer type among its template parameters? E.g.: MyType<std::shared_ptr>.
+ * This is not a shared pointer. Can't Clang determine wheter a given type is a
+ * smart pointer? Cant't the type be checked instead of its name?
+ * IF we get the name of a node from Clang then probably id wouldn't contain
+ * "std::" at the beginning. So strings in smartPointers vector also shouldn't
+ * have "std::" as prefix.
  */
 bool isSmartPointer(const std::string& name_)
 {
-  for (const std::string smartPtr : smartPointers)
+  for (const std::string& smartPtr : smartPointers)
     if (name_.find(smartPtr) != std::string::npos)
       return true;
   return false;
@@ -50,48 +57,40 @@ bool isAllocatorCall(const clang::FunctionDecl* fd_)
   if (!namedCallee)
     return false;
 
-  std::string name = namedCallee->getNameAsString();
-  return
-    std::find(allocators.begin(), allocators.end(), name)!= allocators.end();
+  return std::find(
+    allocators.begin(),
+    allocators.end(),
+    namedCallee->getNameAsString()) != allocators.end();
 }
 
 /**
  * Get pointer analysis options for variables.
  */
-std::set<cc::model::CppPointerAnalysis::Options> getVariableOptions(
+cc::model::CppPointerAnalysis::Options_t getVariableOptions(
   const clang::VarDecl* vd_)
 {
-  std::set<cc::model::CppPointerAnalysis::Options> options;
+  cc::model::CppPointerAnalysis::Options_t options = 0;
   const clang::Type* type = vd_->getType().getTypePtrOrNull();
+
   if (type && type->isReferenceType())
-    options.insert(cc::model::CppPointerAnalysis::Options::Reference);
+    options |= cc::model::CppPointerAnalysis::Options::Reference;
 
   if (type && type->isArrayType())
-      options.insert(cc::model::CppPointerAnalysis::Options::Array);
+      options |= cc::model::CppPointerAnalysis::Options::Array;
 
   bool isParam = llvm::isa<clang::ParmVarDecl>(vd_);
   if (isParam)
-    options.insert(cc::model::CppPointerAnalysis::Options::Param);
+    options |= cc::model::CppPointerAnalysis::Options::Param;
 
   if (isParam || vd_->isLocalVarDecl())
-    options.insert(cc::model::CppPointerAnalysis::Options::StackObj);
+    options |= cc::model::CppPointerAnalysis::Options::StackObj;
   else
-    options.insert(cc::model::CppPointerAnalysis::Options::GlobalObject);
+    options |= cc::model::CppPointerAnalysis::Options::GlobalObject;
 
   if (vd_->isStaticLocal() || vd_->isStaticDataMember())
-    options.insert(cc::model::CppPointerAnalysis::Options::GlobalObject);
+    options |= cc::model::CppPointerAnalysis::Options::GlobalObject;
 
   return options;
-}
-
-std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
-{
-  if (!fileLoc_.file)
-    return std::string();
-
-  return std::to_string(fileLoc_.file.object_id()) + ':'
-       + std::to_string(fileLoc_.range.start.line) + ':'
-       + std::to_string(fileLoc_.range.start.column);
 }
 
 /**
@@ -101,13 +100,12 @@ bool isPointerOrReferenceType(
   const clang::Type* type_,
   const std::string& sideType_)
 {
-  if (type_ && (
-      type_->isAnyPointerType() ||
-      type_->isReferenceType() ||
-      type_->isArrayType() ||
-      isSmartPointer(sideType_)))
-    return true;
-  return false;
+  return
+    type_ && (
+    type_->isAnyPointerType() ||
+    type_->isReferenceType() ||
+    type_->isArrayType() ||
+    isSmartPointer(sideType_));
 }
 
 }
@@ -121,8 +119,7 @@ AstNodeCreator::AstNodeCreator(
   cc::parser::SourceManager& srcMgr_,
   const clang::ASTContext& astContext_)
   : _srcMgr(srcMgr_),
-    _fileLocUtil(astContext_.getSourceManager()),
-    _cppSourceType("CPP")
+    _fileLocUtil(astContext_.getSourceManager())
 {
 }
 
@@ -130,54 +127,52 @@ cc::model::CppAstNodePtr AstNodeCreator::operator()(
   const std::string& astValue_,
   const std::string& mangledName_,
   const clang::SourceLocation& start_,
-  const clang::SourceLocation& end_,
-  bool addSuffixToMangledName_)
+  const clang::SourceLocation& end_) const
 {
   cc::model::CppAstNodePtr astNode = std::make_shared<cc::model::CppAstNode>();
+
+  if (!setFileLoc(astNode->location, start_, end_))
+    return nullptr;
+
+  std::string suffix;
+  if (astNode->location.file)
+    suffix += std::to_string(astNode->location.file.object_id());
+  suffix += ':' + std::to_string(astNode->location.range.start.line);
+  suffix += ':' + std::to_string(astNode->location.range.start.column);
+
   astNode->symbolType = cc::model::CppAstNode::SymbolType::Other;
   astNode->astType = cc::model::CppAstNode::AstType::Other;
   astNode->visibleInSourceCode = false;
   astNode->astValue = astValue_;
-
-  if (!addFileLoc(astNode, start_, end_))
-    return nullptr;
-
-  astNode->mangledName = mangledName_;
-
-  if (addSuffixToMangledName_ && start_.isValid() && end_.isValid())
-    astNode->mangledName += getSuffixFromLoc(astNode->location);
-
+  astNode->mangledName = mangledName_ + suffix;
   astNode->mangledNameHash = cc::util::fnvHash(astNode->mangledName);
   astNode->id = cc::model::createIdentifier(*astNode);
 
   return astNode;
 }
 
-bool AstNodeCreator::addFileLoc(
-  cc::model::CppAstNodePtr& astNode_,
+bool AstNodeCreator::setFileLoc(
+  cc::model::FileLoc& fileLoc_,
   const clang::SourceLocation& start_,
-  const clang::SourceLocation& end_)
+  const clang::SourceLocation& end_) const
 {
   if (start_.isInvalid() || end_.isInvalid())
     return false;
 
-  cc::model::FileLoc fileLoc;
-  _fileLocUtil.setRange(start_, end_, fileLoc.range);
-  fileLoc.file = _srcMgr.getFile(_fileLocUtil.getFilePath(start_));
+  _fileLocUtil.setRange(start_, end_, fileLoc_.range);
+  fileLoc_.file = _srcMgr.getFile(_fileLocUtil.getFilePath(start_));
 
-  const std::string& type = fileLoc.file.load()->type;
-  if (type != cc::model::File::DIRECTORY_TYPE && type != _cppSourceType)
+  const std::string& type = fileLoc_.file.load()->type;
+  if (type != cc::model::File::DIRECTORY_TYPE && type != "CPP")
   {
-    fileLoc.file->type = _cppSourceType;
-    _srcMgr.updateFile(*fileLoc.file);
+    fileLoc_.file->type = "CPP";
+    _srcMgr.updateFile(*fileLoc_.file);
   }
 
-  astNode_->location = fileLoc;
   return true;
 }
 
-ReturnCollector::ReturnCollector(
-  std::unordered_set<clang::Expr*>& collected_)
+ReturnCollector::ReturnCollector(std::unordered_set<clang::Expr*>& collected_)
   : _collected(collected_)
 {
 }
@@ -209,7 +204,6 @@ bool ReturnCollector::VisitReturnStmt(clang::ReturnStmt* rs_)
   return true;
 }
 
-
 StmtSideCollector::StmtSideCollector(
   std::set<model::CppPointerAnalysis::StmtSide>& collected_,
   ParserContext& ctx_,
@@ -219,22 +213,17 @@ StmtSideCollector::StmtSideCollector(
   std::vector<model::CppAstNodePtr>& astNodes_,
   std::unordered_map<clang::CXXMethodDecl*,
       std::unordered_set<clang::CXXMethodDecl*>> overridens_)
-  : _collected(collected_),
-    _ctx(ctx_),
-    _astContext(astContext_),
-    _mangledNameCache(mangledNameCache_),
-    _clangToAstNodeId(clangToAstNodeId_),
-    _astNodes(astNodes_),
-    _overridens(overridens_),
-    _clangSrcMgr(astContext_.getSourceManager()),
-    _astNodeCreator(ctx_.srcMgr, astContext_),
-    _fileLocUtil(astContext_.getSourceManager()),
-    _mngCtx(astContext_.createMangleContext()),
-    _shouldCollect(true),
-    _cppSourceType("CPP"),
-    _operators(""),
-    _isReturnType(false),
-    _returnCollectorCallCount(0)
+    : _collected(collected_),
+      _mangledNameCache(mangledNameCache_),
+      _clangToAstNodeId(clangToAstNodeId_),
+      _astNodes(astNodes_),
+      _overriddens(overridens_),
+      _clangSrcMgr(astContext_.getSourceManager()),
+      _astNodeCreator(ctx_.srcMgr, astContext_),
+      _mngCtx(astContext_.createMangleContext()),
+      _operators(""),
+      _isReturnType(false),
+      _returnCollectorCallCount(0)
 {
 }
 
@@ -256,9 +245,11 @@ bool StmtSideCollector::VisitStringLiteral(clang::StringLiteral* sl_)
   std::uint64_t mangledNameHash = createAstNode(value, value,
     sl_->getLocStart(), sl_->getLocEnd());
 
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::Literal,
-    model::CppPointerAnalysis::Options::GlobalObject});
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::Literal |
+    model::CppPointerAnalysis::Options::GlobalObject,
+    _operators);
 
   return false;
 }
@@ -269,8 +260,10 @@ bool StmtSideCollector::VisitCXXNullPtrLiteralExpr(
   std::uint64_t mangledNameHash = createAstNode("nullptr", "nullptr",
     ne_->getLocStart(), ne_->getLocEnd());
 
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::NullPtr});
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::NullPtr,
+    _operators);
 
   return false;
 }
@@ -280,19 +273,21 @@ bool StmtSideCollector::VisitGNUNullExpr(clang::GNUNullExpr* ne_)
   std::uint64_t mangledNameHash = createAstNode("NULL", "NULL",
     ne_->getLocStart(), ne_->getLocEnd());
 
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::NullPtr});
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::NullPtr,
+    _operators);
 
   return false;
 }
 
-bool StmtSideCollector::VisitUnaryDeref(clang::UnaryOperator* uop_)
+bool StmtSideCollector::VisitUnaryDeref(clang::UnaryOperator*)
 {
   _operators += "*";
   return true;
 }
 
-bool StmtSideCollector::VisitUnaryAddrOf(clang::UnaryOperator* uop_)
+bool StmtSideCollector::VisitUnaryAddrOf(clang::UnaryOperator*)
 {
   _operators += "&";
   return true;
@@ -300,8 +295,7 @@ bool StmtSideCollector::VisitUnaryAddrOf(clang::UnaryOperator* uop_)
 
 bool StmtSideCollector::VisitVarDecl(clang::VarDecl* vd_)
 {
-  addStmtSide(getStmtMangledName(vd_), _operators, getVariableOptions(vd_));
-
+  addStmtSide(getStmtMangledName(vd_), getVariableOptions(vd_), _operators);
   return false;
 }
 
@@ -317,7 +311,6 @@ bool StmtSideCollector::VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
     if (ce_->getNumArgs())
     {
       clang::Expr* init = ce_->getArg(0);
-
       this->TraverseStmt(init);
       return false;
     }
@@ -325,16 +318,21 @@ bool StmtSideCollector::VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
     {
       std::uint64_t mangledNameHash = createAstNode("nullptr", "nullptr",
         ce_->getLocStart(), ce_->getLocEnd());
-      addStmtSide(mangledNameHash, _operators, {
-        model::CppPointerAnalysis::Options::NullPtr});
+      addStmtSide(
+        mangledNameHash,
+        model::CppPointerAnalysis::Options::NullPtr,
+        _operators);
       return false;
     }
   }
 
   std::uint64_t mangledNameHash = createAstNode(ctor->getNameAsString(),
     getMangledName(_mngCtx, ctor), ce_->getLocStart(), ce_->getLocEnd());
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::StackObj});
+
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::StackObj,
+    _operators);
 
   return false;
 }
@@ -354,15 +352,17 @@ bool StmtSideCollector::VisitCXXNewExpr(clang::CXXNewExpr* ne_)
     astValue, getMangledName(_mngCtx, newDecl),
     ne_->getLocStart(), ne_->getLocEnd());
 
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::HeapObj});
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::HeapObj,
+    _operators);
 
   return false;
 }
 
 bool StmtSideCollector::VisitExprWithCleanups(clang::ExprWithCleanups* ec_)
 {
-  addStmtSide(getStmtMangledName(ec_), _operators);
+  addStmtSide(getStmtMangledName(ec_), 0, _operators);
   return false;
 }
 
@@ -372,9 +372,7 @@ bool StmtSideCollector::VisitCallExpr(clang::CallExpr* ce_)
 
   // TODO: If call is a function pointer call, callee is a nullptr
   if (!callee)
-  {
     return false;
-  }
 
   //--- Check if it's a `move` operator ---//
 
@@ -384,9 +382,8 @@ bool StmtSideCollector::VisitCallExpr(clang::CallExpr* ce_)
     return false;
   }
 
-  if (isVirtualCall(ce_))
-    if (collectVirtualFunctionCalls(ce_))
-      return false;
+  if (isVirtualCall(ce_) && collectVirtualFunctionCalls(ce_))
+    return false;
 
   if (isAllocatorCall(callee))
   {
@@ -400,8 +397,10 @@ bool StmtSideCollector::VisitCallExpr(clang::CallExpr* ce_)
       astValue, getMangledName(_mngCtx, callee),
       ce_->getLocStart(), ce_->getLocEnd());
 
-    addStmtSide(mangledNameHash, _operators, {
-      model::CppPointerAnalysis::Options::HeapObj});
+    addStmtSide(
+      mangledNameHash,
+      model::CppPointerAnalysis::Options::HeapObj,
+      _operators);
 
     return false;
   }
@@ -414,8 +413,10 @@ bool StmtSideCollector::VisitCallExpr(clang::CallExpr* ce_)
 
   if (ret.empty() || _returnCollectorCallCount > _maxReturnCount)
   {
-    addStmtSide(getStmtMangledName(ce_), _operators, {
-      model::CppPointerAnalysis::Options::FunctionCall});
+    addStmtSide(
+      getStmtMangledName(ce_),
+      model::CppPointerAnalysis::Options::FunctionCall,
+      _operators);
     return false;
   }
 
@@ -432,8 +433,10 @@ bool StmtSideCollector::VisitCallExpr(clang::CallExpr* ce_)
 
 bool StmtSideCollector::VisitMemberExpr(clang::MemberExpr* me_)
 {
-  addStmtSide(getStmtMangledName(me_), _operators, {
-    model::CppPointerAnalysis::Options::Member});
+  addStmtSide(
+    getStmtMangledName(me_),
+    model::CppPointerAnalysis::Options::Member,
+    _operators);
 
   return false;
 }
@@ -442,17 +445,17 @@ bool StmtSideCollector::VisitDeclRefExpr(clang::DeclRefExpr* re_)
 {
   clang::ValueDecl* decl = re_->getDecl();
 
-  std::set<cc::model::CppPointerAnalysis::Options> options;
+  model::CppPointerAnalysis::Options_t options = 0;
   if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     options = getVariableOptions(vd);
 
-  addStmtSide(getStmtMangledName(re_), _operators, options);
+  addStmtSide(getStmtMangledName(re_), options, _operators);
   return false;
 }
 
 bool StmtSideCollector::VisitFieldDecl(clang::FieldDecl* fd_)
 {
-  addStmtSide(getStmtMangledName(fd_), _operators);
+  addStmtSide(getStmtMangledName(fd_), 0, _operators);
   return false;
 }
 
@@ -467,8 +470,10 @@ bool StmtSideCollector::VisitInitListExpr(clang::InitListExpr* il_)
     astValue, mangledName,
     il_->getLocStart(), il_->getLocEnd());
 
-  addStmtSide(mangledNameHash, _operators, {
-    model::CppPointerAnalysis::Options::InitList});
+  addStmtSide(
+    mangledNameHash,
+    model::CppPointerAnalysis::Options::InitList,
+    _operators);
 
   return false;
 }
@@ -520,7 +525,7 @@ bool StmtSideCollector::collectVirtualFunctionCalls(const clang::CallExpr* ce_)
     clang::CXXMethodDecl* md = q.front();
     processed.insert(md);
 
-    for (clang::CXXMethodDecl* d : _overridens[md])
+    for (clang::CXXMethodDecl* d : _overriddens[md])
     {
       collector.collect(d);
       if (processed.find(d) == processed.end())
@@ -593,13 +598,13 @@ bool StmtSideCollector::isVirtualCall(const clang::CallExpr* ce_) const
 
 void StmtSideCollector::addStmtSide(
   std::uint64_t mangledNameHash_,
-  const std::string operators_,
-  std::set<model::CppPointerAnalysis::Options> options_)
+  model::CppPointerAnalysis::Options_t options_,
+  const std::string& operators_)
 {
   if (_isReturnType)
-    options_.insert(model::CppPointerAnalysis::Options::Return);
+    options_ |= model::CppPointerAnalysis::Options::Return;
 
-  _collected.insert({mangledNameHash_, operators_, options_});
+  _collected.insert({mangledNameHash_, options_, operators_});
 }
 
 std::string StmtSideCollector::getSourceText(
@@ -616,7 +621,7 @@ std::string StmtSideCollector::getSourceText(
   clang::StringRef src =
     clang::Lexer::getSourceText(range, _clangSrcMgr, langOpts);
 
-  // Some reason `src` can contain null terminated string  character(\0)
+  // For some reason `src` can contain null terminated string character(\0)
   // on which pgsql will throw an error: invalid byte sequence for
   // encoding "SQL_ASCII": 0x00. For this reason we call c_str on the string.
   return src.str().c_str();
@@ -626,15 +631,15 @@ std::uint64_t StmtSideCollector::createAstNode(
   const std::string& astValue_,
   const std::string& mangledName_,
   const clang::SourceLocation& start_,
-  const clang::SourceLocation& end_,
-  bool addSuffixToMangledName_)
+  const clang::SourceLocation& end_)
 {
   cc::model::CppAstNodePtr astNode = _astNodeCreator(astValue_, mangledName_,
-    start_, end_, addSuffixToMangledName_);
+    start_, end_);
 
   if (astNode)
   {
-    if (_mangledNameCache.insert(*astNode))
+    if (_mangledNameCache.insert(
+          std::make_pair(astNode->id, astNode->mangledNameHash)))
       _astNodes.push_back(astNode);
 
     return astNode->mangledNameHash;
@@ -664,8 +669,8 @@ PointerAnalysisCollector::~PointerAnalysisCollector()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    persistAll(_astNodes);
-    persistAll(_pAnalysis);
+    util::persistAll(_astNodes, _ctx.db);
+    util::persistAll(_pAnalysis, _ctx.db);
   });
 }
 
@@ -676,8 +681,8 @@ bool PointerAnalysisCollector::VisitCXXMethodDecl(clang::CXXMethodDecl* decl)
        ++it)
   {
     clang::CXXMethodDecl* overriden = const_cast<clang::CXXMethodDecl*>(*it);
-    _overridens[decl].insert(overriden);
-    _overridens[overriden].insert(decl);
+    _overriddens[decl].insert(overriden);
+    _overriddens[overriden].insert(decl);
   }
 
   return true;
@@ -750,11 +755,8 @@ bool PointerAnalysisCollector::VisitCXXConstructorDecl(
 bool PointerAnalysisCollector::VisitCXXOperatorCallExpr(
   clang::CXXOperatorCallExpr* ce_)
 {
-  if (isSmartPointer(ce_->getType().getAsString()) &&
-      ce_->getNumArgs() > 1)
-  {
+  if (isSmartPointer(ce_->getType().getAsString()) && ce_->getNumArgs() > 1)
     makeAssignRels(ce_->getArg(0), ce_->getArg(1));
-  }
 
   return true;
 }
@@ -763,52 +765,35 @@ void PointerAnalysisCollector::createPointerAnalysis(
   const std::set<model::CppPointerAnalysis::StmtSide>& lhs_,
   const std::set<model::CppPointerAnalysis::StmtSide>& rhs_)
 {
-  static std::mutex _cacheMutex;
-
-  std::lock_guard<std::mutex> guard(_cacheMutex);
   for (const model::CppPointerAnalysis::StmtSide& lhs : lhs_)
     for (const model::CppPointerAnalysis::StmtSide& rhs : rhs_)
-    {
       if (lhs.mangledNameHash && rhs.mangledNameHash)
       {
-//        std::string id =
-//          std::to_string(lhs.mangledNameHash) +
-//          lhs.operators +
-//          std::to_string(lhs.options.size()) +
-//          std::to_string(rhs.mangledNameHash) +
-//          rhs.operators +
-//          std::to_string(rhs.options.size());
-
-        std::string id =
-          std::to_string(lhs.mangledNameHash) +
-          std::to_string(rhs.mangledNameHash);
-
         model::CppPointerAnalysisPtr pAnalysis =
           std::make_shared<model::CppPointerAnalysis>();
+
         pAnalysis->lhs = lhs;
         pAnalysis->rhs = rhs;
-
-        pAnalysis->id = util::fnvHash(id);
+        pAnalysis->id = model::createIdentifier(*pAnalysis);
 
         if (_pointerAnalysisCache.insert(pAnalysis->id))
-          _pAnalysis.push_back(std::move(pAnalysis));
+          _pAnalysis.push_back(pAnalysis);
       }
-    }
 }
 
 std::uint64_t PointerAnalysisCollector::createAstNode(
   const std::string& astValue_,
   const std::string& mangledName_,
   const clang::SourceLocation& start_,
-  const clang::SourceLocation& end_,
-  bool addSuffixToMangledName_)
+  const clang::SourceLocation& end_)
 {
   cc::model::CppAstNodePtr astNode = _astNodeCreator(astValue_, mangledName_,
-    start_, end_, addSuffixToMangledName_);
+    start_, end_);
 
   if (astNode)
   {
-    if (_mangledNameCache.insert(*astNode))
+    if (_mangledNameCache.insert(
+          std::make_pair(astNode->id, astNode->mangledNameHash)))
       _astNodes.push_back(astNode);
 
     return astNode->mangledNameHash;
@@ -816,14 +801,13 @@ std::uint64_t PointerAnalysisCollector::createAstNode(
   return 0;
 }
 
-void PointerAnalysisCollector:: makeUndefinedRels(clang::VarDecl* lhs_)
+void PointerAnalysisCollector::makeUndefinedRels(clang::VarDecl* lhs_)
 {
   std::set<model::CppPointerAnalysis::StmtSide> lhs = collect(lhs_);
   model::CppPointerAnalysis::StmtSide rhs;
   rhs.mangledNameHash = createAstNode("undefined", "undefined",
     lhs_->getLocStart(), lhs_->getLocEnd());
-  rhs.options.insert(
-    model::CppPointerAnalysis::Options::Undefined);
+  rhs.options |= model::CppPointerAnalysis::Options::Undefined;
   createPointerAnalysis(lhs, {rhs});
 }
 

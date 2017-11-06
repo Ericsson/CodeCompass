@@ -81,7 +81,7 @@ void PointerAnalysisDiagram::getAndersenPointerAnalysisDiagram(
       std::string lhsNodeId = std::to_string(lhsNode.id);
       if (!graph_.hasNode(lhsNodeId))
       {
-        cratePointerAnalysisNode(graph_, lhsNodeId, key.first.options, true);
+        createPointerAnalysisNode(graph_, lhsNodeId, key.first.options, true);
         decoratePointerAnalysisNode(graph_, lhsNode, key.first.options);
       }
 
@@ -102,7 +102,7 @@ void PointerAnalysisDiagram::getAndersenPointerAnalysisDiagram(
 
         if (!graph_.hasNode(rhsNodeId))
         {
-          cratePointerAnalysisNode(graph_, rhsNodeId, value.options, true);
+          createPointerAnalysisNode(graph_, rhsNodeId, value.options, true);
           decoratePointerAnalysisNode(graph_, rhsNode, value.options);
         }
 
@@ -235,41 +235,29 @@ bool PointerAnalysisDiagram::getAstNode(
   return true;
 }
 
-void PointerAnalysisDiagram::cratePointerAnalysisNode(
+void PointerAnalysisDiagram::createPointerAnalysisNode(
   util::Graph& graph_,
   const std::string& nodeId_,
-  const std::set<model::CppPointerAnalysis::Options>& options_,
+  model::CppPointerAnalysis::Options_t options_,
   bool addToSubraphs)
 {
   if (!graph_.hasNode(nodeId_))
   {
-    bool created = false;
+    std::string cluster;
+
     if (addToSubraphs)
-      for (const auto& option : options_)
-      {
-        switch (option)
-        {
-          case model::CppPointerAnalysis::Options::HeapObj:
-            graph_.getOrCreateNode(nodeId_, "cluster_heap");
-            created = true;
-            break;
+    {
+      if (options_ & model::CppPointerAnalysis::Options::HeapObj)
+        cluster = "cluster_heap";
+      else if (options_ & model::CppPointerAnalysis::Options::StackObj)
+        cluster = "cluster_stack";
+      else if (options_ & model::CppPointerAnalysis::Options::GlobalObject)
+        cluster = "cluster_global";
 
-          case model::CppPointerAnalysis::Options::StackObj:
-            graph_.getOrCreateNode(nodeId_, "cluster_stack");
-            created = true;
-            break;
-
-          case model::CppPointerAnalysis::Options::GlobalObject:
-            graph_.getOrCreateNode(nodeId_, "cluster_global");
-            created = true;
-            break;
-        }
-
-      if (created)
-        break;
+      graph_.getOrCreateNode(nodeId_, cluster);
     }
 
-    if (!created)
+    if (cluster.empty())
       graph_.getOrCreateNode(nodeId_);
   }
 }
@@ -277,25 +265,19 @@ void PointerAnalysisDiagram::cratePointerAnalysisNode(
 void PointerAnalysisDiagram::decoratePointerAnalysisEdge(
   util::Graph& graph_,
   const util::Graph::Edge& edge_,
-  const std::set<model::CppPointerAnalysis::Options>& lhsOptions_,
-  const std::set<model::CppPointerAnalysis::Options>& rhsOptions_)
+  model::CppPointerAnalysis::Options_t lhsOptions_,
+  model::CppPointerAnalysis::Options_t rhsOptions_)
 {
-  if (lhsOptions_.find(
-    model::CppPointerAnalysis::Options::Reference) != lhsOptions_.end())
-  {
+  if (lhsOptions_ & model::CppPointerAnalysis::Options::Reference)
     decorateEdge(graph_, edge_, referenceEdgeDecoration);
-  }
-  else if (rhsOptions_.find(
-    model::CppPointerAnalysis::Options::InitList) != rhsOptions_.end())
-  {
+  else if (rhsOptions_ & model::CppPointerAnalysis::Options::InitList)
     decorateEdge(graph_, edge_, initListEdgeDecoration);
-  }
 }
 
 void PointerAnalysisDiagram::decoratePointerAnalysisNode(
   util::Graph& graph_,
   const model::CppAstNode& astNode,
-  const std::set<model::CppPointerAnalysis::Options>& options_)
+  model::CppPointerAnalysis::Options_t options_)
 {
   std::string nodeId = std::to_string(astNode.id);
 
@@ -305,40 +287,24 @@ void PointerAnalysisDiagram::decoratePointerAnalysisNode(
 
   graph_.setNodeAttribute(nodeId, "label", label);
 
-  for (const auto& option : options_)
+  if (options_ & model::CppPointerAnalysis::Options::FunctionCall)
+    decorateNode(graph_, nodeId, functionNodeDecoration);
+  if (options_ & model::CppPointerAnalysis::Options::NullPtr)
+    decorateNode(graph_, nodeId , nullptrNodeDecoration);
+  if (options_ & model::CppPointerAnalysis::Options::Undefined)
+    decorateNode(graph_, nodeId , undefinedNodeDecoration);
+  if (options_ & model::CppPointerAnalysis::Options::InitList)
+    decorateNode(graph_, nodeId , initListNodeDecoration);
+  if (options_ & model::CppPointerAnalysis::Options::Array)
   {
-    switch (option)
-    {
-      case model::CppPointerAnalysis::Options::FunctionCall:
-        decorateNode(graph_, nodeId , functionNodeDecoration);
-        break;
-
-      case model::CppPointerAnalysis::Options::NullPtr:
-        decorateNode(graph_, nodeId , nullptrNodeDecoration);
-        break;
-
-      case model::CppPointerAnalysis::Options::Undefined:
-        decorateNode(graph_, nodeId , undefinedNodeDecoration);
-        break;
-
-      case model::CppPointerAnalysis::Options::Array:
-        graph_.setNodeAttribute(nodeId, "shape", "record");
-        graph_.setNodeAttribute(nodeId, "label", "{" + astNode.astValue + "} | {...|...}");
-        break;
-
-      case model::CppPointerAnalysis::Options::InitList:
-        decorateNode(graph_, nodeId , initListNodeDecoration);
-        break;
-
-      case model::CppPointerAnalysis::Options::HeapObj:
-      case model::CppPointerAnalysis::Options::Literal:
-        decorateNode(graph_, nodeId , objectNodeDecoration);
-        break;
-
-      default:
-        break;
-    }
+    graph_.setNodeAttribute(
+      nodeId, "shape", "record");
+    graph_.setNodeAttribute(
+      nodeId, "label", "{" + astNode.astValue + "} | {...|...}");
   }
+  if (options_ & (model::CppPointerAnalysis::Options::HeapObj |
+                  model::CppPointerAnalysis::Options::Literal))
+    decorateNode(graph_, nodeId , objectNodeDecoration);
 }
 
 void PointerAnalysisDiagram::createMemorySubraphs(util::Graph& graph_)

@@ -28,7 +28,7 @@ public:
    * range_ will begin at the beginning of loc_ and it will end at the end of
    * loc_. If loc_ is invalid then range_ stays untouched.
    */
-  bool setRange(const clang::SourceLocation& loc_, model::Range& range_)
+  bool setRange(const clang::SourceLocation& loc_, model::Range& range_) const
   {
     return setRange(loc_, loc_, range_);
   }
@@ -42,7 +42,7 @@ public:
   bool setRange(
     const clang::SourceLocation& start_,
     const clang::SourceLocation& end_,
-    model::Range& range_)
+    model::Range& range_) const
   {
     if (!setPosition(start_, range_.start) || !setPosition(end_, range_.end))
       return false;
@@ -67,7 +67,7 @@ public:
    */
   bool setPosition(
     const clang::SourceLocation& loc_,
-    model::Position& position_)
+    model::Position& position_) const
   {
     if (loc_.isInvalid())
       return false;
@@ -83,7 +83,7 @@ public:
    * location is meant to be the expanded location (in case of macro expansion).
    * If the file can't be determined then empty string returns.
    */
-  std::string getFilePath(const clang::SourceLocation& loc_)
+  std::string getFilePath(const clang::SourceLocation& loc_) const
   {
     clang::SourceLocation expLoc =_clangSrcMan.getExpansionLoc(loc_);
     clang::FileID fid = _clangSrcMan.getFileID(expLoc);

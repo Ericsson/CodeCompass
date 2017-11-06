@@ -22,11 +22,10 @@
 
 #include <cppparser/cppparser.h>
 
-#include "pointeranalysiscollector.h"
+#include "cachetypes.h"
 #include "clangastvisitor.h"
 #include "relationcollector.h"
-#include "manglednamecache.h"
-#include "idcache.h"
+#include "pointeranalysiscollector.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
@@ -42,13 +41,16 @@ public:
   static void cleanUp()
   {
     MyFrontendAction::_mangledNameCache.clear();
+    MyFrontendAction::_pointerAnalysisCache.clear();
   }
 
   static void init(ParserContext& ctx_)
   {
     (util::OdbTransaction(ctx_.db))([&] {
       for (const model::CppAstNode& node : ctx_.db->query<model::CppAstNode>())
-        MyFrontendAction::_mangledNameCache.insert(node);
+        MyFrontendAction::_mangledNameCache.insert(
+          std::make_pair(node.id, node.mangledNameHash));
+
       for (const model::CppPointerAnalysis& node :
         ctx_.db->query<model::CppPointerAnalysis>())
       {
@@ -166,7 +168,6 @@ private:
 };
 
 MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
-
 IdCache VisitorActionFactory::MyFrontendAction::_pointerAnalysisCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
@@ -359,9 +360,6 @@ std::vector<std::string> CppParser::getDependentParsers() const
 
 bool CppParser::parse()
 {
-  if (_ctx.options.count("skip-cpp-pointeranalysis"))
-    LOG(info) << "C++ pointer analysis skipped.";
-
   VisitorActionFactory::init(_ctx);
 
   bool success = true;
@@ -468,7 +466,7 @@ extern "C"
        "If this flag is given the parser will skip parsing the documentation "
        "comments.")
       ("skip-cpp-pointeranalysis",
-       "Enable C++ pointer analysis.");
+       "Skip C++ pointer analysis.");
 
     return description;
   }

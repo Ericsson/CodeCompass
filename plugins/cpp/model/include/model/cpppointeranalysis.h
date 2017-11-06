@@ -4,6 +4,8 @@
 #include <memory>
 #include <set>
 
+#include <util/hash.h>
+
 namespace cc
 {
 namespace model
@@ -12,23 +14,29 @@ namespace model
 #pragma db object
 struct CppPointerAnalysis
 {
-  enum Options
+  typedef std::uint32_t Options_t;
+
+  enum Options : Options_t
   {
-    HeapObj, /*!< Object which allocated on the heap: `new`, `make_shared`,
-      `make_unique`, `malloc`, `realloc`, etc.. */
-    StackObj, /*!< Object which allocated on the stack: `T x;` */
-    GlobalObject, /*!< Object, which allocated globally. */
-    NullPtr, /*!< Null pointer: `nullptr` or `NULL`. */
-    Reference, /*!< Alias to a variable or a function. For example:
-      `T& x = y;`. */
-    FunctionCall, /*!< Function call. */
-    Return, /*!< Return statement. */
-    Param, /*!< Function parameters. */
-    Member, /*!< Data member of a struct, class, union. */
-    Literal, /*!< String literal. */
-    InitList, /*!< Initialization list of a class, struct, array. */
-    Array, /*!< Array variables. */
-    Undefined /*!< Non initalized type, undefined memory space. */
+    HeapObj      = 1 << 0,  /*!< Object which is allocated on the heap: `new`,
+                                 `make_shared`, `make_unique`, `malloc`,
+                                 `realloc`, etc. */
+    StackObj     = 1 << 1,  /*!< Object which is allocated on the stack:
+                                 `T x;`. */
+    GlobalObject = 1 << 2,  /*!< Object, which is allocated globally. */
+    NullPtr      = 1 << 3,  /*!< Null pointer: `nullptr` or `NULL`. */
+    Reference    = 1 << 4,  /*!< Alias to a variable or a function. For
+                                 example: `T& x = y;`. */
+    FunctionCall = 1 << 5,  /*!< Function call. */
+    Return       = 1 << 6,  /*!< Return statement. */
+    Param        = 1 << 7,  /*!< Function parameters. */
+    Member       = 1 << 8,  /*!< Data member of a struct, class, union. */
+    Literal      = 1 << 9,  /*!< String literal. */
+    InitList     = 1 << 10, /*!< Initialization list of a class, struct,
+                                 array. */
+    Array        = 1 << 11, /*!< Array variables. */
+    Undefined    = 1 << 12  /*!< Non initalized type, undefined memory
+                                 space. */
   };
 
   #pragma db value
@@ -36,17 +44,19 @@ struct CppPointerAnalysis
   {
     StmtSide() = default;
 
-    StmtSide(std::uint64_t mangledNameHash_, const std::string& operators_,
-      std::set<Options> options_)
-      : mangledNameHash(mangledNameHash_),
-        operators(operators_),
-        options(options_)
+    StmtSide(
+      std::uint64_t mangledNameHash_,
+      Options_t options_,
+      const std::string& operators_)
+        : mangledNameHash(mangledNameHash_),
+          options(options_),
+          operators(operators_)
     {
     }
 
     std::uint64_t mangledNameHash = 0;
+    Options_t options = 0;
     std::string operators;
-    std::set<Options> options;
 
     bool operator==(const StmtSide& rhs_) const
     {
@@ -67,7 +77,8 @@ struct CppPointerAnalysis
 
   std::string toString() const;
 
-  bool operator==(const CppPointerAnalysis& other_) const {
+  bool operator==(const CppPointerAnalysis& other_) const
+  {
     return id == other_.id;
   }
 
@@ -85,15 +96,23 @@ inline std::string CppPointerAnalysis::toString() const
     .append("\nrhs = ").append(std::to_string(rhs.mangledNameHash));
 }
 
-inline bool isReference(const CppPointerAnalysis::StmtSide& side_)
+inline std::uint64_t createIdentifier(const CppPointerAnalysis& panal_)
 {
-  return side_.options.find(CppPointerAnalysis::Options::Reference) !=
-    side_.options.end();
+  return util::fnvHash(
+    std::to_string(panal_.lhs.mangledNameHash) +
+    std::to_string(panal_.rhs.mangledNameHash));
 }
+
+#pragma db view object(CppPointerAnalysis)
+struct CppPointerAnalysisCount
+{
+  #pragma db column("count(" + CppPointerAnalysis::id + ")")
+  std::size_t count;
+};
 
 struct Hash
 {
-  size_t operator() (const CppPointerAnalysis::StmtSide& s_) const
+  std::size_t operator()(const CppPointerAnalysis::StmtSide& s_) const
   {
     return s_.mangledNameHash;
   }

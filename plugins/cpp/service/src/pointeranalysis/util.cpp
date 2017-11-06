@@ -37,20 +37,15 @@ namespace util
 
 bool isDirectPointsTo(const model::CppPointerAnalysis& stmt_)
 {
-  std::set<model::CppPointerAnalysis::Options> rhsOpt = stmt_.rhs.options;
-  return model::isReference(stmt_.lhs) ||
-    std::any_of(rhsOpt.begin(), rhsOpt.end(), [] (
-      model::CppPointerAnalysis::Options opt_)
-    {
-      return
-        opt_ == model::CppPointerAnalysis::Options::NullPtr ||
-        opt_ == model::CppPointerAnalysis::Options::HeapObj ||
-        opt_ == model::CppPointerAnalysis::Options::Undefined ||
-        opt_ == model::CppPointerAnalysis::Options::Literal ||
-        opt_ == model::CppPointerAnalysis::Options::InitList ||
-        opt_ == model::CppPointerAnalysis::Options::Return ||
-        opt_ == model::CppPointerAnalysis::Options::FunctionCall;
-    });
+  return (stmt_.lhs.options & model::CppPointerAnalysis::Options::Reference) ||
+    stmt_.rhs.options & (
+      model::CppPointerAnalysis::Options::NullPtr   |
+      model::CppPointerAnalysis::Options::HeapObj   |
+      model::CppPointerAnalysis::Options::Undefined |
+      model::CppPointerAnalysis::Options::Literal   |
+      model::CppPointerAnalysis::Options::InitList  |
+      model::CppPointerAnalysis::Options::Return    |
+      model::CppPointerAnalysis::Options::FunctionCall);
 }
 
 bool isBaseConstraint(const model::CppPointerAnalysis& stmt_)
