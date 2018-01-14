@@ -12,8 +12,9 @@ namespace cc
 namespace util
 {
 
-struct GraphPimpl
+class GraphPimpl
 {
+public:
   GraphPimpl(std::string name_     = "",
              bool        directed_ = true,
              bool        strict_   = false)

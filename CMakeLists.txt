@@ -18,6 +18,7 @@ find_package(Java    REQUIRED)
 find_package(GTest)
 
 include(UseJava)
+set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8)
 
 add_subdirectory(model)
 add_subdirectory(util)

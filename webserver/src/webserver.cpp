@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>

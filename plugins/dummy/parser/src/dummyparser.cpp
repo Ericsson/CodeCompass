@@ -1,6 +1,7 @@
 #include <dummyparser/dummyparser.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include <util/logutil.h>
 
