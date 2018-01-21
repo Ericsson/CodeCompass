@@ -1,0 +1,87 @@
+version: '3.2'
+
+services:
+    webserver:
+        image: compass_webserver
+        container_name: cc_webserver
+        build:
+            context: ./ccgui/
+            dockerfile: Dockerfile
+            args:
+                - database_host=database
+                - database_port=5432
+                - database_user_name=postgres
+                - database_users_password=postgres
+                - webserver_port=6251
+                - shared_workspace_dir=/data
+        ports:
+            - '6251:6251'
+        networks:
+            - codecompass
+        volumes:
+            - type: volume
+              source: parse_data
+              target: /data
+# TODO: For debugging:
+#        stdin_open: true
+#        tty: true
+#        command: /bin/bash
+
+    xercesparser:
+        image: compass_xercesparser
+        container_name: cc_xercesparser
+        build:
+            context: ./xerces/
+            dockerfile: Dockerfile
+            args:
+                - project_name=xerces
+                - database_host=database
+                - database_port=5432
+                - database_user_name=postgres
+                - database_users_password=postgres
+                - project_workspace_dir=/mnt/ws
+                - shared_workspace_dir=/data
+
+        networks:
+            - codecompass
+        volumes:
+            - type: volume
+              source: parse_data
+              target: /data
+            - type: bind
+              source: ./xercessrc
+              target: /mnt/ws
+        user: ${user_id}:${group_id}
+# TODO: For debugging:
+        stdin_open: true
+        tty: true
+        command: /bin/bash
+
+    db:
+        image: 'postgres:9.5'
+        container_name: cc_db
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_USER=postgres
+            - PGDATA=/var/lib/postgresql/data/pgdata
+            - POSTGRES_INITDB_ARGS='-E "SQL_ASCII"'
+        networks:
+            codecompass:
+                aliases:
+                    - database
+
+    dbadmin:
+        image: 'quantumobject/docker-mywebsql'
+        container_name: cc_dbadmin
+        ports:
+            - "8081:80"
+        networks:
+            - codecompass
+
+networks:
+  codecompass:
+
+volumes:
+  parse_data:
