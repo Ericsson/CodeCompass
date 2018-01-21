@@ -1,0 +1,25 @@
+CODE_COMPASS_DEVELOPER_HOME="/tmp/developer"
+mkdir -p "${CODE_COMPASS_DEVELOPER_HOME}"
+export HOME="${CODE_COMPASS_DEVELOPER_HOME}"
+
+export NVM_DIR="/opt/nvm"
+source "$NVM_DIR/nvm.sh"
+
+THRIFT_INSTALL_DIR="/opt/thrift"
+ODB_INSTALL_DIR="/opt/odb"
+CC_INSTALL_DIR="/opt/CodeCompass"
+LLVM_INSTALL_DIR="/opt/llvm"
+
+CMAKE_PREFIX_PATH_ORG="${CMAKE_PREFIX_PATH}"
+CMAKE_PREFIX_PATH+="${THRIFT_INSTALL_DIR}"
+CMAKE_PREFIX_PATH+=":${LLVM_INSTALL_DIR}/share/clang/cmake"
+CMAKE_PREFIX_PATH+=":${LLVM_INSTALL_DIR}/share/llvm/cmake"
+CMAKE_PREFIX_PATH+=":${ODB_INSTALL_DIR}"
+CMAKE_PREFIX_PATH+=":${CMAKE_PREFIX_PATH_ORG}"
+export CMAKE_PREFIX_PATH
+
+export PATH="${THRIFT_INSTALL_DIR}/bin:${PATH}"
+export PATH="${ODB_INSTALL_DIR}/bin:${PATH}"
+
+# TODO: Necessary to compile CodeCompass with clang.
+#export PATH="${LLVM_INSTALL_DIR}/bin:${PATH}"

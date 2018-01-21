@@ -1,0 +1,35 @@
+FROM ccparser
+
+ARG project_name
+ARG database_host
+ARG database_port
+ARG database_user_name
+ARG database_users_password
+ARG project_workspace_dir
+ARG shared_workspace_dir
+
+# Database connection arguments
+ENV PROJECT_NAME            ${project_name:-xerces}
+ENV DATABASE_HOST           ${database_host:-localhost}
+ENV DATABASE_PORT           ${database_port:-5432}
+ENV DATABASE_USER_NAME      ${database_user_name:-postgres}
+ENV DATABASE_USER_PASSWORD  ${database_users_password:-postgres}
+
+# Directory where this project perfoms the build
+# It can be overwritten in build time with build-arg or run-time by setting
+# environment variable in the command line.
+ENV PROJECT_WORKSPACE_DIR   ${project_workspace_dir:-${PROJECT_WORKSPACE_DIR}}
+
+# Directory that must be shared between this parser and CC webserver
+ENV CC_SHARED_WORKSPACE_DIR ${shared_workspace_dir:-${CC_SHARED_WORKSPACE_DIR}}
+
+RUN apt-get install -y \
+    autoconf \
+    cmake \
+    g++ \
+    libcurl3 \
+    make
+
+# Install scripts to the script directory, including project specific things
+COPY ./bin ${SCRIPT_DIR}
+RUN chmod ugo+x ${SCRIPT_DIR}/filterbuildcmds.py
