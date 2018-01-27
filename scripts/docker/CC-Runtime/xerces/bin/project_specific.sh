@@ -24,8 +24,6 @@ install_project() {
     local configdir="${2}" # Unused
     local workspacedir="${3}"
 
-    echo ${workspacedir}
-    ls -la ${workspacedir}
     if [[ ! -r  "${workspacedir}/xerces-c.spec" ]]; then
         echo "Xerces source could not be found." >&2
         exit 1

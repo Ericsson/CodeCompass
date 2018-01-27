@@ -23,13 +23,17 @@ ENV PROJECT_WORKSPACE_DIR   ${project_workspace_dir:-${PROJECT_WORKSPACE_DIR}}
 # Directory that must be shared between this parser and CC webserver
 ENV CC_SHARED_WORKSPACE_DIR ${shared_workspace_dir:-${CC_SHARED_WORKSPACE_DIR}}
 
-RUN apt-get install -y \
+# Install developer tools for xerces
+RUN apt-get install --yes \
     autoconf \
     cmake \
     g++ \
     libcurl3 \
     make
 
+# Prepare directory for indexer plugin
+RUN mkdir --parent --mode=a+rwx "${CC_SHARED_WORKSPACE_DIR}/${PROJECT_NAME}"
+
 # Install scripts to the script directory, including project specific things
 COPY ./bin ${SCRIPT_DIR}
-RUN chmod ugo+x ${SCRIPT_DIR}/filterbuildcmds.py
+RUN chmod ugo+x "${SCRIPT_DIR}/filterbuildcmds.py"
