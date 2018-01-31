@@ -16,7 +16,7 @@ namespace cc
 namespace util 
 {
 
-class GraphPimpl;
+struct GraphPimpl;
 
 /**
  * This class helps in creating a graph. The built graph can be written to the

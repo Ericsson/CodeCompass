@@ -280,6 +280,8 @@ void MetricsParser::persistLoc(const Loc& loc_, model::FileId file_)
   });
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
   boost::program_options::options_description getOptions()
@@ -293,6 +295,7 @@ extern "C"
     return std::make_shared<MetricsParser>(ctx_);
   }
 }
+#pragma clang diagnostic pop
 
 }
 }

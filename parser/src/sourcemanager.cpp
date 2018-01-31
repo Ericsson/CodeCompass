@@ -32,7 +32,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
 
   //--- Initialize magic for plain text testing ---//
 
-  if (_magicCookie = ::magic_open(MAGIC_SYMLINK))
+  if ((_magicCookie = ::magic_open(MAGIC_SYMLINK)))
   {
     if (::magic_load(_magicCookie, 0) != 0)
     {
