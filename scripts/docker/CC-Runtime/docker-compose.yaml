@@ -13,7 +13,7 @@ services:
                 - database_user_name=postgres
                 - database_users_password=postgres
                 - webserver_port=6251
-                - shared_workspace_dir=/data
+                - shared_workspace_dir=/data/codecompass
         ports:
             - '6251:6251'
         networks:
@@ -40,7 +40,7 @@ services:
                 - database_user_name=postgres
                 - database_users_password=postgres
                 - project_workspace_dir=/mnt/ws
-                - shared_workspace_dir=/data
+                - shared_workspace_dir=/data/codecompass
 
         networks:
             - codecompass
