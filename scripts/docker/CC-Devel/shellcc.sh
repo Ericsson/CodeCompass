@@ -55,23 +55,15 @@ if [[ "$developer_id" -eq 0 ]] || [[ "$developer_group" -eq 0 ]]; then
 fi
 
 if [[ ! -d "${cc_source_dir}" ]]; then
-    echo "Source directory not exists." >&2
+    echo "Source directory does not exist." >&2
     usage
     exit 5
 fi
 
 if [[ ! -d "${cc_output_dir}" ]]; then
-    echo "Output directory not exists." >&2
+    echo "Output directory does not exist." >&2
     usage
     exit 5
-fi
-
-developer_id="$(id --user)"
-developer_group="$(id --group)"
-
-if [[ "$developer_id" -eq 0 ]] || [[ "$developer_group" -eq 0 ]]; then
-    echo "'${0}' should not run as root." >&2
-    exit 2
 fi
 
 cc_source_mounted="/mnt/cc_source"

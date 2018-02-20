@@ -24,10 +24,6 @@ cd "${script_dir}"
 # Start containers.
 # TODO: Services depends on each other. Should be synchronized.
 
-start_backend_command=("${compose_command}" "-f" "${yaml_file}" "up" "db"      \
-  "webserver")
-call_docker "${start_backend_command[@]}"
-
 start_dbadmin_command=("${compose_command}" "-f" "${yaml_file}" "up" "dbadmin")
 start_parser_command=("${compose_command}" "-f" "${yaml_file}" "up"            \
   "xercesparser")
@@ -37,4 +33,14 @@ echo "${start_dbadmin_command[*]}"
 
 echo "Run parsing of xerces use the following command:"
 echo "${start_parser_command[*]}"
+
+start_webserver_command=("${compose_command}" "-f" "${yaml_file}" "up"         \
+  "webserver")
+
+echo "To start webserver use the following command:"
+echo "${start_webserver_command[*]}"
+
+start_backend_command=("${compose_command}" "-f" "${yaml_file}" "up" "db")
+call_docker "${start_backend_command[@]}"
+
 

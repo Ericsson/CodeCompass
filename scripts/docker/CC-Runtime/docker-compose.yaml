@@ -53,9 +53,9 @@ services:
               target: /mnt/ws
         user: ${user_id}:${group_id}
 # TODO: For debugging:
-        stdin_open: true
-        tty: true
-        command: /bin/bash
+#        stdin_open: true
+#        tty: true
+#        command: /bin/bash
 
     db:
         image: 'postgres:9.5'
