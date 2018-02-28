@@ -10,13 +10,12 @@ effort. We hope that the developers can be productive in a shorter time in
 CodeCompass development. However the build system can be run on any
 distribution, the executables are compiled for ubuntu. The result of the build
 may or may not run on another distribution. This solution contains a runtime
-environment to try the compiled CodeCompass. This runtime environment based on
-ubuntu too, so the CodeCompass can try without problem with it. (See
+environment too to try the compiled CodeCompass. This runtime environment based
+on ubuntu too, so the CodeCompass can be tried without problem with it. (See
 [Set up CodeCompass runtime environment](#set-up-codecompass-runtime-environment))
 
 Additionally, the image creation is an exact definition how the build system
-have to set up when somebody want to try to develop for a different distribution
-than ubuntu.
+have to set up.
 
 Using this way of CodeCompass development not requires full understanding of
 Docker. The steps of development wrapped with shell scripts which hides the
@@ -33,7 +32,7 @@ All tools that necessary to build CodeCompass, is encapsulated in a Docker
 image. So, the developer image should be created first on the developer's
 machine.
 
-To create docker image that contains all necessary tool to make a CodeCompass
+To create docker image that contains all necessary tools to make a CodeCompass
 binary:
 
 ```bash
@@ -42,8 +41,8 @@ docker build --tag compass-devel <cc_source_dir>/scripts/docker/CC-Devel
 ```
 
 This is a long running task, because a complete LLVM is necessary to compile
-(among others). When it is built, it consumes about 4GB on the developer's
-machine.
+(among others). When it is built, the image consumes about 4GB on the
+developer's machine.
 
 Using "compass-devel" as image name is mandatory, because the scripts find the
 image by this name.
@@ -118,19 +117,20 @@ parts of the environment run in their containers. The ``docker-compose`` by
 
 ## Set up CodeCompass runtime environment
 
-CodeCompass is a complex networked application, it is not trivial to set-up a
-working environment for it. The purpose of this environment that the developer
-can quickly try CodeCompass on his/her developer host.
+The purpose of this environment that the developer can quickly try
+CodeCompass on his/her developer's machine. CodeCompass is a complex networked
+application, it is not trivial to set-up a well established environment for it.
 
-The ``create_base_images.sh`` script control the assembling of necessary images.
+The ``create_base_images.sh`` script controls assembling of necessary images.
 This script depends on the ``compass-devel`` image, so that should be created
 first as described in chapter
 [Create CodeCompass development environment](#create-codecompass-development-environment)
 
-The demonstration parser parses ``xerces`` project. The xerces source should be
-downloaded by hand under the ``CC-Runtime/xercessrc`` directory before the parser
-started (up). (A specific parser can download its project automatically, but in
-this demo does not. See ``CC-Runtime/xerces/bin/project_specific.sh``)
+The CodeCompass repository contains a demonstration parser which parses
+``xerces`` project. The xerces source should be downloaded by hand into the
+``CC-Runtime/xercessrc`` directory before the parser started (up). (An other
+parser can download its project automatically. See
+``CC-Runtime/xerces/bin/project_specific.sh``)
 
 ## Running CodeCompass
 
