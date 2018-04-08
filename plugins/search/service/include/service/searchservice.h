@@ -37,7 +37,7 @@ public:
 
   void searchFile(
     FileSearchResult& _return,
-    const SearchParams&     params_);
+    const SearchParams&     params_) override;
 
   void getSearchTypes(std::vector<SearchType> & _return) override;
 

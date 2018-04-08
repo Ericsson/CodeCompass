@@ -11,6 +11,9 @@ add_executable(CodeCompass_parser
   src/sourcemanager.cpp
   src/parser.cpp)
 
+set_target_properties(CodeCompass_parser
+  PROPERTIES ENABLE_EXPORTS 1)
+
 target_link_libraries(CodeCompass_parser
   util
   model

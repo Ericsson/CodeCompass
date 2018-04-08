@@ -101,7 +101,7 @@ public:
   {
   }
 
-  std::string key() const
+  std::string key() const override
   {
     return "ThriftHandler";
   }

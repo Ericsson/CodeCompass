@@ -121,6 +121,8 @@ GitParser::~GitParser()
   git_libgit2_shutdown();
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
   boost::program_options::options_description getOptions()
@@ -134,6 +136,7 @@ extern "C"
     return std::make_shared<GitParser>(ctx_);
   }
 }
+#pragma clang diagnostic pop
 
 } // parser
 } // cc

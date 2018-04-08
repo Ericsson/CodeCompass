@@ -2,25 +2,26 @@
 #include <webserver/thrifthandler.h>
 #include <pluginservice/pluginservice.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    boost::program_options::options_description description("Plugin Plugin");
 
-boost::program_options::options_description getOptions()
-{
-  boost::program_options::options_description description("Plugin Plugin");
+    return description;
+  }
 
-  return description;
+  void registerPlugin(
+    const boost::program_options::variables_map& config_,
+    cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
+  {
+    std::shared_ptr<cc::webserver::RequestHandler> handler(
+      new cc::webserver::ThriftHandler<cc::service::plugin::PluginServiceProcessor>(
+        new cc::service::plugin::PluginServiceHandler(pluginHandler_, config_)));
+
+    pluginHandler_->registerImplementation("PluginService", handler);
+  }
 }
-
-void registerPlugin(
-  const boost::program_options::variables_map& config_,
-  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
-{
-  std::shared_ptr<cc::webserver::RequestHandler> handler(
-    new cc::webserver::ThriftHandler<cc::service::plugin::PluginServiceProcessor>(
-      new cc::service::plugin::PluginServiceHandler(pluginHandler_, config_)));
-
-  pluginHandler_->registerImplementation("PluginService", handler);
-}
-
-}
+#pragma clang diagnostic pop

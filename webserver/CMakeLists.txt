@@ -3,6 +3,9 @@ add_executable(CodeCompass_webserver
   src/mainrequesthandler.cpp
   src/threadedmongoose.cpp )
 
+set_target_properties(CodeCompass_webserver
+  PROPERTIES ENABLE_EXPORTS 1)
+
 add_library(mongoose STATIC src/mongoose.c )
 
 target_include_directories(mongoose PUBLIC include)

@@ -100,7 +100,7 @@ void PPMacroCallback::MacroExpands(
   _disabled = true;
   clang::DiagnosticsEngine *OldDiags = &_pp.getDiagnostics();
   _pp.setDiagnostics(TmpDiags);
-  _pp.EnterTokenStream(tokens.data(), tokens.size(), false, false);
+  _pp.EnterTokenStream(tokens, false);
 
   std::string expansion;
   _pp.Lex(tok);
@@ -165,7 +165,8 @@ void PPMacroCallback::MacroDefined(
 
 void PPMacroCallback::MacroUndefined(
   const clang::Token& macroNameTok_,
-  const clang::MacroDefinition& md_)
+  const clang::MacroDefinition& md_,
+  const clang::MacroDirective* undef_)
 {
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
