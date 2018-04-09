@@ -166,7 +166,7 @@ void PPMacroCallback::MacroDefined(
 void PPMacroCallback::MacroUndefined(
   const clang::Token& macroNameTok_,
   const clang::MacroDefinition& md_,
-  const clang::MacroDirective* undef_)
+  const clang::MacroDirective* /*undef_*/)
 {
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
@@ -220,8 +220,13 @@ void PPMacroCallback::addFileLoc(
 
 bool PPMacroCallback::isBuiltInMacro(const clang::MacroInfo* mi_) const
 {
-  std::string fileName = _clangSrcMgr.getPresumedLoc(
-    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc())).getFilename();
+  clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
+    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));
+
+  if (presLoc.isInvalid())
+    return true;
+
+  std::string fileName = presLoc.getFilename();
 
   return fileName == "<built-in>" || fileName == "<command line>";
 }
@@ -231,9 +236,7 @@ std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
   clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
     _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));
 
-  const char* fileName = presLoc.getFilename();
-
-  if (!fileName)
+  if (presLoc.isInvalid())
     return std::string();
 
   std::string locStr
@@ -242,8 +245,8 @@ std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
 
   return locStr
     + (isBuiltInMacro(mi_)
-    ? fileName
-    : std::to_string(_ctx.srcMgr.getFile(fileName)->id));
+    ? presLoc.getFilename()
+    : std::to_string(_ctx.srcMgr.getFile(presLoc.getFilename())->id));
 }
 
 } // parser
