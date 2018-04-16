@@ -112,7 +112,18 @@ void PPMacroCallback::MacroExpands(
         expansion += ' ';
 
     // Escape any special characters in the token text.
-    expansion += _pp.getSpelling(tok);
+    if (!tok.isAnnotation())
+      // getSpelling calls getLength() on the token, which is not viable if the
+      // token isAnnotation().
+      // FIXME: Revise how the preprocessor/lexer of Clang could be improved to
+      // handle annotation expansions properly, if possible.
+      expansion += _pp.getSpelling(tok);
+    else
+    {
+      expansion += "/*< FIXME: ";
+      expansion += tok.getName();
+      expansion += " token not expanded. >*/";
+    }
     _pp.Lex(tok);
   }
 
