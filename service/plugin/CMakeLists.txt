@@ -16,12 +16,15 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/PluginService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/PluginService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
+    thrift --gen cpp --gen js
+      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
   COMMENT
-    "Generate thrift for workspace.thrift")
+    "Generating Thrift for workspace.thrift")
 
 add_library(pluginthrift STATIC
   gen-cpp/plugin_constants.cpp
