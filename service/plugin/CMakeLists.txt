@@ -24,7 +24,7 @@ add_custom_command(
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
   COMMENT
-    "Generating Thrift for workspace.thrift")
+    "Generating Thrift for plugin.thrift")
 
 add_library(pluginthrift STATIC
   gen-cpp/plugin_constants.cpp
