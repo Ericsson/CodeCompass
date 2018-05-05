@@ -62,7 +62,7 @@ cd thrift-<version>
 # given language then it'll use it. For example in the previous step npm was
 # installed which requires NodeJS. If NodeJS can be found on your machine then
 # the corresponding stub will also compile. If you don't need it then you can
-# turn it off: ./configure --witout-nodejs.
+# turn it off: ./configure --without-nodejs.
 #
 # In certain cases, installation may fail if development libraries for languages
 # are not installed on the target machine. E.g. if Python is installed but the
@@ -98,7 +98,7 @@ cd ../..
 mkdir build
 cd build
 export REQUIRES_RTTI=1
-cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON \
+cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=<clang_install_dir> \
   ../llvm-release_60
 # This make step takes a while. If you have more CPUs then you can compile on
