@@ -97,6 +97,8 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
     if (astNodeInfo.astNodeType !== 'Definition')
       astNodeInfo = languageService.getReferences(astNodeInfo.id, 0)[0];
 
+    var srcText = languageService.getSourceText(astNodeInfo.id);
+
     var newElement = new CodeBitesElement({
       astNodeInfo     : astNodeInfo,
       firstLineNumber : astNodeInfo.range.range.startpos.line,
@@ -108,7 +110,7 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
       selection       : panel.selection
     });
 
-    newElement.set('content', astNodeInfo.srcText);
+    newElement.set('content', srcText);
     newElement.set('header', fileInfo);
 
     //--- Place node ---//
