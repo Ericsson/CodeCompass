@@ -9,7 +9,7 @@ function (urlHandler, exports) {
   exports._fileTypesToService = {};
 
   /**
-   * Get service identified by name. Registrate if doesn't exist.
+   * Get service identified by name. Register it if it doesn't exist.
    */
   exports.addService = function (name, url, Client) {
     if (!this[name]) {
