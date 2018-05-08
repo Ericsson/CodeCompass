@@ -236,7 +236,6 @@ private:
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-  const boost::program_options::variables_map& _config;
   std::shared_ptr<std::string> _datadir;
 
   core::ProjectServiceHandler _projectHandler;

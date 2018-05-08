@@ -81,7 +81,7 @@ private:
 
       {
         RelationCollector relationCollector(
-          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+          _ctx, _context);
         relationCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
 

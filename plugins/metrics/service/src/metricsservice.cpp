@@ -87,7 +87,7 @@ std::string MetricsServiceHandler::getMetricsFromDir(
       [](const model::File& file) { return file.id; });
 
     if (descendantFids.empty())
-      return "";
+      return;
 
     //--- Get metrics for these files ---//
 
