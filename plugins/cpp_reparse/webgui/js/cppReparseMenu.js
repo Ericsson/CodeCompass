@@ -14,6 +14,37 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     // Don't create the menus if the server can't reparse.
     return;
 
+  //--- Reparse menu for source codes ---//
+  var nodeMenu = {
+    id : 'cppreparse-node',
+    render : function (nodeInfo, fileInfo) {
+      if (fileInfo.type !== "CPP")
+        return;
+
+      var submenu = new Menu();
+
+      submenu.addChild(new MenuItem({
+        label : 'Show AST HTML',
+        onClick : function () {
+          topic.publish('codecompass/cppreparsenode', {
+            fileInfo : fileInfo,
+            nodeInfo : nodeInfo
+          });
+        }
+      }));
+
+      return new PopupMenuItem({
+        label : 'C++',
+        popup : submenu
+      });
+    }
+  };
+
+  viewHandler.registerModule(nodeMenu, {
+    type     : viewHandler.moduleType.TextContextMenu,
+    priority : 10
+  });
+
   //--- Reparse menu for source files in the project manager ---//
   var fileMenu = {
     id : 'cppreparse-file',

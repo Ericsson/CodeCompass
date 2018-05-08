@@ -46,6 +46,10 @@ public:
     std::string& return_,
     const core::FileId& fileId_) override;
 
+  virtual void getAsHTMLForNode(
+    std::string& return_,
+    const core::AstNodeId& nodeId_) override;
+
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

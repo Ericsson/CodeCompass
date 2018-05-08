@@ -9,7 +9,10 @@
 
 #include <util/logutil.h>
 
+#include <cppparser/filelocutil.h>
+
 #include "asthtml.h"
+#include "astnodelocator.h"
 
 namespace
 {
@@ -146,6 +149,60 @@ private:
   const char* _name;
 };
 
+/**
+ * This class implements the functionality of Clang's AST-to-HTML printer in a
+ * way that only a subtree corresponding to the user's requested node is
+ * printed.
+ */
+class ASTSubtreeHTMLPrinter
+  : public ASTConsumer,
+    public RecursiveASTVisitor<ASTSubtreeHTMLPrinter>
+{
+  typedef RecursiveASTVisitor<ASTSubtreeHTMLPrinter> Base;
+
+public:
+  ASTSubtreeHTMLPrinter(std::unique_ptr<raw_ostream> out_,
+                        ASTContext& context_,
+                        model::CppAstNodePtr node_)
+    : _out(std::move(out_)),
+      _context(context_),
+      _locator(context_, std::move(node_))
+  {}
+
+  void HandleTranslationUnit(ASTContext& context_) override
+  {
+    assert(&_context == &context_ && "AST visitor must be called with the same "
+      "ASTContext as it was set up with.");
+    TranslationUnitDecl* d = context_.getTranslationUnitDecl();
+    TraverseDecl(d);
+  }
+
+  bool TraverseDecl(Decl* d_)
+  {
+    if (_locator.matchNodeAgainstLocation(d_))
+    {
+      d_->dump(*_out, /* Deserialize = */ false);
+      return true;
+    }
+    return Base::TraverseDecl(d_);
+  }
+
+  bool TraverseStmt(Stmt* s_)
+  {
+    if (_locator.matchNodeAgainstLocation(s_))
+    {
+      s_->dump(*_out, _context.getSourceManager());
+      return true;
+    }
+    return Base::TraverseStmt(s_);
+  }
+
+private:
+  std::unique_ptr<raw_ostream> _out;
+  ASTContext& _context;
+  cc::service::reparse::ASTNodeLocator _locator;
+};
+
 } // namespace (anonymous)
 
 
@@ -163,6 +220,16 @@ std::unique_ptr<clang::ASTConsumer> ASTHTMLActionFactory::newASTConsumer()
   assert(_stream && "Must not call newASTConsumer twice as the underlying "
     "stream has been moved out.");
   return clang::CreateASTDumper(std::move(_stream), "", true, true, false);
+}
+
+std::unique_ptr<clang::ASTConsumer>
+ASTHTMLActionFactory::newASTConsumerForNode(clang::ASTContext& context_,
+                                            model::CppAstNodePtr astNode_)
+{
+  assert(_stream && "Must not call newASTConsumer twice as the underlying "
+    "stream has been moved out.");
+  return std::make_unique<ASTSubtreeHTMLPrinter>(std::move(_stream),
+                                                 context_, astNode_);
 }
 
 std::string ASTHTMLActionFactory::str() const

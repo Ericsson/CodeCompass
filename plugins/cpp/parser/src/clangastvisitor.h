@@ -37,8 +37,9 @@
 #include <util/odbtransaction.h>
 #include <util/logutil.h>
 
+#include <cppparser/filelocutil.h>
+
 #include "manglednamecache.h"
-#include "filelocutil.h"
 #include "symbolhelper.h"
 
 namespace cc

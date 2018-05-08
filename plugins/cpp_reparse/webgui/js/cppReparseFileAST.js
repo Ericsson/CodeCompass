@@ -37,10 +37,12 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
     },
 
     setState : function (state) {
-      if (state.center !== this.id || !(state.fid))
+      if (state.center !== this.id || !(state.fid || state.node))
         return;
 
-      if (state.fid)
+      if (state.node)
+        this.loadASTForNode(urlHandler.getAstNodeInfo());
+      else if (state.fid)
         this.loadASTForFile(urlHandler.getFileInfo());
     },
 
@@ -60,6 +62,18 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
       );
     },
 
+    loadASTForNode : function (nodeInfo) {
+      var that = this;
+      this.setLoading();
+
+      model.cppreparseservice.getAsHTMLForNode(
+        nodeInfo.id,
+        function(astHtml) {
+          that.set('content', astHtml);
+        }
+      );
+    },
+
     _subscribeTopics : function () {
       var that = this;
       topic.subscribe('codecompass/cppreparsefile', function (message) {
@@ -73,6 +87,27 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
         urlHandler.setStateValue({
           center : that.id,
           fid : fileInfo.id
+        });
+        urlHandler.unsetStateValue("select");
+        urlHandler.unsetStateValue("node");
+      });
+
+      topic.subscribe('codecompass/cppreparsenode', function (message) {
+        var fileInfo = message.fileInfo;
+        var nodeInfo = message.nodeInfo;
+        if (!fileInfo || !nodeInfo)
+          return;
+
+        if (!nodeInfo.range || nodeInfo.range.file !== fileInfo.id)
+          return;
+
+        that.loadASTForNode(nodeInfo, true);
+        topic.publish('codecompass/setCenterModule', that.id);
+
+        urlHandler.setStateValue({
+          center : that.id,
+          fid : fileInfo.id,
+          node : nodeInfo.id
         });
         urlHandler.unsetStateValue("select");
       });

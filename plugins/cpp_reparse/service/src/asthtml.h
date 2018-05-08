@@ -128,6 +128,14 @@ public:
   std::unique_ptr<clang::ASTConsumer> newASTConsumer();
 
   /**
+   * Creataes a new AST Consumer which emits the subtree for the given
+   * database-stored AST node's in-memory subtree into a formattec HTML string.
+   */
+  std::unique_ptr<clang::ASTConsumer> newASTConsumerForNode(
+    clang::ASTContext& context_,
+    model::CppAstNodePtr astNode_);
+
+  /**
    * Retrieve the HTML string that was populated by the ASTConsumer created by
    * this factory.
    */
