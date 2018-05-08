@@ -18,12 +18,8 @@ std::unordered_set<model::CppEdgeAttributeId> RelationCollector::_edgeAttrCache;
 
 RelationCollector::RelationCollector(
   ParserContext& ctx_,
-  clang::ASTContext& astContext_,
-  MangledNameCache& mangledNameCache_,
-  std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
+  clang::ASTContext& astContext_)
   : _ctx(ctx_),
-    _mangledNameCache(mangledNameCache_),
-    _clangToAstNodeId(clangToAstNodeId_),
     _fileLocUtil(astContext_.getSourceManager())
 {
 }

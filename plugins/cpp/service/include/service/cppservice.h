@@ -129,7 +129,7 @@ public:
 
   void getSyntaxHighlight(
     std::vector<SyntaxHighlight>& return_,
-    const core::FileId& fileId) override;
+    const core::FileId& fileId_) override;
 
 private:
   enum ReferenceType

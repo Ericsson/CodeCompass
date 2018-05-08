@@ -53,8 +53,6 @@ private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
-  const boost::program_options::variables_map& _config;
-
   core::ProjectServiceHandler _projectService;
 };
 

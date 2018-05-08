@@ -593,7 +593,7 @@ void CppServiceHandler::getReferences(
   std::vector<AstNodeInfo>& return_,
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_,
-  const std::vector<std::string>& tags_)
+  const std::vector<std::string>& /* tags_ */)
 {
   std::map<model::CppAstNodeId, std::vector<std::string>> tags;
   std::vector<model::CppAstNode> nodes;
@@ -991,28 +991,28 @@ void CppServiceHandler::getDiagramTypes(
 }
 
 void CppServiceHandler::getReferencesInFile(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const core::FileId& fileId_,
-  const std::vector<std::string>& tags_)
+  std::vector<AstNodeInfo>& /* return_ */,
+  const core::AstNodeId& /* astNodeId_ */,
+  const std::int32_t /* referenceId_ */,
+  const core::FileId& /* fileId_ */,
+  const std::vector<std::string>& /* tags_ */)
 {
   // TODO
 }
 
 void CppServiceHandler::getReferencesPage(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const std::int32_t pageSize_,
-  const std::int32_t pageNo_)
+  std::vector<AstNodeInfo>& /* return_ */,
+  const core::AstNodeId& /* astNodeId_ */,
+  const std::int32_t /* referenceId_ */,
+  const std::int32_t /* pageSize_ */,
+  const std::int32_t /* pageNo_ */)
 {
   // TODO
 }
 
 void CppServiceHandler::getFileReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
-  const core::FileId& fileId_)
+  const core::FileId& /* fileId_ */)
 {
   return_["Types"]     = TYPES;
   return_["Functions"] = FUNCTIONS;
@@ -1106,8 +1106,8 @@ std::int32_t CppServiceHandler::getFileReferenceCount(
 }
 
 void CppServiceHandler::getSyntaxHighlight(
-  std::vector<SyntaxHighlight>& return_,
-  const core::FileId& fileId)
+  std::vector<SyntaxHighlight>& /* return_ */,
+  const core::FileId& /* fileId_ */)
 {
   // TODO
 }
