@@ -58,6 +58,7 @@ add_library(cppreparseservice SHARED
   src/astcache.cpp
   src/asthtml.cpp
   src/databasefilesystem.cpp
+  src/infotree.cpp
   src/reparser.cpp)
 
 target_compile_options(cppreparseservice PUBLIC -Wno-unknown-pragmas)

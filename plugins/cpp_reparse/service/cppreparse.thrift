@@ -50,4 +50,22 @@ service CppReparseService
    * Returns the AST for the given AST Node('s subtree) as an HTML string.
    */
   string getAsHTMLForNode(1: common.AstNodeId nodeId);
+
+  /**
+   * Gets a Clang AST node basic values for the top-level (translation unit)
+   * declaration of the given file.
+   */
+  ASTNodeBasic getBasic(1: common.FileId fileId);
+
+  /**
+   * Gets a Clang AST node basic values for the database-stored AST node given.
+   */
+  ASTNodeBasic getBasicForNode(1: common.AstNodeId nodeId);
+
+  /**
+   * Retrieves the details of the given AST node identified by visitId, in
+   * the traversal of the (file of the) tree of rootNode.
+   */
+  ASTNodeDetail getDetail(1: common.FileId fileId,
+                          2: i64 visitId);
 }

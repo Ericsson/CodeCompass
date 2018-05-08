@@ -56,8 +56,10 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
      * This function loads the first level of the info tree based on the given
      * info object.
      * @param {AstNodeInfo | FileInfo} elementInfo Thrift object.
+     * @param {string} fileType The type of the file which has the element the
+     * InfoTree is loaded for. (Optional.)
      */
-    loadInfoTree : function (elementInfo) {
+    loadInfoTree : function (elementInfo, fileType) {
       var that = this;
 
       //--- Remove previous tree data ---//
@@ -70,7 +72,8 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
 
       viewHandler.getModules({ 
         type     : viewHandler.moduleType.InfoTree,
-        fileType : urlHandler.getFileInfo().type
+        fileType : fileType !== undefined
+                   ? fileType : urlHandler.getFileInfo().type
       }).forEach(function (item) {
         item.render(elementInfo).forEach(function (infoNode) {
           that._store.put(infoNode);

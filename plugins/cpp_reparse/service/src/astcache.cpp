@@ -67,6 +67,36 @@ void ASTCache::pruneEntries()
   }
 }
 
+ASTCache::NodeVisitMap::mapped_type ASTCache::getIdToAddressMapping(
+  const core::FileId& id_,
+  size_t nodeVisitId_)
+{
+  std::lock_guard<std::mutex> lock(_lock);
+  auto it = _cache.find(id_);
+  if (it == _cache.end())
+    return std::make_pair(nullptr, ClangASTNodeType::Unknown);
+
+  NodeVisitMap& map = it->second.getNodeMap();
+  auto entryIt = map.find(nodeVisitId_);
+  if (entryIt == map.end())
+    return std::make_pair(nullptr, ClangASTNodeType::Unknown);
+
+  return entryIt->second;
+}
+
+void ASTCache::storeIdToAddressMapping(const core::FileId& id_,
+                                       const size_t nodeVisitId_,
+                                       void* nodeAddress_,
+                                       const ClangASTNodeType type_)
+{
+  std::lock_guard<std::mutex> lock(_lock);
+  auto it = _cache.find(id_);
+  if (it == _cache.end())
+    return;
+
+  it->second.insertNodeMapping(nodeVisitId_, nodeAddress_, type_);
+}
+
 ASTCache::ASTCacheEntry::ASTCacheEntry(std::unique_ptr<clang::ASTUnit> AST_)
   : _AST(std::move(AST_)),
     _hitCount(0),
@@ -96,6 +126,20 @@ size_t ASTCache::ASTCacheEntry::referenceCount() const
   assert(useCount > 0 && "Use count must not reach zero in the reference "
                          "object if it is still in the cache.");
   return useCount - 1;
+}
+
+void ASTCache::ASTCacheEntry::insertNodeMapping(const size_t nodeId_,
+                                                void* address_,
+                                                const ClangASTNodeType type_)
+{
+  _lastHit = std::chrono::steady_clock::now();
+  _nodeIdToAddress[nodeId_] = std::make_pair(address_, type_);
+}
+
+ASTCache::NodeVisitMap& ASTCache::ASTCacheEntry::getNodeMap()
+{
+  _lastHit = std::chrono::steady_clock::now();
+  return _nodeIdToAddress;
 }
 
 } // namespace language

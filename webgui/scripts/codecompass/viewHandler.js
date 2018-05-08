@@ -72,6 +72,10 @@ function (lang, Deferred, model) {
              modules[module].options.type === filter.type) &&
             // Module is for the given file type.
             (filter.fileType === undefined ||
+                modules[module].options.fileType === undefined ||
+                modules[module].options.fileType === filter.fileType) &&
+            // Module is for the given file type's service.
+            (filter.fileType === undefined ||
              modules[module].options.service === undefined ||
              modules[module].options.service ===
                model.getLanguageService(filter.fileType)) &&

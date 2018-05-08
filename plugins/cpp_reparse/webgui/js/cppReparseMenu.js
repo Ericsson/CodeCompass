@@ -24,6 +24,16 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       var submenu = new Menu();
 
       submenu.addChild(new MenuItem({
+        label : 'Show syntax InfoTree',
+        onClick : function () {
+          topic.publish('codecompass/infotree', {
+            fileType : 'cpp-reparse',
+            elementInfo : nodeInfo
+          });
+        }
+      }));
+
+      submenu.addChild(new MenuItem({
         label : 'Show AST HTML',
         onClick : function () {
           topic.publish('codecompass/cppreparsenode', {
@@ -53,6 +63,16 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
         return;
 
       var submenu = new Menu();
+
+      submenu.addChild(new MenuItem({
+        label : 'Show syntax InfoTree',
+        onClick : function () {
+          topic.publish('codecompass/infotree', {
+              fileType : 'cpp-reparse',
+              elementInfo : fileInfo
+          });
+        }
+      }));
 
       submenu.addChild(new MenuItem({
         label : 'Show AST HTML',

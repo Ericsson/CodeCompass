@@ -50,6 +50,19 @@ public:
     std::string& return_,
     const core::AstNodeId& nodeId_) override;
 
+  virtual void getBasic(
+    ASTNodeBasic& return_,
+    const core::FileId& fileId_) override;
+
+  virtual void getBasicForNode(
+    ASTNodeBasic& return_,
+    const core::AstNodeId& nodeId_) override;
+
+  virtual void getDetail(
+    ASTNodeDetail& return_,
+    const core::FileId& fileId_,
+    const int64_t visitId_) override;
+
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
