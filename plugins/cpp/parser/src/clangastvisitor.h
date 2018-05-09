@@ -6,10 +6,11 @@
 #include <type_traits>
 #include <stack>
 
+#include <clang/AST/Decl.h>
+#include <clang/AST/RecordLayout.h>
+#include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
-#include <clang/AST/Decl.h>
-#include <clang/AST/RecursiveASTVisitor.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <model/cppastnode.h>
@@ -343,15 +344,23 @@ public:
     cppType->mangledNameHash = astNode->mangledNameHash;
     cppType->name = rd_->getNameAsString();
     cppType->qualifiedName = rd_->getQualifiedNameAsString();
-    if (const clang::CXXRecordDecl* crd
-        = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
+
+    if (!rd_->getTypeForDecl()->isDependentType() &&
+        !rd_->getTypeForDecl()->isInstantiationDependentType())
     {
-      cppType->isAbstract = crd->isAbstract();
-      cppType->isPOD = crd->isPOD();
+      // Template types are full definitions but they aren't layout-able.
+      const clang::ASTRecordLayout& layout =
+        rd_->getASTContext().getASTRecordLayout(rd_);
+
+      cppType->size = layout.getSize().getQuantity();
+      cppType->alignment = layout.getAlignment().getQuantity();
     }
 
     if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
+      cppType->isAbstract = crd->isAbstract();
+      cppType->isPOD = crd->isPOD();
+
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)

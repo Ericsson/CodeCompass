@@ -308,6 +308,16 @@ void CppServiceHandler::getProperties(
         if (type.isPOD)
           return_["POD type"] = "true";
 
+        // Size and alignment is expressed in C++ standard bytes (sizeof(char)).
+        if (type.size > 0)
+          // If size was 0, the compiler couldn't deduce the size of the type.
+          return_["Size"] = std::to_string(type.size);
+        if (type.alignment > 1)
+          // Only send alignment if it is meaningful alignment. An alignment of
+          // 1 means it is byte-aligned, i.e. it can be placed without any
+          // particular alignment.
+          return_["Alignment"] = std::to_string(type.alignment);
+
         return_["Name"] = type.name;
         return_["Qualified name"] = type.qualifiedName;
 

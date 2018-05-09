@@ -51,6 +51,11 @@ struct CppType : CppEntity
   bool isAbstract = false;
   bool isPOD = false;
 
+  // Size and alignment is expressed in C++ standard bytes (sizeof(char)).
+  // Default value 0 means it couldn't have been obtained from Clang.
+  std::size_t size = 0;
+  std::size_t alignment = 0;
+
   std::string toString() const
   {
     std::string ret("CppType");
@@ -61,6 +66,18 @@ struct CppType : CppEntity
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nisAbstract = ").append(std::to_string(isAbstract))
       .append("\nisPOD = ").append(std::to_string(isPOD));
+
+    ret.append("\nsize = ");
+    if (size == 0)
+      ret.append("unknown");
+    else
+      ret.append(std::to_string(size)).append(" bytes");
+
+    ret.append("\nalignment = ");
+    if (alignment > 1)
+      ret.append(std::to_string(alignment)).append(" bytes");
+    else
+      ret.append("any");
 
     if (!tags.empty())
     {

@@ -90,7 +90,7 @@
   font-size: 0.9em;
 }
 
-/** Infotree icons * */
+/** InfoTree icons * */
 
 .icon-info::before{
   content : '\e014'
@@ -301,6 +301,14 @@
 
 .icon-Undefinitions::before {
   content: '\e063';
+}
+
+.icon-Size::before {
+  content: '\e073';
+}
+
+.icon-Alignment::before {
+  content: '\e074';
 }
 
 .icon-x{

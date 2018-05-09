@@ -304,9 +304,16 @@ function (model, viewHandler, util) {
 
         for (var propName in props) {
           var propId = propName.replace(/ /g, '-');
+          var value = props[propName];
+
+          // Certain values are sent without suffices over the API. Add these
+          // here.
+          if (propName === "Size" || propName === "Alignment")
+            value = value + " bytes";
+
           var label
             = '<span class="label">' + propName + '</span>: '
-            + '<span class="value">' + props[propName] + '</span>';
+            + '<span class="value">' + value + '</span>';
 
           ret.push({
             name        : label,

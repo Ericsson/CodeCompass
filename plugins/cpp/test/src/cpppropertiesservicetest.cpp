@@ -1,6 +1,8 @@
 #define GTEST_HAS_TR1_TUPLE 1
 #define GTEST_USE_OWN_TR1_TUPLE 0
 
+#include <algorithm>
+
 #include <gtest/gtest.h>
 
 #include <service/cppservice.h>
@@ -35,7 +37,9 @@ public:
   }
 
   void checkProperties(model::FileId fid_, int line_, int col_,
-    std::map<std::string, std::string>& expectedLines_)
+    const std::map<std::string, std::string>& expectedValues_,
+    const std::vector<std::string>& ignoredValues_ = {},
+    const std::vector<std::string>& optionalProperties_ = {})
   {
     std::map<std::string, std::string> props;
 
@@ -46,19 +50,51 @@ public:
       _cppservice->getProperties(props, anFrom.id);
     });
 
-    if (props.size() < expectedLines_.size())
+    if (props.size() < expectedValues_.size() + ignoredValues_.size())
       LOG(debug) << "Position: " << line_ << ":" << col_;
 
-    EXPECT_LE(expectedLines_.size(), props.size());
+    EXPECT_LE(expectedValues_.size() + ignoredValues_.size(),
+              props.size());
     for (const auto& prop : props)
     {
-      if (expectedLines_[prop.first] != prop.second)
+      if (std::find(optionalProperties_.begin(), optionalProperties_.end(),
+                    prop.first) != optionalProperties_.end())
+      {
+        // Certain properties may or may not exist in the result set. Ignore
+        // if they are found.
+        LOG(debug) << "AstNode property " << prop.first << " optional."
+          << " Current value is: " << prop.second << ".";
+        continue;
+      }
+
+      if (std::find(ignoredValues_.begin(), ignoredValues_.end(), prop.first)
+          != ignoredValues_.end())
+      {
+        // If a property is found to not have its value tested but only the
+        // existence of it, accept it.
+        LOG(debug) << "AstNode property " << prop.first << " value ignored."
+          << " Current value is: " << prop.second << ".";
+        continue;
+      }
+
+      if (expectedValues_.find(prop.first) == expectedValues_.end())
+      {
         LOG(error)
           << "AstNode properties " << prop.first
-          << " doesn't match. Expected value is: " << expectedLines_[prop.first]
-          << ". Current value is: " << prop.second << "!";
+          << " doesn't match. There wasn't an expected value."
+          << " Current value is: " << prop.second << "!";
+        FAIL() << "Got value which isn't ignored, but wasn't expecting "
+                  "anything ";
+      }
 
-      EXPECT_EQ(expectedLines_[prop.first], prop.second);
+      if (expectedValues_.at(prop.first) != prop.second)
+        // Otherwise, check if the value is the value we expected to get.
+        LOG(error)
+          << "AstNode properties " << prop.first
+          << " doesn't match. Expected value is: "
+          << expectedValues_.at(prop.first) << ". Current value is: "
+          << prop.second << "!";
+      EXPECT_EQ(expectedValues_.at(prop.first), prop.second);
     }
   }
 
@@ -88,7 +124,8 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"Qualified name", "cc::test::SimpleClass"}
     };
 
-    checkProperties(_simpleClassHeader, 9, 10, expected);
+    checkProperties(_simpleClassHeader, 9, 10, expected,
+                    {"Size"}, {"Alignment"});
   }
 
   {
@@ -99,7 +136,8 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"POD type", "true"}
     };
 
-    checkProperties(_nestedClassHeader, 9, 10, expected);
+    checkProperties(_nestedClassHeader, 9, 10, expected,
+                    {"Size"}, {"Alignment"});
   }
 
   {
@@ -110,7 +148,8 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
       {"POD type", "true"}
     };
 
-    checkProperties(_nestedClassHeader, 13, 15, expected);
+    checkProperties(_nestedClassHeader, 13, 15, expected,
+                    {"Size"}, {"Alignment"});
   }
 }
 
@@ -124,7 +163,8 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
       {"Abstract type", "true"}
     };
 
-    checkProperties(_inheritanceClassHeader, 9, 10, expected);
+    checkProperties(_inheritanceClassHeader, 9, 10, expected,
+                    {"Size"}, {"Alignment"});
   }
 
   {
@@ -134,6 +174,7 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
       {"Qualified name", "cc::test::DerivedClass"}
     };
 
-    checkProperties(_inheritanceClassHeader, 31, 15, expected);
+    checkProperties(_inheritanceClassHeader, 31, 15, expected,
+                    {"Size"}, {"Alignment"});
   }
 }
