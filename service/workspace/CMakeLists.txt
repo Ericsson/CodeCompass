@@ -16,12 +16,15 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/WorkspaceService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/WorkspaceService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
+    thrift --gen cpp --gen js
+      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/workspace.thrift
   COMMENT
-    "Generate thrift for workspace.thrift")
+    "Generating Thrift for workspace.thrift")
 
 add_library(workspacethrift STATIC
   gen-cpp/workspace_constants.cpp

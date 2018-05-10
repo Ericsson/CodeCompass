@@ -46,7 +46,8 @@ public:
 
   virtual void MacroUndefined(
     const clang::Token& macroNameTok_,
-    const clang::MacroDefinition& md_) override;
+    const clang::MacroDefinition& md_,
+    const clang::MacroDirective* undef_) override;
 
 private:
 

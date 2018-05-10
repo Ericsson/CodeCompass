@@ -14,11 +14,13 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
   COMMAND
-    thrift --gen cpp --gen java -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
+    thrift --gen cpp --gen java
+      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
   COMMENT
-    "Generate thrift for searchindexer.thrift")
+    "Generating Thrift for searchindexer.thrift")
 
 add_library(searchindexerthrift STATIC
   gen-cpp/searchindexer_constants.cpp

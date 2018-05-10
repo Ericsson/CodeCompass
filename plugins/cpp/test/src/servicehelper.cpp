@@ -21,7 +21,7 @@ namespace test
 ServiceHelper::ServiceHelper(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<CppServiceHandler> cppservice_) :
-    _db(db_), _transaction(_db), _cppservice(cppservice_)
+    _db(db_), _cppservice(cppservice_), _transaction(_db)
 {
 }
 

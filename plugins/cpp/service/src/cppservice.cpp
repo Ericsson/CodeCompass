@@ -71,6 +71,9 @@ namespace
     {
     }
 
+    /**
+     * Returns the Thrift object for this C++ AST node.
+     */
     cc::service::language::AstNodeInfo operator()(
       const cc::model::CppAstNode& astNode_)
     {
@@ -88,16 +91,7 @@ namespace
       ret.range.range.endpos.column = astNode_.location.range.end.column;
 
       if (astNode_.location.file)
-      {
         ret.range.file = std::to_string(astNode_.location.file.object_id());
-
-        ret.__set_srcText(cc::util::textRange(
-          astNode_.location.file.load()->content.load()->content,
-          astNode_.location.range.start.line,
-          astNode_.location.range.start.column,
-          astNode_.location.range.end.line,
-          astNode_.location.range.end.column));
-      }
 
       TagMap::const_iterator it = _tags.find(astNode_.id);
       if (it != _tags.end())
@@ -137,6 +131,25 @@ void CppServiceHandler::getAstNodeInfo(
 {
   return_ = _transaction([this, &astNodeId_](){
     return CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+  });
+}
+
+void CppServiceHandler::getSourceText(
+  std::string& return_,
+  const core::AstNodeId& astNodeId_)
+{
+  return_ = _transaction([this, &astNodeId_](){
+    model::CppAstNode astNode = queryCppAstNode(astNodeId_);
+
+    if (astNode.location.file)
+      return cc::util::textRange(
+        astNode.location.file.load()->content.load()->content,
+        astNode.location.range.start.line,
+        astNode.location.range.start.column,
+        astNode.location.range.end.line,
+        astNode.location.range.end.column);
+
+    return std::string();
   });
 }
 

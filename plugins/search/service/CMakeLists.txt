@@ -21,13 +21,14 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js --gen java -o ${CMAKE_CURRENT_SOURCE_DIR}
-    -I ${PROJECT_SOURCE_DIR}/service
-    ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift
+    thrift --gen cpp --gen js --gen java
+      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -I ${PROJECT_SOURCE_DIR}/service
+      ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift
   COMMENT
-    "Generate thrift for search.thrift")
+    "Generating Thrift for search.thrift")
 
 # Create cpp static library from thrift files
 add_library(searchthrift STATIC

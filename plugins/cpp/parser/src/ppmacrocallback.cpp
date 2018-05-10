@@ -100,7 +100,7 @@ void PPMacroCallback::MacroExpands(
   _disabled = true;
   clang::DiagnosticsEngine *OldDiags = &_pp.getDiagnostics();
   _pp.setDiagnostics(TmpDiags);
-  _pp.EnterTokenStream(tokens.data(), tokens.size(), false, false);
+  _pp.EnterTokenStream(tokens, false);
 
   std::string expansion;
   _pp.Lex(tok);
@@ -112,7 +112,18 @@ void PPMacroCallback::MacroExpands(
         expansion += ' ';
 
     // Escape any special characters in the token text.
-    expansion += _pp.getSpelling(tok);
+    if (!tok.isAnnotation())
+      // getSpelling calls getLength() on the token, which is not viable if the
+      // token isAnnotation().
+      // FIXME: Revise how the preprocessor/lexer of Clang could be improved to
+      // handle annotation expansions properly, if possible.
+      expansion += _pp.getSpelling(tok);
+    else
+    {
+      expansion += "/*< FIXME: ";
+      expansion += tok.getName();
+      expansion += " token not expanded. >*/";
+    }
     _pp.Lex(tok);
   }
 
@@ -165,7 +176,8 @@ void PPMacroCallback::MacroDefined(
 
 void PPMacroCallback::MacroUndefined(
   const clang::Token& macroNameTok_,
-  const clang::MacroDefinition& md_)
+  const clang::MacroDefinition& md_,
+  const clang::MacroDirective* /*undef_*/)
 {
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
@@ -219,8 +231,13 @@ void PPMacroCallback::addFileLoc(
 
 bool PPMacroCallback::isBuiltInMacro(const clang::MacroInfo* mi_) const
 {
-  std::string fileName = _clangSrcMgr.getPresumedLoc(
-    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc())).getFilename();
+  clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
+    _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));
+
+  if (presLoc.isInvalid())
+    return true;
+
+  std::string fileName = presLoc.getFilename();
 
   return fileName == "<built-in>" || fileName == "<command line>";
 }
@@ -230,9 +247,7 @@ std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
   clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
     _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));
 
-  const char* fileName = presLoc.getFilename();
-
-  if (!fileName)
+  if (presLoc.isInvalid())
     return std::string();
 
   std::string locStr
@@ -241,8 +256,8 @@ std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
 
   return locStr
     + (isBuiltInMacro(mi_)
-    ? fileName
-    : std::to_string(_ctx.srcMgr.getFile(fileName)->id));
+    ? presLoc.getFilename()
+    : std::to_string(_ctx.srcMgr.getFile(presLoc.getFilename())->id));
 }
 
 } // parser

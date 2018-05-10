@@ -2,31 +2,42 @@
 
 #include <service/dummyservice.h>
 
+/* These two methods are used by the plugin manager to allow dynamic loading
+   of CodeCompass Service plugins. Clang (>= version 6.0) gives a warning that
+   these C-linkage specified methods return types that are not proper from a
+   C code.
+
+   These codes are NOT to be called from any C code. The C linkage is used to
+   turn off the name mangling so that the dynamic loader can easily find the
+   symbol table needed to set the plugin up.
+*/
+// When writing a plugin, please do NOT copy this notice to your code.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
+  boost::program_options::options_description getOptions()
+  {
+    namespace po = boost::program_options;
 
-boost::program_options::options_description getOptions()
-{
-  namespace po = boost::program_options;
+    po::options_description description("Dummy Plugin");
 
-  po::options_description description("Dummy Plugin");
+    description.add_options()
+      ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
+        "This value will be returned by the dummy service.");
 
-  description.add_options()
-    ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
-      "This value will be returned by the dummy service.");
+    return description;
+  }
 
-  return description;
+  void registerPlugin(
+    const boost::program_options::variables_map& configuration,
+    cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler)
+  {
+    cc::webserver::registerPluginSimple(
+      configuration,
+      pluginHandler,
+      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Dummy, dummy),
+      "DummyService");
+  }
 }
-
-void registerPlugin(
-  const boost::program_options::variables_map& configuration,
-  cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler)
-{
-  cc::webserver::registerPluginSimple(
-    configuration,
-    pluginHandler,
-    CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Dummy, dummy),
-    "DummyService");
-}
-
-}
+#pragma clang diagnostic pop

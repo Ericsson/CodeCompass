@@ -48,6 +48,10 @@ public:
     AstNodeInfo& return_,
     const core::FilePosition& fpos_) override;
 
+  void getSourceText(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_) override;
+
   void getDocumentation(
     std::string& return_,
     const core::AstNodeId& astNodeId_) override;

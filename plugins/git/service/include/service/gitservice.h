@@ -54,7 +54,7 @@ public:
 
   virtual void getRepositoryByProjectPath(
     RepositoryByProjectPathResult& return_,
-    const std::string& path_);
+    const std::string& path_) override;
 
   virtual void getBlobOidByPath(
     std::string& return_,

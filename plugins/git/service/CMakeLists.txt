@@ -20,12 +20,15 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/GitService.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/GitService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js -o ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/git.thrift
+    thrift --gen cpp --gen js
+      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/git.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/git.thrift
   COMMENT
-    "Generate thrift for git.thrift")
+    "Generating Thrift for git.thrift")
 
 add_library(gitthrift STATIC
   gen-cpp/git_constants.cpp

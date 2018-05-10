@@ -8,7 +8,7 @@ ending()
   kill $pid
 }
 
-trap ending SIGINT
+trap ending SIGINT SIGTERM
 
 ulimit -c unlimited &> /dev/null
 

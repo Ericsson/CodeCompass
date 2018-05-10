@@ -10,9 +10,8 @@ struct AstNodeInfo
   3:string astNodeType /** String representation of AST type (e.g. Statement/Declaration/Usage). */
   4:string symbolType /** String representation of Symbol type (e.g. Function/Type/Variable). */
   5:string astNodeValue /** String representation of an AST node. */
-  6:string srcText /** Corresponding code fragment in the source code. */
-  7:common.FileRange range /** Source code range of an AST node. */
-  8:list<string> tags /** Meta information of the AST node (e.g. public, static, virtual etc.) */
+  6:common.FileRange range /** Source code range of an AST node. */
+  7:list<string> tags /** Meta information of the AST node (e.g. public, static, virtual etc.) */
 }
 
 struct SyntaxHighlight
@@ -51,6 +50,16 @@ service LanguageService
    */
   AstNodeInfo getAstNodeInfoByPosition(1:common.FilePosition fpos)
     throws (1:common.InvalidInput ex)
+
+  /**
+   * Returns the source code text that corresponds to the given AST node.
+   * @param astNodeId ID of an AST node.
+   * @return The source text as a verbatim string.
+   * @exception common.InvalidId Exception is thrown if no AST node belongs to
+   * the given ID.
+   */
+  string getSourceText(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
 
   /**
    * Returns the documentation which belongs to the given AST node if any
