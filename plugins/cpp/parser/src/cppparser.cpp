@@ -334,7 +334,7 @@ CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
       _parsedCommandHashes.insert(util::fnvHash(ba.command));
   });
 }
-  
+
 std::vector<std::string> CppParser::getDependentParsers() const
 {
   return std::vector<std::string>{};
@@ -342,6 +342,54 @@ std::vector<std::string> CppParser::getDependentParsers() const
 
 bool CppParser::parse()
 {
+  if(_ctx.options.count("incremental"))
+  {
+    LOG(info) << "Incremental Parsing Enabled";
+
+    std::unordered_map<std::string, std::string> fileHashes;
+    std::unordered_map<std::string, IncrementalStatus> fileStatus;
+
+    (util::OdbTransaction(_ctx.db))([&] {
+      auto files = _ctx.db->query<model::File>(
+          odb::query<model::File>::type != model::File::DIRECTORY_TYPE &&
+          odb::query<model::File>::type != model::File::BINARY_TYPE);
+
+      for(const model::File& file : files)
+      {
+        if(boost::filesystem::exists(file.path))
+        {
+          auto content = file.content.load();
+          fileHashes[file.path] = content != nullptr ? content->hash : "";
+          if(content == nullptr)
+            continue;
+
+          std::ifstream fileStream(file.path);
+          std::string fileContent(
+            (std::istreambuf_iterator<char>(fileStream)),
+            (std::istreambuf_iterator<char>()));
+          fileStream.close();
+
+          if(content->hash != util::sha1Hash(fileContent))
+          {
+            fileStatus.insert(std::make_pair(file.path, IncrementalStatus::MODIFIED));
+            LOG(debug) << "[Incremental] File modified: " << file.path;
+          }
+          else
+          {
+            // TODO: check header inclusions
+          }
+        }
+        else
+        {
+          fileStatus.insert(std::make_pair(file.path, IncrementalStatus::DELETED));
+          LOG(debug) << "[Incremental] File deleted: " << file.path;
+        }
+      }
+    });
+
+    // TODO: detect added files
+  }
+
   VisitorActionFactory::init(_ctx);
 
   bool success = true;
@@ -449,7 +497,9 @@ extern "C"
     description.add_options()
       ("skip-doccomment",
        "If this flag is given the parser will skip parsing the documentation "
-       "comments.");
+       "comments.")
+      ("incremental",
+       "Enable incremental parsing.");
     return description;
   }
 

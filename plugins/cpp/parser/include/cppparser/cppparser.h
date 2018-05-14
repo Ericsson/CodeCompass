@@ -76,6 +76,17 @@ private:
     ParseJob(const ParseJob&) = default;
   };
 
+  /**
+   * Defines file status categories for incremental parsing.
+   */
+  enum class IncrementalStatus
+  {
+    UNCHANGED,
+    MODIFIED,
+    ADDED,
+    DELETED,
+  };
+
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 };
   

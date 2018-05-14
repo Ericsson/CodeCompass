@@ -1,6 +1,7 @@
 # IDEs and editors
 
-nbproject
+nbproject/
+.idea/
 *.swp
 
 # Generated files and directories
@@ -17,3 +18,4 @@ nbproject
 # Other
 
 /build/
+/build_*/
