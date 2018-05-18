@@ -184,8 +184,8 @@ TEST_F(CppReferenceServiceTest, DerivedClassTest)
     {"Data member", {34}}, /*!< Z */
     {"Definition", {31}},
     {"Inherits from", {9, 21}}, /*!< BaseClass1, BaseClass2 */
-    {"Method", {-1, -1, -1, -1, 36, 38, 40}}, /*!< f, g, h, copy ctor, move ctor
-      cpy operator=, move operator=, dtor */
+    {"Method", {-1, -1, -1, -1, -1, 36, 38, 40}}, /*!< move assignment,
+      copy assignment, move ctor, copy ctor, dtor, f, g, h */
     {"Usage", {31, 8, 40, 45, 50}}
   };
 

@@ -101,3 +101,22 @@ function(find_boost_libraries)
 
   set(Boost_LINK_LIBRARIES ${LIBS} PARENT_SCOPE)
 endfunction(find_boost_libraries)
+
+# Prints a coloured, and optionally bold message to the console.
+# _colour should be some ANSI colour name, like "blue" or "magenta".
+function(fancy_message _str _colour _isBold)
+  set(BOLD_TAG "")
+  set(COLOUR_TAG "")
+
+  if (_isBold)
+    set(BOLD_TAG "--bold")
+  endif()
+
+  if (NOT (_colour STREQUAL ""))
+    set(COLOUR_TAG "--${_colour}")
+  endif()
+
+  execute_process(COMMAND
+    ${CMAKE_COMMAND} -E env CLICOLOR_FORCE=1
+    ${CMAKE_COMMAND} -E cmake_echo_color ${COLOUR_TAG} ${BOLD_TAG} ${_str})
+endfunction(fancy_message)
