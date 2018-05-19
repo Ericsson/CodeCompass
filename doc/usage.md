@@ -32,7 +32,7 @@ psql
 In the PostgreSQL command-line shell, type:
 
 ```sql
-CREATE USER compass SUPERUSER LOGIN WITH PASSWORD 'mypassword';
+CREATE USER compass WITH SUPERUSER LOGIN PASSWORD 'mypassword';
 ```
 
 You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
