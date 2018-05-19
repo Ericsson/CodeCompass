@@ -26,8 +26,8 @@ Formatting
   namespace parser
   {
   /* ... */
-  }
-  }
+  } // parser
+  } // cc
   ```
 - **Blocks** Related opening and closing brackets should be placed to the same
   column (do not follow Java style). This rule holds for namespaces, classes,
@@ -51,6 +51,9 @@ Formatting
   ```
 - **Friend** declarations, if any, should be placed before the public
   visibility items, before the public keyword.
+- The pointer and reference qualifier `*` and `&` letters should come
+  **directly** after the type, followed by a space and then the variable's name:
+  `int* ptr`, `const MyType& rhs`, `std::unique_ptr<T>&& data`.
 
 Naming
 ------
@@ -125,8 +128,8 @@ Headers
   ```
 - **Order of the inclusion of headers** - either in source files or in other
   header files - should be the following: First include standard C++ headers,
-  then Boost headers, then other supporting library headers (ODB, SQLite,
-  etc.), then your implementing headers.
+  then Boost headers, then other supporting library headers (LLVM/Clang, ODB,
+  SQLite, etc.), then your implementing headers.
   ```cpp
   #include <memory>
 
