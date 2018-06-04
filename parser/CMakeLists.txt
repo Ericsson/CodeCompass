@@ -6,6 +6,10 @@ include_directories(
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_executable(CodeCompass_parser
   src/pluginhandler.cpp
   src/sourcemanager.cpp

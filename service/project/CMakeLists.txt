@@ -9,6 +9,10 @@ include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
   ${ODB_INCLUDE_DIRS})
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 # The folders here are added so that executing `make clean` removes all
 # generated files.
 add_custom_command(

@@ -9,6 +9,10 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_executable(cpptest
   src/cppservicetest.cpp
   src/servicehelper.cpp

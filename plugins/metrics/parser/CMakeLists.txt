@@ -5,6 +5,10 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/parser/include
   ${PLUGIN_DIR}/model/include)
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_library(metricsparser SHARED
   src/metricsparser.cpp)
 

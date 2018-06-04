@@ -7,6 +7,10 @@ include_directories(
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_library(util STATIC
   src/dbutil.cpp
   src/parserutil.cpp

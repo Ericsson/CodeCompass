@@ -1,3 +1,7 @@
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp

@@ -6,6 +6,10 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+)
+
 add_custom_command(
   OUTPUT
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_constants.cpp
