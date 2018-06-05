@@ -15,11 +15,11 @@ set_target_properties(CodeCompass_parser
   PROPERTIES ENABLE_EXPORTS 1)
 
 find_boost_libraries(
-  thread
   filesystem
-  system
+  log
   program_options
-  log)
+  system
+  thread)
 target_link_libraries(CodeCompass_parser
   util
   model

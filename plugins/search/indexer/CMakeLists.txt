@@ -50,8 +50,8 @@ add_library(indexerservice SHARED
 
 find_boost_libraries(
   filesystem
-  system
-  log)
+  log
+  system)
 target_link_libraries(indexerservice
   util
   searchindexerthrift
