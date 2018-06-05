@@ -9,8 +9,8 @@ add_library(metricsparser SHARED
   src/metricsparser.cpp)
 
 find_boost_libraries(
-  boost_filesystem
-  boost_log)
+  filesystem
+  log)
 target_link_libraries(metricsparser
   metricsmodel
   util

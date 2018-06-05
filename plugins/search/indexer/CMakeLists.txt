@@ -49,9 +49,9 @@ add_library(indexerservice SHARED
   src/indexerprocess.cpp)
 
 find_boost_libraries(
-  boost_filesystem
-  boost_system
-  boost_log)
+  filesystem
+  system
+  log)
 target_link_libraries(indexerservice
   util
   searchindexerthrift

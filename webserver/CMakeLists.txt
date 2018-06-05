@@ -17,11 +17,11 @@ target_include_directories(CodeCompass_webserver PUBLIC
   ${PROJECT_SOURCE_DIR}/util/include)
 
 find_boost_libraries(
-  boost_thread
-  boost_filesystem
-  boost_system
-  boost_program_options
-  boost_log)
+  thread
+  filesystem
+  system
+  program_options
+  log)
 target_link_libraries(CodeCompass_webserver
   util
   mongoose

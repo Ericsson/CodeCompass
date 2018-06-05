@@ -18,10 +18,10 @@ add_executable(cpptest
 target_compile_options(cpptest PUBLIC -Wno-unknown-pragmas)
 
 find_boost_libraries(
-  boost_program_options
-  boost_filesystem
-  boost_system
-  boost_log)
+  program_options
+  filesystem
+  system
+  log)
 target_link_libraries(cpptest
   util
   cppservice
