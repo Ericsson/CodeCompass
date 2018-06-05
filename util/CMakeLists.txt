@@ -7,10 +7,6 @@ include_directories(
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_library(util STATIC
   src/dbutil.cpp
   src/parserutil.cpp
@@ -22,6 +18,9 @@ add_library(util STATIC
   src/pipedprocess.cpp)
 
 target_compile_options(util PUBLIC -fPIC)
+
+find_boost_library(
+  boost_regex)
 target_link_libraries(util
-  boost_regex
+  ${Boost_LINK_LIBRARIES}
   sqlite3)

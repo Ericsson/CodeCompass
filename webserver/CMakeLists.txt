@@ -1,7 +1,3 @@
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp
@@ -20,14 +16,16 @@ target_include_directories(CodeCompass_webserver PUBLIC
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include)
 
-target_link_libraries(CodeCompass_webserver
-  util
-  mongoose
+find_boost_library(
   boost_thread
   boost_filesystem
   boost_system
   boost_program_options
-  boost_log
+  boost_log)
+target_link_libraries(CodeCompass_webserver
+  util
+  mongoose
+  ${Boost_LINK_LIBRARIES}  
   ${ODB_LIBRARIES}
   pthread
   dl)

@@ -6,10 +6,6 @@ include_directories(
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_executable(CodeCompass_parser
   src/pluginhandler.cpp
   src/sourcemanager.cpp
@@ -18,15 +14,17 @@ add_executable(CodeCompass_parser
 set_target_properties(CodeCompass_parser
   PROPERTIES ENABLE_EXPORTS 1)
 
-target_link_libraries(CodeCompass_parser
-  util
-  model
+find_boost_library(
   boost_thread
   boost_filesystem
   boost_system
   boost_program_options
-  boost_log
-  ${ODB_LIBRARIES}    
+  boost_log)
+target_link_libraries(CodeCompass_parser
+  util
+  model
+  ${Boost_LINK_LIBRARIES}
+  ${ODB_LIBRARIES}
   ${CMAKE_DL_LIBS}
   magic
   pthread)

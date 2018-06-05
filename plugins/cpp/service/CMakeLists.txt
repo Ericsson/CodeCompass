@@ -11,10 +11,6 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_library(cppservice SHARED
   src/cppservice.cpp
   src/plugin.cpp

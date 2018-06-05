@@ -6,10 +6,6 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_custom_command(
   OUTPUT
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_constants.cpp
@@ -52,13 +48,15 @@ add_subdirectory(indexer-java)
 add_library(indexerservice SHARED
   src/indexerprocess.cpp)
 
+find_boost_library(
+  boost_filesystem
+  boost_system
+  boost_log)
 target_link_libraries(indexerservice
   util
   searchindexerthrift
   ${THRIFT_LIBTHRIFT_LIBRARIES}
-  boost_filesystem
-  boost_system
-  boost_log)
+  ${Boost_LINK_LIBRARIES})
 
 install(TARGETS indexerservice DESTINATION ${INSTALL_LIB_DIR})
 install_jar(searchindexerthriftjava ${INSTALL_JAVA_LIB_DIR})

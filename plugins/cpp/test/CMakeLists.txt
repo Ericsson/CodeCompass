@@ -9,10 +9,6 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_executable(cpptest
   src/cppservicetest.cpp
   src/servicehelper.cpp
@@ -21,13 +17,15 @@ add_executable(cpptest
 
 target_compile_options(cpptest PUBLIC -Wno-unknown-pragmas)
 
-target_link_libraries(cpptest
-  util
-  cppservice
+find_boost_library(
   boost_program_options
   boost_filesystem
   boost_system
-  boost_log
+  boost_log)
+target_link_libraries(cpptest
+  util
+  cppservice
+  ${Boost_LINK_LIBRARIES}
   ${GTEST_BOTH_LIBRARIES}
   pthread)
 

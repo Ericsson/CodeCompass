@@ -5,18 +5,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/parser/include
   ${PLUGIN_DIR}/model/include)
 
-link_directories(
-  ${Boost_LIBRARY_DIRS}
-)
-
 add_library(metricsparser SHARED
   src/metricsparser.cpp)
 
+find_boost_library(
+  boost_filesystem
+  boost_log)
 target_link_libraries(metricsparser
   metricsmodel
   util
-  boost_filesystem
-  boost_log)
+  ${Boost_LINK_LIBRARIES})
 
 install(TARGETS metricsparser
   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
