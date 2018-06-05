@@ -18,6 +18,10 @@ add_library(util STATIC
   src/pipedprocess.cpp)
 
 target_compile_options(util PUBLIC -fPIC)
+
+find_boost_libraries(
+  regex)
+#FIXME: Why does util link unconditionally against sqlite3?
 target_link_libraries(util
-  boost_regex
+  ${Boost_LINK_LIBRARIES}
   sqlite3)

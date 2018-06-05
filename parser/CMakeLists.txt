@@ -14,15 +14,17 @@ add_executable(CodeCompass_parser
 set_target_properties(CodeCompass_parser
   PROPERTIES ENABLE_EXPORTS 1)
 
+find_boost_libraries(
+  filesystem
+  log
+  program_options
+  system
+  thread)
 target_link_libraries(CodeCompass_parser
   util
   model
-  boost_thread
-  boost_filesystem
-  boost_system
-  boost_program_options
-  boost_log
-  ${ODB_LIBRARIES}    
+  ${Boost_LINK_LIBRARIES}
+  ${ODB_LIBRARIES}
   ${CMAKE_DL_LIBS}
   magic
   pthread)
