@@ -14,7 +14,7 @@ add_executable(CodeCompass_parser
 set_target_properties(CodeCompass_parser
   PROPERTIES ENABLE_EXPORTS 1)
 
-find_boost_library(
+find_boost_libraries(
   boost_thread
   boost_filesystem
   boost_system

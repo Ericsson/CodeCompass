@@ -90,7 +90,7 @@ endfunction(install_webplugin)
 
 # Finds the absolute paths for the given Boost libraries
 # Use variable arguments for the Boost libraries to link
-function(find_boost_library)
+function(find_boost_libraries)
   foreach(_lib ${ARGV})
     foreach(_path ${Boost_LIBRARIES})
       if(_path MATCHES ".*${_lib}\.so$")
@@ -100,4 +100,4 @@ function(find_boost_library)
   endforeach(_lib)
 
   set(Boost_LINK_LIBRARIES ${LIBS} PARENT_SCOPE)
-endfunction(find_boost_library)
+endfunction(find_boost_libraries)

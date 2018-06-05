@@ -16,7 +16,7 @@ target_include_directories(CodeCompass_webserver PUBLIC
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include)
 
-find_boost_library(
+find_boost_libraries(
   boost_thread
   boost_filesystem
   boost_system
@@ -25,7 +25,7 @@ find_boost_library(
 target_link_libraries(CodeCompass_webserver
   util
   mongoose
-  ${Boost_LINK_LIBRARIES}  
+  ${Boost_LINK_LIBRARIES}
   ${ODB_LIBRARIES}
   pthread
   dl)

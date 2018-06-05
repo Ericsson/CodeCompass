@@ -48,7 +48,7 @@ add_subdirectory(indexer-java)
 add_library(indexerservice SHARED
   src/indexerprocess.cpp)
 
-find_boost_library(
+find_boost_libraries(
   boost_filesystem
   boost_system
   boost_log)

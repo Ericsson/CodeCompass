@@ -19,7 +19,7 @@ add_library(util STATIC
 
 target_compile_options(util PUBLIC -fPIC)
 
-find_boost_library(
+find_boost_libraries(
   boost_regex)
 target_link_libraries(util
   ${Boost_LINK_LIBRARIES}
