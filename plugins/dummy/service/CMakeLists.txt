@@ -17,7 +17,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/DummyService.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
   COMMAND
-    thrift --gen cpp
+    ${THRIFT_EXECUTABLE} --gen cpp
       -o ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/dummy.thrift
   DEPENDS
