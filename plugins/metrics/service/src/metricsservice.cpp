@@ -16,11 +16,11 @@ namespace metrics
 MetricsServiceHandler::MetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
-  const boost::program_options::variables_map& config_)
+  const cc::webserver::ServerContext& context_)
     : _db(db_),
       _transaction(db_),
-      _config(config_),
-      _projectService(db_, datadir_, config_)
+      _config(context_.options),
+      _projectService(db_, datadir_, context_)
 {
 }
 

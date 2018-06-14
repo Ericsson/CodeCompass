@@ -14,6 +14,7 @@
 #include <boost/filesystem.hpp>
 
 #include <util/dbutil.h>
+#include <util/filesystem.h>
 #include <util/logutil.h>
 
 #include <parser/parsercontext.h>
@@ -132,10 +133,10 @@ std::string prepareProjectDir(const po::variables_map& vm_)
 
 int main(int argc, char* argv[])
 {
-  std::string binDir = fs::canonical(fs::path(argv[0]).parent_path()).string();
+  std::string compassRoot = cc::util::binaryPathToInstallDir(argv[0]);
 
-  const std::string PARSER_PLUGIN_DIR = binDir + "/../lib/parserplugin";
-  const std::string SQL_DIR = binDir + "/../share/codecompass/sql";
+  const std::string PARSER_PLUGIN_DIR = compassRoot + "/lib/parserplugin";
+  const std::string SQL_DIR = compassRoot + "/share/codecompass/sql";
 
   cc::util::initLogger();
 
@@ -229,7 +230,7 @@ int main(int argc, char* argv[])
   //--- Start parsers ---//
 
   cc::parser::SourceManager srcMgr(db);
-  cc::parser::ParserContext ctx(db, srcMgr, vm);
+  cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
   // TODO: Handle errors returned by parse().

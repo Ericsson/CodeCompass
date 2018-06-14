@@ -16,6 +16,7 @@
 #include <projectservice/projectservice.h>
 
 #include <util/odbtransaction.h>
+#include <webserver/servercontext.h>
 
 #include <MetricsService.h>
 
@@ -32,8 +33,7 @@ public:
   MetricsServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_
-      = boost::program_options::variables_map());
+    const cc::webserver::ServerContext& context_);
 
   void getMetrics(
     std::string& _return,

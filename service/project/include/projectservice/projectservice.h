@@ -7,8 +7,9 @@
 
 #include <odb/database.hxx>
 
-#include <util/odbtransaction.h>
 #include <model/file.h>
+#include <util/odbtransaction.h>
+#include <webserver/servercontext.h>
 
 #include <ProjectService.h>
 
@@ -24,7 +25,7 @@ public:
   ProjectServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_);
+    const cc::webserver::ServerContext& context_);
 
   void getFileInfo(FileInfo& return_, const FileId& fileId_) override;
   void getFileInfoByPath(FileInfo& return_, const std::string& path) override;

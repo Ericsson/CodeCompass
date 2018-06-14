@@ -13,12 +13,12 @@ extern "C"
   }
 
   void registerPlugin(
-    const boost::program_options::variables_map& configuration,
-    cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler)
+    const cc::webserver::ServerContext& context_,
+    cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
   {
     cc::webserver::registerPluginSimple(
-      configuration,
-      pluginHandler,
+      context_,
+      pluginHandler_,
       CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(Cpp),
       "CppService");
   }

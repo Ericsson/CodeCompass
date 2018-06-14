@@ -12,13 +12,6 @@ trap ending SIGINT SIGTERM
 
 ulimit -c unlimited &> /dev/null
 
-if [ -z $CODECOMPASS_HOME ]; then
-  CODECOMPASS_HOME=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-  CODECOMPASS_HOME=$(readlink -f "$CODECOMPASS_HOME/..")
-fi
-
-export CLASSPATH=$CODECOMPASS_HOME/lib/java/*
-
 while true; do
   $@ &
   pid=$!

@@ -21,7 +21,8 @@ public:
     _cppservice(new CppServiceHandler(
       _db,
       std::make_shared<std::string>(""),
-      boost::program_options::variables_map())),
+      cc::webserver::ServerContext(std::string(),
+                                   boost::program_options::variables_map()))),
     _helper(_db, _cppservice)
   {
     _simpleClassHeader = _helper.getFileId("simpleclass.h");

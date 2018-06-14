@@ -10,6 +10,8 @@
 
 #include <util/dynamiclibrary.h>
 
+#include <webserver/servercontext.h>
+
 namespace cc
 {
 namespace webserver
@@ -68,20 +70,19 @@ public:
     return desc;
   }
 
-  void configure(const boost::program_options::variables_map& configuration_)
+  void configure(const ServerContext& ctx_)
   {
     namespace po = ::boost::program_options;
     _implementationMap.clear();
 
     for (auto dynamicLibrary : _dynamicLibraries)
     {
-      typedef void (*RegisterFuncPtr)(const po::variables_map&,
-        PluginHandler*);
+      typedef void (*RegisterFuncPtr)(const ServerContext&, PluginHandler*);
 
       auto registerPlugin = reinterpret_cast<RegisterFuncPtr>(
         dynamicLibrary->getSymbol("registerPlugin"));
 
-      registerPlugin(configuration_, this);
+      registerPlugin(ctx_, this);
     }
   }
 

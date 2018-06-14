@@ -25,7 +25,7 @@ namespace webserver
 
 template <typename RequestHandlerT, typename ServiceFactoryT>
 inline void registerPluginSimple(
-  const boost::program_options::variables_map& vm_,
+  const ServerContext& ctx_,
   PluginHandler<RequestHandlerT>* pluginHandler_,
   ServiceFactoryT serviceFactory_,
   const std::string& serviceName_)
@@ -34,7 +34,7 @@ inline void registerPluginSimple(
   namespace po = boost::program_options;
   namespace pt = boost::property_tree;
 
-  for (fs::directory_iterator it(vm_["workspace"].as<std::string>());
+  for (fs::directory_iterator it(ctx_.options["workspace"].as<std::string>());
     it != fs::directory_iterator();
     ++it)
   {
@@ -50,7 +50,7 @@ inline void registerPluginSimple(
       dbName = project;
 
     std::string connStr = util::updateConnectionString(
-      vm_["database"].as<std::string>(),
+      ctx_.options["database"].as<std::string>(),
       "database",
       dbName);
 
@@ -73,7 +73,7 @@ inline void registerPluginSimple(
         serviceFactory_(
           db,
           std::make_shared<std::string>(fs::canonical(it->path()).native()),
-          vm_));
+          ctx_));
 
       // Create a key for the implementation
       std::string key = project + '/' + serviceName_;
@@ -97,24 +97,24 @@ inline void registerPluginSimple(
 #define CODECOMPASS_SERVICE_FACTORY_WITH_CFG(serviceName, nspace) \
   [](std::shared_ptr<odb::database>& db_, \
      std::shared_ptr<std::string> datadir_, \
-     const boost::program_options::variables_map& cfg_) { \
+     const cc::webserver::ServerContext& ctx_) { \
     return new cc::webserver::ThriftHandler< \
       cc::service::nspace::serviceName##ServiceProcessor>( \
         new cc::service::nspace::serviceName##ServiceHandler( \
-          db_, datadir_, cfg_)); \
+          db_, datadir_, ctx_)); \
   }
 
 #define CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(serviceName) \
   [](std::shared_ptr<odb::database>& db_, \
      std::shared_ptr<std::string> datadir_, \
-     const boost::program_options::variables_map& cfg_) { \
+     const cc::webserver::ServerContext& ctx_) { \
     return new cc::webserver::ThriftHandler< \
       cc::service::language::LanguageServiceProcessor>( \
         new cc::service::language::serviceName##ServiceHandler( \
-          db_, datadir_, cfg_)); \
+          db_, datadir_, ctx_)); \
   }
 
-} // plugin
+} // webserver
 } // cc
 
 #endif // CC_WEBSERVER_PLUGINHELPER_H

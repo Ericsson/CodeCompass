@@ -10,6 +10,7 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <odb/database.hxx>
+#include <webserver/servercontext.h>
 
 #include <SearchService.h>
 
@@ -28,8 +29,7 @@ public:
   SearchServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_
-      = boost::program_options::variables_map());
+    const cc::webserver::ServerContext& context_);
 
   void search(
     SearchResult& _return,

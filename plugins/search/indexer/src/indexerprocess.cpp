@@ -27,6 +27,7 @@ namespace parser
 
 IndexerProcess::IndexerProcess(
   const std::string& indexDatabase_,
+  const std::string& compassRoot_,
   IndexerProcess::OpenMode openMode_,
   IndexerProcess::LockMode lockMode_)
 {
@@ -34,7 +35,7 @@ IndexerProcess::IndexerProcess(
 
   if (startProcess() == 0)
   {
-    // This is the child process
+    // This is the child process.
     std::string inFd(std::to_string(_pipeFd[0]));
     std::string outFd(std::to_string(_pipeFd2[1]));
 
@@ -52,8 +53,11 @@ IndexerProcess::IndexerProcess(
     else
       logLevelOpt += "FINEST";
 
+    std::string classpath = compassRoot_ + "/lib/java/*";
+
     std::vector<const char*> execArguments {
       "java", JAVAMEMORYAMOUNT,
+      "-classpath", classpath.c_str(),
       "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
       "-Djava.util.logging.SimpleFormatter.format=[%4$s] %5$s%6$s%n",
       logLevelOpt.c_str(),

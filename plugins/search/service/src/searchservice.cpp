@@ -102,10 +102,11 @@ namespace search
 SearchServiceHandler::SearchServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
-  const boost::program_options::variables_map& config_) :
-  _db(db_)
+  const cc::webserver::ServerContext& context_) :
+    _db(db_)
 {
-  _javaProcess.reset(new ServiceProcess(*datadir_ + "/search"));
+  _javaProcess.reset(new ServiceProcess(*datadir_ + "/search",
+                                        context_.compassRoot));
 }
 
 void SearchServiceHandler::search(

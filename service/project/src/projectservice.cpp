@@ -27,7 +27,7 @@ namespace core
 ProjectServiceHandler::ProjectServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
-  const boost::program_options::variables_map&)
+  const cc::webserver::ServerContext& /*context_*/)
     : _db(db_), _transaction(db_), _datadir(*datadir_)
 {
 }

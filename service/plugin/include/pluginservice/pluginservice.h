@@ -3,6 +3,7 @@
 
 #include <webserver/pluginhandler.h>
 #include <webserver/requesthandler.h>
+#include <webserver/servercontext.h>
 #include <PluginService.h>
 
 namespace cc
@@ -17,7 +18,7 @@ class PluginServiceHandler : virtual public PluginServiceIf
 public:
   PluginServiceHandler(
     webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_,
-    const boost::program_options::variables_map& configuration_);
+    const cc::webserver::ServerContext& context_);
 
   void getPlugins(std::vector<std::string>& return_) override;
 

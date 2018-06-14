@@ -40,7 +40,7 @@ public:
   enum class LockMode
   {
     Native, /*!< Use native locks. This is a stable and recommend mode for
-      locking file but on NFS this isn't works. */
+      locking file but on NFS this doesn't work. */
 
     Simple /*!< This locking mechanism is based on a little buggy Java feature
       but in the most cases it's works (see SimpleFSLockFactory in Lucene doc).
@@ -55,11 +55,14 @@ public:
    * use Simple lock mode on NFS.
    *
    * @param indexDatabase_ Path to index database.
+   * @param compassRoot_ Path to the installation folder of CodeCompass. This
+   * is used to find the required libraries for the Java subprocess.
    * @param openMode_ Database open mode.
    * @param lockMode_ Lucene database lock mode.
    */
   IndexerProcess(
     const std::string& indexDatabase_,
+    const std::string& compassRoot_,
     OpenMode openMode_,
     LockMode lockMode_ = LockMode::Simple);
   
