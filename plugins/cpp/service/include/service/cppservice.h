@@ -19,6 +19,7 @@
 #include <model/cpprelation-odb.hxx>
 
 #include <util/odbtransaction.h>
+#include <webserver/servercontext.h>
 
 namespace cc
 {
@@ -35,8 +36,7 @@ public:
   CppServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_
-      = boost::program_options::variables_map());
+    const cc::webserver::ServerContext& context_);
 
   void getFileTypes(std::vector<std::string>& return_) override;
 
@@ -384,7 +384,7 @@ private:
   util::OdbTransaction _transaction;
 
   std::shared_ptr<std::string> _datadir;
-  const boost::program_options::variables_map& _config;
+  const cc::webserver::ServerContext& _context;
 };
 
 }

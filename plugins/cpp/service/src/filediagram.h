@@ -18,7 +18,7 @@ public:
   FileDiagram(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_);
+    const cc::webserver::ServerContext& context_);
 
   /**
    * This diagram shows the module which directory depends on. The "depends on"

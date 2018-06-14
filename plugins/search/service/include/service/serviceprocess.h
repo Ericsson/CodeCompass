@@ -32,7 +32,8 @@ public:
    *
    * @param indexDatabase_ path to a index database
    */
-  ServiceProcess(const std::string& indexDatabase_) :
+  ServiceProcess(const std::string& indexDatabase_,
+                 const std::string& compassRoot_) :
     _indexDatabase(indexDatabase_)
   {
     openPipe(_pipeFd2[0], _pipeFd2[1]);
@@ -56,7 +57,10 @@ public:
       else
         logLevelOpt += "ALL";
 
+      std::string classpath = compassRoot_ + "/lib/java/*";
+
       ::execlp("java", "java", "-server",
+        "-classpath", classpath.c_str(),
         //"-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8666",
         "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
         "-Djava.util.logging.SimpleFormatter.format=[%4$s] %5$s%6$s%n",

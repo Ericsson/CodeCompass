@@ -69,6 +69,7 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
 
     _indexProcess.reset(new IndexerProcess(
       _searchDatabase,
+      ctx_.compassRoot,
       IndexerProcess::OpenMode::Create));
   }
   catch (const IndexerProcess::Failure& ex_)

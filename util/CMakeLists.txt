@@ -9,13 +9,14 @@ include_directories(SYSTEM
 
 add_library(util STATIC
   src/dbutil.cpp
-  src/parserutil.cpp
   src/dynamiclibrary.cpp
-  src/logutil.cpp
+  src/filesystem.cpp
   src/graph.cpp
   src/legendbuilder.cpp
-  src/util.cpp
-  src/pipedprocess.cpp)
+  src/logutil.cpp
+  src/parserutil.cpp
+  src/pipedprocess.cpp
+  src/util.cpp)
 
 target_compile_options(util PUBLIC -fPIC)
 

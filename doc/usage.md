@@ -132,9 +132,7 @@ installation. This is used to keep CodeCompass alive if it crashes for some
 reason. This way a long parsing session restarts if an error happens.
 CodeCompass plugins are expected to individually handle what to do when a
 parsing is stopped and restarted with an existing database, so the parsing can
-continue from where it stopped. **Furthermore it sets some environment
-variables which are necessary to start the `CodeCompass_parser` binary, so its
-usage is mandatory!**
+continue from where it stopped.
 
 ### Usage example
 
@@ -189,8 +187,7 @@ For full documentation see `CodeCompass_webserver -h`.
 
 :exclamation: The `keepalive` is a script in the `bin` directory of CodeCompass
 installation. This is used to keep CodeCompass alive if it crashes for some
-reason. **Furthermore it sets some environment variables which are necessary to
-start the `CodeCompass_webserver` binary, so its usage is mandatory!**
+reason.
 
 ### Usage example
 

@@ -11,6 +11,7 @@
 
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
+#include <webserver/servercontext.h>
 
 #include <projectservice/projectservice.h>
 
@@ -44,8 +45,7 @@ public:
   GitServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_
-      = boost::program_options::variables_map());
+    const cc::webserver::ServerContext& context_);
 
   ~GitServiceHandler();
 

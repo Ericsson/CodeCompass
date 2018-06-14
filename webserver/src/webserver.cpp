@@ -6,6 +6,7 @@
 #include <boost/log/attributes.hpp>
 #include <boost/program_options.hpp>
 
+#include <util/filesystem.h>
 #include <util/logutil.h>
 #include <util/webserverutil.h>
 
@@ -42,11 +43,10 @@ po::options_description commandLineArguments()
 
 int main(int argc, char* argv[])
 {
-  std::string binDir = boost::filesystem::canonical(
-    boost::filesystem::path(argv[0]).parent_path()).string();
+  std::string compassRoot = cc::util::binaryPathToInstallDir(argv[0]);
 
-  const std::string SERVICE_PLUGIN_DIR = binDir + "/../lib/serviceplugin";
-  const std::string WEBGUI_DIR = binDir + "/../share/codecompass/webgui/";
+  const std::string SERVICE_PLUGIN_DIR = compassRoot + "/lib/serviceplugin";
+  const std::string WEBGUI_DIR = compassRoot + "/share/codecompass/webgui/";
 
   cc::util::initLogger();
  
@@ -95,7 +95,8 @@ int main(int argc, char* argv[])
 
   //--- Process workspaces ---//
 
-  requestHandler.pluginHandler.configure(vm);
+  cc::webserver::ServerContext ctx(compassRoot, vm);
+  requestHandler.pluginHandler.configure(ctx);
 
   //--- Start mongoose server ---//
 
