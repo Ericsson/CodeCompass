@@ -17,7 +17,6 @@ if [ -z $CODECOMPASS_HOME ]; then
   CODECOMPASS_HOME=$(readlink -f "$CODECOMPASS_HOME/..")
 fi
 
-export LD_LIBRARY_PATH=$CODECOMPASS_HOME/lib:$CODECOMPASS_HOME/lib/serviceplugin:$LD_LIBRARY_PATH
 export CLASSPATH=$CODECOMPASS_HOME/lib/java/*
 
 while true; do

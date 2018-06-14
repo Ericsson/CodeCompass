@@ -20,6 +20,10 @@ find_package(GTest)
 include(UseJava)
 set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8)
 
+# Set the third-party libraries' path properly so the installation can find them.
+include(Exports.cmake)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${RUNENV_LD_LIBRARY_PATH}")
+
 add_subdirectory(model)
 add_subdirectory(util)
 add_subdirectory(parser)
