@@ -22,7 +22,12 @@ target_compile_options(util PUBLIC -fPIC)
 
 find_boost_libraries(
   regex)
-#FIXME: Why does util link unconditionally against sqlite3?
+
 target_link_libraries(util
-  ${Boost_LINK_LIBRARIES}
-  sqlite3)
+  ${Boost_LINK_LIBRARIES})
+
+string(TOLOWER "${DATABASE}" _database)
+if (${_database} STREQUAL "sqlite")
+  target_link_libraries(util
+    sqlite3)
+endif()
