@@ -16,16 +16,16 @@ function(generate_odb_files _src)
         ${CMAKE_CURRENT_SOURCE_DIR}/${_ixx}
         ${CMAKE_CURRENT_SOURCE_DIR}/${_sql}
       COMMAND
-        ${ODB} ${ODBFLAGS}
-        -o ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/include
-        -I ${CMAKE_SOURCE_DIR}/model/include
-        -I ${CMAKE_SOURCE_DIR}/util/include
-        -I ${ODB_INCLUDE_DIRS}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
+        ${ODB_EXECUTABLE} ${ODBFLAGS}
+          -o ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}
+          -I ${CMAKE_CURRENT_SOURCE_DIR}/include
+          -I ${CMAKE_SOURCE_DIR}/model/include
+          -I ${CMAKE_SOURCE_DIR}/util/include
+          -I ${ODB_INCLUDE_DIRS}
+          ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
       DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
-      COMMENT "Building odb for ${_file}")
+      COMMENT "Generating ODB for ${_file}")
 
     list(APPEND SOURCES ${_cxx})
   endforeach(_file)
