@@ -28,6 +28,17 @@ public:
 
 private:
   /**
+   * Defines file status categories for incremental parsing.
+   */
+  enum class IncrementalStatus
+  {
+    UNCHANGED,
+    MODIFIED,
+    ADDED,
+    DELETED,
+  };
+
+  /**
    * This function gets the input-output pairs from the compile command.
    *
    * If the compile command comtains C/C++ source file(s) and the output is set
@@ -37,6 +48,9 @@ private:
    * -o provided then the output file name will be a.out.  If the compile
    * command contains no source files then the function returns an empty map.
    */
+
+  std::unordered_map<std::string, IncrementalStatus> fileStatus;
+
   std::map<std::string, std::string> extractInputOutputs(
     const clang::tooling::CompileCommand& command_) const;
 
@@ -53,6 +67,8 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int worker(const clang::tooling::CompileCommand& command_);
+
+  void markAsModified(model::File file);
 
   /**
    * A single build command's cc::util::JobQueueThreadPool job.
@@ -74,17 +90,6 @@ private:
     {}
 
     ParseJob(const ParseJob&) = default;
-  };
-
-  /**
-   * Defines file status categories for incremental parsing.
-   */
-  enum class IncrementalStatus
-  {
-    UNCHANGED,
-    MODIFIED,
-    ADDED,
-    DELETED,
   };
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;

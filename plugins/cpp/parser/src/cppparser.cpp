@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <memory>
 #include <unordered_map>
+#include <fstream>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -347,7 +348,6 @@ bool CppParser::parse()
     LOG(info) << "Incremental Parsing Enabled";
 
     std::unordered_map<std::string, std::string> fileHashes;
-    std::unordered_map<std::string, IncrementalStatus> fileStatus;
 
     (util::OdbTransaction(_ctx.db))([&] {
       auto files = _ctx.db->query<model::File>(
@@ -356,7 +356,7 @@ bool CppParser::parse()
 
       for(const model::File& file : files)
       {
-        if(boost::filesystem::exists(file.path))
+        if(boost::filesystem::exists(file.path) && fileStatus.count(file.path) == 0)
         {
           auto content = file.content.load();
           fileHashes[file.path] = content != nullptr ? content->hash : "";
@@ -371,8 +371,7 @@ bool CppParser::parse()
 
           if(content->hash != util::sha1Hash(fileContent))
           {
-            fileStatus.insert(std::make_pair(file.path, IncrementalStatus::MODIFIED));
-            LOG(debug) << "[Incremental] File modified: " << file.path;
+            markAsModified(file);
           }
           else
           {
@@ -404,6 +403,23 @@ bool CppParser::parse()
   _parsedCommandHashes.clear();
 
   return success;
+}
+
+void CppParser::markAsModified(model::File file)
+{
+  if(fileStatus.count(file.path) == 0)
+  {
+    fileStatus.insert(std::make_pair(file.path, IncrementalStatus::MODIFIED));
+    LOG(debug) << "[Incremental] File modified: " << file.path;
+
+    auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
+        odb::query<model::CppHeaderInclusion>::included == file.id);
+
+    for (auto inc : inclusions)
+    {
+      markAsModified(*inc.includer.load());
+    }
+  }
 }
 
 bool CppParser::parseByJson(
