@@ -28,11 +28,32 @@ public:
 
 private:
   /**
+   * A single build command's cc::util::JobQueueThreadPool job.
+   */
+  struct ParseJob
+  {
+    /**
+     * The build command itself. This is given to CppParser::worker.
+     */
+    std::reference_wrapper<const clang::tooling::CompileCommand> command;
+
+    /**
+     * The # of the build command in the compilation command database.
+     */
+    std::size_t index;
+
+    ParseJob(const clang::tooling::CompileCommand& command, std::size_t index)
+        : command(command), index(index)
+    {}
+
+    ParseJob(const ParseJob&) = default;
+  };
+
+  /**
    * Defines file status categories for incremental parsing.
    */
   enum class IncrementalStatus
   {
-    UNCHANGED,
     MODIFIED,
     ADDED,
     DELETED,
@@ -48,9 +69,6 @@ private:
    * -o provided then the output file name will be a.out.  If the compile
    * command contains no source files then the function returns an empty map.
    */
-
-  std::unordered_map<std::string, IncrementalStatus> fileStatus;
-
   std::map<std::string, std::string> extractInputOutputs(
     const clang::tooling::CompileCommand& command_) const;
 
@@ -67,32 +85,11 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int worker(const clang::tooling::CompileCommand& command_);
-
-  void markAsModified(model::File file);
-
-  /**
-   * A single build command's cc::util::JobQueueThreadPool job.
-   */
-  struct ParseJob
-  {
-    /**
-     * The build command itself. This is given to CppParser::worker.
-     */
-    std::reference_wrapper<const clang::tooling::CompileCommand> command;
-
-    /**
-     * The # of the build command in the compilation command database.
-     */
-    std::size_t index;
-
-    ParseJob(const clang::tooling::CompileCommand& command, std::size_t index)
-      : command(command), index(index)
-    {}
-
-    ParseJob(const ParseJob&) = default;
-  };
+  void markAsModified(const model::File& file_);
+  void insertBuildActions();
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
+  std::unordered_map<std::string, IncrementalStatus> _fileStatus;
 };
   
 } // parser

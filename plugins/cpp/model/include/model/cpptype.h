@@ -26,6 +26,7 @@ struct CppMemberType
   std::uint64_t typeHash;
 
   #pragma db unique
+  #pragma db on_delete(cascade)
   odb::lazy_shared_ptr<CppAstNode> memberAstNode;
   std::uint64_t memberTypeHash;
 
