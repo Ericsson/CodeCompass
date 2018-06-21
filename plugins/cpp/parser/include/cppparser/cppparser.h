@@ -2,6 +2,7 @@
 #define CC_PARSER_CXXPARSER_H
 
 #include <map>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -9,6 +10,7 @@
 #include <clang/Tooling/Tooling.h>
 
 #include <model/buildaction.h>
+#include <model/cppnode.h>
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
@@ -85,8 +87,11 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int worker(const clang::tooling::CompileCommand& command_);
+
+  void incrementalParse();
+  void initBuildActions();
   void markAsModified(const model::File& file_);
-  void insertBuildActions();
+  std::set<model::CppNodeId> collectNodeSet(model::CppNodeId node_) const;
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
   std::unordered_map<std::string, IncrementalStatus> _fileStatus;

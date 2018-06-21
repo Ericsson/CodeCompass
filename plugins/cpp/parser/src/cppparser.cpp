@@ -331,7 +331,6 @@ int CppParser::worker(const clang::tooling::CompileCommand& command_)
 
 CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
-  insertBuildActions();
 }
 
 std::vector<std::string> CppParser::getDependentParsers() const
@@ -344,121 +343,10 @@ bool CppParser::parse()
   if(_ctx.options.count("incremental"))
   {
     LOG(info) << "Incremental Parsing Enabled";
-
-    std::unordered_map<std::string, std::string> fileHashes;
-
-    (util::OdbTransaction(_ctx.db))([&] {
-      auto files = _ctx.db->query<model::File>(
-          odb::query<model::File>::type != model::File::DIRECTORY_TYPE &&
-          odb::query<model::File>::type != model::File::BINARY_TYPE);
-
-      for(const model::File& file : files)
-      {
-        if(boost::filesystem::exists(file.path))
-        {
-          if(!_fileStatus.count(file.path))
-          {
-            auto content = file.content.load();
-            fileHashes[file.path] = content != nullptr ? content->hash : "";
-            if (content == nullptr)
-              continue;
-
-            std::ifstream fileStream(file.path);
-            std::string fileContent(
-                (std::istreambuf_iterator<char>(fileStream)),
-                (std::istreambuf_iterator<char>()));
-            fileStream.close();
-
-            if(content->hash != util::sha1Hash(fileContent))
-            {
-              markAsModified(file);
-            }
-          }
-        }
-        else
-        {
-          _fileStatus.insert(std::make_pair(file.path, IncrementalStatus::DELETED));
-          LOG(debug) << "File deleted: " << file.path;
-        }
-      }
-
-      // TODO: detect added files (not necessary currently)
-
-      for(auto& item : _fileStatus)
-      {
-        switch(item.second)
-        {
-          case IncrementalStatus::MODIFIED:
-          case IncrementalStatus::DELETED:
-          {
-            LOG(info) << "Database cleanup: " << item.first;
-
-            // Query file
-            auto delFile = _ctx.db->query<model::File>(
-                odb::query<model::File>::path == item.first).one();
-
-            // Delete FileContent (only when no other File references it)
-            auto relFiles = _ctx.db->query<model::File>(
-                odb::query<model::File>::content == delFile->content.object_id());
-            if(std::distance(relFiles.begin(), relFiles.end()) == 1)
-              _ctx.db->erase<model::FileContent>(delFile->content.object_id());
-
-            // Query CppAstNode
-            auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
-                odb::query<model::CppAstNode>::location.file == delFile->id &&
-                odb::query<model::CppAstNode>::astType == model::CppAstNode::AstType::Definition);
-            for(const model::CppAstNode& astNode : defCppAstNodes)
-            {
-              // Delete CppEntity
-              auto delCppEntities = _ctx.db->query<model::CppEntity>(
-                  odb::query<model::CppEntity>::mangledNameHash == astNode.mangledNameHash);
-              for(const model::CppEntity& entity : delCppEntities)
-              {
-                _ctx.db->erase<model::CppEntity>(entity.id);
-              }
-
-              // Delete CppInheritance
-              auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
-                  odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
-              for(const model::CppInheritance& inheritance : delCppInheritance)
-              {
-                _ctx.db->erase<model::CppInheritance>(inheritance.id);
-              }
-
-              // Delete CppFriendship
-              auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
-                  odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
-              for(const model::CppFriendship& friendship : delCppFriendship)
-              {
-                _ctx.db->erase<model::CppFriendship>(friendship.id);
-              }
-            }
-
-            // Delete BuildAction
-            auto delSources = _ctx.db->query<model::BuildSource>(
-                odb::query<model::BuildSource>::file == delFile->id);
-            for(const model::BuildSource& source : delSources)
-            {
-              _ctx.db->erase<model::BuildAction>(source.action->id);
-            }
-
-            // Delete File
-            _ctx.db->erase<model::File>(delFile->id);
-
-            // TODO: consider to update the source manager (remove file?)
-            break;
-          }
-
-          case IncrementalStatus::ADDED:
-            // Empty deliberately
-            break;
-        }
-      }
-    }); // end of transaction
+    incrementalParse();
   }
 
-
-
+  initBuildActions();
   VisitorActionFactory::init(_ctx);
 
   bool success = true;
@@ -475,11 +363,142 @@ bool CppParser::parse()
   return success;
 }
 
-void CppParser::insertBuildActions()
+void CppParser::incrementalParse()
+{
+  std::unordered_map<std::string, std::string> fileHashes;
+
+  (util::OdbTransaction(_ctx.db))([&] {
+    auto files = _ctx.db->query<model::File>(
+      odb::query<model::File>::type != model::File::DIRECTORY_TYPE &&
+      odb::query<model::File>::type != model::File::BINARY_TYPE);
+
+    for(const model::File& file : files)
+    {
+      if (boost::filesystem::exists(file.path))
+      {
+        if (!_fileStatus.count(file.path))
+        {
+          auto content = file.content.load();
+          fileHashes[file.path] = content != nullptr ? content->hash : "";
+          if (content == nullptr)
+            continue;
+
+          std::ifstream fileStream(file.path);
+          std::string fileContent(
+            (std::istreambuf_iterator<char>(fileStream)),
+            (std::istreambuf_iterator<char>()));
+          fileStream.close();
+
+          if (content->hash != util::sha1Hash(fileContent))
+          {
+            markAsModified(file);
+          }
+        }
+      }
+      else
+      {
+        _fileStatus.insert(std::make_pair(file.path, IncrementalStatus::DELETED));
+        LOG(debug) << "File deleted: " << file.path;
+      }
+    }
+
+    // TODO: detect added files (not necessary currently)
+
+    for(auto& item : _fileStatus)
+    {
+      switch (item.second)
+      {
+        case IncrementalStatus::MODIFIED:
+        case IncrementalStatus::DELETED:
+        {
+          LOG(info) << "Database cleanup: " << item.first;
+
+          // Query file
+          auto delFile = _ctx.db->query<model::File>(
+            odb::query<model::File>::path == item.first).one();
+
+          // Query CppAstNode
+          auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
+            odb::query<model::CppAstNode>::location.file == delFile->id &&
+            odb::query<model::CppAstNode>::astType == model::CppAstNode::AstType::Definition);
+          for (const model::CppAstNode &astNode : defCppAstNodes)
+          {
+            // Delete CppEntity
+            auto delCppEntities = _ctx.db->query<model::CppEntity>(
+              odb::query<model::CppEntity>::mangledNameHash == astNode.mangledNameHash);
+            for (const model::CppEntity &entity : delCppEntities)
+            {
+              _ctx.db->erase<model::CppEntity>(entity.id);
+            }
+
+            // Delete CppInheritance
+            auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
+              odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
+            for (const model::CppInheritance &inheritance : delCppInheritance)
+            {
+              _ctx.db->erase<model::CppInheritance>(inheritance.id);
+            }
+
+            // Delete CppFriendship
+            auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
+              odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
+            for (const model::CppFriendship &friendship : delCppFriendship)
+            {
+              _ctx.db->erase<model::CppFriendship>(friendship.id);
+            }
+
+            // Delete CppNode (connected to CppAstNode) with all its connected CppNodes
+            auto delNodes = _ctx.db->query<model::CppNode>(
+              odb::query<model::CppNode>::domainId == std::to_string(astNode.id) &&
+              odb::query<model::CppNode>::domain == model::CppNode::CPPASTNODE);
+            for (model::CppNode &node : delNodes)
+            {
+              for (model::CppNodeId nodeId : collectNodeSet(node.id))
+              {
+                _ctx.db->erase<model::CppNode>(nodeId);
+              }
+            }
+          }
+
+          // Delete BuildAction
+          auto delSources = _ctx.db->query<model::BuildSource>(
+            odb::query<model::BuildSource>::file == delFile->id);
+          for (const model::BuildSource &source : delSources)
+          {
+            _ctx.db->erase<model::BuildAction>(source.action->id);
+          }
+
+          // Delete CppNode (connected to File) with all its connected CppNodes
+          auto delNodes = _ctx.db->query<model::CppNode>(
+            odb::query<model::CppNode>::domainId == std::to_string(delFile->id) &&
+            odb::query<model::CppNode>::domain == model::CppNode::FILE);
+          for (model::CppNode &node : delNodes)
+          {
+            for (model::CppNodeId nodeId : collectNodeSet(node.id))
+            {
+              _ctx.db->erase<model::CppNode>(nodeId);
+            }
+          }
+
+          // Delete File and FileContent (only when no other File references it)
+          _ctx.srcMgr.removeFile(*delFile);
+
+          break;
+        }
+
+        case IncrementalStatus::ADDED:
+          // Empty deliberately
+          break;
+      }
+    }
+  }); // end of transaction
+}
+
+void CppParser::initBuildActions()
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
-  for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
-  _parsedCommandHashes.insert(util::fnvHash(ba.command));
+    for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
+      _parsedCommandHashes.insert(util::fnvHash(ba.command));
   });
 }
 
@@ -491,13 +510,54 @@ void CppParser::markAsModified(const model::File& file_)
     LOG(debug) << "File modified: " << file_.path;
 
     auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
-        odb::query<model::CppHeaderInclusion>::included == file_.id);
+      odb::query<model::CppHeaderInclusion>::included == file_.id);
 
     for (auto inc : inclusions)
     {
       markAsModified(*inc.includer.load());
     }
   }
+}
+
+std::set<model::CppNodeId> CppParser::collectNodeSet(model::CppNodeId node_) const
+{
+  std::set<model::CppNodeId> nodes;
+  std::queue<model::CppNodeId> processQueue;
+
+  nodes.insert(node_);
+  processQueue.push(node_);
+
+  while(!processQueue.empty())
+  {
+    auto nodeId = processQueue.front();
+    processQueue.pop();
+
+    // Fetch nodes on edges where current node has a 'from' role
+    auto fromEdges = _ctx.db->query<model::CppEdge>(
+      odb::query<model::CppEdge>::from == nodeId);
+    for (const model::CppEdge &edge : fromEdges)
+    {
+      if (!nodes.count(edge.to->id))
+      {
+        nodes.insert(edge.to->id);
+        processQueue.push(edge.to->id);
+      }
+    }
+
+    // Fetch nodes on edges where current node has a 'to' role
+    auto toEdges = _ctx.db->query<model::CppEdge>(
+      odb::query<model::CppEdge>::to == nodeId);
+    for (const model::CppEdge &edge : toEdges)
+    {
+      if (!nodes.count(edge.from->id))
+      {
+        nodes.insert(edge.from->id);
+        processQueue.push(edge.from->id);
+      }
+    }
+  }
+
+  return nodes;
 }
 
 bool CppParser::parseByJson(

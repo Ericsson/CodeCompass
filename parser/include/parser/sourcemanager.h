@@ -52,6 +52,13 @@ public:
   // TODO: Maybe this function shouldn't exist.
   void persistFiles();
 
+  /**
+   * This function removes the given file (and its content if necessary)
+   * from the SourceManager and also deletes it from the database.
+   * @param file_ A model::File object which is already persistent.
+   */
+  void removeFile(const model::File& file_);
+
 private:
   /**
    * This function creates a model::FileContent object and fills its attributes

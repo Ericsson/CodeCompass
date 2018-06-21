@@ -221,6 +221,31 @@ void SourceManager::updateFile(const model::File& file_)
     });
 }
 
+void SourceManager::removeFile(const model::File& file_)
+{
+  bool removeContent = false;
+
+  // Delete File and FileContent (only when no other File references it)
+  _transaction([&, this]() {
+    auto relFiles = _db->query<model::File>(
+        odb::query<model::File>::content == file_.content.object_id());
+    if(std::distance(relFiles.begin(), relFiles.end()) == 1)
+    {
+      removeContent = true;
+      _db->erase<model::FileContent>(file_.content.object_id());
+    }
+    _db->erase<model::File>(file_.id);
+  });
+
+  // Maintain cache
+  _createFileMutex.lock();
+  _files.erase(file_.path);
+  _persistedFiles.erase(file_.id);
+  if(removeContent)
+    _persistedContents.erase(file_.content.object_id());
+  _createFileMutex.unlock();
+}
+
 void SourceManager::persistFiles()
 {
   std::lock_guard<std::mutex> guard(_createFileMutex);
