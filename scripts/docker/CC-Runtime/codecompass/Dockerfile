@@ -1,11 +1,12 @@
 FROM compass-devel AS code-compass-installer
 
 ARG compass_source_url
+ARG compass_branch
 
 WORKDIR /root
 COPY ./bin ./bin
 RUN chmod u+x ./bin/make_compass.sh
-RUN ./bin/make_compass.sh ${compass_source_url}
+RUN ./bin/make_compass.sh ${compass_source_url} ${compass_branch}
 
 
 FROM ubuntu:16.04 AS code-compass

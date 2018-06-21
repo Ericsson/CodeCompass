@@ -43,17 +43,17 @@ RUN \
     ./bin/install_thrift.sh \
     ./bin/install_dbaccess.sh \
     ./bin/install_llvm.sh \
-    ./bin/install_npm.sh
+    ./bin/install_nvm.sh
 
 RUN \
     ./bin/install_gtest.sh \
     && ./bin/install_thrift.sh -t "0.10.0" \
     && ./bin/install_dbaccess.sh \
-    && ./bin/install_llvm.sh -l "3.8.1" \
+    && ./bin/install_llvm.sh -l "6.0.0" \
     && wget -qO- \
     https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh \
     | NVM_DIR=/opt/nvm /bin/bash \
-    && ./bin/install_npm.sh
+    && ./bin/install_nvm.sh
 
 RUN \
     mv /root/bin/fetchcc.sh \

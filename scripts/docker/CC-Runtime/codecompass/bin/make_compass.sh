@@ -5,32 +5,38 @@ COMPASS_INSTALL_DIR="/opt/CodeCompass"
 set -e
 
 function usage() {
-    echo "${0} <URL of CodeCompass source in a git repository>"
+cat << EOF
+${0}
+    Options:
+        <URL of CodeCompass source in a git repository>
+        <Branch name in the git repository>
+EOF
 }
 
-if [[ -z "${1}" ]]; then
-    echo "URL of CodeCompass is not specified." >&2
+if [[ -z "${2}" ]]; then
+    echo "Too few options specified." >&2
     usage
     exit 1
 fi
 
-if [[ ! -z "${2}" ]]; then
-    echo "Too many options." >&2
+if [[ ! -z "${3}" ]]; then
+    echo "Too many options specified." >&2
     usage
     exit 2
 fi
 
 COMPASS_URL="${1}"
+COMPASS_BRANCH="${2}"
 
 scriptdir=$(readlink -ev "$(dirname "$(which "$0")")")
 
 COMPASS_SRC_DIR="/tmp/Compass.main"
 COMPASS_OUTPUT_DIR="/tmp/Compass.build"
 
-mkdir -p "${COMPASS_SRC_DIR}"
-mkdir -p "${COMPASS_OUTPUT_DIR}"
+mkdir --parents "${COMPASS_SRC_DIR}"
+mkdir --parents "${COMPASS_OUTPUT_DIR}"
 
-fetchcc.sh "${COMPASS_SRC_DIR}" "${COMPASS_URL}"
+fetchcc.sh "${COMPASS_SRC_DIR}" "${COMPASS_URL}" "${COMPASS_BRANCH}"
 configurecc.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}" "Release"
 buildcc.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}"
 

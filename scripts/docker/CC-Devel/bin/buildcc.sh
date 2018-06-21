@@ -8,13 +8,13 @@ function usage() {
 
 if [[ -z "${2}" ]]; then
     echo "Mandatory options is not specified." >&2
-    usage
+    usage >&2
     exit 1
 fi
 
 if [[ ! -z "${3}" ]]; then
     echo "Too many options." >&2
-    usage
+    usage >&2
     exit 2
 fi
 

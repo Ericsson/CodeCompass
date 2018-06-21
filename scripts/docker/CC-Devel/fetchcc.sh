@@ -3,27 +3,32 @@
 set -e
 
 function usage() {
-    echo "${0}"
-    echo "  -h  Print this usage information. Optional."
-    echo "  -s  Directory of CodeCompass source. If not specified then"
-    echo "      CC_SOURCE environment variable will be used. Any of them"
-    echo "      is mandatory."
-    echo "  -u  URL of repository of CodeCompass. If not specified then"
-    echo "      CC_URL environment variable will be used. If none of them was"
-    echo "      specified then the the main repository"
-    echo "      (https://github.com/Ericsson/CodeCompass) will be used."
+cat << EOF
+${0} [-h]
+${0} [-s <source directory>] [-u <repository URL>] [-b]
+  -h  Print this usage information. Optional.
+  -s  Directory of CodeCompass source. If not specified then
+      CC_SOURCE environment variable will be used. Any of them
+      is mandatory.
+  -u  URL of repository of CodeCompass. If not specified then CC_URL environment
+      variable will be used. If not specified then the the main repository
+       (https://github.com/Ericsson/CodeCompass) will be used.
+  -b  Branch of CodeCompass in the repository. Optional. If not specified then
+      the the master branch will be used.
+EOF
 }
 
 main_repo_url="https://github.com/Ericsson/CodeCompass"
 
 cc_source_dir="${CC_SOURCE}"
+cc_branch="master"
 cc_output_dir="${CC_BUILD}"
 cc_build_type="${CC_BUILD_TYPE}"
 cc_url="${CC_URL}"
 if [[ -z ${cc_url} ]]; then
     cc_url="${main_repo_url}"
 fi
-while getopts ":hs:u:" option; do
+while getopts ":hs:u:b:" option; do
     case ${option} in
         h)
             usage
@@ -35,8 +40,11 @@ while getopts ":hs:u:" option; do
         u)
             cc_url="${OPTARG}"
             ;;
+        b)
+            cc_branch="${OPTARG}"
+            ;;
         *)
-            usage
+            usage >&2
             exit 1
             ;;
     esac
@@ -44,7 +52,7 @@ done
 
 if [[ -z "${cc_source_dir}" ]]; then
     echo "Target directory of CodeCompass source was not specified." >&2
-    usage
+    usage >&2
     exit 2
 fi
 
@@ -62,7 +70,7 @@ docker_command=("docker" "run" "--rm"                                          \
   "--user=${developer_id}:${developer_group}"                                  \
   "--mount=type=bind,source=${cc_source_dir},target=${cc_source_mounted}"      \
   "compass-devel" "/usr/local/bin/fetchcc.sh" "${cc_source_mounted}"           \
-  "${cc_url}")
+  "${cc_url}" "${cc_branch}")
 
 if [[ "$(id -nG ${USER})" == *"docker"* ]] || [[ ! -z ${DOCKER_HOST} ]]; then
     "${docker_command[@]}"

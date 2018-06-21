@@ -3,18 +3,22 @@
 set -e
 
 function usage() {
-    echo "${0}"
-    echo "  -h  Print this usage information. Optional."
-    echo "  -s  Directory of CodeCompass source. If not specified then"
-    echo "      CC_SOURCE environment variable will be used. Any of them"
-    echo "      is mandatory."
-    echo "  -o  Directory of generated output artifacts. If not specified then"
-    echo "      CC_BUILD environment variable will be used. Any of them"
-    echo "      is mandatory."
-    echo "  -t  Build type. Optional."
-    echo "      It can be: Debug; Release; RelWithDebInfo; MinSizeRel"
-    echo "      If not specified then CC_BUILD_TYPE environment variable will "
-    echo "      be used. Any of them is mandatory."
+    cat <<EOF
+${0} [-h]
+${0} [-s <source directory>] [-o <output directory>] [-t]
+  -h  Print this usage information. Optional.
+  -s  Directory of CodeCompass source. If not specified this option
+      CC_SOURCE environment variable will be used. If any of them not specified,
+      this script uses the root directory of this git repository as Compass
+      source.
+  -o  Directory of generated output artifacts. If not specified then
+      CC_BUILD environment variable will be used. Any of them
+      is mandatory.
+  -t  Build type. Optional.
+      It can be: Debug; Release; RelWithDebInfo; MinSizeRel
+      If not specified then CC_BUILD_TYPE environment variable will
+      be used. Any of them is mandatory.
+EOF
 }
 
 cc_source_dir="${CC_SOURCE}"
@@ -36,7 +40,7 @@ while getopts ":hs:o:t:" option; do
             cc_build_type="${OPTARG}"
             ;;
         *)
-            usage
+            usage >&2
             exit 1
             ;;
     esac
@@ -52,9 +56,18 @@ if [[ "${cc_build_type}" != "Debug" ]] \
 fi
 
 if [[ -z "${cc_source_dir}" ]]; then
-    echo "CodeCompass source directory should be defined." >&2
-    usage
-    exit 3
+    script_dir=$(readlink -ev "$(dirname "$(which "${0}")")")
+    cc_source_dir=$(
+        set +e
+        cd ${script_dir}
+        git rev-parse --show-toplevel
+    )
+
+    if [[ ! $? ]]; then
+        echo "CodeCompass source directory should be defined." >&2
+        usage >&2
+        exit 3
+    fi
 fi
 
 if [[ -z "${cc_output_dir}" ]]; then

@@ -3,14 +3,17 @@
 set -e
 
 function usage() {
-    echo "${0}"
-    echo "  -h  Print this usage information. Optional."
-    echo "  -s  Directory of CodeCompass source. If not specified then"
-    echo "      CC_SOURCE environment variable will be used. Any of them"
-    echo "      is mandatory."
-    echo "  -o  Directory of generated output artifacts. If not specified then"
-    echo "      CC_BUILD environment variable will be used. Any of them"
-    echo "      is mandatory."
+${0} [-h]
+${0} [-s <source directory>] [-o <output directory>]
+  -h  Print this usage information. Optional.
+  -s  Directory of CodeCompass source. If not specified this option
+      CC_SOURCE environment variable will be used. If any of them not specified,
+      this script uses the root directory of this git repository as Compass
+      source.
+  -o  Directory of generated output artifacts. If not specified then
+      CC_BUILD environment variable will be used. Any of them
+      is mandatory.
+EOF
 }
 
 cc_source_dir="${CC_SOURCE}"
@@ -28,7 +31,7 @@ while getopts ":hs:o:" option; do
             cc_output_dir="${OPTARG}"
             ;;
         *)
-            usage
+            usage >&2
             exit 1
             ;;
     esac
@@ -36,14 +39,14 @@ done
 
 if [[ -z "${cc_source_dir}" ]]; then
     echo "CodeCompass source directory should be defined." >&2
-    usage
-    exit 3
+    usage >&2
+    exit 2
 fi
 
 if [[ -z "${cc_output_dir}" ]]; then
     echo "Output directory of build should be defined." >&2
-    usage
-    exit 4
+    usage >&2
+    exit 3
 fi
 
 developer_id="$(id --user)"
@@ -51,7 +54,7 @@ developer_group="$(id --group)"
 
 if [[ "$developer_id" -eq 0 ]] || [[ "$developer_group" -eq 0 ]]; then
     echo "'${0}' should not run as root." >&2
-    exit 2
+    exit 4
 fi
 
 mkdir -p ${cc_output_dir}
@@ -64,7 +67,6 @@ docker_command=("docker" "run" "--rm"                                       \
   "--mount" "type=bind,source=${cc_output_dir},target=${cc_output_mounted}" \
   "compass-devel" "/usr/local/bin/buildcc.sh" "${cc_source_mounted}"        \
   "${cc_output_mounted}")
-
 
 if [[ "$(id -nG ${USER})" == *"docker"* ]] || [[ ! -z ${DOCKER_HOST} ]]; then
     "${docker_command[@]}"
