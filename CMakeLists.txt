@@ -11,7 +11,7 @@ enable_testing()
 
 find_package(Threads REQUIRED)
 find_package(LLVM    REQUIRED CONFIG)
-find_package(Boost   REQUIRED)
+find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
 find_package(Odb     REQUIRED)
 find_package(Thrift  REQUIRED)
 find_package(Java    REQUIRED)

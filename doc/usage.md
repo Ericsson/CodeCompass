@@ -1,34 +1,84 @@
 # CodeCompass usage
 
 ## Setup database (one time only)
-CodeCompass uses relational database system for data storage. Currently SQLite
-and PostgreSQL are supported. The first one is for trial purposes and for
-smaller projects, the latter one is for parsing large projects. You may choose
-but make sure that CodeCompass is compiled with the given database system (see:
-`-DDATABASE` CMake flag in chapter [Build CodeCompass](deps.md).
+CodeCompass uses relational database system for data storage. Currently *SQLite*
+and *PostgreSQL* are supported. The first one is for trial purposes and for
+smaller projects only, as SQLite can slow down considerably on large project.
+PostgreSQL is recommender for any production operation on medium-size or larger
+projects. The database backend used is decided when compiling CodeCompass, via
+the `-DDATABASE` CMake flag (see chapter [Build CodeCompass](deps.md)).
 
-If you choose PostgreSQL then first the database server has to be initialized
-and started. If PostgreSQL is installed by the Linux package manager then it is
-done. Otherwise you can start your own instance:
+### Using *SQLite*
+
+The usage of SQLite is automatic, the embedded library will take care of
+creating and using the database file.
+
+### Using *PostgreSQL* from package manager
+
+PostgreSQL can be installed from the package manager, using
+`sudo apt-get install postgresql-<version>` (e.g. `postgresql-9.5`). This will
+set up an automatically starting local server on the default port `5432`.
+
+This server, by default, is only accessible for an automatically created system
+user named `postgres`. However, CodeCompass' database layer only supports
+password-based authentication. First, you have to create a user to access the
+database:
+
+```bash
+sudo su postgres
+psql
+```
+
+In the PostgreSQL command-line shell, type:
+
+```sql
+CREATE USER compass WITH SUPERUSER LOGIN PASSWORD 'mypassword';
+```
+
+You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
+with the given name and credentials is now created.
+
+This was the most basic way to set up access to the database. In case of a live,
+production, public server, certain other measures need to be taken to ensure
+secure access. For full documentation, see:
+- Read more about the [`CREATE USER`](https://www.postgresql.org/docs/9.5/static/sql-createuser.html)
+  command.
+- [PostgreSQL access configuration file](https://www.postgresql.org/docs/9.5/static/auth-pg-hba-conf.html)
+
+In case you want to *manually* create the database and not through a `SUPERUSER`
+via CodeCompass, you need to ensure the database is created with the right
+locale, otherwise `CodeCompass_parser` will crash when trying to store your
+files. Please use the following command to create databases:
+
+    CREATE DATABASE mydatabase
+      WITH ENCODING 'SQL_ASCII' LC_CTYPE 'C' LC_COLLATE 'C'
+      TEMPLATE template0;
+
+### Using self-compiled *PostgreSQL*
+Alternatively, you may compile PostgreSQL by yourself. Using this method, you'll
+need to manually initialise a server and start your own instance:
 
 ```bash
 mkdir -p ~/cc/database
 initdb -D ~/cc/database -E SQL_ASCII
 
-# Start PostgreSQL server on port 6250
+# Start PostgreSQL server on port 6250.
 postgres -D ~/cc/database -p 6250
 ```
+
+A manually started PostgreSQL server is automatically configured to your user,
+and your user only. No extra user creation or configuration needs to take place.
 
 For full documentation see:
 - [Initialize PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-initdb.html)
   (`-E SQL_ASCII` flag is recommended!)
 - [Start PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-postgres.html)
 
-## 1. Generate compilation databse
-If you want to parse a C++ project, you have to create a compilation database
-file (http://clang.llvm.org/docs/JSONCompilationDatabase.html).
+## 1. Generate compilation database
+If you want to parse a C++ project, you have to create a [compilation database
+file](http://clang.llvm.org/docs/JSONCompilationDatabase.html).
 
-### Compilation database from CMake
+### Get compilation database from CMake
 If the project uses CMake build system then you can create the compilation
 database by CMake with the option `CMAKE_EXPORT_COMPILE_COMMANDS`:
 
@@ -39,13 +89,13 @@ cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 This command creates the `compile_commands.json` file, this is the compilation
 database.
 
-### Compilation database from CodeCompass
+### Create compilation database via build instrumentation
 CodeCompass can also be used for generating compilation database. This is a more
-general solution because it is not only for CMake projects. Suppose you have
+general solution because it works for non-CMake projects. Suppose you have
 `hello.cpp` in the current working directory.
 
 ```bash
-CodeCompass_logger ~/cc/compilation_commands.json "g++ main.cpp"
+CodeCompass_logger ~/myproject/compilation_commands.json "g++ hello.cpp"
 ```
 
 The `CodeCompass_logger` is provided in the `bin` directory in the CodeCompass
@@ -53,8 +103,8 @@ installation. The first command line argument is the output file name and the
 second argument is the build command which compiles your project. This can be a
 simple compiler invocation or starting a build system.
 
-## 2. Parse a project
-If you installed some third party dependecies manually for building CodeCompass
+## 2. Parse the project
+If you installed some third party dependencies manually for building CodeCompass
 because of known issues then you have to make their `lib` directories seen:
 
 ```bash
@@ -67,8 +117,10 @@ For parsing a project with CodeCompass, the following command has to be emitted:
 keepalive CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connection_string>
 ```
 
-- **Workspace**: This is a directory where the parsed project and different
-  config and log files are located.
+- **Workspace**: This is a directory where the some parse results, and different
+  configuration and log files are located. **Please ensure that this directory
+  is not located under any *input* folder, or under your project's source file
+  tree.**
 - **Input**: Several inputs can be given with `-i` flags. An input can be a
   directory or a compilation database. The plugins iterate these inputs and
   decide if they can use it. For example the C++ parser will consume the given
@@ -91,19 +143,38 @@ from where it stopped. **Furthermore it sets some environment variables which
 are necessary to start the `CodeCompass_parser` binary, so its usage is
 mandatory!**
 
-### Using example:
+### Usage example
+
+In these examples, the parser is given **two** inputs. The
+`compile_commands.json` file tells the C/C++ parser which source files to parse.
+Giving the project's directory will allow the text search parser to index words
+in your project.
+
+Parse and store the results of the project in a PostgreSQL database:
 
 ```bash
-# Parse an example C++ project. We suppose that the database is located on port 6250 on localhost
 keepalive CodeCompass_parser \
-  -d "pgsql:host=localhost;database=mydatabase;port=6250" \
+  -d "pgsql:host=localhost;port=5432;user=compass;password=mypassword;database=mydatabase" \
   -w ~/cc/workdir \
   -n myproject \
-  -i ~/cc/compile_commands.json \
+  -i ~/myproject/compile_commands.json \
+  -i ~/myproject \
   -j 4
 ```
 
-## 3. Start the webserver
+Or use SQLite (not recommended for large projects):
+
+```bash
+keepalive CodeCompass_parser \
+  -d "sqlite:database=~/cc/mydatabase.sqlite" \
+  -w ~/cc/workdir \
+  -n myproject \
+  -i ~/myproject/compile_commands.json \
+  -i ~/myproject \
+  -j 4
+```
+
+## 3. Start the web server
 
 You can start the CodeCompass weserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
@@ -112,9 +183,10 @@ the CodeCompass installation directory.
 keepalive CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
 ```
 
-- **Workspace**: This is a directory where the parsed projects and different
-  config and log files are located. 
-- **Port**: Port number of the webserver to listen on.
+- **Workspace**: This is a directory where the some parse results, and different
+  configuration and log files are located. This should be the same as what was
+  provided to the `CodeCompass_parser` binary in *Step 2*.
+- **Port**: Port number of the web server to listen on.
 - **Database**: The plugins can use an SQL database as storage. By the
   connection string the user can give the location of a running database
   system. In the parsing session the database name could have been provided.
@@ -128,14 +200,21 @@ installation. This is used to keep CodeCompass alive if it crashes for some
 reason. **Furthermore it sets some environment variables which are necessary to
 start the `CodeCompass_parser` binary, so its usage is mandatory!**
 
-### Using example:
+### Usage example
 
 ```bash
-# Start the server listening on port 6251. We suppose that database is located on port 6250.
+# Start the server listening on port 6251.
 keepalive CodeCompass_webserver \
   -w ~/cc/workdir \
   -p 6251 \
-  -d "pgsql:host=localhost;database=mydatabase;port=6250"
+  -d "pgsql:host=localhost;port=5432;user=compass;password=mypassword"
 
-# Open up a browser and access http://localhost:6251
+# Or if SQLite database is used:
+keepalive CodeCompass_webserver \
+  -w ~/cc/workdir \
+  -p 6251 \
+  -d "sqlite"
 ```
+
+The server will be available in a browser on
+[`http://localhost:6251`](http://localhost:6251).
