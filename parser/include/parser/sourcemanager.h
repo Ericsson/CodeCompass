@@ -28,6 +28,12 @@ public:
   ~SourceManager();
 
   /**
+   * This function copies and returns a pointer to all model::File objects
+   * currently stored.
+   */
+  std::vector<model::FilePtr> getAllFiles();
+
+  /**
    * This function returns a pointer to the corresponding model::File object
    * based on the given path_. The object is read from a cache. If the file is
    * not in the cache yet then a model::File entry is created, persisted in the

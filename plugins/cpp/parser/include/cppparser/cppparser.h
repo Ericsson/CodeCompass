@@ -90,7 +90,7 @@ private:
 
   void incrementalParse();
   void initBuildActions();
-  void markAsModified(const model::File& file_);
+  void markAsModified(model::FilePtr file_);
   std::set<model::CppNodeId> collectNodeSet(model::CppNodeId node_) const;
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;

@@ -79,10 +79,23 @@ po::options_description commandLineArguments()
 }
 
 /**
+ * This function checks the existence of the workspace and project directory
+ * based on the given command line arguments.
+ * @return The path of the project directory.
+ */
+bool checkProjectDir(const po::variables_map& vm_)
+{
+  const std::string projDir
+    = vm_["workspace"].as<std::string>() + '/'
+      + vm_["name"].as<std::string>();
+
+  return fs::exists(projDir) && fs::is_directory(projDir);
+}
+
+/**
  * This function prepares the workspace and project directory based on the given
  * command line arguments. If the project directory can't be created because of
- * permission issues or the directory already exists and "--force" flag is not
- * provided then empty string returns which indicates the problem.
+ * permission issues then empty string returns which indicates the problem.
  * @return The path of the project directory.
  */
 std::string prepareProjectDir(const po::variables_map& vm_)
@@ -121,11 +134,6 @@ std::string prepareProjectDir(const po::variables_map& vm_)
       LOG(error) << "Permission denied to create " + projDir;
       return std::string();
     }
-  }
-  else
-  {
-    LOG(error) << projDir << " already exists. Use -f for reparsing!";
-    return std::string();
   }
 
   return projDir;
@@ -204,7 +212,20 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  //--- Check workspace and project directory ---//
+  //--- Check database and project directory existsence ---//
+
+  bool isNewDb = cc::util::connectDatabase(
+    vm["database"].as<std::string>(), false) ? false : true;
+  bool isNewProject = !checkProjectDir(vm);
+
+  if (isNewProject && !isNewDb || !isNewProject && isNewDb)
+  {
+    LOG(error)
+      << "Database and working directory existence are inconsistent. Use -f for reparsing!";
+    return 1;
+  }
+
+  //--- Prepare workspace and project directory ---//
 
   std::string projDir = prepareProjectDir(vm);
   if (projDir.empty())
@@ -212,8 +233,8 @@ int main(int argc, char* argv[])
 
   //--- Create and init database ---//
 
-  std::shared_ptr<odb::database> db = cc::util::createDatabase(
-    vm["database"].as<std::string>());
+  std::shared_ptr<odb::database> db = cc::util::connectDatabase(
+      vm["database"].as<std::string>(), true);
 
   if (!db)
   {
@@ -225,7 +246,8 @@ int main(int argc, char* argv[])
   if (vm.count("force"))
     cc::util::removeTables(db, SQL_DIR);
 
-  cc::util::createTables(db, SQL_DIR);
+  if (vm.count("force") || isNewDb)
+    cc::util::createTables(db, SQL_DIR);
 
   //--- Start parsers ---//
 
@@ -242,7 +264,8 @@ int main(int argc, char* argv[])
 
   //--- Add indexes to the database ---//
 
-  cc::util::createIndexes(db, SQL_DIR);
+  if(vm.count("force") || isNewDb)
+    cc::util::createIndexes(db, SQL_DIR);
 
   //--- Create project config file ---//
 

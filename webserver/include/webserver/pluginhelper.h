@@ -54,7 +54,7 @@ inline void registerPluginSimple(
       "database",
       dbName);
 
-    std::shared_ptr<odb::database> db = util::createDatabase(connStr);
+    std::shared_ptr<odb::database> db = util::connectDatabase(connStr);
 
     if (!db)
     {

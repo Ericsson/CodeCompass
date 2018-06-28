@@ -149,6 +149,19 @@ model::FilePtr SourceManager::getCreateFileEntry(
   return file;
 }
 
+std::vector<model::FilePtr> SourceManager::getAllFiles()
+{
+  std::lock_guard<std::mutex> guard(_createFileMutex);
+
+  std::vector<model::FilePtr> values;
+  values.reserve(_files.size());
+
+  std::transform(_files.begin(), _files.end(), std::back_inserter(values),
+                 [](const auto &pair) { return pair.second; });
+
+  return values;
+}
+
 model::FilePtr SourceManager::getFile(const std::string& path_)
 {
   //--- Create canonical form of the path ---//
