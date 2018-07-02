@@ -33,6 +33,8 @@ public:
    */
   virtual std::vector<std::string> getDependentParsers() const = 0;
 
+  virtual void preparse(){}
+
   /**
    * Method parses a path or a compilation database
    * @return Return true if the parse was success, false otherwise

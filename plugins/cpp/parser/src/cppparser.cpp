@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <iterator>
+#include <vector>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -338,10 +339,28 @@ std::vector<std::string> CppParser::getDependentParsers() const
   return std::vector<std::string>{};
 }
 
-bool CppParser::parse()
+void CppParser::preparse()
 {
-  if(_ctx.options.count("incremental"))
+  std::vector<model::FilePtr> filePtrs(_ctx.fileStatus.size());
+
+  std::transform(_ctx.fileStatus.begin(),
+                 _ctx.fileStatus.end(),
+                 filePtrs.begin(),
+                 [this](const auto& item)
+                 {
+                   if (item.second == cc::parser::IncrementalStatus::MODIFIED)
+                   {
+                     return _ctx.srcMgr.getFile(item.first);
+                   }
+                   else
+                   {
+                     return std::make_shared<model::File>();
+                   }
+                 });
+
+  (util::OdbTransaction(_ctx.db))([&]
   {
+<<<<<<< HEAD
     LOG(info) << "Incremental Parsing Enabled";
     incrementalParse();
   }
@@ -381,7 +400,7 @@ void CppParser::incrementalParse()
     {
       if (boost::filesystem::exists(file->path))
       {
-        if (!_fileStatus.count(file->path))
+        if (!_ctx.fileStatus.count(file.path))
         {
           auto hash = file->content.object_id();
           fileHashes[file->path] = hash;
@@ -400,14 +419,19 @@ void CppParser::incrementalParse()
       }
       else
       {
-        _fileStatus.insert(std::make_pair(file->path, IncrementalStatus::DELETED));
-        LOG(debug) << "File deleted: " << file->path;
+        _ctx.fileStatus.insert(std::make_pair(file.path, cc::parser::IncrementalStatus::DELETED));
+        LOG(debug) << "File deleted: " << file.path;
+=======
+    for(const model::FilePtr file : filePtrs)
+    {
+      if(file)
+      {
+        markAsModified(file);
+>>>>>>> 8f85585... Solves #8
       }
     }
 
-    // TODO: detect added files (not necessary currently)
-
-    for(auto& item : _fileStatus)
+    for(auto& item : _ctx.fileStatus)
     {
       switch (item.second)
       {
@@ -496,6 +520,31 @@ void CppParser::incrementalParse()
   }); // end of transaction
 }
 
+bool CppParser::parse()
+{
+  if(_ctx.options.count("incremental"))
+  {
+    LOG(info) << "Incremental Parsing Enabled";
+    //incrementalParse();
+  }
+
+  initBuildActions();
+  VisitorActionFactory::init(_ctx);
+
+  bool success = true;
+
+  for (const std::string& input
+    : _ctx.options["input"].as<std::vector<std::string>>())
+    if (boost::filesystem::is_regular_file(input))
+      success
+        = success && parseByJson(input, _ctx.options["jobs"].as<int>());
+
+  VisitorActionFactory::cleanUp();
+  _parsedCommandHashes.clear();
+
+  return success;
+}
+
 void CppParser::initBuildActions()
 {
   (util::OdbTransaction(_ctx.db))([&, this] {
@@ -504,19 +553,33 @@ void CppParser::initBuildActions()
   });
 }
 
+<<<<<<< HEAD
 void CppParser::markAsModified(model::FilePtr file_)
+=======
+void CppParser::markAsModified(const model::FilePtr file_)
+>>>>>>> 8f85585... Solves #8
 {
-  if(_fileStatus.count(file_->path) == 0)
-  {
-    _fileStatus.insert(std::make_pair(file_->path, IncrementalStatus::MODIFIED));
-    LOG(debug) << "File modified: " << file_->path;
+  auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
+    odb::query<model::CppHeaderInclusion>::included == file_->id);
 
+<<<<<<< HEAD
     auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
       odb::query<model::CppHeaderInclusion>::included == file_->id);
 
     for (auto inc : inclusions)
     {
       markAsModified(inc.includer.load());
+=======
+  for (auto inc : inclusions)
+  {
+    model::FilePtr loaded = inc.includer.load();
+    if(_ctx.fileStatus.count(loaded->path) == 0)
+    {
+      _ctx.fileStatus.insert(std::make_pair(loaded->path, IncrementalStatus::MODIFIED));
+      LOG(debug) << "File modified: " << loaded->path;
+
+      markAsModified(loaded);
+>>>>>>> 8f85585... Solves #8
     }
   }
 }

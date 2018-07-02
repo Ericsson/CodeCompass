@@ -26,7 +26,8 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool parse() override; 
+  virtual void preparse() override;
+  virtual bool parse() override;
 
 private:
   /**
@@ -51,15 +52,7 @@ private:
     ParseJob(const ParseJob&) = default;
   };
 
-  /**
-   * Defines file status categories for incremental parsing.
-   */
-  enum class IncrementalStatus
-  {
-    MODIFIED,
-    ADDED,
-    DELETED,
-  };
+
 
   /**
    * This function gets the input-output pairs from the compile command.
@@ -87,14 +80,13 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int worker(const clang::tooling::CompileCommand& command_);
-
-  void incrementalParse();
+  
   void initBuildActions();
   void markAsModified(model::FilePtr file_);
   std::set<model::CppNodeId> collectNodeSet(model::CppNodeId node_) const;
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
-  std::unordered_map<std::string, IncrementalStatus> _fileStatus;
+
 };
   
 } // parser

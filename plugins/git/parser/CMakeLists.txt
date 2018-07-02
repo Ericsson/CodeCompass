@@ -1,7 +1,8 @@
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/parser/include)
+  ${PROJECT_SOURCE_DIR}/parser/include
+  ${PROJECT_SOURCE_DIR}/model/include)
 
 add_library(gitparser SHARED 
   src/gitparser.cpp)

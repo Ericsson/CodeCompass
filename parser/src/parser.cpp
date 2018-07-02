@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
   }
 
   //--- Check database and project directory existsence ---//
-
+  
   bool isNewDb = cc::util::connectDatabase(
     vm["database"].as<std::string>(), false) ? false : true;
   bool isNewProject = !checkProjectDir(vm);
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
   }
 
   //--- Prepare workspace and project directory ---//
-
+  
   std::string projDir = prepareProjectDir(vm);
   if (projDir.empty())
     return 1;
@@ -235,6 +235,8 @@ int main(int argc, char* argv[])
 
   std::shared_ptr<odb::database> db = cc::util::connectDatabase(
       vm["database"].as<std::string>(), true);
+
+  std::unordered_map<std::string, cc::parser::IncrementalStatus> fileStatus;
 
   if (!db)
   {
@@ -252,8 +254,16 @@ int main(int argc, char* argv[])
   //--- Start parsers ---//
 
   cc::parser::SourceManager srcMgr(db);
-  cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
+  cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm, fileStatus);
   pHandler.createPlugins(ctx);
+
+  std::vector<std::string> reversedTopologicalOrder = pHandler.getTopologicalOrder();
+  std::reverse(reversedTopologicalOrder.begin(), reversedTopologicalOrder.end());
+
+  for(const std::string& parserName : reversedTopologicalOrder)
+  {
+    pHandler.getParser(parserName)->preparse();
+  }
 
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())
