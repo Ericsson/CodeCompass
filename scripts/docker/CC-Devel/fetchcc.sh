@@ -59,17 +59,18 @@ fi
 developer_id="$(id --user)"
 developer_group="$(id --group)"
 
-if [[ "$developer_id" -eq 0 ]] || [[ "$developer_group" -eq 0 ]]; then
+if [[ "${developer_id}" -eq 0 ]] || [[ "${developer_group}" -eq 0 ]]; then
     echo "'${0}' should not run as root." >&2
     exit 2
 fi
 
-mkdir -p ${cc_source_dir}
+mkdir --parents ${cc_source_dir}
+cc_source_dir=$(readlink --canonicalize-existing --verbose "${cc_source_dir}")
 cc_source_mounted="/mnt/cc_source"
 docker_command=("docker" "run" "--rm"                                          \
   "--user=${developer_id}:${developer_group}"                                  \
   "--mount=type=bind,source=${cc_source_dir},target=${cc_source_mounted}"      \
-  "compass-devel" "/usr/local/bin/fetchcc.sh" "${cc_source_mounted}"           \
+  "compass-devel" "/usr/local/bin/fetchcompass.sh" "${cc_source_mounted}"      \
   "${cc_url}" "${cc_branch}")
 
 if [[ "$(id -nG ${USER})" == *"docker"* ]] || [[ ! -z ${DOCKER_HOST} ]]; then

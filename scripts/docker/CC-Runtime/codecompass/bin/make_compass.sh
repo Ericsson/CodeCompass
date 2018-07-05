@@ -36,8 +36,8 @@ COMPASS_OUTPUT_DIR="/tmp/Compass.build"
 mkdir --parents "${COMPASS_SRC_DIR}"
 mkdir --parents "${COMPASS_OUTPUT_DIR}"
 
-fetchcc.sh "${COMPASS_SRC_DIR}" "${COMPASS_URL}" "${COMPASS_BRANCH}"
-configurecc.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}" "Release"
-buildcc.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}"
+fetchcompass.sh "${COMPASS_SRC_DIR}" "${COMPASS_URL}" "${COMPASS_BRANCH}"
+configurecompass.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}" "Release"
+buildcompass.sh "${COMPASS_SRC_DIR}" "${COMPASS_OUTPUT_DIR}"
 
 mv "${COMPASS_OUTPUT_DIR}/install" "${COMPASS_INSTALL_DIR}"

@@ -3,7 +3,12 @@
 set -e
 
 function usage() {
-    echo "${0} <Directory of CodeCompass source> <Output directory>"
+    cat <<EOF
+${0}
+    Options:
+        <Directory of CodeCompass source>
+        <Output directory>
+EOF
 }
 
 if [[ -z "${2}" ]]; then

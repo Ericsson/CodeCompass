@@ -59,17 +59,19 @@ if [[ -z "${cc_source_dir}" ]]; then
         exit 2
     fi
 fi
+cc_source_dir=$(readlink --canonicalize-existing --verbose "$cc_source_dir")
 
 if [[ -z "${cc_output_dir}" ]]; then
     echo "Output directory of build should be defined." >&2
     usage >&2
     exit 3
 fi
+cc_output_dir=$(readlink --canonicalize-existing --verbose "${cc_output_dir}")
 
 developer_id="$(id --user)"
 developer_group="$(id --group)"
 
-if [[ "$developer_id" -eq 0 ]] || [[ "$developer_group" -eq 0 ]]; then
+if [[ "${developer_id}" -eq 0 ]] || [[ "${developer_group}" -eq 0 ]]; then
     echo "'${0}' should not run as root." >&2
     exit 4
 fi
@@ -95,7 +97,8 @@ if [[ "${run_as_root}" == "false" ]]; then
     docker_command+=("--user=${developer_id}:${developer_group}")
 fi
 
-docker_command+=("--mount" "type=bind,source=${cc_source_dir},target=${cc_source_mounted}" \
+docker_command+=(
+  "--mount" "type=bind,source=${cc_source_dir},target=${cc_source_mounted}"    \
   "--mount" "type=bind,source=${cc_output_dir},target=${cc_output_mounted}"    \
   "compass-devel" "/bin/bash")
 
