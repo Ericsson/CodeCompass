@@ -51,6 +51,26 @@ std::vector<std::string> MetricsParser::getDependentParsers() const
   return std::vector<std::string>{};
 }
 
+void MetricsParser::preparse()
+{
+  if(!_fileIdCache.empty())
+  {
+    (util::OdbTransaction(_ctx.db))([this] {
+      for(const model::File& file
+        : _ctx.db->query<model::File>(
+        odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+      {
+        if(_ctx.fileStatus[file.path] == cc::parser::IncrementalStatus::DELETED ||
+           _ctx.fileStatus[file.path] == cc::parser::IncrementalStatus::MODIFIED)
+        {
+          _ctx.db->erase_query<model::Metrics>(odb::query<model::Metrics>::file == file.id);
+          _fileIdCache.erase(file.id);
+        }
+      }
+    });
+  }
+}
+
 bool MetricsParser::parse()
 {
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
