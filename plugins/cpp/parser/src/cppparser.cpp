@@ -348,7 +348,7 @@ void CppParser::preparse()
                  filePtrs.begin(),
                  [this](const auto& item)
                  {
-                   if (item.second == cc::parser::IncrementalStatus::MODIFIED)
+                   if (item.second == IncrementalStatus::MODIFIED)
                    {
                      return _ctx.srcMgr.getFile(item.first);
                    }
@@ -438,7 +438,7 @@ void CppParser::incrementalParse()
         case IncrementalStatus::MODIFIED:
         case IncrementalStatus::DELETED:
         {
-          LOG(info) << "Database cleanup: " << item.first;
+          LOG(info) << "[cppparser] Database cleanup: " << item.first;
 
           // Fetch file from SourceManager by path
           model::FilePtr delFile = _ctx.srcMgr.getFile(item.first);
@@ -451,7 +451,7 @@ void CppParser::incrementalParse()
           {
             // Delete CppEntity
             auto delCppEntities = _ctx.db->query<model::CppEntity>(
-              odb::query<model::CppEntity>::mangledNameHash == astNode.mangledNameHash);
+              odb::query<model::CppEntity>::astNodeId == astNode.id);
             for (const model::CppEntity &entity : delCppEntities)
             {
               _ctx.db->erase<model::CppEntity>(entity.id);
@@ -505,9 +505,6 @@ void CppParser::incrementalParse()
               _ctx.db->erase<model::CppNode>(nodeId);
             }
           }
-
-          // Delete File and FileContent (only when no other File references it)
-          _ctx.srcMgr.removeFile(*delFile);
 
           break;
         }

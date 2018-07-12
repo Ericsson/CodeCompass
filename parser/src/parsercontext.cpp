@@ -65,6 +65,8 @@ ParserContext::ParserContext(
          LOG(debug) << "File deleted: " << file->path;
        }
      }
+
+     // TODO: detect ADDED files
    });
 }
 

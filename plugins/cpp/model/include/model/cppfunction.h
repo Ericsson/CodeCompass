@@ -14,7 +14,9 @@ namespace model
 #pragma db object
 struct CppFunction : CppTypedEntity
 {
+  #pragma db on_delete(cascade)
   std::vector<odb::lazy_shared_ptr<CppVariable>> parameters;
+  #pragma db on_delete(cascade)
   std::vector<odb::lazy_shared_ptr<CppVariable>> locals;
 
   std::string toString() const

@@ -16,6 +16,7 @@
 #include <util/dbutil.h>
 #include <util/filesystem.h>
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
 
 #include <parser/parsercontext.h>
 #include <parser/pluginhandler.h>
@@ -269,6 +270,32 @@ int main(int argc, char* argv[])
     LOG(info) << "[" << parserName << "] preparse started!";
     pHandler.getParser(parserName)->preparse();
   }
+
+  // TODO: Consider whether there is a better place for this code.
+  (cc::util::OdbTransaction(ctx.db))([&]
+  {
+    for(auto& item : ctx.fileStatus)
+    {
+      switch (item.second)
+      {
+        case cc::parser::IncrementalStatus::MODIFIED:
+        case cc::parser::IncrementalStatus::DELETED:
+        {
+          LOG(info) << "Database cleanup: " << item.first;
+
+          // Fetch file from SourceManager by path
+          cc::model::FilePtr delFile = srcMgr.getFile(item.first);
+
+          // Delete File and FileContent (only when no other File references it)
+          srcMgr.removeFile(*delFile);
+          break;
+        }
+        case cc::parser::IncrementalStatus::ADDED:
+          // Empty deliberately
+          break;
+      }
+    }
+  });
 
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())

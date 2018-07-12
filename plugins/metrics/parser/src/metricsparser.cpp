@@ -60,9 +60,13 @@ void MetricsParser::preparse()
         : _ctx.db->query<model::File>(
         odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
       {
-        if(_ctx.fileStatus[file.path] == cc::parser::IncrementalStatus::DELETED ||
-           _ctx.fileStatus[file.path] == cc::parser::IncrementalStatus::MODIFIED)
+        auto it = _ctx.fileStatus.find(file.path);
+        if(it != _ctx.fileStatus.end() &&
+          (it->second == cc::parser::IncrementalStatus::DELETED ||
+           it->second == cc::parser::IncrementalStatus::MODIFIED))
         {
+          LOG(info) << "[metricsparser] Database cleanup: " << file.path;
+
           _ctx.db->erase_query<model::Metrics>(odb::query<model::Metrics>::file == file.id);
           _fileIdCache.erase(file.id);
         }
