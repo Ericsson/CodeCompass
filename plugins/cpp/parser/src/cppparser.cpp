@@ -716,9 +716,7 @@ extern "C"
     description.add_options()
       ("skip-doccomment",
        "If this flag is given the parser will skip parsing the documentation "
-       "comments.")
-      ("incremental",
-       "Enable incremental parsing.");
+       "comments.");
     return description;
   }
 

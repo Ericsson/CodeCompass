@@ -211,8 +211,8 @@ int main(int argc, char* argv[])
     LOG(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
-
-  //--- Check database and project directory existsence ---//
+  
+  //--- Check database and project directory existence ---//
   
   bool isNewDb = cc::util::connectDatabase(
     vm["database"].as<std::string>(), false) ? false : true;
@@ -224,6 +224,9 @@ int main(int argc, char* argv[])
       << "Database and working directory existence are inconsistent. Use -f for reparsing!";
     return 1;
   }
+
+  if(!isNewDb)
+    LOG(info) << "Project already exists, incremental parsing in action.";
 
   //--- Prepare workspace and project directory ---//
   
@@ -260,15 +263,17 @@ int main(int argc, char* argv[])
   std::vector<std::string> reversedTopologicalOrder = pHandler.getTopologicalOrder();
   std::reverse(reversedTopologicalOrder.begin(), reversedTopologicalOrder.end());
 
+  // TODO: Handle errors returned by preparse().
   for(const std::string& parserName : reversedTopologicalOrder)
   {
+    LOG(info) << "[" << parserName << "] preparse started!";
     pHandler.getParser(parserName)->preparse();
   }
 
   // TODO: Handle errors returned by parse().
   for (const std::string& parserName : pHandler.getTopologicalOrder())
   {
-    LOG(info) << "[" << parserName << "] started!";
+    LOG(info) << "[" << parserName << "] parse started!";
     pHandler.getParser(parserName)->parse();
   }
 
