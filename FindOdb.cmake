@@ -98,7 +98,7 @@ endif()
 set(ODB_INCLUDE_DIRS ${ODB_LIBODB_INCLUDE_DIRS})
 set(ODB_LIBRARIES ${ODB_LIBODB_LIBRARIES})
 
-set(ODB_FIND_COMPONENTS "pgsql" "sqlite" "mysql")
+set(ODB_FIND_COMPONENTS "pgsql" "sqlite")
 foreach(component ${ODB_FIND_COMPONENTS})
 	find_odb_api(${component})
 endforeach()
@@ -107,4 +107,9 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ODB
 	FOUND_VAR ODB_FOUND
 	REQUIRED_VARS ODB_EXECUTABLE ODB_LIBODB_FOUND
-HANDLE_COMPONENTS)
+	HANDLE_COMPONENTS)
+
+string(TOLOWER "${DATABASE}" _databaseLib)
+if ("${ODB_${_databaseLib}_LIBRARY}" MATCHES "-NOTFOUND")
+  message(FATAL_ERROR "ODB library for selected DATABASE ${DATABASE} not found.")
+endif()

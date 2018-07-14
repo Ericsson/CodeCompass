@@ -1,6 +1,6 @@
 # Operating system
-We build CodeCompass under Linux. It is recommended to use a 64-bit operating
-system.
+We build CodeCompass under Linux. Currently, we are supporting Ubuntu 16.04 LTS.
+It is recommended to use a 64-bit operating system.
 
 # Dependencies
 CodeCompass uses some third-party dependencies. These can be installed from the
@@ -52,14 +52,20 @@ Some third-party tools are present in the distribution's package manager in a
 way that they are eiter incompatible with each other or not available as a
 package, thus can't be used to create your CodeCompass installation.
 
+:warning: Building and installing from source code to the system is a dangerous
+operation - outside package managers, the wrong binaries can end up being used
+by other processes which could, in extreme cases, make the system very hard or
+impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
+other commands below, unless *explicitly* specified!**
+
 ### Thrift
+=======
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
 from source:
 
-- [Download](http://xenia.sote.hu/ftp/mirrors/www.apache.org/thrift/0.10.0/thrift-0.10.0.tar.gz)
-  Thrift
+- [Download Thrift](http://xenia.sote.hu/ftp/mirrors/www.apache.org/thrift/0.10.0/thrift-0.10.0.tar.gz)
 - Uncompress and build it:
 
 ```bash
