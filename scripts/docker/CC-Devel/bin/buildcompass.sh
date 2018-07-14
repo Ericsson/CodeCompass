@@ -34,11 +34,12 @@ mkdir -p "${CODE_COMPASS_BUILD_DIR}"
 mkdir -p "${CODE_COMPASS_INSTALL_DIR}"
 mkdir -p "${CODE_COMPASS_NPM_DIR}"
 
-SCRIPT_DIR=$(readlink -ev "$(dirname "$(which "${0}")")")
+SCRIPT_DIR=$(readlink --canonicalize-existing --verbose                        \
+    "$(dirname "$(which "${0}")")")
 source "${SCRIPT_DIR}/builder_config.sh"
 
 export NPM_CONFIG_PREFIX="${CODE_COMPASS_NPM_DIR}"
 
 cd "${CODE_COMPASS_BUILD_DIR}"
-make -j $(nproc)
+cmake --build . -- -j $(nproc)
 make install

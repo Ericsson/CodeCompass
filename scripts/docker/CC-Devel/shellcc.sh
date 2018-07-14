@@ -46,7 +46,7 @@ while getopts ":hs:o:u" OPTION; do
 done
 
 if [[ -z "${cc_source_dir}" ]]; then
-    script_dir=$(readlink -ev "$(dirname "$(which "${0}")")")
+    script_dir=$(readlink --canonicalize-existing --verbose "$(dirname "$(which "${0}")")")
     cc_source_dir=$(
         set +e
         cd ${script_dir}

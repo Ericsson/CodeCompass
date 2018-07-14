@@ -10,9 +10,11 @@
 #
 
 # Load project specific API implementation
-scriptdir=$(readlink -e "$(dirname "$(which "$0")")")
-source "${scriptdir}/project_specific.sh"
+script_dir=$(readlink --canonicalize-existing --verbose                        \
+    "$(dirname "$(which "${0}")")")
 
-build_the_project "${scriptdir}" "${1}" "${2}"
+source "${script_dir}/project_specific.sh"
+
+build_the_project "${script_dir}" "${1}" "${2}"
 exit $?
 

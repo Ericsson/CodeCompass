@@ -50,7 +50,8 @@ if [[ -z "${cc_output_dir}" ]]; then
     usage >&2
     exit 3
 fi
-cc_output_dir=${readlink --canonicalize-existing --verbose "${cc_output_dir}"}
+cc_output_dir=${readlink --canonicalize-existing --verbose                  \
+    "${cc_output_dir}"}
 
 developer_id="$(id --user)"
 developer_group="$(id --group)"

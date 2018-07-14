@@ -63,7 +63,8 @@ if [[ "${cc_build_type}" != "Debug" ]] \
 fi
 
 if [[ -z "${cc_source_dir}" ]]; then
-    script_dir=$(readlink -ev "$(dirname "$(which "${0}")")")
+    script_dir=$(readlink ---canonicalize-existing --verbose                   \
+        "$(dirname "$(which "${0}")")")
     cc_source_dir=$(
         set +e
         cd ${script_dir}

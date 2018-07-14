@@ -48,7 +48,8 @@ while getopts ":hu:" option; do
     esac
 done
 
-script_dir=$(readlink -ev "$(dirname "$(which "${0}")")")
+script_dir=$(readlink --canonicalize-existing --verbose                        \
+    "$(dirname "$(which "${0}")")")
 
 docker_command="$(which docker)"
 
@@ -56,11 +57,11 @@ docker_command="$(which docker)"
 build_command=("${docker_command}" "build"                                     \
     "--build-arg" "compass_source_url=${cc_url}"                               \
     "--build-arg" "compass_branch=${cc_branch}"                                \
-    "--tag" "codecompass" "codecompass")
+    "--tag=codecompass" "codecompass")
 call_docker "${build_command[@]}"
 
 # Create image as base image of CC parsers.
-build_command=("${docker_command}" "build" "--tag" "ccparser" "ccparser")
+build_command=("${docker_command}" "build" "--tag=ccparser" "ccparser")
 call_docker "${build_command[@]}"
 
 # Create ".env" file for docker-compose command.
@@ -74,9 +75,9 @@ yaml_file="${script_dir}/docker-compose.yaml"
 
 cd "${script_dir}"
 # Create whole leaf images of the networked application.
-pull_command=("${compose_command}" "-f" "${yaml_file}" "pull" "db" "dbadmin")     
+pull_command=("${compose_command}" "--file" "${yaml_file}" "pull" "db"         \
+    "dbadmin")
 call_docker "${pull_command[@]}"
 
-build_command=("${compose_command}" "-f" "${yaml_file}" "build")
+build_command=("${compose_command}" "--file" "${yaml_file}" "build")
 call_docker "${build_command[@]}"
-

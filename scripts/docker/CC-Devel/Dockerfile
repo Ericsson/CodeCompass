@@ -1,7 +1,16 @@
 FROM ubuntu:16.04
 
-RUN apt-get update \
-  && apt-get install --yes \
+RUN apt-get update                                                             \
+  && DEBIAN_FRONTEND=noninteractive apt-get install --yes locales
+
+RUN sed --in-place --expression='s/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/'     \
+    /etc/locale.gen                                                            \
+  && dpkg-reconfigure --frontend=noninteractive locales                        \
+  && update-locale LANG=en_US.UTF-8
+
+ENV LANG en_US.UTF-8
+
+RUN apt-get install --yes \
     ant \
     autoconf \
     automake \

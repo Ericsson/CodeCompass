@@ -55,13 +55,13 @@ export PATH="/opt/CodeCompass/bin:${PATH}"
 export PATH="/opt/llvm/bin:${PATH}"
 
 # Load project specific API implementation
-scriptdir=$(readlink -e "$(dirname "$(which "$0")")")
-source "${scriptdir}/project_specific.sh"
+script_dir=$(readlink --canonicalize-existing "$(dirname "$(which "$0")")")
+source "${script_dir}/project_specific.sh"
 
 # Set up development environment of the project
 # The sciptdir parameter helps to the function to find other parts of the
 # project specific things.
-install_project "${scriptdir}" "${CONFIG_DIR}" "${PROJECT_WORKSPACE_DIR}"
+install_project "${script_dir}" "${CONFIG_DIR}" "${PROJECT_WORKSPACE_DIR}"
 
 compilation_database=$(get_compilation_database "${log_workspace_dir}")
 
@@ -71,9 +71,9 @@ if is_logging_necessary; then
     mkdir -p ${log_workspace_dir}
     export CC_LOGGER_GCC_LIKE="$(get_compiler_pattern)"
     CodeCompass_logger "${compilation_database}" \
-        "${scriptdir}/build_project.sh ${CONFIG_DIR} ${PROJECT_WORKSPACE_DIR}"
+        "${script_dir}/build_project.sh ${CONFIG_DIR} ${PROJECT_WORKSPACE_DIR}"
 fi
-filtered_compilation_database=$(filter_compilation_database "${scriptdir}"     \
+filtered_compilation_database=$(filter_compilation_database "${script_dir}"    \
     "${compilation_database}")
 
 pushd /opt/CodeCompass/bin  # Workaround for a CodeCompass bug
@@ -88,7 +88,7 @@ pushd /opt/CodeCompass/bin  # Workaround for a CodeCompass bug
 input_dir_switches=""
 while read input_dir; do
     input_dir_switches="${input_dir_switches} --input ${input_dir}";
-done < <(get_source_dir_array "${scriptdir}" "${CONFIG_DIR}"                   \
+done < <(get_source_dir_array "${script_dir}" "${CONFIG_DIR}"                  \
   "${PROJECT_WORKSPACE_DIR}")
 
 ./keepalive ./CodeCompass_parser --workspace "${CC_SHARED_WORKSPACE_DIR}"      \
