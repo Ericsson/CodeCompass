@@ -4,42 +4,55 @@ system.
 
 # Dependencies
 CodeCompass uses some third-party dependencies. These can be installed from the
-official repository of the given Linux distribution. In Ubuntu 16.04 LTS the
-following packages are necessary for building CodeCompass:
+official repository of the given Linux distribution. On Ubuntu, the following
+packages are necessary for building CodeCompass:
 
-- **git**: For fetching and managing CodeCompass source code.
-- **cmake** and **make**: For building CodeCompass.
-- **g++**: For compiling CodeCompass. A version which supports C++14 features
+- **`git`**: For fetching and managing CodeCompass source code.
+- **`cmake`** and **`make`**: For building CodeCompass.
+- **`g++`**: For compiling CodeCompass. A version which supports C++14 features
   is required. (Alternatively, you can compile with Clang.)
-- **libboost-all-dev**: Boost can be used during the development.
-- **llvm-6.0**, **clang-6.0**: For compiling CodeCompass with Clang instead of
-  G++.
-- **llvm-6.0-dev**, **libclang-6.0-dev**: C++ parser uses LLVM/Clang for
+- **`libboost-all-dev`**: Boost can be used during the development.
+- **`llvm-6.0`**, **`clang-6.0`**: For compiling CodeCompass with Clang
+  instead of G++.
+- **`llvm-6.0-dev`**, **`libclang-6.0-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code. Version 6.0 or newer is required.
   ***See [Known issues](#known-issues)!***
-- **odb**, **libodb-dev**, **libodb-sqlite-dev**, **libodb-pgsql-dev**: For
-  persistence ODB can be used which is an Object Relation Mapping (ORM) system.
+- **`odb`**, **`libodb-dev`**, **`libodb-sqlite-dev`**, **`libodb-pgsql-dev`**:
+  For persistence ODB can be used which is an Object Relation Mapping (ORM)
+  system.
   ***See [Known issues](#known-issues)!***
-- **openjdk-8-jdk**: For search parsing CodeCompass uses an indexer written in
-  Java.
-- **libssl-dev**: OpenSSL libs are required by Thrift.
-- **libgraphviz-dev**: GraphViz is used for generating diagram visualitaions.
-- **libmagic-dev**: For detecting file types.
-- **libgit2-dev**: For compiling Git plugin in CodeCompass.
-- **npm** and **nodejs-legacy**: For handling JavaScript dependencies for
-  CodeCompass web GUI.
-- **ctags**: For search parsing.
-- **libgtest-dev**: For testing CodeCompass.
+- **`openjdk-8-jdk`**: For search parsing CodeCompass uses an indexer written
+  in Java.
+- **`libssl-dev`**: OpenSSL libs are required by Thrift.
+- **`libgraphviz-dev`**: GraphViz is used for generating diagram visualitaions.
+- **`libmagic-dev`**: For detecting file types.
+- **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
+- **`npm`**, and **`nodejs-legacy`** (for 16.04) or **`nodejs`** (for 18.04):
+  For handling JavaScript dependencies for CodeCompass web GUI.
+- **`ctags`**: For search parsing.
+- **`libgtest-dev`**: For testing CodeCompass.
   ***See [Known issues](#known-issues)!***
 
 The following command installs the packages except for those which have some
 known issues:
 ```bash
 sudo apt-get install git cmake make g++ libboost-all-dev openjdk-8-jdk \
-  libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm \
-  nodejs-legacy ctags libgtest-dev
+  libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags \
+  libgtest-dev
+
+# For Ubuntu 16.04 "Xenial Xerus" LTS:
+sudo apt-get install nodejs-legacy
+
+# For Ubuntu 18.04 "Bionic Beaver" LTS:
+sudo apt-get install nodejs
 ```
 
+## Known issues
+Some third-party tools are present in the distribution's package manager in a
+way that they are eiter incompatible with each other or not available as a
+package, thus can't be used to create your CodeCompass installation.
+
+### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
@@ -72,19 +85,22 @@ cd thrift-<version>
 make install
 ```
 
-## Known issues
-- In Ubuntu 16.04 LTS the LLVM/Clang has some packaging issues, i.e. some libs
-  are searched in `/usr/lib` however the package has these in
-  `/usr/lib/llvm-3.8/lib` (see
-  [http://stackoverflow.com/questions/38171543/error-when-using-cmake-with-llvm](http://stackoverflow.com/questions/38171543/error-when-using-cmake-with-llvm)
-  . Also, LLVM version 6.0 is not available as a package.
-  This problem causes an error when emitting `cmake` command during CodeCompass
-  build. A solution would be to download a prebuilt package from the LLVM/Clang
-  webpage but another issue is that the prebuilt packages don't use RTTI which
-  is needed for CodeCompass compilation. So Clang needs to be compiled with
-  RTTI manually:
+### LLVM/Clang
+In Ubuntu 16.04 LTS the LLVM/Clang has some packaging issues, i.e. some libs
+are searched in `/usr/lib` however the package has these in
+`/usr/lib/llvm-3.8/lib` (see
+[http://stackoverflow.com/questions/38171543/error-when-using-cmake-with-llvm](http://stackoverflow.com/questions/38171543/error-when-using-cmake-with-llvm)
+. Also, LLVM version 6.0 is not available as a package.
+This problem causes an error when emitting `cmake` command during CodeCompass
+build. A solution would be to download a prebuilt package from the LLVM/Clang
+webpage but another issue is that the prebuilt packages don't use RTTI which
+is needed for CodeCompass compilation. So Clang needs to be compiled with
+RTTI manually:
 
 ```bash
+# If you want Clang's diagnostic output to have colours, install the following.
+sudo apt-get install libtinfo-dev
+
 wget http://github.com/llvm-mirror/llvm/archive/release_60.zip
 unzip release_60.zip
 rm release_60.zip
@@ -98,7 +114,9 @@ cd ../..
 mkdir build
 cd build
 export REQUIRES_RTTI=1
-cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Release \
+cmake -G "Unix Makefiles" \
+  -DLLVM_ENABLE_RTTI=ON \
+  -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=<clang_install_dir> \
   ../llvm-release_60
 # This make step takes a while. If you have more CPUs then you can compile on
@@ -106,16 +124,17 @@ cmake -G "Unix Makefiles" -DLLVM_ENABLE_RTTI=ON -DCMAKE_BUILD_TYPE=Release \
 make install
 ```
 
-- As of `gcc` version 5 the ABI has changed which practically means that some
-  symbols in `std` namespace (like `std::string` and `std::list`) contain
-  `__cxx11` in their mangled names. This results linkage errors if the compiled
-  project has libraries compiled with an earlier version of `gcc`.
+### ODB
+As of `gcc` version 5 the ABI has changed which practically means that some
+symbols in `std` namespace (like `std::string` and `std::list`) contain
+`__cxx11` in their mangled names. This results linkage errors if the compiled
+project has libraries compiled with an earlier version of `gcc`.
 
-  In the official Ubuntu 16.04 LTS package repository ODB is stored with the
-  earlier ABI, not like other dependencies such as Boost. The solution is to
-  download and recompile ODB using a new C++ compiler.
+In the official Ubuntu 16.04 LTS package repository ODB is stored with the
+earlier ABI, not like other dependencies such as Boost. The solution is to
+download and recompile ODB using a new C++ compiler.
 
-```
+```bash
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.tar.gz
 tar -xvf libodb-2.4.0.tar.gz
 cd libodb-2.4.0
@@ -146,7 +165,13 @@ cd libodb-pgsql-2.4.0
   --with-libodb="$(readlink -f ../libodb-2.4.0)"
 make install
 cd ..
+```
 
+The ODB compiler must also be installed to generate the database schema and
+connection code.
+
+#### Ubuntu 16.04 LTS
+```bash
 sudo apt-get install gcc-<version>-plugin-dev libcutl-dev libexpat1-dev
 wget http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.tar.gz
 tar -xvf odb-2.4.0.tar.gz
@@ -156,13 +181,29 @@ make install
 cd ..
 ```
 
-- In Ubuntu 16.04 LTS the `libgtest-dev` package contains only the source files
-  of GTest, but the libs are missing. You have to compile GTest manually and
-  copy the libs to the right place:
+#### Ubuntu 18.04 LTS
+On Ubuntu 18.04, the default version of GNU/GCC is version 7, which considers
+the current release version of ODB invalid. Due to this error, **ODB's
+compilation must manually fall back to using GCC 5**.
+
+```bash
+sudo apt-get install g++-5 gcc-5-plugin-dev libcutl-dev libexpat1-dev
+wget http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.tar.gz
+tar -xvf odb-2.4.0.tar.gz
+cd odb-2.4.0
+CC="gcc-5" CXX="g++-5" ./configure --prefix=<odb_install_dir>
+make install
+cd ..
+```
+
+### GTest/Googletest
+The `libgtest-dev` package contains only the source files of GTest, but the
+binaries are missing. You have to compile GTest manually and copy the libs to
+the right place:
 
 ```bash
 mkdir <gtest_install_dir>
-cp -R /usr/src/gtest <gtest_install_dir>
+cp -R /usr/src/gtest/* <gtest_install_dir>
 cmake .
 make
 mkdir <gtest_install_dir>/lib
@@ -170,7 +211,6 @@ mv libgtest.a libgtest_main.a <gtest_install_dir>/lib/
 ```
 
 # Build CodeCompass
-
 The dependencies which are installed manually because of known issues have to
 be seen by CMake build system:
 
