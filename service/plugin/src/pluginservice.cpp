@@ -25,8 +25,9 @@ namespace plugin
 
 PluginServiceHandler::PluginServiceHandler(
   webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_,
-  const boost::program_options::variables_map& configuration_)
-    : _pluginHandler(pluginHandler_), _configuration(configuration_)
+  const cc::webserver::ServerContext& context_)
+    : _pluginHandler(pluginHandler_),
+      _configuration(context_.options)
 {
 }
 

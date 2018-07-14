@@ -104,13 +104,6 @@ second argument is the build command which compiles your project. This can be a
 simple compiler invocation or starting a build system.
 
 ## 2. Parse the project
-If you installed some third party dependencies manually for building CodeCompass
-because of known issues then you have to make their `lib` directories seen:
-
-```bash
-export LD_LIBRARY_PATH=<thrift_install_dir>/lib:<clang_install_dir>/lib:<odb_install_dir>/lib:$LD_LIBRARY_PATH
-```
-
 For parsing a project with CodeCompass, the following command has to be emitted:
 
 ```bash
@@ -136,12 +129,10 @@ For full documentation see `CodeCompass_parser -h`.
 
 :exclamation: The `keepalive` is a script in the `bin` directory of CodeCompass
 installation. This is used to keep CodeCompass alive if it crashes for some
-reason. This way a long parsing session restarts if an error happens. The
-CodeCompass plugins should handle themselves what to do when a parsing is
-stopped and restarted with an existing database, so the parsing can continue
-from where it stopped. **Furthermore it sets some environment variables which
-are necessary to start the `CodeCompass_parser` binary, so its usage is
-mandatory!**
+reason. This way a long parsing session restarts if an error happens.
+CodeCompass plugins are expected to individually handle what to do when a
+parsing is stopped and restarted with an existing database, so the parsing can
+continue from where it stopped.
 
 ### Usage example
 
@@ -175,8 +166,7 @@ keepalive CodeCompass_parser \
 ```
 
 ## 3. Start the web server
-
-You can start the CodeCompass weserver with `CodeCompass_webserver` binary in
+You can start the CodeCompass webserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
 
 ```bash
@@ -197,8 +187,7 @@ For full documentation see `CodeCompass_webserver -h`.
 
 :exclamation: The `keepalive` is a script in the `bin` directory of CodeCompass
 installation. This is used to keep CodeCompass alive if it crashes for some
-reason. **Furthermore it sets some environment variables which are necessary to
-start the `CodeCompass_parser` binary, so its usage is mandatory!**
+reason.
 
 ### Usage example
 

@@ -1,6 +1,7 @@
 #include <boost/program_options.hpp>
 #include <webserver/pluginhandler.h>
 #include <webserver/requesthandler.h>
+#include <webserver/servercontext.h>
 #include <webserver/thrifthandler.h>
 #include <workspaceservice/workspaceservice.h>
 
@@ -16,13 +17,13 @@ extern "C"
   }
 
   void registerPlugin(
-    const boost::program_options::variables_map& vm_,
+    const cc::webserver::ServerContext& context_,
     cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
   {
     std::shared_ptr<cc::webserver::RequestHandler> handler(
       new cc::webserver::ThriftHandler<cc::service::workspace::WorkspaceServiceProcessor>(
         new cc::service::workspace::WorkspaceServiceHandler(
-          vm_["workspace"].as<std::string>())));
+          context_.options["workspace"].as<std::string>())));
 
     pluginHandler_->registerImplementation("WorkspaceService", handler);
   }

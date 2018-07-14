@@ -21,7 +21,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js --gen java
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
       -o ${CMAKE_CURRENT_SOURCE_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
       ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift

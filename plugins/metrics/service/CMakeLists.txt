@@ -20,7 +20,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
   COMMAND
-    thrift --gen cpp --gen js 
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js
       -o ${CMAKE_CURRENT_SOURCE_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
       ${CMAKE_CURRENT_SOURCE_DIR}/metrics.thrift

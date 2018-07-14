@@ -4,10 +4,11 @@
 #include <memory>
 #include <vector>
 
+#include <boost/program_options/variables_map.hpp>
+
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
-
-#include <boost/program_options/variables_map.hpp>
+#include <webserver/servercontext.h>
 
 #include <DummyService.h>
 
@@ -24,8 +25,7 @@ public:
   DummyServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_
-      = boost::program_options::variables_map());
+    const cc::webserver::ServerContext& context_);
 
   void getDummyString(std::string& str_);
 

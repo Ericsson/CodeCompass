@@ -18,7 +18,7 @@ public:
   Diagram(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
-    const boost::program_options::variables_map& config_);
+    const cc::webserver::ServerContext& context_);
 
   void getFunctionCallDiagram(
     util::Graph& graph_,

@@ -14,7 +14,7 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
   COMMAND
-    thrift --gen cpp --gen java
+    ${THRIFT_EXECUTABLE} --gen cpp --gen java
       -o ${CMAKE_CURRENT_SOURCE_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
   DEPENDS

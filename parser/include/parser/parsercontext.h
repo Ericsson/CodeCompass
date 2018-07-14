@@ -19,15 +19,18 @@ struct ParserContext
   ParserContext(
     std::shared_ptr<odb::database> db_,
     SourceManager& srcMgr_,
+    std::string& compassRoot_,
     po::variables_map& options_) :
       db(db_),
       srcMgr(srcMgr_),
+      compassRoot(compassRoot_),
       options(options_)
   {
   }
 
   std::shared_ptr<odb::database> db;
   SourceManager& srcMgr;
+  std::string& compassRoot;
   po::variables_map& options;
 };
 

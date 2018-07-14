@@ -1,4 +1,5 @@
 #include <webserver/requesthandler.h>
+#include <webserver/servercontext.h>
 #include <webserver/thrifthandler.h>
 #include <pluginservice/pluginservice.h>
 
@@ -14,12 +15,13 @@ extern "C"
   }
 
   void registerPlugin(
-    const boost::program_options::variables_map& config_,
+    const cc::webserver::ServerContext& context_,
     cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
   {
     std::shared_ptr<cc::webserver::RequestHandler> handler(
       new cc::webserver::ThriftHandler<cc::service::plugin::PluginServiceProcessor>(
-        new cc::service::plugin::PluginServiceHandler(pluginHandler_, config_)));
+        new cc::service::plugin::PluginServiceHandler(pluginHandler_,
+                                                      context_)));
 
     pluginHandler_->registerImplementation("PluginService", handler);
   }
