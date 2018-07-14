@@ -15,7 +15,6 @@
 #include <util/logutil.h>
 
 #include "filelocutil.h"
-#include "manglednamecache.h"
 
 namespace cc
 {
@@ -27,9 +26,7 @@ class RelationCollector : public clang::RecursiveASTVisitor<RelationCollector>
 public:
   RelationCollector(
     ParserContext& ctx_,
-    clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
-    std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_);
+    clang::ASTContext& astContext_);
 
   ~RelationCollector();
 
@@ -49,8 +46,6 @@ private:
     model::CppEdgeAttributePtr attr_ = nullptr);
 
   ParserContext& _ctx;
-  MangledNameCache& _mangledNameCache;
-  std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 
   static std::unordered_set<model::CppNodeId> _nodeCache;
   static std::unordered_set<model::CppEdgeId> _edgeCache;
