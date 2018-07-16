@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include <model/file.h>
+
 #include <util/hash.h>
 
 namespace cc
@@ -16,48 +18,27 @@ typedef std::uint64_t CppNodeId;
 #pragma db object
 struct CppNode
 {
-  enum Domain
-  {
-    FILE,
-    CPPASTNODE
-  };
-
   #pragma db id
   CppNodeId id;
 
   #pragma db not_null
-  Domain domain;
-
-  #pragma db not_null
-  std::string domainId;
+  FileId file_id;
 
   std::string toString() const;
 };
 
 typedef std::shared_ptr<CppNode> CppNodePtr;
 
-inline std::string domainToString(CppNode::Domain type_)
-{
-  switch (type_)
-  {
-    case CppNode::Domain::FILE: return "File";
-    case CppNode::Domain::CPPASTNODE: return "CppAstNode";
-  }
-
-  return std::string();
-}
-
 inline std::string CppNode::toString() const
 {
   return std::string("CppNode")
     .append("\nid = ").append(std::to_string(id))
-    .append("\ndomain = ").append(domainToString(domain))
-    .append("\ndomainId = ").append(domainId);
+    .append("\ndomainId = ").append(std::to_string(file_id));
 }
 
 inline std::uint64_t createIdentifier(const CppNode& node_)
 {
-  return util::fnvHash(domainToString(node_.domain) + node_.domainId);
+  return node_.file_id;
 }
 
 typedef std::uint64_t CppNodeAttributeId;

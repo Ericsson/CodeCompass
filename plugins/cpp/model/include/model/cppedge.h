@@ -26,19 +26,17 @@ struct CppEdge
    */
   enum Type {
     PROVIDE,
-    IMPLEMENT,
-    USE,
-    DEPEND
+    USE
   };
 
   #pragma db id
   CppEdgeId id;
 
   #pragma db not_null
-  std::shared_ptr<CppNode> from;
+  std::shared_ptr<File> from;
 
   #pragma db not_null
-  std::shared_ptr<CppNode> to;
+  std::shared_ptr<File> to;
 
   #pragma db not_null
   Type type;
@@ -59,9 +57,7 @@ inline std::string typeToString(CppEdge::Type type_)
   switch (type_)
   {
     case CppEdge::Type::PROVIDE: return "Provide";
-    case CppEdge::Type::IMPLEMENT: return "Implement";
     case CppEdge::Type::USE: return "Use";
-    case CppEdge::Type::DEPEND: return "Depend";
   }
 
   return std::string();
