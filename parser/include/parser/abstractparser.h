@@ -33,7 +33,14 @@ public:
    */
   virtual std::vector<std::string> getDependentParsers() const = 0;
 
-  virtual void preparse(){}
+  /**
+   * Maintains and cleans up the database in preparation of
+   * incremental parsing.
+   */
+  virtual bool preparse()
+  {
+    return true;
+  }
 
   /**
    * Method parses a path or a compilation database

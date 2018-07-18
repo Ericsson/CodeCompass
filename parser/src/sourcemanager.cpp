@@ -251,12 +251,11 @@ void SourceManager::removeFile(const model::File& file_)
   });
 
   // Maintain cache
-  _createFileMutex.lock();
+  std::lock_guard<std::mutex> guard(_createFileMutex);
   _files.erase(file_.path);
   _persistedFiles.erase(file_.id);
-  if(removeContent)
+  if (removeContent)
     _persistedContents.erase(file_.content.object_id());
-  _createFileMutex.unlock();
 }
 
 void SourceManager::persistFiles()

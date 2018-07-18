@@ -26,7 +26,7 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual void preparse() override;
+  virtual bool preparse() override;
   virtual bool parse() override;
 
 private:

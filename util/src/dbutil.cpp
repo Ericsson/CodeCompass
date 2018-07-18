@@ -335,10 +335,10 @@ std::shared_ptr<odb::database> connectDatabase(const std::string& connStr_, bool
       updateConnectionString(connStr_, "database", "postgres");
     std::string dbName = connStrComponent(connStr_, "database");
 
-    if(checkPsqlDatbase(defaultPsqlConnStr, dbName, create_))
+    if (checkPsqlDatbase(defaultPsqlConnStr, dbName, create_))
     {
       db.reset(new odb::pgsql::database(optionsSize, cStyleOptions),
-               [](odb::database *) {});
+               [](odb::database*) {});
     }
     else
     {

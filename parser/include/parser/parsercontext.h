@@ -1,20 +1,13 @@
 #ifndef CC_PARSER_PARSERCONTEXT_H
 #define CC_PARSER_PARSERCONTEXT_H
 
+#include <fstream>
 #include <memory>
 #include <unordered_map>
-#include <fstream>
 
 #include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
 
 #include <odb/database.hxx>
-
-#include <model/file.h>
-#include <model/file-odb.hxx>
-
-#include <util/hash.h>
-#include <util/odbtransaction.h>
 
 namespace po = boost::program_options; 
 
@@ -25,8 +18,10 @@ namespace parser
 
 class SourceManager;
 
- /**
+/**
  * Defines file status categories for incremental parsing.
+ *
+ * State in database VERSUS state on disk at parse time.
  */
 enum class IncrementalStatus
 {

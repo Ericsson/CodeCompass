@@ -1,3 +1,11 @@
+#include <boost/filesystem.hpp>
+
+#include <model/file.h>
+#include <model/file-odb.hxx>
+
+#include <util/hash.h>
+#include <util/odbtransaction.h>
+
 #include <parser/parsercontext.h>
 #include <parser/sourcemanager.h>
 
@@ -12,13 +20,11 @@ ParserContext::ParserContext(
     std::shared_ptr<odb::database> db_,
     SourceManager& srcMgr_,
     std::string& compassRoot_,
-    po::variables_map& options_,
-    std::unordered_map<std::string, IncrementalStatus> fileStatus_):
-    db(db_),
-    srcMgr(srcMgr_),
-    compassRoot(compassRoot_),
-    options(options_),
-    fileStatus(fileStatus_)
+    po::variables_map& options_):
+      db(db_),
+      srcMgr(srcMgr_),
+      options(options_),
+      compassRoot(compassRoot_)
 {
   std::unordered_map<std::string, std::string> fileHashes;
 

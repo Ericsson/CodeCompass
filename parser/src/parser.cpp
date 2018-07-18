@@ -219,14 +219,14 @@ int main(int argc, char* argv[])
     vm["database"].as<std::string>(), false) ? false : true;
   bool isNewProject = !checkProjectDir(vm);
 
-  if (isNewProject && !isNewDb || !isNewProject && isNewDb)
+  if (isNewProject ^ isNewDb)
   {
     LOG(error)
       << "Database and working directory existence are inconsistent. Use -f for reparsing!";
     return 1;
   }
 
-  if(!isNewDb)
+  if (!isNewDb)
     LOG(info) << "Project already exists, incremental parsing in action.";
 
   //--- Prepare workspace and project directory ---//
@@ -261,20 +261,22 @@ int main(int argc, char* argv[])
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm, fileStatus);
   pHandler.createPlugins(ctx);
 
-  std::vector<std::string> reversedTopologicalOrder = pHandler.getTopologicalOrder();
-  std::reverse(reversedTopologicalOrder.begin(), reversedTopologicalOrder.end());
-
   // TODO: Handle errors returned by preparse().
-  for(const std::string& parserName : reversedTopologicalOrder)
+  std::vector<std::string> topologicalOrder = pHandler.getTopologicalOrder();
+  for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
-    LOG(info) << "[" << parserName << "] preparse started!";
-    pHandler.getParser(parserName)->preparse();
+    LOG(info) << "[" << *it << "] preparse started!";
+    if(!pHandler.getParser(*it)->preparse())
+    {
+      LOG(error) << "[" << *it << "] preparse failed!";
+      return 2;
+    }
   }
 
   // TODO: Consider whether there is a better place for this code.
   (cc::util::OdbTransaction(ctx.db))([&]
   {
-    for(auto& item : ctx.fileStatus)
+    for (auto& item : ctx.fileStatus)
     {
       switch (item.second)
       {
@@ -306,7 +308,7 @@ int main(int argc, char* argv[])
 
   //--- Add indexes to the database ---//
 
-  if(vm.count("force") || isNewDb)
+  if (vm.count("force") || isNewDb)
     cc::util::createIndexes(db, SQL_DIR);
 
   //--- Create project config file ---//

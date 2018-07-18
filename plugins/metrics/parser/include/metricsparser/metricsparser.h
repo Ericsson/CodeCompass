@@ -17,7 +17,7 @@ public:
   MetricsParser(ParserContext& ctx_);
   virtual std::vector<std::string> getDependentParsers() const override;  
   virtual bool parse() override;
-  virtual void preparse() override;
+  virtual bool preparse() override;
 
 private:
   util::DirIterCallback getParserCallback();
