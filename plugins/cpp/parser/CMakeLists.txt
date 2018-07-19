@@ -1,4 +1,10 @@
+find_package(LLVM REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
+
+# Set the runtime path of LLVM libraries to be in the rpath of the build.
+# This only applies for the current folder's scope (C++ Parser plugin).
+mark_run_env_path(LLVM LD_LIBRARY_PATH "${LLVM_BUILD_LIBRARY_DIR}")
+set_rpath_with_libraries(LLVM)
 
 llvm_map_components_to_libnames(llvm_libs support core irreader)
 
@@ -48,3 +54,9 @@ target_link_libraries(cppparser
 target_compile_options(cppparser PUBLIC -Wno-unknown-pragmas)
 
 install(TARGETS cppparser DESTINATION ${INSTALL_PARSER_DIR})
+
+# Install Clang additional files. These are needed so the running Clang tool
+# environment can find standard headers.
+install(DIRECTORY
+  ${LLVM_LIBRARY_DIRS}/clang
+  DESTINATION "${INSTALL_LIB_DIR}")

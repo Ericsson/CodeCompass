@@ -7,38 +7,34 @@ include(Config.cmake)
 # Utility functions
 include(Functions.cmake)
 
+find_package(GTest)
 enable_testing()
 
-find_package(Threads REQUIRED)
-find_package(LLVM    REQUIRED CONFIG)
-find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
+find_package(Boost   REQUIRED
+  COMPONENTS filesystem log program_options regex system thread)
+find_package(Java    REQUIRED)
 find_package(Odb     REQUIRED)
 find_package(Thrift  REQUIRED)
-find_package(Java    REQUIRED)
-find_package(GTest)
+find_package(Threads REQUIRED)
 
 include(UseJava)
 
-# Set the third-party libraries' path properly so the installation can find them.
+# Functions that are used to set up installation properly for the environment
+# in which CodeCompass will be run
 include(Exports.cmake)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${RUNENV_LD_LIBRARY_PATH}")
 
-add_subdirectory(model)
-add_subdirectory(util)
-add_subdirectory(parser)
-add_subdirectory(plugins)
-add_subdirectory(webserver)
-add_subdirectory(service)
 add_subdirectory(logger)
+add_subdirectory(model)
+add_subdirectory(parser)
+add_subdirectory(service)
 add_subdirectory(scripts)
+add_subdirectory(util)
 add_subdirectory(webgui)
+add_subdirectory(webserver)
+
+add_subdirectory(plugins)
 
 # Install java libraries
 install(DIRECTORY
   lib/java/
   DESTINATION "${INSTALL_JAVA_LIB_DIR}")
-
-# Install Clang additional files
-install(DIRECTORY
-  ${LLVM_LIBRARY_DIRS}/clang
-  DESTINATION "${INSTALL_LIB_DIR}")

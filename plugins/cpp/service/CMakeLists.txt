@@ -1,3 +1,5 @@
+set_rpath_with_libraries(Thrift ServicePlugins)
+
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/util/include

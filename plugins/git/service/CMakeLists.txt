@@ -1,3 +1,5 @@
+set_rpath_with_libraries(ODB Thrift ServicePlugins)
+
 include_directories(
   include
   gen-cpp

@@ -1,3 +1,5 @@
+set_rpath_with_libraries(ODB)
+
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp
@@ -22,6 +24,7 @@ find_boost_libraries(
   program_options
   system
   thread)
+
 target_link_libraries(CodeCompass_webserver
   util
   mongoose

@@ -33,8 +33,11 @@ function(generate_odb_files _src)
   set(ODB_CXX_SOURCES ${SOURCES} PARENT_SCOPE)
 endfunction(generate_odb_files)
 
-# add new odb static library
+# Add a new static library target that links against ODB.
 function(add_odb_library _name)
+  # Make sure the library created here depends on the ODB libs.
+  set_rpath_with_libraries(ODB)
+
   add_library(${_name} STATIC ${ARGN})
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
   target_link_libraries(${_name} ${ODB_LIBRARIES})

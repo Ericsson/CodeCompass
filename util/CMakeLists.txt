@@ -1,7 +1,6 @@
 include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/model/include
-  ${LLVM_INCLUDE_DIRS}
   ${BOOST_INCLUDE_DIRS})
 
 include_directories(SYSTEM
@@ -20,8 +19,7 @@ add_library(util STATIC
 
 target_compile_options(util PUBLIC -fPIC)
 
-find_boost_libraries(
-  regex)
+find_boost_libraries(regex)
 
 target_link_libraries(util
   ${Boost_LINK_LIBRARIES})
