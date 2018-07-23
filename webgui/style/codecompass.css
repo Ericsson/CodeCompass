@@ -218,8 +218,18 @@ svg {
   color: #fff;
 }
 
+.tag-user-deleted {
+  background-color: #812d06;
+  color: #fff;
+}
+
 .label-implicit {
   color: grey;
+}
+
+.label-user-deleted {
+  color: grey;
+  text-decoration: line-through #812d06;
 }
 
 .label-return-type {

@@ -26,6 +26,9 @@ function (model, viewHandler, util) {
       label += '<span class="tag tag-virtual" title="Virtual">V</span>';
     if (tags.indexOf('global') > -1)
       label += '<span class="tag tag-global" title="Global">G</span>';
+    if (tags.indexOf('user-deleted') > -1)
+      label +=
+        '<span class="tag tag-user-deleted" title="User deleted">X</span>';
 
     return label;
   }
@@ -38,11 +41,13 @@ function (model, viewHandler, util) {
     var labelClass = '';
 
     if (astNodeInfo.tags.indexOf('implicit') > -1)
-      labelClass = 'label-implicit';
+      labelClass += 'label-implicit ';
+    if (astNodeInfo.tags.indexOf('user-deleted') > -1)
+      labelClass += 'label-user-deleted ';
 
     var labelValue = astNodeInfo.astNodeValue;
 
-    // Create dom node for return type of a function and place it at the end of
+    // Create DOM node for return type of a function and place it at the end of
     // signature.
     if (astNodeInfo.symbolType === 'Function') {
       var init = labelValue.slice(0, labelValue.indexOf('('));
@@ -51,7 +56,7 @@ function (model, viewHandler, util) {
       //--- Constructor, destructor doesn't have return type ---//
 
       if (returnTypeEnd !== -1) {
-        var funcSignature = init.slice(returnTypeEnd);
+        var funcSignature = labelValue.slice(returnTypeEnd);
 
         labelValue = funcSignature
           + ' : <span class="label-return-type">'
@@ -61,11 +66,14 @@ function (model, viewHandler, util) {
     }
 
     var label = createTagLabels(astNodeInfo.tags)
-      + '<span class="' + labelClass + '">'
-      + astNodeInfo.range.range.startpos.line   + ':'
-      + astNodeInfo.range.range.startpos.column + ': '
-      + labelValue
-      + '</span>';
+      + '<span class="' + labelClass + '">';
+
+    if (astNodeInfo.range.range.startpos.line != -1) {
+      label += astNodeInfo.range.range.startpos.line + ':'
+        + astNodeInfo.range.range.startpos.column + ': '
+    }
+
+    label += labelValue + '</span>';
 
     return label;
   }
@@ -335,7 +343,7 @@ function (model, viewHandler, util) {
                 return loadReferenceNodes(this, elementInfo, refTypes);
               }
             });
-        };
+        }
 
       } else if (elementInfo instanceof FileInfo) {
 
@@ -358,7 +366,7 @@ function (model, viewHandler, util) {
                 return loadFileReferenceNodes(this);
               }
             });
-        };
+        }
 
       }
 

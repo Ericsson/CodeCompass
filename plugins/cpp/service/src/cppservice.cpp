@@ -295,7 +295,7 @@ void CppServiceHandler::getProperties(
         return_["Name"] = function.qualifiedName.substr(
           function.qualifiedName.find_last_of(':') + 1);
         return_["Qualified name"] = function.qualifiedName;
-        return_["Signature"] = function.name;
+        return_["Signature"] = node.astValue;
 
         break;
       }

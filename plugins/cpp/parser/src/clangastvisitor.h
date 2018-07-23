@@ -624,6 +624,9 @@ public:
         cppFunction->tags.insert(model::Tag::Destructor);
     }
 
+    if (fn_->isDeletedAsWritten())
+      cppFunction->tags.insert(model::Tag::UserDeleted);
+
     if (_isImplicit)
       cppFunction->tags.insert(model::Tag::Implicit);
 

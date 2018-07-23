@@ -23,7 +23,8 @@ enum Tag
   Static  = 3,
   Implicit = 4,
   Global = 5,
-  Constant = 6
+  Constant = 6,
+  UserDeleted = 7
 };
 
 inline std::string visibilityToString(Visibility v_)
@@ -43,7 +44,8 @@ inline std::string tagToString(Tag t_)
     t_ == Static        ? "static" :
     t_ == Implicit      ? "implicit" :
     t_ == Global        ? "global" :
-    t_ == Constant      ? "constant" : "";
+    t_ == Constant      ? "constant" :
+    t_ == UserDeleted   ? "user-deleted" : "";
 }
 
 }
