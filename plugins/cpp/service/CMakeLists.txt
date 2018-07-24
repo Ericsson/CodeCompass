@@ -1,14 +1,17 @@
 set_rpath_with_libraries(Thrift ServicePlugins)
 
+map_model_include_directories(
+  ${PLUGIN_DIR}/model/include
+  ${PROJECT_SOURCE_DIR}/model/include)
+include_directories(${ODB_MODEL_INCLUDE_DIRECTORIES})
+
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
-  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
-  ${PLUGIN_DIR}/model/include)
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp)
 
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})

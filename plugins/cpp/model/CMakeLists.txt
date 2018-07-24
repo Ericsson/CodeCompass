@@ -1,3 +1,8 @@
+map_model_include_directories(
+  include
+  ${PROJECT_SOURCE_DIR}/model/include)
+include_directories(${ODB_MODEL_INCLUDE_DIRECTORIES})
+
 set(ODB_SOURCES
   include/model/cppastnode.h
   include/model/cppentity.h
@@ -20,5 +25,7 @@ set(ODB_SOURCES
 generate_odb_files("${ODB_SOURCES}")
 
 add_odb_library(cppmodel ${ODB_CXX_SOURCES})
+
+add_dependencies(cppmodel model)
 
 install_sql(include/model/)

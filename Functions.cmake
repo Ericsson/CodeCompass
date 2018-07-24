@@ -1,8 +1,30 @@
-# Generate ODB files from sources
-# @return ODB_CXX_SOURCES - odb cxx source files
+# Map the given (any argument long) model source directories to include paths
+# that properly span the source and the build folder, ensuring that
+# model-related headers can be found properly.
+# @param _directories - The list of "include" directories, either relative or
+# absolute, which contain "model/entity.h" files.
+# @return ODB_MODEL_INCLUDE_DIRECTORIES - The include directories that were mapped.
+function(map_model_include_directories)
+  foreach(_dir ${ARGV})
+    get_filename_component(absolute "${_dir}" ABSOLUTE)
+    string(REPLACE "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}"
+      binary_dir "${absolute}")
+
+    list(APPEND include_dirs
+      "${absolute}"
+      "${absolute}/model"
+      "${binary_dir}"
+      "${binary_dir}/model")
+  endforeach()
+  set(ODB_MODEL_INCLUDE_DIRECTORIES "${include_dirs}" PARENT_SCOPE)
+endfunction(map_model_include_directories)
+
+# Generate ODB files from sources entity definitions.
+# @return ODB_CXX_SOURCES - ODB-generated translation unit source files.
 function(generate_odb_files _src)
   foreach(_file ${_src})
     get_filename_component(_dir ${_file} DIRECTORY)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_dir})
 
     string(REPLACE ".h" "-odb.cxx" _cxx ${_file})
     string(REPLACE ".h" "-odb.hxx" _hxx ${_file})
@@ -11,13 +33,13 @@ function(generate_odb_files _src)
 
     add_custom_command(
       OUTPUT
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_cxx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_hxx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_ixx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_sql}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_cxx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_hxx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_ixx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_sql}
       COMMAND
         ${ODB_EXECUTABLE} ${ODBFLAGS}
-          -o ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}
+          -o ${CMAKE_CURRENT_BINARY_DIR}/${_dir}
           -I ${CMAKE_CURRENT_SOURCE_DIR}/include
           -I ${CMAKE_SOURCE_DIR}/model/include
           -I ${CMAKE_SOURCE_DIR}/util/include
@@ -35,6 +57,9 @@ endfunction(generate_odb_files)
 
 # Add a new static library target that links against ODB.
 function(add_odb_library _name)
+  map_model_include_directories(${CMAKE_SOURCE_DIR}/model/include)
+  include_directories(SYSTEM ${ODB_INCLUDE_DIRS})
+
   # Make sure the library created here depends on the ODB libs.
   set_rpath_with_libraries(ODB)
 
@@ -42,9 +67,20 @@ function(add_odb_library _name)
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
   target_include_directories(${_name} PUBLIC
-    ${CMAKE_SOURCE_DIR}/model/include
+    ${ODB_MODEL_INCLUDE_DIRECTORIES}
     ${CMAKE_SOURCE_DIR}/util/include)
 endfunction(add_odb_library)
+
+# This function can be used to install the ODB generated .sql files from the
+# build directory to the install directory. These files will be used to create
+# the database schema before the parsing session.
+# @param _dir The model directory where the entities are defined.
+function(install_sql _dir)
+  install(
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${_dir}
+    DESTINATION ${INSTALL_SQL_DIR}
+    FILES_MATCHING PATTERN "*.sql")
+endfunction(install_sql)
 
 # Add a new static library target that generates Thrift RPC stubs and links the
 # generated code against Thrift.
@@ -178,17 +214,6 @@ function(add_thrift_library _name _generators _dependencies)
     CACHE INTERNAL "The folder for the ${_name}thrift's generated code.")
   mark_as_advanced(${_name}thrift_BINARY_DIR)
 endfunction(add_thrift_library)
-
-# This function can be used to install the ODB generated .sql files to a
-# specific directory. These files will be used to create database tables before
-# the parsing session.
-# @param _dir The model directory under which the .sql files are located.
-function(install_sql _dir)
-  install(
-    DIRECTORY ${_dir}
-    DESTINATION ${INSTALL_SQL_DIR}
-    FILES_MATCHING PATTERN "*.sql")
-endfunction(install_sql)
 
 # This function can be used to install the thrift generated .js files to a
 # specific directory. These files will be used at the gui

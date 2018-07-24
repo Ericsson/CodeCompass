@@ -3,13 +3,6 @@
 nbproject
 *.swp
 
-# Generated files and directories
-
-**/*odb\.cxx
-**/*odb\.hxx
-**/*odb\.ixx
-**/*odb\.sql
-
 # Other
 
 /build/

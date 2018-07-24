@@ -1,7 +1,9 @@
+map_model_include_directories(${PROJECT_SOURCE_DIR}/model/include)
+
 include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${BOOST_INCLUDE_DIRS})
+  ${BOOST_INCLUDE_DIRS}
+  ${ODB_MODEL_INCLUDE_DIRECTORIES})
 
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})

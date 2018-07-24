@@ -4,7 +4,6 @@ include_directories(
   include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp)
 

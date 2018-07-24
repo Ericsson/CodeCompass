@@ -13,10 +13,11 @@ add_library(mongoose STATIC src/mongoose.c )
 target_include_directories(mongoose PUBLIC include)
 target_compile_options(mongoose PUBLIC -fPIC)
 
+map_model_include_directories(${PROJECT_SOURCE_DIR}/model/include)
 target_include_directories(CodeCompass_webserver PUBLIC
   include
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${PROJECT_SOURCE_DIR}/util/include)
+  ${PROJECT_SOURCE_DIR}/util/include
+  ${ODB_MODEL_INCLUDE_DIRECTORIES})
 
 find_boost_libraries(
   filesystem

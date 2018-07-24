@@ -1,9 +1,11 @@
 set_rpath_with_libraries(ServicePlugins)
 
+map_model_include_directories(${PLUGIN_DIR}/model/include)
+include_directories(${ODB_MODEL_INCLUDE_DIRECTORIES})
+
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/service/project/include
-  ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include)
 

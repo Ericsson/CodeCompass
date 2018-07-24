@@ -8,12 +8,15 @@ set_rpath_with_libraries(LLVM)
 
 llvm_map_components_to_libnames(llvm_libs support core irreader)
 
+map_model_include_directories(
+  ${PLUGIN_DIR}/model/include
+  ${PROJECT_SOURCE_DIR}/model/include)
+include_directories(${ODB_MODEL_INCLUDE_DIRECTORIES})
+
 include_directories(
   include
   ${CMAKE_SOURCE_DIR}/parser/include
-  ${CMAKE_SOURCE_DIR}/util/include
-  ${CMAKE_SOURCE_DIR}/model/include
-  ${PLUGIN_DIR}/model/include)
+  ${CMAKE_SOURCE_DIR}/util/include)
 
 include_directories(SYSTEM
   ${LLVM_INCLUDE_DIRS}

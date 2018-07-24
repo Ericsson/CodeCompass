@@ -1,8 +1,5 @@
-include_directories(
-  include)
-
-include_directories(SYSTEM
-  ${ODB_INCLUDE_DIRS})
+map_model_include_directories(include)
+include_directories(${ODB_MODEL_INCLUDE_DIRECTORIES})
 
 set(ODB_SOURCES
   include/model/buildaction.h
