@@ -36,6 +36,15 @@ struct FileContentIds
   std::string hash;
 };
 
+#pragma db view object(FileContent)
+struct FileContentLength
+{
+  std::string hash;
+
+  #pragma db column("length(" + FileContent::content + ")")
+  std::size_t size;
+};
+
 } // model
 } // cc
 
