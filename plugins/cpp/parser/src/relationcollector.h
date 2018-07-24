@@ -14,7 +14,7 @@
 
 #include <util/logutil.h>
 
-#include "filelocutil.h"
+#include <cppparser/filelocutil.h>
 
 namespace cc
 {

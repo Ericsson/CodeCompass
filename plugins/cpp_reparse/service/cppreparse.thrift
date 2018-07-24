@@ -45,4 +45,9 @@ service CppReparseService
    * Returns the Abstract Syntax Tree (AST) for the given file as HTML string.
    */
   string getAsHTML(1: common.FileId fileId);
+
+  /**
+   * Returns the AST for the given AST Node('s subtree) as an HTML string.
+   */
+  string getAsHTMLForNode(1: common.AstNodeId nodeId);
 }
