@@ -1,5 +1,5 @@
-include "../project/common.thrift"
-include "../project/project.thrift"
+include "project/common.thrift"
+include "project/project.thrift"
 
 namespace cpp cc.service.language
 

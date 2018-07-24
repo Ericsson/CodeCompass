@@ -3,8 +3,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
-  ${PLUGIN_DIR}/indexer/gen-cpp
-  ${PLUGIN_DIR}/indexer/include)
+  ${PLUGIN_DIR}/indexer/include
+  ${PLUGIN_BINARY_DIR}/indexer/gen-cpp)
 
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})

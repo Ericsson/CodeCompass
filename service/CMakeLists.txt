@@ -1,4 +1,4 @@
-set_rpath_with_libraries(Thrift ServicePlugins)
+set_rpath_with_libraries(ServicePlugins)
 
 add_subdirectory(plugin)
 add_subdirectory(workspace)

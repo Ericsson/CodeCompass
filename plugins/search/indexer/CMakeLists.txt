@@ -1,42 +1,18 @@
 include_directories(
   include
-  gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include)
 
-include_directories(SYSTEM
-  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
-
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/IndexerService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen java
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
-  COMMENT
-    "Generating Thrift for searchindexer.thrift")
-
-add_library(searchindexerthrift STATIC
-  gen-cpp/searchindexer_constants.cpp
-  gen-cpp/searchindexer_types.cpp
-  gen-cpp/IndexerService.cpp)
-
-target_compile_options(searchindexerthrift PUBLIC -fPIC)
+add_thrift_library(searchindexer "cpp;java" "")
 
 # Create java library from thrift files
-set(CMAKE_JAVA_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/lib/java/*)
+set(CMAKE_JAVA_INCLUDE_PATH
+  ${PROJECT_SOURCE_DIR}/lib/java/*)
 
 add_jar(searchindexerthriftjava
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/FieldValue.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/IndexerService.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/Location.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/searchindexerConstants.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/FieldValue.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/IndexerService.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/Location.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/searchindexerConstants.java
   OUTPUT_NAME searchindexerthrift)
 
 add_dependencies(searchindexerthriftjava searchindexerthrift)

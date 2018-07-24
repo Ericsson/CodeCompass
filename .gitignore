@@ -10,10 +10,6 @@ nbproject
 **/*odb\.ixx
 **/*odb\.sql
 
-**/gen-cpp/
-**/gen-js/
-**/gen-java/
-
 # Other
 
 /build/
