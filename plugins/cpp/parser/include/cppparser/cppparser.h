@@ -26,7 +26,7 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool preparse() override;
+  virtual bool preparse(bool dry_) override;
   virtual bool parse() override;
 
 private:
@@ -82,8 +82,7 @@ private:
   int worker(const clang::tooling::CompileCommand& command_);
   
   void initBuildActions();
-  void markAsModified(model::FilePtr file_);
-  std::set<model::CppNodeId> collectNodeSet(model::CppNodeId node_) const;
+  void markByInclusion(model::FilePtr file_);
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 

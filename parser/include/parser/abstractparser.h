@@ -36,9 +36,11 @@ public:
   /**
    * Maintains and cleans up the database in preparation of
    * incremental parsing.
+   * @param dry_ When true, perform a dry-run and only detect the changed files,
+   * but do not execute any maintenance actions.
    * @return Return true if the preparse was success, false otherwise.
    */
-  virtual bool preparse()
+  virtual bool preparse(bool dry_ = false)
   {
     return true;
   }
