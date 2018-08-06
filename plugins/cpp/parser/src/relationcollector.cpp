@@ -156,16 +156,12 @@ void RelationCollector::addEdge(
 
   model::CppEdgePtr edge = std::make_shared<model::CppEdge>();
 
-  (util::OdbTransaction(_ctx.db))([&, this]
+  util::OdbTransaction{_ctx.db} ([&, this]
    {
-     auto result = _ctx.db->query<model::File>(
-       odb::query<model::File>::id == from_
-     ).one();
-     edge->from = std::shared_ptr<model::File>(result);//_ctx.srcMgr.getFile(result.begin()->path);
+     auto result = _ctx.db->load<model::File>(from_);
+     edge->from = std::shared_ptr<model::File>(result);
 
-     result = _ctx.db->query<model::File>(
-       odb::query<model::File>::id == to_
-     ).one();
+     result = _ctx.db->load<model::File>(to_);
      edge->to = std::shared_ptr<model::File>(result);
    });
 
@@ -187,8 +183,6 @@ void RelationCollector::addEdge(
         _edgeAttributes.push_back(attr_);
     }
   }
-
-  LOG(info) << "add edge done";
 }
 
 } // parser

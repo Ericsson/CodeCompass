@@ -3,7 +3,6 @@
 
 #include <service/cppservice.h>
 #include <projectservice/projectservice.h>
-#include <parser/parsercontext.h>
 #include <util/graph.h>
 
 namespace cc

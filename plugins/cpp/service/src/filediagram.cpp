@@ -9,8 +9,6 @@
 #include <model/cppedge.h>
 #include <model/cppedge-odb.hxx>
 
-#include <parser/parsercontext.h>
-
 #include <util/logutil.h>
 #include <util/dbutil.h>
 #include <util/legendbuilder.h>
@@ -431,14 +429,8 @@ std::vector<util::Graph::Node> FileDiagram::getImplementedFiles(
     }
     for (const core::FileId& fileId : used)
     {
-      auto files = _db->query<model::File>(
-        odb::query<model::File>::id == std::stoull(fileId)
-      );
-
-      for (const model::File &file : files)
-      {
-        implements.push_back(std::to_string(file.parent.object_id()));
-      }
+      auto file = _db->load<model::File>(std::stoull(fileId));
+      implements.push_back(std::to_string(file.get()->parent.object_id()));
     }
     std::sort(implements.begin(), implements.end());
     auto it = std::unique(implements.begin(), implements.end());

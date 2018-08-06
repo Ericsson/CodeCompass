@@ -3,7 +3,6 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
   ${PROJECT_SOURCE_DIR}/model/include
-  ${PROJECT_SOURCE_DIR}/parser/include
   ${PROJECT_SOURCE_DIR}/service/language/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
