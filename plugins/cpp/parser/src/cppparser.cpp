@@ -47,7 +47,7 @@ public:
 
   static void init(ParserContext& ctx_)
   {
-    (util::OdbTransaction(ctx_.db))([&] {
+    util::OdbTransaction {ctx_.db} ([&] {
       for (const model::CppAstNode& node : ctx_.db->query<model::CppAstNode>())
         MyFrontendAction::_mangledNameCache.insert(node);
     });
@@ -360,9 +360,9 @@ bool CppParser::preparse()
 
   try
   {
-    (util::OdbTransaction(_ctx.db))([&]
+    util::OdbTransaction {_ctx.db} ([&]
     {
-      for (const model::FilePtr file : filePtrs)
+      for (const model::FilePtr& file : filePtrs)
       {
         if(file)
         {
@@ -386,12 +386,12 @@ bool CppParser::preparse()
             auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
               odb::query<model::CppAstNode>::location.file == delFile->id &&
               odb::query<model::CppAstNode>::astType == model::CppAstNode::AstType::Definition);
-            for (const model::CppAstNode &astNode : defCppAstNodes)
+            for (const model::CppAstNode& astNode : defCppAstNodes)
             {
               // Delete CppEntity
               auto delCppEntities = _ctx.db->query<model::CppEntity>(
                 odb::query<model::CppEntity>::astNodeId == astNode.id);
-              for (const model::CppEntity &entity : delCppEntities)
+              for (const model::CppEntity& entity : delCppEntities)
               {
                 _ctx.db->erase<model::CppEntity>(entity.id);
               }
@@ -399,7 +399,7 @@ bool CppParser::preparse()
               // Delete CppInheritance
               auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
                 odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
-              for (const model::CppInheritance &inheritance : delCppInheritance)
+              for (const model::CppInheritance& inheritance : delCppInheritance)
               {
                 _ctx.db->erase<model::CppInheritance>(inheritance.id);
               }
@@ -407,7 +407,7 @@ bool CppParser::preparse()
               // Delete CppFriendship
               auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
                 odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
-              for (const model::CppFriendship &friendship : delCppFriendship)
+              for (const model::CppFriendship& friendship : delCppFriendship)
               {
                 _ctx.db->erase<model::CppFriendship>(friendship.id);
               }
@@ -416,7 +416,7 @@ bool CppParser::preparse()
               auto delNodes = _ctx.db->query<model::CppNode>(
                 odb::query<model::CppNode>::domainId == std::to_string(astNode.id) &&
                 odb::query<model::CppNode>::domain == model::CppNode::CPPASTNODE);
-              for (model::CppNode &node : delNodes)
+              for (model::CppNode& node : delNodes)
               {
                 for (model::CppNodeId nodeId : collectNodeSet(node.id))
                 {
@@ -428,7 +428,7 @@ bool CppParser::preparse()
             // Delete BuildAction
             auto delSources = _ctx.db->query<model::BuildSource>(
               odb::query<model::BuildSource>::file == delFile->id);
-            for (const model::BuildSource &source : delSources)
+            for (const model::BuildSource& source : delSources)
             {
               _ctx.db->erase<model::BuildAction>(source.action->id);
             }
@@ -437,7 +437,7 @@ bool CppParser::preparse()
             auto delNodes = _ctx.db->query<model::CppNode>(
               odb::query<model::CppNode>::domainId == std::to_string(delFile->id) &&
               odb::query<model::CppNode>::domain == model::CppNode::FILE);
-            for (model::CppNode &node : delNodes)
+            for (model::CppNode& node : delNodes)
             {
               for (model::CppNodeId nodeId : collectNodeSet(node.id))
               {
@@ -455,9 +455,9 @@ bool CppParser::preparse()
       }
     }); // end of transaction
   }
-  catch(odb::database_exception&)
+  catch (odb::database_exception&)
   {
-    LOG(fatal) << "Transaction failed!";
+    LOG(fatal) << "Transaction failed in C++ parser!";
     return false;
   }
 
@@ -485,7 +485,7 @@ bool CppParser::parse()
 
 void CppParser::initBuildActions()
 {
-  (util::OdbTransaction(_ctx.db))([&, this] {
+  util::OdbTransaction {_ctx.db} ([&] {
     for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
       _parsedCommandHashes.insert(util::fnvHash(ba.command));
   });
@@ -499,9 +499,9 @@ void CppParser::markAsModified(const model::FilePtr file_)
   for (auto inc : inclusions)
   {
     model::FilePtr loaded = inc.includer.load();
-    if(_ctx.fileStatus.count(loaded->path) == 0)
+    if(!_ctx.fileStatus.count(loaded->path))
     {
-      _ctx.fileStatus.insert(std::make_pair(loaded->path, IncrementalStatus::MODIFIED));
+      _ctx.fileStatus.emplace(loaded->path, IncrementalStatus::MODIFIED);
       LOG(debug) << "File modified: " << loaded->path;
 
       markAsModified(loaded);

@@ -36,6 +36,7 @@ public:
   /**
    * Maintains and cleans up the database in preparation of
    * incremental parsing.
+   * @return Return true if the preparse was success, false otherwise.
    */
   virtual bool preparse()
   {

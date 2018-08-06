@@ -320,7 +320,7 @@ std::shared_ptr<odb::database> connectDatabase(const std::string& connStr_, bool
         nullptr,
         nullptr);
     }
-    catch(odb::database_exception& e)
+    catch (odb::database_exception& e)
     {
       // Could not connect to DB
       db.reset();

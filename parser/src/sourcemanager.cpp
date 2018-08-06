@@ -229,7 +229,7 @@ void SourceManager::updateFile(const model::File& file_)
   _createFileMutex.unlock();
 
   if (find)
-    _transaction([&, this]() {
+    _transaction([&]() {
       _db->update(file_);
     });
 }
@@ -239,10 +239,10 @@ void SourceManager::removeFile(const model::File& file_)
   bool removeContent = false;
 
   // Delete File and FileContent (only when no other File references it)
-  _transaction([&, this]() {
+  _transaction([&]() {
     auto relFiles = _db->query<model::File>(
         odb::query<model::File>::content == file_.content.object_id());
-    if(std::distance(relFiles.begin(), relFiles.end()) == 1)
+    if (relFiles.size() == 1)
     {
       removeContent = true;
       _db->erase<model::FileContent>(file_.content.object_id());
@@ -251,18 +251,20 @@ void SourceManager::removeFile(const model::File& file_)
   });
 
   // Maintain cache
-  std::lock_guard<std::mutex> guard(_createFileMutex);
-  _files.erase(file_.path);
-  _persistedFiles.erase(file_.id);
-  if (removeContent)
-    _persistedContents.erase(file_.content.object_id());
+  {
+    std::lock_guard<std::mutex> guard(_createFileMutex);
+    _files.erase(file_.path);
+    _persistedFiles.erase(file_.id);
+    if (removeContent)
+      _persistedContents.erase(file_.content.object_id());
+  }
 }
 
 void SourceManager::persistFiles()
 {
   std::lock_guard<std::mutex> guard(_createFileMutex);
 
-  _transaction([&, this]() {
+  _transaction([&]() {
     for (const auto& p : _files)
     {
       if (_persistedFiles.find(p.second->id) == _persistedFiles.end())

@@ -41,7 +41,7 @@ struct BuildTarget
   FilePtr file;
 
   #pragma db not_null
-#pragma db on_delete(cascade)
+  #pragma db on_delete(cascade)
   std::shared_ptr<BuildAction> action;
 };
 

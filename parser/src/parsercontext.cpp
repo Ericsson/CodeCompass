@@ -12,7 +12,7 @@
 namespace po = boost::program_options;
 
 namespace cc
-{,
+{
 namespace parser
 {
 
@@ -43,12 +43,13 @@ ParserContext::ParserContext(
      {
        if (boost::filesystem::exists(file->path))
        {
-         if (!this->fileStatus.count(file->path))
+         if (!fileStatus.count(file->path))
          {
-           auto content = file->content.load();
-           fileHashes[file->path] = content != nullptr ? content->hash : "";
-           if (content == nullptr)
+           model::FileContentPtr content = file->content.load();
+           if (!content)
              continue;
+
+           fileHashes[file->path] = content->hash;
 
            std::ifstream fileStream(file->path);
            std::string fileContent(
@@ -58,16 +59,16 @@ ParserContext::ParserContext(
 
            if (content->hash != util::sha1Hash(fileContent))
            {
-             this->fileStatus.insert(
-               std::make_pair(file->path, cc::parser::IncrementalStatus::MODIFIED));
+             this->fileStatus.emplace(
+               file->path, cc::parser::IncrementalStatus::MODIFIED);
              LOG(debug) << "File modified: " << file->path;
            }
          }
        }
        else
        {
-         this->fileStatus.insert(
-             std::make_pair(file->path, cc::parser::IncrementalStatus::DELETED));
+         fileStatus.emplace(
+             file->path, cc::parser::IncrementalStatus::DELETED);
          LOG(debug) << "File deleted: " << file->path;
        }
      }

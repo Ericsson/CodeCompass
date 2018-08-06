@@ -5,7 +5,6 @@
 #include <string>
 
 #include <odb/database.hxx>
-#include <odb/sqlite/exceptions.hxx>
 
 #ifdef DATABASE_PGSQL
 #  define SQL_ILIKE "ILIKE"

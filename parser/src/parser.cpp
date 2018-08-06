@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
   //--- Check database and project directory existence ---//
   
   bool isNewDb = cc::util::connectDatabase(
-    vm["database"].as<std::string>(), false) ? false : true;
+    vm["database"].as<std::string>(), false) == nullptr;
   bool isNewProject = !checkProjectDir(vm);
 
   if (isNewProject ^ isNewDb)
@@ -258,7 +258,7 @@ int main(int argc, char* argv[])
   //--- Start parsers ---//
 
   cc::parser::SourceManager srcMgr(db);
-  cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm, fileStatus);
+  cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
   // TODO: Handle errors returned by preparse().
@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
   for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
     LOG(info) << "[" << *it << "] preparse started!";
-    if(!pHandler.getParser(*it)->preparse())
+    if (!pHandler.getParser(*it)->preparse())
     {
       LOG(error) << "[" << *it << "] preparse failed!";
       return 2;
@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
   }
 
   // TODO: Consider whether there is a better place for this code.
-  (cc::util::OdbTransaction(ctx.db))([&]
+  cc::util::OdbTransaction {ctx.db} ([&]
   {
     for (auto& item : ctx.fileStatus)
     {

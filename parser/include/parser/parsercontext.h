@@ -36,8 +36,7 @@ struct ParserContext
       std::shared_ptr<odb::database> db_,
       SourceManager& srcMgr_,
       std::string& compassRoot_,
-      po::variables_map& options_,
-      std::unordered_map<std::string, IncrementalStatus> fileStatus_);
+      po::variables_map& options);
 
   std::shared_ptr<odb::database> db;
   SourceManager& srcMgr;
