@@ -33,6 +33,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
         }
       }));
 
+      if (nodeInfo.symbolType === "Type")
+        submenu.addChild(new MenuItem({
+          label : "Dump special generated members in browser console",
+          onClick : function () {
+            topic.publish('codecompass/cppReparse/handleSpecialMembers',
+              nodeInfo);
+          }
+        }));
+
       return new PopupMenuItem({
         label : 'C++',
         popup : submenu

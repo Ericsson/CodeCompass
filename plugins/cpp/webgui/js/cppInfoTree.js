@@ -1,8 +1,9 @@
 require([
+  'dojo/topic',
   'codecompass/model',
   'codecompass/viewHandler',
   'codecompass/util'],
-function (model, viewHandler, util) {
+function (topic, model, viewHandler, util) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
@@ -79,7 +80,22 @@ function (model, viewHandler, util) {
            null;
   }
 
-  function groupReferencesByVisibilities(references, parentNode, nodeInfo) {
+  /**
+   * Sets the onClick() handler for the given InfoTree node to a call to
+   * C++ Reparse's implicit method handler, if the given AST Node is marked as
+   * implicit.
+   *
+   * In case C++ Reparse is not installed, nothing happens.
+   */
+  function setHandlingOfImplicit(node, reference) {
+    if (reference.tags.indexOf('implicit') > -1)
+      node.onClick = function (item, node, event) {
+        topic.publish('codecompass/cppReparse/handleSpecialMembers', reference);
+      };
+  }
+
+  function groupReferencesByVisibilities(references, parentNode, nodeInfo,
+                                         refTypes) {
     var res = [];
     var visibilities = ['public', 'private', 'protected'];
 
@@ -101,14 +117,19 @@ function (model, viewHandler, util) {
           var res = [];
 
           nodes.forEach(function (reference) {
-            res.push({
+            var node = {
               id          : visibility + reference.id,
               name        : createLabel(reference),
               refType     : parentNode.refType,
               nodeInfo    : reference,
               hasChildren : false,
               cssClass    : getCssClass(reference)
-            });
+            };
+
+            if (parentNode.refType === refTypes['Method'])
+              setHandlingOfImplicit(node, reference);
+
+            res.push(node);
           });
 
           return res;
@@ -129,7 +150,8 @@ function (model, viewHandler, util) {
 
     if (parentNode.refType === refTypes['Method'] ||
         parentNode.refType === refTypes['Data member'])
-      return groupReferencesByVisibilities(references, parentNode, nodeInfo);
+      return groupReferencesByVisibilities(references, parentNode, nodeInfo,
+                                           refTypes);
 
     references.forEach(function (reference) {
       if (parentNode.refType === refTypes['Caller'] ||
@@ -239,8 +261,9 @@ function (model, viewHandler, util) {
   /**
    * This function returns file references children.
    * @param parentNode Reference type node in Info Tree.
+   * @param refTypes   The available reference types the server reported.
    */
-  function loadFileReferenceNodes(parentNode) {
+  function loadFileReferenceNodes(parentNode, refTypes) {
     var res = [];
 
     var references = model.cppservice.getFileReferences(
@@ -248,13 +271,18 @@ function (model, viewHandler, util) {
       parentNode.refType);
 
     references.forEach(function (reference) {
-      res.push({
+      var node = {
         name        : createLabel(reference),
         refType     : parentNode.refType,
         nodeInfo    : reference,
         hasChildren : false,
         cssClass    : getCssClass(reference)
-      });
+      };
+
+      if (parentNode.refType === refTypes['Functions'])
+        setHandlingOfImplicit(node, reference);
+
+      res.push(node);
     });
 
     return res;
@@ -355,7 +383,7 @@ function (model, viewHandler, util) {
               cssClass    : 'icon-' + refType.replace(/ /g, '-'),
               hasChildren : true,
               getChildren : function () {
-                return loadFileReferenceNodes(this);
+                return loadFileReferenceNodes(this, refTypes);
               }
             });
         };

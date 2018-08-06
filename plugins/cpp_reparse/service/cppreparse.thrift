@@ -1,5 +1,6 @@
 include "project/common.thrift"
 include "project/project.thrift"
+include "language/language.thrift"
 
 namespace cpp cc.service.language
 
@@ -38,6 +39,10 @@ service CppReparseService
   /**
   * Returns false if the server was started with a command-line argument that
   * disables the reparse capabilities.
+  *
+  * Generally, the client should not expose any reparse-needing user actions
+  * or make any calls to the server if reparse is disabled. The behaviour of
+  * the Reparse API is undefined in this case.
   */
   bool isEnabled();
 
@@ -50,4 +55,12 @@ service CppReparseService
    * Returns the AST for the given AST Node('s subtree) as an HTML string.
    */
   string getAsHTMLForNode(1: common.AstNodeId nodeId);
+
+  /**
+   * TODO: Function's doc!
+   * The argument AstNodeId might either be the AST node for a record definition
+   * or a member function of the record to generate members for.
+   */
+  list<language.SourceTextFragment>
+  getSpecialMembersSource(1: common.AstNodeId astNode);
 }

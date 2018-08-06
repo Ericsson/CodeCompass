@@ -79,6 +79,11 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
     },
 
     onClick : function (item, node, event) {
+      if (item.onClick) {
+        item.onClick(item, node, event);
+        return;
+      }
+
       if (item.nodeInfo) {
         var nodeInfo = item.nodeInfo;
         if (nodeInfo instanceof AstNodeInfo) {

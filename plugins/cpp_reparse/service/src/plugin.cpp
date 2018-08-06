@@ -11,7 +11,7 @@ extern "C"
     namespace po = boost::program_options;
 
     boost::program_options::options_description description(
-      "C++ Reparse Plugin");
+      "C++ Reparse Plugin (Experimental)");
 
     description.add_options()
       ("disable-cpp-reparse", po::value<bool>()->default_value(false),

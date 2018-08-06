@@ -12,7 +12,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${cpp_PLUGIN_DIR}/model/include
-  ${cpp_PLUGIN_DIR}/parser/include)
+  ${cpp_PLUGIN_DIR}/parser/include
+  ${cpp_PLUGIN_DIR}/service/include)
 
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
@@ -58,7 +59,8 @@ add_library(cppreparseservice SHARED
   src/astcache.cpp
   src/asthtml.cpp
   src/databasefilesystem.cpp
-  src/reparser.cpp)
+  src/reparser.cpp
+  src/typespecialmembers.cpp)
 
 target_compile_options(cppreparseservice PUBLIC -Wno-unknown-pragmas)
 
@@ -68,7 +70,9 @@ target_link_libraries(cppreparseservice
   cppmodel
   mongoose
   projectservice
+  cppservice
   ${THRIFT_LIBTHRIFT_LIBRARIES}
+  languagethrift
   cppreparsethrift
   clangTooling
   clangFrontend

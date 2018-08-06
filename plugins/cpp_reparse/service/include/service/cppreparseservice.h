@@ -50,10 +50,15 @@ public:
     std::string& return_,
     const core::AstNodeId& nodeId_) override;
 
+  virtual void getSpecialMembersSource(
+    std::vector<language::SourceTextFragment>& return_,
+    const core::AstNodeId& astNode_) override;
+
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-  const boost::program_options::variables_map& _config;
+  std::shared_ptr<std::string> _datadir;
+  const cc::webserver::ServerContext& _context;
 
   std::shared_ptr<reparse::ASTCache> _astCache;
   std::unique_ptr<reparse::CppReparser> _reparser;

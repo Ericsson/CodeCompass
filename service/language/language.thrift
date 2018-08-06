@@ -20,6 +20,23 @@ struct SyntaxHighlight
   2:string className /** CSS class name */
 }
 
+struct SourceTextFragment
+{
+  1:bool mapped, /** Whether the text of this fragment is mapped to an actual file in the database. */
+  2:string text, /** The source code itself. */
+  /**
+   * If mapped, the file from which the text has been extracted.
+   * Otherwise, the value is up to the API call that sends this record.
+   */
+  3:common.FileId file,
+  /**
+   * Indicates the offset of the top left character (line 1, column 1) in 'text'
+   * from the top left corner of the stored source file, if the text is mapped.
+   * Otherwise, the value is up to the API call that sends this record.
+   */
+  4:common.Position topLeftOffset
+}
+
 service LanguageService
 {
   /**
@@ -94,7 +111,7 @@ service LanguageService
 
   /**
    * Returns the SVG represenation of a diagram about the AST node identified by
-   * astNodeId and diagarm type identified by diagramId.
+   * astNodeId and diagram type identified by diagramId.
    * @param astNodeId The AST node we want to draw diagram about.
    * @param diagramId The diagram type we want to draw. The diagram types can be
    * queried by getDiagramTypes().
@@ -129,7 +146,7 @@ service LanguageService
 
   /**
    * Returns an SVG representation of the required diagram graph.
-   * @param fileId The file ID we would like to draw the diagram aboue.
+   * @param fileId The file ID we would like to draw the diagram above.
    * @param diagramId The diagram type we want to draw. These can be queried by
    * getFileDiagramTypes().
    * @return SVG represenation of the diagram.
