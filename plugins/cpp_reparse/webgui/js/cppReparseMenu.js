@@ -35,7 +35,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
       if (nodeInfo.symbolType === "Type")
         submenu.addChild(new MenuItem({
-          label : "Dump special generated members in browser console",
+          label : 'Show special members',
           onClick : function () {
             topic.publish('codecompass/cppReparse/handleSpecialMembers',
               nodeInfo);

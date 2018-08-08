@@ -155,59 +155,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         pos.line === ran.to.line   && pos.column <= ran.to.column;
   }
 
-  /**
-   * This function adds menu items to the given context menu. The menu items
-   * come from the language service which are applicable for the AST node at
-   * the given position. Moreover some client-side menu items are also added.
-   * @param {Array} position An array with two elements: line and column
-   * respectively.
-   * @param {FileInfo} fileInfo A Thrift object which contains the information
-   * of the file in which the click happens.
-   * @param {ContextMenu} contextMenu A Menu which will be filled with menu
-   * items.
-   */
-  function buildContextMenu(position, fileInfo, contextMenu) {
-
-    var astNodeInfo = astHelper.getAstNodeInfoByPosition(position, fileInfo);
-
-    //--- Build menu ---//
-
-    contextMenu.clear();
-
-    viewHandler.getModules({
-      type : viewHandler.moduleType.TextContextMenu,
-      fileType : fileInfo.type
-    }).forEach(function (menuItem) {
-      var item = menuItem.render(astNodeInfo, fileInfo);
-      if (item)
-        contextMenu.addChild(item);
-    });
-
-    contextMenu.addChild(new MenuItem({
-      label : 'Get permalink to selection',
-      onClick : function (event) {
-        var text = dom.create('div', {
-          innerHTML : 'You can copy the page URL from this text box which\
-            encodes the selection too.',
-          style : 'margin-bottom: 5px; width: 300px; text-align: center'
-        });
-
-        var textInput = dom.create('input', {
-          value : urlHandler.getURL(),
-          style : 'width: 100%'
-        });
-
-        var content = dom.create('div');
-        dom.place(text, content);
-        dom.place(textInput, content);
-
-        (new Dialog({ title : 'Copy URL', content : content })).show();
-
-        textInput.select();
-      }
-    }));
-  }
-
   return declare(ContentPane, {
     constructor : function () {
       this.class = 'editor';
@@ -289,6 +236,57 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.loadFile(state.fid);
       this.set('selection', selection);
       this.jumpToPos(selection[0], selection[1]);
+    },
+
+    /**
+     * This function adds menu items to the given context menu. The menu items
+     * come from the language service which are applicable for the AST node at
+     * the given position. Moreover some client-side menu items are also added.
+     * @param {Array} position An array with two elements: line and column
+     * respectively.
+     * @param {FileInfo} fileInfo A Thrift object which contains the information
+     * of the file in which the click happens.
+     * @param {ContextMenu} contextMenu A Menu which will be filled with menu
+     * items.
+     */
+    buildContextMenu : function (position, fileInfo, contextMenu) {
+
+      var astNodeInfo = astHelper.getAstNodeInfoByPosition(position, fileInfo);
+
+      contextMenu.clear();
+
+      viewHandler.getModules({
+        type : viewHandler.moduleType.TextContextMenu,
+        fileType : fileInfo.type
+      }).forEach(function (menuItem) {
+        var item = menuItem.render(astNodeInfo, fileInfo);
+        if (item)
+          contextMenu.addChild(item);
+      });
+
+      contextMenu.addChild(new MenuItem({
+        label : 'Get permalink to selection',
+        onClick : function (event) {
+          var text = dom.create('div', {
+            innerHTML : 'You can copy the page URL from this text box which\
+              encodes the selection too.',
+            style : 'margin-bottom: 5px; width: 300px; text-align: center'
+          });
+
+          var textInput = dom.create('input', {
+            value : urlHandler.getURL(),
+            style : 'width: 100%'
+          });
+
+          var content = dom.create('div');
+          dom.place(text, content);
+          dom.place(textInput, content);
+
+          (new Dialog({ title : 'Copy URL', content : content })).show();
+
+          textInput.select();
+        }
+      }));
     },
 
     /**
@@ -410,7 +408,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //--- Right click ---//
 
       if (event.button === 2)
-        buildContextMenu(pos, this._fileInfo, this._contextMenu);
+        this.buildContextMenu(pos, this._fileInfo, this._contextMenu);
 
       //--- Ctrl-click ---//
 
