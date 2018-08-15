@@ -1,7 +1,6 @@
 #ifndef CC_PARSER_PARSERCONTEXT_H
 #define CC_PARSER_PARSERCONTEXT_H
 
-#include <fstream>
 #include <memory>
 #include <unordered_map>
 

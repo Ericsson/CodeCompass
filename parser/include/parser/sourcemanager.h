@@ -27,11 +27,22 @@ public:
   SourceManager(const SourceManager&) = delete;
   ~SourceManager();
 
-  /**
-   * This function copies and returns a pointer to all model::File objects
-   * currently stored.
-   */
-  std::vector<model::FilePtr> getAllFiles();
+  struct AllFilesFilter
+  {
+    bool operator()(model::FilePtr file_) const { return true; }
+  };
+
+  template<typename Filter = SourceManager::AllFilesFilter>
+  std::vector<model::FilePtr> getFiles(const Filter& beta_ = Filter())
+  {
+    std::vector<model::FilePtr> files;
+
+    for (const auto& p: _files)
+      if (beta_(p.second))
+        files.push_back(p.second);
+
+    return files;
+  }
 
   /**
    * This function returns a pointer to the corresponding model::File object

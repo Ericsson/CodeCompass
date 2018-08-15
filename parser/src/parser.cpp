@@ -82,7 +82,7 @@ po::options_description commandLineArguments()
 /**
  * This function checks the existence of the workspace and project directory
  * based on the given command line arguments.
- * @return The path of the project directory.
+ * @return Whether the project directory exists or not.
  */
 bool checkProjectDir(const po::variables_map& vm_)
 {
@@ -90,7 +90,7 @@ bool checkProjectDir(const po::variables_map& vm_)
     = vm_["workspace"].as<std::string>() + '/'
       + vm_["name"].as<std::string>();
 
-  return fs::exists(projDir) && fs::is_directory(projDir);
+  return fs::is_directory(projDir);
 }
 
 /**
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
   // TODO: Consider whether there is a better place for this code.
   cc::util::OdbTransaction {ctx.db} ([&]
   {
-    for (auto& item : ctx.fileStatus)
+    for (const auto& item : ctx.fileStatus)
     {
       switch (item.second)
       {
@@ -300,7 +300,7 @@ int main(int argc, char* argv[])
   });
 
   // TODO: Handle errors returned by parse().
-  for (const std::string& parserName : pHandler.getTopologicalOrder())
+  for (const std::string& parserName : topologicalOrder)
   {
     LOG(info) << "[" << parserName << "] parse started!";
     pHandler.getParser(parserName)->parse();

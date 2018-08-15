@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <boost/filesystem.hpp>
 
 #include <model/file.h>
@@ -30,14 +32,13 @@ ParserContext::ParserContext(
 
   (util::OdbTransaction(this->db))([&]
    {
-     // Fetch all files from SourceManager
-     std::vector<model::FilePtr> files = this->srcMgr.getAllFiles();
-     files.erase(std::remove_if(files.begin(), files.end(),
-                                [](const auto &item)
-                                {
-                                  return item->type == model::File::DIRECTORY_TYPE ||
-                                         item->type == model::File::BINARY_TYPE;
-                                }), files.end());
+     // Fetch directory and binary type files from SourceManager
+     auto func = [](const auto& item)
+     {
+       return item->type != model::File::DIRECTORY_TYPE &&
+              item->type != model::File::BINARY_TYPE;
+     };
+     std::vector<model::FilePtr> files = this->srcMgr.getFiles(func);
 
      for (model::FilePtr file : files)
      {
