@@ -74,7 +74,7 @@ CppReparseServiceHandler::~CppReparseServiceHandler() = default;
 
 bool CppReparseServiceHandler::isEnabled()
 {
-  return !_context.options["disable-cpp-reparse"].as<bool>();
+  return !_context.options.count("disable-cpp-reparse");
 }
 
 void CppReparseServiceHandler::getAsHTML(
@@ -185,14 +185,10 @@ void CppReparseServiceHandler::getSpecialMembersSource(
         return;
       }
 
-      for (const model::CppAstNode& resultType : _db->query<model::CppAstNode>(
+      astNode = _db->query_one<model::CppAstNode>(
         AstQuery::mangledNameHash == memberType->typeHash &&
         AstQuery::symbolType == model::CppAstNode::SymbolType::Type &&
-        AstQuery::astType == model::CppAstNode::AstType::Definition))
-      {
-        astNode = std::make_shared<model::CppAstNode>(resultType);
-        break;
-      }
+        AstQuery::astType == model::CppAstNode::AstType::Definition);
 
       if (!astNode)
       {
@@ -208,17 +204,6 @@ void CppReparseServiceHandler::getSpecialMembersSource(
     LOG(warning) << "No location file found for AST node #" << astNode_;
     return;
   }
-
-  // TODO: Class definitions will be in headers in 99% of the cases...
-
-  core::FileId fileId_ = std::to_string(astNode->location.file.object_id());
-  auto result = _reparser->getASTForTranslationUnitFile(fileId_);
-  if (std::string* err = boost::get<std::string>(&result))
-  {
-    LOG(warning) <<  "The AST could not be obtained. " + *err;
-    return;
-  }
-  std::shared_ptr<ASTUnit> AST = boost::get<std::shared_ptr<ASTUnit>>(result);
 
   TypeSpecialMemberPrinter::DefinitionSearchFunction defSearch =
     [&](const std::string& filePath_, const model::Range& range_)
@@ -263,8 +248,8 @@ void CppReparseServiceHandler::getSpecialMembersSource(
       return res;
     };
 
-  TypeSpecialMemberPrinter tsmp(*_db, std::move(defSearch));
-  return_ = tsmp.resolveMembersFor(astNode, AST);
+  TypeSpecialMemberPrinter tsmp(*_db, *_reparser, std::move(defSearch));
+  return_ = tsmp.resolveMembersFor(astNode);
 }
 
 } // namespace language

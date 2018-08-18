@@ -6,6 +6,7 @@
 #include <boost/algorithm/string/regex.hpp>
 
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/Basic/Diagnostic.h>
 
 #include <util/logutil.h>
 
@@ -13,6 +14,7 @@
 #include <model/file-odb.hxx>
 
 #include <cppparser/filelocutil.h>
+#include <service/reparser.h>
 
 #include "typespecialmembers.h"
 
@@ -21,10 +23,9 @@ namespace
 
 using namespace cc;
 using namespace cc::service::language;
+using namespace cc::service::reparse;
 using namespace clang;
 using namespace llvm;
-
-typedef odb::query<model::File> FileQuery;
 
 typedef std::map<void*, std::string> ASTNodeToIdentifierMapTy;
 
@@ -77,29 +78,29 @@ void printParameters(std::ostream& os_,
   // the implicit parameters might not have a name.
   assert(argMap_.empty() && "printParameters sets up argument-name bindings"
                             "but was given a non-empty map.");
+
+  size_t argNum = 1;
+  FunctionDecl::param_iterator begin = begin_;
+
+  while (begin != end_)
   {
-    size_t argNum = 1;
-    FunctionDecl::param_iterator begin = begin_;
+    ParmVarDecl& var = **begin;
 
-    while (begin != end_)
+    if (!var.getName().empty())
+      argMap_[&var] = var.getName().str();
+    else
     {
-      ParmVarDecl& var = **begin;
-
-      if (!var.getName().empty())
-        argMap_[&var] = var.getName().str();
-      else
-      {
-        argMap_[&var] = "arg" + std::to_string(argNum);
-      }
-
-      ++argNum;
-      ++begin;
+      argMap_[&var] = "arg" + std::to_string(argNum);
     }
 
-    // Conventionally if there is one argument, it could just be called "rhs".
-    if (argMap_.size() == 1)
-      argMap_.begin()->second = "rhs";
+    ++argNum;
+    ++begin;
   }
+
+  // Conventionally if there is one argument, it could just be called "rhs".
+  if (argMap_.size() == 1)
+    argMap_.begin()->second = "rhs";
+
 
   printSeparatedList(os_, ", ", begin_, end_,
     [&](ParmVarDecl* var) {
@@ -198,6 +199,135 @@ class SpecialMemberCollector
 {
   typedef RecursiveASTVisitor<SpecialMemberCollector> Base;
 
+  /**
+   * Captures the diagnostics related to special members' implicit deleted
+   * status.
+   */
+  class SpecialMemberDiagnosticCapture : public DiagnosticConsumer
+  {
+
+  public:
+
+    struct DiagnosticMessage
+    {
+      std::string filename;
+      std::size_t lineNo;
+      std::string line;
+      std::string message;
+
+      DiagnosticMessage(std::string filename_,
+                        std::size_t lineNo_,
+                        std::string line_,
+                        std::string message_)
+        : filename(std::move(filename_)),
+          lineNo(lineNo_),
+          line(std::move(line_)),
+          message(std::move(message_))
+      {
+      }
+    };
+
+    void HandleDiagnostic(DiagnosticsEngine::Level diagLevel_,
+                          const Diagnostic& info_) override
+    {
+      // The usage of special member functions, if impossible due to a deleted
+      // member, results in an error, and then some notes explaining the error.
+      if (diagLevel_ != DiagnosticsEngine::Level::Error
+          && !_shouldCaptureDiagnostic)
+        return;
+
+      if (diagLevel_ != DiagnosticsEngine::Level::Error
+          && diagLevel_ != DiagnosticsEngine::Level::Note
+          && _shouldCaptureDiagnostic)
+      {
+        // In case the sequence of "error->note->note->..." is broken, turn off
+        // capturing.
+        _shouldCaptureDiagnostic = false;
+        return;
+      }
+
+      // Figure out the line where the diagnostic points to.
+      const SourceManager& manager = info_.getSourceManager();
+      SourceLocation loc = manager.getSpellingLoc(info_.getLocation());
+      FileID fid = manager.getFileID(loc);
+      StringRef fileContents = manager.getBufferData(fid);
+      std::size_t actualLineNo = manager.getSpellingLineNumber(loc);
+      auto lineOffsetInBuffer = manager.getDecomposedLoc(
+        manager.translateLineCol(fid, actualLineNo, 1)).second;
+      const char* lineBegin = fileContents.data() + lineOffsetInBuffer;
+      const char* lineEnd = lineBegin + 1;
+      while (lineEnd != (fileContents.data() + fileContents.size()) &&
+             *lineEnd != '\n' && *lineEnd != '\r')
+        ++lineEnd;
+      std::string line(lineBegin, lineEnd - lineBegin);
+
+      if (diagLevel_ == DiagnosticsEngine::Level::Error)
+      {
+        // Try to match against the special member marker in the handcrafted
+        // usage lines that could have emitted the error.
+        auto smMarker = line.find("/* SM: ");
+        if (smMarker == std::string::npos)
+          // An error was emitted from the original file, not the crafted code.
+          return;
+
+        smMarker += 7; // 7 == std::string("/* SM: ").size()
+        auto smMarkerEnd = line.find(" */", smMarker + 1);
+        std::string tail = line.substr(smMarker, smMarkerEnd - smMarker);
+
+        _shouldCaptureDiagnostic = true;
+        _currentCapturingAnnotation = tail;
+
+        // However, the error itself should not be captured as it is in temp
+        // code.
+        return;
+      }
+
+      assert(diagLevel_ == DiagnosticsEngine::Level::Note &&
+             "Algorithm failure: at this point, the diagnostic should've been "
+             "a note.");
+
+      SmallString<128> message;
+      info_.FormatDiagnostic(message);
+
+      PresumedLoc presumed = manager.getPresumedLoc(info_.getLocation());
+      std::string presumedFilename = presumed.isValid() ?
+                                     presumed.getFilename() : "<unknown>";
+      std::size_t presumedLineNo = presumed.isValid() ?
+                                   presumed.getLine() : 0;
+
+      _diagnostics[_currentCapturingAnnotation].emplace_back(
+        std::move(presumedFilename), presumedLineNo,
+        std::move(line), message.c_str());
+    }
+
+    const std::vector<DiagnosticMessage>* getDiagnostics(
+      const std::string& group_) const
+    {
+      auto it = _diagnostics.find(group_);
+      if (it != _diagnostics.end())
+        return &it->second;
+
+      return nullptr;
+    }
+
+  private:
+
+    bool _shouldCaptureDiagnostic = false;
+
+    /**
+     * The special member annotation string (e.g. "CopyCtor") that is set to be
+     * captured right now.
+     * This is only applicable if _shouldCaptureDiagnostic is true.
+     */
+    std::string _currentCapturingAnnotation;
+
+    /**
+     * Maps captured diagnostic to the special member annotations found in the
+     * crafted code.
+     */
+    std::map<std::string, std::vector<DiagnosticMessage>> _diagnostics;
+  };
+
 public:
 
   /**
@@ -229,12 +359,14 @@ public:
       std::string _text;
 
       /**
-       * Path of the file where the text can be read from.
+       * Path of the file where the text can be read from. This field is only
+       * applicable if the mapping of the fragment is not "Unmapped."
        */
       std::string _file;
 
       /**
-       * The range in the file where the text can be found.
+       * The range in the file where the text can be found. This field is only
+       * applicable if the mapping of the fragment is not "Unmapped."
        */
       model::Range _range;
 
@@ -273,6 +405,7 @@ public:
 
     clang::AccessSpecifier _visibility;
     std::vector<TextComponent> _components;
+    ASTNodeToIdentifierMapTy _argumentNames;
 
     /**
      * Specifies if the special member's source code cannot be fetched
@@ -280,7 +413,6 @@ public:
      * This member is set to false after visitation has concluded.
      */
     bool _needsImplicitBodyResolution = false;
-    ASTNodeToIdentifierMapTy _argumentNames;
 
     /**
      * The ordering operator of SpecialMembers set the ordering importance
@@ -290,28 +422,110 @@ public:
     {
       return _kind < rhs._kind;
     }
+
+    static std::string kindToString(Kind kind_)
+    {
+      switch (kind_)
+      {
+        case Kind::Ctor:
+          return "Ctor";
+        case Kind::CopyCtor:
+          return "CopyCtor";
+        case Kind::MoveCtor:
+          return "MoveCtor";
+        case Kind::Asg:
+          return "Asg";
+        case Kind::CopyAsg:
+          return "CopyAsg";
+        case Kind::MoveAsg:
+          return "MoveAsg";
+        case Kind::Dtor:
+          return "Dtor";
+        default:
+          return "Unknown";
+      }
+    }
   };
 
   typedef std::map<clang::AccessSpecifier,
     std::vector<SpecialMember>>SpecialMemberMap;
 
+private:
+
+  static std::string makeSpecialMemberMarker(SpecialMember::Kind kind_)
+  {
+    return std::string("/* SM: ").append(SpecialMember::kindToString(kind_))
+      .append(" */");
+  }
+
+  std::string makeSpecialMemberDummyCall(
+    const std::string& member_,
+    const std::string& code_)
+  {
+    return std::string("void __").append(_recordName).append("_odr_")
+      .append(member_).append("_(").append(_recordName)
+      .append("* __ptr)\n{\n\n")
+      .append(code_)
+      .append("\n\n}\n\n");
+  }
+
+public:
+
   /**
    * Initialize the member-to-code pretty printer that will search the AST for
    * the record with the given name.
    */
-  SpecialMemberCollector(ASTContext& AST_, const std::string& recordName_)
-    : _locUtil(AST_.getSourceManager()),
-      _recordName(recordName_),
+  SpecialMemberCollector(
+    const model::CppAstNodePtr& astNode_,
+    CppReparser& reparser_)
+    : _recordName(astNode_->astValue),
       _cxxRecordDecl(nullptr),
       _recordNameDecl(nullptr),
       _currentSpecialMember(nullptr)
   {
-    TraverseDecl(AST_.getTranslationUnitDecl());
+    // Assemble a source code that will force the generation of all special
+    // member bodies regardless of the original code.
+    // Note that this is a non-functional change on the class' behaviour,
+    // apart from ensuring "odr-use" on the special members.
+    std::string dummy = std::string("\n")
+      .append(makeSpecialMemberDummyCall("ctor",
+        std::string(_recordName).append(" __defCtor; ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::Ctor))))
+      .append(makeSpecialMemberDummyCall("dtor",
+        std::string("__ptr->~").append(_recordName).append("(); ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::Dtor))))
+      .append(makeSpecialMemberDummyCall("copy",
+        std::string(_recordName).append(" __copyCtor(*__ptr); ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::CopyCtor))))
+      .append(makeSpecialMemberDummyCall("copy_a",
+        std::string(_recordName).append(" __def;\n*__ptr = __def; ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::CopyAsg))))
+      .append("#if __cplusplus >= 201103L\n")
+      .append("#include <utility>\n\n")
+      .append(makeSpecialMemberDummyCall("move",
+        std::string(_recordName).append(" __moveCtor(std::move(*__ptr)); ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::MoveCtor))))
+      .append(makeSpecialMemberDummyCall("move_a",
+        std::string(_recordName).append(" __def;\n*__ptr = std::move(__def); ")
+          .append(makeSpecialMemberMarker(SpecialMember::Kind::MoveAsg))))
+      .append("#endif\n");
+
+    CppReparser::ASTOrError reparsed = reparser_.getASTForString(
+      std::move(dummy),
+      std::to_string(astNode_->location.file.object_id()),
+      true, &_diagnostics);
+    if (std::string* error = boost::get<std::string>(&reparsed))
+      return;
+    _AST = boost::get<std::shared_ptr<ASTUnit>>(reparsed);
+    _locUtil = std::make_unique<cc::parser::FileLocUtil>(
+      _AST->getSourceManager());
+
+    TraverseDecl(_AST->getASTContext().getTranslationUnitDecl());
   }
 
   bool found() const
   {
-    return _cxxRecordDecl;
+    return static_cast<bool>(_cxxRecordDecl);
   }
 
   SpecialMemberMap& getSpecialMembers()
@@ -397,9 +611,6 @@ public:
     if (!found())
       return true;
 
-    // QUESTION: How to ensure that special methods have body even if they are
-    // unused in the current TU?
-
     if (method_->getOverloadedOperator() == OO_Equal)
     {
       if (method_->isCopyAssignmentOperator())
@@ -409,6 +620,18 @@ public:
       else
         _currentSpecialMember->_kind = SpecialMember::Kind::Asg;
     }
+    else if (CXXConstructorDecl* ctor = dyn_cast<CXXConstructorDecl>(method_))
+    {
+      if (ctor->isCopyConstructor())
+        _currentSpecialMember->_kind = SpecialMember::Kind::CopyCtor;
+      else if (ctor->isMoveConstructor())
+        _currentSpecialMember->_kind = SpecialMember::Kind::MoveCtor;
+      else
+        _currentSpecialMember->_kind = SpecialMember::Kind::Ctor;
+    }
+    else if (isa<CXXDestructorDecl>(method_))
+      _currentSpecialMember->_kind = SpecialMember::Kind::Dtor;
+
     _currentSpecialMember->_visibility = method_->getAccess();
 
     SpecialMember::TextComponent source;
@@ -419,7 +642,7 @@ public:
       SourceRange range = method_->getSourceRange();
       source._mapping = SpecialMember::TextComponent::Mapping::OnFile;
       source._file = manager.getFilename(range.getBegin());
-      _locUtil.setRange(range.getBegin(), range.getEnd(), source._range);
+      _locUtil->setRange(range.getBegin(), range.getEnd(), source._range);
 
       if (method_->isDeletedAsWritten())
       {
@@ -458,8 +681,8 @@ public:
             source._mapping = SpecialMember::TextComponent::Mapping::OnFile;
             SourceRange range = defDecl->getSourceRange();
             source._file = manager.getFilename(range.getBegin());
-            _locUtil.setRange(range.getBegin(), range.getEnd(),
-                              source._range);
+            _locUtil->setRange(range.getBegin(), range.getEnd(),
+              source._range);
 
             // The out-of-line definition's range contains a function signature.
             source._stripSignature = true;
@@ -509,12 +732,55 @@ public:
         _currentSpecialMember->_components.emplace_back(std::move(source));
       else
       {
-        // Only forward declaration of the implicit method exists.
         if (method_->isDeleted())
         {
-          // QUESTION: Good to have to show WHY? See SemaDeclCXX.cpp in Clang!
+          const auto* capturedDiags = _diagnostics.getDiagnostics(
+            SpecialMember::kindToString(_currentSpecialMember->_kind));
+          if (capturedDiags)
+          {
+            SpecialMember::TextComponent comp;
+            comp._mapping = SpecialMember::TextComponent::Mapping::Unmapped;
+            comp._text = "/**\nThis special member function cannot be "
+                         "automatically generated.\n\n";
+
+            for (const auto& diag : *capturedDiags)
+            {
+              comp._text.append("  ").append(diag.filename).append(":")
+                .append(std::to_string(diag.lineNo)).append("\n")
+                .append(diag.line).append("\n  ");
+
+              // Cut the diagnostic message if it would be too long.
+              if (diag.message.length() > 80)
+              {
+                std::string diagMsg = diag.message;
+                while (diagMsg.length() > 80)
+                {
+                  auto lastWhitespace = diagMsg.find_last_of(" \t\r\n", 80);
+                  comp._text.append(diagMsg.substr(0, lastWhitespace))
+                    .append("\n  ");
+
+                  auto nextNonWhitespace = diagMsg.find_first_not_of(
+                    " \t\r\n", lastWhitespace + 1);
+                  diagMsg = diagMsg.substr(nextNonWhitespace);
+                }
+
+                if (!diagMsg.empty())
+                  comp._text.append(diagMsg);
+              }
+              else
+                comp._text.append(diag.message);
+
+              comp._text.append("\n\n");
+            }
+
+            comp._text.append("**/\n");
+
+            _currentSpecialMember->_components.emplace_back(std::move(comp));
+          }
         }
 
+        // Only forward declaration of the implicit method exists. This will be
+        // pretty-printed later in the visitor.
         _currentSpecialMember->_components.emplace_back(std::move(source));
       }
     }
@@ -541,7 +807,7 @@ public:
       {
         if (method_->isDeleted())
           _workStream << " = delete";
-        _workStream << ';';
+        _workStream << ";\n";
       }
     });
 
@@ -552,13 +818,6 @@ public:
   {
     if (!found())
       return true;
-
-    if (ctor_->isCopyConstructor())
-      _currentSpecialMember->_kind = SpecialMember::Kind::CopyCtor;
-    else if (ctor_->isMoveConstructor())
-      _currentSpecialMember->_kind = SpecialMember::Kind::MoveCtor;
-    else
-      _currentSpecialMember->_kind = SpecialMember::Kind::Ctor;
 
     implicitBodyTraverseWrapper([&] {
       _workStream << _cxxRecordDecl->getName().str() << '(';
@@ -611,8 +870,7 @@ public:
       {
         if (ctor_->isDeleted())
           _workStream << " = delete";
-
-        _workStream << ';';
+        _workStream << ";\n";
       }
     });
 
@@ -623,8 +881,6 @@ public:
   {
     if (!found())
       return true;
-
-    _currentSpecialMember->_kind = SpecialMember::Kind::Dtor;
 
     implicitBodyTraverseWrapper([&] {
       _workStream << '~' << _cxxRecordDecl->getName().str() << "()";
@@ -638,8 +894,7 @@ public:
       {
         if (dtor_->isDeleted())
           _workStream << " = delete";
-
-        _workStream << ';';
+        _workStream << ";\n";
       }
     });
 
@@ -856,18 +1111,19 @@ public:
 
     SpecialMember ret;
     SpecialMember::TextComponent name;
-    SourceManager& manager = _cxxRecordDecl->getASTContext().getSourceManager();
+    SourceManager& manager = _AST->getASTContext().getSourceManager();
     SourceRange range = _recordNameDecl->getSourceRange();
     name._mapping = SpecialMember::TextComponent::Mapping::OnFile;
     name._file = manager.getFilename(range.getBegin());
-    _locUtil.setRange(range.getBegin(), range.getEnd(), name._range);
+    _locUtil->setRange(range.getBegin(), range.getEnd(), name._range);
     ret._components.emplace_back(std::move(name));
 
     return ret;
   }
 
 private:
-  cc::parser::FileLocUtil _locUtil;
+  std::shared_ptr<ASTUnit> _AST;
+  std::unique_ptr<cc::parser::FileLocUtil> _locUtil;
 
   /**
    * The name of the record the visitor is searching for.
@@ -901,6 +1157,11 @@ private:
    * traversal.
    */
   SpecialMemberMap _specialMembers;
+
+  /**
+   * Capture diagnostics about using the implicit members by temporary code.
+   */
+  SpecialMemberDiagnosticCapture _diagnostics;
 
   template <class ClangASTNode, typename BaseTraverseCallback>
   bool TraverseASTNode(ClangASTNode* /* node_ */, BaseTraverseCallback base_)
@@ -1002,21 +1263,22 @@ namespace language
 
 TypeSpecialMemberPrinter::TypeSpecialMemberPrinter(
     odb::database& db_,
-    DefinitionSearchFunction defSearch_)
+    reparse::CppReparser& reparser_,
+    const DefinitionSearchFunction& defSearch_)
   : _db(db_),
     _transaction(db_),
+    _reparser(reparser_),
     _definitionSearch(defSearch_)
 {
 }
 
 std::vector<SourceTextFragment>
 TypeSpecialMemberPrinter::resolveMembersFor(
-  const model::CppAstNodePtr astNode_,
-  std::shared_ptr<ASTUnit> AST_)
+  const model::CppAstNodePtr astNode_)
 {
   using Mapping = SpecialMemberCollector::SpecialMember::TextComponent::Mapping;
 
-  SpecialMemberCollector smc(AST_->getASTContext(), astNode_->astValue);
+  SpecialMemberCollector smc(astNode_, _reparser);
   if (!smc.found())
   {
     LOG(warning) << "Clang could not match the found record node in the AST.";
@@ -1029,8 +1291,7 @@ TypeSpecialMemberPrinter::resolveMembersFor(
     {
       case Mapping::Unmapped:
         if (component._text.empty())
-          LOG(warning) <<
-                       "Unmapped code component without body retrieved.";
+          LOG(warning) << "Unmapped code component without body retrieved.";
         break;
       case Mapping::OnFile:
         component._text = getFileSubstring(component._file, component._range);
@@ -1176,7 +1437,7 @@ TypeSpecialMemberPrinter::resolveMembersFor(
     }
   }
 
-  ret.emplace_back(createFromString("};\n"));
+  ret.emplace_back(createFromString("\n};\n"));
   return ret;
 }
 
@@ -1184,8 +1445,9 @@ std::string TypeSpecialMemberPrinter::getFileSubstring(
   const std::string& filePath_,
   const model::Range& range_)
 {
-  auto& fileLines = _fileCache[filePath_];
+  typedef odb::query<model::File> FileQuery;
 
+  auto& fileLines = _fileCache[filePath_];
   if (fileLines.empty())
   {
     _transaction([&]() {

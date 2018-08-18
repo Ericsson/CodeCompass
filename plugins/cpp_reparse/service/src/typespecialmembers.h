@@ -27,6 +27,12 @@ namespace cc
 {
 namespace service
 {
+
+namespace reparse
+{
+class CppReparser;
+} // namespace reparse
+
 namespace language
 {
 
@@ -48,11 +54,11 @@ public:
     const model::Range& range_)> DefinitionSearchFunction;
 
   TypeSpecialMemberPrinter(odb::database& db_,
-                           DefinitionSearchFunction defSearch_);
+                           reparse::CppReparser& reparser_,
+                           const DefinitionSearchFunction& defSearch_);
 
   std::vector<SourceTextFragment>
-  resolveMembersFor(const model::CppAstNodePtr astNode_,
-    std::shared_ptr<clang::ASTUnit> AST_);
+  resolveMembersFor(const model::CppAstNodePtr astNode_);
 
 private:
   std::string getFileSubstring(const std::string& filePath_,
@@ -60,6 +66,7 @@ private:
 
   odb::database& _db;
   util::OdbTransaction _transaction;
+  reparse::CppReparser& _reparser;
   const DefinitionSearchFunction& _definitionSearch;
 
   /**

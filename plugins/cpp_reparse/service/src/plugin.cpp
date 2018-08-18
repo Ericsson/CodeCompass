@@ -14,7 +14,7 @@ extern "C"
       "C++ Reparse Plugin (Experimental)");
 
     description.add_options()
-      ("disable-cpp-reparse", po::value<bool>()->default_value(false),
+      ("disable-cpp-reparse",
        "Turn off the reparse capabilities on the started server, even though "
        "the plugin is loaded.");
 
