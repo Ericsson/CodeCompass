@@ -123,6 +123,7 @@ public:
         break;
       case raw_ostream::WHITE:
         _name = "white";
+        break;
       case raw_ostream::SAVEDCOLOR:
       default:
         _name = "";
