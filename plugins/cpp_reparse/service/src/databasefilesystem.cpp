@@ -220,7 +220,7 @@ DatabaseFileSystem::openFileForRead(const Twine& path_)
       fileToStatus(*_db, *file),
       std::move(file->content.load()->content));
   });
-  return dbFile;
+  return std::move(dbFile);
 }
 
 directory_iterator
