@@ -227,12 +227,15 @@ void SourceManager::removeFile(const model::File& file_)
 
   // Delete File and FileContent (only when no other File references it)
   _transaction([&]() {
-    auto relFiles = _db->query<model::File>(
-        odb::query<model::File>::content == file_.content.object_id());
-    if (relFiles.size() == 1)
+    if(file_.content)
     {
-      removeContent = true;
-      _db->erase<model::FileContent>(file_.content.object_id());
+      auto relFiles = _db->query<model::File>(
+        odb::query<model::File>::content == file_.content.object_id());
+      if (relFiles.size() == 1)
+      {
+        removeContent = true;
+        _db->erase<model::FileContent>(file_.content.object_id());
+      }
     }
     _db->erase<model::File>(file_.id);
   });
