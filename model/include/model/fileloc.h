@@ -15,6 +15,7 @@ struct FileLoc
   Range range;
 
   #pragma db null
+  #pragma db on_delete(cascade)
   odb::lazy_shared_ptr<File> file;
 };
 

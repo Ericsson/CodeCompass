@@ -34,6 +34,16 @@ public:
   virtual std::vector<std::string> getDependentParsers() const = 0;
 
   /**
+   * Maintains and cleans up the database in preparation of
+   * incremental parsing.
+   * @return Return true if the preparse was success, false otherwise.
+   */
+  virtual bool preparse()
+  {
+    return true;
+  }
+
+  /**
    * Method parses a path or a compilation database
    * @return Return true if the parse was success, false otherwise
    */

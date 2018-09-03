@@ -35,9 +35,11 @@ struct CppEdge
   CppEdgeId id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<CppNode> from;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<CppNode> to;
 
   #pragma db not_null
@@ -93,6 +95,7 @@ struct CppEdgeAttribute
   CppEdgeAttributeId id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<CppEdge> edge;
 
   #pragma db not_null

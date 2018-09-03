@@ -130,9 +130,11 @@ void sqliteRegexImpl(
 
 #ifdef DATABASE_PGSQL
 /**
- * This function creates a postgres database if the database doesn't exists.
+ * This function checks the existance of a postgres database and
+ * optionally creates the database if it doesn't exists.
+ * @return True if the database exists after the function call; otherwise, false.
  */
-void createPsqlDatbase(const std::string& connStr_, const std::string dbName_)
+bool checkPsqlDatbase(const std::string& connStr_, const std::string dbName_, bool create_)
 {
   std::size_t colonPos = connStr_.find(':');
   std::string database = connStr_.substr(0, colonPos);
@@ -147,8 +149,10 @@ void createPsqlDatbase(const std::string& connStr_, const std::string dbName_)
   odb::connection_ptr connection = db.connection();
   try
   {
-    if (!connection->execute(
-      "SELECT 1 FROM pg_database WHERE datname = '" + dbName_ + "'"))
+    bool exists = connection->execute(
+      "SELECT 1 FROM pg_database WHERE datname = '" + dbName_ + "'") > 0;
+
+    if(!exists && create_)
     {
       std::string createCmd = "CREATE DATABASE " + dbName_
         + " ENCODING = 'SQL_ASCII'"
@@ -159,6 +163,11 @@ void createPsqlDatbase(const std::string& connStr_, const std::string dbName_)
 
       LOG(info) << "Creating database: " << dbName_;
     }
+
+    exists = connection->execute(
+      "SELECT 1 FROM pg_database WHERE datname = '" + dbName_ + "'") > 0;
+
+    return exists;
   }
   catch (const odb::exception& ex)
   {
@@ -259,7 +268,7 @@ namespace util
  */
 static std::map<std::string, std::shared_ptr<odb::database>> databasePool;
 
-std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
+std::shared_ptr<odb::database> connectDatabase(const std::string& connStr_, bool create_)
 {
   auto iter = databasePool.find(connStr_);
   if (iter != databasePool.end())
@@ -281,39 +290,41 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
 
   std::vector<std::string> odbOpts = createOdbOptions(options);
   char** cStyleOptions = createCStyleOptions(odbOpts);
+  int optionsSize = odbOpts.size();
 
   std::shared_ptr<odb::database> db;
-
-#ifdef DATABASE_MYSQL
-  if (database == "mysql")
-    db.reset(new odb::mysql::database(odbOpts.size(), cStyleOptions),
-      [](odb::database*){});
-#endif
 
 #ifdef DATABASE_SQLITE
   if (database == "sqlite")
   {
-    int optionsSize = odbOpts.size();
-    auto sqliteDB = new odb::sqlite::database(
-      optionsSize,
-      cStyleOptions,
-      false,
-      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-      true,
-      "",
-      std::make_unique<odb::sqlite::single_connection_factory>());
-    db.reset(sqliteDB, [](odb::database*){});
+    try
+    {
+      auto sqliteDB = new odb::sqlite::database(
+        optionsSize,
+        cStyleOptions,
+        false,
+        SQLITE_OPEN_READWRITE | (create_ ? SQLITE_OPEN_CREATE : 0),
+        true,
+        "",
+        std::make_unique<odb::sqlite::single_connection_factory>());
+      db.reset(sqliteDB, [](odb::database*){});
 
-    auto sqlitePtr = sqliteDB->connection()->handle();
-    sqlite3_create_function_v2(
-      sqlitePtr,
-      "regexp", 2, // regexp function with one argument
-      SQLITE_UTF8,
-      nullptr,
-      &sqliteRegexImpl,
-      nullptr,
-      nullptr,
-      nullptr);
+      auto sqlitePtr = sqliteDB->connection()->handle();
+      sqlite3_create_function_v2(
+        sqlitePtr,
+        "regexp", 2, // regexp function with one argument
+        SQLITE_UTF8,
+        nullptr,
+        &sqliteRegexImpl,
+        nullptr,
+        nullptr,
+        nullptr);
+    }
+    catch (odb::database_exception& e)
+    {
+      // Could not connect to DB
+      db.reset();
+    }
   }
 #endif
 
@@ -324,11 +335,16 @@ std::shared_ptr<odb::database> createDatabase(const std::string& connStr_)
       updateConnectionString(connStr_, "database", "postgres");
     std::string dbName = connStrComponent(connStr_, "database");
 
-    createPsqlDatbase(defaultPsqlConnStr, dbName);
-
-    int size = odbOpts.size();
-    db.reset(new odb::pgsql::database(size, cStyleOptions),
-      [](odb::database*){});
+    if (checkPsqlDatbase(defaultPsqlConnStr, dbName, create_))
+    {
+      db.reset(new odb::pgsql::database(optionsSize, cStyleOptions),
+               [](odb::database*) {});
+    }
+    else
+    {
+      // DB does not exists
+      db.reset();
+    }
   }
 #endif
 

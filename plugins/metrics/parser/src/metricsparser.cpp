@@ -23,7 +23,7 @@ namespace parser
 
 MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
-  (util::OdbTransaction(_ctx.db))([&, this] {
+  util::OdbTransaction {_ctx.db} ([&, this] {
     for (const model::MetricsFileIdView& mf
       : _ctx.db->query<model::MetricsFileIdView>())
     {
@@ -49,6 +49,40 @@ MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 std::vector<std::string> MetricsParser::getDependentParsers() const
 {
   return std::vector<std::string>{};
+}
+
+bool MetricsParser::preparse()
+{
+  if (!_fileIdCache.empty())
+  {
+    try
+    {
+      util::OdbTransaction {_ctx.db} ([this] {
+        for (const model::File& file
+          : _ctx.db->query<model::File>(
+          odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+        {
+          auto it = _ctx.fileStatus.find(file.path);
+          if (it != _ctx.fileStatus.end() &&
+             (it->second == cc::parser::IncrementalStatus::DELETED ||
+              it->second == cc::parser::IncrementalStatus::MODIFIED))
+          {
+            LOG(info) << "[metricsparser] Database cleanup: " << file.path;
+
+            _ctx.db->erase_query<model::Metrics>(odb::query<model::Metrics>::file == file.id);
+            _fileIdCache.erase(file.id);
+          }
+        }
+      });
+    }
+    catch (odb::database_exception&)
+    {
+      LOG(fatal) << "Transaction failed in metrics parser!";
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool MetricsParser::parse()

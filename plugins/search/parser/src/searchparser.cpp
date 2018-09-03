@@ -87,18 +87,9 @@ bool SearchParser::parse()
 {
   if (fs::is_directory(_searchDatabase))
   {
-    if (_ctx.options.count("force"))
-    {
-      fs::remove_all(_searchDatabase);
-      fs::create_directory(_searchDatabase);
-    }
-    else
-    {
-      LOG(info)
-        << "Skipping search parser, because search database already exists. "
-           "Use -f flag for forcing reparse.";
-      return true;
-    }
+    fs::remove_all(_searchDatabase);
+    fs::create_directory(_searchDatabase);
+    LOG(info) << "Search database already exists, dropping.";
   }
 
   for (const std::string& path :

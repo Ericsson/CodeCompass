@@ -2,6 +2,7 @@
 #define CC_PARSER_CXXPARSER_H
 
 #include <map>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -9,6 +10,7 @@
 #include <clang/Tooling/Tooling.h>
 
 #include <model/buildaction.h>
+#include <model/cppnode.h>
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
@@ -24,9 +26,34 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool parse() override; 
+  virtual bool preparse() override;
+  virtual bool parse() override;
 
 private:
+  /**
+   * A single build command's cc::util::JobQueueThreadPool job.
+   */
+  struct ParseJob
+  {
+    /**
+     * The build command itself. This is given to CppParser::worker.
+     */
+    std::reference_wrapper<const clang::tooling::CompileCommand> command;
+
+    /**
+     * The # of the build command in the compilation command database.
+     */
+    std::size_t index;
+
+    ParseJob(const clang::tooling::CompileCommand& command, std::size_t index)
+        : command(command), index(index)
+    {}
+
+    ParseJob(const ParseJob&) = default;
+  };
+
+
+
   /**
    * This function gets the input-output pairs from the compile command.
    *
@@ -53,30 +80,13 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int worker(const clang::tooling::CompileCommand& command_);
-
-  /**
-   * A single build command's cc::util::JobQueueThreadPool job.
-   */
-  struct ParseJob
-  {
-    /**
-     * The build command itself. This is given to CppParser::worker.
-     */
-    std::reference_wrapper<const clang::tooling::CompileCommand> command;
-
-    /**
-     * The # of the build command in the compilation command database.
-     */
-    std::size_t index;
-
-    ParseJob(const clang::tooling::CompileCommand& command, std::size_t index)
-      : command(command), index(index)
-    {}
-
-    ParseJob(const ParseJob&) = default;
-  };
+  
+  void initBuildActions();
+  void markAsModified(model::FilePtr file_);
+  std::set<model::CppNodeId> collectNodeSet(model::CppNodeId node_) const;
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
+
 };
   
 } // parser

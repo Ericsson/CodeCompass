@@ -70,6 +70,7 @@ public:
   CppNodeAttributeId id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<CppNode> node;
 
   #pragma db not_null
