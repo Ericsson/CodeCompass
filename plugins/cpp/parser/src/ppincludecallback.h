@@ -41,7 +41,8 @@ public:
     const clang::FileEntry *File,
     clang::StringRef SearchPath,
     clang::StringRef RelativePath,
-    const clang::Module *Imported) override;
+    const clang::Module *Imported,
+    clang::SrcMgr::CharacteristicKind FileType) override;
 
 private:
   /**
