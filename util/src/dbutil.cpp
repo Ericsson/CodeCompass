@@ -156,6 +156,7 @@ bool checkPsqlDatbase(const std::string& connStr_, const std::string dbName_, bo
     {
       std::string createCmd = "CREATE DATABASE " + dbName_
         + " ENCODING = 'SQL_ASCII'"
+        + " LC_CTYPE='C'"
         + " LC_COLLATE='C'"
         + " TEMPLATE template0;";
 
