@@ -141,7 +141,7 @@ void CppServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_)
 {
   return_ = _transaction([this, &astNodeId_](){
-    return CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+    return CreateAstNodeInfo(_db)(queryCppAstNode(astNodeId_));
   });
 }
 
@@ -249,7 +249,7 @@ void CppServiceHandler::getAstNodeInfoByPosition(
     }
 
     return_ = _transaction([this, &min](){
-      return CreateAstNodeInfo(getTags({min}))(min);
+      return CreateAstNodeInfo(_db, getTags({min}))(min);
     });
   });
 }
@@ -969,7 +969,7 @@ void CppServiceHandler::getReferences(
     }
 
     return_.reserve(nodes.size());
-    _transaction([this, &return_, &nodes](){
+    _transaction([this, &return_, &nodes, &tags](){
       std::transform(
         nodes.begin(), nodes.end(),
         std::back_inserter(return_),
@@ -1073,7 +1073,7 @@ void CppServiceHandler::getFileReferences(
       std::transform(
         nodes.begin(), nodes.end(),
         std::back_inserter(return_),
-        CreateAstNodeInfo(getTags(nodes)));
+        CreateAstNodeInfo(_db, getTags(nodes)));
     });
   });
 }

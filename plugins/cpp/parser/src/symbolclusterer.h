@@ -7,6 +7,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include <boost/lambda/lambda.hpp>
+
 #include <parser/parsercontext.h>
 
 #include <util/logutil.h>
@@ -250,7 +252,8 @@ private:
             typename ExpandPredicate = std::function<bool (GroupKey, GroupKey)>>
   void calculateReachablePropagation(Result& result,
                                      QueryBuilder queryBuilder,
-                                     ExpandPredicate shouldExpand) const;
+                                     ExpandPredicate shouldExpand =
+                                       boost::lambda::constant(true)) const;
 
   /**
    * The context object in which the parser is running.

@@ -4,7 +4,6 @@
 #include <utility>
 
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/lambda/lambda.hpp>
 
 #include <util/odbtransaction.h>
 
@@ -349,7 +348,7 @@ template <typename GroupKey,
 void SymbolClusterer::calculateReachablePropagation(
   Result& result,
   QueryBuilder queryBuilder,
-  ExpandPredicate shouldExpand = boost::lambda::constant(true)) const
+  ExpandPredicate shouldExpand) const
 {
   Result leafCollector;
 
