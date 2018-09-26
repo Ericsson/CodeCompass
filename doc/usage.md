@@ -176,6 +176,10 @@ compilation database will always contain all files.
 Currently the C++ and metrics parsers support incremental parsing, while other parsers
 just execute a forced reparse.
 
+In order to review the changes detected by the incremental parser without performing any
+action that would alter the workspace database or directory, the `--dry-run` command line 
+option can be specified for `CodeCompass_parser`.
+
 ## 3. Start the web server
 You can start the CodeCompass webserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
