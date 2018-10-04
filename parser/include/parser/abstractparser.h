@@ -15,7 +15,7 @@ class AbstractParser
 {
 public:
   /**
-   * Constructor, initalize the parsers
+   * Constructor, initialize the parsers
    * @param ctx_ - Parser context options
    */
   AbstractParser(ParserContext& ctx_) : _ctx(ctx_){} 

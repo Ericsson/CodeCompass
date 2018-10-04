@@ -370,102 +370,103 @@ bool CppParser::preparse(bool dry_)
     }
   }); // end of transaction
 
+  // On dry-run we are finished.
+  if(dry_)
+    return true;
+
   // Perform maintenance actions.
-  if(!dry_)
+  try
   {
-    try
+    util::OdbTransaction{_ctx.db}([&]
     {
-      util::OdbTransaction{_ctx.db}([&]
+      for (auto &item : _ctx.fileStatus)
       {
-        for (auto &item : _ctx.fileStatus)
+        switch (item.second)
         {
-          switch (item.second)
+          case IncrementalStatus::MODIFIED:
+          case IncrementalStatus::DELETED:
           {
-            case IncrementalStatus::MODIFIED:
-            case IncrementalStatus::DELETED:
+            LOG(info) << "[cppparser] Database cleanup: " << item.first;
+
+            // Fetch file from SourceManager by path
+            model::FilePtr delFile = _ctx.srcMgr.getFile(item.first);
+
+            // Query CppAstNode
+            auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
+              odb::query<model::CppAstNode>::location.file == delFile->id &&
+              odb::query<model::CppAstNode>::astType ==
+              model::CppAstNode::AstType::Definition);
+            for (const model::CppAstNode &astNode : defCppAstNodes)
             {
-              LOG(info) << "[cppparser] Database cleanup: " << item.first;
-
-              // Fetch file from SourceManager by path
-              model::FilePtr delFile = _ctx.srcMgr.getFile(item.first);
-
-              // Query CppAstNode
-              auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
-                odb::query<model::CppAstNode>::location.file == delFile->id &&
-                odb::query<model::CppAstNode>::astType ==
-                model::CppAstNode::AstType::Definition);
-              for (const model::CppAstNode &astNode : defCppAstNodes)
+              // Delete CppEntity
+              auto delCppEntities = _ctx.db->query<model::CppEntity>(
+                odb::query<model::CppEntity>::astNodeId == astNode.id);
+              for (const model::CppEntity &entity : delCppEntities)
               {
-                // Delete CppEntity
-                auto delCppEntities = _ctx.db->query<model::CppEntity>(
-                  odb::query<model::CppEntity>::astNodeId == astNode.id);
-                for (const model::CppEntity &entity : delCppEntities)
-                {
-                  _ctx.db->erase<model::CppEntity>(entity.id);
-                }
-
-                // Delete CppInheritance
-                auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
-                  odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
-                for (const model::CppInheritance &inheritance : delCppInheritance)
-                {
-                  _ctx.db->erase<model::CppInheritance>(inheritance.id);
-                }
-
-                // Delete CppFriendship
-                auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
-                  odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
-                for (const model::CppFriendship &friendship : delCppFriendship)
-                {
-                  _ctx.db->erase<model::CppFriendship>(friendship.id);
-                }
-
-                // Delete CppNode (connected to CppAstNode) with all its connected CppNodes
-                auto delNodes = _ctx.db->query<model::CppNode>(
-                  odb::query<model::CppNode>::domainId == std::to_string(astNode.id) &&
-                  odb::query<model::CppNode>::domain == model::CppNode::CPPASTNODE);
-                for (model::CppNode &node : delNodes)
-                {
-                  _ctx.db->erase<model::CppNode>(node.id);
-                  // TODO: handle that RelationCollector will try to reinsert the other end of the relation
-                  // Raises "[WARNING] object already persistent"
-                }
+                _ctx.db->erase<model::CppEntity>(entity.id);
               }
 
-              // Delete BuildAction
-              auto delSources = _ctx.db->query<model::BuildSource>(
-                odb::query<model::BuildSource>::file == delFile->id);
-              for (const model::BuildSource &source : delSources)
+              // Delete CppInheritance
+              auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
+                odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
+              for (const model::CppInheritance &inheritance : delCppInheritance)
               {
-                _ctx.db->erase<model::BuildAction>(source.action->id);
+                _ctx.db->erase<model::CppInheritance>(inheritance.id);
               }
 
-              // Delete CppNode (connected to File) with all its connected CppNodes
+              // Delete CppFriendship
+              auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
+                odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
+              for (const model::CppFriendship &friendship : delCppFriendship)
+              {
+                _ctx.db->erase<model::CppFriendship>(friendship.id);
+              }
+
+              // Delete CppNode (connected to CppAstNode) with all its connected CppNodes
               auto delNodes = _ctx.db->query<model::CppNode>(
-                odb::query<model::CppNode>::domainId == std::to_string(delFile->id) &&
-                odb::query<model::CppNode>::domain == model::CppNode::FILE);
+                odb::query<model::CppNode>::domainId == std::to_string(astNode.id) &&
+                odb::query<model::CppNode>::domain == model::CppNode::CPPASTNODE);
               for (model::CppNode &node : delNodes)
               {
                 _ctx.db->erase<model::CppNode>(node.id);
                 // TODO: handle that RelationCollector will try to reinsert the other end of the relation
                 // Raises "[WARNING] object already persistent"
               }
-
-              break;
             }
 
-            case IncrementalStatus::ADDED:
-              // Empty deliberately
-              break;
+            // Delete BuildAction
+            auto delSources = _ctx.db->query<model::BuildSource>(
+              odb::query<model::BuildSource>::file == delFile->id);
+            for (const model::BuildSource &source : delSources)
+            {
+              _ctx.db->erase<model::BuildAction>(source.action->id);
+            }
+
+            // Delete CppNode (connected to File) with all its connected CppNodes
+            auto delNodes = _ctx.db->query<model::CppNode>(
+              odb::query<model::CppNode>::domainId == std::to_string(delFile->id) &&
+              odb::query<model::CppNode>::domain == model::CppNode::FILE);
+            for (model::CppNode &node : delNodes)
+            {
+              _ctx.db->erase<model::CppNode>(node.id);
+              // TODO: handle that RelationCollector will try to reinsert the other end of the relation
+              // Raises "[WARNING] object already persistent"
+            }
+
+            break;
           }
+
+          case IncrementalStatus::ADDED:
+            // Empty deliberately
+            break;
         }
-      });
-    }
-    catch (odb::database_exception&)
-    {
-      LOG(fatal) << "Transaction failed in C++ parser!";
-      return false;
-    }
+      }
+    });
+  }
+  catch (odb::database_exception&)
+  {
+    LOG(fatal) << "Transaction failed in C++ parser!";
+    return false;
   }
 
   return true;
