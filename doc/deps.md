@@ -59,7 +59,7 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### Thrift
+### Step1 Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
@@ -91,7 +91,7 @@ cd thrift-<version>
 make install
 ```
 
-### LLVM/Clang
+### Step2 LLVM/Clang
 In Ubuntu 16.04 LTS the LLVM/Clang has some packaging issues, i.e. some libs
 are searched in `/usr/lib` however the package has these in
 `/usr/lib/llvm-3.8/lib` (see
@@ -101,7 +101,9 @@ build. A solution would be to download a prebuilt package from the LLVM/Clang
 webpage but another issue is that the prebuilt packages don't use runtime type
 informations (RTTI) which is needed for CodeCompass. Clang needs to be compiled
 with RTTI manually.
-
+important：
+if you install another LLVM/Clang version,you had better to uninstall them. 
+when you build CodeCompass, System will read defaute env in your computer rather than you install LLVM/Clang.
 ```bash
 # If you want Clang's diagnostic output to have colours, install the following.
 sudo apt-get install libtinfo-dev
@@ -122,14 +124,16 @@ cd build
 cmake -G "Unix Makefiles" \
   -DCMAKE_BUILD_TYPE=Release \
   -DLLVM_ENABLE_RTTI=ON \
-  -DCMAKE_INSTALL_PREFIX=<clang_install_dir> \
+  -DCMAKE_INSTALL_PREFIX=<clang_install_dir>  
   ../llvm
+  
+#This clang_install_dir maybe confuse with above clang.They are different.
 # This make step takes a while. If you have more CPUs then you can compile on
 # several threads with -j<number_of_threads> flag.
 make install
 ```
 
-### ODB
+### Step3 ODB
 As of `gcc` version 5, the ABI has changed which practically means that some
 symbols in `std` namespace (like `std::string` and `std::list`) contain
 `__cxx11` in their mangled names. This results linkage errors if the compiled
@@ -143,7 +147,7 @@ download and recompile ODB using a new C++ compiler.
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.tar.gz
 tar -xvf libodb-2.4.0.tar.gz
 cd libodb-2.4.0
-./configure --prefix=<odb_install_dir>
+./configure --prefix=<libodb_install_dir>
 make install
 cd ..
 
@@ -154,7 +158,7 @@ sudo apt-get install libsqlite3-dev # Needed for this step.
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-sqlite-2.4.0.tar.gz
 tar -xvf libodb-sqlite-2.4.0.tar.gz
 cd libodb-sqlite-2.4.0
-./configure --prefix=<odb_install_dir> \
+./configure --prefix=<SQLiteodb_install_dir> \
   --with-libodb="$(readlink -f ../libodb-2.4.0)"
 make install
 cd ..
@@ -166,16 +170,15 @@ sudo apt-get install postgresql-server-dev-<version> # Needed for this step.
 wget http://www.codesynthesis.com/download/odb/2.4/libodb-pgsql-2.4.0.tar.gz
 tar -xvf libodb-pgsql-2.4.0.tar.gz
 cd libodb-pgsql-2.4.0
-./configure --prefix=<odb_install_dir> \
+./configure --prefix=<PostgreSQLodb_install_dir> \
   --with-libodb="$(readlink -f ../libodb-2.4.0)"
 make install
 cd ..
 ```
+#### Step4 ODBUbuntu 16.04 LTS
 
 The ODB compiler must also be installed to generate the database schema and
 connection code.
-
-#### Ubuntu 16.04 LTS
 ```bash
 sudo apt-get install gcc-<version>-plugin-dev libcutl-dev libexpat1-dev
 wget http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.tar.gz
@@ -203,7 +206,7 @@ make install
 cd ..
 ```
 
-### GTest/Googletest
+### Step5 GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
 binaries are missing. You have to compile GTest manually and copy the libs to
 the right place:
@@ -217,17 +220,17 @@ mkdir <gtest_install_dir>/lib
 mv libgtest.a libgtest_main.a <gtest_install_dir>/lib/
 ```
 
-# Build CodeCompass
+# Step6 Build CodeCompass
 The dependencies which are installed manually because of known issues have to
 be seen by CMake build system:
 
 ```bash
-export GTEST_ROOT=<gtest_install_dir>
-export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=<clang_install_dir>:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=<odb_install_dir>:$CMAKE_PREFIX_PATH
-export PATH=<thrift_install_dir>/bin:$PATH
-export PATH=<odb_install_dir>/bin:$PATH
+export GTEST_ROOT=<gtest_install_dir>                                      #Step5 <gtest_install_dir>
+export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH           #Step1 <thrift_install_dir>
+export CMAKE_PREFIX_PATH=<clang_install_dir>:$CMAKE_PREFIX_PATH            #Step2 <clang_install_dir>
+export CMAKE_PREFIX_PATH=<odb_install_dir>:$CMAKE_PREFIX_PATH              #Step4 <odb_install_dir>
+export PATH=<thrift_install_dir>/bin:$PATH                                 #Step1 <thrift_install_dir>
+export PATH=<odb_install_dir>/bin:$PATH                                    #Step4 <odb_install_dir>
 ```
 
 Use the following instructions to build CodeCompass with CMake.
