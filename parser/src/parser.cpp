@@ -16,6 +16,7 @@
 #include <util/dbutil.h>
 #include <util/filesystem.h>
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
 
 #include <parser/parsercontext.h>
 #include <parser/pluginhandler.h>
@@ -79,10 +80,23 @@ po::options_description commandLineArguments()
 }
 
 /**
+ * This function checks the existence of the workspace and project directory
+ * based on the given command line arguments.
+ * @return Whether the project directory exists or not.
+ */
+bool checkProjectDir(const po::variables_map& vm_)
+{
+  const std::string projDir
+    = vm_["workspace"].as<std::string>() + '/'
+      + vm_["name"].as<std::string>();
+
+  return fs::is_directory(projDir);
+}
+
+/**
  * This function prepares the workspace and project directory based on the given
  * command line arguments. If the project directory can't be created because of
- * permission issues or the directory already exists and "--force" flag is not
- * provided then empty string returns which indicates the problem.
+ * permission issues then empty string returns which indicates the problem.
  * @return The path of the project directory.
  */
 std::string prepareProjectDir(const po::variables_map& vm_)
@@ -121,11 +135,6 @@ std::string prepareProjectDir(const po::variables_map& vm_)
       LOG(error) << "Permission denied to create " + projDir;
       return std::string();
     }
-  }
-  else
-  {
-    LOG(error) << projDir << " already exists. Use -f for reparsing!";
-    return std::string();
   }
 
   return projDir;
@@ -203,17 +212,35 @@ int main(int argc, char* argv[])
     LOG(error) << "Error in command line arguments: " << e.what();
     return 1;
   }
+  
+  //--- Check database and project directory existence ---//
+  
+  bool isNewDb = cc::util::connectDatabase(
+    vm["database"].as<std::string>(), false) == nullptr;
+  bool isNewProject = !checkProjectDir(vm);
 
-  //--- Check workspace and project directory ---//
+  if (isNewProject ^ isNewDb)
+  {
+    LOG(error)
+      << "Database and working directory existence are inconsistent. Use -f for reparsing!";
+    return 1;
+  }
 
+  if (!isNewDb)
+    LOG(info) << "Project already exists, incremental parsing in action.";
+
+  //--- Prepare workspace and project directory ---//
+  
   std::string projDir = prepareProjectDir(vm);
   if (projDir.empty())
     return 1;
 
   //--- Create and init database ---//
 
-  std::shared_ptr<odb::database> db = cc::util::createDatabase(
-    vm["database"].as<std::string>());
+  std::shared_ptr<odb::database> db = cc::util::connectDatabase(
+      vm["database"].as<std::string>(), true);
+
+  std::unordered_map<std::string, cc::parser::IncrementalStatus> fileStatus;
 
   if (!db)
   {
@@ -225,7 +252,8 @@ int main(int argc, char* argv[])
   if (vm.count("force"))
     cc::util::removeTables(db, SQL_DIR);
 
-  cc::util::createTables(db, SQL_DIR);
+  if (vm.count("force") || isNewDb)
+    cc::util::createTables(db, SQL_DIR);
 
   //--- Start parsers ---//
 
@@ -233,16 +261,55 @@ int main(int argc, char* argv[])
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
-  // TODO: Handle errors returned by parse().
-  for (const std::string& parserName : pHandler.getTopologicalOrder())
+  // TODO: Handle errors returned by preparse().
+  std::vector<std::string> topologicalOrder = pHandler.getTopologicalOrder();
+  for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
-    LOG(info) << "[" << parserName << "] started!";
+    LOG(info) << "[" << *it << "] preparse started!";
+    if (!pHandler.getParser(*it)->preparse())
+    {
+      LOG(error) << "[" << *it << "] preparse failed!";
+      return 2;
+    }
+  }
+
+  // TODO: Consider whether there is a better place for this code.
+  cc::util::OdbTransaction {ctx.db} ([&]
+  {
+    for (const auto& item : ctx.fileStatus)
+    {
+      switch (item.second)
+      {
+        case cc::parser::IncrementalStatus::MODIFIED:
+        case cc::parser::IncrementalStatus::DELETED:
+        {
+          LOG(info) << "Database cleanup: " << item.first;
+
+          // Fetch file from SourceManager by path
+          cc::model::FilePtr delFile = srcMgr.getFile(item.first);
+
+          // Delete File and FileContent (only when no other File references it)
+          srcMgr.removeFile(*delFile);
+          break;
+        }
+        case cc::parser::IncrementalStatus::ADDED:
+          // Empty deliberately
+          break;
+      }
+    }
+  });
+
+  // TODO: Handle errors returned by parse().
+  for (const std::string& parserName : topologicalOrder)
+  {
+    LOG(info) << "[" << parserName << "] parse started!";
     pHandler.getParser(parserName)->parse();
   }
 
   //--- Add indexes to the database ---//
 
-  cc::util::createIndexes(db, SQL_DIR);
+  if (vm.count("force") || isNewDb)
+    cc::util::createIndexes(db, SQL_DIR);
 
   //--- Create project config file ---//
 

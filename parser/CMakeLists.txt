@@ -9,7 +9,8 @@ include_directories(SYSTEM
 add_executable(CodeCompass_parser
   src/pluginhandler.cpp
   src/sourcemanager.cpp
-  src/parser.cpp)
+  src/parser.cpp
+  src/parsercontext.cpp)
 
 set_target_properties(CodeCompass_parser
   PROPERTIES ENABLE_EXPORTS 1)

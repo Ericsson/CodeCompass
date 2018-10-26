@@ -803,6 +803,6 @@ GitServiceHandler::~GitServiceHandler()
   git_libgit2_shutdown();
 }
 
-} //namespace version
+} //namespace git
 } //namespace service
 } //namespace cc

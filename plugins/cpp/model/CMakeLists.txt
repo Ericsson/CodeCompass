@@ -13,7 +13,6 @@ set(ODB_SOURCES
   include/model/cppheaderinclusion.h
   include/model/cppmacro.h
   include/model/cppmacroexpansion.h
-  include/model/cppnode.h
   include/model/cppedge.h
   include/model/cppdoccomment.h)
 

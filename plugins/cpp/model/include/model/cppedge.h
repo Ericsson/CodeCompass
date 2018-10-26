@@ -5,9 +5,9 @@
 #include <string>
 #include <tuple>
 
-#include <util/hash.h>
+#include <model/file.h>
 
-#include "cppnode.h"
+#include <util/hash.h>
 
 namespace cc
 {
@@ -26,16 +26,20 @@ struct CppEdge
    */
   enum Type {
     PROVIDE,
-    USE
+    IMPLEMENT,
+    USE,
+    DEPEND
   };
 
   #pragma db id
   CppEdgeId id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<File> from;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<File> to;
 
   #pragma db not_null
@@ -57,7 +61,9 @@ inline std::string typeToString(CppEdge::Type type_)
   switch (type_)
   {
     case CppEdge::Type::PROVIDE: return "Provide";
+    case CppEdge::Type::IMPLEMENT: return "Implement";
     case CppEdge::Type::USE: return "Use";
+    case CppEdge::Type::DEPEND: return "Depend";
   }
 
   return std::string();
@@ -89,6 +95,7 @@ struct CppEdgeAttribute
   CppEdgeAttributeId id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<CppEdge> edge;
 
   #pragma db not_null

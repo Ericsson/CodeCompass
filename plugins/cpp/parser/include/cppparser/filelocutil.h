@@ -102,7 +102,7 @@ private:
   const clang::SourceManager& _clangSrcMan;
 };
 
-}
-}
+} // namespace parser
+} // namespace cc
 
 #endif

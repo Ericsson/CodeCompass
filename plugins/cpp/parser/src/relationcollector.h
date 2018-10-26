@@ -5,8 +5,6 @@
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
-#include <model/cppnode.h>
-#include <model/cppnode-odb.hxx>
 #include <model/cppedge.h>
 #include <model/cppedge-odb.hxx>
 
@@ -14,7 +12,7 @@
 
 #include <util/logutil.h>
 
-#include "filelocutil.h"
+#include <cppparser/filelocutil.h>
 
 namespace cc
 {

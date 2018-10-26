@@ -16,7 +16,7 @@ class CppPropertiesServiceTest : public ::testing::Test
 {
 public:
   CppPropertiesServiceTest() :
-    _db(cc::util::createDatabase(dbConnectionString)),
+    _db(cc::util::connectDatabase(dbConnectionString)),
     _transaction(_db),
     _cppservice(new CppServiceHandler(
       _db,
