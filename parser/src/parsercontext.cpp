@@ -54,8 +54,8 @@ ParserContext::ParserContext(
 
            std::ifstream fileStream(file->path);
            std::string fileContent(
-               (std::istreambuf_iterator<char>(fileStream)),
-               (std::istreambuf_iterator<char>()));
+             std::istreambuf_iterator<char>{fileStream},
+             std::istreambuf_iterator<char>{});
            fileStream.close();
 
            if (content->hash != util::sha1Hash(fileContent))
@@ -69,7 +69,7 @@ ParserContext::ParserContext(
        else
        {
          fileStatus.emplace(
-             file->path, cc::parser::IncrementalStatus::DELETED);
+           file->path, cc::parser::IncrementalStatus::DELETED);
          LOG(debug) << "File deleted: " << file->path;
        }
      }
