@@ -58,7 +58,7 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
   if (!defFile)
     return true;
 
-  //--- Create provide and implement relations ---//
+  //--- Create provide relations ---//
 
   if (declFile->id != defFile->id)
   {
@@ -98,7 +98,7 @@ bool RelationCollector::VisitValueDecl(clang::ValueDecl* vd_)
   if (!usedFile)
     return true;
 
-  //--- Create use and depend relations ---//
+  //--- Create use relations ---//
 
   if (userFile->id != usedFile->id)
     addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
@@ -129,7 +129,7 @@ bool RelationCollector::VisitCallExpr(clang::CallExpr* ce_)
   if (!usedFile)
     return true;
 
-  //--- Create use and depend relations ---//
+  //--- Create use relations ---//
 
   if (userFile->id != usedFile->id)
     addEdge(userFile->id, usedFile->id, model::CppEdge::USE);

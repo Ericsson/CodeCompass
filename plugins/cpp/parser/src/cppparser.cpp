@@ -411,9 +411,6 @@ bool CppParser::preparse()
               {
                 _ctx.db->erase<model::CppFriendship>(friendship.id);
               }
-
-              // Delete CppNode (connected to CppAstNode) with all its connected CppNodes
-              // TODO
             }
 
             // Delete BuildAction
@@ -424,8 +421,13 @@ bool CppParser::preparse()
               _ctx.db->erase<model::BuildAction>(source.action->id);
             }
 
-            // Delete CppNode (connected to File) with all its connected CppNodes
-            // TODO
+            // Delete CppEdge (connected to File)
+            auto delEdges = _ctx.db->query<model::CppEdge>(
+              odb::query<model::CppEdge>::from == delFile->id);
+            for (const model::CppEdge& edge : delEdges)
+            {
+              _ctx.db->erase<model::CppEdge>(edge.id);
+            }
 
             break;
           }
