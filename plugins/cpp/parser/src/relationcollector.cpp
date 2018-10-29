@@ -156,14 +156,10 @@ void RelationCollector::addEdge(
 
   model::CppEdgePtr edge = std::make_shared<model::CppEdge>();
 
-  util::OdbTransaction{_ctx.db} ([&, this]
-   {
-     auto result = _ctx.db->load<model::File>(from_);
-     edge->from = std::shared_ptr<model::File>(result);
-
-     result = _ctx.db->load<model::File>(to_);
-     edge->to = std::shared_ptr<model::File>(result);
-   });
+  edge->from = std::make_shared<model::File>();
+  edge->from->id = from_;
+  edge->to = std::make_shared<model::File>();
+  edge->to->id = to_;
 
   edge->type = type_;
   edge->id   = createIdentifier(*edge);
