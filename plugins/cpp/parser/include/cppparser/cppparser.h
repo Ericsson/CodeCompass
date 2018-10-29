@@ -10,6 +10,7 @@
 #include <clang/Tooling/Tooling.h>
 
 #include <model/buildaction.h>
+#include <model/cppnode.h>
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
@@ -25,7 +26,7 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool preparse() override;
+  virtual bool preparse(bool dry_) override;
   virtual bool parse() override;
 
 private:
@@ -81,7 +82,8 @@ private:
   int worker(const clang::tooling::CompileCommand& command_);
   
   void initBuildActions();
-  void markAsModified(model::FilePtr file_);
+  void markByInclusion(model::FilePtr file_);
+
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 
 };

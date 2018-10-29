@@ -339,7 +339,7 @@ std::vector<std::string> CppParser::getDependentParsers() const
   return std::vector<std::string>{};
 }
 
-bool CppParser::preparse()
+bool CppParser::preparse(bool dry_)
 {
   std::vector<model::FilePtr> filePtrs(_ctx.fileStatus.size());
 
@@ -358,19 +358,28 @@ bool CppParser::preparse()
                    }
                  });
 
+  // Detect changed files through C++ header inclusions.
+  util::OdbTransaction {_ctx.db} ([&]
+  {
+    for (const model::FilePtr file : filePtrs)
+    {
+      if(file)
+      {
+        markByInclusion(file);
+      }
+    }
+  }); // end of transaction
+
+  // On dry-run we are finished.
+  if(dry_)
+    return true;
+
+  // Perform maintenance actions.
   try
   {
-    util::OdbTransaction {_ctx.db} ([&]
+    util::OdbTransaction{_ctx.db}([&]
     {
-      for (const model::FilePtr& file : filePtrs)
-      {
-        if(file)
-        {
-          markAsModified(file);
-        }
-      }
-
-      for (auto& item : _ctx.fileStatus)
+      for (auto &item : _ctx.fileStatus)
       {
         switch (item.second)
         {
@@ -475,7 +484,7 @@ void CppParser::initBuildActions()
   });
 }
 
-void CppParser::markAsModified(const model::FilePtr file_)
+void CppParser::markByInclusion(model::FilePtr file_)
 {
   auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
     odb::query<model::CppHeaderInclusion>::included == file_->id);
@@ -488,7 +497,7 @@ void CppParser::markAsModified(const model::FilePtr file_)
       _ctx.fileStatus.emplace(loaded->path, IncrementalStatus::MODIFIED);
       LOG(debug) << "File modified: " << loaded->path;
 
-      markAsModified(loaded);
+      markByInclusion(loaded);
     }
   }
 }

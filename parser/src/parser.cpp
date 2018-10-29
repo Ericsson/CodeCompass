@@ -74,7 +74,11 @@ po::options_description commandLineArguments()
     ("skip,s", po::value<std::vector<std::string>>(),
       "This is a list of parsers which will be omitted during the parsing "
       "process. The possible values are the plugin names which can be listed "
-      "by --list flag.");
+      "by --list flag.")
+    ("dry-run",
+     "Performs a dry on the incremental parsing maintenance, "
+     "listing the detected changes, but without executing any "
+     "further actions modifying the state of the database.");
 
   return desc;
 }
@@ -138,6 +142,64 @@ std::string prepareProjectDir(const po::variables_map& vm_)
   }
 
   return projDir;
+}
+
+/**
+ * Lists the file statuses for added, modified and deleted files affected by
+ * incremental parsing.
+ * @param ctx_ Parser context.
+ */
+void incrementalList(cc::parser::ParserContext& ctx_)
+{
+  LOG(info) << "[Incremental parsing] Detected change list:";
+  for (const auto& item : ctx_.fileStatus)
+  {
+    switch(item.second)
+    {
+      case cc::parser::IncrementalStatus::ADDED:
+        LOG(info) << "ADDED file: " << item.first;
+        break;
+      case cc::parser::IncrementalStatus::MODIFIED:
+        LOG(info) << "MODIFIED file: " << item.first;
+        break;
+      case cc::parser::IncrementalStatus::DELETED:
+        LOG(info) << "DELETED file: " << item.first;
+        break;
+    }
+  }
+}
+
+/**
+ * Maintains and cleans up the file entries from the database as part of
+ * incremental parsing.
+ * @param ctx_ Parser context.
+ */
+void incrementalCleanup(cc::parser::ParserContext& ctx_)
+{
+  cc::util::OdbTransaction {ctx_.db} ([&]
+  {
+    for (auto& item : ctx_.fileStatus)
+    {
+      switch (item.second)
+      {
+        case cc::parser::IncrementalStatus::MODIFIED:
+        case cc::parser::IncrementalStatus::DELETED:
+        {
+          LOG(info) << "Database cleanup: " << item.first;
+
+          // Fetch file from SourceManager by path
+          cc::model::FilePtr delFile = ctx_.srcMgr.getFile(item.first);
+
+          // Delete File and FileContent (only when no other File references it)
+          ctx_.srcMgr.removeFile(*delFile);
+          break;
+        }
+        case cc::parser::IncrementalStatus::ADDED:
+          // Empty deliberately
+          break;
+      }
+    }
+  });
 }
 
 int main(int argc, char* argv[])
@@ -227,7 +289,17 @@ int main(int argc, char* argv[])
   }
 
   if (!isNewDb)
-    LOG(info) << "Project already exists, incremental parsing in action.";
+  {
+    LOG(info) << "Project already exists, incremental parsing in action"
+              << (vm.count("dry-run") ? " (DRY RUN)" : "") << ".";
+  }
+
+  if (isNewDb && vm.count("dry-run"))
+  {
+    LOG(warning) << "Dry-run can be only used with incremental parsing, "
+                    "no project found, turning --dry-run off.";
+    vm.erase("dry-run");
+  }
 
   //--- Prepare workspace and project directory ---//
   
@@ -266,44 +338,27 @@ int main(int argc, char* argv[])
   for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
     LOG(info) << "[" << *it << "] preparse started!";
-    if (!pHandler.getParser(*it)->preparse())
+    if (!pHandler.getParser(*it)->preparse(vm.count("dry-run")))
     {
       LOG(error) << "[" << *it << "] preparse failed!";
       return 2;
     }
   }
 
-  // TODO: Consider whether there is a better place for this code.
-  cc::util::OdbTransaction {ctx.db} ([&]
+  if(vm.count("dry-run"))
   {
-    for (const auto& item : ctx.fileStatus)
+    incrementalList(ctx);
+  }
+  else
+  {
+    incrementalCleanup(ctx);
+
+    // TODO: Handle errors returned by parse().
+    for (const std::string& parserName : pHandler.getTopologicalOrder())
     {
-      switch (item.second)
-      {
-        case cc::parser::IncrementalStatus::MODIFIED:
-        case cc::parser::IncrementalStatus::DELETED:
-        {
-          LOG(info) << "Database cleanup: " << item.first;
-
-          // Fetch file from SourceManager by path
-          cc::model::FilePtr delFile = srcMgr.getFile(item.first);
-
-          // Delete File and FileContent (only when no other File references it)
-          srcMgr.removeFile(*delFile);
-          break;
-        }
-        case cc::parser::IncrementalStatus::ADDED:
-          // Empty deliberately
-          break;
-      }
+      LOG(info) << "[" << parserName << "] parse started!";
+      pHandler.getParser(parserName)->parse();
     }
-  });
-
-  // TODO: Handle errors returned by parse().
-  for (const std::string& parserName : topologicalOrder)
-  {
-    LOG(info) << "[" << parserName << "] parse started!";
-    pHandler.getParser(parserName)->parse();
   }
 
   //--- Add indexes to the database ---//
