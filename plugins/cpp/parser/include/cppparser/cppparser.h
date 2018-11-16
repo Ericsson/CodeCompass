@@ -10,7 +10,6 @@
 #include <clang/Tooling/Tooling.h>
 
 #include <model/buildaction.h>
-#include <model/cppnode.h>
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
