@@ -263,5 +263,6 @@ during compilation.
 | -------- | ------- |
 | [`CMAKE_INSTALL_PREFIX`](http://cmake.org/cmake/help/v3.0/variable/CMAKE_INSTALL_PREFIX.html) | Install directory. |
 | [`CMAKE_BUILD_TYPE`](http://cmake.org/cmake/help/v3.0/variable/CMAKE_BUILD_TYPE.html)| Specifies the build type on single-configuration generators. Possible values are empty, **`Debug`**, **`Release`**. |
-| `CMAKE_CXX_COMPILER` | If the official repository of your Linux distribution doesn't contain a C++ compiler which supports C++14 then you can install one manually and set to use it. For more information see: [Useful CMake Variables](http://cmake.org/Wiki/CMake_Useful_Variables). |
-| `DATABASE` | Database type. Possible values are **`sqlite`**, **`pgsql`**. The default value is `sqlite`. |
+| `CMAKE_CXX_COMPILER` | If the official repository of your Linux distribution doesn't contain a C++ compiler which supports C++14 then you can install one manually and set to use it. For more information see: https://cmake.org/Wiki/CMake_Useful_Variables |
+| `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
+| `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. |
