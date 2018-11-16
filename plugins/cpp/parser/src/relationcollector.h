@@ -5,8 +5,6 @@
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
-#include <model/cppnode.h>
-#include <model/cppnode-odb.hxx>
 #include <model/cppedge.h>
 #include <model/cppedge-odb.hxx>
 
@@ -47,11 +45,9 @@ private:
 
   ParserContext& _ctx;
 
-  static std::unordered_set<model::CppNodeId> _nodeCache;
   static std::unordered_set<model::CppEdgeId> _edgeCache;
   static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
 
-  std::vector<model::CppNodePtr> _nodes;
   std::vector<model::CppEdgePtr> _edges;
   std::vector<model::CppEdgeAttributePtr> _edgeAttributes;
 

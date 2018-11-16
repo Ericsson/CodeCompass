@@ -394,14 +394,13 @@ bool CppParser::preparse(bool dry_)
             // Query CppAstNode
             auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
               odb::query<model::CppAstNode>::location.file == delFile->id &&
-              odb::query<model::CppAstNode>::astType ==
-              model::CppAstNode::AstType::Definition);
-            for (const model::CppAstNode &astNode : defCppAstNodes)
+              odb::query<model::CppAstNode>::astType == model::CppAstNode::AstType::Definition);
+            for (const model::CppAstNode& astNode : defCppAstNodes)
             {
               // Delete CppEntity
               auto delCppEntities = _ctx.db->query<model::CppEntity>(
                 odb::query<model::CppEntity>::astNodeId == astNode.id);
-              for (const model::CppEntity &entity : delCppEntities)
+              for (const model::CppEntity& entity : delCppEntities)
               {
                 _ctx.db->erase<model::CppEntity>(entity.id);
               }
@@ -409,7 +408,7 @@ bool CppParser::preparse(bool dry_)
               // Delete CppInheritance
               auto delCppInheritance = _ctx.db->query<model::CppInheritance>(
                 odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
-              for (const model::CppInheritance &inheritance : delCppInheritance)
+              for (const model::CppInheritance& inheritance : delCppInheritance)
               {
                 _ctx.db->erase<model::CppInheritance>(inheritance.id);
               }
@@ -417,40 +416,27 @@ bool CppParser::preparse(bool dry_)
               // Delete CppFriendship
               auto delCppFriendship = _ctx.db->query<model::CppFriendship>(
                 odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
-              for (const model::CppFriendship &friendship : delCppFriendship)
+              for (const model::CppFriendship& friendship : delCppFriendship)
               {
                 _ctx.db->erase<model::CppFriendship>(friendship.id);
-              }
-
-              // Delete CppNode (connected to CppAstNode) with all its connected CppNodes
-              auto delNodes = _ctx.db->query<model::CppNode>(
-                odb::query<model::CppNode>::domainId == std::to_string(astNode.id) &&
-                odb::query<model::CppNode>::domain == model::CppNode::CPPASTNODE);
-              for (model::CppNode &node : delNodes)
-              {
-                _ctx.db->erase<model::CppNode>(node.id);
-                // TODO: handle that RelationCollector will try to reinsert the other end of the relation
-                // Raises "[WARNING] object already persistent"
               }
             }
 
             // Delete BuildAction
             auto delSources = _ctx.db->query<model::BuildSource>(
               odb::query<model::BuildSource>::file == delFile->id);
-            for (const model::BuildSource &source : delSources)
+            for (const model::BuildSource& source : delSources)
             {
               _ctx.db->erase<model::BuildAction>(source.action->id);
             }
 
-            // Delete CppNode (connected to File) with all its connected CppNodes
-            auto delNodes = _ctx.db->query<model::CppNode>(
-              odb::query<model::CppNode>::domainId == std::to_string(delFile->id) &&
-              odb::query<model::CppNode>::domain == model::CppNode::FILE);
-            for (model::CppNode &node : delNodes)
+            // Delete CppEdge (connected to File)
+            auto delEdges = _ctx.db->query<model::CppEdge>(
+              odb::query<model::CppEdge>::from == delFile->id ||
+              odb::query<model::CppEdge>::to == delFile->id);
+            for (const model::CppEdge& edge : delEdges)
             {
-              _ctx.db->erase<model::CppNode>(node.id);
-              // TODO: handle that RelationCollector will try to reinsert the other end of the relation
-              // Raises "[WARNING] object already persistent"
+              _ctx.db->erase<model::CppEdge>(edge.id);
             }
 
             break;
@@ -461,7 +447,7 @@ bool CppParser::preparse(bool dry_)
             break;
         }
       }
-    });
+    }); // end of transaction
   }
   catch (odb::database_exception&)
   {

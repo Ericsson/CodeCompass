@@ -8,8 +8,6 @@
 
 #include <model/cppedge.h>
 #include <model/cppedge-odb.hxx>
-#include <model/cppnode.h>
-#include <model/cppnode-odb.hxx>
 
 #include <util/logutil.h>
 #include <util/dbutil.h>
@@ -415,28 +413,41 @@ std::vector<util::Graph::Node> FileDiagram::getImplementedFiles(
   const util::Graph::Node& node_,
   bool reverse_)
 {
-  std::vector<util::Graph::Node> implements;
+  std::vector<core::FileId> implements;
+  _transaction([&, this]
+  {
+    auto contained = _db->query<model::File>(
+      odb::query<model::File>::parent == std::stoull(node_) &&
+      odb::query<model::File>::type != model::File::DIRECTORY_TYPE
+    );
+    std::unordered_set<core::FileId> used;
 
-  _transaction([&, this]{
-    EdgeResult res = _db->query<model::CppEdge>(
-      (reverse_
-         ? EdgeQuery::to->domainId
-         : EdgeQuery::from->domainId) == node_ &&
-      EdgeQuery::from->domainId != EdgeQuery::to->domainId &&
-      EdgeQuery::type == model::CppEdge::IMPLEMENT);
-
-    for (const model::CppEdge& edge : res)
+    for (const model::File &file : contained)
     {
-      core::FileId fileId = reverse_ ? edge.from->domainId : edge.to->domainId;
-
-      core::FileInfo fileInfo;
-      _projectHandler.getFileInfo(fileInfo, fileId);
-
-      implements.push_back(addNode(graph_, fileInfo));
+      auto files = getProvidedFileIds(graph_, std::to_string(file.id), reverse_);
+      used.insert(files.begin(), files.end());
     }
+    for (const core::FileId& fileId : used)
+    {
+      auto file = _db->load<model::File>(std::stoull(fileId));
+      implements.push_back(std::to_string(file.get()->parent.object_id()));
+    }
+    std::sort(implements.begin(), implements.end());
+    auto it = std::unique(implements.begin(), implements.end());
+    implements.resize(it - implements.begin());
+    implements.erase(std::find(implements.begin(), implements.end(), node_));
   });
 
-  return implements;
+  std::vector<util::Graph::Node> annotated;
+
+  for (const core::FileId& fileId : implements)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, fileId);
+
+    annotated.push_back(addNode(graph_, fileInfo));
+  }
+  return annotated;
 }
 
 std::vector<util::Graph::Node> FileDiagram::getDepends(
@@ -458,28 +469,50 @@ std::vector<util::Graph::Node> FileDiagram::getDependFiles(
   const util::Graph::Node& node_,
   bool reverse_)
 {
-  std::vector<util::Graph::Node> depends;
+  std::vector<core::FileId> depends;
 
   _transaction([&, this]{
-    EdgeResult res = _db->query<model::CppEdge>(
-      (reverse_
-         ? EdgeQuery::to->domainId
-         : EdgeQuery::from->domainId) == node_ &&
-      EdgeQuery::from->domainId != EdgeQuery::to->domainId &&
-      EdgeQuery::type == model::CppEdge::DEPEND);
+    auto contained = _db->query<model::File>(
+      odb::query<model::File>::parent == std::stoull(node_) &&
+      odb::query<model::File>::type != model::File::DIRECTORY_TYPE
+      );
 
-    for (const model::CppEdge& edge : res)
+    std::unordered_set<core::FileId> used;
+
+    for(const model::File& file : contained)
     {
-      core::FileId fileId = reverse_ ? edge.from->domainId : edge.to->domainId;
-
-      core::FileInfo fileInfo;
-      _projectHandler.getFileInfo(fileInfo, fileId);
-
-      depends.push_back(addNode(graph_, fileInfo));
+      auto files = getUsedFileIds(graph_, std::to_string(file.id), reverse_);
+      used.insert(files.begin(), files.end());
     }
+
+    for(const core::FileId& fileId : used)
+    {
+      auto files =_db->query<model::File>(
+        odb::query<model::File>::id == std::stoull(fileId)
+        );
+
+      for(const model::File& file : files)
+      {
+        depends.push_back(std::to_string(file.parent.object_id()));
+      }
+    }
+
+    std::sort(depends.begin(), depends.end());
+    auto it = std::unique(depends.begin(), depends.end());
+    depends.resize(it - depends.begin());
+    depends.erase(std::find(depends.begin(), depends.end(), node_));
   });
 
-  return depends;
+  std::vector<util::Graph::Node> annotated;
+
+  for (const core::FileId& fileId: depends)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, fileId);
+
+    annotated.push_back(addNode(graph_, fileInfo));
+  }
+  return annotated;
 }
 
 std::vector<util::Graph::Node> FileDiagram::getProvides(
@@ -503,21 +536,37 @@ std::vector<util::Graph::Node> FileDiagram::getProvidedFiles(
 {
   std::vector<util::Graph::Node> depends;
 
+  std::vector<core::FileId> fileIds = getProvidedFileIds(graph_, node_, reverse_);
+
+  for (const core::FileId& fileId : fileIds)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, fileId);
+
+    depends.push_back(addNode(graph_, fileInfo));
+  }
+
+  return depends;
+}
+
+std::vector<core::FileId> FileDiagram::getProvidedFileIds(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<core::FileId> depends;
+
   _transaction([&, this]{
     EdgeResult res = _db->query<model::CppEdge>(
       (reverse_
-         ? EdgeQuery::to->domainId
-         : EdgeQuery::from->domainId) == node_ &&
+       ? EdgeQuery::to->id
+       : EdgeQuery::from->id) == std::stoull(node_) &&
       EdgeQuery::type == model::CppEdge::PROVIDE);
 
     for (const model::CppEdge& edge : res)
     {
-      core::FileId fileId = reverse_ ? edge.from->domainId : edge.to->domainId;
-
-      core::FileInfo fileInfo;
-      _projectHandler.getFileInfo(fileInfo, fileId);
-
-      depends.push_back(addNode(graph_, fileInfo));
+      core::FileId fileId = reverse_ ? std::to_string(edge.from->id) : std::to_string(edge.to->id);
+      depends.push_back(fileId);
     }
   });
 
@@ -595,21 +644,38 @@ std::vector<util::Graph::Node> FileDiagram::getUsedFiles(
 {
   std::vector<util::Graph::Node> usages;
 
+  std::vector<core::FileId> fileIds = getUsedFileIds(graph_, node_, reverse_);
+
+  for (const core::FileId& fileId: fileIds)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, fileId);
+
+    usages.push_back(addNode(graph_, fileInfo));
+  }
+
+  return usages;
+}
+
+std::vector<core::FileId> FileDiagram::getUsedFileIds(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<core::FileId> usages;
+
   _transaction([&, this]{
     EdgeResult res = _db->query<model::CppEdge>(
       (reverse_
-         ? EdgeQuery::to->domainId
-         : EdgeQuery::from->domainId) == node_ &&
+       ? EdgeQuery::to->id
+       : EdgeQuery::from->id) == std::stoull(node_) &&
       EdgeQuery::type == model::CppEdge::USE);
 
     for (const model::CppEdge& edge : res)
     {
-      core::FileId fileId = reverse_ ? edge.from->domainId : edge.to->domainId;
+      core::FileId fileId = reverse_ ? std::to_string(edge.from->id) : std::to_string(edge.to->id);
 
-      core::FileInfo fileInfo;
-      _projectHandler.getFileInfo(fileInfo, fileId);
-
-      usages.push_back(addNode(graph_, fileInfo));
+      usages.push_back(fileId);
     }
   });
 

@@ -5,9 +5,9 @@
 #include <string>
 #include <tuple>
 
-#include <util/hash.h>
+#include <model/file.h>
 
-#include "cppnode.h"
+#include <util/hash.h>
 
 namespace cc
 {
@@ -36,11 +36,11 @@ struct CppEdge
 
   #pragma db not_null
   #pragma db on_delete(cascade)
-  std::shared_ptr<CppNode> from;
+  std::shared_ptr<File> from;
 
   #pragma db not_null
   #pragma db on_delete(cascade)
-  std::shared_ptr<CppNode> to;
+  std::shared_ptr<File> to;
 
   #pragma db not_null
   Type type;
