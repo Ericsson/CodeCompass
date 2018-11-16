@@ -655,3 +655,44 @@ div.CodeMirror-linenumber {
   text-decoration: underline;
   color: #335180;
 }
+
+/* Reparse */
+
+#cpp-ast {
+  font-family: monospace;
+  font-size: 14px;
+  padding: 10px 2px;
+}
+
+/* Terminal colouring interpretation in the browser */
+.ansi.black {
+  color: #000;
+}
+
+.ansi.red {
+  color: rgb(127, 0, 0);
+}
+
+.ansi.green {
+  color: rgb(0, 147, 0);
+}
+
+.ansi.yellow {
+  color: rgb(252, 127, 0);
+}
+
+.ansi.blue {
+  color: rgb(0, 0, 127);
+}
+
+.ansi.magenta {
+  color: rgb(156, 0, 156);
+}
+
+.ansi.cyan {
+  color: rgb(0, 147, 147);
+}
+
+.ansi.white {
+  color: #666;
+}

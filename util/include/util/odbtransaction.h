@@ -132,6 +132,7 @@ public:
       s.reset();
     }
 #ifdef DATABASE_SQLITE
+    (void)_switchCurrent; // Silence unused variable warning in SQLite mode.
     // IT'S COMMENTED OUT (SLOW, VERY SLOW)
     /*else if (_switchCurrent)
     {

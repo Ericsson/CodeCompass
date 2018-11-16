@@ -12,18 +12,13 @@ namespace cc
 namespace parser
 {
 
-std::unordered_set<model::CppNodeId> RelationCollector::_nodeCache;
 std::unordered_set<model::CppEdgeId> RelationCollector::_edgeCache;
 std::unordered_set<model::CppEdgeAttributeId> RelationCollector::_edgeAttrCache;
 
 RelationCollector::RelationCollector(
   ParserContext& ctx_,
-  clang::ASTContext& astContext_,
-  MangledNameCache& mangledNameCache_,
-  std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
+  clang::ASTContext& astContext_)
   : _ctx(ctx_),
-    _mangledNameCache(mangledNameCache_),
-    _clangToAstNodeId(clangToAstNodeId_),
     _fileLocUtil(astContext_.getSourceManager())
 {
 }
@@ -33,7 +28,6 @@ RelationCollector::~RelationCollector()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    util::persistAll(_nodes, _ctx.db);
     util::persistAll(_edges, _ctx.db);
     util::persistAll(_edgeAttributes, _ctx.db);
   });
@@ -64,7 +58,7 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
   if (!defFile)
     return true;
 
-  //--- Create provide and implement relations ---//
+  //--- Create provide relations ---//
 
   if (declFile->id != defFile->id)
   {
@@ -76,17 +70,6 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
 
     addEdge(defFile->id, declFile->id, model::CppEdge::PROVIDE, attr);
   }
-
-  model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-
-  attr->key   = "implement";
-  attr->value = defFile->filename + " -> " + declFile->filename;
-
-  addEdge(
-    defFile->parent.object_id(),
-    declFile->parent.object_id(),
-    model::CppEdge::IMPLEMENT,
-    attr);
 
   return true;
 }
@@ -115,21 +98,10 @@ bool RelationCollector::VisitValueDecl(clang::ValueDecl* vd_)
   if (!usedFile)
     return true;
 
-  //--- Create use and depend relations ---//
+  //--- Create use relations ---//
 
   if (userFile->id != usedFile->id)
     addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
-
-  model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-
-  attr->key   = "depend";
-  attr->value = userFile->filename + " -> " + usedFile->filename;
-
-  addEdge(
-    userFile->parent.object_id(),
-    usedFile->parent.object_id(),
-    model::CppEdge::DEPEND,
-    attr);
 
   return true;
 }
@@ -157,28 +129,16 @@ bool RelationCollector::VisitCallExpr(clang::CallExpr* ce_)
   if (!usedFile)
     return true;
 
-  //--- Create use and depend relations ---//
+  //--- Create use relations ---//
 
   if (userFile->id != usedFile->id)
     addEdge(userFile->id, usedFile->id, model::CppEdge::USE);
-
-  model::CppEdgeAttributePtr attr = std::make_shared<model::CppEdgeAttribute>();
-
-  attr->key   = "depend";
-  attr->value = userFile->filename + " -> " + usedFile->filename;
-
-  addEdge(
-    userFile->parent.object_id(),
-    usedFile->parent.object_id(),
-    model::CppEdge::DEPEND,
-    attr);
 
   return true;
 }
 
 void RelationCollector::cleanUp()
 {
-  _nodeCache.clear();
   _edgeCache.clear();
   _edgeAttrCache.clear();
 }
@@ -192,33 +152,15 @@ void RelationCollector::addEdge(
   static std::mutex m;
   std::lock_guard<std::mutex> guard(m);
 
-  std::string fromStr     = std::to_string(from_);
-  std::string toStr       = std::to_string(to_);
-  std::string nodeTypeStr = std::to_string(model::CppNode::FILE);
-
-  //--- Add nodes ---//
-
-  model::CppNodePtr fromNode = std::make_shared<model::CppNode>();
-  fromNode->domain = model::CppNode::FILE;
-  fromNode->domainId = fromStr;
-  fromNode->id = createIdentifier(*fromNode);
-
-  if (_nodeCache.insert(fromNode->id).second)
-    _nodes.push_back(fromNode);
-
-  model::CppNodePtr toNode = std::make_shared<model::CppNode>();
-  toNode->domain = model::CppNode::FILE;
-  toNode->domainId = toStr;
-  toNode->id = createIdentifier(*toNode);
-
-  if (_nodeCache.insert(toNode->id).second)
-    _nodes.push_back(toNode);
-
   //--- Add edge ---//
 
   model::CppEdgePtr edge = std::make_shared<model::CppEdge>();
-  edge->from = fromNode;
-  edge->to   = toNode;
+
+  edge->from = std::make_shared<model::File>();
+  edge->from->id = from_;
+  edge->to = std::make_shared<model::File>();
+  edge->to->id = to_;
+
   edge->type = type_;
   edge->id   = createIdentifier(*edge);
 

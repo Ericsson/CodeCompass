@@ -1,7 +1,8 @@
 #include <parser/sourcemanager.h>
 #include <util/odbtransaction.h>
 
-#include "filelocutil.h"
+#include <cppparser/filelocutil.h>
+
 #include "ppmacrocallback.h"
 
 namespace cc

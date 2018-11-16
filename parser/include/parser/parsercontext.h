@@ -2,7 +2,10 @@
 #define CC_PARSER_PARSERCONTEXT_H
 
 #include <memory>
+#include <unordered_map>
+
 #include <boost/program_options.hpp>
+
 #include <odb/database.hxx>
 
 namespace po = boost::program_options; 
@@ -14,24 +17,31 @@ namespace parser
 
 class SourceManager;
 
+/**
+ * Defines file status categories for incremental parsing.
+ *
+ * State in database VERSUS state on disk at parse time.
+ */
+enum class IncrementalStatus
+{
+  MODIFIED,
+  ADDED,
+  DELETED
+};
+
 struct ParserContext 
 {  
   ParserContext(
-    std::shared_ptr<odb::database> db_,
-    SourceManager& srcMgr_,
-    std::string& compassRoot_,
-    po::variables_map& options_) :
-      db(db_),
-      srcMgr(srcMgr_),
-      compassRoot(compassRoot_),
-      options(options_)
-  {
-  }
+      std::shared_ptr<odb::database> db_,
+      SourceManager& srcMgr_,
+      std::string& compassRoot_,
+      po::variables_map& options);
 
   std::shared_ptr<odb::database> db;
   SourceManager& srcMgr;
   std::string& compassRoot;
   po::variables_map& options;
+  std::unordered_map<std::string, IncrementalStatus> fileStatus;
 };
 
 } // parser

@@ -296,6 +296,11 @@ private:
     const util::Graph::Node& fileNode_,
     bool reverse_ = false);
 
+  std::vector<core::FileId> getProvidedFileIds(
+    util::Graph& graph_,
+    const util::Graph::Node& fileNode_,
+    bool reverse_ = false);
+
   /**
    * This function creates graph nodes for each build sources which related to
    * the given build target.
@@ -356,6 +361,11 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_,
     bool reverse_ = false);
+
+  std::vector<core::FileId> getUsedFileIds(
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    bool reverse_);
 
   static const Decoration centerNodeDecoration;
   static const Decoration sourceFileNodeDecoration;

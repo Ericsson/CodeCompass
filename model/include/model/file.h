@@ -70,9 +70,17 @@ struct File
   
   bool inSearchIndex = false;
 
+  std::string toString() const;
+
 #pragma db index member(path)
 #pragma db index member(parent)
 };
+
+inline std::string File::toString() const
+{
+  return std::string("File")
+    .append("\nid = ").append(std::to_string(id));
+}
 
 #pragma db view object(File)
 struct FileIdView
@@ -93,7 +101,6 @@ struct ParentIdCollector
   #pragma db column(File::parent)
   FileId parent;
 };
-  
 
 } // model
 } // cc

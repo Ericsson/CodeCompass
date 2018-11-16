@@ -5,8 +5,6 @@
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
-#include <model/cppnode.h>
-#include <model/cppnode-odb.hxx>
 #include <model/cppedge.h>
 #include <model/cppedge-odb.hxx>
 
@@ -14,8 +12,7 @@
 
 #include <util/logutil.h>
 
-#include "filelocutil.h"
-#include "manglednamecache.h"
+#include <cppparser/filelocutil.h>
 
 namespace cc
 {
@@ -27,9 +24,7 @@ class RelationCollector : public clang::RecursiveASTVisitor<RelationCollector>
 public:
   RelationCollector(
     ParserContext& ctx_,
-    clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
-    std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_);
+    clang::ASTContext& astContext_);
 
   ~RelationCollector();
 
@@ -49,14 +44,10 @@ private:
     model::CppEdgeAttributePtr attr_ = nullptr);
 
   ParserContext& _ctx;
-  MangledNameCache& _mangledNameCache;
-  std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 
-  static std::unordered_set<model::CppNodeId> _nodeCache;
   static std::unordered_set<model::CppEdgeId> _edgeCache;
   static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
 
-  std::vector<model::CppNodePtr> _nodes;
   std::vector<model::CppEdgePtr> _edges;
   std::vector<model::CppEdgeAttributePtr> _edgeAttributes;
 

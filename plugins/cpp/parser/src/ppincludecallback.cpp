@@ -1,7 +1,8 @@
 #include <parser/sourcemanager.h>
 #include <util/odbtransaction.h>
 
-#include "filelocutil.h"
+#include <cppparser/filelocutil.h>
+
 #include "ppincludecallback.h"
 
 namespace cc
@@ -64,7 +65,8 @@ void PPIncludeCallback::InclusionDirective(
   const clang::FileEntry*,
   clang::StringRef searchPath_,
   clang::StringRef,
-  const clang::Module*)
+  const clang::Module*,
+  clang::SrcMgr::CharacteristicKind)
 {
   if (searchPath_.empty())
     return;

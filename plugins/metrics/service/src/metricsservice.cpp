@@ -19,7 +19,6 @@ MetricsServiceHandler::MetricsServiceHandler(
   const cc::webserver::ServerContext& context_)
     : _db(db_),
       _transaction(db_),
-      _config(context_.options),
       _projectService(db_, datadir_, context_)
 {
 }
@@ -87,7 +86,7 @@ std::string MetricsServiceHandler::getMetricsFromDir(
       [](const model::File& file) { return file.id; });
 
     if (descendantFids.empty())
-      return "";
+      return;
 
     //--- Get metrics for these files ---//
 

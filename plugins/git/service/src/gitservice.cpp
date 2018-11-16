@@ -75,7 +75,6 @@ GitServiceHandler::GitServiceHandler(
   const cc::webserver::ServerContext& context_)
     : _db(db_),
       _transaction(db_),
-      _config(context_.options),
       _datadir(datadir_),
       _projectHandler(db_, datadir_, context_)
 {
@@ -804,6 +803,6 @@ GitServiceHandler::~GitServiceHandler()
   git_libgit2_shutdown();
 }
 
-} //namespace version
+} //namespace git
 } //namespace service
 } //namespace cc

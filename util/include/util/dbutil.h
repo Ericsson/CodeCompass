@@ -23,8 +23,14 @@ namespace cc
 {
 namespace util
 {
-
-std::shared_ptr<odb::database> createDatabase(const std::string& connStr_);
+/**
+ * This function connects to and if required, optionally creates a database.
+ * @param connStr_ The database connection string.
+ * @param create_ True to create database if does not exist; otherwise, false.
+ */
+std::shared_ptr<odb::database> connectDatabase(
+  const std::string& connStr_,
+  bool create_ = true);
 
 /**
  * This function adds indexes to the database. These indexes are added from the
