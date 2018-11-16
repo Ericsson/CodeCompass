@@ -92,7 +92,7 @@ bool checkProjectDir(const po::variables_map& vm_)
 {
   const std::string projDir
     = vm_["workspace"].as<std::string>() + '/'
-      + vm_["name"].as<std::string>();
+    + vm_["name"].as<std::string>();
 
   return fs::is_directory(projDir);
 }
@@ -154,7 +154,7 @@ void incrementalList(cc::parser::ParserContext& ctx_)
   LOG(info) << "[Incremental parsing] Detected change list:";
   for (const auto& item : ctx_.fileStatus)
   {
-    switch(item.second)
+    switch (item.second)
     {
       case cc::parser::IncrementalStatus::ADDED:
         LOG(info) << "ADDED file: " << item.first;
@@ -281,23 +281,24 @@ int main(int argc, char* argv[])
     vm["database"].as<std::string>(), false) == nullptr;
   bool isNewProject = !checkProjectDir(vm);
 
-  if (isNewProject ^ isNewDb)
+  if ((isNewProject ^ isNewDb) && !vm.count("force"))
   {
-    LOG(error)
-      << "Database and working directory existence are inconsistent. Use -f for reparsing!";
+    LOG(error) << "Database and working directory existence are inconsistent. "
+      "Use -f for reparsing!";
     return 1;
   }
 
   if (!isNewDb)
   {
-    LOG(info) << "Project already exists, incremental parsing in action"
-              << (vm.count("dry-run") ? " (DRY RUN)" : "") << ".";
+    LOG(info)
+      << "Project already exists, incremental parsing in action"
+      << (vm.count("dry-run") ? " (DRY RUN)" : "") << ".";
   }
 
   if (isNewDb && vm.count("dry-run"))
   {
     LOG(warning) << "Dry-run can be only used with incremental parsing, "
-                    "no project found, turning --dry-run off.";
+      "no project found, turning --dry-run off.";
     vm.erase("dry-run");
   }
 
@@ -310,7 +311,7 @@ int main(int argc, char* argv[])
   //--- Create and init database ---//
 
   std::shared_ptr<odb::database> db = cc::util::connectDatabase(
-      vm["database"].as<std::string>(), true);
+    vm["database"].as<std::string>(), true);
 
   std::unordered_map<std::string, cc::parser::IncrementalStatus> fileStatus;
 
@@ -345,7 +346,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  if(vm.count("dry-run"))
+  if (vm.count("dry-run"))
   {
     incrementalList(ctx);
   }
