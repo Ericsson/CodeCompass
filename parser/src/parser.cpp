@@ -288,7 +288,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  if (!isNewDb)
+  if (!isNewDb && !vm.count("force"))
   {
     LOG(info)
       << "Project already exists, incremental parsing in action"
