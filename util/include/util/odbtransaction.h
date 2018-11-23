@@ -175,12 +175,16 @@ void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
         << item->toString();
       LOG(warning)
         << ex.what() << std::endl
-        << "AST nodes in this translation unit will be ignored!";
+        << "Further changes in this transaction will might be ignored!";
     }
     catch (const odb::database_exception& ex)
     {
-      // TODO: Error code should be checked and rethrow if it is not unique
-      // constraint error. Error code may be database specific.
+      LOG(debug)
+        << item->toString();
+      LOG(error)
+        << ex.what() << std::endl;
+
+      throw;
     }
   }
 }
