@@ -393,8 +393,7 @@ bool CppParser::preparse(bool dry_)
 
             // Query CppAstNode
             auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
-              odb::query<model::CppAstNode>::location.file == delFile->id &&
-              odb::query<model::CppAstNode>::astType == model::CppAstNode::AstType::Definition);
+              odb::query<model::CppAstNode>::location.file == delFile->id);
             for (const model::CppAstNode& astNode : defCppAstNodes)
             {
               // Delete CppEntity
