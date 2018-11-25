@@ -179,11 +179,17 @@ void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
     }
     catch (const odb::database_exception& ex)
     {
-      LOG(debug)
-        << item->toString();
-      LOG(error)
-        << ex.what() << std::endl;
+      LOG(debug) << item->toString();
 
+#ifdef DATABASE_PGSQL
+      if (std::string(ex.what()).find("25P02") != std::string::npos)
+      {
+        LOG(error) << "The transaction was aborted due to previous error, omitting further changes!";
+        break;
+      }
+#endif
+
+      LOG(error) << ex.what() << std::endl;
       throw;
     }
   }
