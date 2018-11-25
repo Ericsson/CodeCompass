@@ -432,7 +432,7 @@ bool CppParser::preparse(bool dry_)
             // Delete CppEdge (connected to File)
             auto delEdges = _ctx.db->query<model::CppEdge>(
               odb::query<model::CppEdge>::from == delFile->id ||
-              odb::query<model::CppEdge>::to == delFile->id);
+              odb::query<model::CppEdge>::to == delFile->id); // TODO: maybe deletion for the from side is sufficient?
             for (const model::CppEdge& edge : delEdges)
             {
               _ctx.db->erase<model::CppEdge>(edge.id);
