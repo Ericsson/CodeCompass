@@ -48,8 +48,8 @@ private:
   static std::unordered_set<model::CppEdgeId> _edgeCache;
   static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
 
-  std::vector<model::CppEdgePtr> _edges;
-  std::vector<model::CppEdgeAttributePtr> _edgeAttributes;
+  std::vector<model::CppEdgePtr> _newEdges;
+  std::vector<model::CppEdgeAttributePtr> _newEdgeAttributes;
 
   FileLocUtil _fileLocUtil;
 };

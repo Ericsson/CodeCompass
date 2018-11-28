@@ -21,6 +21,22 @@ RelationCollector::RelationCollector(
   : _ctx(ctx_),
     _fileLocUtil(astContext_.getSourceManager())
 {
+  // Fill edge cache on first object initialization
+  // Note that the caches are static members.
+  if (_edgeCache.empty())
+  {
+    util::OdbTransaction{_ctx.db}([this]
+    {
+      for (const model::CppEdge &edge : _ctx.db->query<model::CppEdge>())
+      {
+        _edgeCache.insert(edge.id);
+      }
+      for (const model::CppEdgeAttribute &edgeAttr : _ctx.db->query<model::CppEdgeAttribute>())
+      {
+        _edgeAttrCache.insert(edgeAttr.id);
+      }
+    }); // end of transaction
+  }
 }
 
 RelationCollector::~RelationCollector()
@@ -28,8 +44,8 @@ RelationCollector::~RelationCollector()
   _ctx.srcMgr.persistFiles();
 
   (util::OdbTransaction(_ctx.db))([this]{
-    util::persistAll(_edges, _ctx.db);
-    util::persistAll(_edgeAttributes, _ctx.db);
+    util::persistAll(_newEdges, _ctx.db);
+    util::persistAll(_newEdgeAttributes, _ctx.db);
   });
 }
 
@@ -166,7 +182,7 @@ void RelationCollector::addEdge(
 
   if (_edgeCache.insert(edge->id).second)
   {
-    _edges.push_back(edge);
+    _newEdges.push_back(edge);
 
     //--- Add edge attribute ---//
 
@@ -176,7 +192,7 @@ void RelationCollector::addEdge(
       attr_->id = model::createIdentifier(*attr_);
 
       if (_edgeAttrCache.insert(attr_->id).second)
-        _edgeAttributes.push_back(attr_);
+        _newEdgeAttributes.push_back(attr_);
     }
   }
 }
