@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <future>
+#include <cstring>
 
 #include <odb/database.hxx>
 #include <odb/transaction.hxx>
@@ -175,14 +176,14 @@ void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
         << item->toString();
       LOG(warning)
         << ex.what() << std::endl
-        << "Further changes in this transaction will might be ignored!";
+        << "Further changes in this transaction will be ignored!";
     }
     catch (const odb::database_exception& ex)
     {
       LOG(debug) << item->toString();
 
 #ifdef DATABASE_PGSQL
-      if (std::string(ex.what()).find("25P02") != std::string::npos)
+      if (std::strstr(ex.what(), "25P02") != nullptr)
       {
         LOG(error) << "The transaction was aborted due to previous error, omitting further changes!";
         break;
