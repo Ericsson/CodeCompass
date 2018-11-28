@@ -435,7 +435,9 @@ std::vector<util::Graph::Node> FileDiagram::getImplementedFiles(
     std::sort(implements.begin(), implements.end());
     auto it = std::unique(implements.begin(), implements.end());
     implements.resize(it - implements.begin());
-    implements.erase(std::find(implements.begin(), implements.end(), node_));
+    implements.erase(std::remove_if(implements.begin(), implements.end(),
+                     [&node_](const util::Graph::Node& n){ return node_ == n; }),
+                     implements.end());
   });
 
   std::vector<util::Graph::Node> annotated;
@@ -500,7 +502,9 @@ std::vector<util::Graph::Node> FileDiagram::getDependFiles(
     std::sort(depends.begin(), depends.end());
     auto it = std::unique(depends.begin(), depends.end());
     depends.resize(it - depends.begin());
-    depends.erase(std::find(depends.begin(), depends.end(), node_));
+    depends.erase(std::remove_if(depends.begin(), depends.end(),
+                     [&node_](const util::Graph::Node& n){ return node_ == n; }),
+                     depends.end());
   });
 
   std::vector<util::Graph::Node> annotated;
