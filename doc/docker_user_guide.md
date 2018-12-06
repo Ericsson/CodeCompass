@@ -52,9 +52,10 @@ the CodeCompass.
 
 ## Compiling CodeCompass
 
-There are three wrapper script in the
+There are four wrapper script in the
 ``<cc_source_dir>/scripts/docker/CC-Devel`` directory beside the ``Dockerfile``.
 These scripts performs the development steps. They should be run in order.
+(Explained later.)
 
 The builder container mount two directories while it is running. The first one
 which contains CodeCompass source. The second one where the result of the
@@ -70,8 +71,13 @@ Additionally the ``configurecc.sh`` uses the
 
 - CC_BUILD_TYPE what defines build type as the cmake requires, for example
 ``Debug``
+- CC_DATABASE_TYPE what defines the underlined database type. It can be sqlite or pgsql.
 
-### Get CodeCompass source
+Additionally the ``fetchcc.sh`` and ``create_base_images.sh``uses the
+
+- CC_URL points to the CodeCompass git repository
+
+### 1. Get CodeCompass source
 
 If the latest master version is necessary to build then nothing to do here,
 because that was downloaded to compile the ``compass-devel`` image before. If
@@ -82,25 +88,38 @@ it.
 
 ```bash
 <cc_source_dir>/scripts/docker/CC-devel/fetchcc.sh \
-  -u <other_compass_repository_url> -s <cc_source_dir>
+  [-u <other_compass_repository_url>] [-s <cc_source_dir>] \
+  [-b <cc_branch>]
 ```
 
 This command simply clones the CodeCompass source from a repository that the
 ``<url>`` determines. (This action can be performed on the developer's machine
 with native git commands too.)
 
-### Configure CodeCompass
+### 2. Configure CodeCompass source to compile
 
 The build system of the CodeCompass is ``cmake``. When the source is available,
 ``cmake`` requires a configuration step what create makefiles. This task
 performed by ``configurecc.sh`` script.
 
+```bash
+<cc_source_dir>/scripts/docker/CC-devel/configurecc.sh \
+  -o <output_dir> -s <cc_source_dir> [-d <database_type>] \
+  [-t <build_type>]
+```
+
 The directory pointed by ``CC_BUILD`` (or -o option) will be contain a ``build``
 subdirectory that populated with files that cmake generates.
 
-### Build CodeCompass
+### 3. Build CodeCompass
 
 The ``buildcc.sh`` script performs the build and install steps of CodeCompass.
+
+```bash
+<cc_source_dir>/scripts/docker/CC-devel/buildcc.sh \
+  [-s <source directory>] [-o <output directory>]
+```
+
 If something went wrong during build then the developer can edit the source of
 CodeCompass on the developer's machine as him/her could be done in an usual
 development environment.
@@ -108,11 +127,35 @@ development environment.
 After successful build the directory pointed by ``CC_BUILD`` (or -o option)
 will be contain an ``install`` subdirectory that contains CodeCompass binaries.
 
+### 4. Troubleshooting the builder container
+
+The ``shellcc.sh`` script can be used to try/troubleshoot/develop the builder image. It starts a shell in a new container that based on compass-devel image. Normally not necessary to use.
+
+```bash
+<cc_source_dir>/scripts/docker/CC-devel/shellcc.sh \
+  -o <output_dir> -s <cc_source_dir> [-u]
+```
+
+### Example to compile CodeCompass builder image
+
+```bash
+cc_src="~/compass/zomen2"
+git checkout https://github.com/zomen2/CodeCompass ${cc_src}
+
+export CC_SOURCE="~/compass/source"
+${cc_src}/scripts/docker/CC-devel/fetchcc.sh
+
+export CC_BUILD="~/compass/build"
+${cc_src}/scripts/docker/CC-devel/configurecc.sh
+${cc_src}/scripts/docker/CC-devel/buildcc.sh
+```
+
 ## Installing docker-compose
 
 The runtime environment is based on ``docker-compose``. Applications that are
 parts of the environment run in their containers. The ``docker-compose`` by
 ``docker-compose.yaml`` file glue them together.
+
 [Install Docker Compose](https://docs.docker.com/compose/install/)
 
 ## Set up CodeCompass runtime environment
@@ -120,17 +163,29 @@ parts of the environment run in their containers. The ``docker-compose`` by
 The purpose of this environment that the developer can quickly try
 CodeCompass on his/her developer's machine. CodeCompass is a complex networked
 application, it is not trivial to set-up a well established environment for it.
+The different roles in a host based network are realized by different
+containers. Script below controls assembling of necessary images of the whole
+demo environment.
 
-The ``create_base_images.sh`` script controls assembling of necessary images.
+```bash
+<cc_source_dir>/scripts/docker/CC-Runtime/create_base_images.sh \
+  [-u <other_compass_repository_url>] [-b <cc_branch>]
+```
+
+It uses the previously built compass-devel image, build a new CodeCompass from
+the specified source and pulls the additional necessary images from their docker
+repositories. (After calling ``create_base_images.sh`` run the
+``docker images`` command that shows the created/pulled images.)
+
 This script depends on the ``compass-devel`` image, so that should be created
 first as described in chapter
 [Create CodeCompass development environment](#create-codecompass-development-environment)
 
 The CodeCompass repository contains a demonstration parser which parses
 ``xerces`` project. The xerces source should be downloaded by hand into the
-``CC-Runtime/xercessrc`` directory before the parser started (up). (An other
-parser can download its project automatically. See
-``CC-Runtime/xerces/bin/project_specific.sh``)
+``CC-Runtime/xercessrc`` directory before the parser started (up). (Your  
+parser for your project can download its project automatically. See
+implementation of ``CC-Runtime/xerces/bin/project_specific.sh``)
 
 ## Running CodeCompass
 
@@ -142,8 +197,8 @@ cd CC-Runtime
 ```
 
 In contrast by its name this script (now) only starts the backend database. But
-writes the further necessary commands to the console. The next command should be
-started in an other shell:
+writes the further necessary commands to the console. The commands should be
+started in an other shell, because the first are used by the database server:
 
 ```bash
 docker-compose -f <cc_source_dir>/scripts/docker/CC-Runtime/docker-compose.yaml up xercesparser
