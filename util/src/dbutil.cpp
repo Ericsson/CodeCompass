@@ -130,11 +130,15 @@ void sqliteRegexImpl(
 
 #ifdef DATABASE_PGSQL
 /**
- * This function checks the existance of a postgres database and
+ * This function checks the existance of a PostgreSQL database and
  * optionally creates the database if it doesn't exists.
- * @return True if the database exists after the function call; otherwise, false.
+ * @return True if the database exists after the function call; otherwise,
+ *   false.
  */
-bool checkPsqlDatbase(const std::string& connStr_, const std::string dbName_, bool create_)
+bool checkPsqlDatbase(
+  const std::string& connStr_,
+  const std::string& dbName_,
+  bool create_)
 {
   std::size_t colonPos = connStr_.find(':');
   std::string database = connStr_.substr(0, colonPos);
@@ -152,7 +156,7 @@ bool checkPsqlDatbase(const std::string& connStr_, const std::string dbName_, bo
     bool exists = connection->execute(
       "SELECT 1 FROM pg_database WHERE datname = '" + dbName_ + "'") > 0;
 
-    if(!exists && create_)
+    if (!exists && create_)
     {
       std::string createCmd = "CREATE DATABASE " + dbName_
         + " ENCODING = 'SQL_ASCII'"
@@ -173,7 +177,10 @@ bool checkPsqlDatbase(const std::string& connStr_, const std::string dbName_, bo
   catch (const odb::exception& ex)
   {
     LOG(warning) << ex.what();
+    throw;
   }
+
+  return false;
 }
 #endif
 
@@ -269,7 +276,9 @@ namespace util
  */
 static std::map<std::string, std::shared_ptr<odb::database>> databasePool;
 
-std::shared_ptr<odb::database> connectDatabase(const std::string& connStr_, bool create_)
+std::shared_ptr<odb::database> connectDatabase(
+  const std::string& connStr_,
+  bool create_)
 {
   auto iter = databasePool.find(connStr_);
   if (iter != databasePool.end())

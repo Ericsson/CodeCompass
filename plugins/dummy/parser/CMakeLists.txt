@@ -7,4 +7,6 @@ include_directories(
 add_library(dummyparser SHARED
   src/dummyparser.cpp)
 
+target_compile_options(dummyparser PUBLIC -Wno-unknown-pragmas)
+
 install(TARGETS dummyparser DESTINATION ${INSTALL_PARSER_DIR})

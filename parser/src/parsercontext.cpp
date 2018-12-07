@@ -19,14 +19,14 @@ namespace parser
 {
 
 ParserContext::ParserContext(
-    std::shared_ptr<odb::database> db_,
-    SourceManager& srcMgr_,
-    std::string& compassRoot_,
-    po::variables_map& options_):
-      db(db_),
-      srcMgr(srcMgr_),
-      options(options_),
-      compassRoot(compassRoot_)
+  std::shared_ptr<odb::database> db_,
+  SourceManager& srcMgr_,
+  std::string& compassRoot_,
+  po::variables_map& options_) :
+    db(db_),
+    srcMgr(srcMgr_),
+    compassRoot(compassRoot_),
+    options(options_)
 {
   std::unordered_map<std::string, std::string> fileHashes;
 

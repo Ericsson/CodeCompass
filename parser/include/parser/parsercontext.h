@@ -32,10 +32,10 @@ enum class IncrementalStatus
 struct ParserContext 
 {  
   ParserContext(
-      std::shared_ptr<odb::database> db_,
-      SourceManager& srcMgr_,
-      std::string& compassRoot_,
-      po::variables_map& options);
+    std::shared_ptr<odb::database> db_,
+    SourceManager& srcMgr_,
+    std::string& compassRoot_,
+    po::variables_map& options_);
 
   std::shared_ptr<odb::database> db;
   SourceManager& srcMgr;

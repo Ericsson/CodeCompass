@@ -40,7 +40,7 @@ public:
    * but do not execute any maintenance actions.
    * @return Return true if the preparse was success, false otherwise.
    */
-  virtual bool preparse(bool dry_ = false)
+  virtual bool preparse(bool /* dry_ */ = false)
   {
     return true;
   }

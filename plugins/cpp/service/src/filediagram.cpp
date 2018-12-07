@@ -554,7 +554,7 @@ std::vector<util::Graph::Node> FileDiagram::getProvidedFiles(
 }
 
 std::vector<core::FileId> FileDiagram::getProvidedFileIds(
-  util::Graph& graph_,
+  util::Graph&,
   const util::Graph::Node& node_,
   bool reverse_)
 {
@@ -662,7 +662,7 @@ std::vector<util::Graph::Node> FileDiagram::getUsedFiles(
 }
 
 std::vector<core::FileId> FileDiagram::getUsedFileIds(
-  util::Graph& graph_,
+  util::Graph&,
   const util::Graph::Node& node_,
   bool reverse_)
 {

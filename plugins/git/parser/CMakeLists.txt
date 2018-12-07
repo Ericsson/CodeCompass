@@ -6,6 +6,8 @@ include_directories(
 add_library(gitparser SHARED 
   src/gitparser.cpp)
 
+target_compile_options(gitparser PUBLIC -Wno-unknown-pragmas)
+
 target_link_libraries(gitparser
   util
   git2
