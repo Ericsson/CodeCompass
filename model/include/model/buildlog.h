@@ -44,6 +44,7 @@ struct BuildLog
   BuildLogMessage log;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   std::shared_ptr<BuildAction> action;
 
   #pragma db null

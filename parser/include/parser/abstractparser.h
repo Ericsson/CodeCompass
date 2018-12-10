@@ -15,7 +15,7 @@ class AbstractParser
 {
 public:
   /**
-   * Constructor, initalize the parsers
+   * Constructor, initialize the parsers
    * @param ctx_ - Parser context options
    */
   AbstractParser(ParserContext& ctx_) : _ctx(ctx_){} 
@@ -32,6 +32,18 @@ public:
    * @return dependent parsers
    */
   virtual std::vector<std::string> getDependentParsers() const = 0;
+
+  /**
+   * Maintains and cleans up the database in preparation of
+   * incremental parsing.
+   * @param dry_ When true, perform a dry-run and only detect the changed files,
+   * but do not execute any maintenance actions.
+   * @return Return true if the preparse was success, false otherwise.
+   */
+  virtual bool preparse(bool dry_ = false)
+  {
+    return true;
+  }
 
   /**
    * Method parses a path or a compilation database

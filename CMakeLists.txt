@@ -7,7 +7,8 @@ include(Config.cmake)
 # Utility functions
 include(Functions.cmake)
 
-enable_testing()
+# Do some sanity check on the testing setup and enable testing if applicable.
+include(Testing.cmake)
 
 find_package(Threads REQUIRED)
 find_package(LLVM    REQUIRED CONFIG)

@@ -156,7 +156,7 @@ function (ObjectStoreModel, TitlePane, declare, Memory, Observable, mouse,
       try {
         this.content.loadInfoTree(fileInfo);
       } catch (ex) {
-        console.warn('Exception trown by server', ex);
+        console.warn('Exception thrown by server', ex);
       }
 
       return this;

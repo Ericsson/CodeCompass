@@ -110,7 +110,7 @@ function (lang, Deferred, model) {
      * page.
      * @param {Object} module Module object.
      * @param {option} meta-information of module
-     *  - type: tyoe of the module. It can't be undefined.
+     *  - type: type of the module. It can't be undefined.
      *  - service: the current module belongs to this service 
      *    (eg. cpp menus belongs to cppservice). This is an optional parameter.
      *  - priority: Order of the module. Optional parameter. 

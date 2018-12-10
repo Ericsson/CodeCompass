@@ -1,9 +1,10 @@
-# IDEs and editors
+# IDEs and editors.
 
-nbproject
+nbproject/
+.idea/
 *.swp
 
-# Generated files and directories
+# Generated files and directories.
 
 **/*odb\.cxx
 **/*odb\.hxx
@@ -13,7 +14,3 @@ nbproject
 **/gen-cpp/
 **/gen-js/
 **/gen-java/
-
-# Other
-
-/build/

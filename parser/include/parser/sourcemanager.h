@@ -27,6 +27,23 @@ public:
   SourceManager(const SourceManager&) = delete;
   ~SourceManager();
 
+  struct AllFilesFilter
+  {
+    bool operator()(model::FilePtr file_) const { return true; }
+  };
+
+  template<typename Filter = SourceManager::AllFilesFilter>
+  std::vector<model::FilePtr> getFiles(const Filter& beta_ = Filter())
+  {
+    std::vector<model::FilePtr> files;
+
+    for (const auto& p: _files)
+      if (beta_(p.second))
+        files.push_back(p.second);
+
+    return files;
+  }
+
   /**
    * This function returns a pointer to the corresponding model::File object
    * based on the given path_. The object is read from a cache. If the file is
@@ -51,6 +68,13 @@ public:
 
   // TODO: Maybe this function shouldn't exist.
   void persistFiles();
+
+  /**
+   * This function removes the given file (and its content if necessary)
+   * from the SourceManager and also deletes it from the database.
+   * @param file_ A model::File object which is already persistent.
+   */
+  void removeFile(const model::File& file_);
 
 private:
   /**

@@ -21,9 +21,11 @@ struct CppHeaderInclusion
   int id;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   odb::lazy_shared_ptr<File> includer;
 
   #pragma db not_null
+  #pragma db on_delete(cascade)
   odb::lazy_shared_ptr<File> included;
 
   std::string toString() const
