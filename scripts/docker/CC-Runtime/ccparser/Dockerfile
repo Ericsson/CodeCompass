@@ -28,7 +28,7 @@ ENV CC_SHARED_WORKSPACE_DIR /data
 ENV SCRIPT_DIR /usr/local/bin
 
 # Copy all config file to the config directory.
-RUN mkdir -p ${CONFIG_DIR}
+RUN mkdir --parents ${CONFIG_DIR}
 COPY ./config ${CONFIG_DIR}
 
 # TODO: Change to the nearest mirror in a better way.
@@ -52,4 +52,3 @@ WORKDIR /tmp
 # Perform logging/parsing tasks. The task specialization should be placed in
 # descendant image. Create ${SCRIPT_DIR}/project_specific.sh.
 CMD ${SCRIPT_DIR}/parse_project.sh
-

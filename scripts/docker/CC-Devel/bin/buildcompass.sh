@@ -23,23 +23,19 @@ if [[ ! -z "${3}" ]]; then
     exit 2
 fi
 
-CODE_COMPASS_SRC_DIR="${1}"
-CODE_COMPASS_OUTPUT_DIR="${2}"
+CODE_COMPASS_SRC_DIR=$(readlink --canonicalize-existing --verbose "${1}")
+CODE_COMPASS_OUTPUT_DIR=$(readlink --canonicalize-existing --verbose "${2}")
 
 CODE_COMPASS_BUILD_DIR="${CODE_COMPASS_OUTPUT_DIR}/build"
 CODE_COMPASS_INSTALL_DIR="${CODE_COMPASS_OUTPUT_DIR}/install"
-CODE_COMPASS_NPM_DIR="${CODE_COMPASS_OUTPUT_DIR}/npm"
 
-mkdir -p "${CODE_COMPASS_BUILD_DIR}"
-mkdir -p "${CODE_COMPASS_INSTALL_DIR}"
-mkdir -p "${CODE_COMPASS_NPM_DIR}"
+mkdir --parents "${CODE_COMPASS_BUILD_DIR}"
+mkdir --parents "${CODE_COMPASS_INSTALL_DIR}"
 
 SCRIPT_DIR=$(readlink --canonicalize-existing --verbose                        \
     "$(dirname "$(which "${0}")")")
 source "${SCRIPT_DIR}/builder_config.sh"
 
-export NPM_CONFIG_PREFIX="${CODE_COMPASS_NPM_DIR}"
-
 cd "${CODE_COMPASS_BUILD_DIR}"
-cmake --build . -- -j $(nproc)
+cmake --build . -- --jobs $(nproc)
 make install

@@ -28,7 +28,7 @@ cc_source_dir="${CC_SOURCE}"
 cc_output_dir="${CC_BUILD}"
 cc_build_type="${CC_BUILD_TYPE}"
 cc_database_type="${CC_DATABASE_TYPE}"
-while getopts ":hs:o:t:" option; do
+while getopts ":hd:s:o:t:" option; do
     case ${option} in
         h)
             usage

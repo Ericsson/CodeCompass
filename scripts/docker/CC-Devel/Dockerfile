@@ -1,4 +1,10 @@
-FROM ubuntu:16.04
+ARG UBUNTU_VERSION=16.04
+
+FROM ubuntu:${UBUNTU_VERSION}
+
+ARG UBUNTU_VERSION
+
+LABEL com.ericsson.codecompass.ubuntu.version="${UBUNTU_VERSION}"
 
 RUN apt-get update                                                             \
   && DEBIAN_FRONTEND=noninteractive apt-get install --yes locales
@@ -10,38 +16,6 @@ RUN sed --in-place --expression='s/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/'     \
 
 ENV LANG en_US.UTF-8
 
-RUN apt-get install --yes \
-    ant \
-    autoconf \
-    automake \
-    bison \
-    cmake \
-    flex \
-    gcc-5-plugin-dev \
-    git \
-    libboost-all-dev \
-    libboost-filesystem1.58.0 \
-    libboost-log1.58.0 \
-    libboost-program-options1.58.0 \
-    libboost-thread1.58.0 \
-    libcutl-dev \
-    libevent-dev \
-    libgit2-dev \
-    libgraphviz-dev \
-    libgtest-dev \
-    libmagic-dev \
-    libpq-dev \
-    libsqlite3-dev \
-    libssl-dev \
-    libtool \
-    lsb-release \
-    make \
-    openjdk-8-jdk-headless \
-    pkg-config \
-    wget \
-    xz-utils \
-    zlib1g-dev
-
 WORKDIR /root
 COPY ./bin ./bin
 RUN chmod u+x \
@@ -49,16 +23,14 @@ RUN chmod u+x \
     ./bin/install_thrift.sh \
     ./bin/install_dbaccess.sh \
     ./bin/install_llvm.sh \
-    ./bin/install_nvm.sh
+    ./bin/install_dependencies.sh
+
+RUN ./bin/install_dependencies.sh ${UBUNTU_VERSION}
 
 RUN ./bin/install_gtest.sh \
-  && ./bin/install_thrift.sh -t "0.10.0" \
+  && ./bin/install_thrift.sh -t "0.11.0" \
   && ./bin/install_dbaccess.sh \
-  && ./bin/install_llvm.sh -l "6.0.0" \
-  && wget -qO- \
-    https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh \
-    | NVM_DIR=/opt/nvm /bin/bash \
-  && ./bin/install_nvm.sh
+  && ./bin/install_llvm.sh -l "7.0.0"
 
 RUN mv \
     /root/bin/fetchcompass.sh \
@@ -72,4 +44,3 @@ RUN mv \
     /usr/local/bin/buildcompass.sh
 
 WORKDIR /tmp
-

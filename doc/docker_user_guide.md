@@ -21,10 +21,18 @@ Using this way of CodeCompass development not requires full understanding of
 Docker. The steps of development wrapped with shell scripts which hides the
 dirty work.
 
-## Installing Docker
+## Necessary tools to cretate development images and runtime environment
 
 On the developer host the Docker software should be installed. (See
 [Install Docker](https://docs.docker.com/install/))
+
+The runtime environment is based on ``docker-compose``. Applications that are
+parts of the environment run in their containers.
+
+(See [Install Docker Compose](https://docs.docker.com/compose/install/))
+
+
+Bash and [jq](https://stedolan.github.io/jq/) also necessary.
 
 ## Create CodeCompass development environment
 
@@ -36,9 +44,12 @@ To create docker image that contains all necessary tools to make a CodeCompass
 binary:
 
 ```bash
-git clone https://github.com/Ericsson/CodeCompass <cc_source_dir>
-docker build --tag compass-devel <cc_source_dir>/scripts/docker/CC-Devel
+git clone https://github.com/Ericsson/CodeCompass <cc_source_dir> \
+    docker build --tag compass-devel --build-arg UBUNTU_VERSION=<version> \
+    <cc_source_dir>/scripts/docker/CC-Devel
 ```
+
+Two ubuntu LTS version are supported: *16.04* and *18.04*. If none of them specified the *16.04* will be the default.
 
 This is a long running task, because a complete LLVM is necessary to compile
 (among others). When it is built, the image consumes about 4GB on the
@@ -133,7 +144,7 @@ The ``shellcc.sh`` script can be used to try/troubleshoot/develop the builder im
 
 ```bash
 <cc_source_dir>/scripts/docker/CC-devel/shellcc.sh \
-  -o <output_dir> -s <cc_source_dir> [-u]
+  [-o <output_dir>] [-s <cc_source_dir>] [-u]
 ```
 
 ### Example to compile CodeCompass builder image
@@ -150,14 +161,6 @@ ${cc_src}/scripts/docker/CC-devel/configurecc.sh
 ${cc_src}/scripts/docker/CC-devel/buildcc.sh
 ```
 
-## Installing docker-compose
-
-The runtime environment is based on ``docker-compose``. Applications that are
-parts of the environment run in their containers. The ``docker-compose`` by
-``docker-compose.yaml`` file glue them together.
-
-[Install Docker Compose](https://docs.docker.com/compose/install/)
-
 ## Set up CodeCompass runtime environment
 
 The purpose of this environment that the developer can quickly try
@@ -172,7 +175,9 @@ demo environment.
   [-u <other_compass_repository_url>] [-b <cc_branch>]
 ```
 
-It uses the previously built compass-devel image, build a new CodeCompass from
+Behind the scenes the ``docker-compose`` by
+``docker-compose.yaml`` file glues parts of the runtime applications together.
+It uses the previously built ``compass-devel image``, build a new CodeCompass from
 the specified source and pulls the additional necessary images from their docker
 repositories. (After calling ``create_base_images.sh`` run the
 ``docker images`` command that shows the created/pulled images.)

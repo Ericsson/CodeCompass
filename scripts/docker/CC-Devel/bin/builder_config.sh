@@ -2,9 +2,6 @@ CODE_COMPASS_DEVELOPER_HOME="/tmp/developer"
 mkdir --parents "${CODE_COMPASS_DEVELOPER_HOME}"
 export HOME="${CODE_COMPASS_DEVELOPER_HOME}"
 
-export NVM_DIR="/opt/nvm"
-source "${NVM_DIR}/nvm.sh"
-
 THRIFT_INSTALL_DIR="/opt/thrift"
 ODB_INSTALL_DIR="/opt/odb"
 CC_INSTALL_DIR="/opt/CodeCompass"

@@ -31,12 +31,14 @@ password=${DB_PASS}\
 "
 
 # Set environment variables to run CodeCompass
-export LD_LIBRARY_PATH="/opt/thrift/lib:/opt/odb/lib:/opt/CodeCompass/lib:/opt/CodeCompass/lib/serviceplugin"
+export LD_LIBRARY_PATH="/opt/thrift/lib:\
+/opt/odb/lib:\
+/opt/CodeCompass/lib:\
+/opt/CodeCompass/lib/serviceplugin"
 export PATH="/opt/CodeCompass/bin:${PATH}"
 
 # Start webserver
-cd /opt/CodeCompass/bin # Workaround for CC bug.
-./keepalive ./CodeCompass_webserver \
-  --workspace "${SHARED_WORKSPACE_DIR}" \
-  --port "${CC_PORT}" \
+keepalive /opt/CodeCompass/bin/CodeCompass_webserver                           \
+  --workspace "${SHARED_WORKSPACE_DIR}"                                        \
+  --port "${CC_PORT}"                                                          \
   --database "${DB_CONNECTION_STRING}"

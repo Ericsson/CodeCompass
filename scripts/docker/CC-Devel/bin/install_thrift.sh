@@ -4,15 +4,15 @@ set -e
 
 function cleanup() {
     echo "Cleaning up Thrift temporaries."
-    if  [ -n "${THRIFT_BUILD_DIR}" ]; then
-        rm -rf "${THRIFT_BUILD_DIR}"
+    if  [[ -n "${THRIFT_BUILD_DIR}" ]]; then
+        rm --recursive --force "${THRIFT_BUILD_DIR}"
     fi
 }
 
 trap cleanup EXIT
 
 function usage() {
-    echo "${0}"
+    echo "${0} [-h] -t <thrift version> [-p]"
     echo "  -h  Print this usage information. Optional."
     echo "  -t  Thrift version. Mandatory. For example '0.10.0'."
     echo "  -p  Additional PATH components."
@@ -54,12 +54,12 @@ THRIFT_INSTALL_DIR="/opt/thrift"
 FAKE_JAVA_INSTALL_DIR="/usr/local/lib"
 JAVA_LIB_INSTALL_DIR="${THRIFT_INSTALL_DIR}/lib/java"
 
-mkdir -p "${THRIFT_SRC_DIR}"
+mkdir --parents "${THRIFT_SRC_DIR}"
 wget --no-verbose \
   "http://xenia.sote.hu/ftp/mirrors/www.apache.org/thrift/${THRIFT_VERSION}/${THRIFT_ARCHIVE_NAME}" \
-  -O "${THRIFT_BUILD_DIR}/${THRIFT_ARCHIVE_NAME}"
-tar -xzf "${THRIFT_BUILD_DIR}/${THRIFT_ARCHIVE_NAME}" -C "${THRIFT_SRC_DIR}"   \
-  --strip-components=1
+  --output-document="${THRIFT_BUILD_DIR}/${THRIFT_ARCHIVE_NAME}"
+tar --extract --gunzip --file="${THRIFT_BUILD_DIR}/${THRIFT_ARCHIVE_NAME}"     \
+    --directory="${THRIFT_SRC_DIR}" --strip-components=1
 rm "${THRIFT_BUILD_DIR}/${THRIFT_ARCHIVE_NAME}"
 
 configure_cmd=("./configure" "--prefix=${THRIFT_INSTALL_DIR}"                  \
@@ -112,11 +112,11 @@ pushd "${THRIFT_SRC_DIR}"
 # https://thrift.apache.org/lib/java does not work.
 if [[ ! -z ${http_proxy} ]]; then
     pushd "lib/java"
-    ant ${ANT_FLAGS}
+    ant "${ANT_FLAGS}"
     popd
 fi
 
-make -j $(nproc) install
+make --jobs="$(nproc)" install
 
 popd
 
@@ -125,5 +125,5 @@ popd
 # $JAVA_PREFIX/usr/local/lib
 # CodeCompass needs java libs together with c++ libs. We follow the debian
 # library layout, so finally java libs should move to $PREFIX/lib/java.
-mv "${THRIFT_INSTALL_DIR}/${FAKE_JAVA_INSTALL_DIR}" "${JAVA_LIB_INSTALL_DIR}"
+mv "${THRIFT_INSTALL_DIR}${FAKE_JAVA_INSTALL_DIR}" "${JAVA_LIB_INSTALL_DIR}"
 rm -rf "${THRIFT_INSTALL_DIR}/usr"

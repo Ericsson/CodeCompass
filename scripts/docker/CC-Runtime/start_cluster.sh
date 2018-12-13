@@ -27,8 +27,8 @@ cd "${script_dir}"
 
 start_dbadmin_command=("${compose_command}" "--file" "${yaml_file}" "up"       \
     "dbadmin")
-start_parser_command=("${compose_command}" "--file" "${yaml_file}" "up"        \
-  "xercesparser")
+start_parser_command=("cd" "${script_dir}" "&&" "${compose_command}"           \
+    "--file" "${yaml_file}" "up" "xercesparser")
 
 echo "To start dbadmin use the following command:"
 echo "${start_dbadmin_command[*]}"

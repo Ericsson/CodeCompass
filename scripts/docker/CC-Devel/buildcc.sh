@@ -43,15 +43,15 @@ if [[ -z "${cc_source_dir}" ]]; then
     usage >&2
     exit 2
 fi
-cc_source_dir=${readlink --canonicalize-existing --verbose "${cc_source_dir}"}
+cc_source_dir=$(readlink --canonicalize-existing --verbose "${cc_source_dir}")
 
 if [[ -z "${cc_output_dir}" ]]; then
     echo "Output directory of build should be defined." >&2
     usage >&2
     exit 3
 fi
-cc_output_dir=${readlink --canonicalize-existing --verbose                  \
-    "${cc_output_dir}"}
+cc_output_dir=$(readlink --canonicalize-existing --verbose                     \
+    "${cc_output_dir}")
 
 developer_id="$(id --user)"
 developer_group="$(id --group)"

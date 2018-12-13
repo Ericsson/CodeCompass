@@ -11,8 +11,8 @@ trap cleanup EXIT
 
 set -e
 
-export CC="gcc"
-export CXX="g++"
+export CC="gcc-5"
+export CXX="g++-5"
 
 ODB_MIRROR="http://www.codesynthesis.com/download/odb"
 ODB_MAJOR_VERSION="2.4"

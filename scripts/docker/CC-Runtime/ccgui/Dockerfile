@@ -17,12 +17,12 @@ ENV SHARED_WORKSPACE_DIR   ${shared_workspace_dir:-/data}
 # TODO Prepare for configurable user.
 WORKDIR /root
 
-COPY start_webserver.sh .
-RUN chmod u+x ./start_webserver.sh
+COPY ./bin/start_webserver.sh /usr/local/bin/
+RUN chmod u+x /usr/local/bin/start_webserver.sh
 
 EXPOSE ${WEBSERVER_PORT}
 
-CMD ./start_webserver.sh \
+CMD start_webserver.sh \
     ${DATABASE_HOST} \
     ${DATABASE_PORT} \
     ${DATABASE_USER_NAME} \
