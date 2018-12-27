@@ -44,6 +44,7 @@ int MainRequestHandler::operator()(
       return begin_request_handler(conn_);
 
     case MG_AUTH:
+    {
       if (digestPasswdFile.empty())
         return MG_TRUE;
 
@@ -62,6 +63,10 @@ int MainRequestHandler::operator()(
         // TODO: An internal server error response would be nicer.
         throw std::runtime_error("Password file could not be opened.");
       }
+      break;
+    }
+
+    default:
       break;
   }
 

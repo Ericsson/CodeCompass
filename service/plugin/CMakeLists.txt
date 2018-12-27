@@ -31,7 +31,7 @@ add_library(pluginthrift STATIC
   gen-cpp/plugin_types.cpp
   gen-cpp/PluginService.cpp)
 
-target_compile_options(pluginthrift PUBLIC -fPIC)
+target_compile_options(pluginthrift PUBLIC -fPIC -Wno-unknown-pragmas)
 
 add_library(pluginservice SHARED
   src/pluginservice.cpp

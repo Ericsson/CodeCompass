@@ -55,7 +55,8 @@ util::DirIterCallback GitParser::getParserCallback()
 
     //--- Clone the repo into a bare repo ---//
 
-    git_clone_options opts(GIT_CLONE_OPTIONS_INIT);
+    git_clone_options opts;
+    git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
     opts.bare = true;
 
     git_repository *out;

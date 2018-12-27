@@ -31,7 +31,7 @@ add_library(workspacethrift STATIC
   gen-cpp/workspace_types.cpp
   gen-cpp/WorkspaceService.cpp)
 
-target_compile_options(workspacethrift PUBLIC -fPIC)
+target_compile_options(workspacethrift PUBLIC -fPIC -Wno-unknown-pragmas)
 
 add_library(workspaceservice SHARED
   src/workspaceservice.cpp
