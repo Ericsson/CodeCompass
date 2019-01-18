@@ -25,7 +25,8 @@ public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool preparse(bool dry_) override;
+  virtual void markModifiedFiles() override;
+  virtual bool cleanupDatabase(bool dry_) override;
   virtual bool parse() override;
 
 private:
@@ -82,6 +83,7 @@ private:
   
   void initBuildActions();
   void markByInclusion(model::FilePtr file_);
+  std::vector<std::string> createCleanupOrder();
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 

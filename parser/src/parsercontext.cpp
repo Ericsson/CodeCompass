@@ -77,7 +77,6 @@ ParserContext::ParserContext(
      // TODO: detect ADDED files
    });
 }
-
 }
 }
 

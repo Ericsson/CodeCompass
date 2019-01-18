@@ -33,6 +33,13 @@ public:
    */
   virtual std::vector<std::string> getDependentParsers() const = 0;
 
+  virtual void markModifiedFiles(){}
+
+  virtual bool cleanupDatabase(bool dry_)
+  {
+    return true;
+  }
+
   /**
    * Maintains and cleans up the database in preparation of
    * incremental parsing.
@@ -40,10 +47,6 @@ public:
    * but do not execute any maintenance actions.
    * @return Return true if the preparse was success, false otherwise.
    */
-  virtual bool preparse(bool /* dry_ */ = false)
-  {
-    return true;
-  }
 
   /**
    * Method parses a path or a compilation database

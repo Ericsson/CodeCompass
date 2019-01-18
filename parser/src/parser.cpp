@@ -78,7 +78,10 @@ po::options_description commandLineArguments()
     ("dry-run",
      "Performs a dry on the incremental parsing maintenance, "
      "listing the detected changes, but without executing any "
-     "further actions modifying the state of the database.");
+     "further actions modifying the state of the database.")
+    ("incremental-threshold", po::value<int>()->default_value(10),
+      "This is a threshold percentage. If the total ratio of changed files "
+      "is greater than this value, full parse is forced instead of incremental parsing.");
 
   return desc;
 }
@@ -176,9 +179,9 @@ void incrementalList(cc::parser::ParserContext& ctx_)
  */
 void incrementalCleanup(cc::parser::ParserContext& ctx_)
 {
-  cc::util::OdbTransaction {ctx_.db} ([&]
+  for (auto& item : ctx_.fileStatus)
   {
-    for (auto& item : ctx_.fileStatus)
+    cc::util::OdbTransaction {ctx_.db} ([&]
     {
       switch (item.second)
       {
@@ -198,8 +201,8 @@ void incrementalCleanup(cc::parser::ParserContext& ctx_)
           // Empty deliberately
           break;
       }
-    }
-  });
+    });
+  }
 }
 
 int main(int argc, char* argv[])
@@ -339,27 +342,42 @@ int main(int argc, char* argv[])
   for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
     LOG(info) << "[" << *it << "] preparse started!";
-    if (!pHandler.getParser(*it)->preparse(vm.count("dry-run")))
-    {
-      LOG(error) << "[" << *it << "] preparse failed!";
-      return 2;
-    }
+    pHandler.getParser(*it)->markModifiedFiles();
   }
 
   if (vm.count("dry-run"))
   {
     incrementalList(ctx);
+    return 0;
   }
-  else
-  {
-    incrementalCleanup(ctx);
 
-    // TODO: Handle errors returned by parse().
-    for (const std::string& parserName : pHandler.getTopologicalOrder())
+  if(ctx.fileStatus.size() > ctx.srcMgr.filesSize() * vm["incremental-threshold"].as<int>() / 100.0)
+  {
+    LOG(info) << "The number of changed files exceeds the given incremental"
+                 "threshold ratio, full parse will be forced.";
+    vm.insert(std::make_pair("force", po::variable_value()));
+  }
+
+  if(!vm.count("force"))
+  {
+    for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
     {
-      LOG(info) << "[" << parserName << "] parse started!";
-      pHandler.getParser(parserName)->parse();
+      LOG(info) << "[" << *it << "] cleanup started!";
+      if (!pHandler.getParser(*it)->cleanupDatabase(vm.count("dry-run")))
+      {
+        LOG(error) << "[" << *it << "] cleanup failed!";
+        return 2;
+      }
     }
+
+    incrementalCleanup(ctx);
+  }
+
+  // TODO: Handle errors returned by parse().
+  for (const std::string& parserName : pHandler.getTopologicalOrder())
+  {
+    LOG(info) << "[" << parserName << "] parse started!";
+    pHandler.getParser(parserName)->parse();
   }
 
   //--- Add indexes to the database ---//

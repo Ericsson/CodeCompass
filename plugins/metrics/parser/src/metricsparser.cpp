@@ -51,7 +51,7 @@ std::vector<std::string> MetricsParser::getDependentParsers() const
   return std::vector<std::string>{};
 }
 
-bool MetricsParser::preparse(bool dry_)
+bool MetricsParser::cleanupDatabase(bool dry_)
 {
   if (!dry_)
   {

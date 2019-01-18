@@ -15,7 +15,7 @@ public:
   DummyParser(ParserContext& ctx_);
   virtual ~DummyParser();
   virtual std::vector<std::string> getDependentParsers() const override;
-  virtual bool parse() override; 
+  virtual bool parse() override;
 private:
   bool accept(const std::string& path_);
 };

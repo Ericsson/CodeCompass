@@ -45,6 +45,11 @@ public:
   }
 
   /**
+   * This function is a getter for the size of _files.
+   */
+  int filesSize();
+
+  /**
    * This function returns a pointer to the corresponding model::File object
    * based on the given path_. The object is read from a cache. If the file is
    * not in the cache yet then a model::File entry is created, persisted in the
