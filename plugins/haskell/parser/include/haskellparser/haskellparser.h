@@ -18,6 +18,7 @@ public:
   virtual bool parse() override; 
 private:
   bool accept(const std::string& path_);
+  bool parseByJson(const std::string& jsonFile_);
 };
   
 } // parser
