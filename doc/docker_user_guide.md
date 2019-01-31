@@ -44,8 +44,8 @@ To create docker image that contains all necessary tools to make a CodeCompass
 binary:
 
 ```bash
-git clone https://github.com/Ericsson/CodeCompass <cc_source_dir> \
-    docker build --tag compass-devel --build-arg UBUNTU_VERSION=<version> \
+git clone https://github.com/Ericsson/CodeCompass <cc_source_dir>
+docker build --tag compass-devel --build-arg UBUNTU_VERSION=<version> \
     <cc_source_dir>/scripts/docker/CC-Devel
 ```
 
