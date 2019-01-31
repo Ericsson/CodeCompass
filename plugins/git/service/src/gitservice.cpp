@@ -793,7 +793,7 @@ BlamePtr GitServiceHandler::getBlameData(
 BlameOptsPtr GitServiceHandler::createBlameOpts(const git_oid& newCommitOid_)
 {
   git_blame_options* blameOpts = new git_blame_options;
-  *blameOpts = GIT_BLAME_OPTIONS_INIT;
+  git_blame_init_options(blameOpts, GIT_BLAME_OPTIONS_VERSION);
   blameOpts->newest_commit = newCommitOid_;
   return BlameOptsPtr { blameOpts };
 }

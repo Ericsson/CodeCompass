@@ -267,9 +267,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.inherited(arguments);
 
       // TODO: if add new resizehandler it will not be the last node of domNode
-      var codeMirror = query('.CodeMirror', this.domNode)[0];
-      this._contextMenu.bindDomNode(
-        query('.CodeMirror-scroll', codeMirror)[0]);
+      this._contextMenu.bindDomNode(query('.CodeMirror', this.domNode)[0]);
     },
 
     resize : function () {

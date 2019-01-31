@@ -29,7 +29,7 @@ public:
 
   struct AllFilesFilter
   {
-    bool operator()(model::FilePtr file_) const { return true; }
+    bool operator()(model::FilePtr) const { return true; }
   };
 
   template<typename Filter = SourceManager::AllFilesFilter>
