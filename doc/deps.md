@@ -205,11 +205,13 @@ cd ..
 
 ### GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
-binaries are missing. You have to compile GTest manually:
+binaries are missing. You have to compile GTest manually.
 
 ```bash
 mkdir gtest
-cp -R /usr/src/gtest/* ./gtest
+cp -R /usr/src/gtest/* ./gtest      # for Ubuntu 16.04 LTS
+cp -R /usr/src/googletest/* ./gtest # for Ubuntu 18.04 LTS
+
 cd gtest
 mkdir build
 cd build
