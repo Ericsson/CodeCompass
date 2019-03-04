@@ -205,16 +205,18 @@ cd ..
 
 ### GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
-binaries are missing. You have to compile GTest manually and copy the libs to
-the right place:
+binaries are missing. You have to compile GTest manually:
 
 ```bash
-mkdir <gtest_install_dir>
-cp -R /usr/src/gtest/* <gtest_install_dir>
-cmake .
-make
-mkdir <gtest_install_dir>/lib
-mv libgtest.a libgtest_main.a <gtest_install_dir>/lib/
+mkdir gtest
+cp -R /usr/src/gtest/* ./gtest
+cd gtest
+mkdir build
+cd build
+
+cmake .. \
+  -DCMAKE_INSTALL_PREFIX=<gtest_install_dir>
+make install
 ```
 
 # Build CodeCompass
