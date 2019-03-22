@@ -81,6 +81,13 @@ std::string connStrComponent(
   const std::string& connStr_,
   const std::string& key_);
 
+/**
+ * This function returns the database driver name being used. Currently "pgsql"
+ * or "sqlite" can be returned depending on the build option giving which
+ * database system to use.
+ */
+inline std::string getDbDriver();
+
 } // util
 } // cc
 

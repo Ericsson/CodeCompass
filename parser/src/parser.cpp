@@ -317,8 +317,9 @@ int main(int argc, char* argv[])
 
   if (!db)
   {
-    LOG(error)
-      << "Couldn't connect to database. Check the connection string.";
+    LOG(error) << "Couldn't connect to database. Check the connection string. "
+      "Connection string format: \"" +
+      cc::util::getDbDriver() + ":<opt1>=<val1>;<opt2>=<val2>...\"";
     return 1;
   }
 
