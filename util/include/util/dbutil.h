@@ -86,7 +86,16 @@ std::string connStrComponent(
  * or "sqlite" can be returned depending on the build option giving which
  * database system to use.
  */
-inline std::string getDbDriver();
+inline std::string getDbDriver()
+{
+#if defined(DATABASE_PGSQL)
+  return "pgsql";
+#elif defined(DATABASE_SQLITE)
+  return "sqlite";
+#else
+  return "";
+#endif
+}
 
 } // util
 } // cc

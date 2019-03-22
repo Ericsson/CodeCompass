@@ -487,16 +487,5 @@ std::string connStrComponent(
   return connStr_.substr(pos3, pos2 - pos3);
 }
 
-std::string getDbDriver()
-{
-#if defined(DATABASE_PGSQL)
-  return "pgsql";
-#elif defined(DATABASE_SQLITE)
-  return "sqlite";
-#else
-  return "";
-#endif
-}
-
 } // util
 } // cc
