@@ -14,18 +14,12 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  int status;
-
   GTEST_LOG_(INFO) << "Testing C++ started...";
   GTEST_LOG_(INFO) << "Executing build command: " << argv[1];
-  status = system(argv[1]);
-  if (status != 0)
-    return status;
+  system(argv[1]);
 
   GTEST_LOG_(INFO) << "Executing parser command: " << argv[2];
-  status = system(argv[2]);
-  if (status != 0)
-    return status;
+  system(argv[2]);
 
   GTEST_LOG_(INFO) << "Using database for tests: " << dbConnectionString;
   ::testing::InitGoogleTest(&argc, argv);
