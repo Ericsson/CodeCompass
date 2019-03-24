@@ -154,10 +154,14 @@ bool checkPsqlDatbase(
   std::string database = connStr_.substr(0, colonPos);
   std::string options  = connStr_.substr(colonPos + 1);
 
-  const std::vector<std::string>& odbOpts = *createOdbOptions(options);
-  char** cStyleOptions = createCStyleOptions(odbOpts);
+  const boost::optional<std::vector<std::string>> odbOpts = createOdbOptions(options);
 
-  int size = odbOpts.size();
+  if (!odbOpts)
+      return false;
+
+  char** cStyleOptions = createCStyleOptions(*odbOpts);
+
+  int size = odbOpts->size();
   odb::pgsql::database db(size, cStyleOptions);
 
   odb::connection_ptr connection = db.connection();
