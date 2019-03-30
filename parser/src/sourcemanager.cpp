@@ -149,11 +149,6 @@ model::FilePtr SourceManager::getCreateFileEntry(
   return file;
 }
 
-int SourceManager::filesSize()
-{
-  return _files.size();
-}
-
 model::FilePtr SourceManager::getFile(const std::string& path_)
 {
   //--- Create canonical form of the path ---//

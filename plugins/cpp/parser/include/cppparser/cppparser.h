@@ -26,7 +26,17 @@ public:
   virtual ~CppParser();  
   virtual std::vector<std::string> getDependentParsers() const override;
   virtual void markModifiedFiles() override;
-  virtual bool cleanupDatabase(bool dry_) override;
+  /**
+   * Maintains and cleans up the database in preparation of incremental parsing.
+   *
+   * A graph is constructed from the files to be cleaned up along the inclusion
+   * relations. Then the nodes of the graph are sorted topologically.
+   * In each iteration the leaf nodes of the graph are cleaned up (paralelly),
+   * which guarantees that no file is cleaned up before its dependants.
+   *
+   * @return Returns true if the cleanup succeeded, false otherwise.
+   */
+  virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
 private:
@@ -46,12 +56,28 @@ private:
     std::size_t index;
 
     ParseJob(const clang::tooling::CompileCommand& command, std::size_t index)
-        : command(command), index(index)
+      : command(command), index(index)
     {}
 
     ParseJob(const ParseJob&) = default;
   };
 
+  struct CleanupJob
+  {
+    /**
+     * The path of the file to be cleaned up.
+     */
+    std::string path;
+
+    /**
+     * The # of the cleanup job.
+     */
+    std::size_t index;
+
+    CleanupJob(const std::string& path, std::size_t index)
+      : path(path), index(index)
+    {}
+  };
 
 
   /**
@@ -79,11 +105,12 @@ private:
   bool isSourceFile(const std::string& file_) const;
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
-  int worker(const clang::tooling::CompileCommand& command_);
+  int parseWorker(const clang::tooling::CompileCommand& command_);
   
   void initBuildActions();
   void markByInclusion(model::FilePtr file_);
-  std::vector<std::string> createCleanupOrder();
+  std::vector<std::vector<std::string>> createCleanupOrder();
+  bool cleanupWorker(const std::string& path_);
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 

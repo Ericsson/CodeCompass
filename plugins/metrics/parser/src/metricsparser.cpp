@@ -51,37 +51,34 @@ std::vector<std::string> MetricsParser::getDependentParsers() const
   return std::vector<std::string>{};
 }
 
-bool MetricsParser::cleanupDatabase(bool dry_)
+bool MetricsParser::cleanupDatabase()
 {
-  if (!dry_)
+  if (!_fileIdCache.empty())
   {
-    if (!_fileIdCache.empty())
+    try
     {
-      try
-      {
-        util::OdbTransaction {_ctx.db} ([this] {
-          for (const model::File& file
-            : _ctx.db->query<model::File>(
-            odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+      util::OdbTransaction {_ctx.db} ([this] {
+        for (const model::File& file
+          : _ctx.db->query<model::File>(
+          odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+        {
+          auto it = _ctx.fileStatus.find(file.path);
+          if (it != _ctx.fileStatus.end() &&
+              (it->second == cc::parser::IncrementalStatus::DELETED ||
+               it->second == cc::parser::IncrementalStatus::MODIFIED))
           {
-            auto it = _ctx.fileStatus.find(file.path);
-            if (it != _ctx.fileStatus.end() &&
-                (it->second == cc::parser::IncrementalStatus::DELETED ||
-                 it->second == cc::parser::IncrementalStatus::MODIFIED))
-            {
-              LOG(info) << "[metricsparser] Database cleanup: " << file.path;
+            LOG(info) << "[metricsparser] Database cleanup: " << file.path;
 
-              _ctx.db->erase_query<model::Metrics>(odb::query<model::Metrics>::file == file.id);
-              _fileIdCache.erase(file.id);
-            }
+            _ctx.db->erase_query<model::Metrics>(odb::query<model::Metrics>::file == file.id);
+            _fileIdCache.erase(file.id);
           }
-        });
-      }
-      catch (odb::database_exception&)
-      {
-        LOG(fatal) << "Transaction failed in metrics parser!";
-        return false;
-      }
+        }
+      });
+    }
+    catch (odb::database_exception&)
+    {
+      LOG(fatal) << "Transaction failed in metrics parser!";
+      return false;
     }
   }
   return true;

@@ -333,15 +333,25 @@ int main(int argc, char* argv[])
 
   //--- Start parsers ---//
 
+  /*
+   * Workflow for incremental parsing:
+   * 1. directly modified files are detected by ParserContext.
+   * 2. all plugin parsers marks the indirectly modified files.
+   * 3. all plugin parsers performs a cleanup operation.
+   * 4. global tables are cleaned up by parser.cpp.
+   * 5. all plugin parsers performs a parsing operation.
+   *
+   * In case of an initial or forced parsing, only step 5 is executed.
+   */
+
   cc::parser::SourceManager srcMgr(db);
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
-  // TODO: Handle errors returned by preparse().
   std::vector<std::string> topologicalOrder = pHandler.getTopologicalOrder();
   for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
   {
-    LOG(info) << "[" << *it << "] preparse started!";
+    LOG(info) << "[" << *it << "] started to mark modified files!";
     pHandler.getParser(*it)->markModifiedFiles();
   }
 
@@ -363,7 +373,7 @@ int main(int argc, char* argv[])
     for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
     {
       LOG(info) << "[" << *it << "] cleanup started!";
-      if (!pHandler.getParser(*it)->cleanupDatabase(vm.count("dry-run")))
+      if (!pHandler.getParser(*it)->cleanupDatabase())
       {
         LOG(error) << "[" << *it << "] cleanup failed!";
         return 2;
