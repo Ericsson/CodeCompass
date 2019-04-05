@@ -3,21 +3,22 @@
 function(generate_odb_files _src)
   foreach(_file ${_src})
     get_filename_component(_dir ${_file} DIRECTORY)
+    get_filename_component(_name ${_file} NAME)
 
-    string(REPLACE ".h" "-odb.cxx" _cxx ${_file})
-    string(REPLACE ".h" "-odb.hxx" _hxx ${_file})
-    string(REPLACE ".h" "-odb.ixx" _ixx ${_file})
-    string(REPLACE ".h" "-odb.sql" _sql ${_file})
+    string(REPLACE ".h" "-odb.cxx" _cxx ${_name})
+    string(REPLACE ".h" "-odb.hxx" _hxx ${_name})
+    string(REPLACE ".h" "-odb.ixx" _ixx ${_name})
+    string(REPLACE ".h" "-odb.sql" _sql ${_name})
 
     add_custom_command(
       OUTPUT
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_cxx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_hxx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_ixx}
-        ${CMAKE_CURRENT_SOURCE_DIR}/${_sql}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_cxx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_hxx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_ixx}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_sql}
       COMMAND
         ${ODB_EXECUTABLE} ${ODBFLAGS}
-          -o ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}
+          -o ${CMAKE_CURRENT_BINARY_DIR}
           -I ${CMAKE_CURRENT_SOURCE_DIR}/include
           -I ${CMAKE_SOURCE_DIR}/model/include
           -I ${CMAKE_SOURCE_DIR}/util/include
@@ -40,18 +41,29 @@ function(add_odb_library _name)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
   target_include_directories(${_name} PUBLIC
     ${CMAKE_SOURCE_DIR}/model/include
-    ${CMAKE_SOURCE_DIR}/util/include)
+    ${CMAKE_SOURCE_DIR}/model/include/model
+    ${CMAKE_SOURCE_DIR}/util/include
+    ${CMAKE_BINARY_DIR})
 endfunction(add_odb_library)
+
+# add new odb static library for a plugin
+function(add_odb_library_plugin _name _plugin)
+  add_odb_library(${_name} ${ARGN})
+  target_include_directories(${_name} PUBLIC
+    ${CMAKE_SOURCE_DIR}/plugins/${_plugin}/model/include
+    ${CMAKE_SOURCE_DIR}/plugins/${_plugin}/model/include/model
+    ${CMAKE_BINARY_DIR}/plugins/${_plugin})
+endfunction(add_odb_library_plugin)
 
 # This function can be used to install the ODB generated .sql files to a
 # specific directory. These files will be used to create database tables before
 # the parsing session.
 # @param _dir The model directory under which the .sql files are located.
 function(install_sql _dir)
+  file(GLOB SQL_FILES "${_dir}/*.sql")
   install(
-    DIRECTORY ${_dir}
-    DESTINATION ${INSTALL_SQL_DIR}
-    FILES_MATCHING PATTERN "*.sql")
+    FILES ${SQL_FILES}
+    DESTINATION ${INSTALL_SQL_DIR})
 endfunction(install_sql)
 
 # This function can be used to install the thrift generated .js files to a
