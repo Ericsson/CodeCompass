@@ -68,8 +68,7 @@ else()
        cd ${CMAKE_CURRENT_BINARY_DIR}/build && \
        cmake ${CMAKE_CURRENT_SOURCE_DIR}/sources/service \
          -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
-    "${CMAKE_INSTALL_PREFIX}/bin/keepalive \
-       ${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
+    "${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
        --database \"${TEST_DB}\" \
        --name cppservicetest \
        --input ${CMAKE_CURRENT_BINARY_DIR}/build/compile_commands.json \
@@ -84,8 +83,7 @@ else()
        cd ${CMAKE_CURRENT_BINARY_DIR}/build && \
        cmake ${CMAKE_CURRENT_SOURCE_DIR}/sources/parser \
          -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
-    "${CMAKE_INSTALL_PREFIX}/bin/keepalive \
-       ${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
+    "${CMAKE_INSTALL_PREFIX}/bin/CodeCompass_parser \
        --database \"${TEST_DB}\" \
        --name cppparsertest \
        --input ${CMAKE_CURRENT_BINARY_DIR}/build/compile_commands.json \
