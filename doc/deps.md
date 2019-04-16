@@ -207,10 +207,30 @@ cd ..
 The `libgtest-dev` package contains only the source files of GTest, but the
 binaries are missing. You have to compile GTest manually.
 
+#### Ubuntu 16.04 LTS
+As further complications, under Ubuntu Xenial, the *install* instructions
+are also missing from GTest's build system, so the target binaries
+have to copied manually to the install location.
+
 ```bash
 mkdir gtest
-cp -R /usr/src/gtest/* ./gtest      # for Ubuntu 16.04 LTS
-cp -R /usr/src/googletest/* ./gtest # for Ubuntu 18.04 LTS
+cp -R /usr/src/gtest/* ./gtest
+
+cd gtest
+mkdir build
+cd build
+
+cmake ..
+make
+
+mkdir -p <gtest_install_dir>/lib
+cp libgtest.a libgtest_main.a <gtest_install_dir>/lib/
+```
+
+#### Ubuntu 18.04 LTS
+```bash
+mkdir gtest
+cp -R /usr/src/googletest/* ./gtest
 
 cd gtest
 mkdir build
