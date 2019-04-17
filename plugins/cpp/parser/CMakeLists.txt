@@ -1,7 +1,5 @@
 find_package(Clang REQUIRED CONFIG)
 
-llvm_map_components_to_libnames(llvm_libs support core irreader)
-
 include_directories(
   include
   ${CMAKE_SOURCE_DIR}/parser/include
@@ -41,9 +39,7 @@ target_link_libraries(cppparser
   clangLex
   clangBasic
   clang
-  LLVMMCParser
-  LLVMOption
-  ${llvm_libs})
+  )
 
 target_compile_options(cppparser PUBLIC -Wno-unknown-pragmas)
 
