@@ -55,6 +55,8 @@ struct CppAstNode
     FieldTypeLoc,
     GlobalTypeLoc,
     LocalTypeLoc,
+    TypedefTypeLoc,
+    InheritanceTypeLoc,
     Other = 1000
   };
 
@@ -130,6 +132,8 @@ inline std::string astTypeToString(CppAstNode::AstType type_)
     case CppAstNode::AstType::FieldTypeLoc: return "FieldTypeLoc";
     case CppAstNode::AstType::GlobalTypeLoc: return "GlobalTypeLoc";
     case CppAstNode::AstType::LocalTypeLoc: return "LocalTypeLoc";
+    case CppAstNode::AstType::TypedefTypeLoc: return "TypedefTypeLoc";
+    case CppAstNode::AstType::InheritanceTypeLoc: return "InheritanceTypeLoc";
     case CppAstNode::AstType::Other: return "Other";
   }
 

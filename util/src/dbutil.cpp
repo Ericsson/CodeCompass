@@ -4,6 +4,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
@@ -23,7 +24,8 @@
 namespace
 {
 
-std::vector<std::string> createOdbOptions(const std::string& connStr_)
+boost::optional<std::vector<std::string>> createOdbOptions(
+  const std::string& connStr_)
 {
   std::vector<std::string> connOpts;
   boost::split(connOpts, connStr_, boost::is_any_of(";"));
@@ -37,17 +39,25 @@ std::vector<std::string> createOdbOptions(const std::string& connStr_)
     std::string val;
     std::size_t assignPos = opt.find('=');
 
-    if (assignPos != std::string::npos)
-    {
-      val = opt.substr(assignPos + 1);
-      opt = opt.substr(0, assignPos);
-    }
+    if (assignPos == std::string::npos)
+      return boost::none;
+
+    val = opt.substr(assignPos + 1);
+    opt = opt.substr(0, assignPos);
 
 #ifdef DATABASE_PGSQL
     if (opt == "passwdfile")
     {
       setenv("PGPASSFILE", val.c_str(), 1);
       continue;
+    }
+#endif
+
+#ifdef DATABASE_SQLITE
+    if (opt == "database" && val.substr(0, 2) == "~/")
+    {
+      if (char* home = std::getenv("HOME"))
+        val = home + val.substr(1);
     }
 #endif
 
@@ -144,10 +154,14 @@ bool checkPsqlDatbase(
   std::string database = connStr_.substr(0, colonPos);
   std::string options  = connStr_.substr(colonPos + 1);
 
-  std::vector<std::string> odbOpts = createOdbOptions(options);
-  char** cStyleOptions = createCStyleOptions(odbOpts);
+  const boost::optional<std::vector<std::string>> odbOpts = createOdbOptions(options);
 
-  int size = odbOpts.size();
+  if (!odbOpts)
+      return false;
+
+  char** cStyleOptions = createCStyleOptions(*odbOpts);
+
+  int size = odbOpts->size();
   odb::pgsql::database db(size, cStyleOptions);
 
   odb::connection_ptr connection = db.connection();
@@ -283,22 +297,26 @@ std::shared_ptr<odb::database> connectDatabase(
   auto iter = databasePool.find(connStr_);
   if (iter != databasePool.end())
   {
-    auto db = iter->second;
-
-    if (db)
-      return db;
+    if (iter->second)
+      return iter->second;
 
     databasePool.erase(iter);
   }
 
   std::size_t colonPos = connStr_.find(':');
   if (colonPos == std::string::npos)
-    return std::shared_ptr<odb::database>();
+    return nullptr;
 
   std::string database = connStr_.substr(0, colonPos);
   std::string options = connStr_.substr(colonPos + 1);
 
-  std::vector<std::string> odbOpts = createOdbOptions(options);
+  boost::optional<std::vector<std::string>> optOdbOpts
+    = createOdbOptions(options);
+
+  if (!optOdbOpts)
+    return nullptr;
+
+  const std::vector<std::string>& odbOpts = *optOdbOpts;
   char** cStyleOptions = createCStyleOptions(odbOpts);
   int optionsSize = odbOpts.size();
 

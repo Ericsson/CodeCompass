@@ -1,7 +1,5 @@
 find_package(Clang REQUIRED CONFIG)
 
-llvm_map_components_to_libnames(llvm_libs support core irreader)
-
 include_directories(
   include
   gen-cpp
@@ -75,7 +73,7 @@ target_link_libraries(cppreparseservice
   clangBasic
   clangAST
   clang
-  ${llvm_libs})
+  )
 
 install(TARGETS cppreparseservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift(gen-js/)

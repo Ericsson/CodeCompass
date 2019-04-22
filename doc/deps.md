@@ -205,16 +205,40 @@ cd ..
 
 ### GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
-binaries are missing. You have to compile GTest manually and copy the libs to
-the right place:
+binaries are missing. You have to compile GTest manually.
+
+#### Ubuntu 16.04 LTS
+As further complications, under Ubuntu Xenial, the *install* instructions
+are also missing from GTest's build system, so the target binaries
+have to copied manually to the install location.
 
 ```bash
-mkdir <gtest_install_dir>
-cp -R /usr/src/gtest/* <gtest_install_dir>
-cmake .
+mkdir gtest
+cp -R /usr/src/gtest/* ./gtest
+
+cd gtest
+mkdir build
+cd build
+
+cmake ..
 make
-mkdir <gtest_install_dir>/lib
-mv libgtest.a libgtest_main.a <gtest_install_dir>/lib/
+
+mkdir -p <gtest_install_dir>/lib
+cp libgtest.a libgtest_main.a <gtest_install_dir>/lib/
+```
+
+#### Ubuntu 18.04 LTS
+```bash
+mkdir gtest
+cp -R /usr/src/googletest/* ./gtest
+
+cd gtest
+mkdir build
+cd build
+
+cmake .. \
+  -DCMAKE_INSTALL_PREFIX=<gtest_install_dir>
+make install
 ```
 
 # Build CodeCompass

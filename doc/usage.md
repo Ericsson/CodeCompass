@@ -45,14 +45,8 @@ secure access. For full documentation, see:
   command.
 - [PostgreSQL access configuration file](https://www.postgresql.org/docs/9.5/static/auth-pg-hba-conf.html)
 
-In case you want to *manually* create the database and not through a `SUPERUSER`
-via CodeCompass, you need to ensure the database is created with the right
-locale, otherwise `CodeCompass_parser` will crash when trying to store your
-files. Please use the following command to create databases:
-
-    CREATE DATABASE mydatabase
-      WITH ENCODING 'SQL_ASCII' LC_CTYPE 'C' LC_COLLATE 'C'
-      TEMPLATE template0;
+The databases inside PostgreSQL instance will be created automatically by the
+CodeCompass parser, so the user needs rights for adding new database.
 
 ### Using self-compiled *PostgreSQL*
 Alternatively, you may compile PostgreSQL by yourself. Using this method, you'll
