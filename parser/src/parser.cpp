@@ -297,9 +297,9 @@ int main(int argc, char* argv[])
 
   if (isNewDb && vm.count("dry-run"))
   {
-    LOG(warning) << "Dry-run can be only used with incremental parsing, "
-      "no project found, turning --dry-run off.";
-    vm.erase("dry-run");
+    LOG(error) << "Dry-run can be only used with incremental parsing, "
+      "no project found. Try turning --dry-run off.";
+    return 1;
   }
 
   //--- Prepare workspace and project directory ---//
