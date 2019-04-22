@@ -28,8 +28,8 @@ fi
 COMPASS_URL="${1}"
 COMPASS_BRANCH="${2}"
 
-COMPASS_SRC_DIR="/tmp/Compass.main"
-COMPASS_OUTPUT_DIR="/tmp/Compass.build"
+COMPASS_SRC_DIR="/tmp/Compass.${COMPASS_BRANCH}"
+COMPASS_OUTPUT_DIR="/tmp/Compass.${COMPASS_BRANCH}.build"
 
 mkdir --parents "${COMPASS_SRC_DIR}"
 mkdir --parents "${COMPASS_OUTPUT_DIR}"

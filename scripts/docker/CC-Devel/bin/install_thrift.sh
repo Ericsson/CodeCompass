@@ -126,4 +126,4 @@ popd
 # CodeCompass needs java libs together with c++ libs. We follow the debian
 # library layout, so finally java libs should move to $PREFIX/lib/java.
 mv "${THRIFT_INSTALL_DIR}${FAKE_JAVA_INSTALL_DIR}" "${JAVA_LIB_INSTALL_DIR}"
-rm -rf "${THRIFT_INSTALL_DIR}/usr"
+rm --recursive --force "${THRIFT_INSTALL_DIR}/usr"

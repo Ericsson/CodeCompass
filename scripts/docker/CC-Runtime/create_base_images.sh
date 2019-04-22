@@ -29,7 +29,7 @@ function call_docker() {
 
 cc_branch="master"
 cc_url="https://github.com/Ericsson/CodeCompass"
-while getopts ":b:hu:" option; do
+while getopts "b:hu:" option; do
     case ${option} in
         h)
             usage
@@ -42,11 +42,13 @@ while getopts ":b:hu:" option; do
             cc_branch="${OPTARG}"
             ;;
         *)
-            usage
+            usage 2>&1
             exit 1
             ;;
     esac
 done
+
+#TODO Check unnecessary positional parameters.
 
 script_dir=$(readlink --canonicalize-existing --verbose                        \
     "$(dirname "$(which "${0}")")")

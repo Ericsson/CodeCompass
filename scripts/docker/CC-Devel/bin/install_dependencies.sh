@@ -31,12 +31,16 @@ packages_to_install=(                                                          \
 )
 
 if [[ "${1}" == "16.04" ]]; then
-    packages_to_install+=(nodejs-legacy)
+    packages_to_install+=("npm" "nodejs-legacy")
 fi
 if [[ "${1}" == "18.04" ]]; then
-    packages_to_install+=(nodejs gcc g++)
+    packages_to_install+=("nodejs" "odb" "libodb-dev" "libodb-sqlite-dev"      \
+                          "libodb-pgsql-dev")
 fi
+
+apt-get install --yes apt-utils
 
 # Workaround. This single step provides that only the JDK 8 will be installed.
 apt-get install --yes openjdk-8-jdk-headless
+
 apt-get install --yes ${packages_to_install[@]}

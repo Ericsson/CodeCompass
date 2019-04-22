@@ -11,6 +11,10 @@ trap cleanup EXIT
 
 set -e
 
+if [[ "${1}" == "18.04" ]]; then
+    exit 0 
+fi
+
 export CC="gcc-5"
 export CXX="g++-5"
 
