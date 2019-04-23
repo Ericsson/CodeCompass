@@ -95,19 +95,38 @@ before_script:
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
 
-script:
-  - cd $TRAVIS_BUILD_DIR
-  - mkdir build_pgsql && cd build_pgsql
-  - >
-    cmake ..
-    -DDATABASE=pgsql
-    -DCMAKE_BUILD_TYPE=Debug
-    -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
-    -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
-    -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-  - make install
-  - make test ARGS=-V
+jobs:
+  include:
+    - stage: test
+      name: "PostgreSQL build"
+      script:
+        - cd $TRAVIS_BUILD_DIR
+        - mkdir build && cd build
+        - >
+          cmake ..
+          -DDATABASE=pgsql
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+          -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
+          -DLLVM_DIR=/usr/lib/llvm-7/cmake
+          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+        - make install
+        - make test ARGS=-V
+    - stage: test
+      name: "SQLite build"
+      script:
+        - cd $TRAVIS_BUILD_DIR
+        - mkdir build && cd build
+        - >
+          cmake ..
+          -DDATABASE=sqlite
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+          -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
+          -DLLVM_DIR=/usr/lib/llvm-7/cmake
+          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+        - make install
+        - make test ARGS=-V
 
 cache:
   directories:
