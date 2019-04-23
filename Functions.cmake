@@ -60,10 +60,11 @@ endfunction(add_odb_library_plugin)
 # the parsing session.
 # @param _dir The model directory under which the .sql files are located.
 function(install_sql _dir)
-  file(GLOB SQL_FILES "${_dir}/*.sql")
   install(
-    FILES ${SQL_FILES}
-    DESTINATION ${INSTALL_SQL_DIR})
+    DIRECTORY ${_dir}/
+    DESTINATION ${INSTALL_SQL_DIR}
+    FILES_MATCHING PATTERN "*.sql"
+    PATTERN "CMakeFiles" EXCLUDE)
 endfunction(install_sql)
 
 # This function can be used to install the thrift generated .js files to a
