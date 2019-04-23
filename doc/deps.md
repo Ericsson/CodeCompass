@@ -65,15 +65,15 @@ Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
 from source:
 
-- [Download Thrift](http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz)
-- Uncompress and build it:
-
 ```bash
 # Thrift may require yacc and flex as dependency:
 sudo apt-get install byacc flex
 
-tar -xvf ./thrift-<version>.tar.gz
-cd thrift-<version>
+# Download and uncompress Thrift:
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz" \
+  -O thrift-0.10.0.tar.gz
+tar -xvf ./thrift-0.10.0.tar.gz
+cd thrift-0.10.0
 
 ./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
 # Thrift can generate stubs for many programming languages. The configure script
