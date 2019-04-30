@@ -28,7 +28,7 @@ packages are necessary for building CodeCompass:
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualitaions.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
-- **`npm`**, and **`nodejs-legacy`** (for 16.04) or **`nodejs`** (for 18.04):
+- **`npm`** for both ubuntu versions, and **`nodejs-legacy`** (for 16.04) or **`nodejs`** (for 18.04):
   For handling JavaScript dependencies for CodeCompass web GUI.
 - **`ctags`**: For search parsing.
 - **`libgtest-dev`**: For testing CodeCompass.
@@ -65,7 +65,7 @@ Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
 from source:
 
-- [Download Thrift](http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz)
+- [Download Thrift](http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.11.0/thrift-0.11.0.tar.gz)
 - Uncompress and build it:
 
 ```bash
@@ -75,7 +75,8 @@ sudo apt-get install byacc flex
 tar -xvf ./thrift-<version>.tar.gz
 cd thrift-<version>
 
-./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
+./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO \
+  JAVA_PREFIX=<thrift_install_dir> --with-java
 # Thrift can generate stubs for many programming languages. The configure script
 # looks at the development environment and if it finds the environment for a
 # given language then it'll use it. For example in the previous step npm was
@@ -90,6 +91,13 @@ cd thrift-<version>
 
 make install
 ```
+Thrift java libs also necessary for CodeCompass and they should be placed under
+the *lib/java* directory in the <thrift_install_dir> directory. In the Thrift
+0.11.0 version the Java jars are placed to the
+<thrift_install_dir>/usr/local/lib directory by the make install command. So an
+additional move is necessary to place the Thrift jars to the right place.
+
+mv <thrift_install_dir>/usr/local/lib <thrift_install_dir>/lib/java
 
 ### LLVM/Clang
 In Ubuntu 16.04 LTS the LLVM/Clang has some packaging issues, i.e. some libs

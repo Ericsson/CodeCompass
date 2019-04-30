@@ -42,7 +42,7 @@ while getopts "b:hu:" option; do
             cc_branch="${OPTARG}"
             ;;
         *)
-            usage 2>&1
+            usage >&2
             exit 1
             ;;
     esac

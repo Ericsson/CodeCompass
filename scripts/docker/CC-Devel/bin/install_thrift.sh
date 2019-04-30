@@ -14,11 +14,11 @@ trap cleanup EXIT
 function usage() {
     echo "${0} [-h] -t <thrift version> [-p]"
     echo "  -h  Print this usage information. Optional."
-    echo "  -t  Thrift version. Mandatory. For example '0.10.0'."
+    echo "  -t  Thrift version. Mandatory. For example '0.11.0'."
     echo "  -p  Additional PATH components."
 }
 
-while getopts ":ht:p:" OPTION; do
+while getopts "ht:p:" OPTION; do
     case ${OPTION} in
         h)
             usage
@@ -31,7 +31,7 @@ while getopts ":ht:p:" OPTION; do
             ADDITIONAL_PATH="${OPTARG}"
             ;;
         *)
-            usage
+            usage >&2
             exit 1
             ;;
     esac
@@ -80,7 +80,7 @@ if [[ ! -z ${http_proxy} ]]; then
     proxy_port="${proxy_elements[2]}"
 
     maven_config_dir="${HOME}/.m2"
-    mkdir -p "${maven_config_dir}"
+    mkdir --parents "${maven_config_dir}"
     cat << EOF > "${maven_config_dir}/settings.xml"
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

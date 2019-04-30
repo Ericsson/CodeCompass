@@ -4,6 +4,7 @@ packages_to_install=(                                                          \
     openjdk-8-jdk                                                              \
     libgvc6                                                                    \
     libpq5                                                                     \
+    libssl1.0.0                                                                \
 )
 
 if [[ "${1}" == "16.04" ]]; then
