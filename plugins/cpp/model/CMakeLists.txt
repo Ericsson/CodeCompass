@@ -21,4 +21,4 @@ generate_odb_files("${ODB_SOURCES}")
 add_odb_library(cppmodel ${ODB_CXX_SOURCES})
 target_link_libraries(cppmodel model)
 
-install_sql(include/model/)
+install_sql()

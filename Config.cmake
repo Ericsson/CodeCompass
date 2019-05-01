@@ -64,6 +64,8 @@ set(ODBFLAGS
   --schema-format sql
   --sql-file-suffix -odb
   --pgsql-server-version 9.1
+  --include-prefix model/
+  --include-with-brackets
   --default-pointer "std::shared_ptr")
 
 set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -pedantic\
