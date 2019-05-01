@@ -108,7 +108,7 @@ jobs:
         - >
           cmake ..
           -DDATABASE=pgsql
-          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
           -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
           -DLLVM_DIR=/usr/lib/llvm-7/cmake
@@ -123,7 +123,7 @@ jobs:
         - >
           cmake ..
           -DDATABASE=sqlite
-          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
           -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
           -DLLVM_DIR=/usr/lib/llvm-7/cmake
