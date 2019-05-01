@@ -18,7 +18,7 @@ set(ODB_SOURCES
 
 generate_odb_files("${ODB_SOURCES}")
 
-add_odb_library_plugin(cppmodel ${PLUGIN_NAME} ${ODB_CXX_SOURCES})
+add_odb_library(cppmodel ${ODB_CXX_SOURCES})
 target_link_libraries(cppmodel model)
 
-install_sql(${CMAKE_CURRENT_BINARY_DIR})
+install_sql()
