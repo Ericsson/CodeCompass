@@ -17,12 +17,13 @@ packages are necessary for building CodeCompass:
 - **`llvm-7.0-dev`**, **`libclang-7.0-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code. Version 7.0 or newer is required. Clang 7 is not yet
   released, so the project must be compiled manually from source.
-  ***See [Known issues](#known-issues)!***
-- **`libsqlite3-dev`**: SQLite library in case SQLite database system is used.
-- **`postgresql-server-dev-<version>`**: PostgreSQL server in case PostgreSQL
-  database system is used.
-- **`odb`**: For persistence ODB can be used which is an Object Relation
+  ***See [Known issues](#known-issues)!***  
+- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an Object Relation
   Mapping (ORM) system.
+- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the corresponding ODB
+  development library, in case SQLite database system is used.
+- **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL server and
+  the corresponding ODB development library in case PostgreSQL database system is used.
 - **`openjdk-8-jdk`**: For search parsing CodeCompass uses an indexer written
   in Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
@@ -38,8 +39,8 @@ packages are necessary for building CodeCompass:
 The following command installs the packages except for those which have some
 known issues:
 ```bash
-sudo apt-get install git cmake make g++ libboost-all-dev openjdk-8-jdk \
-  libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags \
+sudo apt-get install git cmake make g++ libboost-all-dev odb libodb-dev \
+  openjdk-8-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags \
   libgtest-dev
 
 # For Ubuntu 16.04 "Xenial Xerus" LTS:
@@ -47,6 +48,12 @@ sudo apt-get install nodejs-legacy
 
 # For Ubuntu 18.04 "Bionic Beaver" LTS:
 sudo apt-get install nodejs
+
+# For SQLite database systems:
+sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+
+# For PostgreSQL database systems:
+sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
 ## Known issues
