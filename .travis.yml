@@ -26,9 +26,12 @@ addons:
       # ODB
       - odb
       - libodb-dev
+      # SQLite
       - libodb-sqlite-dev
-      - libodb-pgsql-dev
       - libsqlite3-dev
+      # PostgreSQL
+      - libodb-pgsql-dev
+      - postgresql-server-dev-10
       # Parser
       - libmagic-dev
       - libgit2-dev
