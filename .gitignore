@@ -3,6 +3,7 @@
 nbproject/
 .idea/
 *.swp
+build/
 
 # Generated files and directories.
 
