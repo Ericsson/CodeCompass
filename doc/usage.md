@@ -211,7 +211,7 @@ keepalive CodeCompass_webserver \
 keepalive CodeCompass_webserver \
   -w ~/cc/workdir \
   -p 6251 \
-  -d "sqlite"
+  -d "sqlite:database=~/cc/mydatabase.sqlite"
 ```
 
 The server will be available in a browser on
