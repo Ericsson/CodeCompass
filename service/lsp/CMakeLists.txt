@@ -7,7 +7,9 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${PROJECT_SOURCE_DIR}/plugins/cpp/service/include
-  ${PROJECT_SOURCE_DIR}/plugins/cpp/model/include)
+  ${PROJECT_SOURCE_DIR}/plugins/cpp/model/include
+  ${CMAKE_BINARY_DIR}/model/include
+  ${CMAKE_BINARY_DIR}/plugins/cpp/model/include)
 
 include_directories(SYSTEM)
 
