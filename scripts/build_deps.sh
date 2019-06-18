@@ -707,9 +707,8 @@ build_ncurses()
 {
   dep gcc
   
-  # TODO: use offical source
+  download ftp://ftp.invisible-island.net/ncurses/ncurses-5.9.tar.gz
   # Use a snapshot for gcc 5.1, http://trac.sagemath.org/ticket/18301
-  download ftp://invisible-island.net/ncurses/ncurses-5.9.tgz
   #download http://ftp.gnu.org/pub/gnu/ncurses/ncurses-5.9.tar.gz
   compile generic ncurses-5.9 lib/libncurses.a --without-ada --with-shared
 }
@@ -878,7 +877,7 @@ build_doxygen()
   dep bison
   dep graphviz
 
-  download http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.9.1.src.tar.gz
+  download https://launchpad.net/doxygen/main/1.8.9.1.src/+download/doxygen-1.8.9.1.src.tar.gz
   compile doxygen doxygen-1.8.9.1 bin/doxygen "--english-only --static"
 }
 
