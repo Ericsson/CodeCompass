@@ -1,3 +1,6 @@
+include_directories(SYSTEM
+  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
+  
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/mainrequesthandler.cpp
@@ -36,6 +39,7 @@ target_link_libraries(CodeCompass_webserver
   mongoose
   ${Boost_LINK_LIBRARIES}
   ${ODB_LIBRARIES}
+  ${THRIFT_LIBTHRIFT_LIBRARIES}
   pthread
   dl)
 

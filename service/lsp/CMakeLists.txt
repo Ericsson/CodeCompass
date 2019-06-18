@@ -11,7 +11,8 @@ include_directories(
   ${CMAKE_BINARY_DIR}/model/include
   ${CMAKE_BINARY_DIR}/plugins/cpp/model/include)
 
-include_directories(SYSTEM)
+include_directories(SYSTEM
+  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_library(lspservice SHARED
   src/lspservice.cpp
@@ -19,7 +20,8 @@ add_library(lspservice SHARED
   src/plugin.cpp)
 
 target_link_libraries(lspservice
-  util)
+  util
+  ${THRIFT_LIBTHRIFT_LIBRARIES})
 
 add_dependencies(lspservice projectthrift)
 add_dependencies(lspservice languagethrift)
