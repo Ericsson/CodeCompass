@@ -1,6 +1,8 @@
 #ifndef CC_PARSER_RELATIONCOLLECTOR_H
 #define CC_PARSER_RELATIONCOLLECTOR_H
 
+#include <mutex>
+
 #include <clang/AST/RecursiveASTVisitor.h>
 
 #include <model/cppastnode.h>
@@ -47,6 +49,7 @@ private:
 
   static std::unordered_set<model::CppEdgeId> _edgeCache;
   static std::unordered_set<model::CppEdgeAttributeId> _edgeAttrCache;
+  static std::mutex _edgeCacheMutex;
 
   std::vector<model::CppEdgePtr> _newEdges;
   std::vector<model::CppEdgeAttributePtr> _newEdgeAttributes;
