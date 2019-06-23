@@ -20,12 +20,16 @@ packages_to_install=(                                                          \
     "libgraphviz-dev"                                                          \
     "libgtest-dev"                                                             \
     "libmagic-dev"                                                             \
+    "libodb-dev"                                                               \
+    "libodb-pgsql-dev"                                                         \
+    "libodb-sqlite-dev"                                                        \
     "libpq-dev"                                                                \
     "libsqlite3-dev"                                                           \
     "libssl-dev"                                                               \
     "libtool"                                                                  \
     "lsb-release"                                                              \
     "make"                                                                     \
+    "odb"                                                                      \
     "pkg-config"                                                               \
     "wget"                                                                     \
     "xz-utils"                                                                 \
@@ -35,8 +39,7 @@ packages_to_install=(                                                          \
 if [[ "${1}" == "16.04" ]]; then
     packages_to_install+=("nodejs-legacy")
 elif [[ "${1}" == "18.04" ]]; then
-    packages_to_install+=("odb" "libodb-dev" "libodb-sqlite-dev"               \
-                          "libodb-pgsql-dev" "nodejs")
+    packages_to_install+=( "nodejs")
 fi
 
 apt-get install --yes "apt-utils"

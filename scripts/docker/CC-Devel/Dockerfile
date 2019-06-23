@@ -21,15 +21,13 @@ COPY ./bin ./bin
 RUN chmod u+x \
     ./bin/install_gtest.sh                                                     \
     ./bin/install_thrift.sh                                                    \
-    ./bin/install_dbaccess.sh                                                  \
     ./bin/install_llvm.sh                                                      \
     ./bin/install_dependencies.sh
 
 RUN ./bin/install_dependencies.sh ${UBUNTU_VERSION}
 
 RUN ./bin/install_gtest.sh                                                     \
-  && ./bin/install_thrift.sh -t "0.11.0"                                       \
-  && ./bin/install_dbaccess.sh ${UBUNTU_VERSION}                               \
+  && ./bin/install_thrift.sh -t "0.10.0"                                       \
   && ./bin/install_llvm.sh -l "7.0.0"
 
 RUN mv \

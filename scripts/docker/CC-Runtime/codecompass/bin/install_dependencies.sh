@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
 packages_to_install=(                                                          \
-    openjdk-8-jdk                                                              \
     libgvc6                                                                    \
+    libodb-pgsql-2.4                                                           \
+    libodb-sqlite-2.4                                                          \
     libpq5                                                                     \
     libssl1.0.0                                                                \
+    openjdk-8-jdk                                                              \
 )
 
 if [[ "${1}" == "16.04" ]]; then
@@ -22,8 +24,6 @@ elif [[ "${1}" == "18.04" ]]; then
         libboost-program-options1.65.1                                         \
         libboost-thread1.65.1                                                  \
         libgit2-26                                                             \
-        libodb-sqlite-2.4                                                      \
-        libodb-pgsql-2.4                                                       \
     )
 fi
 
