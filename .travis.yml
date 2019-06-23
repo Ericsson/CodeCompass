@@ -1,0 +1,137 @@
+os: linux
+dist: xenial
+sudo: require
+
+language: cpp
+
+services:
+  - postgresql
+
+addons:
+  apt:
+    update: true
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-xenial-7
+    packages:
+      # Boost
+      - libboost-all-dev
+      # LLVM/clang
+      - llvm-7
+      - llvm-7-dev
+      - clang-7
+      - libclang-7-dev
+      # Java
+      - openjdk-8-jdk
+      # ODB
+      - odb
+      - libodb-dev
+      # SQLite
+      - libodb-sqlite-dev
+      - libsqlite3-dev
+      # PostgreSQL
+      - libodb-pgsql-dev
+      - postgresql-server-dev-10
+      # Parser
+      - libmagic-dev
+      - libgit2-dev
+      - ctags
+      # Service
+      - libgraphviz-dev
+      - nodejs-legacy
+      - npm
+      # GTest
+      - libgtest-dev
+      # Thrift
+      - libssl-dev
+      # Thrift (compile)
+      - byacc
+      - flex
+  postgresql: "10"
+  
+before_install:
+  # Java config
+  - export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+  # Default locations and versions
+  - which cmake g++ clang llvm-config javac
+  - cmake --version
+  - g++ --version
+  - clang --version
+  - llvm-config --version --has-rtti
+  - javac -version
+  # LLVM/Clang test from package install
+  - /usr/bin/clang-7 --version
+  - /usr/bin/llvm-config-7 --version --has-rtti
+
+install:
+  # Thrift
+  - |
+    if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
+      cd $HOME
+      wget -O thrift-0.10.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz"
+      tar -xvf ./thrift-0.10.0.tar.gz
+      cd thrift-0.10.0
+      ./configure --prefix=$HOME/thrift_install --without-python --without-php --without-ruby --without-nodejs --without-go
+      make install
+    fi
+  # GTest
+  - |
+    if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+      cd $HOME
+      mkdir gtest
+      cp -R /usr/src/gtest/* ./gtest
+      cd gtest
+      mkdir build && cd build
+      cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
+      make
+      
+      mkdir -p $HOME/gtest_install/lib
+      cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
+    fi
+
+before_script:
+  # Thrift
+  - export CMAKE_PREFIX_PATH=$HOME/thrift_install:$CMAKE_PREFIX_PATH
+  - export PATH=$HOME/thrift_install/bin:$PATH
+  - thrift --version
+  # GTest
+  - export GTEST_ROOT=$HOME/gtest_install
+
+jobs:
+  include:
+    - stage: test
+      name: "PostgreSQL build"
+      script:
+        - cd $TRAVIS_BUILD_DIR
+        - mkdir build && cd build
+        - >
+          cmake ..
+          -DDATABASE=pgsql
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+          -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
+          -DLLVM_DIR=/usr/lib/llvm-7/cmake
+          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+        - make install
+        - make test ARGS=-V
+    - stage: test
+      name: "SQLite build"
+      script:
+        - cd $TRAVIS_BUILD_DIR
+        - mkdir build && cd build
+        - >
+          cmake ..
+          -DDATABASE=sqlite
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+          -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
+          -DLLVM_DIR=/usr/lib/llvm-7/cmake
+          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+        - make install
+        - make test ARGS=-V
+
+cache:
+  directories:
+    - $HOME/thrift_install
+    - $HOME/gtest_install

@@ -393,6 +393,11 @@ std::shared_ptr<odb::database> connectDatabase(
     return nullptr;
   }
 
+#ifdef DATABASE_SQLITE
+  if (database == "sqlite")
+    db->connection()->execute("PRAGMA case_sensitive_like = ON");
+#endif
+
   databasePool[connStr_] = db;
 
   return db;

@@ -17,11 +17,13 @@ packages are necessary for building CodeCompass:
 - **`llvm-7.0-dev`**, **`libclang-7.0-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code. Version 7.0 or newer is required. Clang 7 is not yet
   released, so the project must be compiled manually from source.
-  ***See [Known issues](#known-issues)!***
-- **`odb`**, **`libodb-dev`**, **`libodb-sqlite-dev`**, **`libodb-pgsql-dev`**:
-  For persistence ODB can be used which is an Object Relation Mapping (ORM)
-  system.
-  ***See [Known issues](#known-issues)!***
+  ***See [Known issues](#known-issues)!***  
+- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an Object Relation
+  Mapping (ORM) system.
+- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the corresponding ODB
+  development library, in case SQLite database system is used.
+- **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL server and
+  the corresponding ODB development library in case PostgreSQL database system is used.
 - **`openjdk-8-jdk`**: For search parsing CodeCompass uses an indexer written
   in Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
@@ -37,8 +39,8 @@ packages are necessary for building CodeCompass:
 The following command installs the packages except for those which have some
 known issues:
 ```bash
-sudo apt-get install git cmake make g++ libboost-all-dev openjdk-8-jdk \
-  libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags \
+sudo apt-get install git cmake make g++ libboost-all-dev odb libodb-dev \
+  openjdk-8-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev npm ctags \
   libgtest-dev
 
 # For Ubuntu 16.04 "Xenial Xerus" LTS:
@@ -46,6 +48,12 @@ sudo apt-get install nodejs-legacy
 
 # For Ubuntu 18.04 "Bionic Beaver" LTS:
 sudo apt-get install nodejs
+
+# For SQLite database systems:
+sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+
+# For PostgreSQL database systems:
+sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
 ## Known issues
@@ -65,13 +73,13 @@ Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS repositories, but you can download it and build
 from source:
 
-- [Download Thrift](http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.11.0/thrift-0.11.0.tar.gz)
-- Uncompress and build it:
-
 ```bash
 # Thrift may require yacc and flex as dependency:
 sudo apt-get install byacc flex
 
+# Download and uncompress Thrift:
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/<version>/thrift-<version>.tar.gz" \
+  -O thrift-<version>.tar.gz
 tar -xvf ./thrift-<version>.tar.gz
 cd thrift-<version>
 
@@ -137,80 +145,6 @@ cmake -G "Unix Makefiles" \
 make install
 ```
 
-### ODB
-As of `gcc` version 5, the ABI has changed which practically means that some
-symbols in `std` namespace (like `std::string` and `std::list`) contain
-`__cxx11` in their mangled names. This results linkage errors if the compiled
-project has libraries compiled with an earlier version of `gcc`.
-
-In the official Ubuntu 16.04 LTS package repository ODB is stored with the
-earlier ABI, not like other dependencies such as Boost. The solution is to
-download and recompile ODB using a new C++ compiler.
-
-```bash
-wget http://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.tar.gz
-tar -xvf libodb-2.4.0.tar.gz
-cd libodb-2.4.0
-./configure --prefix=<odb_install_dir>
-make install
-cd ..
-
-#
-# If you use SQLite:
-#
-sudo apt-get install libsqlite3-dev # Needed for this step.
-wget http://www.codesynthesis.com/download/odb/2.4/libodb-sqlite-2.4.0.tar.gz
-tar -xvf libodb-sqlite-2.4.0.tar.gz
-cd libodb-sqlite-2.4.0
-./configure --prefix=<odb_install_dir> \
-  --with-libodb="$(readlink -f ../libodb-2.4.0)"
-make install
-cd ..
-
-#
-# If you use PostgreSQL:
-#
-sudo apt-get install postgresql-server-dev-<version> # Needed for this step.
-wget http://www.codesynthesis.com/download/odb/2.4/libodb-pgsql-2.4.0.tar.gz
-tar -xvf libodb-pgsql-2.4.0.tar.gz
-cd libodb-pgsql-2.4.0
-./configure --prefix=<odb_install_dir> \
-  --with-libodb="$(readlink -f ../libodb-2.4.0)"
-make install
-cd ..
-```
-
-The ODB compiler must also be installed to generate the database schema and
-connection code.
-
-#### Ubuntu 16.04 LTS
-```bash
-sudo apt-get install gcc-<version>-plugin-dev libcutl-dev libexpat1-dev
-wget http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.tar.gz
-tar -xvf odb-2.4.0.tar.gz
-cd odb-2.4.0
-./configure --prefix=<odb_install_dir>
-make install
-cd ..
-```
-
-#### Ubuntu 18.04 LTS
-On Ubuntu 18.04, the default version of GNU/GCC is version 7, which considers
-the current release version of ODB invalid. Due to this error, **ODB's
-compilation must manually fall back to using GCC/G++ 5**. (This only applies
-to ODB. The rest of the manually built dependencies, and CodeCompass itself can
-and should be compiled with GCC/G++ 7!)
-
-```bash
-sudo apt-get install g++-5 gcc-5-plugin-dev libcutl-dev libexpat1-dev
-wget http://www.codesynthesis.com/download/odb/2.4/odb-2.4.0.tar.gz
-tar -xvf odb-2.4.0.tar.gz
-cd odb-2.4.0
-CC="gcc-5" CXX="g++-5" ./configure --prefix=<odb_install_dir>
-make install
-cd ..
-```
-
 ### GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
 binaries are missing. You have to compile GTest manually.
@@ -257,9 +191,7 @@ be seen by CMake build system:
 export GTEST_ROOT=<gtest_install_dir>
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=<clang_install_dir>:$CMAKE_PREFIX_PATH
-export CMAKE_PREFIX_PATH=<odb_install_dir>:$CMAKE_PREFIX_PATH
 export PATH=<thrift_install_dir>/bin:$PATH
-export PATH=<odb_install_dir>/bin:$PATH
 ```
 
 Use the following instructions to build CodeCompass with CMake.

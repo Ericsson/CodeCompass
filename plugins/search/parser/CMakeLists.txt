@@ -3,6 +3,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
+  ${CMAKE_BINARY_DIR}/model/include
   ${PLUGIN_DIR}/indexer/gen-cpp
   ${PLUGIN_DIR}/indexer/include)
 
