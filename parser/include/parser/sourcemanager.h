@@ -33,9 +33,9 @@ public:
   };
 
   /**
-   * This function is a getter for the size of _files.
+   * This function returns the number of cached files.
    */
-  std::map<std::string, model::FilePtr>::size_type filesSize()
+  std::map<std::string, model::FilePtr>::size_type numberOfFiles()
   {
     return _files.size();
   }

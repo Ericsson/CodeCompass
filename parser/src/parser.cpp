@@ -336,10 +336,10 @@ int main(int argc, char* argv[])
   /*
    * Workflow for incremental parsing:
    * 1. directly modified files are detected by ParserContext.
-   * 2. all plugin parsers marks the indirectly modified files.
-   * 3. all plugin parsers performs a cleanup operation.
+   * 2. all plugin parsers mark the indirectly modified files.
+   * 3. all plugin parsers perform a cleanup operation.
    * 4. global tables are cleaned up by parser.cpp.
-   * 5. all plugin parsers performs a parsing operation.
+   * 5. all plugin parsers perform a parsing operation.
    *
    * In case of an initial or forced parsing, only step 5 is executed.
    */
@@ -361,9 +361,9 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if(ctx.fileStatus.size() > ctx.srcMgr.filesSize() * vm["incremental-threshold"].as<int>() / 100.0)
+  if(ctx.fileStatus.size() > ctx.srcMgr.numberOfFiles() * vm["incremental-threshold"].as<int>() / 100.0)
   {
-    LOG(info) << "The number of changed files exceeds the given incremental"
+    LOG(info) << "The number of changed files exceeds the given incremental "
                  "threshold ratio, full parse will be forced.";
     vm.insert(std::make_pair("force", po::variable_value()));
   }

@@ -49,7 +49,7 @@ public:
   }
   /**
    * Method parses a path or a compilation database
-   * @return Returns true if the parse was succeeded, false otherwise.
+   * @return Returns true if the parse succeeded, false otherwise.
    */
   virtual bool parse() = 0;
   

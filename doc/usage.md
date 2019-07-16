@@ -179,7 +179,7 @@ just execute a forced reparse.
 In case the analyzed software project was significantly changed (e.g. as a result of
 restructuring the project), dropping the workspace database and performing a full, clean
 parse can yield results faster. This can be achieved by passing the `--force` (or `-f`)
-command line option can be specified for `CodeCompass_parser`. Another solution is
+command line option which can be specified for `CodeCompass_parser`. Another solution is
 to set the `--incremental-threshold` option, which configures an upper threshold of change 
 for incremental parsing (in the percentage of changed files). Above the threshold a full, 
 clean reparse is performed. The default value for this threshold is *10%*.
