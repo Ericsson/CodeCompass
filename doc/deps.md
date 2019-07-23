@@ -24,7 +24,7 @@ packages are necessary for building CodeCompass:
   development library, in case SQLite database system is used.
 - **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL server and
   the corresponding ODB development library in case PostgreSQL database system is used.
-- **`openjdk-8-jdk`**: For search parsing CodeCompass uses an indexer written
+- **`default-jdk`**: For search parsing CodeCompass uses an indexer written
   in Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualitaions.
@@ -78,10 +78,10 @@ from source:
 sudo apt-get install byacc flex
 
 # Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz" \
-  -O thrift-0.10.0.tar.gz
-tar -xvf ./thrift-0.10.0.tar.gz
-cd thrift-0.10.0
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.12.0/thrift-0.12.0.tar.gz" \
+  -O thrift-0.12.0.tar.gz
+tar -xvf ./thrift-0.12.0.tar.gz
+cd thrift-0.12.0
 
 ./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
 # Thrift can generate stubs for many programming languages. The configure script
