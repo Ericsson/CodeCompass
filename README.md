@@ -20,12 +20,16 @@
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot2.jpg" width="30%" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/Earhart/img/screenshot3.jpg" width="30%" />
 
-## Getting Started
+## Documentation
 
-* [Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
-* [Parse your first project](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
+* [Getting Started](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
+* [How To Parse A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Parse-A-Project)
+* [How To Manage Workspaces](https://github.com/Ericsson/CodeCompass/wiki/How-To-Manage-Workspaces)
+* [How To Start CodeCompass Webserver](https://github.com/Ericsson/CodeCompass/wiki/How-To-Start-CodeCompass-Webserver)
+* [How To Add CodeChecker To A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Add-CodeChecker-To-A-Project)
+* [Lazy Dog](https://github.com/Ericsson/CodeCompass/wiki/Lazy-Dog)
+* [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
 
-## Full Documentation
 See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentation.
 
 ## Examples
