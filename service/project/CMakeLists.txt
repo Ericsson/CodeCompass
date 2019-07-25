@@ -1,6 +1,6 @@
 include_directories(
   include
-  gen-cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include)
@@ -13,16 +13,16 @@ include_directories(SYSTEM
 # generated files.
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/common_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/common_constants.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/common_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/common_types.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-java
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
@@ -32,15 +32,15 @@ add_custom_command(
 # Do not add the same folders to both output commands as it produces a warning.
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/project_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/project_constants.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/project_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/project_types.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/ProjectService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/ProjectService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.h
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
@@ -48,15 +48,15 @@ add_custom_command(
     "Generating Thrift for project.thrift")
 
 add_library(commonthrift STATIC
-  gen-cpp/common_constants.cpp
-  gen-cpp/common_types.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp)
 
 target_compile_options(commonthrift PUBLIC -fPIC)
 
 add_library(projectthrift STATIC
-  gen-cpp/project_constants.cpp
-  gen-cpp/project_types.cpp
-  gen-cpp/ProjectService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp)
 
 target_compile_options(projectthrift PUBLIC -fPIC)
 
@@ -65,14 +65,14 @@ add_dependencies(projectthrift commonthrift)
 set(CMAKE_JAVA_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/lib/java/*)
 
 add_jar(corethriftjava
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Description.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/FilePosition.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/FileRange.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/InvalidId.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/InvalidInput.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Position.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Range.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/service/core/Timeout.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Description.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/FilePosition.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/FileRange.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/InvalidId.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/InvalidInput.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Position.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Range.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Timeout.java
   OUTPUT_NAME corethrift)
 
 add_dependencies(corethriftjava commonthrift)
@@ -90,4 +90,4 @@ target_link_libraries(projectservice
 
 install(TARGETS projectservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_jar(corethriftjava "${INSTALL_JAVA_LIB_DIR}")
-install_js_thrift(gen-js/)
+install_js_thrift()

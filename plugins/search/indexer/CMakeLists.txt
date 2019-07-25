@@ -1,6 +1,6 @@
 include_directories(
   include
-  gen-cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include)
 
 include_directories(SYSTEM
@@ -8,14 +8,14 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/searchindexer_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/IndexerService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-java
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/searchindexer_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/searchindexer_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/IndexerService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-java
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen java
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/searchindexer.thrift
@@ -23,9 +23,9 @@ add_custom_command(
     "Generating Thrift for searchindexer.thrift")
 
 add_library(searchindexerthrift STATIC
-  gen-cpp/searchindexer_constants.cpp
-  gen-cpp/searchindexer_types.cpp
-  gen-cpp/IndexerService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/searchindexer_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/searchindexer_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/IndexerService.cpp)
 
 target_compile_options(searchindexerthrift PUBLIC -fPIC)
 
@@ -33,10 +33,10 @@ target_compile_options(searchindexerthrift PUBLIC -fPIC)
 set(CMAKE_JAVA_INCLUDE_PATH ${PROJECT_SOURCE_DIR}/lib/java/*)
 
 add_jar(searchindexerthriftjava
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/FieldValue.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/IndexerService.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/Location.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/gen-java/cc/parser/search/searchindexerConstants.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/FieldValue.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/IndexerService.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/Location.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/parser/search/searchindexerConstants.java
   OUTPUT_NAME searchindexerthrift)
 
 add_dependencies(searchindexerthriftjava searchindexerthrift)
