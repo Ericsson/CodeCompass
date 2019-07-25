@@ -1,5 +1,4 @@
 os: linux
-dist: xenial
 sudo: require
 
 language: cpp
@@ -7,47 +6,84 @@ language: cpp
 services:
   - postgresql
 
-addons:
-  apt:
-    update: true
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-xenial-7
-    packages:
-      # Boost
-      - libboost-all-dev
-      # LLVM/clang
-      - llvm-7
-      - llvm-7-dev
-      - clang-7
-      - libclang-7-dev
-      # Java
-      - openjdk-8-jdk
-      # ODB
-      - odb
-      - libodb-dev
-      # SQLite
-      - libodb-sqlite-dev
-      - libsqlite3-dev
-      # PostgreSQL
-      - libodb-pgsql-dev
-      - postgresql-server-dev-10
-      # Parser
-      - libmagic-dev
-      - libgit2-dev
-      - ctags
-      # Service
-      - libgraphviz-dev
-      - nodejs-legacy
-      - npm
-      # GTest
-      - libgtest-dev
-      # Thrift
-      - libssl-dev
-      # Thrift (compile)
-      - byacc
-      - flex
-  postgresql: "10"
+.apt-xenial: &apt-xenial
+  update: true
+  sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-xenial-7
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - openjdk-8-jdk
+    # ODB
+    - odb
+    - libodb-dev
+    # SQLite
+    - libodb-sqlite-dev
+    - libsqlite3-dev
+    # PostgreSQL
+    - libodb-pgsql-dev
+    - postgresql-server-dev-9.5
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - nodejs-legacy
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl-dev
+    # Thrift (compile)
+    - byacc
+    - flex
+
+.apt-bionic: &apt-bionic
+  update: true
+  sources:
+    - ubuntu-toolchain-r-test
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - openjdk-8-jdk
+    # ODB
+    - odb
+    - libodb-dev
+    # SQLite
+    - libodb-sqlite-dev
+    - libsqlite3-dev
+    # PostgreSQL
+    - libodb-pgsql-dev
+    - postgresql-server-dev-10
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - nodejs
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl-dev
+    # Thrift (compile)
+    - byacc
+    - flex
   
 before_install:
   # Java config
@@ -64,31 +100,43 @@ before_install:
   - /usr/bin/clang-7 --version
   - /usr/bin/llvm-config-7 --version --has-rtti
 
-install:
-  # Thrift
-  - |
-    if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
-      cd $HOME
-      wget -O thrift-0.10.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz"
-      tar -xvf ./thrift-0.10.0.tar.gz
-      cd thrift-0.10.0
-      ./configure --prefix=$HOME/thrift_install --without-python --without-php --without-ruby --without-nodejs --without-go
-      make install
-    fi
-  # GTest
-  - |
-    if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
-      cd $HOME
-      mkdir gtest
-      cp -R /usr/src/gtest/* ./gtest
-      cd gtest
-      mkdir build && cd build
-      cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-      make
-      
-      mkdir -p $HOME/gtest_install/lib
-      cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
-    fi
+.install-thrift: &install-thrift
+  |
+  if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
+    cd $HOME
+    wget -O thrift-0.10.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz"
+    tar -xvf ./thrift-0.10.0.tar.gz
+    cd thrift-0.10.0
+    ./configure --prefix=$HOME/thrift_install --without-python --without-php --without-ruby --without-nodejs --without-go
+    make install
+  fi
+
+.install-gtest-xenial: &install-gtest-xenial
+  |
+  if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+    cd $HOME
+    mkdir gtest
+    cp -R /usr/src/gtest/* ./gtest
+    cd gtest
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
+    make
+
+    mkdir -p $HOME/gtest_install/lib
+    cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
+  fi
+
+.install-gtest-bionic: &install-gtest-bionic
+  |
+  if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+    cd $HOME
+    mkdir gtest
+    cp -R /usr/src/googletest/* ./gtest
+    cd gtest
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
+    make install
+  fi
 
 before_script:
   # Thrift
@@ -98,38 +146,80 @@ before_script:
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
 
+.build-postgres: &build-postgres
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir build && cd build
+  - >
+    cmake ..
+    -DDATABASE=pgsql
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+    -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
+    -DLLVM_DIR=/usr/lib/llvm-7/cmake
+    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+  - make install
+  - make test ARGS=-V
+
+.build-sqlite: &build-sqlite
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir build && cd build
+  - >
+    cmake ..
+    -DDATABASE=sqlite
+    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
+    -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
+    -DLLVM_DIR=/usr/lib/llvm-7/cmake
+    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
+  - make install
+  - make test ARGS=-V
+
 jobs:
   include:
-    - stage: test
-      name: "PostgreSQL build"
+    - name: "Xenial PostgreSQL build"
+      dist: xenial
+      addons:
+        apt:
+          <<: *apt-xenial
+        postgresql: "9.5"
+      install:
+        - *install-thrift
+        - *install-gtest-xenial
       script:
-        - cd $TRAVIS_BUILD_DIR
-        - mkdir build && cd build
-        - >
-          cmake ..
-          -DDATABASE=pgsql
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
-          -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
-          -DLLVM_DIR=/usr/lib/llvm-7/cmake
-          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-        - make install
-        - make test ARGS=-V
-    - stage: test
-      name: "SQLite build"
+        *build-postgres
+    - name: "Xenial SQLite build"
+      dist: xenial
+      addons:
+        apt:
+          <<: *apt-xenial
+        postgresql: "9.5"
+      install:
+        - *install-thrift
+        - *install-gtest-xenial
       script:
-        - cd $TRAVIS_BUILD_DIR
-        - mkdir build && cd build
-        - >
-          cmake ..
-          -DDATABASE=sqlite
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install
-          -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
-          -DLLVM_DIR=/usr/lib/llvm-7/cmake
-          -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-        - make install
-        - make test ARGS=-V
+        *build-sqlite
+    - name: "Bionic PostgreSQL build"
+      dist: bionic
+      addons:
+        apt:
+          <<: *apt-bionic
+        postgresql: "10"
+      install:
+        - *install-thrift
+        - *install-gtest-bionic
+      script:
+        *build-postgres
+    - name: "Bionic SQLite build"
+      dist: bionic
+      addons:
+        apt:
+          <<: *apt-bionic
+        postgresql: "10"
+      install:
+        - *install-thrift
+        - *install-gtest-bionic
+      script:
+        *build-sqlite
 
 cache:
   directories:
