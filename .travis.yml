@@ -56,9 +56,9 @@ services:
   libodb-sqlite-dev libsqlite3-dev
   libodb-pgsql-dev postgresql-server-dev-10
   libmagic-dev libgit2-dev ctags
-  libgraphviz-dev nodejs npm
+  libgraphviz-dev npm
   libgtest-dev
-  libssl-dev
+  libssl1.0-dev
   byacc flex
 
 .install_thrift: &install_thrift
