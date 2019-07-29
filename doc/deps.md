@@ -28,7 +28,7 @@ packages are necessary for building CodeCompass:
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualitaions.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
-- **`npm`**, and **`nodejs-legacy`** (for 16.04) or **`nodejs`** (for 18.04):
+- **`npm`**, and **`nodejs-legacy`** (for 16.04):
   For handling JavaScript dependencies for CodeCompass web GUI.
 - **`ctags`**: For search parsing.
 - **`libgtest-dev`**: For testing CodeCompass.
@@ -60,8 +60,8 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 ```bash
 sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7 clang-7 llvm-7-dev libclang-7-dev odb libodb-dev \
-  openjdk-8-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
-  libgtest-dev npm nodejs
+  openjdk-8-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+  libgtest-dev npm
 ```
 
 #### Database engine support
