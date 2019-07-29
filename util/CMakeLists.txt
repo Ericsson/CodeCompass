@@ -1,7 +1,6 @@
 include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/model/include
-  ${LLVM_INCLUDE_DIRS}
   ${BOOST_INCLUDE_DIRS})
 
 include_directories(SYSTEM
