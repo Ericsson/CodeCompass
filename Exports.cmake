@@ -37,9 +37,6 @@ endfunction(mark_as_run_env_path)
 set(RUNENV_LD_LIBRARY_PATH ""
   CACHE INTERNAL "Environment variable exported to install." FORCE)
 
-# LLVM
-mark_as_run_env_path(LD_LIBRARY_PATH "${LLVM_BUILD_LIBRARY_DIR}")
-
 # ODB
 filelist_to_dirlist_unique(_odbLibDirs "${ODB_LIBRARIES}")
 mark_as_run_env_path(LD_LIBRARY_PATH "${_odbLibDirs}")
