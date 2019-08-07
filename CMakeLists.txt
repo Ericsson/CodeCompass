@@ -10,11 +10,11 @@ include(Functions.cmake)
 # Do some sanity check on the testing setup and enable testing if applicable.
 include(Testing.cmake)
 
-find_package(Threads REQUIRED)
 find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
-find_package(Odb     REQUIRED)
-find_package(Thrift  REQUIRED)
 find_package(Java    REQUIRED)
+find_package(Odb     REQUIRED)
+find_package(Threads REQUIRED)
+find_package(Thrift  REQUIRED)
 find_package(GTest)
 
 include(UseJava)
@@ -24,14 +24,14 @@ include(Exports.cmake)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${RUNENV_LD_LIBRARY_PATH}")
 
 # Modules
-add_subdirectory(model)
-add_subdirectory(util)
-add_subdirectory(parser)
-add_subdirectory(webserver)
-add_subdirectory(service)
 add_subdirectory(logger)
+add_subdirectory(model)
+add_subdirectory(parser)
 add_subdirectory(scripts)
+add_subdirectory(service)
+add_subdirectory(util)
 add_subdirectory(webgui)
+add_subdirectory(webserver)
 # Plugins
 add_subdirectory(plugins)
 
