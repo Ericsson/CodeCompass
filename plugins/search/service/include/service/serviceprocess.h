@@ -163,9 +163,9 @@ private:
     using ProtocolFactory =
       apache::thrift::protocol::TBinaryProtocolFactoryT<Transport>;
 
-    boost::shared_ptr<apache::thrift::transport::TTransport> transIn(
+    std::shared_ptr<apache::thrift::transport::TTransport> transIn(
       new Transport(_pipeFd2[0], Transport::NO_CLOSE_ON_DESTROY));
-    boost::shared_ptr<apache::thrift::transport::TTransport> transOut(
+    std::shared_ptr<apache::thrift::transport::TTransport> transOut(
       new Transport(_pipeFd[1], Transport::NO_CLOSE_ON_DESTROY));
 
     ProtocolFactory protFactory;
