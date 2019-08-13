@@ -22,13 +22,13 @@ packages are necessary for building CodeCompass:
   development library, in case SQLite database system is used.
 - **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL server and
   the corresponding ODB development library in case PostgreSQL database system is used.
-- **`openjdk-8-jdk`**: For search parsing CodeCompass uses an indexer written
+- **`default-jdk`**: For search parsing CodeCompass uses an indexer written
   in Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualitaions.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
-- **`npm`**, and **`nodejs-legacy`** (for 16.04) or **`nodejs`** (for 18.04):
+- **`npm`**, and **`nodejs-legacy`** (for 16.04):
   For handling JavaScript dependencies for CodeCompass web GUI.
 - **`ctags`**: For search parsing.
 - **`libgtest-dev`**: For testing CodeCompass.
@@ -60,8 +60,8 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 ```bash
 sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7 clang-7 llvm-7-dev libclang-7-dev odb libodb-dev \
-  openjdk-8-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
-  libgtest-dev npm nodejs
+  openjdk-8-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+  libgtest-dev npm
 ```
 
 #### Database engine support
@@ -99,10 +99,10 @@ and build from source:
 sudo apt-get install byacc flex
 
 # Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.10.0/thrift-0.10.0.tar.gz" \
-  -O thrift-0.10.0.tar.gz
-tar -xvf ./thrift-0.10.0.tar.gz
-cd thrift-0.10.0
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.12.0/thrift-0.12.0.tar.gz" \
+  -O thrift-0.12.0.tar.gz
+tar -xvf ./thrift-0.12.0.tar.gz
+cd thrift-0.12.0
 
 ./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
 # Thrift can generate stubs for many programming languages. The configure script
