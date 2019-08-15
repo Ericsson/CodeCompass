@@ -2,12 +2,12 @@ find_package(Clang REQUIRED CONFIG)
 
 include_directories(
   include
-  gen-cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${PROJECT_SOURCE_DIR}/service/language/gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/language/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${cpp_PLUGIN_DIR}/model/include
   ${cpp_PLUGIN_DIR}/parser/include)
@@ -23,17 +23,17 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/cppreparse_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/cppreparse_constants.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/cppreparse_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/cppreparse_types.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/CppReparseService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/CppReparseService.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
     thrift --gen cpp --gen js:jquery
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
       ${CMAKE_CURRENT_SOURCE_DIR}/cppreparse.thrift
   DEPENDS
@@ -42,9 +42,9 @@ add_custom_command(
     "Generating Thrift for cppreparse.thrift")
 
 add_library(cppreparsethrift STATIC
-  gen-cpp/cppreparse_constants.cpp
-  gen-cpp/cppreparse_types.cpp
-  gen-cpp/CppReparseService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp)
 
 target_compile_options(cppreparsethrift PUBLIC -fPIC)
 
@@ -76,4 +76,4 @@ target_link_libraries(cppreparseservice
   )
 
 install(TARGETS cppreparseservice DESTINATION ${INSTALL_SERVICE_DIR})
-install_js_thrift(gen-js/)
+install_js_thrift()

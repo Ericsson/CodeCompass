@@ -64,11 +64,10 @@ function(install_sql)
 endfunction(install_sql)
 
 # This function can be used to install the thrift generated .js files to a
-# specific directory. These files will be used at the gui
-# @param _dir The gen-js directory under which the .js files are located.
-function(install_js_thrift _dir)
+# specific directory. These files will be used at the gui.
+function(install_js_thrift)
   install(
-    DIRECTORY ${_dir}
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-js/
     DESTINATION ${INSTALL_GEN_DIR}
     FILES_MATCHING PATTERN "*.js")
 endfunction(install_js_thrift)
