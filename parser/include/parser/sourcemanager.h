@@ -32,16 +32,12 @@ public:
     bool operator()(model::FilePtr) const { return true; }
   };
 
-  template<typename Filter = SourceManager::AllFilesFilter>
-  std::vector<model::FilePtr> getFiles(const Filter& beta_ = Filter())
+  /**
+   * This function returns the number of cached files.
+   */
+  std::map<std::string, model::FilePtr>::size_type numberOfFiles()
   {
-    std::vector<model::FilePtr> files;
-
-    for (const auto& p: _files)
-      if (beta_(p.second))
-        files.push_back(p.second);
-
-    return files;
+    return _files.size();
   }
 
   /**
@@ -50,8 +46,18 @@ public:
    * not in the cache yet then a model::File entry is created, persisted in the
    * database and placed in the cache. If the file doesn't exist then it returns
    * nullptr.
+   * @param path_ The file path to look up.
    */
   model::FilePtr getFile(const std::string& path_);
+
+  /**
+   * This function returns a pointer to the corresponding model::File objects
+   * based on the given beta_ filter. The objects are read from a cache.
+   * Uncached files are ignored.
+   * @param beta_ A filter functor iterated over the cached model::File objects.
+   */
+  template<typename Filter = AllFilesFilter>
+  std::vector<model::FilePtr> getFiles(const Filter& beta_ = Filter());
 
   /**
    * This function updates the file given as parameter. Note that the file
@@ -117,6 +123,18 @@ private:
   std::mutex _createFileMutex;
   ::magic_t _magicCookie;
 };
+
+template<typename Filter>
+std::vector<model::FilePtr> SourceManager::getFiles(const Filter& beta_)
+{
+  std::vector<model::FilePtr> files;
+
+  for (const auto& p: _files)
+    if (beta_(p.second))
+      files.push_back(p.second);
+
+  return files;
+}
 
 } // parser
 } // cc

@@ -33,7 +33,7 @@ ParserContext::ParserContext(
   (util::OdbTransaction(this->db))([&]
    {
      // Fetch directory and binary type files from SourceManager
-     auto func = [](const auto& item)
+     auto func = [](model::FilePtr item)
      {
        return item->type != model::File::DIRECTORY_TYPE &&
               item->type != model::File::BINARY_TYPE;
@@ -77,7 +77,6 @@ ParserContext::ParserContext(
      // TODO: detect ADDED files
    });
 }
-
 }
 }
 
