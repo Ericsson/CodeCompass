@@ -107,6 +107,14 @@ void FileDiagram::getIncludeDependencyDiagram(
   util::bfsBuild(graph_, currentNode,std::bind(&FileDiagram::getRevUsages,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, revUsagesEdgeDecoration, 3);
+  
+  util::bfsBuild(graph_, currentNode, std::bind(&FileDiagram::getProvides,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, usagesEdgeDecoration, 3);
+
+  util::bfsBuild(graph_, currentNode, std::bind(&FileDiagram::getRevProvides,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, revUsagesEdgeDecoration, 3);
 }
 
 std::string FileDiagram::getIncludeDependencyDiagramLegend()
