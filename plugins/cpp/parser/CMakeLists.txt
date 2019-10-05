@@ -1,4 +1,4 @@
-find_package(LLVM REQUIRED CONFIG)
+find_package(LLVM 7 REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
 
 # Check whether RTTI is on for LLVM
