@@ -28,9 +28,9 @@ Features
 
 Documentations
 --------
-- [Requirements, external source dependencies](doc/deps.md)
 - [User guide](doc/usage.md)
 
 Development
 --------
+- [Building CodeCompass](doc/deps.md)
 - [Coding conventions](doc/coding_conventions.md)
