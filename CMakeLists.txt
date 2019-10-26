@@ -27,13 +27,15 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${RUNENV_LD_LIBRARY_PATH}")
 add_subdirectory(logger)
 add_subdirectory(model)
 add_subdirectory(parser)
+add_subdirectory(plugins) # Plugins
 add_subdirectory(scripts)
 add_subdirectory(service)
 add_subdirectory(util)
 add_subdirectory(webgui)
 add_subdirectory(webserver)
-# Plugins
-add_subdirectory(plugins)
+
+# TODO: LspService depends on the C++ plugin, therefore they must be built in the proper order.
+# This dependcy shall be removed, so plugins can be built AFTER the other components.
 
 # Install java libraries
 install(DIRECTORY
