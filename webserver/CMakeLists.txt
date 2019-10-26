@@ -20,8 +20,8 @@ target_include_directories(CodeCompass_webserver PUBLIC
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/service/lsp/include
-  ${PROJECT_SOURCE_DIR}/service/language/gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/language/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${PROJECT_SOURCE_DIR}/plugins/cpp/service/include
   ${PROJECT_SOURCE_DIR}/plugins/cpp/model/include)
