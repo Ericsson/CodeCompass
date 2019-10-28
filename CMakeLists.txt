@@ -18,6 +18,7 @@ find_package(Thrift  REQUIRED)
 find_package(GTest)
 
 include(UseJava)
+set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8)
 
 # Set the third-party libraries' path properly so the installation can find them.
 include(Exports.cmake)
