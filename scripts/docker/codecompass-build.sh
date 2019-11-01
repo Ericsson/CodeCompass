@@ -3,13 +3,10 @@
 # This script will run inside the Docker container. This will build CodeCompass
 # using the following environment variables:
 #
-# DATABASE - pgsql (by default) or sqlite
+# DATABASE - sqlite (by default) or psql
 # BUILD_TYPE - Release (by default) or Debug
 
 # DON'T MODIFY THE REST OF THIS SCRIPT UNLESS YOU KNOW WHAT YOU'RE DOING!
-
-export PATH=/opt/thrift/bin:$PATH
-export CMAKE_PREFIX_PATH=/opt/thrift
 
 BUILD_DIR=/CodeCompass/build
 INSTALL_DIR=/CodeCompass/install
@@ -26,5 +23,4 @@ if [ ! -d $BUILD_DIR ]; then
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 fi
 
-cd $BUILD_DIR
-make $@
+make -C $BUILD_DIR $@
