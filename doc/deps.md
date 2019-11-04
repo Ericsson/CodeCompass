@@ -240,8 +240,8 @@ docker build -t codecompass-dev .
 2. Build CodeCompass.
 ```
 docker run \
-  --env DATABASE=pgsql --env BUILD_TYPE \
-  --volume .../CodeCompass:/CodeCompass Release \
+  --env DATABASE=pgsql --env BUILD_TYPE Release \
+  --volume /path/to/host/CodeCompass:/CodeCompass \
   codecompass-dev <make flags>
 ```
 The `<make flags>` is added to the `make` command when building CodeCompass.
