@@ -36,6 +36,10 @@ RUN set -x && apt-get update -qq \
      make install && \
      cd / && \
      rm -rf /usr/src/googletest/build \
+  \
+  # Remove unnecessary packages.
+  && apt-get purge -y --auto-remove wget \
+  \
   # Erase downloaded archive files.
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
