@@ -1110,14 +1110,14 @@ void CppServiceHandler::getSyntaxHighlight(
   std::vector<SyntaxHighlight>& return_,
   const core::FileRange& range_)
 {
-  std::vector <std::string> content;
+  std::vector<std::string> content;
 
   _transaction([&, this]() {
 
     //--- Load the file content and break it into lines ---//
 
     model::FilePtr file = _db->query_one<model::File>(
-      FileQuery::id == stoull(range_.file));
+      FileQuery::id == std::stoull(range_.file));
 
     if (!file->content.load())
       return;
@@ -1130,7 +1130,7 @@ void CppServiceHandler::getSyntaxHighlight(
     //--- Iterate over AST node elements ---//
 
     for (const model::CppAstNode& node : _db->query<model::CppAstNode>(
-      AstQuery::location.file == stoull(range_.file) &&
+      AstQuery::location.file == std::stoull(range_.file) &&
       AstQuery::location.range.start.line >= range_.range.startpos.line &&
       AstQuery::location.range.end.line < range_.range.endpos.line &&
       AstQuery::location.range.end.line != model::Position::npos &&
@@ -1139,32 +1139,8 @@ void CppServiceHandler::getSyntaxHighlight(
       if (node.astValue.empty())
         continue;
 
-      std::string chrRgx = "([a-zA-Z0-9]?)";
-
       // Regular expression to find element position
-      std::string reg;
-
-      // This variable tells which regex group has to be empty.
-      std::vector<int> emptyGroups;
-
-      if (node.symbolType == model::CppAstNode::SymbolType::Macro ||
-        node.symbolType == model::CppAstNode::SymbolType::Enum ||
-        node.symbolType == model::CppAstNode::SymbolType::EnumConstant)
-      {
-        reg = node.astValue;
-      }
-      else if (node.symbolType == model::CppAstNode::SymbolType::Function ||
-        node.symbolType == model::CppAstNode::SymbolType::Variable ||
-        node.symbolType == model::CppAstNode::SymbolType::Type ||
-        node.symbolType == model::CppAstNode::SymbolType::Typedef)
-      {
-        reg = chrRgx + "(" + node.astValue + ")" + chrRgx;
-        emptyGroups.push_back(1);
-        emptyGroups.push_back(3);
-      }
-
-      if (reg.empty())
-        continue;
+      std::string reg = "\\b" + node.astValue + "\\b";
 
       for (std::size_t i = node.location.range.start.line - 1;
            i < node.location.range.end.line && i < content.size();
@@ -1178,18 +1154,12 @@ void CppServiceHandler::getSyntaxHighlight(
 
         for (std::sregex_iterator ri = words_begin; ri != words_end; ++ri)
         {
-          if (std::any_of(emptyGroups.begin(),emptyGroups.end(),
-            [&](int i_) { return !ri->str(i_).empty(); }))
-          {
-            continue;
-          }
-
           SyntaxHighlight syntax;
-          syntax.range.startpos.line   = i + 1;
+          syntax.range.startpos.line = i + 1;
           syntax.range.startpos.column = ri->position() + 1;
-          syntax.range.endpos.line     = i + 1;
-          syntax.range.endpos.column   = syntax.range.startpos.column +
-                                         node.astValue.length();
+          syntax.range.endpos.line = i + 1;
+          syntax.range.endpos.column =
+            syntax.range.startpos.column + node.astValue.length();
 
           std::string symbolClass =
             "cm-" + model::symbolTypeToString(node.symbolType);
@@ -1258,7 +1228,7 @@ void CppServiceHandler::getFileDiagramTypes(
 {
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
-      FileQuery::id == stoull(fileId_));
+      FileQuery::id == std::stoull(fileId_));
   });
 
   if (file->type == model::File::DIRECTORY_TYPE)
