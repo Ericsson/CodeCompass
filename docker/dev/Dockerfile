@@ -48,5 +48,3 @@ RUN set -x && apt-get update -qq \
 COPY codecompass-build.sh /usr/local/bin
 
 ENV DATABASE=sqlite BUILD_TYPE=Release
-
-ENTRYPOINT ["codecompass-build.sh"]
