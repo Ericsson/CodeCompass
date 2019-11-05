@@ -501,9 +501,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
      */
     _getSyntaxHighlight : function (fileInfo) {
       var that = this;
+
+      var service = model.getLanguageService(fileInfo.type);
+      if (!service) {
+        return;
+      }
+
       setTimeout(function () {
         that.clearAllMarks();
-        var service = model.getLanguageService(fileInfo.type);
         var lines = urlHandler.getFileContent().split('\n').length;
         for (var i = 0; i < lines; i += that._syntaxHighlightStep) {
           var range = new FileRange({
