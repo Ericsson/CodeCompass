@@ -14,7 +14,6 @@ RUN set -x && apt-get update -qq \
   nodejs-dev node-gyp npm \
   ctags \
   wget \
-  git \
   libgtest-dev \
   # Install boost libraries.
   libboost-filesystem-dev \
