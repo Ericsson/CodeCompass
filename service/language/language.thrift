@@ -266,11 +266,12 @@ service LanguageService
 
   /**
    * Returns the syntax highlight elements for a whole file.
-   * @param fileId ID of the file in which we get syntax elements.
+   * @param fileRange The range of the file
    * @return Elements' position and CSS class name.
    * @exception common.InvalidId Exception is thrown if no file belongs to the
    * given ID.
    */
-  list<SyntaxHighlight> getSyntaxHighlight(1:common.FileId fileId)
+  list<SyntaxHighlight> getSyntaxHighlight(
+    1:common.FileRange range)
     throws (1:common.InvalidId ex)
 }
