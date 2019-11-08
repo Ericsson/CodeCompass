@@ -14,7 +14,6 @@ RUN set -x && apt-get update -qq \
   nodejs-dev node-gyp npm \
   ctags \
   wget \
-  git \
   libgtest-dev \
   # Install boost libraries.
   libboost-filesystem-dev \
@@ -37,6 +36,10 @@ RUN set -x && apt-get update -qq \
      make install && \
      cd / && \
      rm -rf /usr/src/googletest/build \
+  \
+  # Remove unnecessary packages.
+  && apt-get purge -y --auto-remove wget \
+  \
   # Erase downloaded archive files.
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
@@ -45,5 +48,3 @@ RUN set -x && apt-get update -qq \
 COPY codecompass-build.sh /usr/local/bin
 
 ENV DATABASE=sqlite BUILD_TYPE=Release
-
-ENTRYPOINT ["codecompass-build.sh"]

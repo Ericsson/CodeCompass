@@ -11,16 +11,20 @@
 BUILD_DIR=/CodeCompass/build
 INSTALL_DIR=/CodeCompass/install
 SOURCE_DIR=/CodeCompass/CodeCompass
+TEST_WORKSPACE=/CodeCompass/test_workspace
+TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
 
 if [ ! -d $BUILD_DIR ]; then
   mkdir $BUILD_DIR
+  mkdir -p $TEST_WORKSPACE
 
   cd $BUILD_DIR
   cmake \
     $SOURCE_DIR \
     -DDATABASE=$DATABASE \
     -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+    -DTEST_DB=$TEST_DB
 fi
 
 make -C $BUILD_DIR $@

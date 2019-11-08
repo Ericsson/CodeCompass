@@ -210,39 +210,7 @@ during compilation.
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. |
 
 # Docker
+[![Docker](images/docker.jpg)](https://www.docker.com/)
 
-Docker related scripts and config files are under
-[/scripts/docker](/scripts/docker). After navigating to this directory you can
-use the build scripts with the commands below.
-
-:warning: When using Docker to build CodeCompass it is very important to have
-the following filesystem layout:
-
-```
-...
- `-CodeCompass
-   |-CodeCompass   # Source code from Git.
-   | `-scripts
-   |   `-docker
-   |-build         # CMake runs here.
-   |-install       # CodeCompass goes here.
-   `-workspace     # Parsed projects' workspace directory.
-```
-
-The scripts assume this layout. The `build` and `install` directories will be
-generated to the parent directory of `CodeCompass` directory containing the
-source code.
-
-1. Build the development environment image. The tag name is important!
-```
-docker build -t codecompass-dev .
-```
-2. Build CodeCompass.
-```
-docker run \
-  --env DATABASE=pgsql --env BUILD_TYPE=Release \
-  --volume /path/to/host/CodeCompass:/CodeCompass \
-  codecompass-dev <make flags>
-```
-The `<make flags>` is added to the `make` command when building CodeCompass.
-Here you can set the number of build jobs or `install`.
+You can develop CodeCompass in docker containers. For more information
+[see](/docker/README.md).
