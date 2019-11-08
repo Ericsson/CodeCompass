@@ -46,11 +46,6 @@ MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
     });
 }
 
-std::vector<std::string> MetricsParser::getDependentParsers() const
-{
-  return std::vector<std::string>{};
-}
-
 bool MetricsParser::cleanupDatabase()
 {
   if (!_fileIdCache.empty())

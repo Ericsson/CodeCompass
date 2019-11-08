@@ -26,14 +26,6 @@ public:
   virtual ~AbstractParser(){}
 
   /**
-   * Get dependencies of parsers. 
-   * Using these dependencies we will create a linear ordering of the parsers
-   * and then we will call the parse() function in the correct order.
-   * @return dependent parsers
-   */
-  virtual std::vector<std::string> getDependentParsers() const = 0;
-
-  /**
    * Look up and mark indirectly modified files for incremental parsing,
    * based on the semantic information of the parser.
    */

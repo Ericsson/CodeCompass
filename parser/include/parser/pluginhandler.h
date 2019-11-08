@@ -49,11 +49,6 @@ public:
   bool createPlugins(ParserContext& ctx_);
 
   /**
-   * Create topological order of parsers by parser dependencies.
-   */
-  std::vector<std::string> getTopologicalOrder();
-
-  /**
    * Get parser by parser name.
    * @param parserName_ Parser name (e.g.: dummyparser, cppparser). A parser is
    * identified by its name. For example dummyparser is implemented in

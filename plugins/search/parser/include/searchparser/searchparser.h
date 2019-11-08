@@ -21,7 +21,6 @@ public:
   SearchParser(ParserContext& ctx_);
   virtual ~SearchParser();
 
-  virtual std::vector<std::string> getDependentParsers() const override;
   virtual bool parse() override;
 
 private:
