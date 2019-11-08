@@ -93,6 +93,5 @@ mkdir -p /CodeCompass/workspace
 
 # Run the web server.
 /CodeCompass/install/bin/CodeCompass_webserver \
-  -d "sqlite:" \
   -w /CodeCompass/workspace
 ```
