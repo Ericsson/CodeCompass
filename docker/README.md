@@ -47,14 +47,14 @@ docker run --rm -ti \
   --env DATABASE=sqlite --env BUILD_TYPE=Release \
   --volume /path/to/host/CodeCompass:/CodeCompass \
   --volume /path/to/your/host/project:/projects/myproject \
-  --port 8001:8080 \
+  --publish 8001:8080 \
   codecompass-dev \
   /bin/bash
 ```
 This container will be used in the next subsections to build CodeCompass,
 parse a project and start a webserver.
 
-*Note*: you do not have to give the `--port` option and set the `DATABASE`
+*Note*: you do not have to give the `--publish` option and set the `DATABASE`
 environment variable if you do not want to run a webserver. Also you do not
 have to mount a project directory if you do not want to parse it later.
 
