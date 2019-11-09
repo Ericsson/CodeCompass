@@ -338,11 +338,6 @@ CppParser::CppParser(ParserContext& ctx_) : AbstractParser(ctx_)
 {
 }
 
-std::vector<std::string> CppParser::getDependentParsers() const
-{
-  return std::vector<std::string>{};
-}
-
 std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
 {
   typedef boost::adjacency_list<boost::vecS, boost::vecS,

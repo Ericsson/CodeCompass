@@ -349,11 +349,11 @@ int main(int argc, char* argv[])
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
-  std::vector<std::string> topologicalOrder = pHandler.getTopologicalOrder();
-  for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
+  std::vector<std::string> pluginNames = pHandler.getPluginNames();
+  for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << *it << "] started to mark modified files!";
-    pHandler.getParser(*it)->markModifiedFiles();
+    LOG(info) << "[" << pluginName << "] started to mark modified files!";
+    pHandler.getParser(pluginName)->markModifiedFiles();
   }
 
   if (vm.count("dry-run"))
@@ -362,21 +362,22 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if(ctx.fileStatus.size() > ctx.srcMgr.numberOfFiles() * vm["incremental-threshold"].as<int>() / 100.0)
+  if (ctx.fileStatus.size() >
+    ctx.srcMgr.numberOfFiles() * vm["incremental-threshold"].as<int>() / 100.0)
   {
     LOG(info) << "The number of changed files exceeds the given incremental "
                  "threshold ratio, full parse will be forced.";
     vm.insert(std::make_pair("force", po::variable_value()));
   }
 
-  if(!vm.count("force"))
+  if (!vm.count("force"))
   {
-    for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
+    for (const std::string& pluginName : pluginNames)
     {
-      LOG(info) << "[" << *it << "] cleanup started!";
-      if (!pHandler.getParser(*it)->cleanupDatabase())
+      LOG(info) << "[" << pluginName << "] cleanup started!";
+      if (!pHandler.getParser(pluginName)->cleanupDatabase())
       {
-        LOG(error) << "[" << *it << "] cleanup failed!";
+        LOG(error) << "[" << pluginName << "] cleanup failed!";
         return 2;
       }
     }
@@ -385,10 +386,10 @@ int main(int argc, char* argv[])
   }
 
   // TODO: Handle errors returned by parse().
-  for (const std::string& parserName : pHandler.getTopologicalOrder())
+  for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << parserName << "] parse started!";
-    pHandler.getParser(parserName)->parse();
+    LOG(info) << "[" << pluginName << "] parse started!";
+    pHandler.getParser(pluginName)->parse();
   }
 
   //--- Add indexes to the database ---//

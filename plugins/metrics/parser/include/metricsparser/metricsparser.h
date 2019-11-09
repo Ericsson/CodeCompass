@@ -15,7 +15,6 @@ class MetricsParser : public AbstractParser
 {
 public:
   MetricsParser(ParserContext& ctx_);
-  virtual std::vector<std::string> getDependentParsers() const override;
   virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 

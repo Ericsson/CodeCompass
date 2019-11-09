@@ -78,11 +78,6 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
   }
 }
 
-std::vector<std::string> SearchParser::getDependentParsers() const
-{
-  return std::vector<std::string>{};
-}
-
 bool SearchParser::parse()
 {
   if (fs::is_directory(_searchDatabase))

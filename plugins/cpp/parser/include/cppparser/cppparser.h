@@ -24,7 +24,6 @@ class CppParser : public AbstractParser
 public:
   CppParser(ParserContext& ctx_);
   virtual ~CppParser();  
-  virtual std::vector<std::string> getDependentParsers() const override;
   virtual void markModifiedFiles() override;
   /**
    * Maintains and cleans up the database in preparation of incremental parsing.

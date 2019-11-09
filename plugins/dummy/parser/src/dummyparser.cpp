@@ -15,11 +15,6 @@ DummyParser::DummyParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
 }
 
-std::vector<std::string> DummyParser::getDependentParsers()  const
-{
-  return std::vector<std::string>{};
-}
-
 bool DummyParser::accept(const std::string& path_)
 {
   std::string ext = boost::filesystem::extension(path_);
