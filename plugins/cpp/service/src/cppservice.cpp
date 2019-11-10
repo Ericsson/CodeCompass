@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <queue>
+#include <regex>
 
 #include <util/util.h>
 #include <util/logutil.h>
@@ -1106,10 +1107,70 @@ std::int32_t CppServiceHandler::getFileReferenceCount(
 }
 
 void CppServiceHandler::getSyntaxHighlight(
-  std::vector<SyntaxHighlight>& /* return_ */,
-  const core::FileId& /* fileId_ */)
+  std::vector<SyntaxHighlight>& return_,
+  const core::FileRange& range_)
 {
-  // TODO
+  std::vector<std::string> content;
+
+  _transaction([&, this]() {
+
+    //--- Load the file content and break it into lines ---//
+
+    model::FilePtr file = _db->query_one<model::File>(
+      FileQuery::id == std::stoull(range_.file));
+
+    if (!file->content.load())
+      return;
+
+    std::istringstream s(file->content->content);
+    std::string line;
+    while (std::getline(s, line))
+      content.push_back(line);
+
+    //--- Iterate over AST node elements ---//
+
+    for (const model::CppAstNode& node : _db->query<model::CppAstNode>(
+      AstQuery::location.file == std::stoull(range_.file) &&
+      AstQuery::location.range.start.line >= range_.range.startpos.line &&
+      AstQuery::location.range.end.line < range_.range.endpos.line &&
+      AstQuery::location.range.end.line != model::Position::npos &&
+      AstQuery::visibleInSourceCode == true))
+    {
+      if (node.astValue.empty())
+        continue;
+
+      // Regular expression to find element position
+      std::string reg = "\\b" + node.astValue + "\\b";
+
+      for (std::size_t i = node.location.range.start.line - 1;
+           i < node.location.range.end.line && i < content.size();
+           ++i)
+      {
+        std::regex words_regex(reg);
+        auto words_begin = std::sregex_iterator(
+          content[i].begin(), content[i].end(),
+          words_regex);
+        auto words_end = std::sregex_iterator();
+
+        for (std::sregex_iterator ri = words_begin; ri != words_end; ++ri)
+        {
+          SyntaxHighlight syntax;
+          syntax.range.startpos.line = i + 1;
+          syntax.range.startpos.column = ri->position() + 1;
+          syntax.range.endpos.line = i + 1;
+          syntax.range.endpos.column =
+            syntax.range.startpos.column + node.astValue.length();
+
+          std::string symbolClass =
+            "cm-" + model::symbolTypeToString(node.symbolType);
+          syntax.className = symbolClass + " " +
+            symbolClass + "-" + model::astTypeToString(node.astType);
+
+          return_.push_back(std::move(syntax));
+        }
+      }
+    }
+  });
 }
 
 void CppServiceHandler::getDiagram(
@@ -1167,7 +1228,7 @@ void CppServiceHandler::getFileDiagramTypes(
 {
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
-      FileQuery::id == stoull(fileId_));
+      FileQuery::id == std::stoull(fileId_));
   });
 
   if (file->type == model::File::DIRECTORY_TYPE)

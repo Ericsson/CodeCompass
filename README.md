@@ -7,7 +7,7 @@ CodeCompass is a pluginable code comprehension tool.
 
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/logo.png" width="250px;"/>
 
-# :bulb: Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)
+**:bulb: Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)**
 
 ## Screenshots
 
@@ -26,22 +26,11 @@ Features
 - Many diagrams: call path, inheritance, aggregation, CodeBites, etc.
 - Scalable: Quick response time even for large (100Mb) source code base
 
-Documentations (New version - **Flash**)
+Documentations
 --------
-- [Requirements, external source dependencies](doc/deps.md)
 - [User guide](doc/usage.md)
-
-Documentations (Earhart)
---------
-- [Getting Started](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
-- [How To Parse A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Parse-A-Project)
-- [How To Manage Workspaces](https://github.com/Ericsson/CodeCompass/wiki/How-To-Manage-Workspaces)
-- [How To Start CodeCompass Webserver](https://github.com/Ericsson/CodeCompass/wiki/How-To-Start-CodeCompass-Webserver)
-- [How To Add CodeChecker To A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Add-CodeChecker-To-A-Project)
-- [Lazy Dog](https://github.com/Ericsson/CodeCompass/wiki/Lazy-Dog)
-- [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
 
 Development
 --------
-- [Architecure refactoring](https://github.com/Ericsson/CodeCompass/wiki/Architecure-Refactoring)
+- [Building CodeCompass](doc/deps.md)
 - [Coding conventions](doc/coding_conventions.md)

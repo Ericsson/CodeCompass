@@ -78,7 +78,10 @@ po::options_description commandLineArguments()
     ("dry-run",
      "Performs a dry on the incremental parsing maintenance, "
      "listing the detected changes, but without executing any "
-     "further actions modifying the state of the database.");
+     "further actions modifying the state of the database.")
+    ("incremental-threshold", po::value<int>()->default_value(10),
+      "This is a threshold percentage. If the total ratio of changed files "
+      "is greater than this value, full parse is forced instead of incremental parsing.");
 
   return desc;
 }
@@ -176,9 +179,9 @@ void incrementalList(cc::parser::ParserContext& ctx_)
  */
 void incrementalCleanup(cc::parser::ParserContext& ctx_)
 {
-  cc::util::OdbTransaction {ctx_.db} ([&]
+  for (auto& item : ctx_.fileStatus)
   {
-    for (auto& item : ctx_.fileStatus)
+    cc::util::OdbTransaction {ctx_.db} ([&]
     {
       switch (item.second)
       {
@@ -198,8 +201,8 @@ void incrementalCleanup(cc::parser::ParserContext& ctx_)
           // Empty deliberately
           break;
       }
-    }
-  });
+    });
+  }
 }
 
 int main(int argc, char* argv[])
@@ -331,36 +334,62 @@ int main(int argc, char* argv[])
 
   //--- Start parsers ---//
 
+  /*
+   * Workflow for incremental parsing:
+   * 1. directly modified files are detected by ParserContext.
+   * 2. all plugin parsers mark the indirectly modified files.
+   * 3. all plugin parsers perform a cleanup operation.
+   * 4. global tables are cleaned up by parser.cpp.
+   * 5. all plugin parsers perform a parsing operation.
+   *
+   * In case of an initial or forced parsing, only step 5 is executed.
+   */
+
   cc::parser::SourceManager srcMgr(db);
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
-  // TODO: Handle errors returned by preparse().
-  std::vector<std::string> topologicalOrder = pHandler.getTopologicalOrder();
-  for (auto it = topologicalOrder.rbegin(); it != topologicalOrder.rend(); ++it)
+  std::vector<std::string> pluginNames = pHandler.getPluginNames();
+  for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << *it << "] preparse started!";
-    if (!pHandler.getParser(*it)->preparse(vm.count("dry-run")))
-    {
-      LOG(error) << "[" << *it << "] preparse failed!";
-      return 2;
-    }
+    LOG(info) << "[" << pluginName << "] started to mark modified files!";
+    pHandler.getParser(pluginName)->markModifiedFiles();
   }
 
   if (vm.count("dry-run"))
   {
     incrementalList(ctx);
+    return 0;
   }
-  else
-  {
-    incrementalCleanup(ctx);
 
-    // TODO: Handle errors returned by parse().
-    for (const std::string& parserName : pHandler.getTopologicalOrder())
+  if (ctx.fileStatus.size() >
+    ctx.srcMgr.numberOfFiles() * vm["incremental-threshold"].as<int>() / 100.0)
+  {
+    LOG(info) << "The number of changed files exceeds the given incremental "
+                 "threshold ratio, full parse will be forced.";
+    vm.insert(std::make_pair("force", po::variable_value()));
+  }
+
+  if (!vm.count("force"))
+  {
+    for (const std::string& pluginName : pluginNames)
     {
-      LOG(info) << "[" << parserName << "] parse started!";
-      pHandler.getParser(parserName)->parse();
+      LOG(info) << "[" << pluginName << "] cleanup started!";
+      if (!pHandler.getParser(pluginName)->cleanupDatabase())
+      {
+        LOG(error) << "[" << pluginName << "] cleanup failed!";
+        return 2;
+      }
     }
+
+    incrementalCleanup(ctx);
+  }
+
+  // TODO: Handle errors returned by parse().
+  for (const std::string& pluginName : pluginNames)
+  {
+    LOG(info) << "[" << pluginName << "] parse started!";
+    pHandler.getParser(pluginName)->parse();
   }
 
   //--- Add indexes to the database ---//

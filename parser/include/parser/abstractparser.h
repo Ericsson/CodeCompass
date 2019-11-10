@@ -10,7 +10,7 @@ namespace cc
 {
 namespace parser
 {
-  
+
 class AbstractParser
 {
 public:
@@ -26,28 +26,22 @@ public:
   virtual ~AbstractParser(){}
 
   /**
-   * Get dependencies of parsers. 
-   * Using these dependencies we will create a linear ordering of the parsers
-   * and then we will call the parse() function in the correct order.
-   * @return dependent parsers
+   * Look up and mark indirectly modified files for incremental parsing,
+   * based on the semantic information of the parser.
    */
-  virtual std::vector<std::string> getDependentParsers() const = 0;
+  virtual void markModifiedFiles(){}
 
   /**
-   * Maintains and cleans up the database in preparation of
-   * incremental parsing.
-   * @param dry_ When true, perform a dry-run and only detect the changed files,
-   * but do not execute any maintenance actions.
-   * @return Return true if the preparse was success, false otherwise.
+   * Maintains and cleans up the database in preparation of incremental parsing.
+   * @return Returns true if the cleanup succeeded, false otherwise.
    */
-  virtual bool preparse(bool /* dry_ */ = false)
+  virtual bool cleanupDatabase()
   {
     return true;
   }
-
   /**
    * Method parses a path or a compilation database
-   * @return Return true if the parse was success, false otherwise
+   * @return Returns true if the parse succeeded, false otherwise.
    */
   virtual bool parse() = 0;
   

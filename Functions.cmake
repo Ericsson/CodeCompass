@@ -39,7 +39,7 @@ function(generate_odb_files _src)
   set(ODB_CXX_SOURCES ${SOURCES} PARENT_SCOPE)
 endfunction(generate_odb_files)
 
-# add new odb static library
+# Add a new static library target that links against ODB.
 function(add_odb_library _name)
   add_library(${_name} STATIC ${ARGN})
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
@@ -64,11 +64,10 @@ function(install_sql)
 endfunction(install_sql)
 
 # This function can be used to install the thrift generated .js files to a
-# specific directory. These files will be used at the gui
-# @param _dir The gen-js directory under which the .js files are located.
-function(install_js_thrift _dir)
+# specific directory. These files will be used at the gui.
+function(install_js_thrift)
   install(
-    DIRECTORY ${_dir}
+    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-js/
     DESTINATION ${INSTALL_GEN_DIR}
     FILES_MATCHING PATTERN "*.js")
 endfunction(install_js_thrift)

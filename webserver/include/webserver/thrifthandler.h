@@ -2,8 +2,7 @@
 #define CC_WEBSERVER_THRIFTHANDLER_H
 
 #include <stdio.h>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/THttpServer.h>
@@ -69,7 +68,7 @@ protected:
   {
   public:
     template <typename IFaceType>
-    LoggingProcessor(boost::shared_ptr<IFaceType> handler_)
+    LoggingProcessor(std::shared_ptr<IFaceType> handler_)
       : Processor(handler_)
     {
     }
@@ -91,7 +90,7 @@ protected:
 public:
   template<class Handler>
   ThriftHandler(Handler *handler_)
-    : _processor(::boost::shared_ptr<Handler>(handler_))
+    : _processor(std::shared_ptr<Handler>(handler_))
   {
   }
 
@@ -118,14 +117,14 @@ public:
 
       LOG(debug) << "Request content:\n" << content;
 
-      boost::shared_ptr<TTransport> inputBuffer(
+      std::shared_ptr<TTransport> inputBuffer(
         new TMemoryBuffer((std::uint8_t*)content.c_str(), content.length()));
 
-      boost::shared_ptr<TTransport> outputBuffer(new TMemoryBuffer(4096));
+      std::shared_ptr<TTransport> outputBuffer(new TMemoryBuffer(4096));
 
-      boost::shared_ptr<TProtocol> inputProtocol(
+      std::shared_ptr<TProtocol> inputProtocol(
         new TJSONProtocol(inputBuffer));
-      boost::shared_ptr<TProtocol> outputProtocol(
+      std::shared_ptr<TProtocol> outputProtocol(
         new TJSONProtocol(outputBuffer));
 
       CallContext ctx{conn_, nullptr};

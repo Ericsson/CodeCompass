@@ -20,11 +20,6 @@ GitParser::GitParser(ParserContext& ctx_) : AbstractParser(ctx_)
   git_libgit2_init();
 }
 
-std::vector<std::string> GitParser::getDependentParsers() const
-{
-  return std::vector<std::string>{};
-}
-
 util::DirIterCallback GitParser::getParserCallback()
 {
   std::string wsDir = _ctx.options["workspace"].as<std::string>();

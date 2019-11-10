@@ -14,6 +14,7 @@ namespace parser
 
 std::unordered_set<model::CppEdgeId> RelationCollector::_edgeCache;
 std::unordered_set<model::CppEdgeAttributeId> RelationCollector::_edgeAttrCache;
+std::mutex RelationCollector::_edgeCacheMutex;
 
 RelationCollector::RelationCollector(
   ParserContext& ctx_,
@@ -23,6 +24,7 @@ RelationCollector::RelationCollector(
 {
   // Fill edge cache on first object initialization
   // Note that the caches are static members.
+  std::lock_guard<std::mutex> cacheLock(_edgeCacheMutex);
   if (_edgeCache.empty())
   {
     util::OdbTransaction{_ctx.db}([this]

@@ -1,7 +1,7 @@
 include_directories(
   include
-  gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/gen-cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
   ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
@@ -12,16 +12,16 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/metrics_constants.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/metrics_constants.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/metrics_types.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/metrics_types.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp/MetricsService.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen-js
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/MetricsService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen js
-      -o ${CMAKE_CURRENT_SOURCE_DIR}
+      -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
       ${CMAKE_CURRENT_SOURCE_DIR}/metrics.thrift
   DEPENDS
@@ -30,9 +30,9 @@ add_custom_command(
     "Generating Thrift for metrics.thrift")
 
 add_library(metricsthrift STATIC
-  gen-cpp/metrics_constants.cpp
-  gen-cpp/metrics_types.cpp
-  gen-cpp/MetricsService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/metrics_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/MetricsService.cpp)
 
 target_compile_options(metricsthrift PUBLIC -fPIC)
 
@@ -53,4 +53,4 @@ target_link_libraries(metricsservice
   metricsthrift)
 
 install(TARGETS metricsservice DESTINATION ${INSTALL_SERVICE_DIR})
-install_js_thrift(gen-js/)
+install_js_thrift()
