@@ -22,7 +22,7 @@ EOF
 cc_source_dir="${CC_SOURCE}"
 cc_output_dir="${CC_BUILD}"
 run_as_root="true"
-while getopts ":hs:o:u" OPTION; do
+while getopts "hs:o:u" OPTION; do
     case ${OPTION} in
         h)
             usage

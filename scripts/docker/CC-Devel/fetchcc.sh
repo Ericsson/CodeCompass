@@ -28,7 +28,7 @@ cc_url="${CC_URL}"
 if [[ -z ${cc_url} ]]; then
     cc_url="${main_repo_url}"
 fi
-while getopts ":hs:u:b:" option; do
+while getopts "hs:u:b:" option; do
     case ${option} in
         h)
             usage

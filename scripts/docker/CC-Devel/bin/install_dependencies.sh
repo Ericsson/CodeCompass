@@ -7,18 +7,19 @@ packages_to_install=(                                                          \
     "autoconf"                                                                 \
     "automake"                                                                 \
     "bison"                                                                    \
+    "clang-7"                                                                  \
     "cmake"                                                                    \
     "flex"                                                                     \
-    "g++-5"                                                                    \
-    "gcc-5-plugin-dev"                                                         \
     "git"                                                                      \
     "libboost-all-dev"                                                         \
+    "libclang-7-dev"                                                           \
     "libcutl-dev"                                                              \
     "libevent-dev"                                                             \
     "libexpat1-dev"                                                            \
     "libgit2-dev"                                                              \
     "libgraphviz-dev"                                                          \
     "libgtest-dev"                                                             \
+    "llvm-7-dev"                                                               \
     "libmagic-dev"                                                             \
     "libodb-dev"                                                               \
     "libodb-pgsql-dev"                                                         \
@@ -27,7 +28,6 @@ packages_to_install=(                                                          \
     "libsqlite3-dev"                                                           \
     "libssl-dev"                                                               \
     "libtool"                                                                  \
-    "lsb-release"                                                              \
     "make"                                                                     \
     "odb"                                                                      \
     "pkg-config"                                                               \
@@ -36,19 +36,21 @@ packages_to_install=(                                                          \
     "zlib1g-dev"                                                               \
 )
 
-if [[ "${1}" == "16.04" ]]; then
+declare running_ubuntu_codename="$(lsb_release --codename --short)"
+if [[ "${running_ubuntu_codename}" == "xenial" ]]; then
     packages_to_install+=("nodejs-legacy")
-elif [[ "${1}" == "18.04" ]]; then
+elif [[ "${running_ubuntu_codename}" == "bionic" ]]; then
     packages_to_install+=( "nodejs")
+else
+    echo "Unsupported ubuntu release" 2>&1
+    exit 1
 fi
-
-apt-get install --yes "apt-utils"
 
 # Workaround. This single step provides that the JDK 8 will be installed only.
 apt-get install --yes "openjdk-8-jdk-headless"
 
 # Install packages that necessary for build CodeCompass.
-apt-get install --yes ${packages_to_install[@]}
+apt-get install --yes "${packages_to_install[@]}"
 
 # Workaround. This single step prevent unwanted remove of npm.
 apt-get install --yes "npm"

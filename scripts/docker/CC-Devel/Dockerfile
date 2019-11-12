@@ -1,4 +1,4 @@
-ARG UBUNTU_VERSION=16.04
+ARG UBUNTU_VERSION=18.04
 
 FROM ubuntu:${UBUNTU_VERSION}
 
@@ -16,19 +16,21 @@ RUN sed --in-place --expression='s/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/'     \
 
 ENV LANG en_US.UTF-8
 
+RUN apt-get install --yes apt-utils gnupg2 lsb-release wget 
+
 WORKDIR /root
 COPY ./bin ./bin
 RUN chmod u+x \
     ./bin/install_gtest.sh                                                     \
     ./bin/install_thrift.sh                                                    \
-    ./bin/install_llvm.sh                                                      \
     ./bin/install_dependencies.sh
 
-RUN ./bin/install_dependencies.sh ${UBUNTU_VERSION}
+RUN ./bin/install_dependencies.sh
+
+# TODO: Add clang alternatives
 
 RUN ./bin/install_gtest.sh                                                     \
-  && ./bin/install_thrift.sh -t "0.10.0"                                       \
-  && ./bin/install_llvm.sh -l "7.0.0"
+  && ./bin/install_thrift.sh -t "0.12.0"
 
 RUN mv \
     /root/bin/fetchcompass.sh                                                  \

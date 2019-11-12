@@ -19,7 +19,7 @@ EOF
 
 cc_source_dir="${CC_SOURCE}"
 cc_output_dir="${CC_BUILD}"
-while getopts ":hs:o:" option; do
+while getopts "hs:o:" option; do
     case ${option} in
         h)
             usage

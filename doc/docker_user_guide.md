@@ -45,17 +45,18 @@ binary:
 
 ```bash
 git clone https://github.com/Ericsson/CodeCompass <cc_source_dir>
-docker build --tag compass-devel --build-arg UBUNTU_VERSION=<version> \
+docker build --tag compass-devel [--build-arg UBUNTU_VERSION=<version>] \
     <cc_source_dir>/scripts/docker/CC-Devel
 ```
 
-Two ubuntu LTS version are supported: *16.04* and *18.04*. If none of them specified the *16.04* will be the default.
+Two ubuntu LTS version are supported: *16.04* and *18.04*. If none of them
+specified the *18.04* will be the default.
 
 This is a long running task, because a complete LLVM is necessary to compile
 (among others). When it is built, the image consumes about 4GB on the
 developer's machine.
 
-Using "compass-devel" as image name is mandatory, because the scripts find the
+Using **compass-devel** as image name is mandatory, because the scripts find the
 image by this name.
 
 Now, the build system is ready to make development cycles (modify-build-try) of
@@ -82,9 +83,10 @@ Additionally the ``configurecc.sh`` uses the
 
 - CC_BUILD_TYPE what defines build type as the cmake requires, for example
 ``Debug``
-- CC_DATABASE_TYPE what defines the underlined database type. It can be sqlite or pgsql.
+- CC_DATABASE_TYPE what defines the underlined database type. It can be sqlite
+or pgsql.
 
-Additionally the ``fetchcc.sh`` and ``create_base_images.sh``uses the
+Additionally the ``fetchcc.sh`` and ``create_base_images.sh`` uses the
 
 - CC_URL points to the CodeCompass git repository
 
