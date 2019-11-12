@@ -1,9 +1,8 @@
+#include <cstdlib>
+
 #include <boost/filesystem.hpp>
 
 #include <util/filesystem.h>
-#include <util/logutil.h>
-
-#include <stdlib.h>
 
 namespace fs = boost::filesystem;
 
@@ -28,24 +27,26 @@ std::string binaryPathToInstallDir(const char* path)
   }
   else
   {
-    std::string webserverPath;
+    std::string pPath;
     std::string fullPath = std::getenv("PATH");
     std::string delimiter = ":";
 
-    size_t pos = 0;
+    std::size_t pos = 0;
     while ((pos = fullPath.find(delimiter)) != std::string::npos)
     {
-      webserverPath = fullPath.substr(0, pos) + "/" + path;
+      pPath = fullPath.substr(0, pos) + "/" + path;
 
-      if (fs::exists(fs::path(webserverPath)))
+      if (fs::exists(fs::path(pPath)))
       {
-        return fs::canonical(fs::path(webserverPath))
+        return fs::canonical(fs::path(pPath))
           .parent_path().parent_path().string();
       }
 
       fullPath.erase(0, pos + delimiter.length());
     }
   }
+
+  throw std::runtime_error(std::string("Could not find ") + path + std::string("."));
 }
 
 } // namespace util
