@@ -19,6 +19,7 @@ std::string binaryPathToInstallDir(const char* path)
   // the root).
   // If the path does not exist, the given binary is searched for in the PATH
   // environment variable.
+  // TODO: replace else branch with fs::search_path if Boost 1.64 or above is used.
 
   if (fs::exists(fs::system_complete(fs::path(path))))
   {
@@ -27,18 +28,18 @@ std::string binaryPathToInstallDir(const char* path)
   }
   else
   {
-    std::string pPath;
+    fs::path pPath;
     std::string fullPath = std::getenv("PATH");
     std::string delimiter = ":";
 
     std::size_t pos = 0;
     while ((pos = fullPath.find(delimiter)) != std::string::npos)
     {
-      pPath = fullPath.substr(0, pos) + "/" + path;
+      pPath = fs::path(fullPath.substr(0, pos)) / fs::path(path);
 
       if (fs::exists(fs::path(pPath)))
       {
-        return fs::canonical(fs::path(pPath))
+        return fs::canonical(pPath)
           .parent_path().parent_path().string();
       }
 
