@@ -212,14 +212,12 @@ reason.
 # Start the server listening on port 6251.
 keepalive CodeCompass_webserver \
   -w ~/cc/workdir \
-  -p 6251 \
-  -d "pgsql:host=localhost;port=5432;user=compass;password=mypassword"
+  -p 6251
 
 # Or if SQLite database is used:
 keepalive CodeCompass_webserver \
   -w ~/cc/workdir \
-  -p 6251 \
-  -d "sqlite:database=~/cc/mydatabase.sqlite"
+  -p 6251
 ```
 
 The server will be available in a browser on
