@@ -47,4 +47,13 @@ RUN set -x && apt-get update -qq \
 
 COPY codecompass-build.sh /usr/local/bin
 
-ENV DATABASE=sqlite BUILD_TYPE=Release
+ENV DATABASE=sqlite \
+    BUILD_TYPE=Release \
+    BUILD_DIR=/CodeCompass/build \
+    INSTALL_DIR=/CodeCompass/install \
+    SOURCE_DIR=/CodeCompass/CodeCompass \
+    TEST_WORKSPACE=/CodeCompass/test_workspace \
+    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
+
+ENV PATH="$INSTALL_DIR/bin:$PATH"
+ENV LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
