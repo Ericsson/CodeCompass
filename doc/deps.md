@@ -16,6 +16,8 @@ be installed from the official repository of the given Linux distribution.
 - **`libboost-all-dev`**: Boost can be used during the development.
 - **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code.
+-**`clang-7`** this is only necessary during the install if you have another
+  version of clang installed on your computer.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
 - **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the
@@ -24,7 +26,7 @@ be installed from the official repository of the given Linux distribution.
 - **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL
   server and the corresponding ODB development library in case PostgreSQL
   database system is used.
-- **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
+- **`open-jdk-8`**: For search parsing CodeCompass uses an indexer written in
   Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizaions.
@@ -47,23 +49,43 @@ The standard Ubuntu Xenial package repository contains only LLCM/Clang version
 6, which is not sufficient for CodeCompass, as at least version 7.0 is
 required.  Therefore LLVM and Clang should be installed from the official LLVM
 repositories:
-
 ```bash
 sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
-
+```
+The default-jdk repository ponts to teh openjdk-11 version of java, whih
+is not sufficent for Thrift, therefore its uninstall is required:
+```bash
+sudo apt remove default-jdk default-jdk-headless default-jre \
+  default-jre-headless openjdk-11-jdk  openjdk-11-jdk-headless \
+  openjdk-11-jre openjdk-11-jre-headless
+```
+Installation command for all the required packages of CodeCompass:
+```bash
 sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+  openjdk-8-jdk openjdk-8-dbg openjdk-8-jre \
+  openjdk-8-jdk-headless openjdk-8-dbg libssl-dev \
+  libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
 ```
 
 #### Ubuntu 18.04 LTS
 
+The default-jdk repository ponts to teh openjdk-11 version of java, whih
+is not sufficent for Thrift, therefore its uninstall is required:
+```bash
+sudo apt remove default-jdk default-jdk-headless default-jre \
+  default-jre-headless openjdk-11-jdk  openjdk-11-jdk-headless \
+  openjdk-11-jre openjdk-11-jre-headless
+
+Installation command for all the required packages of CodeCompass:
 ```bash
 sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+  openjdk-8-jdk openjdk-8-dbg openjdk-8-jre \
+  openjdk-8-jdk-headless openjdk-8-dbg  \
+  libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
 
