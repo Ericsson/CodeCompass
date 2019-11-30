@@ -21,13 +21,13 @@ RUN set -x && apt-get update -qq \
   libboost-program-options-dev \
   libboost-regex-dev \
   # Build thrift.
-  && wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.12.0/thrift-0.12.0.tar.gz" -O /opt/thrift-0.12.0.tar.gz; \
-     tar -xf /opt/thrift-0.12.0.tar.gz -C /opt; \
-     cd /opt/thrift-0.12.0; \
+  && wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" -O /opt/thrift-0.13.0.tar.gz; \
+     tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
+     cd /opt/thrift-0.13.0; \
      ./configure --silent; \
      cd /; \
-     make -C /opt/thrift-0.12.0 -j4 --silent install; \
-     rm -rf /opt/thrift-0.12.0 /opt/thrift-0.12.0.tar.gz \
+     make -C /opt/thrift-0.13.0 -j4 --silent install; \
+     rm -rf /opt/thrift-0.13.0 /opt/thrift-0.13.0.tar.gz \
   # Build GTest.
   && cd /usr/src/googletest/ && \
      mkdir build && \
