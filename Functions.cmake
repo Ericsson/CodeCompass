@@ -70,6 +70,8 @@ function(install_js_thrift)
     DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-js/
     DESTINATION ${INSTALL_GEN_DIR}
     FILES_MATCHING PATTERN "*.js")
+  install(
+    CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/scripts/remover.sh WORKING_DIRECTORY ${INSTALL_GEN_DIR})")
 endfunction(install_js_thrift)
 
 # Install plugins webgui
