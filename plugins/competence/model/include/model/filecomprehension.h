@@ -2,8 +2,8 @@
 // Created by efekane on 2020.01.03..
 //
 
-#ifndef PROJECT_UNDERSTANDING_H
-#define PROJECT_UNDERSTANDING_H
+#ifndef CC_MODEL_FILECOMPREHENSION_H
+#define CC_MODEL_FILECOMPREHENSION_H
 
 #include <memory>
 
@@ -17,7 +17,7 @@ namespace cc
 namespace model
 {
   #pragma db object
-  struct Understanding
+  struct FileComprehension
   {
     #pragma db id auto
     std::uint64_t id;
@@ -29,9 +29,9 @@ namespace model
     short ratio;
   };
 
-  typedef std::shared_ptr<Understanding> UnderstandingPtr;
+  typedef std::shared_ptr<FileComprehension> UnderstandingPtr;
 
 } // model
 } // cc
 
-#endif //PROJECT_UNDERSTANDING_H
+#endif //CC_MODEL_FILECOMPREHENSION_H
