@@ -29,7 +29,7 @@ namespace model
     short ratio;
   };
 
-  typedef std::shared_ptr<FileComprehension> UnderstandingPtr;
+  typedef std::shared_ptr<FileComprehension> FileComprehensionPtr;
 
 } // model
 } // cc
