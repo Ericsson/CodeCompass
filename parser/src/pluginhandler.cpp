@@ -67,9 +67,9 @@ std::vector<std::string> PluginHandler::getLoadedPluginNames() const
 {
   std::vector<std::string> plugins;
 
-  for (auto pair : _dynamicLibraries)
+  for (const auto& lib : _dynamicLibraries)
   {
-    plugins.push_back(pair.first);
+    plugins.push_back(lib.first);
   }
 
   return plugins;
