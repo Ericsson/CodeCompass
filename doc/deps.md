@@ -189,6 +189,9 @@ cmake .. \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type>
 
+#To specify linker for building CodeCompass use
+# -DCODECOMPASS_LINKER=<path_to_linker>
+
 # Build project.
 make -j<number_of_threads>
 
@@ -208,6 +211,7 @@ during compilation.
 | `CMAKE_CXX_COMPILER` | If the official repository of your Linux distribution doesn't contain a C++ compiler which supports C++14 then you can install one manually and set to use it. For more information see: https://cmake.org/Wiki/CMake_Useful_Variables |
 | `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. |
+| `CODECOMPASS_LINKER` | The variable used to specify the linker. |
 
 # Docker
 [![Docker](images/docker.jpg)](https://www.docker.com/)

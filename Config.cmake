@@ -74,8 +74,14 @@ set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -pedantic\
   -DDATABASE_${DATABASE_U} \
   -DBOOST_LOG_DYN_LINK")
 
-# Set gold linker
-set(CMAKE_LINKER "/usr/bin/gold")
+# Gold is the primary linker 
+if(NOT DEFINED CODECOMPASS_LINKER)
+    set(CODECOMPASS_LINKER "/usr/bin/gold")
+endif()
+
+set(CMAKE_LINKER "${CODECOMPASS_LINKER}")
+
+
 
 # Cmake module directory (FindOdb, FindThrift etc.)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
