@@ -37,6 +37,12 @@ public:
   void loadPlugins(std::vector<std::string>& skipParserList_);
 
   /**
+   * Return the list of loaded plugins based the file names in the dynamic
+   * libraries.
+   */
+  std::vector<std::string> getLoadedPluginNames() const;
+
+  /**
    * Return the list of available plugins based on the file names in the parser
    * lib directory.
    */
