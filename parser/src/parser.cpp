@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
   cc::parser::ParserContext ctx(db, srcMgr, compassRoot, vm);
   pHandler.createPlugins(ctx);
 
-  std::vector<std::string> pluginNames = pHandler.getPluginNames();
+  std::vector<std::string> pluginNames = pHandler.getLoadedPluginNames();
   for (const std::string& pluginName : pluginNames)
   {
     LOG(info) << "[" << pluginName << "] started to mark modified files!";
