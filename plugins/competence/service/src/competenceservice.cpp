@@ -32,7 +32,33 @@ void CompetenceServiceHandler::setCompetenceRatio(std::string& return_,
     fileComprehension.file = std::make_shared<model::File>();
     fileComprehension.file->id = std::stoull(fileId_);
     _db->persist(fileComprehension);
+
   });
+}
+
+void CompetenceServiceHandler::loadRepositoryData(std::string& return_,
+  const std::string& repoId_)
+{
+  _transaction([&, this](){
+    RepositoryPtr repo = createRepository(repoId_);
+
+    if (!repo)
+      return;
+
+
+  });
+}
+
+RepositoryPtr CompetenceServiceHandler::createRepository(const std::string& repoId_)
+{
+  std::string repoPath = *_datadir + "/version/" + repoId_;
+  git_repository* repository = nullptr;
+  int error = git_repository_open(&repository, repoPath.c_str());
+
+  if (error)
+    LOG(error) <<"Opening repository " << repoPath << " failed: " << error;
+
+  return RepositoryPtr { repository, &git_repository_free };
 }
 
 } // competence
