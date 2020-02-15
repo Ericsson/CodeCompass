@@ -19,6 +19,8 @@ namespace service
 namespace competence
 {
 
+typedef std::unique_ptr<git_blame, decltype(&git_blame_free)> BlamePtr;
+typedef std::unique_ptr<git_blame_options> BlameOptsPtr;
 typedef std::unique_ptr<git_repository, decltype(&git_repository_free)> RepositoryPtr;
 
 class CompetenceServiceHandler : virtual public CompetenceServiceIf
@@ -35,14 +37,23 @@ public:
 
   void loadRepositoryData(
     std::string& return_,
-    const std::string& repoId_);
+    const std::string& repoId_,
+    const std::string& hexOid_,
+    const std::string& path_);
 
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
   std::shared_ptr<std::string> _datadir;
 
+  BlamePtr createBlame(
+    git_repository* repo_,
+    const std::string& path_,
+    git_blame_options* opts_);
+  BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
   RepositoryPtr createRepository(const std::string& repoId_);
+  git_oid gitOidFromStr(const std::string& hexOid_);
+
 };
 
 } // competence
