@@ -17,6 +17,7 @@ add_custom_command(
         ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/competence_types.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/competence_types.h
         ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CompetenceService.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CompetenceService.h
         ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
         ${CMAKE_CURRENT_BINARY_DIR}/gen-js
         COMMAND
@@ -39,8 +40,8 @@ target_compile_options(competencethrift PUBLIC -fPIC)
 add_dependencies(competencethrift projectthrift)
 
 add_library(competenceservice SHARED
-        src/competenceservice.cpp
-        src/plugin.cpp)
+        src/plugin.cpp
+        src/competenceservice.cpp)
 
 target_link_libraries(competenceservice
         util
@@ -50,7 +51,8 @@ target_link_libraries(competenceservice
         projectthrift
         projectservice
         commonthrift
-        competencethrift)
+        competencethrift
+        git2)
 
 install(TARGETS competenceservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift()
