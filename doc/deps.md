@@ -99,10 +99,10 @@ it and build from source:
 
 ```bash
 # Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.12.0/thrift-0.12.0.tar.gz" \
-  -O thrift-0.12.0.tar.gz
-tar -xvf ./thrift-0.12.0.tar.gz
-cd thrift-0.12.0
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" \
+  -O thrift-0.13.0.tar.gz
+tar -xvf ./thrift-0.13.0.tar.gz
+cd thrift-0.13.0
 
 # Ant is required for having Java support in Thrift.
 sudo apt-get install ant

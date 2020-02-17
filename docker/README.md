@@ -85,7 +85,7 @@ codecompass-build.sh test
 You can parse a project inside a docker container by using the following
 command:
 ```bash
-/CodeCompass/install/bin/CodeCompass_parser \
+CodeCompass_parser \
   -d "sqlite:database=/CodeCompass/workspace/myproject/data.sqlite" \
   -w /CodeCompass/workspace \
   -n myproject \
@@ -101,7 +101,7 @@ You can start a webserver inside the container by using the following command:
 mkdir -p /CodeCompass/workspace
 
 # Run the web server.
-/CodeCompass/install/bin/CodeCompass_webserver \
+CodeCompass_webserver \
   -w /CodeCompass/workspace
 ```
 
