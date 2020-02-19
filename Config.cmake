@@ -76,7 +76,7 @@ set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -pedantic\
 
 # Gold is the primary linker 
 if(NOT DEFINED CODECOMPASS_LINKER)
-    set(CODECOMPASS_LINKER "/usr/bin/gold")
+    set(CODECOMPASS_LINKER "gold")
 endif()
 
 set(CMAKE_LINKER "${CODECOMPASS_LINKER}")
