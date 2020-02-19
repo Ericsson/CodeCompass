@@ -169,6 +169,9 @@ void incrementalList(cc::parser::ParserContext& ctx_)
       case cc::parser::IncrementalStatus::DELETED:
         LOG(info) << "DELETED file: " << item.first;
         break;
+      case cc::parser::IncrementalStatus::ACTION_CHANGED:
+        LOG(info) << "BUILD ACTION CHANGED file: " << item.first;
+        break;
     }
   }
 }
@@ -188,6 +191,7 @@ void incrementalCleanup(cc::parser::ParserContext& ctx_)
       {
         case cc::parser::IncrementalStatus::MODIFIED:
         case cc::parser::IncrementalStatus::DELETED:
+        case cc::parser::IncrementalStatus::ACTION_CHANGED:
         {
           LOG(info) << "Database cleanup: " << item.first;
 
