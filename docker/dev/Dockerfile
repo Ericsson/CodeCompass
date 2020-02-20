@@ -23,7 +23,7 @@ RUN set -x && apt-get update -qq \
     libboost-regex-dev
 # Download the Thrift source code.
 ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" /opt/thrift-0.13.0.tar.gz
-#Build Thrift
+# Build Thrift
 RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
     cd /opt/thrift-0.13.0 && \
     ./configure \
