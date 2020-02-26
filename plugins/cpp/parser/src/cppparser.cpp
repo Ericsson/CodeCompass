@@ -448,6 +448,56 @@ void CppParser::markModifiedFiles()
       }
     }
   }); // end of transaction
+
+  // Detect changed translation units through the build actions.
+  for (const std::string& input
+    : _ctx.options["input"].as<std::vector<std::string>>())
+    if (boost::filesystem::is_regular_file(input))
+    {
+      std::string errorMsg;
+
+      std::unique_ptr<clang::tooling::JSONCompilationDatabase> compDb
+        = clang::tooling::JSONCompilationDatabase::loadFromFile(
+          input, errorMsg,
+          clang::tooling::JSONCommandLineSyntax::Gnu);
+
+      if (!errorMsg.empty())
+      {
+        LOG(error) << errorMsg;
+        continue;
+      }
+
+      // Read the compilation commands from the JSON file
+      std::vector<clang::tooling::CompileCommand> compileCommands =
+        compDb->getAllCompileCommands();
+      std::unordered_set<std::string> commandTexts;
+      for (const auto& command : compileCommands)
+      {
+        commandTexts.insert(
+          boost::algorithm::join(command.CommandLine, " "));
+      }
+
+      // Load the compilation commands from the workspace database
+      util::OdbTransaction {_ctx.db} ([&] {
+        for (const model::BuildAction& ba : _ctx.db->query<model::BuildAction>())
+        {
+          // If a compilation command is found in the workspace database,
+          // but not in the JSON file, mark the source files for cleanup.
+          if (commandTexts.find(ba.command) == commandTexts.end())
+          {
+            for(auto buildSourceLazyPtr : ba.sources)
+            {
+              auto buildSourcePtr = buildSourceLazyPtr.load();
+              if (!_ctx.fileStatus.count(buildSourcePtr->file->path))
+              {
+                _ctx.fileStatus.emplace(buildSourcePtr->file->path, IncrementalStatus::ACTION_CHANGED);
+                LOG(debug) << "[cppparser] Build action for file changed: " << buildSourcePtr->file->path;
+              }
+            }
+          }
+        }
+      }); // end of transaction
+    }
 }
 
 bool CppParser::cleanupDatabase()
@@ -538,6 +588,7 @@ bool CppParser::cleanupWorker(const std::string& path_)
         {
           case IncrementalStatus::MODIFIED:
           case IncrementalStatus::DELETED:
+          case IncrementalStatus::ACTION_CHANGED:
           {
             // Fetch file from SourceManager by path
             model::FilePtr delFile = _ctx.srcMgr.getFile(path_);
@@ -639,7 +690,7 @@ void CppParser::markByInclusion(model::FilePtr file_)
   for (auto inc : inclusions)
   {
     model::FilePtr loaded = inc.includer.load();
-    if(!_ctx.fileStatus.count(loaded->path))
+    if (!_ctx.fileStatus.count(loaded->path))
     {
       _ctx.fileStatus.emplace(loaded->path, IncrementalStatus::MODIFIED);
       LOG(debug) << "[cppparser] File modified: " << loaded->path;

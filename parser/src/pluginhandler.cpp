@@ -63,6 +63,18 @@ void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
   }
 }
 
+std::vector<std::string> PluginHandler::getLoadedPluginNames() const
+{
+  std::vector<std::string> plugins;
+
+  for (const auto& lib : _dynamicLibraries)
+  {
+    plugins.push_back(lib.first);
+  }
+
+  return plugins;
+}
+
 std::vector<std::string> PluginHandler::getPluginNames() const
 {
   std::vector<std::string> plugins;

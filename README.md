@@ -7,7 +7,7 @@ CodeCompass is a pluginable code comprehension tool.
 
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/logo.png" width="250px;"/>
 
-**:bulb: Live demo on Xerces source code available [here](http://modelserver.inf.elte.hu:34540/#wsid=xerces)**
+**:bulb: Live demo on LLVM source code available [here](https://codecompass.zolix.hu/#wsid=llvmmaster)**
 
 ## Screenshots
 

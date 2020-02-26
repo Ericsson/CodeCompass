@@ -60,7 +60,8 @@ bool MetricsParser::cleanupDatabase()
           auto it = _ctx.fileStatus.find(file.path);
           if (it != _ctx.fileStatus.end() &&
               (it->second == cc::parser::IncrementalStatus::DELETED ||
-               it->second == cc::parser::IncrementalStatus::MODIFIED))
+               it->second == cc::parser::IncrementalStatus::MODIFIED ||
+               it->second == cc::parser::IncrementalStatus::ACTION_CHANGED))
           {
             LOG(info) << "[metricsparser] Database cleanup: " << file.path;
 
