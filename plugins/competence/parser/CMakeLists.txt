@@ -8,10 +8,12 @@ include_directories(
 add_library(competenceparser SHARED
         src/competenceparser.cpp)
 
-target_compile_options(competenceparser PUBLIC -Wno-unknown-pragmas)
-
 target_link_libraries(competenceparser
+        model
+        competencemodel
         util
         git2)
+
+target_compile_options(competenceparser PUBLIC -Wno-unknown-pragmas)
 
 install(TARGETS competenceparser DESTINATION ${INSTALL_PARSER_DIR})

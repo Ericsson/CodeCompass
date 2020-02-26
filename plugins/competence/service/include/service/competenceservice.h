@@ -36,29 +36,9 @@ public:
     const core::FileId& fileId_,
     const int ratio_) override;
 
-  void loadRepositoryData(std::string& return_,
-    const core::FileId& fileId_,
-    const std::string& repoId_,
-    const std::string& hexOid_,
-    const std::string& path_,
-    const std::string& user_ = "afekete");
-
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-  std::shared_ptr<std::string> _datadir;
-
-  BlamePtr createBlame(
-    git_repository* repo_,
-    const std::string& path_,
-    git_blame_options* opts_);
-  BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
-  RepositoryPtr createRepository(const std::string& repoId_);
-  CommitPtr createCommit(git_repository *repo_,
-    const git_oid& id_);
-  git_oid gitOidFromStr(const std::string& hexOid_);
-  std::string gitOidToString(const git_oid* oid_);
-
 };
 
 } // competence

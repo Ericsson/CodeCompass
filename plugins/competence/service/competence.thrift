@@ -44,11 +44,4 @@ struct GitBlameHunk
 service CompetenceService
 {
     string setCompetenceRatio(1:common.FileId fileId, 2:i32 ratio)
-
-    string loadRepositoryData(
-      1:common.FileId fileId,
-      2:string repoId,
-      3:string hexOid,
-      4:string path,
-      5:string user)
 }
