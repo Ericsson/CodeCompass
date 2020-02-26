@@ -41,7 +41,7 @@ public:
     const std::string& repoId_,
     const std::string& hexOid_,
     const std::string& path_,
-    const std::string& user_ = "none");
+    const std::string& user_ = "afekete");
 
 private:
   std::shared_ptr<odb::database> _db;

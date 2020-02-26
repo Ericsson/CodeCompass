@@ -31,6 +31,7 @@ void CompetenceServiceHandler::setCompetenceRatio(std::string& return_,
     fileComprehension.ratio = ratio_;
     fileComprehension.file = std::make_shared<model::File>();
     fileComprehension.file->id = std::stoull(fileId_);
+    fileComprehension.inputType = model::InputType::USER;
     _db->persist(fileComprehension);
 
   });
@@ -108,7 +109,7 @@ void CompetenceServiceHandler::loadRepositoryData(std::string& return_,
     }
 
     model::FileComprehension fileComprehension;
-    fileComprehension.ratio = blameLines / totalLines;
+    fileComprehension.ratio = blameLines / totalLines * 100;
     fileComprehension.file = std::make_shared<model::File>();
     fileComprehension.file->id = std::stoull(fileId_);
     _db->persist(fileComprehension);
@@ -122,7 +123,7 @@ RepositoryPtr CompetenceServiceHandler::createRepository(const std::string& repo
   int error = git_repository_open(&repository, repoPath.c_str());
 
   if (error)
-    LOG(error) <<"Opening repository " << repoPath << " failed: " << error;
+    LOG(error) << "Opening repository " << repoPath << " failed: " << error;
 
   return RepositoryPtr { repository, &git_repository_free };
 }
