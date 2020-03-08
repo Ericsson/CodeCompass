@@ -12,23 +12,30 @@ function cleanup() {
 trap cleanup EXIT
 
 function usage() {
-    echo "${0} [-h] -t <thrift version> [-p]"
-    echo "  -h  Print this usage information. Optional."
-    echo "  -t  Thrift version. Mandatory. For example '0.12.0'."
-    echo "  -p  Additional PATH components."
+    cat <<EOF
+${0} [-h] -t <thrift version> [-p]
+  -h  Print this usage information. Optional.
+  -d  Install directory of thrift. Optional. /opt/thrift is the deafault.
+  -t  Thrift version. Mandatory. For example '0.12.0'.
+  -p  Additional PATH components.
+EOF
 }
 
+thrift_install_dir="/opt/thrift"
 while getopts "ht:p:" OPTION; do
     case ${OPTION} in
         h)
             usage
             exit 0
             ;;
-        t)
-            thrift_version="${OPTARG}"
+        d)
+            thrift_install_dir="${OPTARG}"
             ;;
         p)
             additional_path="${OPTARG}"
+            ;;
+        t)
+            thrift_version="${OPTARG}"
             ;;
         *)
             usage >&2
@@ -50,7 +57,6 @@ fi
 thrift_archive_dir="thrift-${thrift_version}.tar.gz"
 thrift_build_dir="/tmp/thrift"
 thrift_src_dir="${thrift_build_dir}/thrift"
-thrift_install_dir="/opt/thrift"
 java_lib_install_dir="${thrift_install_dir}/lib/java"
 
 mkdir --parents "${thrift_src_dir}"
