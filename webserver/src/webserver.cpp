@@ -25,10 +25,6 @@ po::options_description commandLineArguments()
       "Prints this help message.")
     ("workspace,w", po::value<std::string>()->required(),
       "Path to a workspace directory which contains the parsed projects.")
-    ("database,d", po::value<std::string>()->required(),
-      // TODO: Provide a full connection string example.
-      "A connection string to the relational database with the following "
-      "format: pgsql:database=name;user=user_name.")
     ("port,p", po::value<int>()->default_value(8080),
       "Port number of the webserver to listen on.")
     ("loglevel",

@@ -41,18 +41,29 @@ inline void registerPluginSimple(
     std::string project = it->path().filename().native();
 
     fs::path projectInfo = it->path();
+    if ( fs::is_regular_file( projectInfo) )
+      continue;
+
     projectInfo += "/project_info.json";
+    if (!fs::exists(projectInfo.native()))
+    {
+      LOG(error)
+        << "Skip project '" << project << "', because no project info file "
+        << "can be found at: " << projectInfo;
+      continue;
+    }
+
     pt::ptree root;
     pt::read_json(projectInfo.native(), root);
 
-    std::string dbName = root.get<std::string>("database", "");
-    if (dbName.empty())
-      dbName = project;
-
-    std::string connStr = util::updateConnectionString(
-      ctx_.options["database"].as<std::string>(),
-      "database",
-      dbName);
+    std::string connStr = root.get<std::string>("database", "");
+    if (connStr.empty()) {
+      LOG(error)
+        << "Skip project '" << project << "', because no database "
+        << "connection string can be found for it in the '"
+        << projectInfo << "' file!";
+      continue;
+    }
 
     std::shared_ptr<odb::database> db = util::connectDatabase(connStr);
 
@@ -63,7 +74,7 @@ inline void registerPluginSimple(
         << "for project: '" << project << "' "
         << "for service: '" << serviceName_ << "'";
 
-      throw std::runtime_error("Wrong database!");
+      continue;
     }
 
     try

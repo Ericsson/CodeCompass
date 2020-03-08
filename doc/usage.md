@@ -101,7 +101,7 @@ simple compiler invocation or starting a build system.
 For parsing a project with CodeCompass, the following command has to be emitted:
 
 ```bash
-keepalive CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connection_string>
+CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connection_string>
 ```
 
 - **Workspace**: This is a directory where the some parse results, and different
@@ -121,12 +121,9 @@ keepalive CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d
 
 For full documentation see `CodeCompass_parser -h`.
 
-:exclamation: The `keepalive` is a script in the `bin` directory of CodeCompass
-installation. This is used to keep CodeCompass alive if it crashes for some
-reason. This way a long parsing session restarts if an error happens.
-CodeCompass plugins are expected to individually handle what to do when a
-parsing is stopped and restarted with an existing database, so the parsing can
-continue from where it stopped.
+:exclamation: CodeCompass plugins are expected to individually handle what to
+do when a parsing is stopped and restarted with an existing database, so the
+parsing can continue from where it stopped.
 
 ### Usage example
 
@@ -138,7 +135,7 @@ in your project.
 Parse and store the results of the project in a PostgreSQL database:
 
 ```bash
-keepalive CodeCompass_parser \
+CodeCompass_parser \
   -d "pgsql:host=localhost;port=5432;user=compass;password=mypassword;database=mydatabase" \
   -w ~/cc/workdir \
   -n myproject \
@@ -150,7 +147,7 @@ keepalive CodeCompass_parser \
 Or use SQLite (not recommended for large projects):
 
 ```bash
-keepalive CodeCompass_parser \
+CodeCompass_parser \
   -d "sqlite:database=~/cc/mydatabase.sqlite" \
   -w ~/cc/workdir \
   -n myproject \
@@ -187,7 +184,7 @@ You can start the CodeCompass webserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
 
 ```bash
-keepalive CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
+CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
 ```
 
 - **Workspace**: This is a directory where the some parse results, and different
@@ -202,24 +199,18 @@ keepalive CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
 
 For full documentation see `CodeCompass_webserver -h`.
 
-:exclamation: The `keepalive` is a script in the `bin` directory of CodeCompass
-installation. This is used to keep CodeCompass alive if it crashes for some
-reason.
-
 ### Usage example
 
 ```bash
 # Start the server listening on port 6251.
-keepalive CodeCompass_webserver \
+CodeCompass_webserver \
   -w ~/cc/workdir \
-  -p 6251 \
-  -d "pgsql:host=localhost;port=5432;user=compass;password=mypassword"
+  -p 6251
 
 # Or if SQLite database is used:
-keepalive CodeCompass_webserver \
+CodeCompass_webserver \
   -w ~/cc/workdir \
-  -p 6251 \
-  -d "sqlite:database=~/cc/mydatabase.sqlite"
+  -p 6251
 ```
 
 The server will be available in a browser on

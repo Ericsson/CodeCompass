@@ -6,7 +6,7 @@ install(FILES
   DESTINATION "share/codecompass")
 
 install(FILES
-  CodeCompass_logger keepalive
+  CodeCompass_logger
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
     GROUP_EXECUTE GROUP_READ
     WORLD_EXECUTE WORLD_READ

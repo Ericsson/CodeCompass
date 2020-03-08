@@ -68,10 +68,20 @@ set(ODBFLAGS
   --include-with-brackets
   --default-pointer "std::shared_ptr")
 
+# Set CXX flags
 set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -pedantic\
   -std=c++14 \
   -DDATABASE_${DATABASE_U} \
   -DBOOST_LOG_DYN_LINK")
+
+# Gold is the primary linker 
+if(NOT DEFINED CODECOMPASS_LINKER)
+    set(CODECOMPASS_LINKER "gold")
+endif()
+
+set(CMAKE_LINKER "${CODECOMPASS_LINKER}")
+
+
 
 # Cmake module directory (FindOdb, FindThrift etc.)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")
