@@ -68,9 +68,7 @@ public:
   virtual ~CompetenceParser();
   virtual bool parse() override;
 
-  void loadRepositoryData(std::string& return_,
-    const model::FileId& fileId_,
-    const std::string& repoId_,
+  void loadRepositoryData(const std::string& repoId_,
     const std::string& hexOid_,
     const std::string& path_,
     const std::string& user_ = "afekete");
