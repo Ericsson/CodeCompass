@@ -72,6 +72,7 @@ public:
     const std::string& hexOid_,
     const std::string& path_,
     const std::string& user_ = "afekete");
+
 private:
   bool accept(const std::string& path_);
 

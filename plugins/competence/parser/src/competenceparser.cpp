@@ -2,6 +2,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <util/hash.h>
 #include <util/logutil.h>
 #include <util/parserutil.h>
 #include <util/odbtransaction.h>
@@ -62,17 +63,24 @@ void CompetenceParser::loadRepositoryData(const std::string& repoId_,
 
   LOG(info) << "Git parser found a git repo at: " << path;
 
+  std::string repoId = std::to_string(util::fnvHash(path_));
+  std::string clonedRepoPath = versionDataDir + "/" + repoId;
+
   util::OdbTransaction transaction(_ctx.db);
 
-  transaction([&, this](){
+  RepositoryPtr repo = createRepository(repoId);
+
+  if (!repo)
+    return;
+
+  transaction([&, this]()
+  {
+    // rather traverse through all files in repo and
+    // query their file ID later
+    // do i find all files through HEAD?
     for (const model::File& f : _ctx.db->query<model::File>(
       odb::query<model::File>::type != model::File::DIRECTORY_TYPE))
     {
-      RepositoryPtr repo = createRepository(repoId_);
-
-      if (!repo)
-        return;
-
       /*git_reference* head;
       git_repository_head(&head, repo.get());
       git_oid oid;
