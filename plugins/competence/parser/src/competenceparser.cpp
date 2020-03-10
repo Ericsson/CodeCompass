@@ -93,7 +93,7 @@ bool CompetenceParser::parse()
       }
     });
   }
-  
+
   return true;
 }
 
