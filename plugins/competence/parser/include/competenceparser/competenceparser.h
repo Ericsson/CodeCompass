@@ -1,10 +1,15 @@
 #ifndef CC_PARSER_COMPETENCEPARSER_H
 #define CC_PARSER_COMPETENCEPARSER_H
 
+#include <boost/filesystem.hpp>
+
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
 
 #include <memory>
+
+#include <util/parserutil.h>
+#include <util/threadpool.h>
 
 #include <git2.h>
 
@@ -73,22 +78,34 @@ public:
     const std::string& path_,
     const std::string& user_ = "afekete");
 
+  util::DirIterCallback getParserCallback(
+    RepositoryPtr& repo_);
+  util::DirIterCallback getParserCallbackRepo(
+    boost::filesystem::path& repoPath_);
+
 private:
   bool accept(const std::string& path_);
 
   std::shared_ptr<odb::database> _db;
   std::shared_ptr<std::string> _datadir;
 
+  void loadCommitData(model::FilePtr file_,
+                      RepositoryPtr& repo_,
+                      const std::string& user_ = "afekete");
+
   BlamePtr createBlame(
     git_repository* repo_,
     const std::string& path_,
     git_blame_options* opts_);
   BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
-  RepositoryPtr createRepository(const std::string& repoId_);
+  RepositoryPtr createRepository(
+    const boost::filesystem::path& repoPath_);
   CommitPtr createCommit(git_repository *repo_,
                          const git_oid& id_);
   git_oid gitOidFromStr(const std::string& hexOid_);
   std::string gitOidToString(const git_oid* oid_);
+
+  std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
 };
   
 } // parser

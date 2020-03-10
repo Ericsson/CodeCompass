@@ -1,10 +1,9 @@
 #include <competenceparser/competenceparser.h>
 
-#include <boost/filesystem.hpp>
+#include <parser/sourcemanager.h>
 
 #include <util/hash.h>
 #include <util/logutil.h>
-#include <util/parserutil.h>
 #include <util/odbtransaction.h>
 
 #include <model/filecomprehension.h>
@@ -20,6 +19,17 @@ namespace parser
 CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   git_libgit2_init();
+
+  /*int threadNum = _ctx.options["jobs"].as<int>();
+  _pool = util::make_thread_pool<std::string>(
+    threadNum, [this](const std::string& path_)
+    {
+      model::FilePtr file = _ctx.srcMgr.getFile(path_);
+      if (file)
+      {
+        loadCommitData(file);
+      }
+    });*/
 }
 
 bool CompetenceParser::accept(const std::string& path_)
@@ -33,14 +43,107 @@ bool CompetenceParser::parse()
   for(const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
   {
-    // loadRepositoryData()
-    if(accept(path))
-    {
-      LOG(info) << "CompetenceParser parse path: " << path;
+    LOG(info) << "Competence parse path: " << path;
 
+    boost::filesystem::path repoPath;
+
+    auto rcb = getParserCallbackRepo(repoPath);
+
+    try
+    {
+      util::iterateDirectoryRecursive(path, rcb);
     }
+    catch (std::exception &ex_)
+    {
+      LOG(warning)
+        << "Competence parser threw an exception: " << ex_.what();
+    }
+    catch (...)
+    {
+      LOG(warning)
+        << "Competence parser failed with unknown exception!";
+    }
+
+    util::OdbTransaction trans(_ctx.db);
+    trans([&, this]()
+    {
+      //std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
+      RepositoryPtr repo = createRepository(repoPath);
+
+      if (!repo)
+        return;
+
+      auto cb = getParserCallback(repo);
+
+      /*--- Call non-empty iter-callback for all files
+         in the current root directory. ---*/
+      try
+      {
+        util::iterateDirectoryRecursive(path, cb);
+      }
+      catch (std::exception &ex_)
+      {
+        LOG(warning)
+          << "Competence parser threw an exception: " << ex_.what();
+      }
+      catch (...)
+      {
+        LOG(warning)
+          << "Competence parser failed with unknown exception!";
+      }
+    });
   }
+  
   return true;
+}
+
+util::DirIterCallback CompetenceParser::getParserCallbackRepo(
+  boost::filesystem::path& repoPath_)
+{
+  return [&](const std::string& path_)
+  {
+    boost::filesystem::path path(path_);
+
+    if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
+      return true;
+
+    path = boost::filesystem::canonical(path);
+
+    LOG(info) << "Competence parser found a git repo at: " << path;
+
+    repoPath_ = path_;
+  };
+}
+
+util::DirIterCallback CompetenceParser::getParserCallback(
+  RepositoryPtr& repo_)
+{
+  return [&](const std::string& path_)
+  {
+    boost::filesystem::path path(path_);
+
+    if (boost::filesystem::is_regular_file(path))
+    {
+      LOG(info) << "path_: " << path_;
+      LOG(info) << "path: " << path;
+      model::FilePtr file = _ctx.srcMgr.getFile(path_);
+      LOG(info) << "step 4";
+      if (file)
+      {
+        LOG(info) << "step 5";
+        loadCommitData(file, repo_);
+      }
+    }
+
+    return true;
+  };
+}
+
+void CompetenceParser::loadCommitData(model::FilePtr file_,
+  RepositoryPtr& repo_,
+  const std::string& user_)
+{
+  //LOG(info) << "Competence parser: " << repo_.get()
 }
 
 void CompetenceParser::loadRepositoryData(const std::string& repoId_,
@@ -85,6 +188,12 @@ void CompetenceParser::loadRepositoryData(const std::string& repoId_,
       git_repository_head(&head, repo.get());
       git_oid oid;
       int error = git_reference_name_to_id(&oid, repo.get(), head)*/
+
+
+
+
+
+      /* the actual parsing part, TBA
       BlameOptsPtr opt = createBlameOpts(gitOidFromStr(hexOid_));
       BlamePtr blame = createBlame(repo.get(), path_.c_str(), opt.get());
 
@@ -145,23 +254,19 @@ void CompetenceParser::loadRepositoryData(const std::string& repoId_,
       fileComprehension.ratio = blameLines / totalLines * 100;
       fileComprehension.file = std::make_shared<model::File>();
       fileComprehension.file->id = f.id;
-      _ctx.db->persist(fileComprehension);
+      _ctx.db->persist(fileComprehension); */
     }
   });
 }
 
-RepositoryPtr CompetenceParser::createRepository(const std::string& repoId_)
+RepositoryPtr CompetenceParser::createRepository(
+  const boost::filesystem::path& repoPath_)
 {
-  std::string wsDir = _ctx.options["workspace"].as<std::string>();
-  std::string projDir = wsDir + '/' + _ctx.options["name"].as<std::string>();
-  std::string versionDataDir = projDir + "/version";
-  std::string repoPath = versionDataDir + "/" + repoId_;
-
   git_repository* repository = nullptr;
-  int error = git_repository_open(&repository, repoPath.c_str());
+  int error = git_repository_open(&repository, repoPath_.c_str());
 
   if (error)
-    LOG(error) << "Opening repository " << repoPath << " failed: " << error;
+    LOG(error) << "Opening repository " << repoPath_ << " failed: " << error;
 
   return RepositoryPtr { repository, &git_repository_free };
 }
