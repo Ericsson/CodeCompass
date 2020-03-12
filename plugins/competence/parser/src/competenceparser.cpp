@@ -73,7 +73,7 @@ bool CompetenceParser::parse()
       if (!repo)
         return;
 
-      auto cb = getParserCallback(repo);
+      auto cb = getParserCallback(repo, repoPath);
 
       /*--- Call non-empty iter-callback for all files
          in the current root directory. ---*/
@@ -116,7 +116,8 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
 }
 
 util::DirIterCallback CompetenceParser::getParserCallback(
-  RepositoryPtr& repo_)
+  RepositoryPtr& repo_,
+  boost::filesystem::path& repoPath_)
 {
   return [&](const std::string& path_)
   {
@@ -124,14 +125,11 @@ util::DirIterCallback CompetenceParser::getParserCallback(
 
     if (boost::filesystem::is_regular_file(path))
     {
-      LOG(info) << "path_: " << path_;
-      LOG(info) << "path: " << path;
       model::FilePtr file = _ctx.srcMgr.getFile(path_);
-      LOG(info) << "step 4";
+
       if (file)
       {
-        LOG(info) << "step 5";
-        loadCommitData(file, repo_);
+        loadCommitData(file, repo_, repoPath_);
       }
     }
 
@@ -141,122 +139,108 @@ util::DirIterCallback CompetenceParser::getParserCallback(
 
 void CompetenceParser::loadCommitData(model::FilePtr file_,
   RepositoryPtr& repo_,
-  const std::string& user_)
+  boost::filesystem::path& repoPath_,
+  const std::string& useremail_)
 {
-  //LOG(info) << "Competence parser: " << repo_.get()
+  std::string gitFilePath = file_.get()->path.substr(
+    repoPath_.parent_path().string().length() + 1);
+
+  git_oid lastCommitOid = getLastCommitOid(repo_);
+  LOG(info) << gitFilePath;
+  BlameOptsPtr opt = createBlameOpts(lastCommitOid);
+  BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
+
+  if (!blame)
+    return;
+
+  float blameLines = 0;
+  float totalLines = 0;
+
+  for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+  {
+    const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+
+    GitBlameHunk blameHunk;
+    blameHunk.linesInHunk = hunk->lines_in_hunk;
+    blameHunk.boundary = hunk->boundary;
+    blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
+    blameHunk.finalStartLineNumber = hunk->final_start_line_number;
+    LOG(info) << "hunk final commit id: " << gitOidToString(&hunk->final_commit_id);
+    LOG(info) << "hunk final start line number: " << hunk->final_start_line_number;
+
+    if (hunk->final_signature)
+    {
+      blameHunk.finalSignature.name = hunk->final_signature->name;
+      blameHunk.finalSignature.email = hunk->final_signature->email;
+      blameHunk.finalSignature.time = hunk->final_signature->when.time;
+      LOG(info) << "hunk final signature email: " << hunk->final_signature->email;
+    }
+      // TODO
+      // git_oid_iszero is deprecated.
+      // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
+    else if (!git_oid_iszero(&hunk->final_commit_id))
+    {
+      CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
+      const git_signature *author = git_commit_author(commit.get());
+      blameHunk.finalSignature.name = author->name;
+      LOG(info) << "commit author name: " << author->name;
+      blameHunk.finalSignature.email = author->email;
+      LOG(info) << "commit author email: " << author->email;
+      blameHunk.finalSignature.time = author->when.time;
+    }
+
+    /*if (blameHunk.finalSignature.time)
+    {
+      CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
+    }*/
+
+    blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
+    blameHunk.origPath = hunk->orig_path;
+    blameHunk.origStartLineNumber = hunk->orig_start_line_number;
+    if (hunk->orig_signature)
+    {
+      blameHunk.origSignature.name = hunk->orig_signature->name;
+      blameHunk.origSignature.email = hunk->orig_signature->email;
+      LOG(info) << "hunk orifinal signature email: " << hunk->orig_signature->email;
+      blameHunk.origSignature.time = hunk->orig_signature->when.time;
+    }
+
+    if (!useremail_.compare(std::string(blameHunk.finalSignature.email)))
+    {
+      blameLines += blameHunk.linesInHunk;
+    }
+
+    totalLines += blameHunk.linesInHunk;
+
+    LOG(info) << "blamelines: " << blameLines << ", totallines: " << totalLines;
+  }
+
+  util::OdbTransaction trans(_ctx.db);
+  trans([&, this]
+  {
+    model::FileComprehension fileComprehension;
+    fileComprehension.ratio = blameLines / totalLines * 100;
+    fileComprehension.file = std::make_shared<model::File>();
+    fileComprehension.file->id = file_.get()->id;
+    LOG(info) << fileComprehension.ratio << "%";
+    _ctx.db->persist(fileComprehension);
+  });
 }
 
-void CompetenceParser::loadRepositoryData(const std::string& repoId_,
-  const std::string& hexOid_,
-  const std::string& path_,
-  const std::string& user_)
+git_oid CompetenceParser::getLastCommitOid(RepositoryPtr& repo)
 {
-  std::string wsDir = _ctx.options["workspace"].as<std::string>();
-  std::string projDir = wsDir + '/' + _ctx.options["name"].as<std::string>();
-  std::string versionDataDir = projDir + "/version";
+  int rc;
+  git_commit * commit = NULL; /* the result */
+  git_oid oid_parent_commit;  /* the SHA1 for last commit */
 
-  boost::filesystem::path path(path_);
-
-  //--- Check for .git folder ---//
-
-  if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
-    return;
-
-  path = boost::filesystem::canonical(path);
-
-  LOG(info) << "Git parser found a git repo at: " << path;
-
-  std::string repoId = std::to_string(util::fnvHash(path_));
-  std::string clonedRepoPath = versionDataDir + "/" + repoId;
-
-  util::OdbTransaction transaction(_ctx.db);
-
-  RepositoryPtr repo = createRepository(repoId);
-
-  if (!repo)
-    return;
-
-  transaction([&, this]()
+  /* resolve HEAD into a SHA1 */
+  rc = git_reference_name_to_id( &oid_parent_commit, repo.get(), "HEAD" );
+  if ( rc == 0 )
   {
-    // rather traverse through all files in repo and
-    // query their file ID later
-    // do i find all files through HEAD?
-    for (const model::File& f : _ctx.db->query<model::File>(
-      odb::query<model::File>::type != model::File::DIRECTORY_TYPE))
-    {
-      /*git_reference* head;
-      git_repository_head(&head, repo.get());
-      git_oid oid;
-      int error = git_reference_name_to_id(&oid, repo.get(), head)*/
+    return oid_parent_commit;
+  }
 
-
-
-
-
-      /* the actual parsing part, TBA
-      BlameOptsPtr opt = createBlameOpts(gitOidFromStr(hexOid_));
-      BlamePtr blame = createBlame(repo.get(), path_.c_str(), opt.get());
-
-      std::uint32_t blameLines = 0;
-      std::uint32_t totalLines = 0;
-
-      for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
-      {
-        const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
-
-        GitBlameHunk blameHunk;
-        blameHunk.linesInHunk = hunk->lines_in_hunk;
-        blameHunk.boundary = hunk->boundary;
-        blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
-        blameHunk.finalStartLineNumber = hunk->final_start_line_number;
-
-        if (hunk->final_signature)
-        {
-          blameHunk.finalSignature.name = hunk->final_signature->name;
-          //blameHunk.finalSignature.email = hunk->final_signature->email;
-          blameHunk.finalSignature.time = hunk->final_signature->when.time;
-        }
-          // TODO
-          // git_oid_iszero is deprecated.
-          // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
-        else if (!git_oid_iszero(&hunk->final_commit_id))
-        {
-          CommitPtr commit = createCommit(repo.get(), hunk->final_commit_id);
-          const git_signature *author = git_commit_author(commit.get());
-          blameHunk.finalSignature.name = author->name;
-          //blameHunk.finalSignature.email = author->email;
-          blameHunk.finalSignature.time = author->when.time;
-        }
-
-        if (blameHunk.finalSignature.time)
-        {
-          CommitPtr commit = createCommit(repo.get(), hunk->final_commit_id);
-        }
-
-        blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
-        blameHunk.origPath = hunk->orig_path;
-        blameHunk.origStartLineNumber = hunk->orig_start_line_number;
-        if (hunk->orig_signature)
-        {
-          blameHunk.origSignature.name = hunk->orig_signature->name;
-          blameHunk.origSignature.time = hunk->orig_signature->when.time;
-        }
-
-        if (!user_.compare(std::string(blameHunk.finalSignature.name)))
-        {
-          blameLines += blameHunk.linesInHunk;
-        }
-
-        totalLines += blameHunk.linesInHunk;
-      }
-
-      model::FileComprehension fileComprehension;
-      fileComprehension.ratio = blameLines / totalLines * 100;
-      fileComprehension.file = std::make_shared<model::File>();
-      fileComprehension.file->id = f.id;
-      _ctx.db->persist(fileComprehension); */
-    }
-  });
+  return {};
 }
 
 RepositoryPtr CompetenceParser::createRepository(

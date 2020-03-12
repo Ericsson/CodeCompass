@@ -73,25 +73,22 @@ public:
   virtual ~CompetenceParser();
   virtual bool parse() override;
 
-  void loadRepositoryData(const std::string& repoId_,
-    const std::string& hexOid_,
-    const std::string& path_,
-    const std::string& user_ = "afekete");
-
-  util::DirIterCallback getParserCallback(
-    RepositoryPtr& repo_);
-  util::DirIterCallback getParserCallbackRepo(
-    boost::filesystem::path& repoPath_);
-
 private:
   bool accept(const std::string& path_);
 
   std::shared_ptr<odb::database> _db;
   std::shared_ptr<std::string> _datadir;
 
+  util::DirIterCallback getParserCallback(
+    RepositoryPtr& repo_,
+    boost::filesystem::path& repoPath_);
+  util::DirIterCallback getParserCallbackRepo(
+    boost::filesystem::path& repoPath_);
+
   void loadCommitData(model::FilePtr file_,
                       RepositoryPtr& repo_,
-                      const std::string& user_ = "afekete");
+                      boost::filesystem::path& repoPath_,
+                      const std::string& useremail_ = "anett.fekete@ericsson.com");
 
   BlamePtr createBlame(
     git_repository* repo_,
@@ -104,6 +101,7 @@ private:
                          const git_oid& id_);
   git_oid gitOidFromStr(const std::string& hexOid_);
   std::string gitOidToString(const git_oid* oid_);
+  git_oid getLastCommitOid(RepositoryPtr& repo);
 
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
 };

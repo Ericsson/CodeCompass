@@ -764,6 +764,7 @@ BlamePtr GitServiceHandler::createBlame(
   const std::string& path_,
   git_blame_options* opts_)
 {
+  LOG(info) << "createBlame path_" << path_;
   git_blame* blame = nullptr;
   int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
 
