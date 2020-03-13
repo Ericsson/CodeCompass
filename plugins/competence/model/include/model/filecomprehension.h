@@ -9,6 +9,7 @@
 
 #include <odb/core.hxx>
 #include <odb/lazy-ptr.hxx>
+#include <odb/nullable.hxx>
 
 #include <model/file.h>
 
@@ -16,23 +17,27 @@ namespace cc
 {
 namespace model
 {
+
+#pragma db object
+struct FileComprehension
+{
   enum InputType
   {
     REPO,
     USER
   };
 
-#pragma db object
-struct FileComprehension
-{
   #pragma db id auto
   std::uint64_t id;
 
   #pragma db not_null
   FileId file;
 
+  #pragma db null
+  odb::nullable<short> repoRatio;
+
   #pragma db not_null
-  short ratio;
+  short userRatio;
 
   #pragma db not_null
   InputType inputType;

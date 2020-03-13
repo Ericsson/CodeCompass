@@ -207,12 +207,13 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
   trans([&, this]
   {
     model::FileComprehension fileComprehension;
-    fileComprehension.ratio = blameLines / totalLines * 100;
+    fileComprehension.repoRatio = blameLines / totalLines * 100;
+    fileComprehension.userRatio = fileComprehension.repoRatio.get();
     fileComprehension.file = file_.get()->id;
-    fileComprehension.inputType = model::InputType::REPO;
+    fileComprehension.inputType = model::FileComprehension::InputType::REPO;
     _ctx.db->persist(fileComprehension);
 
-    LOG(info) << fileComprehension.ratio << "%";
+    LOG(info) << fileComprehension.repoRatio.get() << "%";
   });
 }
 

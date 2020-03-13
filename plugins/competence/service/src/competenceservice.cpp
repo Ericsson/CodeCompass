@@ -35,17 +35,18 @@ void CompetenceServiceHandler::setCompetenceRatio(std::string& return_,
     {
       for (model::FileComprehension& comp : file)
       {
-        comp.ratio = ratio_;
-        comp.inputType = model::InputType::USER;
+        comp.userRatio = ratio_;
+        comp.inputType = model::FileComprehension::InputType::USER;
         _db->update(comp);
       }
     }
     else
     {
       model::FileComprehension fileComprehension;
-      fileComprehension.ratio = ratio_;
+      fileComprehension.userRatio = ratio_;
+      fileComprehension.repoRatio.reset();
       fileComprehension.file = std::stoull(fileId_);
-      fileComprehension.inputType = model::InputType::USER;
+      fileComprehension.inputType = model::FileComprehension::InputType::USER;
       _db->persist(fileComprehension);
     }
   });
