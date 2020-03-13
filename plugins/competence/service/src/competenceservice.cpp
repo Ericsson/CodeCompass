@@ -26,14 +26,28 @@ void CompetenceServiceHandler::setCompetenceRatio(std::string& return_,
   const core::FileId& fileId_,
   const int ratio_)
 {
-  _transaction([&, this](){
-    model::FileComprehension fileComprehension;
-    fileComprehension.ratio = ratio_;
-    fileComprehension.file = std::make_shared<model::File>();
-    fileComprehension.file->id = std::stoull(fileId_);
-    fileComprehension.inputType = model::InputType::USER;
-    _db->persist(fileComprehension);
+  _transaction([&, this]()
+  {
+    auto file = _db->query<model::FileComprehension>(
+      odb::query<model::FileComprehension>::file == std::stoull(fileId_));
 
+    if (!file.empty())
+    {
+      for (model::FileComprehension& comp : file)
+      {
+        comp.ratio = ratio_;
+        comp.inputType = model::InputType::USER;
+        _db->update(comp);
+      }
+    }
+    else
+    {
+      model::FileComprehension fileComprehension;
+      fileComprehension.ratio = ratio_;
+      fileComprehension.file = std::stoull(fileId_);
+      fileComprehension.inputType = model::InputType::USER;
+      _db->persist(fileComprehension);
+    }
   });
 }
 

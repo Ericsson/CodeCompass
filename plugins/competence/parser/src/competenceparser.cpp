@@ -146,7 +146,6 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     repoPath_.parent_path().string().length() + 1);
 
   git_oid lastCommitOid = getLastCommitOid(repo_);
-  LOG(info) << gitFilePath;
   BlameOptsPtr opt = createBlameOpts(lastCommitOid);
   BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
 
@@ -165,15 +164,12 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     blameHunk.boundary = hunk->boundary;
     blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
     blameHunk.finalStartLineNumber = hunk->final_start_line_number;
-    LOG(info) << "hunk final commit id: " << gitOidToString(&hunk->final_commit_id);
-    LOG(info) << "hunk final start line number: " << hunk->final_start_line_number;
 
     if (hunk->final_signature)
     {
-      blameHunk.finalSignature.name = hunk->final_signature->name;
+      //blameHunk.finalSignature.name = hunk->final_signature->name;
       blameHunk.finalSignature.email = hunk->final_signature->email;
       blameHunk.finalSignature.time = hunk->final_signature->when.time;
-      LOG(info) << "hunk final signature email: " << hunk->final_signature->email;
     }
       // TODO
       // git_oid_iszero is deprecated.
@@ -182,26 +178,18 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     {
       CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
       const git_signature *author = git_commit_author(commit.get());
-      blameHunk.finalSignature.name = author->name;
-      LOG(info) << "commit author name: " << author->name;
+      //blameHunk.finalSignature.name = author->name;
       blameHunk.finalSignature.email = author->email;
-      LOG(info) << "commit author email: " << author->email;
       blameHunk.finalSignature.time = author->when.time;
     }
-
-    /*if (blameHunk.finalSignature.time)
-    {
-      CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
-    }*/
 
     blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
     blameHunk.origPath = hunk->orig_path;
     blameHunk.origStartLineNumber = hunk->orig_start_line_number;
     if (hunk->orig_signature)
     {
-      blameHunk.origSignature.name = hunk->orig_signature->name;
+      //blameHunk.origSignature.name = hunk->orig_signature->name;
       blameHunk.origSignature.email = hunk->orig_signature->email;
-      LOG(info) << "hunk orifinal signature email: " << hunk->orig_signature->email;
       blameHunk.origSignature.time = hunk->orig_signature->when.time;
     }
 
@@ -211,36 +199,32 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     }
 
     totalLines += blameHunk.linesInHunk;
-
-    LOG(info) << "blamelines: " << blameLines << ", totallines: " << totalLines;
   }
+
+  LOG(info) << file_.get()->path << ": ";
 
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]
   {
     model::FileComprehension fileComprehension;
     fileComprehension.ratio = blameLines / totalLines * 100;
-    fileComprehension.file = std::make_shared<model::File>();
-    fileComprehension.file->id = file_.get()->id;
-    LOG(info) << fileComprehension.ratio << "%";
+    fileComprehension.file = file_.get()->id;
+    fileComprehension.inputType = model::InputType::REPO;
     _ctx.db->persist(fileComprehension);
+
+    LOG(info) << fileComprehension.ratio << "%";
   });
 }
 
 git_oid CompetenceParser::getLastCommitOid(RepositoryPtr& repo)
 {
-  int rc;
-  git_commit * commit = NULL; /* the result */
-  git_oid oid_parent_commit;  /* the SHA1 for last commit */
+  git_oid commitOid;
+  int error = git_reference_name_to_id(&commitOid, repo.get(), "HEAD");
 
-  /* resolve HEAD into a SHA1 */
-  rc = git_reference_name_to_id( &oid_parent_commit, repo.get(), "HEAD" );
-  if ( rc == 0 )
-  {
-    return oid_parent_commit;
-  }
+  if (error)
+    LOG(error) << "Retrieving last commit id failed: " << error;
 
-  return {};
+  return commitOid;
 }
 
 RepositoryPtr CompetenceParser::createRepository(
