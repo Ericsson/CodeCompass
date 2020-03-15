@@ -62,11 +62,15 @@ java_lib_install_dir="${thrift_install_dir}/lib/java"
 mkdir --parents "${thrift_src_dir}"
 wget --no-verbose \
   "http://xenia.sote.hu/ftp/mirrors/www.apache.org/thrift/"\
-"${thrift_version}/${thrift_archive_dir}"                                    \
-  --output-document="${thrift_build_dir}/${thrift_archive_dir}"
+"${thrift_version}/${thrift_archive_dir}"                                      \
+    --output-document="${thrift_build_dir}/${thrift_archive_dir}"
 tar --extract --gunzip --file="${thrift_build_dir}/${thrift_archive_dir}"      \
     --directory="${thrift_src_dir}" --strip-components=1
 rm "${thrift_build_dir}/${thrift_archive_dir}"
+
+# Workaround: Maven repository access allowed by https only.
+sed --expression='s,http://repo1.maven.org,https://repo1.maven.org,'           \
+    --in-place "${thrift_src_dir}/lib/java/gradle.properties"
 
 # TODO gradle proxy definitions.
 configure_cmd=("./configure" "--prefix=${thrift_install_dir}"                  \

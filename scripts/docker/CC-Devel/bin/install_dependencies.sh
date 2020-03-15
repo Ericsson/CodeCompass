@@ -8,7 +8,6 @@ packages_to_install=(                                                          \
     "automake"                                                                 \
     "bison"                                                                    \
     "clang-7"                                                                  \
-    "cmake"                                                                    \
     "flex"                                                                     \
     "git"                                                                      \
     "libboost-all-dev"                                                         \
@@ -18,7 +17,6 @@ packages_to_install=(                                                          \
     "libexpat1-dev"                                                            \
     "libgit2-dev"                                                              \
     "libgraphviz-dev"                                                          \
-    "libgtest-dev"                                                             \
     "llvm-7-dev"                                                               \
     "libmagic-dev"                                                             \
     "libodb-dev"                                                               \
@@ -45,6 +43,10 @@ else
     echo "Unsupported ubuntu release" 2>&1
     exit 1
 fi
+
+# Workaround. This single step provides that gtest installed properly on
+# xenial.
+apt-get install --yes  "libgtest-dev" "cmake"
 
 # Workaround. This single step provides that the JDK 8 will be installed only.
 apt-get install --yes "openjdk-8-jdk-headless"
