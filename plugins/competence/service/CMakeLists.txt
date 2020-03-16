@@ -41,7 +41,8 @@ add_dependencies(competencethrift projectthrift)
 
 add_library(competenceservice SHARED
         src/plugin.cpp
-        src/competenceservice.cpp)
+        src/competenceservice.cpp
+        src/diagram.cpp)
 
 target_link_libraries(competenceservice
         util
