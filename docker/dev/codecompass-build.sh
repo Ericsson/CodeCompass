@@ -8,23 +8,15 @@
 
 # DON'T MODIFY THE REST OF THIS SCRIPT UNLESS YOU KNOW WHAT YOU'RE DOING!
 
-BUILD_DIR=/CodeCompass/build
-INSTALL_DIR=/CodeCompass/install
-SOURCE_DIR=/CodeCompass/CodeCompass
-TEST_WORKSPACE=/CodeCompass/test_workspace
-TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
+mkdir -p $BUILD_DIR
+mkdir -p $TEST_WORKSPACE
 
-if [ ! -d $BUILD_DIR ]; then
-  mkdir $BUILD_DIR
-  mkdir -p $TEST_WORKSPACE
-
-  cd $BUILD_DIR
-  cmake \
-    $SOURCE_DIR \
-    -DDATABASE=$DATABASE \
-    -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
-    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-    -DTEST_DB=$TEST_DB
-fi
+cd $BUILD_DIR
+cmake \
+  $SOURCE_DIR \
+  -DDATABASE=$DATABASE \
+  -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
+  -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
+  -DTEST_DB=$TEST_DB
 
 make -C $BUILD_DIR $@
