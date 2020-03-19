@@ -53,6 +53,7 @@ target_link_libraries(competenceservice
         projectservice
         commonthrift
         competencethrift
+        gvc
         git2)
 
 install(TARGETS competenceservice DESTINATION ${INSTALL_SERVICE_DIR})
