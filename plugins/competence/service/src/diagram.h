@@ -28,7 +28,7 @@ public:
 
   void getFileCompetenceDiagram(
     util::Graph& graph_,
-    const core::AstNodeId& astNodeId_);
+    const core::FileId& fileId_);
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
@@ -41,6 +41,8 @@ private:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
+  std::string rateToColor(short rate);
+
   void decorateNode(
     util::Graph& graph_,
     const util::Graph::Node& node_,
@@ -50,6 +52,9 @@ private:
     util::Graph& graph_,
     const util::Graph::Edge& edge_,
     const Decoration& decoration_) const;
+
+  std::shared_ptr<odb::database> _db;
+  util::OdbTransaction _transaction;
 
   std::map<core::FileId, util::Graph::Subgraph> _subgraphs;
 

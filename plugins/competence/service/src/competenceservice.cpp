@@ -17,9 +17,12 @@ namespace competence
 
 CompetenceServiceHandler::CompetenceServiceHandler(
   std::shared_ptr<odb::database> db_,
-  std::shared_ptr<std::string> /*datadir_*/,
+  std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
-  : _db(db_), _transaction(db_)
+  : _db(db_),
+    _transaction(db_),
+    _datadir(datadir_),
+    _context(context_)
 {
 }
 
@@ -51,6 +54,29 @@ void CompetenceServiceHandler::setCompetenceRatio(std::string& return_,
       _db->persist(fileComprehension);
     }
   });
+}
+
+void CompetenceServiceHandler::getDiagram(
+  std::string& return_,
+  const core::FileId& fileId_,
+  const std::int32_t diagramId_)
+{
+  CompetenceDiagram diagram(_db, _datadir, _context);
+  util::Graph graph;
+
+  switch (diagramId_)
+  {
+    case FILE:
+      diagram.getFileCompetenceDiagram(graph, fileId_);
+      break;
+
+    case DIRECTORY:
+      diagram.getDirectoryCompetenceDiagram(graph, fileId_);
+      break;
+  }
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
 }
 
 } // competence

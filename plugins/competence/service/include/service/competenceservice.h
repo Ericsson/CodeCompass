@@ -19,13 +19,10 @@ namespace service
 namespace competence
 {
 
-typedef std::unique_ptr<git_blame, decltype(&git_blame_free)> BlamePtr;
-typedef std::unique_ptr<git_blame_options> BlameOptsPtr;
-typedef std::unique_ptr<git_commit, decltype(&git_commit_free)> CommitPtr;
-typedef std::unique_ptr<git_repository, decltype(&git_repository_free)> RepositoryPtr;
-
 class CompetenceServiceHandler : virtual public CompetenceServiceIf
 {
+  friend class CompetenceDiagram;
+
 public:
   CompetenceServiceHandler(
     std::shared_ptr<odb::database> db_,
@@ -36,9 +33,23 @@ public:
     const core::FileId& fileId_,
     const int ratio_) override;
 
+  void getDiagram(
+    std::string& return_,
+    const core::FileId& fileId_,
+    const std::int32_t diagramId_);
+
 private:
+  enum DiagramType
+  {
+    FILE,
+    DIRECTORY
+  };
+
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
+
+  std::shared_ptr<std::string> _datadir;
+  const cc::webserver::ServerContext& _context;
 };
 
 } // competence
