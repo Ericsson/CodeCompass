@@ -8,10 +8,11 @@ RUN set -x && apt-get update -qq && \
   odb libodb-sqlite-dev libodb-pgsql-dev \
   libsqlite3-dev \
   default-jdk \
+  gosu \
   libssl1.0-dev \
   libgraphviz-dev \
   libmagic-dev \
-  libgit2-dev \
+  git libgit2-dev \
   nodejs-dev node-gyp npm \
   ctags \
   wget \
