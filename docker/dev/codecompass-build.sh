@@ -8,6 +8,8 @@
 
 # DON'T MODIFY THE REST OF THIS SCRIPT UNLESS YOU KNOW WHAT YOU'RE DOING!
 
+set -Eeuxo pipefail
+
 if [ ! -d $BUILD_DIR ]; then
   mkdir $BUILD_DIR
   mkdir -p $TEST_WORKSPACE

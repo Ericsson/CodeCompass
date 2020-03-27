@@ -10,9 +10,10 @@ function usage() {
 ${0} []
     -h  Print this usage information.
     -d Only build the CodeCompass:dev image.
-    -w Only build the CodeCopmass:webserver image. The tag name of the built developer \
-    images need to be passed
-    -R Remove and then rebuild both images
+    -R Remove and then rebuild both images.
+${1} []
+    -w Only build the CodeCopmass:webserver image. The tag name
+    of the built developer image need to be passed.
 EOF
 }
 
