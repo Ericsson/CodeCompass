@@ -22,9 +22,11 @@ RUN set -x && apt-get update -qq && \
   libboost-log-dev \
   libboost-program-options-dev \
   libboost-regex-dev
-  
-RUN wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" -O /opt/thrift-0.13.0.tar.gz; \
-    tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
+
+# Download the Thrift source code.
+ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
+# Build Thrift
+RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
     cd /opt/thrift-0.13.0 && \
     ./configure \
     --silent --without-python                                        \
@@ -35,7 +37,7 @@ RUN wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename
     --without-haskell --without-go --without-rs --without-haxe       \
     --without-dotnetcore --without-d --without-qt4 --without-qt5;    \
     cd /; \
-    make -C /opt/thrift-0.13.0 -j4 --silent install; \
+    make -C /opt/thrift-0.13.0 -j $(nproc) --silent install; \
     rm -rf /opt/thrift-0.13.0 /opt/thrift-0.13.0.tar.gz
 # Build GTest.
 RUN cd /usr/src/googletest/ && \
