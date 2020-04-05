@@ -38,11 +38,15 @@ public:
     const core::FileId& fileId_,
     const std::int32_t diagramId_);
 
+  void getDiagramTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::FileId& fileId_);
+
 private:
   enum DiagramType
   {
-    FILE,
-    DIRECTORY
+    FILE_COMPETENCE,
+    DIRECTORY_COMPETENCE
   };
 
   std::shared_ptr<odb::database> _db;

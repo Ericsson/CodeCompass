@@ -55,7 +55,10 @@ void CompetenceDiagram::getFileCompetenceDiagram(
       {"fillcolor", color}
     };
 
-    //graph.setNodeAttribute(node, "label");
+    model::FilePtr file = _db->query_one<model::File>(
+      odb::query<cc::model::File>::id == std::stoull(fileId_));
+    graph_.setNodeAttribute(node, "label", file->path);
+
     decorateNode(graph_, node, competenceNodeDecoration);
   });
 }
@@ -96,16 +99,24 @@ util::Graph::Subgraph CompetenceDiagram::addSubgraph(
   return subgraph;
 }
 
-std::string rateToColor(short rate)
+std::string CompetenceDiagram::rateToColor(short rate)
 {
-  std::uint32_t red, green;
+  int red, green;
 
-  red = rate < 50 ? 255 : std::round(256 - (rate - 50) * 5.12);
-  green = rate > 50 ? 255 : std::round(rate * 5.12);
+  red = rate < 50 ? 255 : std::round(255 - (rate - 50) * 5.12);
+  green = rate > 50 ? 255 : std::round(rate * 5.12 - 1);
 
   std::stringstream ss;
   ss << "#";
-  ss << std::hex << (red << 16 | green << 8 | 0);
+  if (red != 0)
+  {
+    ss << std::hex << (red << 16 | green << 8 | 0);
+  }
+  else
+  {
+    ss << std::hex << 0 << 0 << (green << 8 | 0);
+  }
+
   return ss.str();
 }
 

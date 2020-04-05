@@ -7,6 +7,7 @@
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
 #include <model/file.h>
+#include <model/file-odb.hxx>
 
 namespace cc
 {
@@ -66,17 +67,36 @@ void CompetenceServiceHandler::getDiagram(
 
   switch (diagramId_)
   {
-    case FILE:
+    case FILE_COMPETENCE:
       diagram.getFileCompetenceDiagram(graph, fileId_);
       break;
 
-    case DIRECTORY:
+    case DIRECTORY_COMPETENCE:
       diagram.getDirectoryCompetenceDiagram(graph, fileId_);
       break;
   }
 
   if (graph.nodeCount() != 0)
     return_ = graph.output(util::Graph::SVG);
+}
+
+void CompetenceServiceHandler::getDiagramTypes(
+  std::map<std::string, std::int32_t>& return_,
+  const core::FileId& fileId_)
+{
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+      odb::query<cc::model::File>::id == std::stoull(fileId_));
+  });
+
+  if (file->type == model::File::DIRECTORY_TYPE)
+  {
+    return_["Directory competence of user"] = DIRECTORY_COMPETENCE;
+  }
+  else
+  {
+    return_["File competence of user"] = FILE_COMPETENCE;
+  }
 }
 
 } // competence

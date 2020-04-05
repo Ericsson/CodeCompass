@@ -1,24 +1,13 @@
 require([
-  'dojo/_base/declare',
-  'dojo/dom-construct',
   'dojo/topic',
-  'dojo/dom-style',
+  'dijit/Menu',
   'dijit/MenuItem',
-  'dijit/form/Button',
-  'dijit/form/CheckBox',
-  'dijit/form/Select',
-  'dijit/layout/ContentPane',
-  'codecompass/viewHandler',
-  'codecompass/urlHandler',
-  'codecompass/model'],
-function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
-  ContentPane, viewHandler, urlHandler, model) {
+  'dijit/PopupMenuItem',
+  'codecompass/model',
+  'codecompass/viewHandler'],
+function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
   model.addService('competenceservice', 'CompetenceService', CompetenceServiceClient);
-
-  /*viewHandler.registerModule(new Competence({ id : 'competence' }), {
-    type : viewHandler.moduleType.Center
-  });*/
 
   var competenceHtml = `
 <div id="dialog-competence" title="Create new user">
@@ -30,6 +19,17 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
 </form>
 </div>`;
 
+  var competenceDiagramHandler = {
+    id : 'competence-diagram-handler',
+
+    getDiagram : function (diagramType, fileId, callback) {
+      model.competenceservice.getDiagram(fileId, diagramType, callback);
+    }
+  };
+
+  viewHandler.registerModule(competenceDiagramHandler, {
+    type : viewHandler.moduleType.Diagram
+  });
 
   $('body').append(competenceHtml);
 
@@ -67,16 +67,51 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
   var competenceMenu = {
     id     : 'cppCompetenceMenu',
     render : function (fileInfo) {
-      return new MenuItem({
+      var submenu = new Menu();
+
+      submenu.addChild(new MenuItem({
+        label : "Set comprehension rate",
+        onClick : function () {
+          //console.log(fileInfo);
+          selectedFileInfo = fileInfo;
+          competenceDialog.dialog("open");
+        }
+      }));
+
+      /*return new MenuItem({
         label    : 'Competence',
         onClick  : function () {
           /*topic.publish('codecompass/competence', {
             fileInfo : fileInfo
-          })*/
+          })
           console.log(fileInfo);
           selectedFileInfo = fileInfo;
           competenceDialog.dialog("open");
         }
+      });*/
+
+      submenu.addChild(new MenuItem({
+        label : "Display diagram",
+        onClick : function () {
+          /*topic.subscribe('codecompass/competence', function (message) {
+            var fileInfo = message.fileInfo;
+
+            that.get
+          });
+          topic.publish('codecompass/almafa');*/
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : 0,
+            node : fileInfo.id
+          });
+        }
+      }));
+
+      return new PopupMenuItem({
+        label : "Competence",
+        popup : submenu
       });
     }
   };
