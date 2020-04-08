@@ -93,17 +93,11 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       submenu.addChild(new MenuItem({
         label : "Display diagram",
         onClick : function () {
-          /*topic.subscribe('codecompass/competence', function (message) {
-            var fileInfo = message.fileInfo;
-
-            that.get
-          });
-          topic.publish('codecompass/almafa');*/
-          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+          //topic.publish('codecompass/openFile', { fileId : fileInfo.id });
 
           topic.publish('codecompass/openDiagram', {
             handler : 'competence-diagram-handler',
-            diagramType : 0,
+            diagramType : 1,
             node : fileInfo.id
           });
         }

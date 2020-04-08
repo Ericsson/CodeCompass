@@ -30,18 +30,28 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
+  std::string getFileCompetenceDiagramLegend();
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
+  std::map<util::Graph::Node, short> getFileCompetenceRates(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
   util::Graph::Node addNode(
     util::Graph& graph_,
-    const language::AstNodeInfo& nodeInfo_);
+    const core::FileInfo& fileInfo_);
 
   util::Graph::Subgraph addSubgraph(
     util::Graph& graph_,
     const core::FileId& fileId_);
 
   std::string rateToColor(short rate);
+
+  std::vector<util::Graph::Node> getSubDirs(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
 
   void decorateNode(
     util::Graph& graph_,
@@ -52,6 +62,12 @@ private:
     util::Graph& graph_,
     const util::Graph::Edge& edge_,
     const Decoration& decoration_) const;
+
+  static const Decoration centerNodeDecoration;
+  static const Decoration directoryNodeDecoration;
+
+  static const Decoration containsEdgeDecoration;
+  static const Decoration subdirEdgeDecoration;
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
