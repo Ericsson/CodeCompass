@@ -24,26 +24,48 @@ CompetenceDiagram::CompetenceDiagram(
 {
 }
 
-void CompetenceDiagram::getDirectoryCompetenceDiagram(
+void CompetenceDiagram::getCompetenceDiagram(
   util::Graph& graph_,
   const core::FileId& fileId_)
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
 
-  util::Graph::Node currentNode = graph_.getOrCreateNode(fileInfo.id);
-  graph_.setNodeAttribute(currentNode, "label", fileInfo.name);
-  decorateNode(graph_, currentNode, centerNodeDecoration);
+  util::Graph::Node currentNode = addNode(graph_, fileInfo);
+
+  if (!fileInfo.isDirectory)
+  {
+    _transaction([&, this]()
+    {
+     auto comp = _db->query<model::FileComprehension>(
+       odb::query<model::FileComprehension>::file == std::stoull(fileInfo.id));
+
+     std::string color = "#ffffff";
+
+     if (!comp.empty())
+       color = rateToColor(comp.begin()->userRatio);
+
+     Decoration competenceNodeDecoration = {
+       {"shape", "box"},
+       {"style", "filled"},
+       {"fillcolor", color}
+     };
+     decorateNode(graph_, currentNode, competenceNodeDecoration);
+    });
+
+    return;
+  }
 
   std::set<util::Graph::Node> subdirs = util::bfsBuild(graph_, currentNode,
     std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
     std::placeholders::_2), {}, subdirEdgeDecoration);
 
   subdirs.insert(currentNode);
+  decorateNode(graph_, currentNode, centerNodeDecoration);
 
   for (const util::Graph::Node& subdir : subdirs)
   {
-    for (const std::pair<util::Graph::Node, short> node : getFileCompetenceRates(graph_, subdir))
+    for (const std::pair<util::Graph::Node, uint16_t> node : getFileCompetenceRates(graph_, subdir))
     {
       util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
       decorateEdge(graph_, edge, containsEdgeDecoration);
@@ -58,53 +80,18 @@ void CompetenceDiagram::getDirectoryCompetenceDiagram(
       decorateNode(graph_, node.first, competenceNodeDecoration);
     }
   }
-}
 
-void CompetenceDiagram::getFileCompetenceDiagram(
-  util::Graph& graph_,
-  const core::FileId& fileId_)
-{
-  graph_.setAttribute("rankdir", "LR");
-
-  util::Graph::Node node
-    = graph_.getOrCreateNode(fileId_);
-
-  _transaction([&, this]()
+  if (graph_.nodeCount() > 15)
   {
-    auto comp = _db->query<model::FileComprehension>(
-      odb::query<model::FileComprehension>::file == std::stoull(fileId_));
-
-    std::string color = "#ffffff";
-
-    if (!comp.empty())
-      color = rateToColor(comp.begin()->userRatio);
-
-    Decoration competenceNodeDecoration = {
-      {"shape", "box"},
-      {"style", "filled"},
-      {"fillcolor", color}
-    };
-
-    model::FilePtr file = _db->query_one<model::File>(
-      odb::query<cc::model::File>::id == std::stoull(fileId_));
-    graph_.setNodeAttribute(node, "label", file->path);
-
-    decorateNode(graph_, node, competenceNodeDecoration);
-  });
+    graph_.setAttribute("rankdir", "LR");
+  }
 }
 
-std::string CompetenceDiagram::getFileCompetenceDiagramLegend()
-{
-  util::LegendBuilder builder("File-level competence diagram");
-
-  return builder.getOutput();
-}
-
-std::map<util::Graph::Node, short> CompetenceDiagram::getFileCompetenceRates(
+std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
-  std::map<core::FileId, short> comprehension;
+  std::map<core::FileId, uint16_t> comprehension;
   _transaction([&, this]
   {
     auto contained = _db->query<model::File>(
@@ -125,16 +112,14 @@ std::map<util::Graph::Node, short> CompetenceDiagram::getFileCompetenceRates(
     }
   });
 
-  std::map<util::Graph::Node, short> annotated;
+  std::map<util::Graph::Node, uint16_t> annotated;
 
   for (const auto& pair : comprehension)
   {
     core::FileInfo fileInfo;
     _projectHandler.getFileInfo(fileInfo, pair.first);
 
-    util::Graph::Node node = graph_.getOrCreateNode(fileInfo.id);
-    graph_.setNodeAttribute(node, "label", fileInfo.name);
-    annotated.insert(std::make_pair(node, pair.second));
+    annotated.insert(std::make_pair(addNode(graph_, fileInfo), pair.second));
   }
 
   return annotated;
@@ -145,39 +130,13 @@ util::Graph::Node CompetenceDiagram::addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_)
 {
-  /*util::Graph::Node node
-    = graph_.getOrCreateNode(nodeInfo_.id,
-      addSubgraph(graph_, nodeInfo_.range.file));
+  util::Graph::Node node = graph_.getOrCreateNode(fileInfo_.id);
+  graph_.setNodeAttribute(node, "label", fileInfo_.name);
 
-  graph_.setNodeAttribute(node, "label", nodeInfo_.astNodeValue);
-
-  return node;*/
+  return node;
 }
 
-util::Graph::Subgraph CompetenceDiagram::addSubgraph(
-  util::Graph& graph_,
-  const core::FileId& fileId_)
-{
-  auto it = _subgraphs.find(fileId_);
-
-  if (it != _subgraphs.end())
-    return it->second;
-
-  core::FileInfo fileInfo;
-  _projectHandler.getFileInfo(fileInfo, fileId_);
-
-  util::Graph::Subgraph subgraph
-    = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
-
-  graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
-  graph_.setSubgraphAttribute(subgraph, "label", fileInfo.path);
-
-  _subgraphs.insert(it, std::make_pair(fileInfo.path, subgraph));
-
-  return subgraph;
-}
-
-std::string CompetenceDiagram::rateToColor(short rate)
+std::string CompetenceDiagram::rateToColor(uint16_t rate)
 {
   int red, green;
 
@@ -208,7 +167,7 @@ std::vector<util::Graph::Node> CompetenceDiagram::getSubDirs(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
-  std::vector<util::Graph::Node> usages;
+  std::vector<util::Graph::Node> subdirs;
 
   _transaction([&, this]
    {
@@ -221,14 +180,13 @@ std::vector<util::Graph::Node> CompetenceDiagram::getSubDirs(
        core::FileInfo fileInfo;
        _projectHandler.getFileInfo(fileInfo, std::to_string(subdir.id));
 
-       util::Graph::Node node = graph_.getOrCreateNode(fileInfo.id);
+       util::Graph::Node node = addNode(graph_, fileInfo);
        decorateNode(graph_, node, directoryNodeDecoration);
-       graph_.setNodeAttribute(node, "label", fileInfo.name);
-       usages.push_back(node);
+       subdirs.push_back(node);
      }
    });
 
-  return usages;
+  return subdirs;
 }
 
 void CompetenceDiagram::decorateNode(

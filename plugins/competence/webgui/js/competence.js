@@ -72,32 +72,19 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       submenu.addChild(new MenuItem({
         label : "Set comprehension rate",
         onClick : function () {
-          //console.log(fileInfo);
           selectedFileInfo = fileInfo;
           competenceDialog.dialog("open");
         }
       }));
 
-      /*return new MenuItem({
-        label    : 'Competence',
-        onClick  : function () {
-          /*topic.publish('codecompass/competence', {
-            fileInfo : fileInfo
-          })
-          console.log(fileInfo);
-          selectedFileInfo = fileInfo;
-          competenceDialog.dialog("open");
-        }
-      });*/
-
       submenu.addChild(new MenuItem({
         label : "Display diagram",
         onClick : function () {
-          //topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
 
           topic.publish('codecompass/openDiagram', {
             handler : 'competence-diagram-handler',
-            diagramType : 1,
+            diagramType : 0,  // In case there are other diagrams.
             node : fileInfo.id
           });
         }

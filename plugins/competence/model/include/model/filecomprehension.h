@@ -34,10 +34,10 @@ struct FileComprehension
   FileId file;
 
   #pragma db null
-  odb::nullable<short> repoRatio;
+  odb::nullable<uint16_t > repoRatio;
 
   #pragma db not_null
-  short userRatio;
+  uint16_t userRatio;
 
   #pragma db not_null
   InputType inputType;

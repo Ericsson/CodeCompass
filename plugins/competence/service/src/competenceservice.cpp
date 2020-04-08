@@ -68,11 +68,7 @@ void CompetenceServiceHandler::getDiagram(
   switch (diagramId_)
   {
     case FILE_COMPETENCE:
-      diagram.getFileCompetenceDiagram(graph, fileId_);
-      break;
-
-    case DIRECTORY_COMPETENCE:
-      diagram.getDirectoryCompetenceDiagram(graph, fileId_);
+      diagram.getCompetenceDiagram(graph, fileId_);
       break;
   }
 

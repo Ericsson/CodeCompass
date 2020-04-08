@@ -22,20 +22,14 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void getDirectoryCompetenceDiagram(
-    util::Graph& graph_,
-    const core::AstNodeId& astNodeId_);
-
-  void getFileCompetenceDiagram(
+  void getCompetenceDiagram(
     util::Graph& graph_,
     const core::FileId& fileId_);
-
-  std::string getFileCompetenceDiagramLegend();
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
-  std::map<util::Graph::Node, short> getFileCompetenceRates(
+  std::map<util::Graph::Node, uint16_t> getFileCompetenceRates(
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
@@ -43,11 +37,7 @@ private:
     util::Graph& graph_,
     const core::FileInfo& fileInfo_);
 
-  util::Graph::Subgraph addSubgraph(
-    util::Graph& graph_,
-    const core::FileId& fileId_);
-
-  std::string rateToColor(short rate);
+  std::string rateToColor(uint16_t rate);
 
   std::vector<util::Graph::Node> getSubDirs(
     util::Graph& graph_,
@@ -71,8 +61,6 @@ private:
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-
-  std::map<core::FileId, util::Graph::Subgraph> _subgraphs;
 
   CompetenceServiceHandler _compHandler;
   core::ProjectServiceHandler _projectHandler;
