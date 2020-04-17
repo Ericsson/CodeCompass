@@ -36,7 +36,7 @@ public:
   void getDiagram(
     std::string& return_,
     const core::FileId& fileId_,
-    const std::int32_t diagramId_);
+    const std::int32_t diagramId_) override;
 
   void getDiagramTypes(
     std::map<std::string, std::int32_t>& return_,

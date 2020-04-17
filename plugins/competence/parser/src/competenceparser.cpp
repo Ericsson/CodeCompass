@@ -142,67 +142,117 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
   boost::filesystem::path& repoPath_,
   const std::string& useremail_)
 {
+  // transform file path to be identical with git file path
   std::string gitFilePath = file_.get()->path.substr(
     repoPath_.parent_path().string().length() + 1);
 
-  git_oid lastCommitOid = getLastCommitOid(repo_);
-  BlameOptsPtr opt = createBlameOpts(lastCommitOid);
-  BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
-
-  if (!blame)
+  // initiate walker
+  git_revwalk* walker = nullptr;
+  if (git_revwalk_new(&walker, repo_.get()) != 0)
     return;
+
+  git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+  git_revwalk_push_head(walker);
 
   float blameLines = 0;
   float totalLines = 0;
 
-  for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+  git_oid oid;
+  while (git_revwalk_next(&oid, walker) == 0)  // walk through commit history
   {
-    const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+    // retrieve commit
+    CommitPtr commit = createCommit(repo_.get(), oid);
 
-    GitBlameHunk blameHunk;
-    blameHunk.linesInHunk = hunk->lines_in_hunk;
-    blameHunk.boundary = hunk->boundary;
-    blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
-    blameHunk.finalStartLineNumber = hunk->final_start_line_number;
+    // retrieve commit's parent
+    git_commit* parent = nullptr;
+    int error = git_commit_parent(&parent, commit.get(), 0);
 
-    if (hunk->final_signature)
+    if (error == 0)
     {
-      //blameHunk.finalSignature.name = hunk->final_signature->name;
-      blameHunk.finalSignature.email = hunk->final_signature->email;
-      blameHunk.finalSignature.time = hunk->final_signature->when.time;
-    }
-      // TODO
-      // git_oid_iszero is deprecated.
-      // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
-    else if (!git_oid_iszero(&hunk->final_commit_id))
-    {
-      CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
-      const git_signature *author = git_commit_author(commit.get());
-      //blameHunk.finalSignature.name = author->name;
-      blameHunk.finalSignature.email = author->email;
-      blameHunk.finalSignature.time = author->when.time;
-    }
+      // get git tree of both commits
+      git_tree* commitTree = nullptr;
+      git_tree* parentTree = nullptr;
 
-    blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
-    blameHunk.origPath = hunk->orig_path;
-    blameHunk.origStartLineNumber = hunk->orig_start_line_number;
-    if (hunk->orig_signature)
-    {
-      //blameHunk.origSignature.name = hunk->orig_signature->name;
-      blameHunk.origSignature.email = hunk->orig_signature->email;
-      blameHunk.origSignature.time = hunk->orig_signature->when.time;
-    }
+      error = git_commit_tree(&commitTree, commit.get());
+      error = git_commit_tree(&parentTree, parent);
 
-    if (!useremail_.compare(std::string(blameHunk.finalSignature.email)))
-    {
-      blameLines += blameHunk.linesInHunk;
-    }
+      // calculate diff of trees
+      git_diff* diff = nullptr;
+      error = git_diff_tree_to_tree(&diff, repo_.get(), parentTree, commitTree, nullptr);
 
-    totalLines += blameHunk.linesInHunk;
+      // loop through each delta
+      size_t num_deltas = git_diff_num_deltas(diff);
+      if (num_deltas != 0)
+      {
+        const git_diff_delta* delta;
+        for (int i = 0; i < num_deltas; ++i)
+        {
+          delta = git_diff_get_delta(diff, i);
+          git_diff_file file = delta->new_file;
+
+          // calculate blame of affected file
+          if (file.path == gitFilePath)
+          {
+            BlameOptsPtr opt = createBlameOpts(oid);
+            BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
+
+            if (!blame)
+              return;
+
+            for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+            {
+              const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+
+              GitBlameHunk blameHunk;
+              blameHunk.linesInHunk = hunk->lines_in_hunk;
+              blameHunk.boundary = hunk->boundary;
+              blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
+              blameHunk.finalStartLineNumber = hunk->final_start_line_number;
+
+              if (hunk->final_signature)
+              {
+                //blameHunk.finalSignature.name = hunk->final_signature->name;
+                blameHunk.finalSignature.email = hunk->final_signature->email;
+                blameHunk.finalSignature.time = hunk->final_signature->when.time;
+              }
+                // TODO
+                // git_oid_iszero is deprecated.
+                // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
+              else if (!git_oid_iszero(&hunk->final_commit_id))
+              {
+                CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
+                const git_signature *author = git_commit_author(commit.get());
+                //blameHunk.finalSignature.name = author->name;
+                blameHunk.finalSignature.email = author->email;
+                blameHunk.finalSignature.time = author->when.time;
+              }
+
+              blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
+              blameHunk.origPath = hunk->orig_path;
+              blameHunk.origStartLineNumber = hunk->orig_start_line_number;
+              if (hunk->orig_signature)
+              {
+                //blameHunk.origSignature.name = hunk->orig_signature->name;
+                blameHunk.origSignature.email = hunk->orig_signature->email;
+                blameHunk.origSignature.time = hunk->orig_signature->when.time;
+              }
+
+              if (!useremail_.compare(std::string(blameHunk.finalSignature.email)))
+              {
+                blameLines += blameHunk.linesInHunk;
+              }
+
+              totalLines += blameHunk.linesInHunk;
+            }
+            break;
+          }
+        }
+      }
+      git_diff_free(diff);
+    }
   }
 
   LOG(info) << file_.get()->path << ": ";
-
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]
   {
@@ -215,6 +265,8 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
 
     LOG(info) << fileComprehension.repoRatio.get() << "%";
   });
+
+  git_revwalk_free(walker);
 }
 
 git_oid CompetenceParser::getLastCommitOid(RepositoryPtr& repo)
