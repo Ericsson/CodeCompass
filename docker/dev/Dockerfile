@@ -52,9 +52,12 @@ RUN chmod u+x /tmp/install_odb.sh && \
     /tmp/install_odb.sh
 
 
-# Erase downloaded archive files.
+# Erase downloaded archive files, and unneded packages.
 RUN set +x && \
+    apt-get purge --yes --auto-remove curl && \
+    apt-get clean \
     rm -rf /var/lib/apt/lists/
+
 
 COPY docker/dev/codecompass-build.sh /usr/local/bin
 
