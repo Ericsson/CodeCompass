@@ -4,8 +4,8 @@ FROM ubuntu:bionic
 RUN set -x && apt-get update -qq \
     && apt-get -y install \
     cmake make \
+    gcc-7 gcc-7-plugin-dev \
     llvm-7 clang-7 llvm-7-dev libclang-7-dev \
-    odb libodb-sqlite-dev libodb-pgsql-dev \
     libsqlite3-dev \
     default-jdk \
     libssl1.0-dev \
@@ -19,7 +19,8 @@ RUN set -x && apt-get update -qq \
     libboost-filesystem-dev \
     libboost-log-dev \
     libboost-program-options-dev \
-    libboost-regex-dev
+    libboost-regex-dev \
+    curl
 # Download the Thrift source code.
 ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
 # Build Thrift
@@ -44,14 +45,18 @@ RUN cd /usr/src/googletest/ && \
      make install && \
      cd / && \
      rm -rf /usr/src/googletest/build
-# Remove unnecessary packages.
-RUN apt-get purge --yes --auto-remove wget \
-  # Erase downloaded archive files.
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
-  && set +x
 
-COPY codecompass-build.sh /usr/local/bin
+COPY scripts/install_odb_2.5.sh /tmp/install_odb.sh
+
+RUN chmod u+x /tmp/install_odb.sh && \
+    /tmp/install_odb.sh
+
+
+# Erase downloaded archive files.
+RUN set +x && \
+    rm -rf /var/lib/apt/lists/
+
+COPY docker/dev/codecompass-build.sh /usr/local/bin
 
 ENV DATABASE=sqlite \
     BUILD_TYPE=Release \

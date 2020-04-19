@@ -11,6 +11,8 @@ be installed from the official repository of the given Linux distribution.
 
 - **`git`**: For fetching and managing CodeCompass source code.
 - **`cmake`** and **`make`**: For building CodeCompass.
+-**`gcc-X`**: Version 7 or higher.
+-**`gcc-X-plugin-dev`**: This is needed to compile odb.
 - **`g++`**: For compiling CodeCompass. A version which supports C++14 features
   is required. (Alternatively, you can compile with Clang.)
 - **`libboost-all-dev`**: Boost can be used during the development.
@@ -90,6 +92,19 @@ operation - outside package managers, the wrong binaries can end up being used
 by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
+
+### Odb
+Odb is an Object relational Mapping tool, that is required by CodeCompass.
+We are using odb 2.5 which is not part of the official ubuntu repositories, so
+it needs to be built manually. For this, we provide a convenience script, under
+the scripts directory.
+
+```bash
+cd CodeCompass/scripts
+chmod u+x install_odb_2.5.sh
+./install_odb_2.5.sh
+```
+Note that this can take up a long time depending on the machine one uses.
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
