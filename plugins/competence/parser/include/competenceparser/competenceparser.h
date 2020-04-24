@@ -86,9 +86,10 @@ private:
     boost::filesystem::path& repoPath_);
 
   void loadCommitData(model::FilePtr file_,
-                      RepositoryPtr& repo_,
-                      boost::filesystem::path& repoPath_,
-                      const std::string& useremail_ = "anett.fekete@ericsson.com");
+    RepositoryPtr& repo_,
+    boost::filesystem::path& repoPath_,
+    const int monthNumber = 6,
+    const std::string& useremail_ = "anett.fekete@ericsson.com");
 
   BlamePtr createBlame(
     git_repository* repo_,

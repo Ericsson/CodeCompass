@@ -9,6 +9,7 @@
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
 
+#include <chrono>
 #include <memory>
 
 namespace cc
@@ -132,7 +133,6 @@ util::DirIterCallback CompetenceParser::getParserCallback(
         loadCommitData(file, repo_, repoPath_);
       }
     }
-
     return true;
   };
 }
@@ -140,13 +140,18 @@ util::DirIterCallback CompetenceParser::getParserCallback(
 void CompetenceParser::loadCommitData(model::FilePtr file_,
   RepositoryPtr& repo_,
   boost::filesystem::path& repoPath_,
+  const int monthNumber,
   const std::string& useremail_)
 {
-  // transform file path to be identical with git file path
+  if (file_.get()->path.find(".git") != std::string::npos ||
+      file_.get()->path.find(".idea") != std::string::npos)
+    return;
+
+  // Transform file path to be identical with git file path.
   std::string gitFilePath = file_.get()->path.substr(
     repoPath_.parent_path().string().length() + 1);
 
-  // initiate walker
+  // Initiate walker.
   git_revwalk* walker = nullptr;
   if (git_revwalk_new(&walker, repo_.get()) != 0)
     return;
@@ -154,33 +159,43 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
   git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
   git_revwalk_push_head(walker);
 
-  float blameLines = 0;
-  float totalLines = 0;
+  float total = 0;
+  int relevantCommitCount = 0;
 
+  // Walk through commit history.
   git_oid oid;
-  while (git_revwalk_next(&oid, walker) == 0)  // walk through commit history
+  while (git_revwalk_next(&oid, walker) == 0)
   {
-    // retrieve commit
+    // Retrieve commit.
     CommitPtr commit = createCommit(repo_.get(), oid);
 
-    // retrieve commit's parent
+    // Calculate elapsed time in full months since current commit.
+    std::time_t elapsed = std::chrono::system_clock::to_time_t(
+      std::chrono::system_clock::now())
+      - git_commit_time(commit.get());
+    double months = elapsed / (double)(86400 * 7 * 30);
+
+    if (months > monthNumber)
+      break;
+
+    // Retrieve parent of commit.
     git_commit* parent = nullptr;
     int error = git_commit_parent(&parent, commit.get(), 0);
 
     if (error == 0)
     {
-      // get git tree of both commits
+      // Get git tree of both commits.
       git_tree* commitTree = nullptr;
       git_tree* parentTree = nullptr;
 
       error = git_commit_tree(&commitTree, commit.get());
       error = git_commit_tree(&parentTree, parent);
 
-      // calculate diff of trees
+      // Calculate diff of trees.
       git_diff* diff = nullptr;
       error = git_diff_tree_to_tree(&diff, repo_.get(), parentTree, commitTree, nullptr);
 
-      // loop through each delta
+      // Loop through each delta.
       size_t num_deltas = git_diff_num_deltas(diff);
       if (num_deltas != 0)
       {
@@ -190,9 +205,12 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
           delta = git_diff_get_delta(diff, i);
           git_diff_file file = delta->new_file;
 
-          // calculate blame of affected file
+          // Calculate blame of affected file.
           if (file.path == gitFilePath)
           {
+            float blameLines = 0;
+            float totalLines = 0;
+
             BlameOptsPtr opt = createBlameOpts(oid);
             BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
 
@@ -244,6 +262,13 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
 
               totalLines += blameHunk.linesInHunk;
             }
+
+            if (blameLines != 0)
+            {
+              // Calculate the retained memory depending on the elapsed time.
+              total += blameLines / totalLines * std::exp(-months) * 100;
+              ++relevantCommitCount;
+            }
             break;
           }
         }
@@ -252,18 +277,17 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     }
   }
 
-  LOG(info) << file_.get()->path << ": ";
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]
   {
     model::FileComprehension fileComprehension;
-    fileComprehension.repoRatio = blameLines / totalLines * 100;
+    fileComprehension.repoRatio = total / relevantCommitCount;
     fileComprehension.userRatio = fileComprehension.repoRatio.get();
     fileComprehension.file = file_.get()->id;
     fileComprehension.inputType = model::FileComprehension::InputType::REPO;
     _ctx.db->persist(fileComprehension);
 
-    LOG(info) << fileComprehension.repoRatio.get() << "%";
+    LOG(info) << file_.get()->path << ": " << fileComprehension.repoRatio.get() << "%";
   });
 
   git_revwalk_free(walker);

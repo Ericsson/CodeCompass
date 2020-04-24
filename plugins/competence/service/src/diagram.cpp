@@ -101,6 +101,10 @@ std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
 
     for (const model::File& file : contained)
     {
+      if (file.path.find(".git") != std::string::npos ||
+          file.path.find(".idea") != std::string::npos)
+        continue;
+
       auto comp = _db->query<model::FileComprehension>(
         odb::query<model::FileComprehension>::file == file.id
         );
@@ -175,8 +179,12 @@ std::vector<util::Graph::Node> CompetenceDiagram::getSubDirs(
        odb::query<model::File>::parent == std::stoull(node_) &&
        odb::query<model::File>::type == model::File::DIRECTORY_TYPE);
 
-     for (const model::File &subdir : sub)
+     for (const model::File& subdir : sub)
      {
+       if (subdir.path.find(".git") != std::string::npos ||
+           subdir.path.find(".idea") != std::string::npos)
+         continue;
+
        core::FileInfo fileInfo;
        _projectHandler.getFileInfo(fileInfo, std::to_string(subdir.id));
 
