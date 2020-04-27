@@ -59,7 +59,6 @@ bpkg create --quiet --jobs $(nproc) cc \
   config.cc.coptions=-O3               \
   config.bin.rpath=/usr/local/lib      \
   config.install.root=/usr/local       \
-  config.install.root=/usr/local
 
 bpkg add https://pkg.cppget.org/1/beta --trust-yes
 bpkg fetch --trust-yes
