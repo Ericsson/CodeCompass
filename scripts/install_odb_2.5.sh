@@ -22,7 +22,7 @@ the slite and pgsql support library.
 
 ${0} [-h] [-d] <odb_install_path> 
   -h  Print this usage information, and quit.
-  -d  Install directory of odb. Optional. /opt/odb is the deafault.
+  -d  Install directory of odb. Optional. /usr/local is the deafault.
 EOF
 }
 
@@ -59,7 +59,6 @@ bpkg create --quiet --jobs $(nproc) cc \
   config.cc.coptions=-O3               \
   config.bin.rpath=/usr/local/lib      \
   config.install.root=/usr/local       \
-  config.install.root=/usr/local
 
 bpkg add https://pkg.cppget.org/1/beta --trust-yes
 bpkg fetch --trust-yes
