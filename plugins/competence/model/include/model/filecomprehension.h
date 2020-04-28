@@ -34,13 +34,16 @@ struct FileComprehension
   FileId file;
 
   #pragma db null
-  odb::nullable<uint16_t > repoRatio;
+  odb::nullable<uint16_t> repoRatio;
 
   #pragma db not_null
   uint16_t userRatio;
 
   #pragma db not_null
   InputType inputType;
+
+  #pragma db not_null
+  std::string userEmail;
 };
 
 typedef std::shared_ptr<FileComprehension> FileComprehensionPtr;

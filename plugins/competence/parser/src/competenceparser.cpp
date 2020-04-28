@@ -159,8 +159,8 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
   git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
   git_revwalk_push_head(walker);
 
-  float total = 0;
-  int relevantCommitCount = 0;
+  // Store total percentage and relevant commit count for each user.
+  std::map<std::string, std::pair<int, int>> userEditions;
 
   // Walk through commit history.
   git_oid oid;
@@ -195,12 +195,15 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
       git_diff* diff = nullptr;
       error = git_diff_tree_to_tree(&diff, repo_.get(), parentTree, commitTree, nullptr);
 
+      // Store the current number of blame lines for each user.
+      std::map<std::string, int> userBlame;
+
       // Loop through each delta.
       size_t num_deltas = git_diff_num_deltas(diff);
       if (num_deltas != 0)
       {
         const git_diff_delta* delta;
-        for (int i = 0; i < num_deltas; ++i)
+        for (size_t i = 0; i < num_deltas; ++i)
         {
           delta = git_diff_get_delta(diff, i);
           git_diff_file file = delta->new_file;
@@ -208,7 +211,6 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
           // Calculate blame of affected file.
           if (file.path == gitFilePath)
           {
-            float blameLines = 0;
             float totalLines = 0;
 
             BlameOptsPtr opt = createBlameOpts(oid);
@@ -255,20 +257,40 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
                 blameHunk.origSignature.time = hunk->orig_signature->when.time;
               }
 
-              if (!useremail_.compare(std::string(blameHunk.finalSignature.email)))
+              auto it = userBlame.find(std::string(blameHunk.finalSignature.email));
+              if (it != userBlame.end())
               {
-                blameLines += blameHunk.linesInHunk;
+                it->second += blameHunk.linesInHunk;
+              }
+              else
+              {
+                userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
+                  blameHunk.linesInHunk));
               }
 
               totalLines += blameHunk.linesInHunk;
             }
 
-            if (blameLines != 0)
+            for (const auto& pair : userBlame)
             {
-              // Calculate the retained memory depending on the elapsed time.
-              total += blameLines / totalLines * std::exp(-months) * 100;
-              ++relevantCommitCount;
+              if (pair.second != 0)
+              {
+                // Calculate the retained memory depending on the elapsed time.
+                double percentage = pair.second / totalLines * std::exp(-months) * 100;
+
+                auto it = userEditions.find(pair.first);
+                if (it != userEditions.end())
+                {
+                  it->second.first += percentage;
+                  ++(it->second.second);
+                }
+                else
+                {
+                  userEditions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
+                }
+              }
             }
+
             break;
           }
         }
@@ -280,14 +302,22 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]
   {
-    model::FileComprehension fileComprehension;
-    fileComprehension.repoRatio = total / relevantCommitCount;
-    fileComprehension.userRatio = fileComprehension.repoRatio.get();
-    fileComprehension.file = file_.get()->id;
-    fileComprehension.inputType = model::FileComprehension::InputType::REPO;
-    _ctx.db->persist(fileComprehension);
+    LOG(info) << file_.get()->path << ": ";
+    for (const auto& pair : userEditions)
+    {
+      if (pair.second.first !=  0)
+      {
+        model::FileComprehension fileComprehension;
+        fileComprehension.userEmail = pair.first;
+        fileComprehension.repoRatio = pair.second.first / pair.second.second;
+        fileComprehension.userRatio = fileComprehension.repoRatio.get();
+        fileComprehension.file = file_.get()->id;
+        fileComprehension.inputType = model::FileComprehension::InputType::REPO;
+        _ctx.db->persist(fileComprehension);
 
-    LOG(info) << file_.get()->path << ": " << fileComprehension.repoRatio.get() << "%";
+        LOG(info) << pair.first << " " << fileComprehension.repoRatio.get() << "%";
+      }
+    }
   });
 
   git_revwalk_free(walker);
