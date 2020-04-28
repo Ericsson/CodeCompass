@@ -20,7 +20,7 @@ class RequestHandler
 public:
   virtual std::string key() const = 0;
   virtual int beginRequest(struct mg_connection*) = 0;
-  virtual ~RequestHandler() {}
+  virtual ~RequestHandler() = default;
 };
 
 } // webserver

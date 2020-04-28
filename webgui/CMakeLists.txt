@@ -7,6 +7,7 @@ install(DIRECTORY
   FILES_MATCHING PATTERN "[^.]*")
 
 install(FILES
+  login.html
   index.html
   startpage.html
   credits.html
