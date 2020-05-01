@@ -22,8 +22,7 @@ services:
     # Java
     - default-jdk
     # ODB
-    - gcc-7
-    - gcc-7-plugin-dev
+    - gcc-5-plugin-dev
     # SQLite
     - libsqlite3-dev
     # PostgreSQL
@@ -50,7 +49,7 @@ services:
   libboost-all-dev
   llvm-7 llvm-7-dev clang-7 libclang-7-dev
   default-jdk
-  gcc-7 gcc-7-plugin-dev
+  gcc-7-plugin-dev
   libsqlite3-dev
   postgresql-server-dev-10
   libmagic-dev libgit2-dev ctags
