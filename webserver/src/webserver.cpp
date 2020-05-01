@@ -1,8 +1,9 @@
 #include <iostream>
 
+#include <boost/filesystem.hpp>
+#include <boost/log/attributes.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/attr.hpp>
-#include <boost/log/attributes.hpp>
 #include <boost/program_options.hpp>
 
 #include <util/filesystem.h>
@@ -12,6 +13,7 @@
 #include "threadedmongoose.h"
 #include "mainrequesthandler.h"
 
+namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 namespace trivial = boost::log::trivial;
 
@@ -99,9 +101,21 @@ int main(int argc, char* argv[])
   server.setOption("listening_port", std::to_string(vm["port"].as<int>()));
   server.setOption("document_root", vm["webguiDir"].as<std::string>());
 
-  LOG(info)
-    << "Mongoose web server starting on port "
-    << server.getOption("listening_port");
+  // Check if certificate.pem exists in the workspace - if so, start SSL.
+  auto certPath = fs::path(vm["workspace"].as<std::string>()).append("certificate.pem");
+  if (boost::filesystem::is_regular_file(certPath))
+  {
+    LOG(info) << "Starting HTTPS listener based on 'certificate.pem'.";
+    server.setOption("ssl_certificate", certPath.native());
+  }
+  else
+  {
+    LOG(warning) << "No 'certificate.pem' found in '--workspace', server "
+                    "running over conventional HTTP!";
+  }
+
+  LOG(info) << "Mongoose web server starting on port "
+            << server.getOption("listening_port");
 
   try
   {
