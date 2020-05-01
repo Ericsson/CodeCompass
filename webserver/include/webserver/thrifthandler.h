@@ -1,7 +1,7 @@
 #ifndef CC_WEBSERVER_THRIFTHANDLER_H
 #define CC_WEBSERVER_THRIFTHANDLER_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <memory>
 
 #include <thrift/transport/TBufferTransports.h>
@@ -11,7 +11,7 @@
 
 #include <util/logutil.h>
 
-#include "mongoose.h"
+#include "requesthandler.h"
 
 /**
  * Returns the demangled name of the type described by the given type info.
@@ -54,9 +54,9 @@ protected:
   struct CallContext
   {
     /**
-     * Mongoose connection.
+     * HTTP request received.
      */
-    struct mg_connection* connection;
+    const HTTPRequest* request;
 
     /**
      * A pointer for the real call context (for dispatch call).
@@ -105,7 +105,7 @@ public:
     return "ThriftHandler";
   }
 
-  int beginRequest(struct mg_connection *conn_) override
+  std::string beginRequest(const HTTPRequest& req_) override
   {
     using namespace ::apache::thrift;
     using namespace ::apache::thrift::transport;
@@ -113,8 +113,7 @@ public:
 
     try
     {
-      std::string content{conn_->content, conn_->content + conn_->content_len};
-
+      const std::string& content = req_.body;
       LOG(debug) << "Request content:\n" << content;
 
       std::shared_ptr<TTransport> inputBuffer(
@@ -127,7 +126,7 @@ public:
       std::shared_ptr<TProtocol> outputProtocol(
         new TJSONProtocol(outputBuffer));
 
-      CallContext ctx{conn_, nullptr};
+      CallContext ctx{&req_, nullptr};
       _processor.process(inputProtocol, outputProtocol, &ctx);
 
       TMemoryBuffer *mBuffer = dynamic_cast<TMemoryBuffer*>(outputBuffer.get());
@@ -137,29 +136,18 @@ public:
       LOG(debug)
         << "Response:\n" << response.c_str() << std::endl;
 
-      // Send HTTP reply to the client create headers
-      mg_send_header(conn_, "Content-Type", "application/x-thrift");
-      mg_send_header(
-        conn_, "Content-Length", std::to_string(response.length()).c_str());
-
-      // Terminate headers
-      mg_write(conn_, "\r\n", 2);
-
-      // Send content
-      mg_write(conn_, response.c_str(), response.length());
+      return response;
     }
     catch (const std::exception& ex)
     {
       LOG(warning) << ex.what();
+      throw;
     }
     catch (...)
     {
       LOG(warning) << "Unknown exception has been caught";
+      throw;
     }
-
-    // Returning non-zero tells mongoose that our function has replied to
-    // the client, and mongoose should not send client any more data.
-    return MG_TRUE;
   }
 
 private:
@@ -167,6 +155,6 @@ private:
 };
 
 } // namespace webserver
-} // cc
+} // namespace cc
 
 #endif // CC_WEBSERVER_THRIFTHANDLER_H

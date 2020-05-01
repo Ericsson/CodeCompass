@@ -1,6 +1,10 @@
 #ifndef CC_WEBSERVER_MAINREQUESTHANDLER_H
 #define CC_WEBSERVER_MAINREQUESTHANDLER_H
 
+#include <string>
+#include <vector>
+
+#include <webserver/httprequest.h>
 #include <webserver/pluginhandler.h>
 #include <webserver/requesthandler.h>
 
@@ -17,19 +21,24 @@ struct MainRequestHandler
 public:
   SessionManager* sessionManager;
   PluginHandler<RequestHandler> pluginHandler;
-  std::map<std::string, std::string> dataDir;
+  std::vector<std::string> servedPaths;
 
-  int operator()(struct mg_connection* conn_, enum mg_event ev_);
+  /**
+   * Executes the given request and sends back a reply into the connection where
+   * the request originated from.
+   */
+  void operator()(HTTPRequest& req_);
+
+  void updateServedPathsFromPluginHandler();
 
 private:
-  int begin_request_handler(struct mg_connection* conn_);
-  std::string getDocDirByURI(std::string uri_);
+  void begin_request_handler(const HTTPRequest& req_);
 
   // Detail template - implementation in the .cpp only.
   template <typename F>
   auto executeWithSessionContext(cc::webserver::Session* sess_, F func);
 };
-  
+
 } // webserver
 } // cc
 

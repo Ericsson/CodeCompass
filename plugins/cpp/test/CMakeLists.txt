@@ -4,6 +4,7 @@ include_directories(
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
+  ${PROJECT_SOURCE_DIR}/webserver/include
   ${PROJECT_SOURCE_DIR}/util/include)
 
 include_directories(SYSTEM

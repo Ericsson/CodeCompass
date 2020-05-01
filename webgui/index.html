@@ -79,6 +79,19 @@
       ];
 
       require(commonModules, function(){
+        // Redirect the user to the login page if login is needed.
+        let AuthService = new AuthenticationServiceClient(
+          new Thrift.Protocol(new Thrift.Transport("/AuthenticationService")));
+        try {
+          if (!AuthService.isCurrentSessionValid()) {
+            // Redirect the user to login page.
+            window.location.replace("/login.html");
+            return;
+          }
+        } catch (ex) {
+          console.warn(ex);
+        }
+
         require([
           'dojo/_base/array',
           'dojo/dom-construct',

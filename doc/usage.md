@@ -197,25 +197,24 @@ For full documentation see `CodeCompass_webserver -h`.
 
 By default, CodeCompass starts a conventional, plain-text HTTP server on the
 port specified.
-In case a `certificate.pem` file exists under the `--workpace` directory, the
-server *will* start in SSL mode.
+In case both `server.key` and `server.pem` files exist under the `--workpace`
+directory, the server *will* start in SSL mode.
 
 The certificate file shall be in PEM format, which looks like shown below. If
 the certificate you received from your Certificate Authority (or self-created)
 isn't in PEM format, use an SSL tool like [OpenSSL](http://openssl.org) to
 convert it.
 
-Normally, the private and public key (the certificate) are created as separate
-files. They **must** be concatenated to *one* `certificate.pem` file, to look
-like the following.
-[Further details on SSL](http://github.com/cesanta/mongoose/blob/5.4/docs/SSL.md#how-to-create-ssl-certificate-file)
-is available from Mongoose, the library CodeCompass uses for HTTP server.
-
+**`server.key`:**
 ~~~{.pem}
 -----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAwONaLOP7EdegqjRuQKSDXzvHmFMZfBufjhELhNjo5KsL4ieH
 hYN0Zii2yTb63jGxKY6gH1R/r9dL8kXaJmcZrfSa3AgywnteJWg=
 -----END RSA PRIVATE KEY-----
+~~~
+
+**`server.pem`:**
+~~~{.pem}
 -----BEGIN CERTIFICATE-----
 MIIDBjCCAe4CCQCX05m0b053QzANBgkqhkiG9w0BAQQFADBFMQswCQYDVQQGEwJB
 SEGI4JSxV56lYg==
@@ -227,14 +226,11 @@ SEGI4JSxV56lYg==
 > on its own.
 
 If intermediate certificates are used because your certificate isn't signed
-by a Root CA (this is common), the certificate chain's elements (also in, or
-converted to PEM format) should also be concatenated into the `certificate.pem`
-file:
+directly by a Root CA (this is common), the certificate chain's elements
+(converted to PEM format) should also be concatenated into the
+`server.pem` file:
 
 ~~~{.pem}
------BEGIN RSA PRIVATE KEY-----
-Your certificate's private key
------END RSA PRIVATE KEY-----
 -----BEGIN CERTIFICATE-----
 Your certificate (the public key)
 -----END CERTIFICATE-----

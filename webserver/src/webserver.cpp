@@ -1,3 +1,7 @@
+// Ensure that Mongoose API is defined the same way in all translation units!
+#include <webserver/mongoose.h> // IWYU pragma: keep
+
+#include <functional>
 #include <iostream>
 
 #include <boost/filesystem.hpp>
@@ -9,17 +13,21 @@
 
 #include <util/filesystem.h>
 #include <util/logutil.h>
+#include <util/threadpool.h>
 #include <util/webserverutil.h>
+
+#include <webserver/httprequest.h>
 
 #include "authentication.h"
 #include "mainrequesthandler.h"
+#include "mongooseserver.h"
 #include "sessionmanager.h"
-#include "threadedmongoose.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 namespace trivial = boost::log::trivial;
 
+using namespace cc::util;
 using namespace cc::webserver;
 
 po::options_description commandLineArguments()
@@ -45,13 +53,13 @@ po::options_description commandLineArguments()
 
 int main(int argc, char* argv[])
 {
-    std::string compassRoot = cc::util::binaryPathToInstallDir(argv[0]);
+    std::string compassRoot = binaryPathToInstallDir(argv[0]);
 
     const std::string AUTH_PLUGIN_DIR = compassRoot + "/lib/authplugin";
     const std::string SERVICE_PLUGIN_DIR = compassRoot + "/lib/serviceplugin";
     const std::string WEBGUI_DIR = compassRoot + "/share/codecompass/webgui/";
 
-    cc::util::initLogger();
+    initLogger();
 
     MainRequestHandler requestHandler;
     requestHandler.pluginHandler.addDirectory(SERVICE_PLUGIN_DIR);
@@ -119,36 +127,70 @@ int main(int argc, char* argv[])
 
     //--- Process workspaces ---//
 
-    cc::webserver::ServerContext ctx(compassRoot, vm, sessions.get());
+    ServerContext ctx(compassRoot, vm, sessions.get());
     requestHandler.pluginHandler.configure(ctx);
+    requestHandler.updateServedPathsFromPluginHandler();
 
     //--- Start mongoose server ---//
 
-    cc::webserver::ThreadedMongoose server(vm["jobs"].as<int>());
-    server.setOption("listening_port", std::to_string(vm["port"].as<int>()));
-    server.setOption("document_root", vm["webguiDir"].as<std::string>());
-
-    // Check if certificate.pem exists in the workspace - if so, start SSL.
+#if MG_ENABLE_SSL
+    // Check if certificates exist in the workspace - if so, start SSL.
     auto certPath = fs::path(vm["workspace"].as<std::string>())
-        .append("certificate.pem");
-    if (boost::filesystem::is_regular_file(certPath))
-    {
-        LOG(info) << "Starting HTTPS listener based on 'certificate.pem'.";
-        server.setOption("ssl_certificate", certPath.native());
-    }
+        .append("server.pem").native();
+    auto keyPath = fs::path(vm["workspace"].as<std::string>())
+        .append("server.key").native();
+    if (fs::is_regular_file(certPath) && fs::is_regular_file(keyPath))
+        LOG(info) << "Starting HTTPS listener with certificate 'server.pem' "
+                     "and private key 'server.key'.";
     else
     {
-        LOG(warning) << "No 'certificate.pem' found in '--workspace', server "
-            "running over conventional HTTP!";
+        LOG(warning)
+          << "No 'server.pem' or 'server.key' found in '--workspace', server "
+             "running over conventional HTTP!";
+      certPath = keyPath = "";
     }
+#else
+    LOG(warning) << "CodeCompass server built without SSL support. Running over "
+                    "conventional HTTP!";
+    std::string certPath, keyPath;
+#endif // MG_ENABLE_SSL
 
-    LOG(info) << "Mongoose web server starting on port "
-        << server.getOption("listening_port");
+    std::string listenPort = std::to_string(vm["port"].as<int>());
+    LOG(info) << "Mongoose web server starting on port " << listenPort;
+    MongooseServer server{std::move(listenPort),
+                          WEBGUI_DIR,
+                          std::move(certPath),
+                          std::move(keyPath)};
+    server.setHTTPServiceURIPaths(&requestHandler.servedPaths);
+
+    //--- Create the worker threads that generate responses ---//
+
+    std::unique_ptr<JobQueueThreadPool<HTTPRequest>> threads =
+        make_thread_pool<HTTPRequest>(
+            vm["jobs"].as<int>(),
+            [&server, &requestHandler](HTTPRequest& req_) {
+                // The executor object of the worker thread is to handle the
+                // request itself by the main handler dispatching it to the
+                // specific handler implementation.
+                requestHandler(req_);
+                server.wakeUp();
+            },
+            true);
+
+    // The callback function of the server itself is to push a received and
+    // understood request to the worker threads' queue.
+    server.setHTTPServiceRequestHandler(
+        [pool = threads.get()](HTTPRequest&& req_)
+        {
+            pool->enqueue(std::move(req_));
+        });
+
+    //--- Begin listening ---//
 
     try
     {
-        server.run(requestHandler);
-        LOG(info) << "Exiting, waiting for all threads to finish...";
+        server.loop();
+        LOG(info) << "Exiting listener! Waiting for all threads to finish...";
     }
     catch (const std::exception& ex)
     {

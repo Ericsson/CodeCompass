@@ -1,5 +1,5 @@
-#ifndef CC_WEBSERVER_PLUGIN_H
-#define CC_WEBSERVER_PLUGIN_H
+#ifndef CC_WEBSERVER_REQUESTHANDLER_H
+#define CC_WEBSERVER_REQUESTHANDLER_H
 
 #include <memory>
 #include <string>
@@ -7,10 +7,10 @@
 
 #include <boost/program_options.hpp>
 
+#include "httprequest.h"
 #include "pluginhandler.h"
-#include "mongoose.h"
 
-namespace cc 
+namespace cc
 { 
 namespace webserver
 {
@@ -19,11 +19,11 @@ class RequestHandler
 {
 public:
   virtual std::string key() const = 0;
-  virtual int beginRequest(struct mg_connection*) = 0;
+  virtual std::string beginRequest(const HTTPRequest& req_) = 0;
   virtual ~RequestHandler() = default;
 };
 
 } // webserver
 } // cc
 
-#endif
+#endif // CC_WEBSERVER_REQUESTHANDLER_H
