@@ -67,7 +67,7 @@ services:
     sh build2-install-0.12.0.sh --yes --trust yes
     mkdir /tmp/odb_build
     cd /tmp/odb_build
-    bpkg create --quiet --jobs $(nproc) cc config.cxx=g++ config.cc.coptions=-O3 config.bin.rpath=/usr/local/lib config.install.root=/usr/local
+    bpkg create --quiet --jobs $(nproc) cc config.cxx=g++ config.cc.coptions=-O3 config.bin.rpath=/usr/local/lib config.install.root=/usr/local config.install.sudo=sudo
     bpkg add https://pkg.cppget.org/1/beta --trust-yes
     bpkg fetch --trust-yes
     bpkg build odb --yes
@@ -171,8 +171,8 @@ jobs:
         postgresql: "9.5"
       install:
         - *install_thrift
-        - *install_gtest_xenial
         - *install_odb
+        - *install_gtest_xenial
       script:
         *build_postgres
     - name: "Xenial SQLite build"
@@ -182,9 +182,9 @@ jobs:
           <<: *apt_xenial
         postgresql: "9.5"
       install:
+        - *install_odb
         - *install_thrift
         - *install_gtest_xenial
-        - *install_odb
       script:
         *build_sqlite
     - name: "Bionic PostgreSQL build"
@@ -194,9 +194,9 @@ jobs:
       install:
         - sudo apt-get update -y
         - *install_bionic
+        - *install_odb
         - *install_thrift
         - *install_gtest_bionic
-        - *install_odb
       script:
         *build_postgres
     - name: "Bionic SQLite build"
@@ -206,9 +206,9 @@ jobs:
       install:
         - sudo apt-get update -y
         - *install_bionic
+        - *install_odb
         - *install_thrift
         - *install_gtest_bionic
-        - *install_odb
       script:
         *build_sqlite
 

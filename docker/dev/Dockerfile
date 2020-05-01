@@ -36,7 +36,7 @@ RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
     --without-dotnetcore --without-d --without-qt4 --without-qt5;    \
     cd /; \
     make -C /opt/thrift-0.13.0 -j $(nproc) --silent install; \
-    rm -rf /opt/thrift-0.13.0 /opt/thrift-0.13.0.tar.gz
+    rm -rf /opt/thrift-0.13.0
 # Build GTest.
 RUN cd /usr/src/googletest/ && \
      mkdir build && \
@@ -50,14 +50,6 @@ COPY scripts/install_odb_2.5.sh /tmp/install_odb.sh
 
 RUN chmod u+x /tmp/install_odb.sh && \
     /tmp/install_odb.sh
-
-
-# Erase downloaded archive files, and unneded packages.
-RUN set +x && \
-    apt-get purge --yes --auto-remove curl && \
-    apt-get clean \
-    rm -rf /var/lib/apt/lists/
-
 
 COPY docker/dev/codecompass-build.sh /usr/local/bin
 
