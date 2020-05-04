@@ -29,7 +29,8 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void setCompetenceRatio(std::string& return_,
+  void setCompetenceRatio(
+    std::string& return_,
     const core::FileId& fileId_,
     const int ratio_) override;
 

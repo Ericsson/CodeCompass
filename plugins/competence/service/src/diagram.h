@@ -26,6 +26,10 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
+  void getTeamViewDiagram(
+    util::Graph& graph_,
+    const core::FileId& fileId_);
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 

@@ -8,6 +8,8 @@
 
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
+#include <model/useremail.h>
+#include <model/useremail-odb.hxx>
 
 #include <chrono>
 #include <memory>
@@ -21,6 +23,7 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   git_libgit2_init();
 
+  srand(time(nullptr));
   /*int threadNum = _ctx.options["jobs"].as<int>();
   _pool = util::make_thread_pool<std::string>(
     threadNum, [this](const std::string& path_)
@@ -137,11 +140,11 @@ util::DirIterCallback CompetenceParser::getParserCallback(
   };
 }
 
-void CompetenceParser::loadCommitData(model::FilePtr file_,
+void CompetenceParser::loadCommitData(
+  model::FilePtr file_,
   RepositoryPtr& repo_,
   boost::filesystem::path& repoPath_,
-  const int monthNumber,
-  const std::string& useremail_)
+  const int monthNumber)
 {
   if (file_.get()->path.find(".git") != std::string::npos ||
       file_.get()->path.find(".idea") != std::string::npos)
@@ -152,19 +155,16 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     repoPath_.parent_path().string().length() + 1);
 
   // Initiate walker.
-  git_revwalk* walker = nullptr;
-  if (git_revwalk_new(&walker, repo_.get()) != 0)
-    return;
-
-  git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-  git_revwalk_push_head(walker);
+  RevWalkPtr walker = createRevWalk(repo_.get());
+  git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+  git_revwalk_push_head(walker.get());
 
   // Store total percentage and relevant commit count for each user.
-  std::map<std::string, std::pair<int, int>> userEditions;
+  std::map<UserEmail, std::pair<Percentage, RelevantCommitCount>> userEditions;
 
   // Walk through commit history.
   git_oid oid;
-  while (git_revwalk_next(&oid, walker) == 0)
+  while (git_revwalk_next(&oid, walker.get()) == 0)
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo_.get(), oid);
@@ -173,134 +173,115 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
       std::chrono::system_clock::now())
       - git_commit_time(commit.get());
-    double months = elapsed / (double)(86400 * 7 * 30);
+    double months = elapsed / (double)(secondsInDay * daysInMonth);
 
     if (months > monthNumber)
       break;
 
     // Retrieve parent of commit.
-    git_commit* parent = nullptr;
-    int error = git_commit_parent(&parent, commit.get(), 0);
+    CommitPtr parent = createParentCommit(commit.get());
 
-    if (error == 0)
+    // Get git tree of both commits.
+    TreePtr commitTree = createTree(commit.get());
+    TreePtr parentTree = createTree(parent.get());
+
+    // Calculate diff of trees.
+    DiffPtr diff = createDiffTree(repo_.get(), parentTree.get(), commitTree.get());
+
+    // Store the current number of blame lines for each user.
+    std::map<UserEmail, UserBlameLines> userBlame;
+
+    // Loop through each delta.
+    size_t num_deltas = git_diff_num_deltas(diff.get());
+    if (num_deltas != 0)
     {
-      // Get git tree of both commits.
-      git_tree* commitTree = nullptr;
-      git_tree* parentTree = nullptr;
-
-      error = git_commit_tree(&commitTree, commit.get());
-      error = git_commit_tree(&parentTree, parent);
-
-      // Calculate diff of trees.
-      git_diff* diff = nullptr;
-      error = git_diff_tree_to_tree(&diff, repo_.get(), parentTree, commitTree, nullptr);
-
-      // Store the current number of blame lines for each user.
-      std::map<std::string, int> userBlame;
-
-      // Loop through each delta.
-      size_t num_deltas = git_diff_num_deltas(diff);
-      if (num_deltas != 0)
+      for (size_t j = 0; j < num_deltas; ++j)
       {
-        const git_diff_delta* delta;
-        for (size_t i = 0; i < num_deltas; ++i)
+        DiffDeltaPtr delta = createDiffDelta(diff.get(), j);
+        git_diff_file diffFile = delta.get()->new_file;
+
+        // Calculate blame of affected file.
+        if (diffFile.path == gitFilePath)
         {
-          delta = git_diff_get_delta(diff, i);
-          git_diff_file file = delta->new_file;
+          float totalLines = 0;
 
-          // Calculate blame of affected file.
-          if (file.path == gitFilePath)
+          BlameOptsPtr opt = createBlameOpts(oid);
+          BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
+
+          if (!blame)
+            return;
+
+          for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
           {
-            float totalLines = 0;
+            const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
 
-            BlameOptsPtr opt = createBlameOpts(oid);
-            BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
+            GitBlameHunk blameHunk;
+            blameHunk.linesInHunk = hunk->lines_in_hunk;
 
-            if (!blame)
-              return;
-
-            for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+            if (hunk->final_signature)
             {
-              const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+              blameHunk.finalSignature.email = hunk->final_signature->email;
+            }
+              // TODO
+              // git_oid_iszero is deprecated.
+              // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
+            else if (!git_oid_iszero(&hunk->final_commit_id))
+            {
+              CommitPtr newCommit = createCommit(repo_.get(), hunk->final_commit_id);
+              const git_signature *author = git_commit_author(newCommit.get());
+              blameHunk.finalSignature.email = author->email;
+            }
 
-              GitBlameHunk blameHunk;
-              blameHunk.linesInHunk = hunk->lines_in_hunk;
-              blameHunk.boundary = hunk->boundary;
-              blameHunk.finalCommitId = gitOidToString(&hunk->final_commit_id);
-              blameHunk.finalStartLineNumber = hunk->final_start_line_number;
+            auto it = userBlame.find(std::string(blameHunk.finalSignature.email));
+            if (it != userBlame.end())
+            {
+              it->second += blameHunk.linesInHunk;
+            }
+            else
+            {
+              userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
+                blameHunk.linesInHunk));
+              persistEmailAddress(blameHunk.finalSignature.email);
+            }
 
-              if (hunk->final_signature)
-              {
-                //blameHunk.finalSignature.name = hunk->final_signature->name;
-                blameHunk.finalSignature.email = hunk->final_signature->email;
-                blameHunk.finalSignature.time = hunk->final_signature->when.time;
-              }
-                // TODO
-                // git_oid_iszero is deprecated.
-                // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
-              else if (!git_oid_iszero(&hunk->final_commit_id))
-              {
-                CommitPtr commit = createCommit(repo_.get(), hunk->final_commit_id);
-                const git_signature *author = git_commit_author(commit.get());
-                //blameHunk.finalSignature.name = author->name;
-                blameHunk.finalSignature.email = author->email;
-                blameHunk.finalSignature.time = author->when.time;
-              }
+            totalLines += blameHunk.linesInHunk;
+          }
 
-              blameHunk.origCommitId = gitOidToString(&hunk->orig_commit_id);
-              blameHunk.origPath = hunk->orig_path;
-              blameHunk.origStartLineNumber = hunk->orig_start_line_number;
-              if (hunk->orig_signature)
-              {
-                //blameHunk.origSignature.name = hunk->orig_signature->name;
-                blameHunk.origSignature.email = hunk->orig_signature->email;
-                blameHunk.origSignature.time = hunk->orig_signature->when.time;
-              }
+          for (const auto& pair : userBlame)
+          {
+            if (pair.second != 0)
+            {
+              // Calculate the retained memory depending on the elapsed time.
+              double percentage = pair.second / totalLines * std::exp(-months) * 100;
 
-              auto it = userBlame.find(std::string(blameHunk.finalSignature.email));
-              if (it != userBlame.end())
+              auto it = userEditions.find(pair.first);
+              if (it != userEditions.end())
               {
-                it->second += blameHunk.linesInHunk;
+                it->second.first += percentage;
+                ++(it->second.second);
               }
               else
               {
-                userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
-                  blameHunk.linesInHunk));
-              }
-
-              totalLines += blameHunk.linesInHunk;
-            }
-
-            for (const auto& pair : userBlame)
-            {
-              if (pair.second != 0)
-              {
-                // Calculate the retained memory depending on the elapsed time.
-                double percentage = pair.second / totalLines * std::exp(-months) * 100;
-
-                auto it = userEditions.find(pair.first);
-                if (it != userEditions.end())
-                {
-                  it->second.first += percentage;
-                  ++(it->second.second);
-                }
-                else
-                {
-                  userEditions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
-                }
+                userEditions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
               }
             }
-
-            break;
           }
+
+          break;
         }
       }
-      git_diff_free(diff);
     }
   }
 
-  util::OdbTransaction trans(_ctx.db);
-  trans([&, this]
+  persistFileComprehensionData(file_, userEditions);
+}
+
+void CompetenceParser::persistFileComprehensionData(
+  model::FilePtr file_,
+  const std::map<UserEmail, std::pair<Percentage, RelevantCommitCount>>& userEditions)
+{
+  util::OdbTransaction transaction(_ctx.db);
+  transaction([&, this]
   {
     LOG(info) << file_.get()->path << ": ";
     for (const auto& pair : userEditions)
@@ -319,19 +300,41 @@ void CompetenceParser::loadCommitData(model::FilePtr file_,
       }
     }
   });
-
-  git_revwalk_free(walker);
 }
 
-git_oid CompetenceParser::getLastCommitOid(RepositoryPtr& repo)
+void CompetenceParser::persistEmailAddress(const std::string& email)
 {
-  git_oid commitOid;
-  int error = git_reference_name_to_id(&commitOid, repo.get(), "HEAD");
+  util::OdbTransaction transaction(_ctx.db);
+  transaction([&, this]
+  {
+    auto emails = _ctx.db->query<model::UserEmail>(
+        odb::query<cc::model::UserEmail>::email == email);
+
+    if (emails.empty())
+    {
+      model::UserEmail userEmail;
+      userEmail.email = email;
+
+      std::string code("#");
+      for (int i = 0; i < 6; ++i)
+      {
+        code += hexChar.at(rand() % hexChar.size());
+      }
+      userEmail.colorCode = code;
+      _ctx.db->persist(userEmail);
+    }
+  });
+}
+
+RevWalkPtr CompetenceParser::createRevWalk(git_repository* repo_)
+{
+  git_revwalk* walker = nullptr;
+  int error = git_revwalk_new(&walker, repo_);
 
   if (error)
-    LOG(error) << "Retrieving last commit id failed: " << error;
+    LOG(error) << "Creating revision walker failed: " << error;
 
-  return commitOid;
+  return RevWalkPtr { walker, &git_revwalk_free };
 }
 
 RepositoryPtr CompetenceParser::createRepository(
@@ -371,6 +374,54 @@ CommitPtr CompetenceParser::createCommit(
     LOG(error) << "Getting commit failed: " << error;
 
   return CommitPtr { commit, &git_commit_free };
+}
+
+CommitPtr CompetenceParser::createParentCommit(
+  git_commit* commit_)
+{
+  git_commit* parent = nullptr;
+  int error = git_commit_parent(&parent, commit_, 0);
+
+  if (error)
+    LOG(error) << "Getting commit parent failed: " << error;
+
+  return CommitPtr { parent, &git_commit_free };
+}
+
+TreePtr CompetenceParser::createTree(
+  git_commit* commit_)
+{
+  git_tree* tree = nullptr;
+  int error = git_commit_tree(&tree, commit_);
+
+  if (error)
+    LOG(error) << "Getting commit tree failed: " << error;
+
+  return TreePtr { tree, &git_tree_free };
+}
+
+DiffPtr CompetenceParser::createDiffTree(
+  git_repository* repo_,
+  git_tree* first_,
+  git_tree* second_)
+{
+  git_diff* diff = nullptr;
+  int error = git_diff_tree_to_tree(&diff, repo_, first_, second_, nullptr);
+
+  if (error)
+    LOG(error) << "Getting commit diff failed: " << error;
+
+  return DiffPtr { diff, &git_diff_free };
+}
+
+DiffDeltaPtr CompetenceParser::createDiffDelta(
+  git_diff* diff_,
+  size_t deltaNumber_)
+{
+  const git_diff_delta* delta = new git_diff_delta;
+  delta = git_diff_get_delta(diff_, deltaNumber_);
+
+  return DiffDeltaPtr { delta };
 }
 
 BlameOptsPtr CompetenceParser::createBlameOpts(const git_oid& newCommitOid_)

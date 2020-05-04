@@ -87,6 +87,13 @@ void CompetenceDiagram::getCompetenceDiagram(
   }
 }
 
+void CompetenceDiagram::getTeamViewDiagram(
+  util::Graph& graph_,
+  const core::FileId& fileId_)
+{
+
+}
+
 std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
   util::Graph& graph_,
   const util::Graph::Node& node_)

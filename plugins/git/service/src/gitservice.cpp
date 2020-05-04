@@ -648,10 +648,10 @@ ReferencePtr GitServiceHandler::createRepositoryHead(git_repository* repo_)
   return ReferencePtr { ref, git_reference_free };
 }
 
-RevWalkPtr GitServiceHandler::createRevWalk(git_repository* repo)
+RevWalkPtr GitServiceHandler::createRevWalk(git_repository* repo_)
 {
   git_revwalk* walker = nullptr;
-  int error = git_revwalk_new(&walker, repo);
+  int error = git_revwalk_new(&walker, repo_);
 
   if (error)
     LOG(error) << "Creating revision walker failed: " << error;
