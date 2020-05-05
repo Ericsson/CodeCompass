@@ -172,8 +172,8 @@ void CompetenceParser::loadCommitData(
     // Calculate elapsed time in full months since current commit.
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
       std::chrono::system_clock::now())
-      - git_commit_time(commit.get());
-    double months = elapsed / (double)(secondsInDay * daysInMonth);
+        - git_commit_time(commit.get());
+    double months = elapsed / (double) (secondsInDay * daysInMonth);
 
     if (months > monthNumber)
       break;
@@ -185,89 +185,93 @@ void CompetenceParser::loadCommitData(
     TreePtr commitTree = createTree(commit.get());
     TreePtr parentTree = createTree(parent.get());
 
-    // Calculate diff of trees.
-    DiffPtr diff = createDiffTree(repo_.get(), parentTree.get(), commitTree.get());
-
-    // Store the current number of blame lines for each user.
-    std::map<UserEmail, UserBlameLines> userBlame;
-
-    // Loop through each delta.
-    size_t num_deltas = git_diff_num_deltas(diff.get());
-    if (num_deltas != 0)
+    if (parentTree != nullptr)
     {
-      for (size_t j = 0; j < num_deltas; ++j)
+      // Calculate diff of trees.
+      DiffPtr diff = createDiffTree(repo_.get(), parentTree.get(), commitTree.get());
+
+      // Store the current number of blame lines for each user.
+      std::map<UserEmail, UserBlameLines> userBlame;
+
+      // Loop through each delta.
+      size_t num_deltas = git_diff_num_deltas(diff.get());
+      if (num_deltas != 0)
       {
-        DiffDeltaPtr delta = createDiffDelta(diff.get(), j);
-        git_diff_file diffFile = delta.get()->new_file;
-
-        // Calculate blame of affected file.
-        if (diffFile.path == gitFilePath)
+        for (size_t j = 0; j < num_deltas; ++j)
         {
-          float totalLines = 0;
+          //DiffDeltaPtr delta = createDiffDelta(diff.get(), j);
+          const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
+          git_diff_file diffFile = delta->new_file;
 
-          BlameOptsPtr opt = createBlameOpts(oid);
-          BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
-
-          if (!blame)
-            return;
-
-          for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+          // Calculate blame of affected file.
+          if (diffFile.path == gitFilePath)
           {
-            const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+            float totalLines = 0;
 
-            GitBlameHunk blameHunk;
-            blameHunk.linesInHunk = hunk->lines_in_hunk;
+            BlameOptsPtr opt = createBlameOpts(oid);
+            BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
 
-            if (hunk->final_signature)
+            if (!blame)
+              return;
+
+            for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
             {
-              blameHunk.finalSignature.email = hunk->final_signature->email;
-            }
-              // TODO
-              // git_oid_iszero is deprecated.
-              // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
-            else if (!git_oid_iszero(&hunk->final_commit_id))
-            {
-              CommitPtr newCommit = createCommit(repo_.get(), hunk->final_commit_id);
-              const git_signature *author = git_commit_author(newCommit.get());
-              blameHunk.finalSignature.email = author->email;
-            }
+              const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
 
-            auto it = userBlame.find(std::string(blameHunk.finalSignature.email));
-            if (it != userBlame.end())
-            {
-              it->second += blameHunk.linesInHunk;
-            }
-            else
-            {
-              userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
-                blameHunk.linesInHunk));
-              persistEmailAddress(blameHunk.finalSignature.email);
-            }
+              GitBlameHunk blameHunk;
+              blameHunk.linesInHunk = hunk->lines_in_hunk;
 
-            totalLines += blameHunk.linesInHunk;
-          }
-
-          for (const auto& pair : userBlame)
-          {
-            if (pair.second != 0)
-            {
-              // Calculate the retained memory depending on the elapsed time.
-              double percentage = pair.second / totalLines * std::exp(-months) * 100;
-
-              auto it = userEditions.find(pair.first);
-              if (it != userEditions.end())
+              if (hunk->final_signature)
               {
-                it->second.first += percentage;
-                ++(it->second.second);
+                blameHunk.finalSignature.email = hunk->final_signature->email;
+              }
+                // TODO
+                // git_oid_iszero is deprecated.
+                // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
+              else if (!git_oid_iszero(&hunk->final_commit_id))
+              {
+                CommitPtr newCommit = createCommit(repo_.get(), hunk->final_commit_id);
+                const git_signature *author = git_commit_author(newCommit.get());
+                blameHunk.finalSignature.email = author->email;
+              }
+
+              auto it = userBlame.find(std::string(blameHunk.finalSignature.email));
+              if (it != userBlame.end())
+              {
+                it->second += blameHunk.linesInHunk;
               }
               else
               {
-                userEditions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
+                userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
+                                                blameHunk.linesInHunk));
+                persistEmailAddress(blameHunk.finalSignature.email);
+              }
+
+              totalLines += blameHunk.linesInHunk;
+            }
+
+            for (const auto &pair : userBlame)
+            {
+              if (pair.second != 0)
+              {
+                // Calculate the retained memory depending on the elapsed time.
+                double percentage = pair.second / totalLines * std::exp(-months) * 100;
+
+                auto it = userEditions.find(pair.first);
+                if (it != userEditions.end())
+                {
+                  it->second.first += (int)percentage;
+                  ++(it->second.second);
+                }
+                else
+                {
+                  userEditions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
+                }
               }
             }
-          }
 
-          break;
+            break;
+          }
         }
       }
     }
