@@ -49,7 +49,7 @@ RUN cd /usr/src/googletest/ && \
 COPY scripts/install_odb_2.5.sh /tmp/install_odb.sh
 
 RUN chmod u+x /tmp/install_odb.sh && \
-    /tmp/install_odb.sh
+    /tmp/install_odb.sh -d /opt/odb
 
 COPY docker/dev/codecompass-build.sh /usr/local/bin
 
@@ -61,5 +61,6 @@ ENV DATABASE=sqlite \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
 
-ENV PATH="$INSTALL_DIR/bin:$PATH"
+ENV PATH="$INSTALL_DIR/bin:/opt/odb/bin:$PATH"
+ENV CMAKE_PREFIX_PATH="/opt/odb:$PATH"
 ENV LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"

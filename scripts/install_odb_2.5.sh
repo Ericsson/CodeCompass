@@ -6,11 +6,21 @@ trap cleanup EXIT
 
 declare ODB_INSTALL_DIR="/usr/local"
 declare ODB_BUILD_DIR="/tmp/odb"
+declare success="false"
 
 function cleanup() {
     echo "Cleaning up Odb temporaries."
+
+    rm --recursive --force "/tmp/build2src"
+    
     if [[ -n "${ODB_BUILD_DIR}" ]]; then
         rm --recursive --force "${ODB_BUILD_DIR}"
+    fi
+    
+    if [[ "${success}" != "true" ]]; then
+        if [[ -d "${ODB_INSTALL_DIR}" ]]; then
+            rm --recursive --force "${ODB_INSTALL_DIR}"
+        fi
     fi
 }
 
@@ -51,20 +61,24 @@ sh build2-install-0.12.0.sh --yes --trust yes
 popd
 
 
-#Building the odb compiler
+#Configuring the build
 mkdir /tmp/odb
 pushd "/tmp/odb"
-bpkg create --quiet --jobs $(nproc) cc \
-  config.cxx=g++                       \
-  config.cc.coptions=-O3               \
-  config.bin.rpath=/usr/local/lib      \
-  config.install.root=/usr/local       \
-
+bpkg create --quiet --jobs "$(nproc)" cc         \
+  config.cxx=g++                                 \
+  config.cc.coptions=-O3                         \
+  config.bin.rpath="${ODB_INSTALL_DIR}/lib"      \
+  config.install.root="${ODB_INSTALL_DIR}"       \
+#Getting the source
 bpkg add https://pkg.cppget.org/1/beta --trust-yes
 bpkg fetch --trust-yes
+#Building odb 
 bpkg build odb --yes
 bpkg build libodb --yes
 bpkg build libodb-sqlite --yes
 bpkg build libodb-pgsql --yes
 bpkg install --all --recursive
 popd
+
+success="true"
+
