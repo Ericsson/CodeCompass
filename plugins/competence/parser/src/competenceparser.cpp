@@ -1,18 +1,18 @@
 #include <competenceparser/competenceparser.h>
 
-#include <parser/sourcemanager.h>
-
-#include <util/hash.h>
-#include <util/logutil.h>
-#include <util/odbtransaction.h>
+#include <chrono>
+#include <memory>
 
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
 #include <model/useremail.h>
 #include <model/useremail-odb.hxx>
 
-#include <chrono>
-#include <memory>
+#include <parser/sourcemanager.h>
+
+#include <util/hash.h>
+#include <util/logutil.h>
+#include <util/odbtransaction.h>
 
 namespace cc
 {

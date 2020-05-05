@@ -3,9 +3,8 @@
 
 #include <service/competenceservice.h>
 #include <projectservice/projectservice.h>
-#include <util/graph.h>
 
-#include "../../../../../../../cc/build/service/language/gen-cpp/language_types.h"
+#include <util/graph.h>
 
 namespace cc
 {
@@ -26,12 +25,14 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
-  void getTeamViewDiagram(
-    util::Graph& graph_,
-    const core::FileId& fileId_);
-
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
+
+  enum DiagramType
+  {
+    USER,
+    TEAM
+  };
 
   std::map<util::Graph::Node, uint16_t> getFileCompetenceRates(
     util::Graph& graph_,
@@ -40,6 +41,14 @@ private:
   util::Graph::Node addNode(
     util::Graph& graph_,
     const core::FileInfo& fileInfo_);
+
+  util::Graph::Node addNode(
+    util::Graph& graph_,
+    const core::FileId& fileId_,
+    DiagramType type_ = TEAM);
+
+  std::string getExpertOnFile(
+    const core::FileId& fileId_);
 
   std::string rateToColor(uint16_t rate);
 
@@ -68,6 +77,8 @@ private:
 
   CompetenceServiceHandler _compHandler;
   core::ProjectServiceHandler _projectHandler;
+
+  const int nodeCountBorder = 15;
 
 };
 }

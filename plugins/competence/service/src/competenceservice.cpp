@@ -1,7 +1,5 @@
 #include <service/competenceservice.h>
-#include "../../model/include/model/filecomprehension.h"
-#include "../../../../model/include/model/file.h"
-#include "../include/service/competenceservice.h"
+
 #include "diagram.h"
 
 #include <model/filecomprehension.h>

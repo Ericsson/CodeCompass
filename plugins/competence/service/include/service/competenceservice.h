@@ -1,6 +1,8 @@
 #ifndef PROJECT_COMPETENCESERVICE_H
 #define PROJECT_COMPETENCESERVICE_H
 
+#include <CompetenceService.h>
+
 #include <memory>
 
 #include <git2.h>
@@ -9,8 +11,6 @@
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
-
-#include <CompetenceService.h>
 
 namespace cc
 {

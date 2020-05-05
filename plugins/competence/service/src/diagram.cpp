@@ -1,11 +1,14 @@
-#include <cmath>
-
 #include "diagram.h"
-#include <util/odbtransaction.h>
+
+#include <cmath>
 
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
+#include <model/useremail.h>
+#include <model/useremail-odb.hxx>
+
 #include <util/legendbuilder.h>
+#include <util/odbtransaction.h>
 
 namespace cc
 {
@@ -13,6 +16,9 @@ namespace service
 {
 namespace competence
 {
+
+typedef odb::query<model::FileComprehension> FileComprehensionQuery;
+typedef odb::query<model::File> FileQuery;
 
 CompetenceDiagram::CompetenceDiagram(
   std::shared_ptr<odb::database> db_,
@@ -38,7 +44,7 @@ void CompetenceDiagram::getCompetenceDiagram(
     _transaction([&, this]()
     {
      auto comp = _db->query<model::FileComprehension>(
-       odb::query<model::FileComprehension>::file == std::stoull(fileInfo.id));
+       FileComprehensionQuery::file == std::stoull(fileInfo.id));
 
      std::string color = "#ffffff";
 
@@ -81,17 +87,10 @@ void CompetenceDiagram::getCompetenceDiagram(
     }
   }
 
-  if (graph_.nodeCount() > 15)
+  if (graph_.nodeCount() > nodeCountBorder)
   {
     graph_.setAttribute("rankdir", "LR");
   }
-}
-
-void CompetenceDiagram::getTeamViewDiagram(
-  util::Graph& graph_,
-  const core::FileId& fileId_)
-{
-
 }
 
 std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
@@ -102,8 +101,8 @@ std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
   _transaction([&, this]
   {
     auto contained = _db->query<model::File>(
-      odb::query<model::File>::parent == std::stoull(node_) &&
-      odb::query<model::File>::type != model::File::DIRECTORY_TYPE
+      FileQuery::parent == std::stoull(node_) &&
+      FileQuery::type != model::File::DIRECTORY_TYPE
     );
 
     for (const model::File& file : contained)
@@ -113,7 +112,7 @@ std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
         continue;
 
       auto comp = _db->query<model::FileComprehension>(
-        odb::query<model::FileComprehension>::file == file.id
+        FileComprehensionQuery::file == file.id
         );
 
       for (const model::FileComprehension& c : comp)
@@ -136,7 +135,6 @@ std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
   return annotated;
 }
 
-
 util::Graph::Node CompetenceDiagram::addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_)
@@ -145,6 +143,64 @@ util::Graph::Node CompetenceDiagram::addNode(
   graph_.setNodeAttribute(node, "label", fileInfo_.name);
 
   return node;
+}
+
+util::Graph::Node CompetenceDiagram::addNode(
+  util::Graph& graph_,
+  const core::FileId& fileId_,
+  DiagramType type_)
+{
+  core::FileInfo fileInfo;
+  _projectHandler.getFileInfo(fileInfo, fileId_);
+
+  util::Graph::Node node = graph_.getOrCreateNode(fileInfo.id);
+  graph_.setNodeAttribute(node, "label", fileInfo.name);
+
+  switch (type_)
+  {
+    case USER:
+    case TEAM:
+      std::string color = getExpertOnFile(fileId_);
+
+      Decoration competenceNodeDecoration = {
+        {"shape", "box"},
+        {"style", "filled"},
+        {"fillcolor", color}
+      };
+
+      decorateNode(graph_, node, competenceNodeDecoration);
+      break;
+  }
+
+  return node;
+}
+
+std::string CompetenceDiagram::getExpertOnFile(
+  const core::FileId& fileId_)
+{
+  _transaction([&, this]
+  {
+    odb::result<model::FileComprehension> comprehensionData = _db->query<model::FileComprehension>(
+      FileComprehensionQuery::file == std::stoull(fileId_)
+    );
+
+    if (!comprehensionData.empty())
+    {
+      auto expert = *(comprehensionData.begin());
+      for (auto it = comprehensionData.begin(); it != comprehensionData.end(); ++it)
+        if (it->userRatio > expert.userRatio)
+          expert = *it;
+
+      auto userData = _db->query_one<model::UserEmail>(
+        odb::query<model::UserEmail>::email == expert.userEmail
+      );
+
+      if (userData)
+        return userData->colorCode;
+    }
+  });
+
+  return "#ffffff";
 }
 
 std::string CompetenceDiagram::rateToColor(uint16_t rate)
@@ -183,8 +239,8 @@ std::vector<util::Graph::Node> CompetenceDiagram::getSubDirs(
   _transaction([&, this]
    {
      odb::result<model::File> sub = _db->query<model::File>(
-       odb::query<model::File>::parent == std::stoull(node_) &&
-       odb::query<model::File>::type == model::File::DIRECTORY_TYPE);
+       FileQuery::parent == std::stoull(node_) &&
+       FileQuery::type == model::File::DIRECTORY_TYPE);
 
      for (const model::File& subdir : sub)
      {

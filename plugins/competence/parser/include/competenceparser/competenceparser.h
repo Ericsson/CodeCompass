@@ -1,20 +1,21 @@
 #ifndef CC_PARSER_COMPETENCEPARSER_H
 #define CC_PARSER_COMPETENCEPARSER_H
 
-#include <boost/filesystem.hpp>
-
-#include <parser/abstractparser.h>
-#include <parser/parsercontext.h>
-
 #include <memory>
 
-#include <util/parserutil.h>
-#include <util/threadpool.h>
+#include <boost/filesystem.hpp>
 
 #include <git2.h>
 
 #include <model/file.h>
+
 #include <odb/database.hxx>
+
+#include <parser/abstractparser.h>
+#include <parser/parsercontext.h>
+
+#include <util/parserutil.h>
+#include <util/threadpool.h>
 
 
 namespace cc
