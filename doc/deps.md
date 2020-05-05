@@ -102,15 +102,29 @@ the scripts directory.
 ```bash
 cd CodeCompass/scripts
 chmod u+x install_odb_2.5.sh
-./install_odb_2.5.sh
+./install_odb_2.5.sh -d <odb_install_directory>
+#If one does not specify an install directory the script will install to /usr/local by default.
 ```
-Note that this can take up a long time depending on the machine one uses.
+*Note: This can take up a long time, depending on the machine one uses.*
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS and 18.04 LTS repositories, but you can download
 it and build from source:
+
+Thrift can generate stubs for many programming languages. The configure
+script looks at the development environment and if it finds the environment
+for a given language then it'll use it. For example in the previous step npm
+was installed which requires NodeJS. If NodeJS can be found on your machine
+then the corresponding stub will also compile. If you don't need it then you
+can turn it off: ./configure --without-nodejs.
+
+In certain cases, installation may fail if development libraries for
+languages are not installed on the target machine. E.g. if Python is
+installed but the Python development headers are not, Thrift will unable to
+install. Python, PHP and such other Thrift builds are NOT required by
+CodeCompass.
 
 ```bash
 # Download and uncompress Thrift:
@@ -121,21 +135,13 @@ cd thrift-0.13.0
 
 # Ant is required for having Java support in Thrift.
 sudo apt-get install ant
-
-# Thrift can generate stubs for many programming languages. The configure
-# script looks at the development environment and if it finds the environment
-# for a given language then it'll use it. For example in the previous step npm
-# was installed which requires NodeJS. If NodeJS can be found on your machine
-# then the corresponding stub will also compile. If you don't need it then you
-# can turn it off: ./configure --without-nodejs.
-#
-# In certain cases, installation may fail if development libraries for
-# languages are not installed on the target machine. E.g. if Python is
-# installed but the Python development headers are not, Thrift will unable to
-# install. Python, PHP and such other Thrift builds are NOT required by
-# CodeCompass.
-
-./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
+./configure --prefix=<thrift_install_dir> --silent --without-python \
+  --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
+  --with-libevent --with-zlib --without-nodejs --without-lua        \
+  --without-ruby --without-csharp --without-erlang --without-perl   \
+  --without-php --without-php_extension --without-dart              \
+  --without-haskell --without-go --without-rs --without-haxe        \
+  --without-dotnetcore --without-d --without-qt4 --without-qt5;     \
 
 make install
 ```
@@ -184,7 +190,9 @@ be seen by CMake build system:
 ```bash
 export GTEST_ROOT=<gtest_install_dir>
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
 export PATH=<thrift_install_dir>/bin:$PATH
+export PATH=<odb_install_directory>/bin>:$PATH
 ```
 
 Use the following instructions to build CodeCompass with CMake.
