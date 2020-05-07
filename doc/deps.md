@@ -93,9 +93,9 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### Odb
-Odb is an Object relational Mapping tool, that is required by CodeCompass.
-We are using odb 2.5 which is not part of the official ubuntu repositories, so
+### ODB
+ODB is an Object Relational Mapping tool, that is required by CodeCompass.
+We are using ODB 2.5 which is not part of the official Ubuntu repositories, so
 it needs to be built manually. For this, we provide a convenience script, under
 the scripts directory.
 
@@ -118,7 +118,7 @@ script looks at the development environment and if it finds the environment
 for a given language then it'll use it. For example in the previous step npm
 was installed which requires NodeJS. If NodeJS can be found on your machine
 then the corresponding stub will also compile. If you don't need it then you
-can turn it off: ./configure --without-nodejs.
+can turn it off: `./configure --without-nodejs.`
 
 In certain cases, installation may fail if development libraries for
 languages are not installed on the target machine. E.g. if Python is
@@ -141,7 +141,7 @@ sudo apt-get install ant
   --without-ruby --without-csharp --without-erlang --without-perl   \
   --without-php --without-php_extension --without-dart              \
   --without-haskell --without-go --without-rs --without-haxe        \
-  --without-dotnetcore --without-d --without-qt4 --without-qt5;     \
+  --without-dotnetcore --without-d --without-qt4 --without-qt5;
 
 make install
 ```

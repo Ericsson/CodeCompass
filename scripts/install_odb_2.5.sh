@@ -5,15 +5,16 @@ set -euxo pipefail
 trap cleanup EXIT
 
 declare ODB_INSTALL_DIR="/usr/local"
-declare ODB_BUILD_DIR="/tmp/odb"
+declare BULDTWO_BUILD_DIR="$(mktemp --directory /tmp/build2XXXXXX)"
+declare ODB_BUILD_DIR="$(mktemp --directory /tmp/odbXXXXXX)"
 declare success="false"
 
 function cleanup() {
     echo "Cleaning up Odb temporaries."
 
-    rm --recursive --force "/tmp/build2src"
+    rm --recursive --force "${BUILDTWO_BUILD_DIR}"
     
-    if [[ -n "${ODB_BUILD_DIR}" ]]; then
+    if [[ -d "${ODB_BUILD_DIR}" ]]; then
         rm --recursive --force "${ODB_BUILD_DIR}"
     fi
     
@@ -53,15 +54,14 @@ while getopts "hd:" OPTION; do
 done
 
 
-#Build2 toolchain
-mkdir /tmp/build2src
-pushd "/tmp/build2src"
+# Build2 toolchain
+pushd "${BULDTWO_BUILD_DIR}"
 curl -sSfO https://download.build2.org/0.12.0/build2-install-0.12.0.sh
 sh build2-install-0.12.0.sh --yes --trust yes
 popd
 
 
-#Configuring the build
+# Configuring the build
 mkdir /tmp/odb
 pushd "/tmp/odb"
 bpkg create --quiet --jobs "$(nproc)" cc         \
@@ -69,10 +69,10 @@ bpkg create --quiet --jobs "$(nproc)" cc         \
   config.cc.coptions=-O3                         \
   config.bin.rpath="${ODB_INSTALL_DIR}/lib"      \
   config.install.root="${ODB_INSTALL_DIR}"       \
-#Getting the source
+# Getting the source
 bpkg add https://pkg.cppget.org/1/beta --trust-yes
 bpkg fetch --trust-yes
-#Building odb 
+# Building odb 
 bpkg build odb --yes
 bpkg build libodb --yes
 bpkg build libodb-sqlite --yes

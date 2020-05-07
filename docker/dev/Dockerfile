@@ -4,23 +4,23 @@ FROM ubuntu:bionic
 RUN set -x && apt-get update -qq \
     && apt-get -y install \
     cmake make \
-    gcc-7 gcc-7-plugin-dev \
-    llvm-7 clang-7 llvm-7-dev libclang-7-dev \
-    libsqlite3-dev \
+    curl ctags \
     default-jdk \
-    libssl1.0-dev \
-    libgraphviz-dev \
-    libmagic-dev \
-    libgit2-dev \
-    nodejs-dev node-gyp npm \
-    ctags \
-    libgtest-dev \
-    # Install boost libraries.
+    gcc-7 gcc-7-plugin-dev \
     libboost-filesystem-dev \
     libboost-log-dev \
     libboost-program-options-dev \
     libboost-regex-dev \
-    curl
+    libgit2-dev \
+    libgraphviz-dev \
+    libgtest-dev \
+    libmagic-dev \
+    libsqlite3-dev \
+    libssl1.0-dev \
+    llvm-7 clang-7 llvm-7-dev libclang-7-dev \
+    nodejs-dev node-gyp npm \
+
+
 # Download the Thrift source code.
 ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
 # Build Thrift
