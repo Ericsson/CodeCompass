@@ -91,16 +91,13 @@ private:
   std::shared_ptr<std::string> _datadir;
 
   util::DirIterCallback getParserCallback(
-    RepositoryPtr& repo_,
     boost::filesystem::path& repoPath_);
   util::DirIterCallback getParserCallbackRepo(
     boost::filesystem::path& repoPath_);
 
   void loadCommitData(
     model::FilePtr file_,
-    RepositoryPtr& repo_,
-    boost::filesystem::path& repoPath_,
-    const int monthNumber = 6);
+    boost::filesystem::path& repoPath_);
 
   void persistEmailAddress(const std::string& email);
 
@@ -135,9 +132,6 @@ private:
     git_tree* first_,
     git_tree* second_);
 
-  DiffDeltaPtr createDiffDelta(
-    git_diff* diff_,
-    size_t deltaNumber_);
   git_oid gitOidFromStr(const std::string& hexOid_);
   std::string gitOidToString(const git_oid* oid_);
 
@@ -145,8 +139,9 @@ private:
   std::vector<char> hexChar = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
   const int secondsInDay = 86400;
-  const int daysInWeek = 7;
   const int daysInMonth = 30;
+
+  int _commitHistoryLength = 6;
 };
   
 } // parser

@@ -24,16 +24,11 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
   git_libgit2_init();
 
   srand(time(nullptr));
-  /*int threadNum = _ctx.options["jobs"].as<int>();
-  _pool = util::make_thread_pool<std::string>(
-    threadNum, [this](const std::string& path_)
-    {
-      model::FilePtr file = _ctx.srcMgr.getFile(path_);
-      if (file)
-      {
-        loadCommitData(file);
-      }
-    });*/
+
+  if (_ctx.options.count("commit-history"))
+    _commitHistoryLength = _ctx.options["commit-history"].as<int>();
+
+  LOG(info) << "[competenceparser] Commit history of " << _commitHistoryLength << " months will be parsed.";
 }
 
 bool CompetenceParser::accept(const std::string& path_)
@@ -71,13 +66,13 @@ bool CompetenceParser::parse()
     util::OdbTransaction trans(_ctx.db);
     trans([&, this]()
     {
-      //std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
+      std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
       RepositoryPtr repo = createRepository(repoPath);
 
       if (!repo)
         return;
 
-      auto cb = getParserCallback(repo, repoPath);
+      auto cb = getParserCallback(repoPath);
 
       /*--- Call non-empty iter-callback for all files
          in the current root directory. ---*/
@@ -120,7 +115,6 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
 }
 
 util::DirIterCallback CompetenceParser::getParserCallback(
-  RepositoryPtr& repo_,
   boost::filesystem::path& repoPath_)
 {
   return [&](const std::string& path_)
@@ -133,7 +127,7 @@ util::DirIterCallback CompetenceParser::getParserCallback(
 
       if (file)
       {
-        loadCommitData(file, repo_, repoPath_);
+        loadCommitData(file, repoPath_);
       }
     }
     return true;
@@ -142,9 +136,7 @@ util::DirIterCallback CompetenceParser::getParserCallback(
 
 void CompetenceParser::loadCommitData(
   model::FilePtr file_,
-  RepositoryPtr& repo_,
-  boost::filesystem::path& repoPath_,
-  const int monthNumber)
+  boost::filesystem::path& repoPath_)
 {
   if (file_.get()->path.find(".git") != std::string::npos ||
       file_.get()->path.find(".idea") != std::string::npos)
@@ -154,8 +146,11 @@ void CompetenceParser::loadCommitData(
   std::string gitFilePath = file_.get()->path.substr(
     repoPath_.parent_path().string().length() + 1);
 
+  // Initiate repository.
+  RepositoryPtr repo = createRepository(repoPath_);
+
   // Initiate walker.
-  RevWalkPtr walker = createRevWalk(repo_.get());
+  RevWalkPtr walker = createRevWalk(repo.get());
   git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
   git_revwalk_push_head(walker.get());
 
@@ -167,7 +162,7 @@ void CompetenceParser::loadCommitData(
   while (git_revwalk_next(&oid, walker.get()) == 0)
   {
     // Retrieve commit.
-    CommitPtr commit = createCommit(repo_.get(), oid);
+    CommitPtr commit = createCommit(repo.get(), oid);
 
     // Calculate elapsed time in full months since current commit.
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -175,7 +170,7 @@ void CompetenceParser::loadCommitData(
         - git_commit_time(commit.get());
     double months = elapsed / (double) (secondsInDay * daysInMonth);
 
-    if (months > monthNumber)
+    if (months > _commitHistoryLength)
       break;
 
     // Retrieve parent of commit.
@@ -188,7 +183,7 @@ void CompetenceParser::loadCommitData(
     if (parentTree != nullptr)
     {
       // Calculate diff of trees.
-      DiffPtr diff = createDiffTree(repo_.get(), parentTree.get(), commitTree.get());
+      DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
 
       // Store the current number of blame lines for each user.
       std::map<UserEmail, UserBlameLines> userBlame;
@@ -209,14 +204,14 @@ void CompetenceParser::loadCommitData(
             float totalLines = 0;
 
             BlameOptsPtr opt = createBlameOpts(oid);
-            BlamePtr blame = createBlame(repo_.get(), gitFilePath, opt.get());
+            BlamePtr blame = createBlame(repo.get(), gitFilePath, opt.get());
 
             if (!blame)
               return;
 
             for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
             {
-              const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame.get(), i);
+              const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
 
               GitBlameHunk blameHunk;
               blameHunk.linesInHunk = hunk->lines_in_hunk;
@@ -230,8 +225,8 @@ void CompetenceParser::loadCommitData(
                 // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
               else if (!git_oid_iszero(&hunk->final_commit_id))
               {
-                CommitPtr newCommit = createCommit(repo_.get(), hunk->final_commit_id);
-                const git_signature *author = git_commit_author(newCommit.get());
+                CommitPtr newCommit = createCommit(repo.get(), hunk->final_commit_id);
+                const git_signature* author = git_commit_author(newCommit.get());
                 blameHunk.finalSignature.email = author->email;
               }
 
@@ -418,16 +413,6 @@ DiffPtr CompetenceParser::createDiffTree(
   return DiffPtr { diff, &git_diff_free };
 }
 
-DiffDeltaPtr CompetenceParser::createDiffDelta(
-  git_diff* diff_,
-  size_t deltaNumber_)
-{
-  const git_diff_delta* delta = new git_diff_delta;
-  delta = git_diff_get_delta(diff_, deltaNumber_);
-
-  return DiffDeltaPtr { delta };
-}
-
 BlameOptsPtr CompetenceParser::createBlameOpts(const git_oid& newCommitOid_)
 {
   git_blame_options* blameOpts = new git_blame_options;
@@ -484,8 +469,9 @@ extern "C"
     boost::program_options::options_description description("Competence Plugin");
 
     description.add_options()
-        ("competence-arg", po::value<std::string>()->default_value("Competence arg"),
-          "This argument will be used by the competence parser.");
+      ("commit-history", po::value<int>()->default_value(6),
+       "This is a threshold value. It is the number of months for which the competence parser"
+       "will parse the commit history.");
 
     return description;
   }
