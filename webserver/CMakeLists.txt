@@ -1,7 +1,12 @@
+add_subdirectory(authenticators)
+
 add_executable(CodeCompass_webserver
   src/webserver.cpp
+  src/authentication.cpp
   src/mainrequesthandler.cpp
-  src/threadedmongoose.cpp )
+  src/session.cpp
+  src/sessionmanager.cpp
+  src/threadedmongoose.cpp)
 
 set_target_properties(CodeCompass_webserver
   PROPERTIES ENABLE_EXPORTS 1)

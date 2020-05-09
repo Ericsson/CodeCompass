@@ -1,4 +1,5 @@
-add_subdirectory(plugin)
-add_subdirectory(workspace)
-add_subdirectory(project)
+add_subdirectory(authentication)
 add_subdirectory(language)
+add_subdirectory(plugin)
+add_subdirectory(project)
+add_subdirectory(workspace)

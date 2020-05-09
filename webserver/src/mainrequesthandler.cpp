@@ -1,27 +1,84 @@
-#include <util/util.h>
 #include <util/logutil.h>
+#include <util/util.h>
 
 #include "mainrequesthandler.h"
+
+#include "sessionmanager.h"
+
+static bool isProtected(const char* uri_)
+{
+  static const std::vector<std::string> UnprotectedFirstDirectories = {
+    "doxygen/",    // Resource directory - contains no secret.
+    "fonts/",      // Resource directory - contains no secret.
+    "images/",     // Resource directory - contains no secret.
+    "scripts/",    // Resource directory - contains no secret.
+    "style/",      // Resource directory - contains no secret.
+    "userguide/",  // Resource directory - contains no secret.
+    "favicon.ico", // Resource - contains no secret.
+    "login.html"   // Allow to handle web browser auth.
+  };
+
+  // Swallow the leading '/' of the URI.
+  const std::string& uri = uri_ + 1;
+
+  return std::find_if(UnprotectedFirstDirectories.begin(),
+                      UnprotectedFirstDirectories.end(),
+                      [&uri](const std::string& E) {
+                        return uri.find(E) == 0;
+                      }) == UnprotectedFirstDirectories.end();
+}
+
+static void writeRedirect(struct mg_connection* conn_, const char* loc_)
+{
+  mg_send_status(conn_, 303); // 303 See Other.
+  mg_send_header(conn_, "Location", loc_);
+  mg_write(conn_, "\r\n\r\n", 4);
+}
 
 namespace cc
 {
 namespace webserver
 {
 
+static void logRequest(const struct mg_connection* conn_, const Session* sess_)
+{
+  std::string username = sess_ ? sess_->username : "Anonymous";
+
+  LOG(debug) << "(" << util::getCurrentDate() << ") " << conn_->remote_ip << ':'
+             << conn_->remote_port << " [" << username << "] " << conn_->uri;
+}
+
+/**
+ * Executes the given function within the context of the session provided.
+ * Any code called inside the function will be able to access the session
+ * associated with the thread of execution the function is running on.
+ */
+template <typename F>
+auto MainRequestHandler::executeWithSessionContext(Session* sess_, F func)
+{
+  SessionManagerAccess::setCurrentSession(sess_);
+  try
+  {
+    auto result = func();
+    SessionManagerAccess::setCurrentSession(nullptr);
+    return result;
+  } catch (...) {
+    SessionManagerAccess::setCurrentSession(nullptr);
+    throw;
+  }
+}
+
+
 int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
 {
-  // We advance ot by one because of the '/' character.
+  // We advance it by one because of the '/' character.
   const std::string& uri = conn_->uri + 1;
-
-  LOG(debug)
-    << util::getCurrentDate() << " Connection from " << conn_->remote_ip
-    << ':' << conn_->remote_port << " requested URI: " << uri;
 
   auto handler = pluginHandler.getImplementation(uri);
   if (handler)
     return handler->beginRequest(conn_);
 
-  if (uri.find_first_of("doxygen/") == 0)
+  if (uri.find("doxygen/") == 0)
   {
     mg_send_file(conn_, getDocDirByURI(uri).c_str());
     return MG_MORE;
@@ -32,45 +89,54 @@ int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
   return MG_FALSE;
 }
 
-int MainRequestHandler::operator()(
-  struct mg_connection* conn_,
-  enum mg_event ev_)
+int MainRequestHandler::operator()(struct mg_connection* conn_,
+                                   enum mg_event ev_)
 {
-  int result;
+  if (ev_ == MG_AUTH)
+    // Always consider HTTP Digest authentication to be complete. We supply
+    // our own authentication system.
+    return MG_TRUE;
 
-  switch (ev_)
+  if (ev_ != MG_REQUEST)
+    // For everything else, bail out.
+    return MG_FALSE;
+
+  const char* cookieHeader = mg_get_header(conn_, "Cookie");
+
+  if (strcmp("/AuthenticationService", conn_->uri) == 0)
   {
-    case MG_REQUEST:
-      return begin_request_handler(conn_);
+    Session* sessCookie = sessionManager->getSessionCookie(cookieHeader);
+    logRequest(conn_, sessCookie);
 
-    case MG_AUTH:
-    {
-      if (digestPasswdFile.empty())
-        return MG_TRUE;
-
-      FILE* fp = fopen(digestPasswdFile.c_str(), "r");
-      if (fp) 
-      {
-        result = mg_authorize_digest(conn_, fp);
-        fclose(fp);
-        return result;
-      }
-      else 
-      {
-        LOG(error)
-          << "Password file could not be opened: " << digestPasswdFile;
-
-        // TODO: An internal server error response would be nicer.
-        throw std::runtime_error("Password file could not be opened.");
-      }
-      break;
-    }
-
-    default:
-      break;
+    // Handle the authentication service specially - it needs access to the
+    // session if it exists, but does NOT require a valid session to access.
+    return executeWithSessionContext(
+      sessCookie, [this, &conn_]() { return begin_request_handler(conn_); });
   }
 
-  return MG_FALSE;
+  if (!isProtected(conn_->uri))
+  {
+    // For unprotected endpoints, just serve naturally, without querying the
+    // session.
+    logRequest(conn_, nullptr);
+    return begin_request_handler(conn_);
+  }
+
+  Session* sessCookie = sessionManager->getSessionCookie(cookieHeader);
+  logRequest(conn_, sessCookie);
+
+  if (!sessionManager->isValid(sessCookie))
+  {
+    // If authentication is needed and the user does not have a valid session,
+    // redirect them to login.
+    sessionManager->destroySessionCookie(sessCookie);
+
+    writeRedirect(conn_, "/login.html");
+    return MG_TRUE;
+  }
+
+  return executeWithSessionContext(
+    sessCookie, [this, &conn_]() { return begin_request_handler(conn_); });
 }
 
 std::string MainRequestHandler::getDocDirByURI(std::string uri_)
@@ -93,5 +159,5 @@ std::string MainRequestHandler::getDocDirByURI(std::string uri_)
   return dataDir[ws] + "/docs" + file;
 }
 
-}
-}
+} // namespace webserver
+} // namespace cc

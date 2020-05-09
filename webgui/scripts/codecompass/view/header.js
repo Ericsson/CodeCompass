@@ -1,4 +1,5 @@
 require([
+  'dojo/cookie',
   'dojo/topic',
   'dojo/_base/declare',
   'dijit/DropDownMenu',
@@ -9,8 +10,8 @@ require([
   'codecompass/model',
   'codecompass/urlHandler',
   'codecompass/viewHandler'],
-function (topic, declare, DropDownMenu, DropDownButton, Select, MenuItem,
-    ContentPane, model, urlHandler, viewHandler) {
+function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
+    MenuItem, ContentPane, model, urlHandler, viewHandler) {
 
   //--- Header Menu ---//
 
@@ -22,7 +23,7 @@ function (topic, declare, DropDownMenu, DropDownButton, Select, MenuItem,
 
       menu.addChild(new MenuItem({
         label     : 'About',
-        iconClass : 'menuicon icon icon-project',
+        iconClass : 'menuicon icon icon-info',
         onClick   : function () {
           topic.publish('codecompass/infopage', 'startpage');
         }
@@ -52,6 +53,38 @@ function (topic, declare, DropDownMenu, DropDownButton, Select, MenuItem,
           topic.publish('codecompass/infopage', 'credits');
         }
       }));
+
+      try {
+        if (model.authentication.isRequiringAuthentication()) {
+          menu.addChild(new MenuItem({
+            label: 'Log out ' + model.authentication.getLoggedInUser(),
+            iconClass: 'menuicon icon icon-project',
+            onClick: function () {
+              try {
+                var logoutResult = false;
+                try {
+                  logoutResult = model.authentication.logout();
+                } catch (ex) {
+                  console.error(ex);
+                }
+
+                if (logoutResult) {
+                  cookie(logoutResult, '<invalid>', {path: '/', expires: -1});
+
+                  // Redirect the user to the homepage after successful logout.
+                  window.location.reload(true);
+                } else {
+                  console.warn("Server rejected logout.");
+                }
+              } catch (exc) {
+                console.error("Logout failed.", exc);
+              }
+            }
+          }));
+        }
+      } catch (ex) {
+        console.warn(ex);
+      }
 
       this._menuButton = new DropDownButton({
         id       : 'menu-btn',

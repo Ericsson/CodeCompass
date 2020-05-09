@@ -10,7 +10,7 @@
 
 #include <util/dynamiclibrary.h>
 
-#include <webserver/servercontext.h>
+#include "servercontext.h"
 
 namespace cc
 {
