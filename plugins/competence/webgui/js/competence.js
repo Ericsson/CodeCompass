@@ -78,13 +78,26 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       }));
 
       submenu.addChild(new MenuItem({
-        label : "Display diagram",
+        label : "Display diagram for current user",
         onClick : function () {
           topic.publish('codecompass/openFile', { fileId : fileInfo.id });
 
           topic.publish('codecompass/openDiagram', {
             handler : 'competence-diagram-handler',
             diagramType : 0,  // In case there are other diagrams.
+            node : fileInfo.id
+          });
+        }
+      }));
+
+      submenu.addChild(new MenuItem({
+        label : "Team view",
+        onClick : function () {
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : 1,  // In case there are other diagrams.
             node : fileInfo.id
           });
         }

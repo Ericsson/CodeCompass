@@ -17,7 +17,6 @@
 #include <util/parserutil.h>
 #include <util/threadpool.h>
 
-
 namespace cc
 {
 namespace parser

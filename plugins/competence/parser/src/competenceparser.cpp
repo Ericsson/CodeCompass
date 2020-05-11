@@ -314,12 +314,12 @@ void CompetenceParser::persistEmailAddress(const std::string& email)
       model::UserEmail userEmail;
       userEmail.email = email;
 
-      std::string code("#");
+      /*std::string code("#");
       for (int i = 0; i < 6; ++i)
       {
         code += hexChar.at(rand() % hexChar.size());
       }
-      userEmail.colorCode = code;
+      userEmail.colorCode = code;*/
       _ctx.db->persist(userEmail);
     }
   });

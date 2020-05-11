@@ -21,7 +21,8 @@ CompetenceServiceHandler::CompetenceServiceHandler(
   : _db(db_),
     _transaction(db_),
     _datadir(datadir_),
-    _context(context_)
+    _context(context_),
+    _sessionManagerAccess(context_.sessionManager)
 {
 }
 
@@ -63,17 +64,12 @@ void CompetenceServiceHandler::getDiagram(
   CompetenceDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
 
-  switch (diagramId_)
-  {
-    case FILE_COMPETENCE:
-      diagram.getCompetenceDiagram(graph, fileId_);
-      break;
-  }
+  diagram.getCompetenceDiagram(graph, fileId_, getCurrentUser(), diagramId_);
 
   if (graph.nodeCount() != 0)
     return_ = graph.output(util::Graph::SVG);
 }
-
+/*
 void CompetenceServiceHandler::getDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_)
@@ -91,6 +87,18 @@ void CompetenceServiceHandler::getDiagramTypes(
   {
     return_["File competence of user"] = FILE_COMPETENCE;
   }
+}*/
+
+std::string CompetenceServiceHandler::getCurrentUser()
+{
+  std::string ret;
+  _sessionManagerAccess.accessSession(
+    [&](webserver::Session* sess_)
+    {
+      ret = sess_ ? sess_->username : std::string();
+    });
+
+  return ret;
 }
 
 } // competence

@@ -20,9 +20,6 @@ struct UserEmail
 
 #pragma db null
   std::string company;
-
-#pragma db not_null
-  std::string colorCode;
 };
 
 } // model
