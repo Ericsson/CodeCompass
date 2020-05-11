@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CodeCompass</title>
+
+    <meta charset="UTF-8">
+
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" href="style/login.css" />
+    <link rel="stylesheet" href="style/codecompass.css" />
+    <link rel="stylesheet" href="style/icons.css" />
+
+    <link rel="stylesheet" href="scripts/node_modules/dojo/resources/dojo.css" />
+    <link rel="stylesheet" href="scripts/node_modules/dijit/themes/claro/claro.css"/>
+
+    <!-- Third party libraries -->
+
+    <script type="text/javascript" src="scripts/node_modules/thrift/src/thrift.js"></script>
+    <script type="text/javascript" src="scripts/node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="scripts/node_modules/jsplumb/dist/js/jsPlumb-2.2.1-min.js"></script>
+
+    <script type="text/javascript">
+        var dojoConfig = {
+            baseUrl: '/scripts/',
+            tlmSiblingOfDojo: false,
+            defaultDuration: 1,
+            async: true,
+            cacheBust: true,
+            packages: [
+                { name: 'dojo',  location: 'node_modules/dojo'  },
+                { name: 'dijit', location: 'node_modules/dijit' },
+                { name: 'dojox', location: 'node_modules/dojox' }
+            ]
+        };
+    </script>
+
+    <script type="text/javascript" src="scripts/node_modules/dojo/dojo.js"></script>
+
+    <script type="text/javascript">
+        var commonModules = [
+            'scripts/codecompass/generated/authentication_types.js',
+            'scripts/codecompass/generated/AuthenticationService.js'
+        ];
+
+        require(commonModules, function(){
+            require([
+              'login/login'], function(login){
+              login();
+            })
+        });
+    </script>
+</head>
+<body class="claro">
+</body>
+</html>

@@ -21,11 +21,19 @@ void WorkspaceServiceHandler::getWorkspaces(std::vector<WorkspaceInfo>& _return)
     it != fs::directory_iterator();
     ++it)
   {
-    std::string filename = it->path().filename().native();
+    if (!fs::is_directory(it->path()))
+      // Ignore plain files in the workspace directory - projects are always
+      // directories.
+      continue;
+    if (!fs::is_regular_file(fs::path{it->path()}.append("project_info.json")))
+      // Ignore directories that do not have a project information for them.
+      // (cf. webserver/pluginhelper.h)
+      continue;
 
+    std::string filename = it->path().filename().native();
     WorkspaceInfo info;
-    info.__set_id(filename);
-    info.__set_description(filename);
+    info.id = filename;
+    info.description = filename;
 
     _return.push_back(std::move(info));
   }

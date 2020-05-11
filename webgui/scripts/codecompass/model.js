@@ -15,7 +15,9 @@ function (urlHandler, exports) {
     if (!this[name]) {
       // These two services are independent from the workspaces, so these are
       // on an URL which don't contain the workspace name.
-      if (url !== 'PluginService' && url !== 'WorkspaceService')
+      if (url !== 'AuthenticationService' &&
+          url !== 'PluginService' &&
+          url !== 'WorkspaceService')
         url = workspace + '/' + url;
 
       var service
@@ -46,6 +48,9 @@ function (urlHandler, exports) {
   }
 
   //--- Initial common services (workspace, plugin, project) ---//
+
+  exports.addService('authentication', 'AuthenticationService',
+    AuthenticationServiceClient);
 
   exports.addService('plugin', 'PluginService', PluginServiceClient);
   exports.addService('workspace', 'WorkspaceService', WorkspaceServiceClient);

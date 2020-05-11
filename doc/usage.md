@@ -199,6 +199,56 @@ CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
 
 For full documentation see `CodeCompass_webserver -h`.
 
+### Enabling HTTPS (SSL/TLS) secure server
+
+By default, CodeCompass starts a conventional, plain-text HTTP server on the
+port specified.
+In case a `certificate.pem` file exists under the `--workpace` directory, the
+server *will* start in SSL mode.
+
+The certificate file shall be in PEM format, which looks like shown below. If
+the certificate you received from your Certificate Authority (or self-created)
+isn't in PEM format, use an SSL tool like [OpenSSL](http://openssl.org) to
+convert it.
+
+Normally, the private and public key (the certificate) are created as separate
+files. They **must** be concatenated to *one* `certificate.pem` file, to look
+like the following.
+[Further details on SSL](http://github.com/cesanta/mongoose/blob/5.4/docs/SSL.md#how-to-create-ssl-certificate-file)
+is available from Mongoose, the library CodeCompass uses for HTTP server.
+
+~~~{.pem}
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAwONaLOP7EdegqjRuQKSDXzvHmFMZfBufjhELhNjo5KsL4ieH
+hYN0Zii2yTb63jGxKY6gH1R/r9dL8kXaJmcZrfSa3AgywnteJWg=
+-----END RSA PRIVATE KEY-----
+-----BEGIN CERTIFICATE-----
+MIIDBjCCAe4CCQCX05m0b053QzANBgkqhkiG9w0BAQQFADBFMQswCQYDVQQGEwJB
+SEGI4JSxV56lYg==
+-----END CERTIFICATE-----
+~~~
+
+> **Note:** Make sure your certificate file itself is not password-protected,
+> as requiring the password to be entered will make the server unable to start
+> on its own.
+
+If intermediate certificates are used because your certificate isn't signed
+by a Root CA (this is common), the certificate chain's elements (also in, or
+converted to PEM format) should also be concatenate into the `certificate.pem`
+file:
+
+~~~{.pem}
+-----BEGIN RSA PRIVATE KEY-----
+Your certificate's private key
+-----END RSA PRIVATE KEY-----
+-----BEGIN CERTIFICATE-----
+Your certificate (the public key)
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+The certificate of the CA that signed your certificate
+-----END CERTIFICATE-----
+~~~
+
 ### Usage example
 
 ```bash
