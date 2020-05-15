@@ -36,26 +36,31 @@ private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
   typedef odb::query<model::FileComprehension> FileComprehensionQuery;
+  typedef odb::result<model::FileComprehension> FileComprehensionResult;
   typedef odb::query<model::File> FileQuery;
   typedef odb::query<model::UserEmail> UserEmailQuery;
   typedef odb::result<model::UserEmail> UserEmailResult;
 
-  enum DiagramType
-  {
-    USER,
-    TEAM
-  };
-
+  /**
+   * This method generates a graph for a single file or
+   * a directory recursively to show the competence rates
+   * of the logged in user.
+   */
   void userView(
     util::Graph& graph_,
     const core::FileId& fileId_,
     std::string user_);
 
-  std::map<util::Graph::Node, uint16_t> getFileCompetenceRates(
+  std::map<util::Graph::Node, int16_t> getFileCompetenceRates(
     util::Graph& graph_,
     const util::Graph::Node& node_,
     const std::vector<std::string>& emails_);
 
+  /**
+   * This method generates a graph for a single file or
+   * a directory recursively to show who the most knowledgeable
+   * developer is on each file.
+   */
   void teamView(
     util::Graph& graph_,
     const core::FileId& fileId_);
@@ -64,18 +69,15 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  model::FileComprehension maxCompetence(FileComprehensionResult& result);
+
   util::Graph::Node addNode(
     util::Graph& graph_,
     const core::FileInfo& fileInfo_);
 
-  util::Graph::Node addNode(
-    util::Graph& graph_,
-    const core::FileId& fileId_,
-    DiagramType type_ = TEAM);
-
-  std::string getExpertOnFile(
-    const core::FileId& fileId_);
-
+  /**
+   * Converts a percentage value to a hex color code.
+   */
   std::string rateToColor(uint16_t rate);
 
   std::vector<util::Graph::Node> getSubDirs(
@@ -95,22 +97,23 @@ private:
   std::string generateColor(const std::string& email_);
   void setCharCodesMap();
 
-  static const Decoration centerNodeDecoration;
-  static const Decoration directoryNodeDecoration;
-
-  static const Decoration containsEdgeDecoration;
-  static const Decoration subdirEdgeDecoration;
-
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
   CompetenceServiceHandler _compHandler;
   core::ProjectServiceHandler _projectHandler;
 
-  const int nodeCountBorder = 15;
+  const int _nodeCountLimit = 15;
+  const std::string _white = "#ffffff";
 
   static std::map<char, std::uint32_t> _charCodes;
   static std::map<std::string, std::string> _colorCodes;
+
+  static const Decoration centerNodeDecoration;
+  static const Decoration directoryNodeDecoration;
+
+  static const Decoration containsEdgeDecoration;
+  static const Decoration subdirEdgeDecoration;
 
 };
 }

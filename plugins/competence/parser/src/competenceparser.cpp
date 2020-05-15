@@ -25,10 +25,31 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 
   srand(time(nullptr));
 
-  if (_ctx.options.count("commit-history"))
-    _commitHistoryLength = _ctx.options["commit-history"].as<int>();
+  if (_ctx.options.count("commit-count"))
+  {
+    _maxCommitCount = _ctx.options["commit-count"].as<int>();
 
-  LOG(info) << "[competenceparser] Commit history of " << _commitHistoryLength << " months will be parsed.";
+    if (_maxCommitCount < 1)
+    {
+      LOG(fatal) << "Commit count is too small!";
+      throw std::logic_error("");
+    }
+    LOG(info) << "[competenceparser] Commit history of " << _maxCommitCount << " commits will be parsed.";
+    return;
+  }
+
+  if (_ctx.options.count("commit-history"))
+  {
+    _maxCommitHistoryLength = _ctx.options["commit-history"].as<int>();
+
+    if (_maxCommitHistoryLength < 1)
+    {
+      LOG(fatal) << "Commit history length is too small!";
+      throw std::logic_error("");
+    }
+
+    LOG(info) << "[competenceparser] Commit history of " << _maxCommitHistoryLength << " months will be parsed.";
+  }
 }
 
 bool CompetenceParser::accept(const std::string& path_)
@@ -159,18 +180,23 @@ void CompetenceParser::loadCommitData(
 
   // Walk through commit history.
   git_oid oid;
+  int commitCounter = 0;
   while (git_revwalk_next(&oid, walker.get()) == 0)
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
 
+    if (_maxCommitCount > 0 && commitCounter > _maxCommitCount)
+      break;
+
+    ++commitCounter;
+
     // Calculate elapsed time in full months since current commit.
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
-      std::chrono::system_clock::now())
-        - git_commit_time(commit.get());
+      std::chrono::system_clock::now()) - git_commit_time(commit.get());
     double months = elapsed / (double) (secondsInDay * daysInMonth);
 
-    if (months > _commitHistoryLength)
+    if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
       break;
 
     // Retrieve parent of commit.
@@ -471,7 +497,12 @@ extern "C"
     description.add_options()
       ("commit-history", po::value<int>()->default_value(6),
        "This is a threshold value. It is the number of months for which the competence parser"
-       "will parse the commit history.");
+       "will parse the commit history. If both commit-history and commit-count is given,"
+       "the value of commit-count will be the threshold value.")
+      ("commit-count", po::value<int>(),
+        "This is a threshold value. It is the number of commits the competence parser"
+        "will process if value is given. If both commit-history and commit-count is given,"
+        "the value of commit-count will be the threshold value.");
 
     return description;
   }

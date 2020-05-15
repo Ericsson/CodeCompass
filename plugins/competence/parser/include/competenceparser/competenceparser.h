@@ -4,16 +4,13 @@
 #include <memory>
 
 #include <boost/filesystem.hpp>
+#include <odb/database.hxx>
 
 #include <git2.h>
 
 #include <model/file.h>
-
-#include <odb/database.hxx>
-
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
-
 #include <util/parserutil.h>
 #include <util/threadpool.h>
 
@@ -25,12 +22,10 @@ namespace parser
 typedef std::unique_ptr<git_blame, decltype(&git_blame_free)> BlamePtr;
 typedef std::unique_ptr<git_blame_options> BlameOptsPtr;
 typedef std::unique_ptr<git_commit, decltype(&git_commit_free)> CommitPtr;
-typedef std::unique_ptr<const git_diff_delta> DiffDeltaPtr;
 typedef std::unique_ptr<git_diff, decltype(&git_diff_free)> DiffPtr;
 typedef std::unique_ptr<git_repository, decltype(&git_repository_free)> RepositoryPtr;
 typedef std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)> RevWalkPtr;
 typedef std::unique_ptr<git_tree, decltype(&git_tree_free)> TreePtr;
-typedef std::unique_ptr<git_tree_entry, decltype(&git_tree_entry_free)> TreeEntryPtr;
 
 typedef std::string UserEmail;
 typedef int RelevantCommitCount;
@@ -46,7 +41,7 @@ struct GitSignature
 
 struct GitBlameHunk
 {
-  std::uint32_t linesInHunk;             /**< The number of lines in this hunk. */
+  std::uint32_t linesInHunk;        /**< The number of lines in this hunk. */
   std::string finalCommitId;        /**< The OID of the commit where this line was
                                     last changed. */
   std::string finalCommitMessage;   /**< Commit message of the commit specified by
@@ -87,7 +82,6 @@ private:
   bool accept(const std::string& path_);
 
   std::shared_ptr<odb::database> _db;
-  std::shared_ptr<std::string> _datadir;
 
   util::DirIterCallback getParserCallback(
     boost::filesystem::path& repoPath_);
@@ -135,12 +129,12 @@ private:
   std::string gitOidToString(const git_oid* oid_);
 
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
-  std::vector<char> hexChar = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
 
-  int _commitHistoryLength = 6;
+  int _maxCommitHistoryLength = 0;
+  int _maxCommitCount = 0;
 };
   
 } // parser

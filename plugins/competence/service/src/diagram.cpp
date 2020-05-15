@@ -69,7 +69,7 @@ void CompetenceDiagram::userView(
     Decoration competenceNodeDecoration = {
       {"shape", "box"},
       {"style", "filled"},
-      {"fillcolor", "#ffffff"}
+      {"fillcolor", _white}
     };
     decorateNode(graph_, currentNode, competenceNodeDecoration);
     return;
@@ -82,21 +82,12 @@ void CompetenceDiagram::userView(
      auto comp = _db->query<model::FileComprehension>(
        FileComprehensionQuery::file == std::stoull(fileInfo.id));
 
-     std::string color = "#ffffff";
+     std::string color = _white;
 
      // Choose maximum competence percentage.
      if (!comp.empty())
      {
-       /*auto it = std::max_element(comp.begin(), comp.end(),
-         [](const model::FileComprehension& a, const model::FileComprehension& b)
-         {
-          return a.userRatio < b.userRatio;
-         });*/
-       auto max = *(comp.begin());
-       for (const auto& f : comp)
-         if (f.userRatio > max.userRatio)
-           max = f;
-
+       auto max = maxCompetence(comp);
        color = rateToColor(max.userRatio);
      }
 
@@ -120,7 +111,7 @@ void CompetenceDiagram::userView(
 
   for (const util::Graph::Node& subdir : subdirs)
   {
-    for (const std::pair<util::Graph::Node, uint16_t> node :
+    for (const std::pair<util::Graph::Node, int16_t> node :
       getFileCompetenceRates(graph_, subdir, emails))
     {
       util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
@@ -137,18 +128,20 @@ void CompetenceDiagram::userView(
     }
   }
 
-  if (graph_.nodeCount() > nodeCountBorder)
-  {
+  if (graph_.nodeCount() > _nodeCountLimit)
     graph_.setAttribute("rankdir", "LR");
-  }
 }
 
-std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
+/*
+ * An individual user's competence rate is the maximum percentage
+ * that is persisted along with any of the user's email addresses.
+ */
+std::map<util::Graph::Node, int16_t> CompetenceDiagram::getFileCompetenceRates(
   util::Graph& graph_,
   const util::Graph::Node& node_,
   const std::vector<std::string>& emails_)
 {
-  std::map<core::FileId, uint16_t> comprehension;
+  std::map<core::FileId, int16_t> comprehension;
   _transaction([&, this]
   {
     auto contained = _db->query<model::File>(
@@ -158,34 +151,36 @@ std::map<util::Graph::Node, uint16_t> CompetenceDiagram::getFileCompetenceRates(
 
     for (const model::File& file : contained)
     {
-      if (file.path.find(".git") != std::string::npos ||
-          file.path.find(".idea") != std::string::npos)
-        continue;
-
       auto fileComp = _db->query<model::FileComprehension>(
         FileComprehensionQuery::file == file.id);
 
       std::vector<model::FileComprehension> comp;
       for (const model::FileComprehension& f : fileComp)
-        for (auto it = emails_.begin(); it != emails_.end(); ++it)
-          if (f.userEmail == *it)
+        for (const std::string& e : emails_)
+          if (f.userEmail == e)
           {
             comp.push_back(f);
             break;
           }
 
-      auto iter = std::max_element(comp.begin(), comp.end(),
-        [](const model::FileComprehension& a, const model::FileComprehension& b)
-        {
-          return a.userRatio < b.userRatio;
-        });
+      if (!comp.empty())
+      {
+        auto max = std::max_element(comp.begin(), comp.end(),
+          [](const model::FileComprehension& a, const model::FileComprehension& b)
+          {
+            return a.userRatio < b.userRatio;
+          });
 
-      comprehension.insert(std::make_pair(std::to_string(iter->file), iter->userRatio));
+        comprehension.insert(std::make_pair(std::to_string(max->file), max->userRatio));
+      }
+      else
+      {
+        comprehension.insert(std::make_pair(std::to_string(file.id), -1));
+      }
     }
   });
 
-  std::map<util::Graph::Node, uint16_t> annotated;
-
+  std::map<util::Graph::Node, int16_t> annotated;
   for (const auto& pair : comprehension)
   {
     core::FileInfo fileInfo;
@@ -213,17 +208,13 @@ void CompetenceDiagram::teamView(
      auto comp = _db->query<model::FileComprehension>(
        FileComprehensionQuery::file == std::stoull(fileInfo.id));
 
-     std::string color = "#ffffff";
+     std::string color = _white;
 
      // Choose maximum competence percentage.
      if (!comp.empty())
      {
-       auto it = std::max_element(comp.begin(), comp.end(),
-        [](const model::FileComprehension& a, const model::FileComprehension& b)
-        {
-          return a.userRatio < b.userRatio;
-        });
-       color = generateColor(it->userEmail);
+       auto max = maxCompetence(comp);
+       color = generateColor(max.userEmail);
      }
 
      Decoration competenceNodeDecoration = {
@@ -238,8 +229,8 @@ void CompetenceDiagram::teamView(
   }
 
   std::set<util::Graph::Node> subdirs = util::bfsBuild(graph_, currentNode,
-   std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
-   std::placeholders::_2), {}, subdirEdgeDecoration);
+    std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
+    std::placeholders::_2), {}, subdirEdgeDecoration);
 
   subdirs.insert(currentNode);
   decorateNode(graph_, currentNode, centerNodeDecoration);
@@ -262,12 +253,14 @@ void CompetenceDiagram::teamView(
     }
   }
 
-  if (graph_.nodeCount() > nodeCountBorder)
-  {
+  if (graph_.nodeCount() > _nodeCountLimit)
     graph_.setAttribute("rankdir", "LR");
-  }
 }
 
+/*
+ * The expert user of a file is the one with the
+ * maximum competence percentage.
+ */
 std::map<util::Graph::Node, std::string> CompetenceDiagram::getFileExpertNodes(
   util::Graph& graph_,
   const util::Graph::Node& node_)
@@ -282,25 +275,22 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getFileExpertNodes(
 
    for (const model::File& file : contained)
    {
-     if (file.path.find(".git") != std::string::npos ||
-         file.path.find(".idea") != std::string::npos)
-       continue;
-
      auto comp = _db->query<model::FileComprehension>(
        FileComprehensionQuery::file == file.id);
 
-     auto iter = std::max_element(comp.begin(), comp.end(),
-      [](const model::FileComprehension& a, const model::FileComprehension& b)
-      {
-        return a.userRatio < b.userRatio;
-      });
-
-     comprehension.insert(std::make_pair(std::to_string(iter->file), iter->userEmail));
+     if (!comp.empty())
+     {
+       auto max = maxCompetence(comp);
+       comprehension.insert(std::make_pair(std::to_string(max.file), max.userEmail));
+     }
+     else
+     {
+       comprehension.insert(std::make_pair(std::to_string(file.id), ""));
+     }
    }
   });
 
   std::map<util::Graph::Node, std::string> annotated;
-
   for (const auto& pair : comprehension)
   {
     core::FileInfo fileInfo;
@@ -312,31 +302,21 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getFileExpertNodes(
   return annotated;
 }
 
-std::string CompetenceDiagram::getExpertOnFile(
-  const core::FileId& fileId_)
+/*
+ * Note: The ODB manual description about the odb::result::iterator type:
+ * "If we have two iterators pointing to the current position
+ * and then we advance one of them, the other will advance as well."
+ * Thus, std::max_element cannot be used for maximum search.
+ */
+model::FileComprehension CompetenceDiagram::maxCompetence(
+  FileComprehensionResult& result)
 {
-  _transaction([&, this]
-  {
-   odb::result<model::FileComprehension> comprehensionData = _db->query<model::FileComprehension>(
-     FileComprehensionQuery::file == std::stoull(fileId_)
-   );
+  model::FileComprehension max = *(result.begin());
+  for (const auto &f : result)
+    if (f.userRatio > max.userRatio)
+      max = f;
 
-   if (!comprehensionData.empty())
-   {
-     auto expert = *(comprehensionData.begin());
-     for (auto it = comprehensionData.begin(); it != comprehensionData.end(); ++it)
-       if (it->userRatio > expert.userRatio)
-         expert = *it;
-
-     /*auto userData = _db->query_one<model::UserEmail>(
-       odb::query<model::UserEmail>::email == expert.userEmail);*/
-
-     //if (userData)
-     return generateColor(expert.userEmail);
-   }
-  });
-
-  return "#ffffff";
+  return max;
 }
 
 util::Graph::Node CompetenceDiagram::addNode(
@@ -349,42 +329,14 @@ util::Graph::Node CompetenceDiagram::addNode(
   return node;
 }
 
-util::Graph::Node CompetenceDiagram::addNode(
-  util::Graph& graph_,
-  const core::FileId& fileId_,
-  DiagramType type_)
-{
-  core::FileInfo fileInfo;
-  _projectHandler.getFileInfo(fileInfo, fileId_);
-
-  util::Graph::Node node = graph_.getOrCreateNode(fileInfo.id);
-  graph_.setNodeAttribute(node, "label", fileInfo.name);
-
-  switch (type_)
-  {
-    case USER:
-    case TEAM:
-      std::string color = getExpertOnFile(fileId_);
-
-      Decoration competenceNodeDecoration = {
-        {"shape", "box"},
-        {"style", "filled"},
-        {"fillcolor", color}
-      };
-
-      decorateNode(graph_, node, competenceNodeDecoration);
-      break;
-  }
-
-  return node;
-}
-
 std::string CompetenceDiagram::rateToColor(uint16_t rate)
 {
-  int red, green;
+  if (rate < 0 || rate > 100)
+    return _white;
 
-  red = rate < 50 ? 255 : std::round(256 - (rate - 50) * 5.12);
-  green = rate > 50 ? 255 : std::round(rate * 5.12);
+  int red, green;
+  red = rate < 50 ? 255 : (int)std::round(256 - (rate - 50) * 5.12);
+  green = rate > 50 ? 255 : (int)std::round(rate * 5.12);
 
   if (green == 256)
     --green;
@@ -395,13 +347,9 @@ std::string CompetenceDiagram::rateToColor(uint16_t rate)
   std::stringstream ss;
   ss << "#";
   if (red != 0)
-  {
     ss << std::hex << (red << 16 | green << 8 | 0);
-  }
   else
-  {
     ss << std::hex << 0 << 0 << (green << 8 | 0);
-  }
 
   return ss.str();
 }
@@ -460,7 +408,7 @@ std::string CompetenceDiagram::generateColor(const std::string& email_)
     return _colorCodes.at(email_);
 
   if (email_.size() < 6)
-    return "#ffffff";
+    return _white;
 
   std::stringstream ss;
   ss << "#";
