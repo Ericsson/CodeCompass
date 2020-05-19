@@ -78,7 +78,7 @@ private:
   /**
    * Converts a percentage value to a hex color code.
    */
-  std::string rateToColor(uint16_t rate);
+  std::string rateToColor(int16_t rate);
 
   std::vector<util::Graph::Node> getSubDirs(
     util::Graph& graph_,
@@ -111,6 +111,8 @@ private:
 
   static const Decoration centerNodeDecoration;
   static const Decoration directoryNodeDecoration;
+  static const Decoration competenceFileDecoration;
+  static const Decoration competenceDirDecoration;
 
   static const Decoration containsEdgeDecoration;
   static const Decoration subdirEdgeDecoration;

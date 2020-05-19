@@ -40,10 +40,6 @@ public:
     const core::FileId& fileId_,
     const std::int32_t diagramId_) override;
 
-  /*void getDiagramTypes(
-    std::map<std::string, std::int32_t>& return_,
-    const core::FileId& fileId_);*/
-
 private:
   std::string getCurrentUser();
 

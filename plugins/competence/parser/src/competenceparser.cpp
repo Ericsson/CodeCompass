@@ -308,7 +308,7 @@ void CompetenceParser::persistFileComprehensionData(
   util::OdbTransaction transaction(_ctx.db);
   transaction([&, this]
   {
-    LOG(info) << file_.get()->path << ": ";
+    LOG(info) << "[competenceparser] " << file_.get()->path << ": ";
     for (const auto& pair : userEditions)
     {
       if (pair.second.first !=  0)
@@ -339,13 +339,6 @@ void CompetenceParser::persistEmailAddress(const std::string& email)
     {
       model::UserEmail userEmail;
       userEmail.email = email;
-
-      /*std::string code("#");
-      for (int i = 0; i < 6; ++i)
-      {
-        code += hexChar.at(rand() % hexChar.size());
-      }
-      userEmail.colorCode = code;*/
       _ctx.db->persist(userEmail);
     }
   });

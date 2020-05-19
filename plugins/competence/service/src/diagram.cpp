@@ -75,47 +75,21 @@ void CompetenceDiagram::userView(
     return;
   }
 
-  if (!fileInfo.isDirectory)
-  {
-    _transaction([&, this]()
-    {
-     auto comp = _db->query<model::FileComprehension>(
-       FileComprehensionQuery::file == std::stoull(fileInfo.id));
-
-     std::string color = _white;
-
-     // Choose maximum competence percentage.
-     if (!comp.empty())
-     {
-       auto max = maxCompetence(comp);
-       color = rateToColor(max.userRatio);
-     }
-
-     Decoration competenceNodeDecoration = {
-       {"shape", "box"},
-       {"style", "filled"},
-       {"fillcolor", color}
-     };
-     decorateNode(graph_, currentNode, competenceNodeDecoration);
-    });
-
-    return;
-  }
-
   std::set<util::Graph::Node> subdirs = util::bfsBuild(graph_, currentNode,
     std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
     std::placeholders::_2), {}, subdirEdgeDecoration);
 
   subdirs.insert(currentNode);
-  decorateNode(graph_, currentNode, centerNodeDecoration);
 
   for (const util::Graph::Node& subdir : subdirs)
   {
-    for (const std::pair<util::Graph::Node, int16_t> node :
-      getFileCompetenceRates(graph_, subdir, emails))
+    for (const auto& node : getFileCompetenceRates(graph_, subdir, emails))
     {
-      util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
-      decorateEdge(graph_, edge, containsEdgeDecoration);
+      if (node.first != currentNode)
+      {
+        util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
+        decorateEdge(graph_, edge, containsEdgeDecoration);
+      }
 
       std::string color = rateToColor(node.second);
 
@@ -146,7 +120,8 @@ std::map<util::Graph::Node, int16_t> CompetenceDiagram::getFileCompetenceRates(
   {
     auto contained = _db->query<model::File>(
       FileQuery::parent == std::stoull(node_) &&
-      FileQuery::type != model::File::DIRECTORY_TYPE
+      FileQuery::type != model::File::DIRECTORY_TYPE ||
+      FileQuery::id == std::stoull(node_)
     );
 
     for (const model::File& file : contained)
@@ -201,46 +176,21 @@ void CompetenceDiagram::teamView(
 
   util::Graph::Node currentNode = addNode(graph_, fileInfo);
 
-  if (!fileInfo.isDirectory)
-  {
-    _transaction([&, this]()
-    {
-     auto comp = _db->query<model::FileComprehension>(
-       FileComprehensionQuery::file == std::stoull(fileInfo.id));
-
-     std::string color = _white;
-
-     // Choose maximum competence percentage.
-     if (!comp.empty())
-     {
-       auto max = maxCompetence(comp);
-       color = generateColor(max.userEmail);
-     }
-
-     Decoration competenceNodeDecoration = {
-       {"shape", "box"},
-       {"style", "filled"},
-       {"fillcolor", color}
-     };
-     decorateNode(graph_, currentNode, competenceNodeDecoration);
-    });
-
-    return;
-  }
-
   std::set<util::Graph::Node> subdirs = util::bfsBuild(graph_, currentNode,
     std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
     std::placeholders::_2), {}, subdirEdgeDecoration);
 
   subdirs.insert(currentNode);
-  decorateNode(graph_, currentNode, centerNodeDecoration);
 
   for (const util::Graph::Node& subdir : subdirs)
   {
-    for (const std::pair<util::Graph::Node, std::string> node : getFileExpertNodes(graph_, subdir))
+    for (const auto& node : getFileExpertNodes(graph_, subdir))
     {
-      util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
-      decorateEdge(graph_, edge, containsEdgeDecoration);
+      if (node.first != currentNode)
+      {
+        util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
+        decorateEdge(graph_, edge, containsEdgeDecoration);
+      }
 
       std::string color = generateColor(node.second);
 
@@ -270,7 +220,8 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getFileExpertNodes(
   {
    auto contained = _db->query<model::File>(
      FileQuery::parent == std::stoull(node_) &&
-     FileQuery::type != model::File::DIRECTORY_TYPE
+     FileQuery::type != model::File::DIRECTORY_TYPE ||
+     FileQuery::id == std::stoull(node_)
    );
 
    for (const model::File& file : contained)
@@ -329,7 +280,7 @@ util::Graph::Node CompetenceDiagram::addNode(
   return node;
 }
 
-std::string CompetenceDiagram::rateToColor(uint16_t rate)
+std::string CompetenceDiagram::rateToColor(int16_t rate)
 {
   if (rate < 0 || rate > 100)
     return _white;
@@ -461,6 +412,18 @@ const CompetenceDiagram::Decoration CompetenceDiagram::centerNodeDecoration = {
 
 const CompetenceDiagram::Decoration CompetenceDiagram::directoryNodeDecoration = {
   {"shape", "folder"}
+};
+
+const CompetenceDiagram::Decoration CompetenceDiagram::competenceFileDecoration = {
+  {"shape", "box"},
+  {"style", "filled"},
+  {"fillcolor", "#ffffff"}
+};
+
+const CompetenceDiagram::Decoration CompetenceDiagram::competenceDirDecoration = {
+  {"shape", "folder"},
+  {"style", "filled"},
+  {"fillcolor", "white"}
 };
 
 const CompetenceDiagram::Decoration CompetenceDiagram::containsEdgeDecoration = {
