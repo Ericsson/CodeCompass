@@ -127,6 +127,7 @@ CppServiceHandler::CppServiceHandler(
 void CppServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
   return_.push_back("CPP");
+  return_.push_back("Dir");
 }
 
 void CppServiceHandler::getAstNodeInfo(
