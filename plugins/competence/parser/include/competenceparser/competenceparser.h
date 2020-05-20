@@ -41,34 +41,9 @@ struct GitSignature
 
 struct GitBlameHunk
 {
-  std::uint32_t linesInHunk;        /**< The number of lines in this hunk. */
-  std::string finalCommitId;        /**< The OID of the commit where this line was
-                                    last changed. */
-  std::string finalCommitMessage;   /**< Commit message of the commit specified by
-                                    finalCommitId. */
-  std::uint32_t finalStartLineNumber;    /**< The 1-based line number where this hunk
-                                    begins, in the final version of the file.
-                               */
-  GitSignature finalSignature; /**< Signature of the commit who this line
-                                    last changed. */
-  std::string origCommitId;         /**< The OID of the commit where this hunk was
-                                    found. This will usually be the same as
-                                    final_commit_id, except when
-                                    GIT_BLAME_TRACK_COPIES_ANY_COMMIT_COPIES
-                                    has been specified.
-                                    TODO: implement blame flags. */
-  std::string origPath;             /**< The path to the file where this hunk
-                                    originated, as of the commit specified by
-                                    origCommitId. */
-  std::uint32_t origStartLineNumber;     /**< The 1-based line number where this hunk
-                                    begins in the file named by orig_path in
-                                    the commit specified by origCommitId. */
-  GitSignature origSignature;  /**< Signature of the commit who thisline last
-                                    changed. */
-  bool boundary;              /**< True if the hunk has been tracked to a
-                                    boundary commit (the root, or the commit
-                                    specified in
-                                    git_blame_options.oldest_commit). */
+  std::uint32_t linesInHunk;       /**< The number of lines in this hunk. */
+  GitSignature finalSignature;     /**< Signature of the commit who this line
+                                   last changed. */
 };
   
 class CompetenceParser : public AbstractParser
@@ -124,9 +99,6 @@ private:
     git_repository* repo_,
     git_tree* first_,
     git_tree* second_);
-
-  git_oid gitOidFromStr(const std::string& hexOid_);
-  std::string gitOidToString(const git_oid* oid_);
 
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
 

@@ -24,6 +24,10 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
     getDiagram : function (diagramType, fileId, callback) {
       model.competenceservice.getDiagram(fileId, diagramType, callback);
+    },
+
+    getDiagramLegend : function (diagramType) {
+      return model.competenceservice.getDiagramLegend(diagramType);
     }
   };
 
@@ -79,12 +83,13 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
       submenu.addChild(new MenuItem({
         label : "Display diagram for current user",
+        type : 0,
         onClick : function () {
           topic.publish('codecompass/openFile', { fileId : fileInfo.id });
 
           topic.publish('codecompass/openDiagram', {
             handler : 'competence-diagram-handler',
-            diagramType : 0,  // In case there are other diagrams.
+            diagramType : this.type,  // In case there are other diagrams.
             node : fileInfo.id
           });
         }
@@ -92,12 +97,13 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
       submenu.addChild(new MenuItem({
         label : "Team view",
+        type : 1,
         onClick : function () {
           topic.publish('codecompass/openFile', { fileId : fileInfo.id });
 
           topic.publish('codecompass/openDiagram', {
             handler : 'competence-diagram-handler',
-            diagramType : 1,  // In case there are other diagrams.
+            diagramType : this.type,  // In case there are other diagrams.
             node : fileInfo.id
           });
         }

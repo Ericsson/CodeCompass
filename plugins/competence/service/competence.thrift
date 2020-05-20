@@ -46,4 +46,6 @@ service CompetenceService
     string setCompetenceRatio(1:common.FileId fileId, 2:i32 ratio)
 
     string getDiagram(1:common.FileId fileId, 2:i32 diagramType)
+
+    string getDiagramLegend(1:i32 diagramType)
 }

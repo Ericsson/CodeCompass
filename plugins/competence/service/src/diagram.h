@@ -32,6 +32,9 @@ public:
     std::string user_,
     const std::int32_t diagramType_);
 
+  std::string getUserViewDiagramLegend();
+  std::string getTeamViewDiagramLegend();
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
@@ -39,17 +42,16 @@ private:
   typedef odb::result<model::FileComprehension> FileComprehensionResult;
   typedef odb::query<model::File> FileQuery;
   typedef odb::query<model::UserEmail> UserEmailQuery;
-  typedef odb::result<model::UserEmail> UserEmailResult;
 
   /**
    * This method generates a graph for a single file or
    * a directory recursively to show the competence rates
    * of the logged in user.
    */
-  void userView(
-    util::Graph& graph_,
-    const core::FileId& fileId_,
-    std::string user_);
+  void userViewDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_,
+    std::string &user_);
 
   std::map<util::Graph::Node, int16_t> getFileCompetenceRates(
     util::Graph& graph_,
@@ -61,9 +63,9 @@ private:
    * a directory recursively to show who the most knowledgeable
    * developer is on each file.
    */
-  void teamView(
-    util::Graph& graph_,
-    const core::FileId& fileId_);
+  void teamViewDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_);
 
   std::map<util::Graph::Node, std::string> getFileExpertNodes(
     util::Graph& graph_,
@@ -95,7 +97,8 @@ private:
     const Decoration& decoration_) const;
 
   std::string generateColor(const std::string& email_);
-  void setCharCodesMap();
+  void setCharCodes();
+  void setColorCodes();
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
@@ -109,10 +112,7 @@ private:
   static std::map<char, std::uint32_t> _charCodes;
   static std::map<std::string, std::string> _colorCodes;
 
-  static const Decoration centerNodeDecoration;
   static const Decoration directoryNodeDecoration;
-  static const Decoration competenceFileDecoration;
-  static const Decoration competenceDirDecoration;
 
   static const Decoration containsEdgeDecoration;
   static const Decoration subdirEdgeDecoration;

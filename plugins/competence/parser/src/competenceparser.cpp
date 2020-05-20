@@ -440,30 +440,6 @@ BlameOptsPtr CompetenceParser::createBlameOpts(const git_oid& newCommitOid_)
   return BlameOptsPtr { blameOpts };
 }
 
-git_oid CompetenceParser::gitOidFromStr(const std::string& hexOid_)
-{
-  git_oid oid;
-  int error = git_oid_fromstr(&oid, hexOid_.c_str());
-
-  if (error)
-    LOG(error)
-      << "Parse hex object id(" << hexOid_
-      << ") into a git_oid has been failed: " << error;
-
-  return oid;
-}
-
-std::string CompetenceParser::gitOidToString(const git_oid* oid_)
-{
-  char oidstr[GIT_OID_HEXSZ + 1];
-  git_oid_tostr(oidstr, sizeof(oidstr), oid_);
-
-  if (!strlen(oidstr))
-    LOG(warning) << "Format a git_oid into a string has been failed.";
-
-  return std::string(oidstr);
-}
-
 CompetenceParser::~CompetenceParser()
 {
   git_libgit2_shutdown();

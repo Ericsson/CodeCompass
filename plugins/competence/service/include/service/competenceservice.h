@@ -40,6 +40,10 @@ public:
     const core::FileId& fileId_,
     const std::int32_t diagramId_) override;
 
+  void getDiagramLegend(
+    std::string& return_,
+    const std::int32_t diagramId_) override;
+
 private:
   std::string getCurrentUser();
 

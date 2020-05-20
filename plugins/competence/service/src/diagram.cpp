@@ -24,7 +24,8 @@ CompetenceDiagram::CompetenceDiagram(
       _projectHandler(db_, datadir_, context_),
       _transaction(db_)
 {
-  setCharCodesMap();
+  setCharCodes();
+  setColorCodes();
 }
 
 void CompetenceDiagram::getCompetenceDiagram(
@@ -36,18 +37,18 @@ void CompetenceDiagram::getCompetenceDiagram(
   switch (diagramType_)
   {
     case 0:
-      userView(graph_, fileId_, user_);
+      userViewDiagram(graph_, fileId_, user_);
       break;
     case 1:
-      teamView(graph_, fileId_);
+      teamViewDiagram(graph_, fileId_);
       break;
   }
 }
 
-void CompetenceDiagram::userView(
-  util::Graph& graph_,
-  const core::FileId& fileId_,
-  std::string user_)
+void CompetenceDiagram::userViewDiagram(
+  util::Graph &graph_,
+  const core::FileId &fileId_,
+  std::string &user_)
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
@@ -167,9 +168,18 @@ std::map<util::Graph::Node, int16_t> CompetenceDiagram::getFileCompetenceRates(
   return annotated;
 }
 
-void CompetenceDiagram::teamView(
-  util::Graph& graph_,
-  const core::FileId& fileId_)
+std::string CompetenceDiagram::getUserViewDiagramLegend()
+{
+  util::LegendBuilder builder("User Competence Diagram");
+
+  //builder.addNode()
+
+  return builder.getOutput();
+}
+
+void CompetenceDiagram::teamViewDiagram(
+  util::Graph &graph_,
+  const core::FileId &fileId_)
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
@@ -186,7 +196,7 @@ void CompetenceDiagram::teamView(
   {
     for (const auto& node : getFileExpertNodes(graph_, subdir))
     {
-      if (node.first != currentNode)
+      if (node.first != subdir)
       {
         util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
         decorateEdge(graph_, edge, containsEdgeDecoration);
@@ -251,6 +261,20 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getFileExpertNodes(
   }
 
   return annotated;
+}
+
+std::string CompetenceDiagram::getTeamViewDiagramLegend()
+{
+  util::LegendBuilder builder("Team Competence Diagram");
+
+  for (const auto& code : _colorCodes)
+    builder.addNode(code.first, {{"shape", "box"},
+      {"style", "filled"}, {"fillcolor", code.second}});
+
+  builder.addNode("No data", {{"shape", "box"},
+    {"style", "filled"}, {"fillcolor", _white}});
+
+  return builder.getOutput();
 }
 
 /*
@@ -371,17 +395,19 @@ std::string CompetenceDiagram::generateColor(const std::string& email_)
 
   ss << std::hex << (red << 16 | green << 8 | blue);
 
+  _colorCodes.insert(std::make_pair(email_, ss.str()));
+
   return ss.str();
 }
 
-void CompetenceDiagram::setCharCodesMap()
+void CompetenceDiagram::setCharCodes()
 {
   if (!_charCodes.empty())
     return;
 
   int counter = 10;
   for (int i = 0; i < counter; ++i)
-    _charCodes.insert({i, i});
+    _charCodes.insert({'0' + i, i});
 
   for (char c = 'a'; c <= 'z'; ++c)
   {
@@ -405,25 +431,22 @@ void CompetenceDiagram::setCharCodesMap()
   _charCodes.insert({' ', counter});
 }
 
-const CompetenceDiagram::Decoration CompetenceDiagram::centerNodeDecoration = {
-  {"style", "filled"},
-  {"fillcolor", "gold"}
-};
+void CompetenceDiagram::setColorCodes()
+{
+  if (!_colorCodes.empty())
+    return;
+
+  _transaction([&, this]
+  {
+    auto emails = _db->query<model::UserEmail>();
+
+    for (const model::UserEmail& user : emails)
+      generateColor(user.email);
+  });
+}
 
 const CompetenceDiagram::Decoration CompetenceDiagram::directoryNodeDecoration = {
   {"shape", "folder"}
-};
-
-const CompetenceDiagram::Decoration CompetenceDiagram::competenceFileDecoration = {
-  {"shape", "box"},
-  {"style", "filled"},
-  {"fillcolor", "#ffffff"}
-};
-
-const CompetenceDiagram::Decoration CompetenceDiagram::competenceDirDecoration = {
-  {"shape", "folder"},
-  {"style", "filled"},
-  {"fillcolor", "white"}
 };
 
 const CompetenceDiagram::Decoration CompetenceDiagram::containsEdgeDecoration = {

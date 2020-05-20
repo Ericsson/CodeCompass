@@ -49,10 +49,6 @@ void CompetenceServiceHandler::setCompetenceRatio(
     if (emails.empty())
       return;
 
-    std::vector<std::string> userEmails;
-    for (const model::UserEmail& e : emails)
-      userEmails.push_back(e.email);
-
     auto file = _db->query<model::FileComprehension>(
       FileComprehensionQuery::file == std::stoull(fileId_));
 
@@ -60,8 +56,8 @@ void CompetenceServiceHandler::setCompetenceRatio(
     bool found = false;
     for (const model::FileComprehension& f : file)
     {
-      for (const std::string &e : userEmails)
-        if (f.userEmail != e && !found)
+      for (const model::UserEmail& e : emails)
+        if (f.userEmail != e.email && !found)
         {
           comp = f;
           found = true;
@@ -78,7 +74,7 @@ void CompetenceServiceHandler::setCompetenceRatio(
       fileComprehension.repoRatio.reset();
       fileComprehension.file = std::stoull(fileId_);
       fileComprehension.inputType = model::FileComprehension::InputType::USER;
-      fileComprehension.userEmail = userEmails.at(0);
+      fileComprehension.userEmail = emails.begin()->email;
       _db->persist(fileComprehension);
     }
     else
@@ -102,6 +98,23 @@ void CompetenceServiceHandler::getDiagram(
 
   if (graph.nodeCount() != 0)
     return_ = graph.output(util::Graph::SVG);
+}
+
+void CompetenceServiceHandler::getDiagramLegend(
+  std::string& return_,
+  const std::int32_t diagramId_)
+{
+  CompetenceDiagram diagram(_db, _datadir, _context);
+
+  switch(diagramId_)
+  {
+    case 0:
+      return_ = diagram.getUserViewDiagramLegend();
+      break;
+    case 1:
+      return_ = diagram.getTeamViewDiagramLegend();
+      break;
+  }
 }
 
 std::string CompetenceServiceHandler::getCurrentUser()
