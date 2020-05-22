@@ -5,23 +5,42 @@ set -euxo pipefail
 trap cleanup EXIT
 
 declare ODB_INSTALL_DIR="/usr/local"
-declare BULDTWO_BUILD_DIR="$(mktemp --directory /tmp/build2XXXXXX)"
-declare ODB_BUILD_DIR="$(mktemp --directory /tmp/odbXXXXXX)"
-declare success="false"
+declare SUCCESS="false"
+declare REMOVE_BUILDTWO="true"
+declare BUILDTWO_BUILD_DIR
+declare BUILDTWO_INSTALL_DIR
+declare ODB_BUILD_DIR
+BUILDTWO_BUILD_DIR="$(mktemp --directory /tmp/build2_build_XXXXXX)"
+BUILDTWO_INSTALL_DIR="$(mktemp --directory /tmp/build2_install_XXXXXX)"
+ODB_BUILD_DIR="$(mktemp --directory /tmp/odb_build_XXXXXX)"
 
 function cleanup() {
-    echo "Cleaning up Odb temporaries."
-
-    rm --recursive --force "${BUILDTWO_BUILD_DIR}"
+    echo "Cleaning up temporaries."
+    
+    if [[ -d "${BUILDTWO_BUILD_DIR}" ]]; then
+        rm --recursive --force "${BUILDTWO_BUILD_DIR}"
+    fi
     
     if [[ -d "${ODB_BUILD_DIR}" ]]; then
         rm --recursive --force "${ODB_BUILD_DIR}"
     fi
     
-    if [[ "${success}" != "true" ]]; then
+    if [[ "${SUCCESS}" != "true" ]]; then
+        echo "Cleaning up after failed installation."
         if [[ -d "${ODB_INSTALL_DIR}" ]]; then
             rm --recursive --force "${ODB_INSTALL_DIR}"
         fi
+    
+        if [[ -d "${BUILDTWO_INSTALL_DIR}" ]]; then
+           rm --recursive --force "${BUILDTWO_INSTALL_DIR}"
+        fi
+    fi
+    
+    if [[ "${REMOVE_BUILDTWO}" != "false" ]]; then
+       echo "Removing the build2 toochain"
+       if [[ -d "${BUILDTWO_INSTALL_DIR}" ]]; then
+           rm --recursive --force "${BUILDTWO_INSTALL_DIR}"
+       fi
     fi
 }
 
@@ -34,10 +53,12 @@ the slite and pgsql support library.
 ${0} [-h] [-d] <odb_install_path> 
   -h  Print this usage information, and quit.
   -d  Install directory of odb. Optional. /usr/local is the deafault.
+  -k  Keep the build2 toolchain after the successful installation of odb,
+      on the given path.
 EOF
 }
 
-while getopts "hd:" OPTION; do
+while getopts "hd:k:" OPTION; do
     case ${OPTION} in
         h)
             usage
@@ -45,6 +66,10 @@ while getopts "hd:" OPTION; do
             ;;
         d)
             ODB_INSTALL_DIR="${OPTARG}"
+            ;;
+        k)
+            REMOVE_BUILDTWO="false"
+            BUILDTWO_INSTALL_DIR="${OPTARG}"
             ;;
         *)
             usage >&2
@@ -55,15 +80,17 @@ done
 
 
 # Build2 toolchain
-pushd "${BULDTWO_BUILD_DIR}"
+pushd "${BUILDTWO_BUILD_DIR}"
 curl -sSfO https://download.build2.org/0.12.0/build2-install-0.12.0.sh
-sh build2-install-0.12.0.sh --yes --trust yes
+sh build2-install-0.12.0.sh --yes --trust yes "${BUILDTWO_INSTALL_DIR}"
 popd
 
 
+export PATH="${BUILDTWO_INSTALL_DIR}/bin:$PATH"
+
 # Configuring the build
-mkdir /tmp/odb
-pushd "/tmp/odb"
+
+pushd "${ODB_BUILD_DIR}"
 bpkg create --quiet --jobs "$(nproc)" cc         \
   config.cxx=g++                                 \
   config.cc.coptions=-O3                         \
@@ -80,5 +107,5 @@ bpkg build libodb-pgsql --yes
 bpkg install --all --recursive
 popd
 
-success="true"
+SUCCESS="true"
 
