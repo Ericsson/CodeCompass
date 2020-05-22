@@ -31,6 +31,7 @@ typedef std::string UserEmail;
 typedef int RelevantCommitCount;
 typedef int Percentage;
 typedef int UserBlameLines;
+typedef std::pair<Percentage, RelevantCommitCount> FileDataPair;
 
 struct GitSignature
 {
@@ -63,9 +64,17 @@ private:
   util::DirIterCallback getParserCallbackRepo(
     boost::filesystem::path& repoPath_);
 
-  void loadCommitData(
-    model::FilePtr file_,
+  void countFileChanges(
+    const std::string& root_,
     boost::filesystem::path& repoPath_);
+
+  void traverseCommits(
+    const std::string& root_,
+    boost::filesystem::path& repoPath_);
+
+  /*void loadCommitData(
+    model::FilePtr file_,
+    boost::filesystem::path& repoPath_);*/
 
   void persistEmailAddress(const std::string& email);
 
@@ -101,6 +110,9 @@ private:
     git_tree* second_);
 
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
+
+  std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
+  std::map<model::FilePtr, int> _changeCount;
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
