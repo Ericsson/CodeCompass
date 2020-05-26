@@ -66,6 +66,7 @@ services:
     curl -sSfO https://download.build2.org/0.12.0/build2-install-0.12.0.sh
     sh build2-install-0.12.0.sh --yes --trust yes "$HOME/build2_install/"
   fi
+  export PATH=$PATH:$HOME/build2_install/bin/
   if [ ! -f "$HOME/odb_install/bin/odb" ]; then
     mkdir /tmp/odb_build
     cd /tmp/odb_build
