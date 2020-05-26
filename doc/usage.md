@@ -160,9 +160,9 @@ CodeCompass_parser \
 
 As an experimental feature CodeCompass supports incremental parsing, updating an
 existing database and project workspace by detecting the added, deleted and modified files.  
-Incremental parsing depends on that the build tooling generates a **complete** compilation database, 
+Incremental parsing depends on that the build tooling generates a **complete** compilation database,
 therefore the build commands for only the modified files are not sufficient.
-In case of CMake, using the result of the `CMAKE_EXPORT_COMPILE_COMMANDS=ON` argument, the 
+In case of CMake, using the result of the `CMAKE_EXPORT_COMPILE_COMMANDS=ON` argument, the
 compilation database will always contain all files.
 Currently the C++ and metrics parsers support incremental parsing, while other parsers
 just execute a forced reparse.
@@ -171,12 +171,12 @@ In case the analyzed software project was significantly changed (e.g. as a resul
 restructuring the project), dropping the workspace database and performing a full, clean
 parse can yield results faster. This can be achieved by passing the `--force` (or `-f`)
 command line option which can be specified for `CodeCompass_parser`. Another solution is
-to set the `--incremental-threshold` option, which configures an upper threshold of change 
-for incremental parsing (in the percentage of changed files). Above the threshold a full, 
+to set the `--incremental-threshold` option, which configures an upper threshold of change
+for incremental parsing (in the percentage of changed files). Above the threshold a full,
 clean reparse is performed. The default value for this threshold is *10%*.
 
 In order to review the changes detected by the incremental parser without performing any
-action that would alter the workspace database or directory, the `--dry-run` command line 
+action that would alter the workspace database or directory, the `--dry-run` command line
 option can be specified for `CodeCompass_parser`.
 
 ## 3. Start the web server
@@ -184,7 +184,7 @@ You can start the CodeCompass webserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
 
 ```bash
-CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
+CodeCompass_webserver -w <workdir> -p <port>
 ```
 
 - **Workspace**: This is a directory where the some parse results, and different
