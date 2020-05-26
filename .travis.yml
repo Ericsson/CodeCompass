@@ -60,15 +60,18 @@ services:
 
 .install_odb: &install_odb
   |
+  if [ ! -f "$HOME/build2_install/bin/bpkg" ]; then
     mkdir /tmp/build2src
     cd /tmp/build2src
     curl -sSfO https://download.build2.org/0.12.0/build2-install-0.12.0.sh
-    sh build2-install-0.12.0.sh --yes --trust yes
+    sh build2-install-0.12.0.sh --yes --trust yes "$HOME/build2_install/"
+  fi
+  if [ ! -f "$HOME/odb_install/bin/odb" ]; then
     mkdir /tmp/odb_build
     cd /tmp/odb_build
     bpkg create --quiet --jobs $(nproc) cc \
     config.cxx=g++ config.cc.coptions=-O3 \
-    config.bin.rpath=/usr/local/lib config.install.root=/usr/local \
+    config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" \
     config.install.sudo=sudo
     bpkg add https://pkg.cppget.org/1/beta --trust-yes
     bpkg fetch --trust-yes
@@ -77,7 +80,7 @@ services:
     bpkg build libodb-sqlite --yes
     bpkg build libodb-pgsql --yes
     bpkg install --all --recursive
-
+  fi
 
 .install_thrift: &install_thrift
   |
@@ -134,6 +137,10 @@ before_script:
   # LLVM/Clang test from package install
   - /usr/bin/clang-7 --version
   - /usr/bin/llvm-config-7 --version --has-rtti
+  # ODB
+  - export CMAKE_PREFIX_PATH=$HOME/odb_install:$CMAKE_PREFIX_PATH
+  - export PATH=$HOME/odb_install/bin:$PATH
+  - odb --version
   # Thrift
   - export CMAKE_PREFIX_PATH=$HOME/thrift_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/thrift_install/bin:$PATH
@@ -224,3 +231,5 @@ cache:
   directories:
     - $HOME/thrift_install
     - $HOME/gtest_install
+    - $HOME/build2_install
+    - $HOME/odb_install
