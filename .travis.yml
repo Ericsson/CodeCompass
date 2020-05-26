@@ -66,7 +66,10 @@ services:
     sh build2-install-0.12.0.sh --yes --trust yes
     mkdir /tmp/odb_build
     cd /tmp/odb_build
-    bpkg create --quiet --jobs $(nproc) cc config.cxx=g++ config.cc.coptions=-O3 config.bin.rpath=/usr/local/lib config.install.root=/usr/local config.install.sudo=sudo
+    bpkg create --quiet --jobs $(nproc) cc \
+    config.cxx=g++ config.cc.coptions=-O3 \
+    config.bin.rpath=/usr/local/lib config.install.root=/usr/local \
+    config.install.sudo=sudo
     bpkg add https://pkg.cppget.org/1/beta --trust-yes
     bpkg fetch --trust-yes
     bpkg build odb --yes
@@ -75,7 +78,7 @@ services:
     bpkg build libodb-pgsql --yes
     bpkg install --all --recursive
 
-  
+
 .install_thrift: &install_thrift
   |
   if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
@@ -83,7 +86,13 @@ services:
     wget -O thrift-0.13.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz"
     tar -xvf ./thrift-0.13.0.tar.gz
     cd thrift-0.13.0
-    ./configure --prefix=$HOME/thrift_install --without-python --without-php --without-ruby --without-nodejs --without-go --without-java
+    ./configure --prefix=$HOME/thrift_install --without-python       \
+    --enable-libtool-lock --enable-tutorial=no --enable-tests=no     \
+    --with-libevent --with-zlib --without-nodejs --without-lua       \
+    --without-ruby --without-csharp --without-erlang --without-perl  \
+    --without-php --without-php_extension --without-dart             \
+    --without-haskell --without-go --without-rs --without-haxe       \
+    --without-dotnetcore --without-d --without-qt4 --without-qt5
     make install
   fi
 
