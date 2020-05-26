@@ -11,20 +11,24 @@ be installed from the official repository of the given Linux distribution.
 
 - **`git`**: For fetching and managing CodeCompass source code.
 - **`cmake`** and **`make`**: For building CodeCompass.
--**`gcc-X`**: Version 7 or higher.
--**`gcc-X-plugin-dev`**: This is needed to compile odb.
-- **`g++`**: For compiling CodeCompass. A version which supports C++14 features is required. (Alternatively, you can compile with Clang.)
+- **`g++`**: For compiling CodeCompass. A version which supports C++14 features
+  is required. (Alternatively, you can compile with Clang.)
+- **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for parsing the source code.
-- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an Object Relation Mapping (ORM) system.
-- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the corresponding ODB development library, in case SQLite database system is used.
+- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
+  parsing the source code.
+- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
+  Object Relation Mapping (ORM) system.
+- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the
+  corresponding ODB development library, in case SQLite database system is
+  used.
 - **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL
   server and the corresponding ODB development library in case PostgreSQL
   database system is used.
 - **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
   Java.
 - **`libssl-dev`**: OpenSSL libs are required by Thrift.
-- **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizaions.
+- **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
 - **`npm`** (and **`nodejs-legacy`** for Ubuntu 16.04): For handling
@@ -49,7 +53,7 @@ repositories:
 sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 
-sudo apt-get install git cmake make g++ libboost-all-dev \
+sudo apt-get install git cmake make g++ gcc-5-plugin-dev libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
@@ -58,7 +62,7 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 #### Ubuntu 18.04 LTS
 
 ```bash
-sudo apt-get install git cmake make g++ libboost-all-dev \
+sudo apt-get install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
@@ -91,23 +95,40 @@ other commands below, unless *explicitly* specified!**
 ### ODB
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
 We are using ODB 2.5 which is not part of the official Ubuntu repositories, so
-it needs to be built manually. For this, we provide a convenience script, under
-the scripts directory.
+it needs to be built manually.
 
+The odb installation uses the build2 build system.
+(This is not needed for CodeCompass so you may delete it right after the installation of odb.)
 ```bash
-cd CodeCompass/scripts
-chmod u+x install_odb_2.5.sh
-./install_odb_2.5.sh -d <odb_install_directory>
-#If one does not specify an install directory the script will install to /usr/local by default.
+wget https://download.build2.org/0.12.0/build2-install-0.12.0.sh
+sh build2-install-0.12.0.sh --yes --trust yes "<build2_install_dir>"
 ```
-The odb installation uses the build2 build system. This is not needed for CodeCompass so it gets deleted right after the installation of odb. If one wishes to keep this toolchain they can call the script like:
+
+Now, utilizing the *build2* toolchain, we can build the *odb* library. In the script below, we assume that ODB is built in the `<odb_build_dir>` directory and installed in the `<odb_install_dir>` directory. A good default install directory could be `/usr/local/`.
 ```bash
-cd CodeCompass/scripts
-chmod u+x install_odb_2.5.sh
-./install_odb_2.5.sh -d <odb_install_directory> \
--k <build2_install_directory>
+# Configuring the build
+cd <odb_build_dir>
+bpkg create --quiet --jobs <number_of_threads> cc \
+  config.cxx=g++ \
+  config.cc.coptions=-O3 \
+  config.bin.rpath=<odb_install_dir>/lib \
+  config.install.root=<odb_install_dir>
+
+# Getting the source
+bpkg add https://pkg.cppget.org/1/beta --trust-yes
+bpkg fetch --trust-yes
+
+# Building odb
+bpkg build odb --yes
+bpkg build libodb --yes
+bpkg build libodb-sqlite --yes
+bpkg build libodb-pgsql --yes
+bpkg install --all --recursive # you may to run the instal with sudo, depending on the install dir
 ```
-*Please take into consideration that the odb installation can take up a long time depending on the machine one is using.*
+Please take into consideration that the odb installation can take up a long time (depending on the machine one is using),
+but you can increase the used threads with the `--jobs` option.
+
+*Note:* now you max delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
