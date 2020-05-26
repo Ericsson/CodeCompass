@@ -1,4 +1,4 @@
-# CodeCompass development dependecies
+# CodeCompass development dependencies
 FROM ubuntu:bionic
 
 RUN set -x && apt-get update -qq \
@@ -18,8 +18,7 @@ RUN set -x && apt-get update -qq \
     libsqlite3-dev \
     libssl1.0-dev \
     llvm-7 clang-7 llvm-7-dev libclang-7-dev \
-    nodejs-dev node-gyp npm \
-
+    nodejs-dev node-gyp npm
 
 # Download the Thrift source code.
 ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
@@ -46,10 +45,27 @@ RUN cd /usr/src/googletest/ && \
      cd / && \
      rm -rf /usr/src/googletest/build
 
-COPY scripts/install_odb_2.5.sh /tmp/install_odb.sh
-
-RUN chmod u+x /tmp/install_odb.sh && \
-    /tmp/install_odb.sh -d /opt/odb
+# Download build2 toolchain install script.
+ADD https://download.build2.org/0.12.0/build2-install-0.12.0.sh /opt/build2-install-0.12.0.sh
+# Build build2, then ODB.
+RUN cd /opt/ && \
+    sh build2-install-0.12.0.sh --yes --trust yes; \
+    mkdir /opt/odb_build && \
+    cd /opt/odb_build && \
+    bpkg create --quiet --jobs $(nproc) cc \
+    config.cxx=g++ \
+    config.cc.coptions=-O3 \
+    config.bin.rpath=/usr/local/lib \
+    config.install.root=/usr/local && \
+    bpkg add https://pkg.cppget.org/1/beta --trust-yes && \
+    bpkg fetch --trust-yes && \
+    bpkg build odb --yes && \
+    bpkg build libodb --yes && \
+    bpkg build libodb-sqlite --yes && \
+    bpkg build libodb-pgsql --yes && \
+    bpkg install --all --recursive; \
+    rm -rf /opt/build2* && \
+    rm -rf /opt/odb_build
 
 COPY docker/dev/codecompass-build.sh /usr/local/bin
 
