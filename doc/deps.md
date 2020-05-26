@@ -13,16 +13,11 @@ be installed from the official repository of the given Linux distribution.
 - **`cmake`** and **`make`**: For building CodeCompass.
 -**`gcc-X`**: Version 7 or higher.
 -**`gcc-X-plugin-dev`**: This is needed to compile odb.
-- **`g++`**: For compiling CodeCompass. A version which supports C++14 features
-  is required. (Alternatively, you can compile with Clang.)
+- **`g++`**: For compiling CodeCompass. A version which supports C++14 features is required. (Alternatively, you can compile with Clang.)
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
-  parsing the source code.
-- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
-  Object Relation Mapping (ORM) system.
-- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the
-  corresponding ODB development library, in case SQLite database system is
-  used.
+- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for parsing the source code.
+- **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an Object Relation Mapping (ORM) system.
+- **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the corresponding ODB development library, in case SQLite database system is used.
 - **`postgresql-server-dev-<version>`**, **`libodb-pgsql-dev`**: PostgreSQL
   server and the corresponding ODB development library in case PostgreSQL
   database system is used.
@@ -105,7 +100,14 @@ chmod u+x install_odb_2.5.sh
 ./install_odb_2.5.sh -d <odb_install_directory>
 #If one does not specify an install directory the script will install to /usr/local by default.
 ```
-*Note: This can take up a long time, depending on the machine one uses.*
+The odb installation uses the build2 build system. This is not needed for CodeCompass so it gets deleted right after the installation of odb. If one wishes to keep this toolchain they can call the script like:
+```bash
+cd CodeCompass/scripts
+chmod u+x install_odb_2.5.sh
+./install_odb_2.5.sh -d <odb_install_directory> \
+-k <build2_install_directory>
+```
+*Please take into consideration that the odb installation can take up a long time depending on the machine one is using.*
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
@@ -124,7 +126,7 @@ In certain cases, installation may fail if development libraries for
 languages are not installed on the target machine. E.g. if Python is
 installed but the Python development headers are not, Thrift will unable to
 install. Python, PHP and such other Thrift builds are NOT required by
-CodeCompass.
+CodeCompass, and can significantly increase compile time so it is advised to avoid using them if it's not necessary.
 
 ```bash
 # Download and uncompress Thrift:
