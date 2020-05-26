@@ -72,10 +72,6 @@ private:
     const std::string& root_,
     boost::filesystem::path& repoPath_);
 
-  /*void loadCommitData(
-    model::FilePtr file_,
-    boost::filesystem::path& repoPath_);*/
-
   void persistEmailAddress(const std::string& email);
 
   void persistFileComprehensionData(
@@ -119,6 +115,7 @@ private:
 
   int _maxCommitHistoryLength = 0;
   int _maxCommitCount = 0;
+  int _commitCount = 0;
 };
   
 } // parser
