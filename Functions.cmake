@@ -45,6 +45,7 @@ function(add_odb_library _name)
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
   target_include_directories(${_name} PUBLIC
+    ${ODB_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/util/include
     ${CMAKE_SOURCE_DIR}/model/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
