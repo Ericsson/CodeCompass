@@ -86,7 +86,7 @@ void CompetenceDiagram::userViewDiagram(
   {
     for (const auto& node : getFileCompetenceRates(graph_, subdir, emails))
     {
-      if (node.first != currentNode)
+      if (node.first != subdir)
       {
         util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
         decorateEdge(graph_, edge, containsEdgeDecoration);

@@ -44,6 +44,15 @@ public:
     std::string& return_,
     const std::int32_t diagramId_) override;
 
+  void getUserEmailPairs(
+    std::vector<UserEmail>& return_) override;
+
+  void setUserData(
+    std::string& return_,
+    const std::string& email_,
+    const std::string& username_,
+    const std::string& company_) override;
+
 private:
   std::string getCurrentUser();
 

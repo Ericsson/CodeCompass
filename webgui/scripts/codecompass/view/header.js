@@ -22,6 +22,14 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
       var menu = new DropDownMenu();
 
       menu.addChild(new MenuItem({
+        label     : 'Workspace contributors',
+        iconClass : 'menuicon icon icon-user',
+        onClick   : function () {
+          //topic.publish('codecompass/infopage', 'startpage');
+        }
+      }));
+
+      menu.addChild(new MenuItem({
         label     : 'About',
         iconClass : 'menuicon icon icon-info',
         onClick   : function () {

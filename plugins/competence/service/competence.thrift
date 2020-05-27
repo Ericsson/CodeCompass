@@ -41,6 +41,13 @@ struct GitBlameHunk
                                       git_blame_options.oldest_commit). */
 }
 
+struct UserEmail
+{
+    1:string email;
+    2:string username;
+    3:string company;
+}
+
 service CompetenceService
 {
     string setCompetenceRatio(1:common.FileId fileId, 2:i32 ratio)
@@ -48,4 +55,8 @@ service CompetenceService
     string getDiagram(1:common.FileId fileId, 2:i32 diagramType)
 
     string getDiagramLegend(1:i32 diagramType)
+
+    list<UserEmail> getUserEmailPairs()
+
+    string setUserData(1:string email, 2:string username, 3:string company)
 }

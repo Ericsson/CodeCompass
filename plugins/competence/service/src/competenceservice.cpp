@@ -117,6 +117,39 @@ void CompetenceServiceHandler::getDiagramLegend(
   }
 }
 
+void CompetenceServiceHandler::getUserEmailPairs(
+  std::vector<UserEmail>& return_)
+{
+  _transaction([&, this]()
+  {
+    auto emails = _db->query<model::UserEmail>();
+    for (const auto& e : emails)
+    {
+      UserEmail tmp;
+      tmp.email = e.email;
+      tmp.username = e.username;
+      tmp.company = e.company;
+      return_.push_back(tmp);
+    }
+  });
+}
+
+void CompetenceServiceHandler::setUserData(
+  std::string& return_,
+  const std::string& email_,
+  const std::string& username_,
+  const std::string& company_)
+{
+  _transaction([&, this]()
+  {
+    auto record = _db->query_one<model::UserEmail>(
+      UserEmailQuery::email == email_);
+    record.get()->username = username_;
+    record.get()->company = company_;
+    _db->update(record);
+  });
+}
+
 std::string CompetenceServiceHandler::getCurrentUser()
 {
   std::string ret;
