@@ -97,8 +97,8 @@ ODB is an Object Relational Mapping tool, that is required by CodeCompass.
 We are using ODB 2.5 which is not part of the official Ubuntu repositories, so
 it needs to be built manually.
 
-The odb installation uses the build2 build system.
-(This is not needed for CodeCompass so you may delete it right after the installation of odb.)
+The ODB installation uses the build2 build system.
+(Build2 is not needed for CodeCompass so you may delete it right after the installation of ODB.)
 ```bash
 wget https://download.build2.org/0.12.0/build2-install-0.12.0.sh
 sh build2-install-0.12.0.sh --yes --trust yes "<build2_install_dir>"
