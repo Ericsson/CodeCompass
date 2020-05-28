@@ -125,7 +125,7 @@ bpkg build libodb-sqlite --yes
 bpkg build libodb-pgsql --yes
 bpkg install --all --recursive # you may to run the instal with sudo, depending on the install dir
 ```
-Please take into consideration that the odb installation can take up a long time (depending on the machine one is using),
+Please take into consideration that the ODB installation can take up a long time (depending on the machine one is using),
 but you can increase the used threads with the `--jobs` option.
 
 *Note:* now you may delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
