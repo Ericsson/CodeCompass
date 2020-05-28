@@ -128,7 +128,7 @@ bpkg install --all --recursive # you may to run the instal with sudo, depending 
 Please take into consideration that the odb installation can take up a long time (depending on the machine one is using),
 but you can increase the used threads with the `--jobs` option.
 
-*Note:* now you max delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
+*Note:* now you may delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
