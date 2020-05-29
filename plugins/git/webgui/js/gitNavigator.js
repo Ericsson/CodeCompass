@@ -230,7 +230,7 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
             var topObj = model.gitservice.getReferenceTopObject(
               repo.id, branchName);
 
-            if (topObj.type === GitObjectType.GIT_OBJ_COMMIT) {
+            if (topObj.type === GitObjectType.Commit) {
               that._data.push({
                 id          : branchCommitsId + "_view",
                 name        : '(branches view)',
@@ -271,7 +271,7 @@ function (Tooltip, ObjectStoreModel, declare, Memory, Observable, topic,
             var topObj = model.gitservice.getReferenceTopObject(
               repo.id, tagName);
 
-            if (topObj.type === GitObjectType.GIT_OBJ_TAG) {
+            if (topObj.type === GitObjectType.Tag) {
               var tag = model.gitservice.getTag(repo.id, topObj.oid);
 
               that._data.push({

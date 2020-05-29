@@ -1,5 +1,5 @@
 os: linux
-sudo: require
+dist: bionic
 
 language: generic
 
@@ -46,20 +46,73 @@ services:
     - byacc
     - flex
 
-.install_bionic: &install_bionic
-  >
-  sudo apt-get install -y
-  libboost-all-dev
-  llvm-7 llvm-7-dev clang-7 libclang-7-dev
-  default-jdk
-  gcc-7-plugin-dev
-  libsqlite3-dev
-  postgresql-server-dev-10
-  libmagic-dev libgit2-dev ctags
-  libgraphviz-dev npm
-  libgtest-dev
-  libssl1.0-dev
-  byacc flex
+.apt_bionic: &apt_bionic
+  update: true
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - gcc-7-plugin-dev
+    # SQLite
+    - libsqlite3-dev
+    # PostgreSQL
+    - postgresql-server-dev-10
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl1.0-dev
+    # Thrift (compile)
+    - byacc
+    - flex
+
+.apt_focal: &apt_focal
+  update: true
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - gcc-9-plugin-dev
+    # SQLite
+    - libsqlite3-dev
+    # PostgreSQL
+    # (Travis can't automatically spin up a running PostgreSQL instance.)
+    - postgresql-12
+    - postgresql-server-dev-12
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl-dev
+    # Thrift (compile)
+    - byacc
+    - flex
 
 .install_odb: &install_odb
   |
@@ -74,9 +127,9 @@ services:
     mkdir /tmp/odb_build
     cd /tmp/odb_build
     bpkg create --quiet --jobs $(nproc) cc \
-    config.cxx=g++ config.cc.coptions=-O3 \
-    config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" \
-    config.install.sudo=sudo
+      config.cxx=g++ config.cc.coptions=-O3 \
+      config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" \
+      config.install.sudo=sudo
     bpkg add https://pkg.cppget.org/1/beta --trust-yes
     bpkg fetch --trust-yes
     bpkg build odb --yes
@@ -101,7 +154,7 @@ services:
     --without-haskell --without-go --without-rs --without-haxe       \
     --without-dotnetcore --without-d --without-qt4 --without-qt5     \
     --without-java
-    make install
+    make install -j $(nproc)
   fi
 
 .install_gtest_xenial: &install_gtest_xenial
@@ -113,7 +166,7 @@ services:
     cd gtest
     mkdir build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-    make
+    make -j $(nproc)
 
     mkdir -p $HOME/gtest_install/lib
     cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
@@ -128,7 +181,7 @@ services:
     cd gtest
     mkdir build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-    make install
+    make install -j $(nproc)
   fi
 
 before_script:
@@ -145,13 +198,26 @@ before_script:
   # ODB
   - export CMAKE_PREFIX_PATH=$HOME/odb_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/odb_install/bin:$PATH
+  - which odb
   - odb --version
   # Thrift
   - export CMAKE_PREFIX_PATH=$HOME/thrift_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/thrift_install/bin:$PATH
+  - which thrift
   - thrift --version
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
+
+.fix_travis_postgresql_server: &fix_travis_postgresql_server
+  # Newer PostgreSQL servers on Travis don't automatically allow connecting
+  # with the 'postgresql' user.
+  # !! YOU SHOULD **NEVER** DO THIS ON A LIVE SYSTEM !!
+  - sudo cat /etc/postgresql/*/main/pg_hba.conf
+  - sudo sed -i "s/peer/trust/g" /etc/postgresql/*/main/pg_hba.conf
+  - sudo sed -i "s/md5/trust/g" /etc/postgresql/*/main/pg_hba.conf
+  - sudo cat /etc/postgresql/*/main/pg_hba.conf
+  - sudo service postgresql restart 12
+  - sudo service postgresql status
 
 .build_postgres: &build_postgres
   - cd $TRAVIS_BUILD_DIR
@@ -163,8 +229,8 @@ before_script:
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-  - make install
+    -DClang_DIR=/usr/lib/cmake/clang-7
+  - make install -j $(nproc)
   - make test ARGS=-V
 
 .build_sqlite: &build_sqlite
@@ -177,13 +243,13 @@ before_script:
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_sqlite
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
     -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-  - make install
+    -DClang_DIR=/usr/lib/cmake/clang-7
+  - make install -j $(nproc)
   - make test ARGS=-V
 
 jobs:
   include:
-    - name: "Xenial PostgreSQL build"
+    - name: "Xenial Xerus (16.04) PostgreSQL build"
       dist: xenial
       addons:
         apt:
@@ -194,36 +260,59 @@ jobs:
         - *install_gtest_xenial
       script:
         *build_postgres
-    - name: "Xenial SQLite build"
+    - name: "Xenial Xerus (16.04) SQLite build"
       dist: xenial
       addons:
         apt:
           <<: *apt_xenial
-        postgresql: "9.5"
       install:
         - *install_thrift
         - *install_gtest_xenial
       script:
         *build_sqlite
-    - name: "Bionic PostgreSQL build"
+    - name: "Bionic Beaver (18.04) PostgreSQL build"
       dist: bionic
       addons:
+        apt:
+          <<: *apt_bionic
         postgresql: "10"
       install:
-        - sudo apt-get update -y
-        - *install_bionic
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
       script:
         *build_postgres
-    - name: "Bionic SQLite build"
+    - name: "Bionic Beaver (18.04) SQLite build"
       dist: bionic
       addons:
-        postgresql: "10"
+        apt:
+          <<: *apt_bionic
       install:
-        - sudo apt-get update -y
-        - *install_bionic
+        - *install_odb
+        - *install_thrift
+        - *install_gtest_bionic
+      script:
+        *build_sqlite
+    - name: "Focal Fossa (20.04) PostgreSQL build"
+      dist: focal
+      addons:
+        apt:
+          <<: *apt_focal
+        postgresql: "12"
+      before_install:
+        - *fix_travis_postgresql_server
+      install:
+        - *install_odb
+        - *install_thrift
+        - *install_gtest_bionic
+      script:
+        *build_postgres
+    - name: "Focal Fossa (20.04) SQLite build"
+      dist: focal
+      addons:
+        apt:
+          <<: *apt_focal
+      install:
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
