@@ -46,20 +46,38 @@ services:
     - byacc
     - flex
 
-.install_bionic: &install_bionic
-  >
-  sudo apt-get install -y
-  libboost-all-dev
-  llvm-7 llvm-7-dev clang-7 libclang-7-dev
-  default-jdk
-  gcc-7-plugin-dev
-  libsqlite3-dev
-  postgresql-server-dev-10
-  libmagic-dev libgit2-dev ctags
-  libgraphviz-dev npm
-  libgtest-dev
-  libssl1.0-dev
-  byacc flex
+.apt_bionic: &apt_bionic
+  update: true
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - gcc-7-plugin-dev
+    # SQLite
+    - libsqlite3-dev
+    # PostgreSQL
+    - postgresql-server-dev-10
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl1.0-dev
+    # Thrift (compile)
+    - byacc
+    - flex
 
 .install_odb: &install_odb
   |
@@ -207,10 +225,10 @@ jobs:
     - name: "Bionic PostgreSQL build"
       dist: bionic
       addons:
+        apt:
+          <<: *apt_bionic
         postgresql: "10"
       install:
-        - sudo apt-get update -y
-        - *install_bionic
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
@@ -219,10 +237,10 @@ jobs:
     - name: "Bionic SQLite build"
       dist: bionic
       addons:
+        apt:
+          <<: *apt_bionic
         postgresql: "10"
       install:
-        - sudo apt-get update -y
-        - *install_bionic
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
@@ -235,3 +253,4 @@ cache:
     - $HOME/gtest_install
     - $HOME/build2_install
     - $HOME/odb_install
+
