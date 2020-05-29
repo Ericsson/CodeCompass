@@ -53,7 +53,7 @@ repositories:
 sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 
-sudo apt-get install git cmake make g++ gcc-5-plugin-dev libboost-all-dev \
+sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
@@ -92,10 +92,10 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### ODB
+### ODB (for Ubuntu 18.04)
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
-We are using ODB 2.5 which is not part of the official Ubuntu repositories, so
-it needs to be built manually.
+For Ubuntu 18.04, the official release of ODB conflicts with the official compiler (GNU G++ 7) of the distribution.
+A newer version of ODB must be compiled manually.
 
 The ODB installation uses the build2 build system.
 (Build2 is not needed for CodeCompass so you may delete it right after the installation of ODB.)
