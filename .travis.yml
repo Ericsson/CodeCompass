@@ -1,16 +1,19 @@
 os: linux
-sudo: require
-
+dist: bionic
 language: generic
-
 services:
   - postgresql
 
-.apt_xenial: &apt_xenial
+# ---------------------------- APT configuration -----------------------------
+
+.apt_xenial_config: &apt_xenial_config
   update: true
   sources:
     - ubuntu-toolchain-r-test
     - llvm-toolchain-xenial-7
+
+.apt_xenial_sqlite: &apt_xenial_sqlite
+  <<: *apt_xenial_config
   packages:
     # Boost
     - libboost-all-dev
@@ -27,6 +30,37 @@ services:
     # SQLite
     - libodb-sqlite-dev
     - libsqlite3-dev
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - nodejs-legacy
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl-dev
+    # Thrift (compile)
+    - byacc
+    - flex
+
+.apt_xenial_pgsql: &apt_xenial_pgsql
+  <<: *apt_xenial_config
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - odb
+    - libodb-dev
     # PostgreSQL
     - libodb-pgsql-dev
     - postgresql-server-dev-9.5
@@ -46,24 +80,166 @@ services:
     - byacc
     - flex
 
-.install_bionic: &install_bionic
-  >
-  sudo apt-get install -y
-  libboost-all-dev
-  llvm-7 llvm-7-dev clang-7 libclang-7-dev
-  default-jdk
-  gcc-7-plugin-dev
-  libsqlite3-dev
-  postgresql-server-dev-10
-  libmagic-dev libgit2-dev ctags
-  libgraphviz-dev npm
-  libgtest-dev
-  libssl1.0-dev
-  byacc flex
+.apt_bionic_config: &apt_bionic_config
+  update: true
+
+.apt_bionic_sqlite: &apt_bionic_sqlite
+  <<: *apt_bionic_config
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - gcc-7-plugin-dev
+    # SQLite
+    - libsqlite3-dev
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl1.0-dev
+    # Thrift (compile)
+    - byacc
+    - flex
+
+.apt_bionic_pgsql: &apt_bionic_pgsql
+  <<: *apt_bionic_config
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - gcc-7-plugin-dev
+    # PostgreSQL
+    - postgresql-server-dev-10
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - libssl1.0-dev
+    # Thrift (compile)
+    - byacc
+    - flex
+
+.apt_focal_config: &apt_focal_config
+  update: true
+
+.apt_focal_sqlite: &apt_focal_sqlite
+  <<: *apt_focal_config
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - odb
+    - libodb-dev
+    # SQLite
+    - libodb-sqlite-dev
+    - libsqlite3-dev
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - thrift-compiler
+    - libthrift-dev
+    - libssl-dev
+
+.apt_focal_pgsql: &apt_focal_pgsql
+  <<: *apt_focal_config
+  packages:
+    # Boost
+    - libboost-all-dev
+    # LLVM/clang
+    - llvm-7
+    - llvm-7-dev
+    - clang-7
+    - libclang-7-dev
+    # Java
+    - default-jdk
+    # ODB
+    - odb
+    - libodb-dev
+    # PostgreSQL
+    - libodb-pgsql-dev
+    # (Travis can't automatically spin up a running PostgreSQL instance for
+    # 20.04.)
+    - postgresql-12
+    - postgresql-server-dev-12
+    # Parser
+    - libmagic-dev
+    - libgit2-dev
+    - ctags
+    # Service
+    - libgraphviz-dev
+    - npm
+    # GTest
+    - libgtest-dev
+    # Thrift
+    - thrift-compiler
+    - libthrift-dev
+    - libssl-dev
+
+# ------------------------ Self-compiled dependencies ------------------------
+
+.install_thrift: &install_thrift
+  |
+  if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
+    echo "Building Thrift..."
+    cd $HOME
+    wget -O thrift-0.13.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz"
+    tar -xvf ./thrift-0.13.0.tar.gz
+    cd thrift-0.13.0
+    ./configure --prefix=$HOME/thrift_install --without-python         \
+      --enable-libtool-lock --enable-tutorial=no --enable-tests=no     \
+      --with-libevent --with-zlib --without-nodejs --without-lua       \
+      --without-ruby --without-csharp --without-erlang --without-perl  \
+      --without-php --without-php_extension --without-dart             \
+      --without-haskell --without-go --without-rs --without-haxe       \
+      --without-dotnetcore --without-d --without-qt4 --without-qt5     \
+      --without-java
+    make install -j $(nproc)
+  fi
 
 .install_odb: &install_odb
   |
   if [ ! -f "$HOME/build2_install/bin/bpkg" ]; then
+    echo "Building Build2..."
     mkdir /tmp/build2src
     cd /tmp/build2src
     curl -sSfO https://download.build2.org/0.12.0/build2-install-0.12.0.sh
@@ -74,46 +250,30 @@ services:
     mkdir /tmp/odb_build
     cd /tmp/odb_build
     bpkg create --quiet --jobs $(nproc) cc \
-    config.cxx=g++ config.cc.coptions=-O3 \
-    config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" \
-    config.install.sudo=sudo
+      config.cxx=g++ config.cc.coptions=-O3 \
+      config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" \
+      config.install.sudo=sudo
     bpkg add https://pkg.cppget.org/1/beta --trust-yes
     bpkg fetch --trust-yes
+    echo "Building ODB..."
     bpkg build odb --yes
     bpkg build libodb --yes
-    bpkg build libodb-sqlite --yes
-    bpkg build libodb-pgsql --yes
+    [ "$DATABASE" == "sqlite" ] && (echo "Building ODB/SQLite..."; bpkg build libodb-sqlite --yes) || echo "Skip building ODB/SQLite!"
+    [ "$DATABASE" == "pgsql" ] && (echo "Building ODB/PostgreSQL..."; bpkg build libodb-pgsql --yes) || echo "Skip building ODB/PostgreSQL!"
     bpkg install --all --recursive
-  fi
-
-.install_thrift: &install_thrift
-  |
-  if [ ! -f "$HOME/thrift_install/bin/thrift" ]; then
-    cd $HOME
-    wget -O thrift-0.13.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz"
-    tar -xvf ./thrift-0.13.0.tar.gz
-    cd thrift-0.13.0
-    ./configure --prefix=$HOME/thrift_install --without-python       \
-    --enable-libtool-lock --enable-tutorial=no --enable-tests=no     \
-    --with-libevent --with-zlib --without-nodejs --without-lua       \
-    --without-ruby --without-csharp --without-erlang --without-perl  \
-    --without-php --without-php_extension --without-dart             \
-    --without-haskell --without-go --without-rs --without-haxe       \
-    --without-dotnetcore --without-d --without-qt4 --without-qt5     \
-    --without-java
-    make install
   fi
 
 .install_gtest_xenial: &install_gtest_xenial
   |
   if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+    echo "Building GoogleTest..."
     cd $HOME
     mkdir gtest
     cp -R /usr/src/gtest/* ./gtest
     cd gtest
     mkdir build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-    make
+    make -j $(nproc)
 
     mkdir -p $HOME/gtest_install/lib
     cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
@@ -122,14 +282,37 @@ services:
 .install_gtest_bionic: &install_gtest_bionic
   |
   if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+    echo "Building GoogleTest..."
     cd $HOME
     mkdir gtest
     cp -R /usr/src/googletest/* ./gtest
     cd gtest
     mkdir build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-    make install
+    make install -j $(nproc)
   fi
+
+.install_gtest_focal: &install_gtest_focal
+  |
+  if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
+    echo "Building GoogleTest..."
+    cd $HOME
+    mkdir gtest
+    cp -R /usr/src/googletest/* ./gtest
+    cd gtest
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
+    make install -j $(nproc)
+  fi
+
+cache:
+  directories:
+    - $HOME/build2_install
+    - $HOME/gtest_install
+    - $HOME/odb_install
+    - $HOME/thrift_install
+
+# ---------------------------------- Setup -----------------------------------
 
 before_script:
   # Default locations and versions
@@ -145,13 +328,26 @@ before_script:
   # ODB
   - export CMAKE_PREFIX_PATH=$HOME/odb_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/odb_install/bin:$PATH
+  - which odb
   - odb --version
   # Thrift
   - export CMAKE_PREFIX_PATH=$HOME/thrift_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/thrift_install/bin:$PATH
+  - which thrift
   - thrift --version
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
+
+.fix_focal_travis_postgresql_server: &fix_focal_travis_postgresql_server
+  # Newer PostgreSQL servers on Travis don't automatically allow connecting
+  # with the 'postgresql' user.
+  # !! YOU SHOULD **NEVER** DO THIS ON A LIVE SYSTEM !!
+  - sudo cat /etc/postgresql/*/main/pg_hba.conf
+  - sudo sed -i "s/peer/trust/g" /etc/postgresql/*/main/pg_hba.conf
+  - sudo sed -i "s/md5/trust/g" /etc/postgresql/*/main/pg_hba.conf
+  - sudo cat /etc/postgresql/*/main/pg_hba.conf
+  - sudo service postgresql restart 12
+  - sudo service postgresql status
 
 .build_postgres: &build_postgres
   - cd $TRAVIS_BUILD_DIR
@@ -163,8 +359,8 @@ before_script:
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-  - make install
+    -DClang_DIR=/usr/lib/cmake/clang-7
+  - make install -j $(nproc)
   - make test ARGS=-V
 
 .build_sqlite: &build_sqlite
@@ -177,62 +373,89 @@ before_script:
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_sqlite
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
     -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR:PATH=/usr/lib/cmake/clang-7
-  - make install
+    -DClang_DIR=/usr/lib/cmake/clang-7
+  - make install -j $(nproc)
   - make test ARGS=-V
+
+# ----------------------------------- Jobs -----------------------------------
 
 jobs:
   include:
-    - name: "Xenial PostgreSQL build"
+    - name: "Xenial Xerus (16.04), PostgreSQL"
       dist: xenial
       addons:
         apt:
-          <<: *apt_xenial
+          <<: *apt_xenial_pgsql
         postgresql: "9.5"
+      env:
+        - DATABASE=pgsql
       install:
         - *install_thrift
         - *install_gtest_xenial
       script:
         *build_postgres
-    - name: "Xenial SQLite build"
+    - name: "Xenial Xerus (16.04), SQLite"
       dist: xenial
       addons:
         apt:
-          <<: *apt_xenial
-        postgresql: "9.5"
+          <<: *apt_xenial_sqlite
+      env:
+        - DATABASE=sqlite
       install:
         - *install_thrift
         - *install_gtest_xenial
       script:
         *build_sqlite
-    - name: "Bionic PostgreSQL build"
+    - name: "Bionic Beaver (18.04), PostgreSQL"
       dist: bionic
       addons:
+        apt:
+          <<: *apt_bionic_pgsql
         postgresql: "10"
+      env:
+        - DATABASE=pgsql
       install:
-        - sudo apt-get update -y
-        - *install_bionic
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
       script:
         *build_postgres
-    - name: "Bionic SQLite build"
+    - name: "Bionic Beaver (18.04), SQLite"
       dist: bionic
       addons:
-        postgresql: "10"
+        apt:
+          <<: *apt_bionic_sqlite
+      env:
+        - DATABASE=sqlite
       install:
-        - sudo apt-get update -y
-        - *install_bionic
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
+      script:
+        *build_sqlite
+    - name: "Focal Fossa (20.04), PostgreSQL"
+      dist: focal
+      addons:
+        apt:
+          <<: *apt_focal_pgsql
+        postgresql: "12"
+      env:
+        - DATABASE=pgsql
+      before_install:
+        - *fix_focal_travis_postgresql_server
+      install:
+        - *install_gtest_focal
+      script:
+        *build_postgres
+    - name: "Focal Fossa (20.04), SQLite"
+      dist: focal
+      addons:
+        apt:
+          <<: *apt_focal_sqlite
+      env:
+        - DATABASE=sqlite
+      install:
+        - *install_gtest_focal
       script:
         *build_sqlite
 
-cache:
-  directories:
-    - $HOME/thrift_install
-    - $HOME/gtest_install
-    - $HOME/build2_install
-    - $HOME/odb_install
