@@ -1,4 +1,4 @@
-# 
+#
 # https://github.com/BtbN/OdbCmake/blob/master/cmake/Modules/FindODB.cmake
 # This module defines the following variables:
 #
@@ -7,7 +7,7 @@
 #                  odb generated headers.
 #
 #   ODB_FOUND - All required components and the core library were found
-#   ODB_INCLUDR_DIRS - Combined list of all components include dirs
+#   ODB_INCLUDE_DIRS - Combined list of all components include dirs
 #   ODB_LIBRARIES - Combined list of all componenets libraries
 #
 #   ODB_LIBODB_FOUND - Libodb core library was found
@@ -98,7 +98,7 @@ endif()
 set(ODB_INCLUDE_DIRS ${ODB_LIBODB_INCLUDE_DIRS})
 set(ODB_LIBRARIES ${ODB_LIBODB_LIBRARIES})
 
-set(ODB_FIND_COMPONENTS "pgsql" "sqlite")
+set(ODB_FIND_COMPONENTS "${DATABASE}")
 foreach(component ${ODB_FIND_COMPONENTS})
 	find_odb_api(${component})
 endforeach()

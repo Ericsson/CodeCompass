@@ -1,25 +1,25 @@
-# CodeCompass development dependecies
+# CodeCompass development dependencies
 FROM ubuntu:bionic
 
 RUN set -x && apt-get update -qq \
     && apt-get -y install \
     cmake make \
-    llvm-7 clang-7 llvm-7-dev libclang-7-dev \
-    odb libodb-sqlite-dev libodb-pgsql-dev \
-    libsqlite3-dev \
+    curl ctags \
     default-jdk \
-    libssl1.0-dev \
-    libgraphviz-dev \
-    libmagic-dev \
-    libgit2-dev \
-    nodejs-dev node-gyp npm \
-    ctags \
-    libgtest-dev \
-    # Install boost libraries.
+    gcc-7 gcc-7-plugin-dev \
     libboost-filesystem-dev \
     libboost-log-dev \
     libboost-program-options-dev \
-    libboost-regex-dev
+    libboost-regex-dev \
+    libgit2-dev \
+    libgraphviz-dev \
+    libgtest-dev \
+    libmagic-dev \
+    libsqlite3-dev \
+    libssl1.0-dev \
+    llvm-7 clang-7 llvm-7-dev libclang-7-dev \
+    nodejs-dev node-gyp npm
+
 # Download the Thrift source code.
 ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
 # Build Thrift
@@ -35,7 +35,7 @@ RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
     --without-dotnetcore --without-d --without-qt4 --without-qt5;    \
     cd /; \
     make -C /opt/thrift-0.13.0 -j $(nproc) --silent install; \
-    rm -rf /opt/thrift-0.13.0 /opt/thrift-0.13.0.tar.gz
+    rm -rf /opt/thrift-0.13.0
 # Build GTest.
 RUN cd /usr/src/googletest/ && \
      mkdir build && \
@@ -44,14 +44,30 @@ RUN cd /usr/src/googletest/ && \
      make install && \
      cd / && \
      rm -rf /usr/src/googletest/build
-# Remove unnecessary packages.
-RUN apt-get purge --yes --auto-remove wget \
-  # Erase downloaded archive files.
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
-  && set +x
 
-COPY codecompass-build.sh /usr/local/bin
+# Download build2 toolchain install script.
+ADD https://download.build2.org/0.12.0/build2-install-0.12.0.sh /opt/build2-install-0.12.0.sh
+# Build build2, then ODB.
+RUN cd /opt/ && \
+    sh build2-install-0.12.0.sh --yes --trust yes; \
+    mkdir /opt/odb_build && \
+    cd /opt/odb_build && \
+    bpkg create --quiet --jobs $(nproc) cc \
+    config.cxx=g++ \
+    config.cc.coptions=-O3 \
+    config.bin.rpath=/usr/local/lib \
+    config.install.root=/usr/local && \
+    bpkg add https://pkg.cppget.org/1/beta --trust-yes && \
+    bpkg fetch --trust-yes && \
+    bpkg build odb --yes && \
+    bpkg build libodb --yes && \
+    bpkg build libodb-sqlite --yes && \
+    bpkg build libodb-pgsql --yes && \
+    bpkg install --all --recursive; \
+    rm -rf /opt/build2* && \
+    rm -rf /opt/odb_build
+
+COPY docker/dev/codecompass-build.sh /usr/local/bin
 
 ENV DATABASE=sqlite \
     BUILD_TYPE=Release \
@@ -61,5 +77,6 @@ ENV DATABASE=sqlite \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
 
-ENV PATH="$INSTALL_DIR/bin:$PATH"
+ENV PATH="$INSTALL_DIR/bin:/opt/odb/bin:$PATH"
+ENV CMAKE_PREFIX_PATH="/opt/odb:$PATH"
 ENV LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
