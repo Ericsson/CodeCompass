@@ -27,7 +27,7 @@ be installed from the official repository of the given Linux distribution.
   database system is used.
 - **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
   Java.
-- **`libssl-dev`**: OpenSSL libs are required by Thrift.
+- **`libssl-dev`** / **`libssl1.0-dev`**: OpenSSL libs are required by Thrift, and NodeJS.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
@@ -64,7 +64,7 @@ sudo apt-get install git cmake make g++ gcc-5-plugin-dev libboost-all-dev \
 ```bash
 sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
   llvm-7-dev clang-7 libclang-7-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+  default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
 
