@@ -157,8 +157,6 @@ wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thr
 tar -xvf ./thrift-0.13.0.tar.gz
 cd thrift-0.13.0
 
-# Ant is required for having Java support in Thrift.
-sudo apt-get install ant
 ./configure --prefix=<thrift_install_dir> --silent --without-python \
   --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
   --with-libevent --with-zlib --without-nodejs --without-lua        \
