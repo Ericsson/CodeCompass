@@ -15,6 +15,7 @@ the following filesystem layout:
    |-CodeCompass   # Source code from Git.
    | `-docker      # Docker related files.
    |  `-dev        # Docker files for development.
+   |  `-web        # Docker files for deployment.  
    |-build         # CMake runs here.
    |-install       # CodeCompass goes here.
    `-workspace     # Parsed projects' workspace directory.
@@ -26,12 +27,17 @@ source code. The `workspace` directory should be created manually.
 
 Table of Contents
 =================
-* [Build image from development](#build-image-from-development)
-* [How to use docker to develop CodeCompass](#how-to-use-docker-to-develop-codecompass)
-  * [Build, install and test CodeCompass](#build-install-and-test-codecompass)
-  * [How to parse a project](#how-to-parse-a-project)
-  * [How to start a webserver](#how-to-start-a-webserver)
+* [Development](#development)
+  * [Build image for development](#build-image-for-development)
+  * [How to use docker to develop CodeCompass](#how-to-use-docker-to-develop-codecompass)
+    * [Build, install and test CodeCompass](#build-install-and-test-codecompass)
+    * [How to parse a project](#how-to-parse-a-project)
+    * [How to start a webserver](#how-to-start-a-webserver)
+* [Deployment](#deployment)
+  * [Build image for web](#build-image-for-web)
+  * [How to run CodeCompass webserver in docker](#how-to-run-codecompass-webserver-in-docker)
 
+# Development
 ## Build image from development
 Build the development environment image. The tag name is important!
 **It is very important to give this command from the top level directory of the
@@ -39,11 +45,15 @@ CodeCompass source.**
 
 ```
 cd CodeCompass
-docker build -t codecompass-dev --file docker/dev/Dockerfile .
+docker build -t codecompass:dev --file docker/dev/Dockerfile .
 ```
 
+See more information [below](#how-to-use-docker-to-develop-codecompass) how to
+use this image to develop CodeCompass.
+
 ## How to use docker to develop CodeCompass
-You can use the `codecompass-dev` image created above to develop CodeCompass.
+You can use the `codecompass:dev` image created
+[above](#build-image-for-development) to develop CodeCompass.
 First, you have to start a docker container from this image, which will mount
 your CodeCompass directory from your host and starts a shell:
 ```bash
@@ -51,8 +61,8 @@ docker run --rm -ti \
   --env DATABASE=sqlite --env BUILD_TYPE=Release \
   --volume /path/to/host/CodeCompass:/CodeCompass \
   --volume /path/to/your/host/project:/projects/myproject \
-  --publish 8001:8080 \
-  codecompass-dev \
+  -p 8001:8080 \
+  codecompass:dev \
   /bin/bash
 ```
 This container will be used in the next subsections to build CodeCompass,
@@ -98,4 +108,27 @@ mkdir -p /CodeCompass/workspace
 # Run the web server.
 CodeCompass_webserver \
   -w /CodeCompass/workspace
+```
+
+# Deployment
+
+## Build image for web
+Build the web environment image from CodeCompass `master` branch:
+```
+docker build -t codecompass:web --no-cache --file docker/web/Dockerfile .
+```
+
+See more information [below](#how-to-run-codecompass-webserver-in-docker) how
+to use this image to start a CodeCompass webserver.
+
+## How to run CodeCompass webserver in docker
+You can use the `codecompass:web` image created
+[above](#build-image-for-web) to start a CodeCompass webserver.
+For this run the following command:
+```bash
+docker run \
+  --volume /path/to/host/workspace/:/workspace \
+  -p 8010:8080 \
+  codecompass:web \
+  CodeCompass_webserver -w /workspace
 ```

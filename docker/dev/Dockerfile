@@ -25,7 +25,7 @@ ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrif
 # Build Thrift
 RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
     cd /opt/thrift-0.13.0 && \
-    ./configure \
+    ./configure --prefix=/opt/thrift_install \
     --silent --without-python                                        \
     --enable-libtool-lock --enable-tutorial=no --enable-tests=no     \
     --with-libevent --with-zlib --without-nodejs --without-lua       \
@@ -55,8 +55,8 @@ RUN cd /opt/ && \
     bpkg create --quiet --jobs $(nproc) cc \
     config.cxx=g++ \
     config.cc.coptions=-O3 \
-    config.bin.rpath=/usr/local/lib \
-    config.install.root=/usr/local && \
+    config.bin.rpath=/opt/odb_install/lib \
+    config.install.root=/opt/odb_install && \
     bpkg add https://pkg.cppget.org/1/beta --trust-yes && \
     bpkg fetch --trust-yes && \
     bpkg build odb --yes && \
@@ -77,6 +77,6 @@ ENV DATABASE=sqlite \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
 
-ENV PATH="$INSTALL_DIR/bin:/opt/odb/bin:$PATH"
-ENV CMAKE_PREFIX_PATH="/opt/odb:$PATH"
+ENV PATH="$INSTALL_DIR/bin:/opt/thrift_install/bin:/opt/odb_install/bin:$PATH"
+ENV CMAKE_PREFIX_PATH="/opt/thrift_install:/opt/odb_install:$CMAKE_PREFIX_PATH"
 ENV LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
