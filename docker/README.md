@@ -15,6 +15,7 @@ the following filesystem layout:
    |-CodeCompass   # Source code from Git.
    | `-docker      # Docker related files.
    |  `-dev        # Docker files for development.
+   |  `-web        # Docker files for deployment.  
    |-build         # CMake runs here.
    |-install       # CodeCompass goes here.
    `-workspace     # Parsed projects' workspace directory.
@@ -44,14 +45,14 @@ CodeCompass source.**
 
 ```
 cd CodeCompass
-docker build -t codecompass-dev --file docker/dev/Dockerfile .
+docker build -t codecompass:dev --file docker/dev/Dockerfile .
 ```
 
 See more information [below](#how-to-use-docker-to-develop-codecompass) how to
 use this image to develop CodeCompass.
 
 ## How to use docker to develop CodeCompass
-You can use the `codecompass-dev` image created
+You can use the `codecompass:dev` image created
 [above](#build-image-for-development) to develop CodeCompass.
 First, you have to start a docker container from this image, which will mount
 your CodeCompass directory from your host and starts a shell:
@@ -61,7 +62,7 @@ docker run --rm -ti \
   --volume /path/to/host/CodeCompass:/CodeCompass \
   --volume /path/to/your/host/project:/projects/myproject \
   -p 8001:8080 \
-  codecompass-dev \
+  codecompass:dev \
   /bin/bash
 ```
 This container will be used in the next subsections to build CodeCompass,
@@ -114,20 +115,20 @@ CodeCompass_webserver \
 ## Build image for web
 Build the web environment image from CodeCompass `master` branch:
 ```
-docker build -t codecompass-web --no-cache docker/web
+docker build -t codecompass:web --no-cache --file docker/web/Dockerfile .
 ```
 
 See more information [below](#how-to-run-codecompass-webserver-in-docker) how
 to use this image to start a CodeCompass webserver.
 
 ## How to run CodeCompass webserver in docker
-You can use the `codecompass-web` image created
+You can use the `codecompass:web` image created
 [above](#build-image-for-web) to start a CodeCompass webserver.
 For this run the following command:
 ```bash
 docker run \
   --volume /path/to/host/workspace/:/workspace \
   -p 8010:8080 \
-  codecompass-web \
+  codecompass:web \
   CodeCompass_webserver -w /workspace
 ```
