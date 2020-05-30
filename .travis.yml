@@ -6,7 +6,22 @@ language: generic
 services:
   - postgresql
 
-.apt_xenial: &apt_xenial
+.xenial_dependencies: &xenial_dependencies
+  update: true
+  packages:
+    # Java
+    - default-jdk
+    # Node
+    - nodejs-legacy
+    - npm
+    # GTest (compile)
+    - libgtest-dev
+    # Thrift (compile)
+    - libssl-dev
+    - byacc
+    - flex
+
+.xenial_test: &xenial_test
   update: true
   sources:
     - ubuntu-toolchain-r-test
@@ -42,11 +57,26 @@ services:
     - libgtest-dev
     # Thrift
     - libssl-dev
+
+.bionic_dependencies: &bionic_dependencies
+  update: true
+  packages:
+    # Java
+    - default-jdk
+    # Node
+    - npm
+    # ODB (compile)
+    - gcc-7-plugin-dev
+    - libsqlite3-dev
+    - postgresql-server-dev-10
+    # GTest (compile)
+    - libgtest-dev
     # Thrift (compile)
+    - libssl1.0-dev
     - byacc
     - flex
 
-.apt_bionic: &apt_bionic
+.bionic_test: &bionic_test
   update: true
   packages:
     # Boost
@@ -58,8 +88,6 @@ services:
     - libclang-7-dev
     # Java
     - default-jdk
-    # ODB
-    - gcc-7-plugin-dev
     # SQLite
     - libsqlite3-dev
     # PostgreSQL
@@ -75,11 +103,28 @@ services:
     - libgtest-dev
     # Thrift
     - libssl1.0-dev
+
+.focal_dependencies: &focal_dependencies
+  update: true
+  packages:
+    # Java
+    - default-jdk
+    # ODB (compile)
+    - gcc-9-plugin-dev
+    # SQLite
+    - libsqlite3-dev
+    # PostgreSQL
+    - postgresql-server-dev-12
+    # Node
+    - npm
+    # GTest (compile)
+    - libgtest-dev
     # Thrift (compile)
+    - libssl-dev
     - byacc
     - flex
 
-.apt_focal: &apt_focal
+.focal_test: &focal_test
   update: true
   packages:
     # Boost
@@ -91,8 +136,6 @@ services:
     - libclang-7-dev
     # Java
     - default-jdk
-    # ODB
-    - gcc-9-plugin-dev
     # SQLite
     - libsqlite3-dev
     # PostgreSQL
@@ -110,9 +153,6 @@ services:
     - libgtest-dev
     # Thrift
     - libssl-dev
-    # Thrift (compile)
-    - byacc
-    - flex
 
 .install_odb: &install_odb
   |
@@ -192,6 +232,8 @@ before_script:
   - clang --version
   - llvm-config --version --has-rtti
   - javac -version
+
+.before_test: &before_test
   # LLVM/Clang test from package install
   - /usr/bin/clang-7 --version
   - /usr/bin/llvm-config-7 --version --has-rtti
@@ -249,75 +291,97 @@ before_script:
 
 jobs:
   include:
-    - name: "Xenial Xerus (16.04) PostgreSQL build"
+    - stage: "Dependencies"
+      name: "Xenial Xerus (16.04)"
       dist: xenial
       addons:
         apt:
-          <<: *apt_xenial
+          <<: *xenial_dependencies
         postgresql: "9.5"
       install:
         - *install_thrift
         - *install_gtest_xenial
-      script:
-        *build_postgres
-    - name: "Xenial Xerus (16.04) SQLite build"
-      dist: xenial
-      addons:
-        apt:
-          <<: *apt_xenial
-      install:
-        - *install_thrift
-        - *install_gtest_xenial
-      script:
-        *build_sqlite
-    - name: "Bionic Beaver (18.04) PostgreSQL build"
+    - stage: "Dependencies"
+      name: "Bionic Beaver (18.04)"
       dist: bionic
       addons:
         apt:
-          <<: *apt_bionic
+          <<: *bionic_dependencies
         postgresql: "10"
       install:
         - *install_odb
         - *install_thrift
         - *install_gtest_bionic
+    - stage: "Dependencies"
+      name: "Focal Fossa (20.04)"
+      dist: focal
+      addons:
+        apt:
+          <<: *focal_dependencies
+        postgresql: "12"
+      install:
+        - *install_odb
+        - *install_thrift
+        - *install_gtest_bionic
+    - stage: "CodeCompass"
+      name: "Xenial Xerus (16.04), PostgreSQL"
+      dist: xenial
+      addons:
+        apt:
+          <<: *xenial_test
+        postgresql: "9.5"
       script:
-        *build_postgres
-    - name: "Bionic Beaver (18.04) SQLite build"
+        - *before_test
+        - *build_postgres
+    - stage: "CodeCompass"
+      name: "Xenial Xerus (16.04), SQLite"
+      dist: xenial
+      addons:
+        apt:
+          <<: *xenial_test
+      script:
+        - *before_test
+        - *build_sqlite
+    - stage: "CodeCompass"
+      name: "Bionic Beaver (18.04), PostgreSQL"
       dist: bionic
       addons:
         apt:
-          <<: *apt_bionic
-      install:
-        - *install_odb
-        - *install_thrift
-        - *install_gtest_bionic
+          <<: *bionic_test
+        postgresql: "10"
       script:
-        *build_sqlite
-    - name: "Focal Fossa (20.04) PostgreSQL build"
+        - *before_test
+        - *build_postgres
+    - stage: "CodeCompass"
+      name: "Bionic Beaver (18.04), SQLite"
+      dist: bionic
+      addons:
+        apt:
+          <<: *bionic_test
+      script:
+        - *before_test
+        - *build_sqlite
+    - stage: "CodeCompass"
+      name: "Focal Fossa (20.04), PostgreSQL"
       dist: focal
       addons:
         apt:
-          <<: *apt_focal
+          <<: *focal_test
         postgresql: "12"
       before_install:
         - *fix_travis_postgresql_server
-      install:
-        - *install_odb
-        - *install_thrift
-        - *install_gtest_bionic
       script:
-        *build_postgres
-    - name: "Focal Fossa (20.04) SQLite build"
+        - *before_test
+        - *build_postgres
+    - stage: "CodeCompass"
+      name: "Focal Fossa (20.04), SQLite"
       dist: focal
       addons:
         apt:
-          <<: *apt_focal
-      install:
-        - *install_odb
-        - *install_thrift
-        - *install_gtest_bionic
+          <<: *focal_test
       script:
-        *build_sqlite
+        - *before_test
+        - *build_sqlite
 
 cache:
   directories:
