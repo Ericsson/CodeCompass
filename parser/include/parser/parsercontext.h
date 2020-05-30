@@ -26,7 +26,8 @@ enum class IncrementalStatus
 {
   MODIFIED,
   ADDED,
-  DELETED
+  DELETED,
+  ACTION_CHANGED
 };
 
 struct ParserContext 

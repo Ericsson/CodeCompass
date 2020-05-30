@@ -8,19 +8,26 @@ namespace cc
 {
 namespace webserver
 {
-  
+
+class Session;
+class SessionManager;
+
 struct MainRequestHandler
 {
 public:
+  SessionManager* sessionManager;
   PluginHandler<RequestHandler> pluginHandler;
-  std::string digestPasswdFile;
   std::map<std::string, std::string> dataDir;
 
   int operator()(struct mg_connection* conn_, enum mg_event ev_);
 
 private:
-  int begin_request_handler(struct mg_connection *conn_);
+  int begin_request_handler(struct mg_connection* conn_);
   std::string getDocDirByURI(std::string uri_);
+
+  // Detail template - implementation in the .cpp only.
+  template <typename F>
+  auto executeWithSessionContext(cc::webserver::Session* sess_, F func);
 };
   
 } // webserver

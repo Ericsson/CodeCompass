@@ -13,8 +13,9 @@ be installed from the official repository of the given Linux distribution.
 - **`cmake`** and **`make`**: For building CodeCompass.
 - **`g++`**: For compiling CodeCompass. A version which supports C++14 features
   is required. (Alternatively, you can compile with Clang.)
+- **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
+- **`llvm-7-dev`**, **`clang-7`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
@@ -26,8 +27,8 @@ be installed from the official repository of the given Linux distribution.
   database system is used.
 - **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
   Java.
-- **`libssl-dev`**: OpenSSL libs are required by Thrift.
-- **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizaions.
+- **`libssl-dev`** / **`libssl1.0-dev`**: OpenSSL libs are required by Thrift, and NodeJS.
+- **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
 - **`npm`** (and **`nodejs-legacy`** for Ubuntu 16.04): For handling
@@ -61,9 +62,9 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 #### Ubuntu 18.04 LTS
 
 ```bash
-sudo apt-get install git cmake make g++ libboost-all-dev \
-  llvm-7-dev libclang-7-dev odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
+  llvm-7-dev clang-7 libclang-7-dev \
+  default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
 
@@ -91,11 +92,63 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
+### ODB (for Ubuntu 18.04)
+ODB is an Object Relational Mapping tool, that is required by CodeCompass.
+For Ubuntu 18.04, the official release of ODB conflicts with the official compiler (GNU G++ 7) of the distribution.
+A newer version of ODB must be compiled manually.
+
+The ODB installation uses the build2 build system.
+(Build2 is not needed for CodeCompass so you may delete it right after the installation of ODB.)
+```bash
+wget https://download.build2.org/0.12.0/build2-install-0.12.0.sh
+sh build2-install-0.12.0.sh --yes --trust yes "<build2_install_dir>"
+```
+
+Now, utilizing the *build2* toolchain, we can build the *odb* library. In the script below, we assume that ODB is built in the `<odb_build_dir>` directory and installed in the `<odb_install_dir>` directory.
+```bash
+export PATH="<build2_install_dir>/bin:$PATH"
+# Configuring the build
+cd <odb_build_dir>
+bpkg create --quiet --jobs <number_of_threads> cc \
+  config.cxx=g++ \
+  config.cc.coptions=-O3 \
+  config.bin.rpath=<odb_install_dir>/lib \
+  config.install.root=<odb_install_dir>
+
+# Getting the source
+bpkg add https://pkg.cppget.org/1/beta --trust-yes
+bpkg fetch --trust-yes
+
+# Building odb
+bpkg build odb --yes
+bpkg build libodb --yes
+bpkg build libodb-sqlite --yes
+bpkg build libodb-pgsql --yes
+bpkg install --all --recursive
+```
+Please take into consideration that the ODB installation can take up a long time (depending on the machine one is using),
+but you can increase the used threads with the `--jobs` option.
+
+> **Note:** now you may delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
+
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. Thrift is not part of
 the official Ubuntu 16.04 LTS and 18.04 LTS repositories, but you can download
 it and build from source:
+
+Thrift can generate stubs for many programming languages. The configure
+script looks at the development environment and if it finds the environment
+for a given language then it'll use it. For example in the previous step npm
+was installed which requires NodeJS. If NodeJS can be found on your machine
+then the corresponding stub will also compile. If you don't need it then you
+can turn it off: `./configure --without-nodejs.`
+
+In certain cases, installation may fail if development libraries for
+languages are not installed on the target machine. E.g. if Python is
+installed but the Python development headers are not, Thrift will unable to
+install. Python, PHP and such other Thrift builds are NOT required by
+CodeCompass, and can significantly increase compile time so it is advised to avoid using them if it's not necessary.
 
 ```bash
 # Download and uncompress Thrift:
@@ -104,23 +157,13 @@ wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thr
 tar -xvf ./thrift-0.13.0.tar.gz
 cd thrift-0.13.0
 
-# Ant is required for having Java support in Thrift.
-sudo apt-get install ant
-
-# Thrift can generate stubs for many programming languages. The configure
-# script looks at the development environment and if it finds the environment
-# for a given language then it'll use it. For example in the previous step npm
-# was installed which requires NodeJS. If NodeJS can be found on your machine
-# then the corresponding stub will also compile. If you don't need it then you
-# can turn it off: ./configure --without-nodejs.
-#
-# In certain cases, installation may fail if development libraries for
-# languages are not installed on the target machine. E.g. if Python is
-# installed but the Python development headers are not, Thrift will unable to
-# install. Python, PHP and such other Thrift builds are NOT required by
-# CodeCompass.
-
-./configure --prefix=<thrift_install_dir> --with-python=NO --with-php=NO
+./configure --prefix=<thrift_install_dir> --silent --without-python \
+  --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
+  --with-libevent --with-zlib --without-nodejs --without-lua        \
+  --without-ruby --without-csharp --without-erlang --without-perl   \
+  --without-php --without-php_extension --without-dart              \
+  --without-haskell --without-go --without-rs --without-haxe        \
+  --without-dotnetcore --without-d --without-qt4 --without-qt5
 
 make install
 ```
@@ -169,7 +212,9 @@ be seen by CMake build system:
 ```bash
 export GTEST_ROOT=<gtest_install_dir>
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
+export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
 export PATH=<thrift_install_dir>/bin:$PATH
+export PATH=<odb_install_directory>/bin>:$PATH
 ```
 
 Use the following instructions to build CodeCompass with CMake.
@@ -188,6 +233,9 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<CodeCompass_install_dir> \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type>
+
+#To specify linker for building CodeCompass use
+# -DCODECOMPASS_LINKER=<path_to_linker>
 
 # Build project.
 make -j<number_of_threads>
@@ -208,6 +256,7 @@ during compilation.
 | `CMAKE_CXX_COMPILER` | If the official repository of your Linux distribution doesn't contain a C++ compiler which supports C++14 then you can install one manually and set to use it. For more information see: https://cmake.org/Wiki/CMake_Useful_Variables |
 | `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. |
+| `CODECOMPASS_LINKER` | The variable used to specify the linker. |
 
 # Docker
 [![Docker](images/docker.jpg)](https://www.docker.com/)

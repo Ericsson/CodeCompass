@@ -160,9 +160,9 @@ CodeCompass_parser \
 
 As an experimental feature CodeCompass supports incremental parsing, updating an
 existing database and project workspace by detecting the added, deleted and modified files.  
-Incremental parsing depends on that the build tooling generates a **complete** compilation database, 
+Incremental parsing depends on that the build tooling generates a **complete** compilation database,
 therefore the build commands for only the modified files are not sufficient.
-In case of CMake, using the result of the `CMAKE_EXPORT_COMPILE_COMMANDS=ON` argument, the 
+In case of CMake, using the result of the `CMAKE_EXPORT_COMPILE_COMMANDS=ON` argument, the
 compilation database will always contain all files.
 Currently the C++ and metrics parsers support incremental parsing, while other parsers
 just execute a forced reparse.
@@ -171,12 +171,12 @@ In case the analyzed software project was significantly changed (e.g. as a resul
 restructuring the project), dropping the workspace database and performing a full, clean
 parse can yield results faster. This can be achieved by passing the `--force` (or `-f`)
 command line option which can be specified for `CodeCompass_parser`. Another solution is
-to set the `--incremental-threshold` option, which configures an upper threshold of change 
-for incremental parsing (in the percentage of changed files). Above the threshold a full, 
+to set the `--incremental-threshold` option, which configures an upper threshold of change
+for incremental parsing (in the percentage of changed files). Above the threshold a full,
 clean reparse is performed. The default value for this threshold is *10%*.
 
 In order to review the changes detected by the incremental parser without performing any
-action that would alter the workspace database or directory, the `--dry-run` command line 
+action that would alter the workspace database or directory, the `--dry-run` command line
 option can be specified for `CodeCompass_parser`.
 
 ## 3. Start the web server
@@ -184,7 +184,7 @@ You can start the CodeCompass webserver with `CodeCompass_webserver` binary in
 the CodeCompass installation directory.
 
 ```bash
-CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
+CodeCompass_webserver -w <workdir> -p <port>
 ```
 
 - **Workspace**: This is a directory where the some parse results, and different
@@ -198,6 +198,56 @@ CodeCompass_webserver -w <workdir> -p <port> -d <connection_string>
   it is useless to provide it at server start.
 
 For full documentation see `CodeCompass_webserver -h`.
+
+### Enabling HTTPS (SSL/TLS) secure server
+
+By default, CodeCompass starts a conventional, plain-text HTTP server on the
+port specified.
+In case a `certificate.pem` file exists under the `--workpace` directory, the
+server *will* start in SSL mode.
+
+The certificate file shall be in PEM format, which looks like shown below. If
+the certificate you received from your Certificate Authority (or self-created)
+isn't in PEM format, use an SSL tool like [OpenSSL](http://openssl.org) to
+convert it.
+
+Normally, the private and public key (the certificate) are created as separate
+files. They **must** be concatenated to *one* `certificate.pem` file, to look
+like the following.
+[Further details on SSL](http://github.com/cesanta/mongoose/blob/5.4/docs/SSL.md#how-to-create-ssl-certificate-file)
+is available from Mongoose, the library CodeCompass uses for HTTP server.
+
+~~~{.pem}
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAwONaLOP7EdegqjRuQKSDXzvHmFMZfBufjhELhNjo5KsL4ieH
+hYN0Zii2yTb63jGxKY6gH1R/r9dL8kXaJmcZrfSa3AgywnteJWg=
+-----END RSA PRIVATE KEY-----
+-----BEGIN CERTIFICATE-----
+MIIDBjCCAe4CCQCX05m0b053QzANBgkqhkiG9w0BAQQFADBFMQswCQYDVQQGEwJB
+SEGI4JSxV56lYg==
+-----END CERTIFICATE-----
+~~~
+
+> **Note:** Make sure your certificate file itself is not password-protected,
+> as requiring the password to be entered will make the server unable to start
+> on its own.
+
+If intermediate certificates are used because your certificate isn't signed
+by a Root CA (this is common), the certificate chain's elements (also in, or
+converted to PEM format) should also be concatenate into the `certificate.pem`
+file:
+
+~~~{.pem}
+-----BEGIN RSA PRIVATE KEY-----
+Your certificate's private key
+-----END RSA PRIVATE KEY-----
+-----BEGIN CERTIFICATE-----
+Your certificate (the public key)
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+The certificate of the CA that signed your certificate
+-----END CERTIFICATE-----
+~~~
 
 ### Usage example
 

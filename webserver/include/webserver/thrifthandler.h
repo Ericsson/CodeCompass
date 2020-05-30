@@ -113,7 +113,7 @@ public:
 
     try
     {
-      std::string content = getContent(conn_);
+      std::string content{conn_->content, conn_->content + conn_->content_len};
 
       LOG(debug) << "Request content:\n" << content;
 
@@ -163,15 +163,10 @@ public:
   }
 
 private:
-  std::string getContent(mg_connection* conn_)
-  {
-    return std::string(conn_->content, conn_->content + conn_->content_len);
-  }
-
   LoggingProcessor _processor;
 };
 
-} // mongoose
+} // namespace webserver
 } // cc
 
 #endif // CC_WEBSERVER_THRIFTHANDLER_H

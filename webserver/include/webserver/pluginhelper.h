@@ -41,13 +41,16 @@ inline void registerPluginSimple(
     std::string project = it->path().filename().native();
 
     fs::path projectInfo = it->path();
+    if ( fs::is_regular_file( projectInfo) )
+      continue;
+
     projectInfo += "/project_info.json";
     if (!fs::exists(projectInfo.native()))
     {
       LOG(error)
         << "Skip project '" << project << "', because no project info file "
         << "can be found at: " << projectInfo;
-      throw std::runtime_error("No project_info.json!");
+      continue;
     }
 
     pt::ptree root;
@@ -59,7 +62,7 @@ inline void registerPluginSimple(
         << "Skip project '" << project << "', because no database "
         << "connection string can be found for it in the '"
         << projectInfo << "' file!";
-      throw std::runtime_error("No db connection string!");
+      continue;
     }
 
     std::shared_ptr<odb::database> db = util::connectDatabase(connStr);
@@ -71,7 +74,7 @@ inline void registerPluginSimple(
         << "for project: '" << project << "' "
         << "for service: '" << serviceName_ << "'";
 
-      throw std::runtime_error("Wrong database!");
+      continue;
     }
 
     try

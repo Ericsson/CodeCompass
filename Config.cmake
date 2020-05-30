@@ -10,6 +10,10 @@ set(INSTALL_PARSER_DIR "${INSTALL_LIB_DIR}/${INSTALL_PARSER_DIR_NAME}")
 set(INSTALL_SERVICE_DIR_NAME "serviceplugin")
 set(INSTALL_SERVICE_DIR "${INSTALL_LIB_DIR}/${INSTALL_SERVICE_DIR_NAME}")
 
+# Installation directory for authentication libraries
+set(INSTALL_AUTH_DIR_NAME "authplugin")
+set(INSTALL_AUTH_DIR "${INSTALL_LIB_DIR}/${INSTALL_AUTH_DIR_NAME}")
+
 # Installation directory of web GUI
 set(INSTALL_WEBROOT_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/webgui")
 
@@ -51,7 +55,9 @@ string(CONCAT CMAKE_INSTALL_RPATH
   ";../${INSTALL_LIB_DIR_NAME}/${INSTALL_PARSER_DIR_NAME}"
   ";$ORIGIN/../${INSTALL_LIB_DIR_NAME}/${INSTALL_PARSER_DIR_NAME}"
   ";../${INSTALL_LIB_DIR_NAME}/${INSTALL_SERVICE_DIR_NAME}"
-  ";$ORIGIN/../${INSTALL_LIB_DIR_NAME}/${INSTALL_SERVICE_DIR_NAME}")
+  ";$ORIGIN/../${INSTALL_LIB_DIR_NAME}/${INSTALL_SERVICE_DIR_NAME}"
+  ";../${INSTALL_LIB_DIR_NAME}/${INSTALL_AUTH_DIR_NAME}"
+  ";$ORIGIN/../${INSTALL_LIB_DIR_NAME}/${INSTALL_AUTH_DIR_NAME}")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Odb commands
@@ -68,10 +74,20 @@ set(ODBFLAGS
   --include-with-brackets
   --default-pointer "std::shared_ptr")
 
+# Set CXX flags
 set(CMAKE_CXX_FLAGS "-W -Wall -Wextra -pedantic\
   -std=c++14 \
   -DDATABASE_${DATABASE_U} \
   -DBOOST_LOG_DYN_LINK")
+
+# Gold is the primary linker 
+if(NOT DEFINED CODECOMPASS_LINKER)
+    set(CODECOMPASS_LINKER "gold")
+endif()
+
+set(CMAKE_LINKER "${CODECOMPASS_LINKER}")
+
+
 
 # Cmake module directory (FindOdb, FindThrift etc.)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}")

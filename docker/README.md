@@ -39,8 +39,12 @@ Table of Contents
 # Development
 ## Build image from development
 Build the development environment image. The tag name is important!
+**It is very important to give this command from the top level directory of the
+CodeCompass source.**
+
 ```
-docker build -t codecompass-dev docker/dev
+cd CodeCompass
+docker build -t codecompass-dev --file docker/dev/Dockerfile .
 ```
 
 See more information [below](#how-to-use-docker-to-develop-codecompass) how to
