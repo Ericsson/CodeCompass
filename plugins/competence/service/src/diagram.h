@@ -71,7 +71,25 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  void personalCompanyViewDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_);
+
+  std::map<util::Graph::Node, std::string> getCompanyExpertNodes(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  void accumulatedCompanyViewDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_);
+
+  std::map<util::Graph::Node, std::string> getAccumulatedCompanyExpertNodes(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::string maxCompanyCompetence(FileComprehensionResult& result);
   model::FileComprehension maxCompetence(FileComprehensionResult& result);
+  std::string getCompany(const std::string& email);
 
   util::Graph::Node addNode(
     util::Graph& graph_,
@@ -98,7 +116,8 @@ private:
 
   std::string generateColor(const std::string& email_);
   void setCharCodes();
-  void setColorCodes();
+  void setUserColorCodes();
+  void setCompanyColorCodes();
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
@@ -110,7 +129,8 @@ private:
   const std::string _white = "#ffffff";
 
   static std::map<char, std::uint32_t> _charCodes;
-  static std::map<std::string, std::string> _colorCodes;
+  static std::map<std::string, std::string> _userColorCodes;
+  static std::map<std::string, std::string> _companyColorCodes;
 
   static const Decoration directoryNodeDecoration;
 
