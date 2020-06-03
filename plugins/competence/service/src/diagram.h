@@ -71,6 +71,12 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  /**
+   * This method generates a graph for a single file or
+   * a directory recursively to show the expert company
+   * based on the affiliation of the most knowledgeable
+   * developer regarding the file.
+   */
   void personalCompanyViewDiagram(
     util::Graph &graph_,
     const core::FileId &fileId_);
@@ -79,6 +85,13 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  /**
+   * This method generates a graph for a single file or
+   * a directory recursively to show the expert company
+   * based on the average competence of the developers of
+   * the company who made relevant changes to the file.
+   * -- WIP, algorithm is not final --
+   */
   void accumulatedCompanyViewDiagram(
     util::Graph &graph_,
     const core::FileId &fileId_);
@@ -87,18 +100,32 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  /**
+   * Returns the expert company for a file.
+   */
   std::string maxCompanyCompetence(FileComprehensionResult& result);
-  model::FileComprehension maxCompetence(FileComprehensionResult& result);
-  std::string getCompany(const std::string& email);
 
-  util::Graph::Node addNode(
-    util::Graph& graph_,
-    const core::FileInfo& fileInfo_);
+  /**
+   * Returns the expert user and their competence data for a file.
+   */
+  model::FileComprehension maxCompetence(FileComprehensionResult& result);
+
+  /**
+   * Returns the affiliation of a user.
+   */
+  std::string getCompany(const std::string& email);
 
   /**
    * Converts a percentage value to a hex color code.
    */
   std::string rateToColor(int16_t rate);
+
+  /**
+   * Helper methods for graph building.
+   */
+  util::Graph::Node addNode(
+    util::Graph& graph_,
+    const core::FileInfo& fileInfo_);
 
   std::vector<util::Graph::Node> getSubDirs(
     util::Graph& graph_,
