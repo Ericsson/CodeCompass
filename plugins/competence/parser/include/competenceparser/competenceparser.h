@@ -55,6 +55,23 @@ public:
   virtual bool parse() override;
 
 private:
+  struct CommitJob
+  {
+    boost::filesystem::path& _repoPath;
+    const std::string& _root;
+    git_oid _oid;
+    git_commit* _commit;
+    int& _commitCounter;
+
+    CommitJob(boost::filesystem::path& repoPath_,
+              const std::string& root_,
+              git_oid oid_,
+              git_commit* commit_,
+              int& commitCounter_)
+      : _repoPath(repoPath_), _root(root_), _oid(oid_),
+        _commit(commit_), _commitCounter(commitCounter_) {}
+  };
+
   bool accept(const std::string& path_);
 
   std::shared_ptr<odb::database> _db;
@@ -67,6 +84,8 @@ private:
   void countFileChanges(
     const std::string& root_,
     boost::filesystem::path& repoPath_);
+
+  void commitWorker(CommitJob& job_);
 
   void traverseCommits(
     const std::string& root_,
@@ -105,7 +124,7 @@ private:
     git_tree* first_,
     git_tree* second_);
 
-  std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
+  std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
 
   std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
   std::map<model::FilePtr, int> _changeCount;
