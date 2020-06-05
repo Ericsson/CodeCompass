@@ -32,6 +32,8 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
       this->commitWorker(job);
     });
 
+  setCompanyList();
+
   if (_ctx.options.count("commit-count"))
   {
     _maxCommitCount = _ctx.options["commit-count"].as<int>();
@@ -102,6 +104,7 @@ bool CompetenceParser::parse()
 
       countFileChanges(path, repoPath);
       traverseCommits(path, repoPath);
+      setUserCompany();
     });
   }
 
@@ -296,6 +299,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
       totalLines += blameHunk.linesInHunk;
     }
 
+    _calculateFileData.lock();
+
     auto fileCountIter = _changeCount.find(file);
     if (fileCountIter != _changeCount.end())
       --(fileCountIter->second);
@@ -331,7 +336,11 @@ void CompetenceParser::commitWorker(CommitJob& job)
         }
       }
     }
+
+    _calculateFileData.unlock();
   }
+
+  _calculateFileData.lock();
 
   for (const auto& pair : _changeCount)
   {
@@ -342,6 +351,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
       _changeCount.erase(pair.first);
     }
   }
+
+  _calculateFileData.unlock();
 }
 
 
@@ -536,6 +547,22 @@ void CompetenceParser::persistFileComprehensionData(
   });
 }
 
+void CompetenceParser::setUserCompany()
+{
+  util::OdbTransaction transaction(_ctx.db);
+  transaction([&, this]
+  {
+    auto users = _ctx.db->query<model::UserEmail>();
+    for (auto& user : users)
+      for (const std::pair<std::string, std::string>& p : _companyList)
+        if (user.email.find(p.first) != std::string::npos)
+        {
+          user.company = p.second;
+          _ctx.db->update(user);
+        }
+  });
+}
+
 void CompetenceParser::persistEmailAddress(const std::string& email)
 {
   util::OdbTransaction transaction(_ctx.db);
@@ -647,6 +674,21 @@ BlameOptsPtr CompetenceParser::createBlameOpts(const git_oid& newCommitOid_)
   git_blame_init_options(blameOpts, GIT_BLAME_OPTIONS_VERSION);
   blameOpts->newest_commit = newCommitOid_;
   return BlameOptsPtr { blameOpts };
+}
+
+void CompetenceParser::setCompanyList()
+{
+  _companyList.insert({"amd.com", "AMD"});
+  _companyList.insert({"apple.com", "Apple"});
+  _companyList.insert({"arm.com", "ARM"});
+  _companyList.insert({"ericsson.com", "Ericsson"});
+  _companyList.insert({"harvard.edu", "Harvard"});
+  _companyList.insert({"huawei.com", "Huawei"});
+  _companyList.insert({"ibm.com", "IBM"});
+  _companyList.insert({"intel.com", "Intel"});
+  _companyList.insert({"microsoft.com", "Microsoft"});
+  _companyList.insert({"sony.com", "Sony"});
+  _companyList.insert({"samsung.com", "Samsung"});
 }
 
 CompetenceParser::~CompetenceParser()

@@ -91,6 +91,8 @@ private:
     const std::string& root_,
     boost::filesystem::path& repoPath_);
 
+  void setUserCompany();
+
   void persistEmailAddress(const std::string& email);
 
   void persistFileComprehensionData(
@@ -124,10 +126,16 @@ private:
     git_tree* first_,
     git_tree* second_);
 
+  // Temporary function to fill company list
+  void setCompanyList();
+
   std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
 
   std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
   std::map<model::FilePtr, int> _changeCount;
+  std::map<std::string, std::string> _companyList;
+
+  std::mutex _calculateFileData;
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
