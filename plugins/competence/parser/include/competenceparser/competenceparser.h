@@ -132,7 +132,7 @@ private:
   std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
 
   std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
-  std::map<model::FilePtr, int> _changeCount;
+  std::map<model::FilePtr, std::pair<int, bool>> _changeCount;
   std::map<std::string, std::string> _companyList;
 
   std::mutex _calculateFileData;

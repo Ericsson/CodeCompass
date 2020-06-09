@@ -148,10 +148,10 @@ void CompetenceParser::countFileChanges(
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
 
+    ++commitCounter;
+
     if (_maxCommitCount > 0 && commitCounter > _maxCommitCount)
       break;
-
-    ++commitCounter;
 
     // Calculate elapsed time in full months since current commit.
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -194,9 +194,9 @@ void CompetenceParser::countFileChanges(
 
       auto iter = _changeCount.find(file);
       if (iter != _changeCount.end())
-        ++iter->second;
+        ++iter->second.first;
       else
-        _changeCount.insert(std::make_pair(file, 1));
+        _changeCount.insert(std::make_pair(file, std::make_pair(1, false)));
     }
   }
 
@@ -207,10 +207,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
 
+  ++job._commitCounter;
   if (_maxCommitCount > 0 && job._commitCounter > _maxCommitCount)
     return;
 
-  ++(job._commitCounter);
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
   // Calculate elapsed time in full months since current commit.
@@ -303,7 +303,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
     auto fileCountIter = _changeCount.find(file);
     if (fileCountIter != _changeCount.end())
-      --(fileCountIter->second);
+      --(fileCountIter->second.first);
 
     for (const auto& pair : userBlame)
     {
@@ -342,13 +342,14 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
   _calculateFileData.lock();
 
-  for (const auto& pair : _changeCount)
+  for (auto& pair : _changeCount)
   {
-    if (pair.second == 0)
+    if (pair.second.first == 0 && !pair.second.second)
     {
       auto it = _userEditions.find(pair.first);
       persistFileComprehensionData(it->first, it->second);
-      _changeCount.erase(pair.first);
+      pair.second.second = true;
+      //_changeCount.erase(pair.first);
     }
   }
 
@@ -392,7 +393,6 @@ void CompetenceParser::traverseCommits(
 
     if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
       break;
-
     // Retrieve parent of commit.
     CommitPtr parent = createParentCommit(commit.get());
 
