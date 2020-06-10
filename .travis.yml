@@ -22,10 +22,13 @@ services:
     # Java
     - default-jdk
     # ODB
-    - gcc-5-plugin-dev
+    - odb
+    - libodb-dev
     # SQLite
+    - libodb-sqlite-dev
     - libsqlite3-dev
     # PostgreSQL
+    - libodb-pgsql-dev
     - postgresql-server-dev-9.5
     # Parser
     - libmagic-dev
@@ -96,7 +99,8 @@ services:
     --without-ruby --without-csharp --without-erlang --without-perl  \
     --without-php --without-php_extension --without-dart             \
     --without-haskell --without-go --without-rs --without-haxe       \
-    --without-dotnetcore --without-d --without-qt4 --without-qt5
+    --without-dotnetcore --without-d --without-qt4 --without-qt5     \
+    --without-java
     make install
   fi
 
@@ -187,7 +191,6 @@ jobs:
         postgresql: "9.5"
       install:
         - *install_thrift
-        - *install_odb
         - *install_gtest_xenial
       script:
         *build_postgres
@@ -198,7 +201,6 @@ jobs:
           <<: *apt_xenial
         postgresql: "9.5"
       install:
-        - *install_odb
         - *install_thrift
         - *install_gtest_xenial
       script:

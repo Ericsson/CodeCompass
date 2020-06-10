@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -Eeuo pipefail
-
 if [ "$(id -u)" == '0' ]; then
   # Change the owner of the workspace directory
   mkdir -p /workspace

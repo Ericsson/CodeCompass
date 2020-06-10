@@ -15,7 +15,7 @@ be installed from the official repository of the given Linux distribution.
   is required. (Alternatively, you can compile with Clang.)
 - **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
+- **`llvm-7-dev`**, **`clang-7`**, **`libclang-7-dev`**: C++ parser uses LLVM/Clang for
   parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
@@ -27,7 +27,7 @@ be installed from the official repository of the given Linux distribution.
   database system is used.
 - **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
   Java.
-- **`libssl-dev`**: OpenSSL libs are required by Thrift.
+- **`libssl-dev`** / **`libssl1.0-dev`**: OpenSSL libs are required by Thrift, and NodeJS.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
@@ -53,7 +53,7 @@ repositories:
 sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
 
-sudo apt-get install git cmake make g++ gcc-5-plugin-dev libboost-all-dev \
+sudo apt-get install git cmake make g++ libboost-all-dev \
   llvm-7-dev libclang-7-dev odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
@@ -62,9 +62,9 @@ sudo apt-get install git cmake make g++ gcc-5-plugin-dev libboost-all-dev \
 #### Ubuntu 18.04 LTS
 
 ```bash
-sudo apt-get install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
-  llvm-7-dev libclang-7-dev odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
+sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
+  llvm-7-dev clang-7 libclang-7-dev \
+  default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
 
@@ -92,10 +92,10 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### ODB
+### ODB (for Ubuntu 18.04)
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
-We are using ODB 2.5 which is not part of the official Ubuntu repositories, so
-it needs to be built manually.
+For Ubuntu 18.04, the official release of ODB conflicts with the official compiler (GNU G++ 7) of the distribution.
+A newer version of ODB must be compiled manually.
 
 The ODB installation uses the build2 build system.
 (Build2 is not needed for CodeCompass so you may delete it right after the installation of ODB.)
@@ -104,8 +104,9 @@ wget https://download.build2.org/0.12.0/build2-install-0.12.0.sh
 sh build2-install-0.12.0.sh --yes --trust yes "<build2_install_dir>"
 ```
 
-Now, utilizing the *build2* toolchain, we can build the *odb* library. In the script below, we assume that ODB is built in the `<odb_build_dir>` directory and installed in the `<odb_install_dir>` directory. A good default install directory could be `/usr/local/`.
+Now, utilizing the *build2* toolchain, we can build the *odb* library. In the script below, we assume that ODB is built in the `<odb_build_dir>` directory and installed in the `<odb_install_dir>` directory.
 ```bash
+export PATH="<build2_install_dir>/bin:$PATH"
 # Configuring the build
 cd <odb_build_dir>
 bpkg create --quiet --jobs <number_of_threads> cc \
@@ -123,12 +124,12 @@ bpkg build odb --yes
 bpkg build libodb --yes
 bpkg build libodb-sqlite --yes
 bpkg build libodb-pgsql --yes
-bpkg install --all --recursive # you may to run the instal with sudo, depending on the install dir
+bpkg install --all --recursive
 ```
 Please take into consideration that the ODB installation can take up a long time (depending on the machine one is using),
 but you can increase the used threads with the `--jobs` option.
 
-*Note:* now you may delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
+> **Note:** now you may delete the *build2* toolchain installed in the `<build2_install_dir>` folder, if you do not need any longer.
 
 ### Thrift
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
@@ -156,15 +157,13 @@ wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thr
 tar -xvf ./thrift-0.13.0.tar.gz
 cd thrift-0.13.0
 
-# Ant is required for having Java support in Thrift.
-sudo apt-get install ant
 ./configure --prefix=<thrift_install_dir> --silent --without-python \
   --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
   --with-libevent --with-zlib --without-nodejs --without-lua        \
   --without-ruby --without-csharp --without-erlang --without-perl   \
   --without-php --without-php_extension --without-dart              \
   --without-haskell --without-go --without-rs --without-haxe        \
-  --without-dotnetcore --without-d --without-qt4 --without-qt5;
+  --without-dotnetcore --without-d --without-qt4 --without-qt5
 
 make install
 ```
