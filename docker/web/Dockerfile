@@ -47,6 +47,7 @@ RUN set -x && apt-get update -qq \
     libssl1.0.0 \
     libgvc6 \
     libmagic-dev \
+    ctags \
     # To switch user and exec command.
     gosu \
   && apt-get clean \
