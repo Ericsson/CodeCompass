@@ -124,8 +124,9 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
     path = boost::filesystem::canonical(path);
 
     LOG(info) << "Competence parser found a git repo at: " << path;
-
     repoPath_ = path_;
+
+    return true;
   };
 }
 
@@ -148,10 +149,10 @@ void CompetenceParser::countFileChanges(
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
 
-    ++commitCounter;
-
-    if (_maxCommitCount > 0 && commitCounter > _maxCommitCount)
+    if (_maxCommitCount > 0 && commitCounter >= _maxCommitCount)
       break;
+
+    ++commitCounter;
 
     // Calculate elapsed time in full months since current commit.
     std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -196,7 +197,10 @@ void CompetenceParser::countFileChanges(
       if (iter != _changeCount.end())
         ++iter->second.first;
       else
+      {
         _changeCount.insert(std::make_pair(file, std::make_pair(1, false)));
+        LOG(info) << file.get()->filename;
+      }
     }
   }
 
@@ -207,11 +211,13 @@ void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
 
-  ++job._commitCounter;
-  if (_maxCommitCount > 0 && job._commitCounter > _maxCommitCount)
+  if (_maxCommitCount > 0 && job._commitCounter >= _commitCount)
     return;
 
+  _calculateFileData.lock();
+  ++job._commitCounter;
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
+  _calculateFileData.unlock();
 
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -262,14 +268,11 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
     // Store the current number of blame lines for each user.
     std::map<UserEmail, UserBlameLines> userBlame;
-
     for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
     {
       const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
-
       GitBlameHunk blameHunk;
       blameHunk.linesInHunk = hunk->lines_in_hunk;
-
       if (hunk->final_signature)
       {
         blameHunk.finalSignature.email = hunk->final_signature->email;
@@ -293,7 +296,9 @@ void CompetenceParser::commitWorker(CommitJob& job)
       {
         userBlame.insert(std::make_pair(std::string(blameHunk.finalSignature.email),
                                         blameHunk.linesInHunk));
+        _calculateFileData.lock();
         persistEmailAddress(blameHunk.finalSignature.email);
+        _calculateFileData.unlock();
       }
 
       totalLines += blameHunk.linesInHunk;
@@ -330,7 +335,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
         else
         {
           std::pair<model::FilePtr, std::map<UserEmail, FileDataPair>> p =
-            { fileCountIter->first, std::map<UserEmail, FileDataPair>() };
+            { file, std::map<UserEmail, FileDataPair>() };
           p.second.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
           _userEditions.insert(p);
         }
@@ -349,7 +354,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
       auto it = _userEditions.find(pair.first);
       persistFileComprehensionData(it->first, it->second);
       pair.second.second = true;
-      //_changeCount.erase(pair.first);
+      _changeCount.erase(pair.first);
     }
   }
 
@@ -369,17 +374,32 @@ void CompetenceParser::traverseCommits(
   git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
   git_revwalk_push_head(walker.get());
 
+  std::vector<std::pair<git_oid, CommitPtr>> commits;
   git_oid oid;
   int commitCounter = 0;
   while (git_revwalk_next(&oid, walker.get()) == 0)
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
+    commits.push_back(std::make_pair(oid, std::move(commit)));
+  }
 
-    CommitJob job(repoPath_, root_, oid, commit.get(), commitCounter);
+  for (const auto& c : commits)
+  {
+    CommitJob job(repoPath_, root_, c.first, c.second.get(), commitCounter);
+    _pool->enqueue(job);
+  }
+
+  /*
+  while (git_revwalk_next(&oid, walker.get()) == 0)
+  {
+    // Retrieve commit.
+    CommitPtr commit = createCommit(repo.get(), oid);
+
+    CommitJob job = (repoPath_, root_, oid, std::move(commit), commitCounter);
     _pool->enqueue(job);
 
-    /*
+
     if (_maxCommitCount > 0 && commitCounter > _maxCommitCount)
       break;
 
@@ -516,8 +536,8 @@ void CompetenceParser::traverseCommits(
         persistFileComprehensionData(it->first, it->second);
         _changeCount.erase(pair.first);
       }
-    }*/
-  }
+    }
+  }*/
   _pool->wait();
 }
 
@@ -559,6 +579,7 @@ void CompetenceParser::setUserCompany()
         {
           user.company = p.second;
           _ctx.db->update(user);
+          break;
         }
   });
 }
@@ -682,11 +703,14 @@ void CompetenceParser::setCompanyList()
   _companyList.insert({"apple.com", "Apple"});
   _companyList.insert({"arm.com", "ARM"});
   _companyList.insert({"ericsson.com", "Ericsson"});
+  _companyList.insert({"fujitsu.com", "Fujitsu"});
   _companyList.insert({"harvard.edu", "Harvard"});
   _companyList.insert({"huawei.com", "Huawei"});
   _companyList.insert({"ibm.com", "IBM"});
   _companyList.insert({"intel.com", "Intel"});
   _companyList.insert({"microsoft.com", "Microsoft"});
+  _companyList.insert({"nokia.com", "Nokia"});
+  _companyList.insert({"oracle.com", "Oracle"});
   _companyList.insert({"sony.com", "Sony"});
   _companyList.insert({"samsung.com", "Samsung"});
 }
