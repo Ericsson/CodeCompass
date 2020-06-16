@@ -158,6 +158,7 @@ private:
   static std::map<char, std::uint32_t> _charCodes;
   static std::map<std::string, std::string> _userColorCodes;
   static std::map<std::string, std::string> _companyColorCodes;
+  static std::set<std::string> _currentTeamViewUsers;
 
   static const Decoration directoryNodeDecoration;
 

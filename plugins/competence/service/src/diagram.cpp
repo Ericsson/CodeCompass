@@ -16,6 +16,7 @@ namespace competence
 std::map<char, std::uint32_t> CompetenceDiagram::_charCodes;
 std::map<std::string, std::string> CompetenceDiagram::_userColorCodes;
 std::map<std::string, std::string> CompetenceDiagram::_companyColorCodes;
+std::set<std::string> CompetenceDiagram::_currentTeamViewUsers;
 
 CompetenceDiagram::CompetenceDiagram(
   std::shared_ptr<odb::database> db_,
@@ -181,7 +182,15 @@ std::string CompetenceDiagram::getUserViewDiagramLegend()
 {
   util::LegendBuilder builder("User Competence Diagram");
 
-  //builder.addNode()
+  builder.addNode("No data", {{"shape", "box"},
+    {"style", "filled"}, {"fillcolor", _white}});
+
+  for (int16_t i = 100; i >= 0; i -= 5)
+  {
+    std::string color = rateToColor(i);
+    builder.addNode(std::to_string(i) + "%", {{"shape", "box"},
+      {"style", "filled"}, {"fillcolor", color}});
+  }
 
   return builder.getOutput();
 }
@@ -192,6 +201,7 @@ void CompetenceDiagram::teamViewDiagram(
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
+  _currentTeamViewUsers.clear();
 
   util::Graph::Node currentNode = addNode(graph_, fileInfo);
 
@@ -211,6 +221,7 @@ void CompetenceDiagram::teamViewDiagram(
         decorateEdge(graph_, edge, containsEdgeDecoration);
       }
 
+      _currentTeamViewUsers.insert(node.second);
       std::string color = generateColor(node.second);
 
       Decoration competenceNodeDecoration = {
@@ -276,12 +287,12 @@ std::string CompetenceDiagram::getTeamViewDiagramLegend()
 {
   util::LegendBuilder builder("Team Competence Diagram");
 
-  for (const auto& code : _userColorCodes)
-    builder.addNode(code.first, {{"shape", "box"},
-      {"style", "filled"}, {"fillcolor", code.second}});
-
   builder.addNode("No data", {{"shape", "box"},
     {"style", "filled"}, {"fillcolor", _white}});
+
+  for (const auto& code : _currentTeamViewUsers)
+    builder.addNode(code, {{"shape", "box"},
+      {"style", "filled"}, {"fillcolor", generateColor(code)}});
 
   return builder.getOutput();
 }

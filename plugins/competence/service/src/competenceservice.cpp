@@ -49,17 +49,23 @@ void CompetenceServiceHandler::setCompetenceRatio(
     if (emails.empty())
       return;
 
+    std::vector<model::UserEmail> emailList;
+    for (const model::UserEmail& e : emails)
+      emailList.push_back(e);
+
     auto file = _db->query<model::FileComprehension>(
       FileComprehensionQuery::file == std::stoull(fileId_));
 
     model::FileComprehension comp;
+    model::UserEmail compEmail = *emailList.begin();
     bool found = false;
     for (const model::FileComprehension& f : file)
     {
-      for (const model::UserEmail& e : emails)
-        if (f.userEmail != e.email && !found)
+      for (const model::UserEmail& e : emailList)
+        if (f.userEmail == e.email && !found)
         {
           comp = f;
+          compEmail = e;
           found = true;
         }
 
@@ -67,14 +73,14 @@ void CompetenceServiceHandler::setCompetenceRatio(
         break;
     }
 
-    if (file.empty() || comp.userEmail.empty())
+    if (!found)
     {
       model::FileComprehension fileComprehension;
       fileComprehension.userRatio = ratio_;
       fileComprehension.repoRatio.reset();
       fileComprehension.file = std::stoull(fileId_);
       fileComprehension.inputType = model::FileComprehension::InputType::USER;
-      fileComprehension.userEmail = emails.begin()->email;
+      fileComprehension.userEmail = compEmail.email;
       _db->persist(fileComprehension);
     }
     else
