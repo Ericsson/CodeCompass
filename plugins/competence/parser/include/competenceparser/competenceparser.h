@@ -55,6 +55,12 @@ public:
   virtual bool parse() override;
 
 private:
+  struct FileEdition
+  {
+    model::FilePtr _file;
+    std::map<UserEmail, FileDataPair> _editions;
+  };
+
   struct CommitJob
   {
     boost::filesystem::path& _repoPath;
@@ -93,11 +99,13 @@ private:
 
   void setUserCompany();
 
-  void persistEmailAddress(const std::string& email);
+  void persistEmailAddress();
 
-  void persistFileComprehensionData(
+  /*void persistFileComprehensionData(
     model::FilePtr file_,
-    const std::map<UserEmail, std::pair<Percentage, RelevantCommitCount>>& userEditions);
+    const std::map<UserEmail, std::pair<Percentage, RelevantCommitCount>>& userEditions);*/
+
+  void persistFileComprehensionData();
 
   RevWalkPtr createRevWalk(git_repository* repo_);
 
@@ -132,6 +140,8 @@ private:
   std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
 
   std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
+  std::vector<FileEdition> _fileEditions;
+  std::set<UserEmail> _emailAddresses;
   std::map<model::FilePtr, std::pair<int, bool>> _changeCount;
   std::map<std::string, std::string> _companyList;
 

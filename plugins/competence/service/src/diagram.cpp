@@ -17,6 +17,7 @@ std::map<char, std::uint32_t> CompetenceDiagram::_charCodes;
 std::map<std::string, std::string> CompetenceDiagram::_userColorCodes;
 std::map<std::string, std::string> CompetenceDiagram::_companyColorCodes;
 std::set<std::string> CompetenceDiagram::_currentTeamViewUsers;
+  std::set<std::string> CompetenceDiagram::_currentCompanies;
 
 CompetenceDiagram::CompetenceDiagram(
   std::shared_ptr<odb::database> db_,
@@ -290,6 +291,7 @@ std::string CompetenceDiagram::getTeamViewDiagramLegend()
   builder.addNode("No data", {{"shape", "box"},
     {"style", "filled"}, {"fillcolor", _white}});
 
+  _currentTeamViewUsers.erase("");
   for (const auto& code : _currentTeamViewUsers)
     builder.addNode(code, {{"shape", "box"},
       {"style", "filled"}, {"fillcolor", generateColor(code)}});
@@ -303,6 +305,7 @@ void CompetenceDiagram::personalCompanyViewDiagram(
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
+  _currentCompanies.clear();
 
   util::Graph::Node currentNode = addNode(graph_, fileInfo);
 
@@ -321,10 +324,12 @@ void CompetenceDiagram::personalCompanyViewDiagram(
         util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
         decorateEdge(graph_, edge, containsEdgeDecoration);
       }
+      _currentCompanies.insert(node.second);
 
       std::string color = _white;
       if (_companyColorCodes.find(node.second) != _companyColorCodes.end())
         color = _companyColorCodes[node.second];
+
 
       Decoration competenceNodeDecoration = {
         {"shape", "box"},
@@ -464,6 +469,23 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getAccumulatedCompan
   }
 
   return annotated;
+}
+
+std::string CompetenceDiagram::getCompanyViewLegend()
+{
+  util::LegendBuilder builder("Company Competence Diagram");
+
+  builder.addNode("No data", {{"shape", "box"},
+                              {"style", "filled"},
+                              {"fillcolor", _white}});
+
+  _currentCompanies.erase("");
+  for (const auto& code : _currentCompanies)
+    builder.addNode(code, {{"shape", "box"},
+                           {"style", "filled"},
+                           {"fillcolor", _companyColorCodes[code]}});
+
+  return builder.getOutput();
 }
 
 /* *
@@ -710,6 +732,8 @@ void CompetenceDiagram::setCompanyColorCodes()
        ss << "#" << std::hex << (red << 16 | green << 8 | blue);
        _companyColorCodes.insert({user.company, ss.str()});
      }
+
+   _companyColorCodes[""] = _white;
   });
 }
 

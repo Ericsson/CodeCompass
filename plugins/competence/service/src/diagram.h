@@ -34,6 +34,7 @@ public:
 
   std::string getUserViewDiagramLegend();
   std::string getTeamViewDiagramLegend();
+  std::string getCompanyViewLegend();
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
@@ -152,13 +153,14 @@ private:
   CompetenceServiceHandler _compHandler;
   core::ProjectServiceHandler _projectHandler;
 
-  const int _nodeCountLimit = 15;
+  const int _nodeCountLimit = 500;
   const std::string _white = "#ffffff";
 
   static std::map<char, std::uint32_t> _charCodes;
   static std::map<std::string, std::string> _userColorCodes;
   static std::map<std::string, std::string> _companyColorCodes;
   static std::set<std::string> _currentTeamViewUsers;
+  static std::set<std::string> _currentCompanies;
 
   static const Decoration directoryNodeDecoration;
 

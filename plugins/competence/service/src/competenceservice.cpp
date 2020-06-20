@@ -120,6 +120,10 @@ void CompetenceServiceHandler::getDiagramLegend(
     case 1:
       return_ = diagram.getTeamViewDiagramLegend();
       break;
+    case 2:
+    case 3:
+      return_ = diagram.getCompanyViewLegend();
+      break;
   }
 }
 

@@ -10,7 +10,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
   model.addService('competenceservice', 'CompetenceService', CompetenceServiceClient);
 
   var competenceHtml = `
-<div id="dialog-competence" title="Create new user">
+<div id="dialog-competence" title="Add percentage">
 <form>
 <fieldset>
   <label for="ratio">Competence ratio</label>
