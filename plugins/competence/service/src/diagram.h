@@ -153,8 +153,9 @@ private:
   CompetenceServiceHandler _compHandler;
   core::ProjectServiceHandler _projectHandler;
 
-  const int _nodeCountLimit = 500;
+  const int _nodeCountLimit = 15;
   const std::string _white = "#ffffff";
+  const std::string _grey = "#D3D3D3";
 
   static std::map<char, std::uint32_t> _charCodes;
   static std::map<std::string, std::string> _userColorCodes;

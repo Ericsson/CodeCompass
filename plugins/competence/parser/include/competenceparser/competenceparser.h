@@ -67,13 +67,13 @@ private:
     const std::string& _root;
     git_oid _oid;
     git_commit* _commit;
-    int& _commitCounter;
+    int _commitCounter;
 
     CommitJob(boost::filesystem::path& repoPath_,
               const std::string& root_,
               git_oid oid_,
               git_commit* commit_,
-              int& commitCounter_)
+              int commitCounter_)
       : _repoPath(repoPath_), _root(root_), _oid(oid_),
         _commit(commit_), _commitCounter(commitCounter_) {}
   };

@@ -99,6 +99,17 @@ bool CompetenceParser::parse()
     if (!repo)
       continue;
 
+    util::OdbTransaction transaction(_ctx.db);
+    transaction([&, this]
+    {
+      for (const model::FileComprehension& fc
+        : _ctx.db->query<model::FileComprehension>())
+        _ctx.db->erase(fc);
+
+      for (const model::UserEmail& ue
+        : _ctx.db->query<model::UserEmail>())
+        _ctx.db->erase(ue);
+    });
     //countFileChanges(path, repoPath);
     traverseCommits(path, repoPath);
     persistFileComprehensionData();
@@ -212,10 +223,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (_maxCommitCount > 0 && job._commitCounter >= _commitCount)
     return;
 
-  _calculateFileData.lock();
-  ++job._commitCounter;
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
-  _calculateFileData.unlock();
 
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -315,7 +323,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
         double percentage = pair.second / totalLines * std::exp(-months) * 100;
 
         //auto it = _userEditions.find(pair.first);
-        std::vector<FileEdition>::iterator fileIter = _fileEditions.begin();
+        auto fileIter = _fileEditions.end();
         for (auto it = _fileEditions.begin(); it != _fileEditions.end(); ++it)
           if (it->_file.get()->id == file.get()->id)
           {
@@ -398,6 +406,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   _calculateFileData.unlock();*/
+
+  LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
 
 
@@ -429,7 +439,7 @@ void CompetenceParser::traverseCommits(
 
   for (const auto& c : commits)
   {
-    CommitJob job(repoPath_, root_, c.first, c.second.get(), commitCounter);
+    CommitJob job(repoPath_, root_, c.first, c.second.get(), ++commitCounter);
     _pool->enqueue(job);
   }
   _pool->wait();
@@ -499,6 +509,15 @@ void CompetenceParser::setUserCompany()
 
 void CompetenceParser::persistEmailAddress()
 {
+  util::OdbTransaction transaction(_ctx.db);
+  transaction([&, this]
+  {
+    auto query = _ctx.db->query<model::UserEmail>();
+    for (const auto& user : query)
+      if (_emailAddresses.find(user.email) != _emailAddresses.end())
+        _emailAddresses.erase(user.email);
+  });
+
   for (const auto& address : _emailAddresses)
   {
     util::OdbTransaction transaction(_ctx.db);

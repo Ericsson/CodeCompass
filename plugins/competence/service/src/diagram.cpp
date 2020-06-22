@@ -5,6 +5,7 @@
 
 #include <util/legendbuilder.h>
 #include <util/odbtransaction.h>
+#include <boost/filesystem.hpp>
 
 namespace cc
 {
@@ -12,6 +13,8 @@ namespace service
 {
 namespace competence
 {
+
+namespace fs = boost::filesystem;
 
 std::map<char, std::uint32_t> CompetenceDiagram::_charCodes;
 std::map<std::string, std::string> CompetenceDiagram::_userColorCodes;
@@ -330,7 +333,6 @@ void CompetenceDiagram::personalCompanyViewDiagram(
       if (_companyColorCodes.find(node.second) != _companyColorCodes.end())
         color = _companyColorCodes[node.second];
 
-
       Decoration competenceNodeDecoration = {
         {"shape", "box"},
         {"style", "filled"},
@@ -473,7 +475,7 @@ std::map<util::Graph::Node, std::string> CompetenceDiagram::getAccumulatedCompan
 
 std::string CompetenceDiagram::getCompanyViewLegend()
 {
-  util::LegendBuilder builder("Company Competence Diagram");
+  util::LegendBuilder builder("Affiliation Competence Diagram");
 
   builder.addNode("No data", {{"shape", "box"},
                               {"style", "filled"},
