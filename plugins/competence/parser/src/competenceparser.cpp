@@ -110,7 +110,7 @@ bool CompetenceParser::parse()
         : _ctx.db->query<model::UserEmail>())
         _ctx.db->erase(ue);
     });
-    //countFileChanges(path, repoPath);
+
     traverseCommits(path, repoPath);
     persistFileComprehensionData();
     persistEmailAddress();
@@ -139,89 +139,9 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
   };
 }
 
-void CompetenceParser::countFileChanges(
-  const std::string& root_,
-  boost::filesystem::path& repoPath_)
-{
-  // Initiate repository.
-  RepositoryPtr repo = createRepository(repoPath_);
-
-  // Initiate walker.
-  RevWalkPtr walker = createRevWalk(repo.get());
-  git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-  git_revwalk_push_head(walker.get());
-
-  git_oid oid;
-  int commitCounter = 0;
-  while (git_revwalk_next(&oid, walker.get()) == 0)
-  {
-    // Retrieve commit.
-    CommitPtr commit = createCommit(repo.get(), oid);
-
-    if (_maxCommitCount > 0 && commitCounter >= _maxCommitCount)
-      break;
-
-    ++commitCounter;
-
-    // Calculate elapsed time in full months since current commit.
-    std::time_t elapsed = std::chrono::system_clock::to_time_t(
-      std::chrono::system_clock::now()) - git_commit_time(commit.get());
-    double months = elapsed / (double) (secondsInDay * daysInMonth);
-
-    if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
-      break;
-
-    // Retrieve parent of commit.
-    CommitPtr parent = createParentCommit(commit.get());
-
-    if (!parent)
-      break;
-
-    // Get git tree of both commits.
-    TreePtr commitTree = createTree(commit.get());
-    TreePtr parentTree = createTree(parent.get());
-
-    if (!commitTree || !parentTree)
-      continue;
-
-    // Calculate diff of trees.
-    DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
-
-    // Loop through each delta.
-    size_t num_deltas = git_diff_num_deltas(diff.get());
-    if (num_deltas == 0)
-      continue;
-
-    // Analyse every file that was affected by the commit.
-    for (size_t j = 0; j < num_deltas; ++j)
-    {
-      const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
-      git_diff_file diffFile = delta->new_file;
-
-      model::FilePtr file = _ctx.srcMgr.getFile(root_ + diffFile.path);
-      if (!file)
-        continue;
-
-      auto iter = _changeCount.find(file);
-      if (iter != _changeCount.end())
-        ++iter->second.first;
-      else
-      {
-        _changeCount.insert(std::make_pair(file, std::make_pair(1, false)));
-        LOG(info) << file.get()->filename;
-      }
-    }
-  }
-
-  _commitCount = commitCounter;
-}
-
 void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
-
-  if (_maxCommitCount > 0 && job._commitCounter >= _commitCount)
-    return;
 
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
@@ -230,8 +150,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
     std::chrono::system_clock::now()) - git_commit_time(job._commit);
   double months = elapsed / (double) (secondsInDay * daysInMonth);
 
-  if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
-    return;
+  //if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
+    //return;
 
   // Retrieve parent of commit.
   CommitPtr parent = createParentCommit(job._commit);
@@ -259,7 +179,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
     git_diff_file diffFile = delta->new_file;
-
     model::FilePtr file = _ctx.srcMgr.getFile(job._root + diffFile.path);
     if (!file)
       continue;
@@ -267,14 +186,15 @@ void CompetenceParser::commitWorker(CommitJob& job)
     float totalLines = 0;
 
     BlameOptsPtr opt = createBlameOpts(job._oid);
-    BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get());
+    BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get(), job._commitCounter);
 
     if (!blame)
       continue;
 
     // Store the current number of blame lines for each user.
     std::map<UserEmail, UserBlameLines> userBlame;
-    for (std::uint32_t i = 0; i < git_blame_get_hunk_count(blame.get()); ++i)
+    std::uint32_t blameHunkCount = git_blame_get_hunk_count(blame.get());
+    for (std::uint32_t i = 0; i < blameHunkCount; ++i)
     {
       const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
       GitBlameHunk blameHunk;
@@ -305,9 +225,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
         _calculateFileData.lock();
         _emailAddresses.insert(blameHunk.finalSignature.email);
         _calculateFileData.unlock();
-        /*_calculateFileData.lock();
-        persistEmailAddress(blameHunk.finalSignature.email);
-        _calculateFileData.unlock();*/
       }
 
       totalLines += blameHunk.linesInHunk;
@@ -322,7 +239,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
         // Calculate the retained memory depending on the elapsed time.
         double percentage = pair.second / totalLines * std::exp(-months) * 100;
 
-        //auto it = _userEditions.find(pair.first);
         auto fileIter = _fileEditions.end();
         for (auto it = _fileEditions.begin(); it != _fileEditions.end(); ++it)
           if (it->_file.get()->id == file.get()->id)
@@ -349,63 +265,11 @@ void CompetenceParser::commitWorker(CommitJob& job)
           FileEdition fe { file, std::map<UserEmail, FileDataPair>() };
           fe._editions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
           _fileEditions.push_back(fe);
-        }
+       }
       }
     }
-
-    /*auto fileCountIter = _changeCount.find(file);
-    if (fileCountIter != _changeCount.end())
-      --(fileCountIter->second.first);
-
-    for (const auto& pair : userBlame)
-    {
-      if (pair.second != 0)
-      {
-        // Calculate the retained memory depending on the elapsed time.
-        double percentage = pair.second / totalLines * std::exp(-months) * 100;
-
-        //auto it = _userEditions.find(pair.first);
-        auto fileIter = _userEditions.find(file);
-        if (fileIter != _userEditions.end())
-        {
-          auto userIter = fileIter->second.find(pair.first);
-          if (userIter != fileIter->second.end())
-          {
-            userIter->second.first += (int)percentage;
-            ++(userIter->second.second);
-          }
-          else
-          {
-            fileIter->second.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
-          }
-        }
-        else
-        {
-          std::pair<model::FilePtr, std::map<UserEmail, FileDataPair>> p =
-            { file, std::map<UserEmail, FileDataPair>() };
-          p.second.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
-          _userEditions.insert(p);
-        }
-      }
-    }*/
-
     _calculateFileData.unlock();
   }
-/*
-  _calculateFileData.lock();
-
-  for (auto& pair : _changeCount)
-  {
-    if (pair.second.first == 0 && !pair.second.second)
-    {
-      auto it = _userEditions.find(pair.first);
-      persistFileComprehensionData(it->first, it->second);
-      pair.second.second = true;
-      //_changeCount.erase(pair.first);
-    }
-  }
-
-  _calculateFileData.unlock();*/
 
   LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
@@ -427,11 +291,11 @@ void CompetenceParser::traverseCommits(
   git_oid oid;
   int commitCounter = 0;
   int tmpCounter = 0;
-  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > tmpCounter)
+  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount >= tmpCounter)
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
-    commits.push_back(std::make_pair(oid, std::move(commit)));
+    commits.emplace_back(std::make_pair(oid, std::move(commit)));
     ++tmpCounter;
   }
 
@@ -467,27 +331,6 @@ void CompetenceParser::persistFileComprehensionData()
       });
     }
   }
-/*
-  util::OdbTransaction transaction(_ctx.db);
-  transaction([&, this]
-  {
-    LOG(info) << "[competenceparser] " << file_.get()->path << ": ";
-    for (const auto& pair : userEditions)
-    {
-      if (pair.second.first !=  0)
-      {
-        model::FileComprehension fileComprehension;
-        fileComprehension.userEmail = pair.first;
-        fileComprehension.repoRatio = pair.second.first / pair.second.second;
-        fileComprehension.userRatio = fileComprehension.repoRatio.get();
-        fileComprehension.file = file_.get()->id;
-        fileComprehension.inputType = model::FileComprehension::InputType::REPO;
-        _ctx.db->persist(fileComprehension);
-
-        LOG(info) << pair.first << " " << fileComprehension.repoRatio.get() << "%";
-      }
-    }
-  });*/
 }
 
 void CompetenceParser::setUserCompany()
@@ -526,15 +369,6 @@ void CompetenceParser::persistEmailAddress()
       model::UserEmail userEmail;
       userEmail.email = address;
       _ctx.db->persist(userEmail);
-      /*auto emails = _ctx.db->query<model::UserEmail>(
-        odb::query<cc::model::UserEmail>::email == email);
-
-      if (emails.empty())
-      {
-        model::UserEmail userEmail;
-        userEmail.email = email;
-        _ctx.db->persist(userEmail);
-      }*/
     });
   }
 }
@@ -565,8 +399,10 @@ RepositoryPtr CompetenceParser::createRepository(
 BlamePtr CompetenceParser::createBlame(
   git_repository* repo_,
   const std::string& path_,
-  git_blame_options* opts_)
+  git_blame_options* opts_, int jobnum)
 {
+  LOG(info) << jobnum << ": " << repo_ << ", " << path_;
+  //LOG(info) << jobnum << ": " << opts_->max_line << ", " << opts_->flags << ", " << opts_->min_line << ", " << opts_->min_match_characters << ", " << opts_->version;
   git_blame* blame = nullptr;
   int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
 

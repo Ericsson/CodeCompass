@@ -82,13 +82,7 @@ private:
 
   std::shared_ptr<odb::database> _db;
 
-  util::DirIterCallback getParserCallback(
-    boost::filesystem::path& repoPath_);
   util::DirIterCallback getParserCallbackRepo(
-    boost::filesystem::path& repoPath_);
-
-  void countFileChanges(
-    const std::string& root_,
     boost::filesystem::path& repoPath_);
 
   void commitWorker(CommitJob& job_);
@@ -97,22 +91,16 @@ private:
     const std::string& root_,
     boost::filesystem::path& repoPath_);
 
-  void setUserCompany();
-
   void persistEmailAddress();
-
-  /*void persistFileComprehensionData(
-    model::FilePtr file_,
-    const std::map<UserEmail, std::pair<Percentage, RelevantCommitCount>>& userEditions);*/
-
   void persistFileComprehensionData();
+  void setUserCompany();
 
   RevWalkPtr createRevWalk(git_repository* repo_);
 
   BlamePtr createBlame(
     git_repository* repo_,
     const std::string& path_,
-    git_blame_options* opts_);
+    git_blame_options* opts_, int jobnum);
 
   BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
 
@@ -139,7 +127,6 @@ private:
 
   std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
 
-  std::map<model::FilePtr, std::map<UserEmail, FileDataPair>> _userEditions;
   std::vector<FileEdition> _fileEditions;
   std::set<UserEmail> _emailAddresses;
   std::map<model::FilePtr, std::pair<int, bool>> _changeCount;
