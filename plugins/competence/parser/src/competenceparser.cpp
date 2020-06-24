@@ -197,12 +197,18 @@ void CompetenceParser::commitWorker(CommitJob& job)
     for (std::uint32_t i = 0; i < blameHunkCount; ++i)
     {
       const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
+
+      if (!git_oid_equal(&hunk->final_commit_id, &job._oid))
+        continue;
+
       GitBlameHunk blameHunk;
       blameHunk.linesInHunk = hunk->lines_in_hunk;
       if (hunk->final_signature)
       {
         blameHunk.finalSignature.email = hunk->final_signature->email;
       }
+      //else
+        //continue;
         // TODO
         // git_oid_iszero is deprecated.
         // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
