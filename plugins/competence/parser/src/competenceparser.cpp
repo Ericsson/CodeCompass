@@ -199,7 +199,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
       const git_blame_hunk* hunk = git_blame_get_hunk_byindex(blame.get(), i);
 
       if (!git_oid_equal(&hunk->final_commit_id, &job._oid))
+      {
+        totalLines += hunk->lines_in_hunk;
         continue;
+      }
 
       GitBlameHunk blameHunk;
       blameHunk.linesInHunk = hunk->lines_in_hunk;
@@ -407,7 +410,7 @@ BlamePtr CompetenceParser::createBlame(
   const std::string& path_,
   git_blame_options* opts_, int jobnum)
 {
-  LOG(info) << jobnum << ": " << repo_ << ", " << path_;
+  //LOG(info) << jobnum << ": " << repo_ << ", " << path_;
   //LOG(info) << jobnum << ": " << opts_->max_line << ", " << opts_->flags << ", " << opts_->min_line << ", " << opts_->min_match_characters << ", " << opts_->version;
   git_blame* blame = nullptr;
   int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
