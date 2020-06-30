@@ -395,6 +395,7 @@ void CompetenceDiagram::accumulatedCompanyViewDiagram(
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
+  _currentCompanies.clear();
 
   util::Graph::Node currentNode = addNode(graph_, fileInfo);
 
@@ -413,6 +414,7 @@ void CompetenceDiagram::accumulatedCompanyViewDiagram(
         util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
         decorateEdge(graph_, edge, containsEdgeDecoration);
       }
+      _currentCompanies.insert(node.second);
 
       std::string color = _white;
       if (_companyColorCodes.find(node.second) != _companyColorCodes.end())

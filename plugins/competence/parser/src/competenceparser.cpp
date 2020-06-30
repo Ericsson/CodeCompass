@@ -299,16 +299,16 @@ void CompetenceParser::traverseCommits(
   std::vector<std::pair<git_oid, CommitPtr>> commits;
   git_oid oid;
   int commitCounter = 0;
-  int tmpCounter = 0;
-  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount >= tmpCounter)
+  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
     commits.emplace_back(std::make_pair(oid, std::move(commit)));
-    ++tmpCounter;
+    ++commitCounter;
   }
 
   _commitCount = _maxCommitCount;
+  commitCounter = 0;
 
   for (const auto& c : commits)
   {
