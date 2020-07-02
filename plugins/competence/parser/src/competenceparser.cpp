@@ -113,6 +113,24 @@ bool CompetenceParser::parse()
 
     traverseCommits(path, repoPath);
     persistFileComprehensionData();
+
+    auto pcb = persistNoDataFiles();
+
+    try
+    {
+      util::iterateDirectoryRecursive(path, pcb);
+    }
+    catch (std::exception &ex_)
+    {
+      LOG(warning)
+        << "Competence parser threw an exception: " << ex_.what();
+    }
+    catch (...)
+    {
+      LOG(warning)
+        << "Competence parser failed with unknown exception!";
+    }
+
     persistEmailAddress();
     setUserCompany();
   }
@@ -179,7 +197,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
     git_diff_file diffFile = delta->new_file;
-    model::FilePtr file = _ctx.srcMgr.getFile(job._root + diffFile.path);
+    model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
     if (!file)
       continue;
 
@@ -342,6 +360,31 @@ void CompetenceParser::persistFileComprehensionData()
   }
 }
 
+util::DirIterCallback CompetenceParser::persistNoDataFiles()
+{
+  return [this](const std::string& currPath_)
+  {
+    boost::filesystem::path path
+    = boost::filesystem::canonical(currPath_);
+
+    if (boost::filesystem::is_regular_file(path) &&
+        !fileEditionContains(currPath_))
+      _ctx.srcMgr.getFile(currPath_);
+
+    return true;
+  };
+}
+
+bool CompetenceParser::fileEditionContains(const std::string& path_)
+{
+  for (const auto& fe : _fileEditions)
+    if (fe._file->path == path_)
+      return true;
+
+  return false;
+}
+
+
 void CompetenceParser::setUserCompany()
 {
   util::OdbTransaction transaction(_ctx.db);
@@ -349,7 +392,7 @@ void CompetenceParser::setUserCompany()
   {
     auto users = _ctx.db->query<model::UserEmail>();
     for (auto& user : users)
-      for (const std::pair<std::string, std::string>& p : _companyList)
+      for (const auto& p : _companyList)
         if (user.email.find(p.first) != std::string::npos)
         {
           user.company = p.second;
@@ -410,8 +453,6 @@ BlamePtr CompetenceParser::createBlame(
   const std::string& path_,
   git_blame_options* opts_, int jobnum)
 {
-  //LOG(info) << jobnum << ": " << repo_ << ", " << path_;
-  //LOG(info) << jobnum << ": " << opts_->max_line << ", " << opts_->flags << ", " << opts_->min_line << ", " << opts_->min_match_characters << ", " << opts_->version;
   git_blame* blame = nullptr;
   int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
 
@@ -490,6 +531,7 @@ void CompetenceParser::setCompanyList()
   _companyList.insert({"harvard.edu", "Harvard"});
   _companyList.insert({"huawei.com", "Huawei"});
   _companyList.insert({"ibm.com", "IBM"});
+  _companyList.insert({"inf.elte.hu", "ELTE FI"});
   _companyList.insert({"intel.com", "Intel"});
   _companyList.insert({"microsoft.com", "Microsoft"});
   _companyList.insert({"nokia.com", "Nokia"});

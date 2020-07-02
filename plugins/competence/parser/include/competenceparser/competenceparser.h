@@ -93,7 +93,10 @@ private:
 
   void persistEmailAddress();
   void persistFileComprehensionData();
+  util::DirIterCallback persistNoDataFiles();
   void setUserCompany();
+
+  bool fileEditionContains(const std::string& path);
 
   RevWalkPtr createRevWalk(git_repository* repo_);
 
@@ -129,7 +132,6 @@ private:
 
   std::vector<FileEdition> _fileEditions;
   std::set<UserEmail> _emailAddresses;
-  std::map<model::FilePtr, std::pair<int, bool>> _changeCount;
   std::map<std::string, std::string> _companyList;
 
   std::mutex _calculateFileData;
