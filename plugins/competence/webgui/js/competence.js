@@ -137,6 +137,20 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
         }
       }));
 
+      submenu.addChild(new MenuItem({
+        label : "Risk view",
+        type : 4,
+        onClick : function () {
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : this.type,  // In case there are other diagrams.
+            node : fileInfo.id
+          });
+        }
+      }));
+
       return new PopupMenuItem({
         label : "Competence",
         popup : submenu

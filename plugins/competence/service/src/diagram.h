@@ -35,6 +35,7 @@ public:
   std::string getUserViewDiagramLegend();
   std::string getTeamViewDiagramLegend();
   std::string getCompanyViewLegend();
+  std::string getRiskViewLegend();
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
@@ -102,6 +103,21 @@ private:
     const util::Graph::Node& node_);
 
   /**
+   * This method generates a graph for a single file or
+   * a directory recursively to show which files are at
+   * risk of forgetting. At least 2 devs with >=50%
+   * understanding mean no risk, 1 dev means low risk,
+   * any lower means high risk.
+   */
+  void riskViewDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_);
+
+  std::map<util::Graph::Node, short> getFileRiskNodes(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  /**
    * Returns the expert company for a file.
    */
   std::string maxCompanyCompetence(FileComprehensionResult& result);
@@ -120,6 +136,12 @@ private:
    * Converts a percentage value to a hex color code.
    */
   std::string rateToColor(int16_t rate);
+
+  /**
+   * Converts a risk value to red, yellow or green
+   * hex color code.
+   */
+  std::string riskCounterToColor(short rate);
 
   /**
    * Helper methods for graph building.

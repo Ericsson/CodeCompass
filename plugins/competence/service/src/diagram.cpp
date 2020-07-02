@@ -56,6 +56,9 @@ void CompetenceDiagram::getCompetenceDiagram(
     case 3:
       accumulatedCompanyViewDiagram(graph_, fileId_);
       break;
+    case 4:
+      riskViewDiagram(graph_, fileId_);
+      break;
   }
 }
 
@@ -547,6 +550,106 @@ std::string CompetenceDiagram::getCompany(const std::string& email_)
   return company;
 }
 
+void CompetenceDiagram::riskViewDiagram(
+  util::Graph &graph_,
+  const core::FileId &fileId_)
+{
+  core::FileInfo fileInfo;
+  _projectHandler.getFileInfo(fileInfo, fileId_);
+
+  util::Graph::Node currentNode = addNode(graph_, fileInfo);
+
+  std::set<util::Graph::Node> subdirs = util::bfsBuild(graph_, currentNode,
+    std::bind(&CompetenceDiagram::getSubDirs, this, std::placeholders::_1,
+    std::placeholders::_2), {}, subdirEdgeDecoration);
+
+  subdirs.insert(currentNode);
+
+  for (const util::Graph::Node& subdir : subdirs)
+  {
+    for (const auto& node : getFileRiskNodes(graph_, subdir))
+    {
+      if (node.first != subdir)
+      {
+        util::Graph::Edge edge = graph_.createEdge(subdir, node.first);
+        decorateEdge(graph_, edge, containsEdgeDecoration);
+      }
+
+      Decoration competenceNodeDecoration = {
+        {"shape", "box"},
+        {"style", "filled"},
+        {"fillcolor", riskCounterToColor(node.second)}
+      };
+      decorateNode(graph_, node.first, competenceNodeDecoration);
+    }
+  }
+
+  if (graph_.nodeCount() > _nodeCountLimit)
+    graph_.setAttribute("rankdir", "LR");
+}
+
+std::map<util::Graph::Node, short> CompetenceDiagram::getFileRiskNodes(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  std::map<core::FileId, short> comprehension;
+  _transaction([&, this]
+  {
+    auto contained = _db->query<model::File>(
+      FileQuery::parent == std::stoull(node_) &&
+      FileQuery::type != model::File::DIRECTORY_TYPE ||
+      FileQuery::id == std::stoull(node_)
+    );
+
+    for (const auto& file : contained)
+    {
+      auto comp = _db->query<model::FileComprehension>(
+        FileComprehensionQuery::file == file.id);
+
+      short counter = std::count_if(comp.begin(), comp.end(),
+        [&](const model::FileComprehension& f){
+          return f.userRatio >= 50;
+      });
+
+      comprehension.insert(std::make_pair(std::to_string(file.id), counter));
+    }
+  });
+
+  std::map<util::Graph::Node, short> annotated;
+  for (const auto& pair : comprehension)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, pair.first);
+
+    annotated.insert(std::make_pair(addNode(graph_, fileInfo), pair.second));
+  }
+
+  return annotated;
+}
+
+std::string CompetenceDiagram::getRiskViewLegend()
+{
+  util::LegendBuilder builder("Risk View Diagram");
+
+  builder.addNode("No data", {{"shape", "box"},
+                              {"style", "filled"},
+                              {"fillcolor", _white}});
+
+  builder.addNode("Safe", {{"shape", "box"},
+                              {"style", "filled"},
+                              {"fillcolor", "#00ff00"}});
+
+  builder.addNode("At low risk", {{"shape", "box"},
+                              {"style", "filled"},
+                              {"fillcolor", "#ffff00"}});
+
+  builder.addNode("At high risk", {{"shape", "box"},
+                              {"style", "filled"},
+                              {"fillcolor", "#ff0000"}});
+
+  return builder.getOutput();
+}
+
 /*
  * Note: The ODB manual description about the odb::result::iterator type:
  * "If we have two iterators pointing to the current position
@@ -597,6 +700,19 @@ std::string CompetenceDiagram::rateToColor(int16_t rate)
     ss << std::hex << 0 << 0 << (green << 8 | 0);
 
   return ss.str();
+}
+
+std::string CompetenceDiagram::riskCounterToColor(short rate)
+{
+  switch (rate)
+  {
+    case 0:
+      return "#ff0000"; // red
+    case 1:
+      return "#ffff00"; // yellow
+    default:
+      return "#00ff00"; //green
+  }
 }
 
 std::vector<util::Graph::Node> CompetenceDiagram::getSubDirs(

@@ -124,6 +124,9 @@ void CompetenceServiceHandler::getDiagramLegend(
     case 3:
       return_ = diagram.getCompanyViewLegend();
       break;
+    case 4:
+      return_ = diagram.getRiskViewLegend();
+      break;
   }
 }
 
