@@ -92,6 +92,13 @@ private:
     boost::filesystem::path& repoPath_);
 
   void persistEmailAddress();
+
+  void persistCommitData(
+    const model::FileId& fileId_,
+    const std::map<UserEmail, UserBlameLines>& userBlame_,
+    const float totalLines,
+    const std::time_t& commitDate_);
+
   void persistFileComprehensionData();
   util::DirIterCallback persistNoDataFiles();
   void setUserCompany();
@@ -103,7 +110,7 @@ private:
   BlamePtr createBlame(
     git_repository* repo_,
     const std::string& path_,
-    git_blame_options* opts_, int jobnum);
+    git_blame_options* opts_);
 
   BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
 

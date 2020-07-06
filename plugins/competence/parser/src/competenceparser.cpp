@@ -3,6 +3,8 @@
 #include <chrono>
 #include <memory>
 
+#include <model/commitdata.h>
+#include <model/commitdata-odb.hxx>
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
 #include <model/useremail.h>
@@ -197,9 +199,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
+  const git_signature* commitAuthor = git_commit_author(job._commit);
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
-    std::chrono::system_clock::now()) - git_commit_time(job._commit);
+    std::chrono::system_clock::now()) - commitAuthor->when.time;
   double months = elapsed / (double) (secondsInDay * daysInMonth);
 
   //if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
@@ -238,7 +241,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
     float totalLines = 0;
 
     BlameOptsPtr opt = createBlameOpts(job._oid);
-    BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get(), job._commitCounter);
+    BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get());
 
     if (!blame)
       continue;
@@ -290,7 +293,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
       totalLines += blameHunk.linesInHunk;
     }
-
+    persistCommitData(file->id, userBlame, totalLines, commitAuthor->when.time);
     _calculateFileData.lock();
 
     for (const auto& pair : userBlame)
@@ -335,18 +338,40 @@ void CompetenceParser::commitWorker(CommitJob& job)
   LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
 
+void CompetenceParser::persistCommitData(
+  const model::FileId& fileId_,
+  const std::map<UserEmail, UserBlameLines>& userBlame_,
+  const float totalLines_,
+  const std::time_t& commitDate_)
+{
+  util::OdbTransaction transaction(_ctx.db);
+  transaction([&, this]
+  {
+    for (const auto& blame : userBlame_)
+    {
+      model::CommitData commitData;
+      commitData.file = fileId_;
+      commitData.committerEmail = blame.first;
+      commitData.committedLines = blame.second;
+      commitData.totalLines = totalLines_;
+      commitData.commitDate = commitDate_;
+      _ctx.db->persist(commitData);
+    }
+  });
+}
+
 void CompetenceParser::persistFileComprehensionData()
 {
   for (const auto& edition : _fileEditions)
   {
-    LOG(info) << "[competenceparser] " << edition._file.get()->path << ": ";
+    LOG(info) << "[competenceparser] " << edition._file->path << ": ";
     for (const auto& pair : edition._editions)
     {
       util::OdbTransaction transaction(_ctx.db);
       transaction([&, this]
       {
         model::FileComprehension fileComprehension;
-        fileComprehension.file = edition._file.get()->id;
+        fileComprehension.file = edition._file->id;
         fileComprehension.userEmail = pair.first;
         fileComprehension.repoRatio = pair.second.first / pair.second.second;
         fileComprehension.userRatio = fileComprehension.repoRatio.get();
@@ -450,7 +475,7 @@ RepositoryPtr CompetenceParser::createRepository(
 BlamePtr CompetenceParser::createBlame(
   git_repository* repo_,
   const std::string& path_,
-  git_blame_options* opts_, int jobnum)
+  git_blame_options* opts_)
 {
   git_blame* blame = nullptr;
   int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
