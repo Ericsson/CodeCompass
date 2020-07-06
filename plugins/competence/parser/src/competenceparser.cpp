@@ -157,6 +157,40 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
   };
 }
 
+void CompetenceParser::traverseCommits(
+  const std::string& root_,
+  boost::filesystem::path& repoPath_)
+{
+  // Initiate repository.
+  RepositoryPtr repo = createRepository(repoPath_);
+
+  // Initiate walker.
+  RevWalkPtr walker = createRevWalk(repo.get());
+  git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+  git_revwalk_push_head(walker.get());
+
+  std::vector<std::pair<git_oid, CommitPtr>> commits;
+  git_oid oid;
+  int commitCounter = 0;
+  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
+  {
+    // Retrieve commit.
+    CommitPtr commit = createCommit(repo.get(), oid);
+    commits.emplace_back(std::make_pair(oid, std::move(commit)));
+    ++commitCounter;
+  }
+
+  _commitCount = _maxCommitCount;
+  commitCounter = 0;
+
+  for (const auto& c : commits)
+  {
+    CommitJob job(repoPath_, root_, c.first, c.second.get(), ++commitCounter);
+    _pool->enqueue(job);
+  }
+  _pool->wait();
+}
+
 void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
@@ -299,41 +333,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
-}
-
-
-void CompetenceParser::traverseCommits(
-  const std::string& root_,
-  boost::filesystem::path& repoPath_)
-{
-  // Initiate repository.
-  RepositoryPtr repo = createRepository(repoPath_);
-
-  // Initiate walker.
-  RevWalkPtr walker = createRevWalk(repo.get());
-  git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-  git_revwalk_push_head(walker.get());
-
-  std::vector<std::pair<git_oid, CommitPtr>> commits;
-  git_oid oid;
-  int commitCounter = 0;
-  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
-  {
-    // Retrieve commit.
-    CommitPtr commit = createCommit(repo.get(), oid);
-    commits.emplace_back(std::make_pair(oid, std::move(commit)));
-    ++commitCounter;
-  }
-
-  _commitCount = _maxCommitCount;
-  commitCounter = 0;
-
-  for (const auto& c : commits)
-  {
-    CommitJob job(repoPath_, root_, c.first, c.second.get(), ++commitCounter);
-    _pool->enqueue(job);
-  }
-  _pool->wait();
 }
 
 void CompetenceParser::persistFileComprehensionData()
