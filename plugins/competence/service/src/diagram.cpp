@@ -85,7 +85,6 @@ void CompetenceDiagram::userViewDiagram(
   if (user_ == "Anonymous" || emails.empty())
   {
     Decoration competenceNodeDecoration = {
-      {"shape", "box"},
       {"style", "filled"},
       {"fillcolor", _white}
     };
@@ -112,7 +111,6 @@ void CompetenceDiagram::userViewDiagram(
       std::string color = rateToColor(node.second);
 
       Decoration competenceNodeDecoration = {
-        {"shape", "box"},
         {"style", "filled"},
         {"fillcolor", color}
       };
@@ -232,7 +230,6 @@ void CompetenceDiagram::teamViewDiagram(
       std::string color = generateColor(node.second);
 
       Decoration competenceNodeDecoration = {
-        {"shape", "box"},
         {"style", "filled"},
         {"fillcolor", color}
       };
@@ -337,7 +334,6 @@ void CompetenceDiagram::personalCompanyViewDiagram(
         color = _companyColorCodes[node.second];
 
       Decoration competenceNodeDecoration = {
-        {"shape", "box"},
         {"style", "filled"},
         {"fillcolor", color}
       };
@@ -424,7 +420,6 @@ void CompetenceDiagram::accumulatedCompanyViewDiagram(
         color = _companyColorCodes[node.second];
 
       Decoration competenceNodeDecoration = {
-        {"shape", "box"},
         {"style", "filled"},
         {"fillcolor", color}
       };
@@ -576,7 +571,6 @@ void CompetenceDiagram::riskViewDiagram(
       }
 
       Decoration competenceNodeDecoration = {
-        {"shape", "box"},
         {"style", "filled"},
         {"fillcolor", riskCounterToColor(node.second)}
       };
@@ -673,6 +667,11 @@ util::Graph::Node CompetenceDiagram::addNode(
 {
   util::Graph::Node node = graph_.getOrCreateNode(fileInfo_.id);
   graph_.setNodeAttribute(node, "label", fileInfo_.name);
+
+  if (fileInfo_.type == model::File::DIRECTORY_TYPE)
+    decorateNode(graph_, node, {{"shape", "folder"}});
+  else
+    decorateNode(graph_, node, {{"shape", "box"}});
 
   return node;
 }

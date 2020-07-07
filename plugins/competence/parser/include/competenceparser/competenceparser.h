@@ -146,7 +146,6 @@ private:
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
 
-  int _maxCommitHistoryLength = 0;
   int _maxCommitCount = 0;
   int _commitCount = 0;
 };

@@ -48,19 +48,6 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
     LOG(info) << "[competenceparser] Commit history of " << _maxCommitCount << " commits will be parsed.";
     return;
   }
-
-  if (_ctx.options.count("commit-history"))
-  {
-    _maxCommitHistoryLength = _ctx.options["commit-history"].as<int>();
-
-    if (_maxCommitHistoryLength < 1)
-    {
-      LOG(fatal) << "Commit history length is too small!";
-      throw std::logic_error("");
-    }
-
-    LOG(info) << "[competenceparser] Commit history of " << _maxCommitHistoryLength << " months will be parsed.";
-  }
 }
 
 bool CompetenceParser::accept(const std::string& path_)
@@ -178,18 +165,10 @@ void CompetenceParser::traverseCommits(
   {
     // Retrieve commit.
     CommitPtr commit = createCommit(repo.get(), oid);
-    commits.emplace_back(std::make_pair(oid, std::move(commit)));
-    ++commitCounter;
-  }
-
-  _commitCount = _maxCommitCount;
-  commitCounter = 0;
-
-  for (const auto& c : commits)
-  {
-    CommitJob job(repoPath_, root_, c.first, c.second.get(), ++commitCounter);
+    CommitJob job(repoPath_, root_, oid, commit.get(), ++commitCounter);
     _pool->enqueue(job);
   }
+  _commitCount = _maxCommitCount;
   _pool->wait();
 }
 
@@ -588,10 +567,6 @@ extern "C"
     boost::program_options::options_description description("Competence Plugin");
 
     description.add_options()
-      ("commit-history", po::value<int>(),
-       "This is a threshold value. It is the number of months for which the competence parser"
-       "will parse the commit history. If both commit-history and commit-count is given,"
-       "the value of commit-count will be the threshold value.")
       ("commit-count", po::value<int>(),
         "This is a threshold value. It is the number of commits the competence parser"
         "will process if value is given. If both commit-history and commit-count is given,"
