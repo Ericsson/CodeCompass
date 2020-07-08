@@ -1238,7 +1238,7 @@ void CppServiceHandler::getFileDiagramTypes(
     return_["This module depends on"]               = EXTERNAL_DEPENDENCY;
     return_["Users of this module"]                 = EXTERNAL_USERS;
   }
-  else
+  else if (file->parseStatus != model::File::PSNone)
   {
     return_["Include Dependency"]                   = INCLUDE_DEPENDENCY;
     return_["Component Users"]                      = COMPONENT_USERS;
