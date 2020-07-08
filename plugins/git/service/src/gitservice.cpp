@@ -60,7 +60,53 @@ int gitDiffToStringCompactCallback(
   return 0;
 }
 
+#define GIT_MACRO_TO_THRIFT_TYPE(GIT_TYPE, THRIFT_TYPE) \
+  case GIT_TYPE: \
+    return cc::service::git::GitObjectType::THRIFT_TYPE;
+
+#if LIBGIT2_VER_MAJOR >= 1 || LIBGIT2_VER_MINOR >= 28
+// LibGIT2 v0.28 is supplied by default on Ubuntu 20.04.0 LTS.
+// There was an API break on the macros for Git object types, this
+// function decouples the Thrift API from the lib's macro.
+inline cc::service::git::GitObjectType::type convertToThriftType(
+  ::git_object_t gitType)
+{
+  switch (gitType)
+  {
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_COMMIT, Commit)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_TREE, Tree)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_BLOB, Blob)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_TAG, Tag)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_OFS_DELTA, OffetDelta)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJECT_REF_DELTA, RefDelta)
+    default:
+      return cc::service::git::GitObjectType::Reserved1;
+  }
 }
+#elif LIGBIT2_VER_MAJOR == 0 && LIBGIT2_VER_MINOR < 27
+// Older versions are supplied by Ubuntu 18 and 16.
+inline cc::service::git::GitObjectType::type convertToThriftType(
+  ::git_otype gitType)
+{
+  switch (gitType)
+  {
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_COMMIT, Commit)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_TREE, Tree)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_BLOB, Blob)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_TAG, Tag)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_OFS_DELTA, OffetDelta)
+    GIT_MACRO_TO_THRIFT_TYPE(GIT_OBJ_REF_DELTA, RefDelta)
+    default:
+      return cc::service::git::GitObjectType::Reserved1;
+  }
+}
+#else
+#error LibGIT2 version not handled!
+#endif
+
+#undef GIT_MACRO_TO_THRIFT_TYPE
+
+} // namespace (anonymous)
 
 namespace cc
 {
@@ -164,7 +210,7 @@ void GitServiceHandler::getRepositoryByProjectPath(
     ReferenceTopObjectResult top;
     getReferenceTopObject(top, repo.id, repo.head);
 
-    if (top.type != GitObjectType::GIT_OBJ_COMMIT) {
+    if (top.type != GitObjectType::Commit) {
       LOG(warning) << "Head is not a commit";
       break;
     }
@@ -485,8 +531,7 @@ void GitServiceHandler::getReferenceTopObject(
   ObjectPtr object = createObject(repo.get(), oid);
 
   if (object)
-    return_.type =
-      static_cast<decltype(return_.type)>(git_object_type(object.get()));
+    return_.type = convertToThriftType(git_object_type(object.get()));
 }
 
 void GitServiceHandler::getCommitDiffAsString(
