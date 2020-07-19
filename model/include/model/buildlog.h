@@ -43,10 +43,6 @@ struct BuildLog
   #pragma db not_null
   BuildLogMessage log;
 
-  #pragma db not_null
-  #pragma db on_delete(cascade)
-  std::shared_ptr<BuildAction> action;
-
   #pragma db null
   FileLoc location;
 };

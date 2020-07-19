@@ -35,6 +35,7 @@
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
+#include "diagnosticmessagehandler.h"
 
 namespace cc
 {
@@ -324,6 +325,9 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   VisitorActionFactory factory(_ctx);
   clang::tooling::ClangTool tool(*compilationDb, command_.Filename);
+
+  DiagnosticMessageHandler diagMsgHandler(_ctx.srcMgr, _ctx.db);
+  tool.setDiagnosticConsumer(&diagMsgHandler);
 
   int error = tool.run(&factory);
 
