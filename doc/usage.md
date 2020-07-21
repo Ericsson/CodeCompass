@@ -32,7 +32,7 @@ psql
 In the PostgreSQL command-line shell, type:
 
 ```sql
-CREATE USER compass WITH SUPERUSER LOGIN PASSWORD <mypassword>;
+CREATE USER compass WITH SUPERUSER LOGIN PASSWORD '<mypassword>';
 ```
 
 You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
@@ -190,11 +190,6 @@ CodeCompass_webserver -w <workdir> -p <port>
   configuration and log files are located. This should be the same as what was
   provided to the `CodeCompass_parser` binary in *Step 2*.
 - **Port**: Port number of the web server to listen on.
-- **Database**: The plugins can use an SQL database as storage. By the
-  connection string the user can give the location of a running database
-  system. In the parsing session the database name could have been provided.
-  This database name is written in a config file in the workspace directory, so
-  it is unnecessary to provide it at server start.
 
 For full documentation see `CodeCompass_webserver -h`.
 
