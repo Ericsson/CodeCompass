@@ -181,7 +181,7 @@ script looks at the development environment and if it finds the environment
 for a given language then it'll use it. For example in the previous step npm
 was installed which requires NodeJS. If NodeJS can be found on your machine
 then the corresponding stub will also compile. If you don't need it then you
-can turn it off: `./configure --without-nodejs.`
+can turn it off: `./configure --without-nodejs`.
 
 In certain cases, installation may fail if development libraries for
 languages are not installed on the target machine. E.g. if Python is
@@ -302,4 +302,3 @@ relevant during compilation.
 | `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. Optional. |
 | `CODECOMPASS_LINKER` | The path of the linker, if the system's default linker is to be overridden. |
-

@@ -4,7 +4,7 @@
 CodeCompass uses relational database system for data storage. Currently *SQLite*
 and *PostgreSQL* are supported. The first one is for trial purposes and for
 smaller projects only, as SQLite can slow down considerably on large project.
-PostgreSQL is recommender for any production operation on medium-size or larger
+PostgreSQL is recommended for any production operation on medium-size or larger
 projects. The database backend used is decided when compiling CodeCompass, via
 the `-DDATABASE` CMake flag (see chapter [Build CodeCompass](deps.md)).
 
@@ -20,7 +20,7 @@ PostgreSQL can be installed from the package manager, using
 set up an automatically starting local server on the default port `5432`.
 
 This server, by default, is only accessible for an automatically created system
-user named `postgres`. However, CodeCompass' database layer only supports
+user named `postgres`. However, CodeCompass's database layer only supports
 password-based authentication. First, you have to create a user to access the
 database:
 
@@ -32,7 +32,7 @@ psql
 In the PostgreSQL command-line shell, type:
 
 ```sql
-CREATE USER compass WITH SUPERUSER LOGIN PASSWORD 'mypassword';
+CREATE USER compass WITH SUPERUSER LOGIN PASSWORD '<mypassword>';
 ```
 
 You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
@@ -74,7 +74,7 @@ file](http://clang.llvm.org/docs/JSONCompilationDatabase.html).
 
 ### Get compilation database from CMake
 If the project uses CMake build system then you can create the compilation
-database by CMake with the option `CMAKE_EXPORT_COMPILE_COMMANDS`:
+database via CMake with the option `CMAKE_EXPORT_COMPILE_COMMANDS`:
 
 ```bash
 cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
@@ -104,7 +104,7 @@ For parsing a project with CodeCompass, the following command has to be emitted:
 CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connection_string>
 ```
 
-- **Workspace**: This is a directory where the some parse results, and different
+- **Workspace**: This is a directory where some parse results and different
   configuration and log files are located. **Please ensure that this directory
   is not located under any *input* folder, or under your project's source file
   tree.**
@@ -160,8 +160,7 @@ CodeCompass_parser \
 
 As an experimental feature CodeCompass supports incremental parsing, updating an
 existing database and project workspace by detecting the added, deleted and modified files.  
-Incremental parsing depends on that the build tooling generates a **complete** compilation database,
-therefore the build commands for only the modified files are not sufficient.
+Incremental parsing depends on the fact, that the build tool generates a **complete** compilation database, therefore the build commands for only the modified files are not sufficient.
 In case of CMake, using the result of the `CMAKE_EXPORT_COMPILE_COMMANDS=ON` argument, the
 compilation database will always contain all files.
 Currently the C++ and metrics parsers support incremental parsing, while other parsers
@@ -191,11 +190,6 @@ CodeCompass_webserver -w <workdir> -p <port>
   configuration and log files are located. This should be the same as what was
   provided to the `CodeCompass_parser` binary in *Step 2*.
 - **Port**: Port number of the web server to listen on.
-- **Database**: The plugins can use an SQL database as storage. By the
-  connection string the user can give the location of a running database
-  system. In the parsing session the database name could have been provided.
-  This database name is written in a config file in the workspace directory, so
-  it is useless to provide it at server start.
 
 For full documentation see `CodeCompass_webserver -h`.
 
@@ -234,7 +228,7 @@ SEGI4JSxV56lYg==
 
 If intermediate certificates are used because your certificate isn't signed
 by a Root CA (this is common), the certificate chain's elements (also in, or
-converted to PEM format) should also be concatenate into the `certificate.pem`
+converted to PEM format) should also be concatenated into the `certificate.pem`
 file:
 
 ~~~{.pem}
@@ -253,11 +247,6 @@ The certificate of the CA that signed your certificate
 
 ```bash
 # Start the server listening on port 6251.
-CodeCompass_webserver \
-  -w ~/cc/workdir \
-  -p 6251
-
-# Or if SQLite database is used:
 CodeCompass_webserver \
   -w ~/cc/workdir \
   -p 6251
