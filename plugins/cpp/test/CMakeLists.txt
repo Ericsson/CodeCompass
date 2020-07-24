@@ -22,18 +22,12 @@ add_executable(cppparsertest
 target_compile_options(cppservicetest PUBLIC -Wno-unknown-pragmas)
 target_compile_options(cppparsertest PUBLIC -Wno-unknown-pragmas)
 
-find_boost_libraries(
-  filesystem
-  log
-  program_options
-  system)
-
 target_link_libraries(cppservicetest
   util
   model
   cppmodel
   cppservice
-  ${Boost_LINK_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${GTEST_BOTH_LIBRARIES}
   pthread)
 
@@ -41,7 +35,7 @@ target_link_libraries(cppparsertest
   util
   model
   cppmodel
-  ${Boost_LINK_LIBRARIES}
+  ${Boost_LIBRARIES}
   ${GTEST_BOTH_LIBRARIES}
   pthread)
 

@@ -27,26 +27,33 @@ RUN mkdir /CodeCompass-build && \
     -DDATABASE=$CC_DATABASE \
     -DCMAKE_INSTALL_PREFIX=/CodeCompass-install \
     -DCMAKE_BUILD_TYPE=$CC_BUILD_TYPE && \
-  make && \
+  make -j $(nproc) && \
   make install
 
 ###############################################################################
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM ubuntu:bionic
+FROM ubuntu:20.04
+
+# tzdata package is installed implicitly in the following command. This package
+# sets timezone interactively during the installation process. This environment
+# variable prevents this interaction.
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     llvm-7 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
-    postgresql-server-dev-10 \
+    postgresql-server-dev-12 \
     default-jre \
     libgit2-dev \
-    libssl1.0.0 \
+    libssl1.1 \
     libgvc6 \
     libmagic-dev \
+    libthrift-dev \
+    libodb-sqlite-dev \
     ctags \
     # To switch user and exec command.
     gosu \
@@ -69,14 +76,7 @@ RUN groupadd -r codecompass -g ${CC_GID} && \
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder --chown=codecompass:codecompass /CodeCompass-install /codecompass
 
-# Copy Thrift installed directory.
-COPY --from=builder /opt/thrift_install /opt/thrift
-
-# Copy ODB installed directory.
-COPY --from=builder /opt/odb_install /opt/odb
-
 ENV PATH="/codecompass/bin:$PATH"
-ENV LD_LIBRARY_PATH="/codecompass/lib:/opt/thrift/lib:/opt/odb/lib:$LD_LIBRARY_PATH"
 
 COPY --chown=codecompass:codecompass docker/web/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh

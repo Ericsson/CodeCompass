@@ -19,11 +19,8 @@ add_library(util STATIC
 
 target_compile_options(util PUBLIC -fPIC)
 
-find_boost_libraries(
-  regex)
-
 target_link_libraries(util
-  ${Boost_LINK_LIBRARIES})
+  ${Boost_LIBRARIES})
 
 string(TOLOWER "${DATABASE}" _database)
 if (${_database} STREQUAL "sqlite")

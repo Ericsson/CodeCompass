@@ -99,23 +99,6 @@ function(install_webplugin _dir)
   set_property(GLOBAL APPEND PROPERTY USERGUIDES "${_userguides}")
 endfunction(install_webplugin)
 
-# Finds the absolute paths for the given Boost libraries
-# Use variable arguments for the Boost libraries to link
-function(find_boost_libraries)
-  foreach(_lib ${ARGV})
-    foreach(_path ${Boost_LIBRARIES})
-      if(_path MATCHES ".*boost_${_lib}\.so$")
-        list(APPEND LIBS ${_path})
-      elseif(_path MATCHES "Boost::${_lib}$")
-        # There is no path for the lib, included as a module.
-        list(APPEND LIBS ${_path})
-      endif()
-    endforeach(_path)
-  endforeach(_lib)
-
-  set(Boost_LINK_LIBRARIES ${LIBS} PARENT_SCOPE)
-endfunction(find_boost_libraries)
-
 # Prints a coloured, and optionally bold message to the console.
 # _colour should be some ANSI colour name, like "blue" or "magenta".
 function(fancy_message _str _colour _isBold)

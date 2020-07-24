@@ -193,6 +193,16 @@ CodeCompass_webserver -w <workdir> -p <port>
 
 For full documentation see `CodeCompass_webserver -h`.
 
+### Enabling authentication
+
+To enable this feature, an `authentication.json` file should be created under
+the workspace directory (`--workspace` or `-w` flag given to the server).
+At a bare minimum, to restrict access, an `"enabled": true` MUST be present
+in the JSON.
+
+For further details and examples, **see the guide on 
+[Requiring authentication](authentication.md).**
+
 ### Enabling HTTPS (SSL/TLS) secure server
 
 By default, CodeCompass starts a conventional, plain-text HTTP server on the
