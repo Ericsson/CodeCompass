@@ -102,7 +102,7 @@ svg {
 }
 
 #cc-headerlogo {
-  background: left center no-repeat url(/images/logo.png);
+  background: left center no-repeat url(../images/logo.png);
   width: 200px;
   height: 100%;
   background-size: 200px;
@@ -413,7 +413,7 @@ svg {
   cursor: pointer;
 }
 
-.infobox dt, 
+.infobox dt,
 .tooltip-info dt {
   font-size: 12pt;
 }
@@ -643,7 +643,7 @@ div.CodeMirror-linenumber {
   display: block;
   width: 100%;
   height: 100%;
-  background: center center no-repeat url(/images/loading.gif);
+  background: center center no-repeat url(../images/loading.gif);
   background-size: 100px 100px;
 }
 

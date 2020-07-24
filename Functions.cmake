@@ -106,7 +106,10 @@ function(find_boost_libraries)
     foreach(_path ${Boost_LIBRARIES})
       if(_path MATCHES ".*boost_${_lib}\.so$")
         list(APPEND LIBS ${_path})
-      endif(_path MATCHES ".*boost_${_lib}\.so$")
+      elseif(_path MATCHES "Boost::${_lib}$")
+        # There is no path for the lib, included as a module.
+        list(APPEND LIBS ${_path})
+      endif()
     endforeach(_path)
   endforeach(_lib)
 

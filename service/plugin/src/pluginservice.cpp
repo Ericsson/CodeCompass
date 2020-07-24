@@ -48,9 +48,9 @@ void PluginServiceHandler::getWebPlugins(std::vector<std::string>& return_)
     webrootDir + "/scripts/codecompass/view");
 
   for (const std::string& file_ : generatedFiles)
-    return_.push_back(file_.substr(webrootDir.size()));
+    return_.push_back(file_.substr(webrootDir.size() + 1)); // +1 to remove starting slash
   for (const std::string& file_ : jsModules)
-    return_.push_back(file_.substr(webrootDir.size()));
+    return_.push_back(file_.substr(webrootDir.size() + 1)); // +1 to remove starting slash
 }
 
 void PluginServiceHandler::getWebStylePlugins(std::vector<std::string>& return_)
@@ -60,7 +60,7 @@ void PluginServiceHandler::getWebStylePlugins(std::vector<std::string>& return_)
   std::vector<std::string> cssFiles = getFiles(webrootDir + "/style");
 
   for (const std::string& file_ : cssFiles)
-    return_.push_back(file_.substr(webrootDir.size()));
+    return_.push_back(file_.substr(webrootDir.size() + 1)); // +1 to remove starting slash
 }
 
 }

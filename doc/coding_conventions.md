@@ -29,7 +29,7 @@ Formatting
   } // parser
   } // cc
   ```
-- **Blocks** Related opening and closing brackets should be placed to the same
+- **Blocks** related to opening and closing brackets should be placed to the same
   column (do not follow Java style). This rule holds for namespaces, classes,
   function blocks and compound statements.
 - **Class declarations** should use only one `public`, `protected` and
@@ -49,6 +49,7 @@ Formatting
     int _privX;
   };
   ```
+
 - **Friend** declarations, if any, should be placed before the public
   visibility items, before the public keyword.
 - The pointer and reference qualifier `*` and `&` letters should come
@@ -58,11 +59,11 @@ Formatting
 Naming
 ------
 
-- **File names** should contain lower case ASCII characters. Avoid other
+- **File names** should only contain lower case ASCII characters. Avoid
   characters, like dash (-). Header file extension is `.h`, source file
   extension is `.cpp`. Example: `cxxparser.cpp`.
 - **Class and Type names** are written in CamelCase. Avoid underscore in class
-  or type names. Pointers to major types should be typedef-ed, and should be
+  or type name. Pointers to major types should be typedef-ed, and should be
   called according the pointed type with a `Ptr` suffix. Example: `Semantic`,
   `FeatureBase`, `SemanticPtr`.
 - **Function names** start with lowercase letter, and have a capital letter for

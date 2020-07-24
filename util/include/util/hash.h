@@ -1,11 +1,16 @@
-#ifndef CC_PARSER_HASH_H
-#define CC_PARSER_HASH_H
+#ifndef CC_UTIL_HASH_H
+#define CC_UTIL_HASH_H
 
 #include <cstdint>
 #include <string>
 #include <sstream>
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106800 /* 1.68.0 */
+#include <boost/uuid/detail/sha1.hpp>
+#else
 #include <boost/uuid/sha1.hpp>
+#endif
 
 namespace cc
 {
@@ -50,4 +55,4 @@ inline std::string sha1Hash(const std::string& data_)
 } // util
 } // cc
 
-#endif // CC_PARSER_HASH_H
+#endif // CC_UTIL_HASH_H
