@@ -27,6 +27,7 @@ RUN set -x && apt-get update -qq \
     libgvc6 \
     libthrift-dev \
     libodb-sqlite-dev \
+    libodb-pgsql-dev \
     # To switch user and exec command.
     gosu \
   && apt-get clean \
