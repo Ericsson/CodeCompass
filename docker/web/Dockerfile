@@ -54,6 +54,7 @@ RUN set -x && apt-get update -qq \
     libmagic-dev \
     libthrift-dev \
     libodb-sqlite-dev \
+    libodb-pgsql-dev \
     ctags \
     # To switch user and exec command.
     gosu \
