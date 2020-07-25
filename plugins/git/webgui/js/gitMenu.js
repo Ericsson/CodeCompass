@@ -25,7 +25,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       }));
 
       return new PopupMenuItem({
-        label : 'Team',
+        label : 'Git',
         popup : submenu
       });
     }
@@ -54,7 +54,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
       }));
 
       return new PopupMenuItem({
-        label : 'Team',
+        label : 'Git',
         popup : submenu
       });
     }
