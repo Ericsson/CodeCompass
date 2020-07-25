@@ -127,7 +127,7 @@ variables:
 
 |       Variable       |                  Meaning                 |
 | -------------------- | ---------------------------------------- |
-| `CC_VERSION` |  The branch of the CodeCompass repository to use. |
+| `CC_VERSION` |  The branch, version hash or tag of the CodeCompass repository to use. |
 | `CC_DATABASE`|  Database type. Possible values are **sqlite**, **pgsql**. |
 | `CC_BUILD_TYPE` | Specifies the build type. Supported values are **`Debug`** and **`Release`**. |
 
