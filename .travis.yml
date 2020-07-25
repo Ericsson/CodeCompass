@@ -459,3 +459,19 @@ jobs:
       script:
         *build_sqlite
 
+    - stage: deploy
+      name: "DockerHub deployment"
+      dist: focal
+      services:
+        - docker
+      before_script:
+        - docker --version
+      script:
+        - docker build -t codecompass:dev -t modelcpp/codecompass:dev --file docker/dev/Dockerfile .
+        - docker build -t codecompass:web -t modelcpp/codecompass:web-sqlite --build-arg CC_DATABASE=sqlite --no-cache --file docker/web/Dockerfile .
+        - |
+          if [ -n "$DOCKER_USERNAME" ]; then
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push modelcpp/codecompass:dev
+            docker push modelcpp/codecompass:web-sqlite
+          fi
