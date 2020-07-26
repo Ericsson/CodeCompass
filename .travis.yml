@@ -379,6 +379,12 @@ before_script:
 
 # ----------------------------------- Jobs -----------------------------------
 
+stages:
+  - compile
+  - test
+  - name: deploy
+    if: (branch = master) AND (type = push) AND (fork = false)
+
 jobs:
   include:
     - name: "Xenial Xerus (16.04), PostgreSQL"
