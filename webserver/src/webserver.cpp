@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/attributes.hpp>
@@ -38,7 +39,9 @@ po::options_description commandLineArguments()
          "Logging level of the parser. Possible values are: debug, info, warning, "
          "error, critical")
         ("jobs,j", po::value<int>()->default_value(4),
-         "Number of worker threads.");
+         "Number of worker threads.")
+        ("analytics", po::value<std::string>(),
+          "Google Analytics Tracking ID.");
 
     return desc;
 }
@@ -116,6 +119,28 @@ int main(int argc, char* argv[])
     std::unique_ptr<SessionManager> sessions{
         std::make_unique<SessionManager>(authHandler.get_ptr())};
     requestHandler.sessionManager = sessions.get();
+
+    //--- Set up Google Analytics monitoring---//
+
+    auto gaFilePath = boost::filesystem::path(
+      vm["webguiDir"].as<std::string>()).append("ga.txt");
+    if (boost::filesystem::is_regular_file(gaFilePath))
+      boost::filesystem::remove(gaFilePath);
+
+    if (vm.count("analytics") && !vm["analytics"].as<std::string>().empty())
+    {
+      std::ofstream gaFile(gaFilePath.string());
+      if(gaFile.is_open())
+      {
+        gaFile << vm["analytics"].as<std::string>();
+        gaFile.close();
+        LOG(info) << "Enabling Google Analytics monitoring with ID: " << vm["analytics"].as<std::string>();
+      }
+      else
+      {
+        LOG(error) << "Enabling Google Analytics monitoring failed.";
+      }
+    }
 
     //--- Process workspaces ---//
 
