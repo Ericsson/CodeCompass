@@ -431,6 +431,9 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       var astNodeInfo = astHelper.getAstNodeInfoByPosition(position, fileInfo);
 
+      if (!astNodeInfo)
+        return;
+
       var refTypes = model.cppservice.getReferenceTypes(astNodeInfo.id);
       var usages = model.cppservice.getReferences(
         astNodeInfo.id,
