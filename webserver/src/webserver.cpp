@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/log/attributes.hpp>
@@ -123,23 +122,15 @@ int main(int argc, char* argv[])
     //--- Set up Google Analytics monitoring---//
 
     auto gaFilePath = boost::filesystem::path(
-      vm["webguiDir"].as<std::string>()).append("ga.txt");
+      vm["workspace"].as<std::string>()).append("ga.txt");
     if (boost::filesystem::is_regular_file(gaFilePath))
-      boost::filesystem::remove(gaFilePath);
-
-    if (vm.count("analytics") && !vm["analytics"].as<std::string>().empty())
     {
-      std::ofstream gaFile(gaFilePath.string());
-      if(gaFile.is_open())
-      {
-        gaFile << vm["analytics"].as<std::string>();
-        gaFile.close();
-        LOG(info) << "Enabling Google Analytics monitoring with ID: " << vm["analytics"].as<std::string>();
-      }
-      else
-      {
-        LOG(error) << "Enabling Google Analytics monitoring failed.";
-      }
+      requestHandler.gaTrackingIdPath = gaFilePath.string();
+      LOG(info) << "Google Analytics monitoring enabled.";
+    }
+    else
+    {
+      LOG(debug) << "Google Analytics monitoring disabled.";
     }
 
     //--- Process workspaces ---//
