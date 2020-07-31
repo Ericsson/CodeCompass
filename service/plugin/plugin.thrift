@@ -8,8 +8,12 @@ service PluginService
   list<string> getPlugins()
 
   /**
-   * Returns a list of javascript plugins from install web directory
-   * (eg. generated thrift files, modules)
+   * Returns a list of generated Thrift javascript plugins from install web directory
+   */
+  list<string> getThriftPlugins()
+
+  /**
+   * Returns a list of custom javascript plugins from install web directory
    */
   list<string> getWebPlugins()
   
