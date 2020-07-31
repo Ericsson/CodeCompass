@@ -18,7 +18,6 @@ void DiagnosticMessageHandler::HandleDiagnostic(
   clang::DiagnosticsEngine::Level diagLevel_,
   const clang::Diagnostic& info_)
 {
-  // TODO: Is this needed?
   clang::DiagnosticConsumer::HandleDiagnostic(diagLevel_, info_);
 
   model::BuildLog buildLog;
