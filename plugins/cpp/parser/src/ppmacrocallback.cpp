@@ -201,8 +201,7 @@ model::CppAstNodePtr PPMacroCallback::createMacroAstNode(
   model::CppAstNodePtr astNode(new model::CppAstNode);
 
   astNode->astValue = macroNameTok_.getIdentifierInfo()->getName().str();
-  astNode->mangledName = getMangledName(mi_);
-  astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
+  astNode->mangledNameHash = util::fnvHash(getMangledName(mi_));
   astNode->symbolType = model::CppAstNode::SymbolType::Macro;
 
   return astNode;

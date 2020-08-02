@@ -40,8 +40,7 @@ model::CppAstNodePtr PPIncludeCallback::createFileAstNode(
   model::CppAstNodePtr astNode(new model::CppAstNode());
 
   astNode->astValue = file_->path;
-  astNode->mangledName = std::to_string(file_->id);
-  astNode->mangledNameHash = util::fnvHash(astNode->mangledName);
+  astNode->mangledNameHash = util::fnvHash(std::to_string(file_->id));
   astNode->symbolType = model::CppAstNode::SymbolType::File;
   astNode->astType = model::CppAstNode::AstType::Usage;
 
