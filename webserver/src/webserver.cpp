@@ -38,7 +38,7 @@ po::options_description commandLineArguments()
          "Logging level of the parser. Possible values are: debug, info, warning, "
          "error, critical")
         ("jobs,j", po::value<int>()->default_value(4),
-         "Number of worker threads.")
+         "Number of worker threads.");
 
     return desc;
 }
