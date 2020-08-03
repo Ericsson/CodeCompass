@@ -39,8 +39,6 @@ po::options_description commandLineArguments()
          "error, critical")
         ("jobs,j", po::value<int>()->default_value(4),
          "Number of worker threads.")
-        ("analytics", po::value<std::string>(),
-          "Google Analytics Tracking ID.");
 
     return desc;
 }
