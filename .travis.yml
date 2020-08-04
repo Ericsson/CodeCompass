@@ -379,6 +379,11 @@ before_script:
 
 # ----------------------------------- Jobs -----------------------------------
 
+stages:
+  - test
+  - name: deploy
+    if: (branch = master) AND (type = push) AND (fork = false)
+
 jobs:
   include:
     - name: "Xenial Xerus (16.04), PostgreSQL"
@@ -459,3 +464,27 @@ jobs:
       script:
         *build_sqlite
 
+    - stage: deploy
+      name: "DockerHub deployment"
+      dist: focal
+      services:
+        - docker
+      before_script:
+        - docker --version
+      script:
+        - docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
+        - docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+        - docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
+        - docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+        - docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
+        - docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
+        - |
+          if [ -n "$DOCKER_USERNAME" ]; then
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push modelcpp/codecompass:dev
+            docker push modelcpp/codecompass:runtime-sqlite
+            docker push modelcpp/codecompass:runtime-pgsql
+            docker push modelcpp/codecompass:web-sqlite
+            docker push modelcpp/codecompass:web-pgsql
+            docker push modelcpp/codecompass:latest
+          fi
