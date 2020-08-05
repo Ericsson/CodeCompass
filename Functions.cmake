@@ -45,6 +45,7 @@ function(add_odb_library _name)
   target_compile_options(${_name} PUBLIC -Wno-unknown-pragmas -fPIC)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
   target_include_directories(${_name} PUBLIC
+    ${ODB_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/util/include
     ${CMAKE_SOURCE_DIR}/model/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -97,20 +98,6 @@ function(install_webplugin _dir)
   file(GLOB _userguides "${_dir}/userguide/*.md")
   set_property(GLOBAL APPEND PROPERTY USERGUIDES "${_userguides}")
 endfunction(install_webplugin)
-
-# Finds the absolute paths for the given Boost libraries
-# Use variable arguments for the Boost libraries to link
-function(find_boost_libraries)
-  foreach(_lib ${ARGV})
-    foreach(_path ${Boost_LIBRARIES})
-      if(_path MATCHES ".*boost_${_lib}\.so$")
-        list(APPEND LIBS ${_path})
-      endif(_path MATCHES ".*boost_${_lib}\.so$")
-    endforeach(_path)
-  endforeach(_lib)
-
-  set(Boost_LINK_LIBRARIES ${LIBS} PARENT_SCOPE)
-endfunction(find_boost_libraries)
 
 # Prints a coloured, and optionally bold message to the console.
 # _colour should be some ANSI colour name, like "blue" or "magenta".

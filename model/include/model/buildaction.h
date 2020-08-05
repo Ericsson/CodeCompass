@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include <odb/core.hxx>
 #include <odb/lazy-ptr.hxx>

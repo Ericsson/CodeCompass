@@ -48,15 +48,11 @@ add_subdirectory(indexer-java)
 add_library(indexerservice SHARED
   src/indexerprocess.cpp)
 
-find_boost_libraries(
-  filesystem
-  log
-  system)
 target_link_libraries(indexerservice
   util
   searchindexerthrift
   ${THRIFT_LIBTHRIFT_LIBRARIES}
-  ${Boost_LINK_LIBRARIES})
+  ${Boost_LIBRARIES})
 
 install(TARGETS indexerservice DESTINATION ${INSTALL_LIB_DIR})
 install_jar(searchindexerthriftjava ${INSTALL_JAVA_LIB_DIR})

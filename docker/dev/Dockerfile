@@ -1,58 +1,47 @@
-# CodeCompass development dependecies
-FROM ubuntu:bionic
+FROM ubuntu:20.04
 
+# tzdata package is installed implicitly in the following command. This package
+# sets timezone interactively during the installation process. This environment
+# variable prevents this interaction.
+ARG DEBIAN_FRONTEND=noninteractive
+
+# CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
-    && apt-get -y install \
-    cmake make \
-    llvm-7 clang-7 llvm-7-dev libclang-7-dev \
-    odb libodb-sqlite-dev libodb-pgsql-dev \
-    libsqlite3-dev \
-    default-jdk \
-    libssl1.0-dev \
-    libgraphviz-dev \
-    libmagic-dev \
-    libgit2-dev \
-    nodejs-dev node-gyp npm \
-    ctags \
-    libgtest-dev \
-    # Install boost libraries.
-    libboost-filesystem-dev \
-    libboost-log-dev \
-    libboost-program-options-dev \
-    libboost-regex-dev
-# Download the Thrift source code.
-ADD http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz /opt/thrift-0.13.0.tar.gz
-# Build Thrift
-RUN tar -xf /opt/thrift-0.13.0.tar.gz -C /opt; \
-    cd /opt/thrift-0.13.0 && \
-    ./configure \
-    --silent --without-python                                        \
-    --enable-libtool-lock --enable-tutorial=no --enable-tests=no     \
-    --with-libevent --with-zlib --without-nodejs --without-lua       \
-    --without-ruby --without-csharp --without-erlang --without-perl  \
-    --without-php --without-php_extension --without-dart             \
-    --without-haskell --without-go --without-rs --without-haxe       \
-    --without-dotnetcore --without-d --without-qt4 --without-qt5;    \
-    cd /; \
-    make -C /opt/thrift-0.13.0 -j $(nproc) --silent install; \
-    rm -rf /opt/thrift-0.13.0 /opt/thrift-0.13.0.tar.gz
+  && apt-get -y install --no-install-recommends \
+  cmake make \
+  default-jdk \
+  ctags \
+  gcc-9 gcc-9-plugin-dev g++-9 \
+  libboost-filesystem-dev \
+  libboost-log-dev \
+  libboost-program-options-dev \
+  libboost-regex-dev \
+  libgit2-dev \
+  libgraphviz-dev \
+  libgtest-dev \
+  libmagic-dev \
+  libsqlite3-dev \
+  libssl-dev \
+  llvm-7 clang-7 llvm-7-dev libclang-7-dev \
+  npm \
+  thrift-compiler libthrift-dev \
+  odb libodb-sqlite-dev libodb-pgsql-dev && \
+  ln -s /usr/bin/gcc-9 /usr/bin/gcc && \
+  ln -s /usr/bin/g++-9 /usr/bin/g++
+
 # Build GTest.
-RUN cd /usr/src/googletest/ && \
-     mkdir build && \
-     cd build && \
-     cmake .. && \
-     make install && \
-     cd / && \
-     rm -rf /usr/src/googletest/build
-# Remove unnecessary packages.
-RUN apt-get purge --yes --auto-remove wget \
-  # Erase downloaded archive files.
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
-  && set +x
+RUN cd /usr/src/googletest && \
+  mkdir build && \
+  cd build && \
+  cmake .. && \
+  make install && \
+  cd / && \
+  rm -rf /usr/src/googletest/build
 
-COPY codecompass-build.sh /usr/local/bin
+# Adding CodeCompass builder script.
+COPY docker/dev/codecompass-build.sh /usr/local/bin
 
+# Setting the environment.
 ENV DATABASE=sqlite \
     BUILD_TYPE=Release \
     BUILD_DIR=/CodeCompass/build \
@@ -62,4 +51,3 @@ ENV DATABASE=sqlite \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"
-ENV LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
