@@ -2,6 +2,7 @@
 #define CC_MODEL_BUILDACTION_H
 
 #include <string>
+#include <vector>
 #include <memory>
 #include <vector>
 
