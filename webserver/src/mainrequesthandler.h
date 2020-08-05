@@ -18,6 +18,7 @@ public:
   SessionManager* sessionManager;
   PluginHandler<RequestHandler> pluginHandler;
   std::map<std::string, std::string> dataDir;
+  std::string gaTrackingIdPath;
 
   int operator()(struct mg_connection* conn_, enum mg_event ev_);
 
