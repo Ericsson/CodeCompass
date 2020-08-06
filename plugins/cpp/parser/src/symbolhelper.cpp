@@ -7,7 +7,12 @@
 #include <model/fileloc.h>
 #include <model/fileloc-odb.hxx>
 
+#include <util/logutil.h>
+
 #include "symbolhelper.h"
+
+// ugly gsd hack
+#include <iostream>
 
 namespace
 {
@@ -69,12 +74,25 @@ std::string getMangledName(
   const clang::NamedDecl* nd_,
   const model::FileLoc& fileLoc_)
 {
+
   if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(nd_))
   {
     std::string result = nd_->getQualifiedNameAsString();
 
     if (const clang::DeclContext* dc = nd_->getParentFunctionOrMethod())
     {
+      // there are contexts which getParentFunctionOrMethod() is not null
+      // but the result is not FunctionDecl
+      // like CapturedDecl	    
+      if ( 0 == llvm::dyn_cast<clang::FunctionDecl>(dc) )
+      {
+        LOG(debug) << "Yet another getparentFunctionMethod() && "
+		      "! llvm::dyn_cast<clang::FunctionDecl>(dc) ";
+	LOG(debug) << dc->getDeclKindName();
+
+	dc = dc->getLookupParent();
+      }
+      	    
       result += ':' + getMangledName(
         mangleContext_,
         llvm::dyn_cast<clang::FunctionDecl>(dc));
