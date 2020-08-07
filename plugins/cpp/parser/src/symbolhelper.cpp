@@ -3,6 +3,7 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
+#include <clang/Lex/Lexer.h>
 
 #include <model/fileloc.h>
 #include <model/fileloc-odb.hxx>
@@ -269,6 +270,41 @@ std::string getSignature(const clang::FunctionDecl* fn_)
   }
 
   return signature;
+}
+
+std::string getDeclPartAsString(
+  const clang::SourceManager& srcMgr_,
+  const clang::TagDecl* td_)
+{
+  return td_->isThisDeclarationADefinition()
+    ? getSourceText(
+        srcMgr_,
+        td_->getOuterLocStart(),
+        td_->getBraceRange().getBegin())
+    : getSourceText(
+        srcMgr_,
+        td_->getOuterLocStart(),
+        td_->getEndLoc(),
+        true);
+}
+
+std::string getSourceText(
+  const clang::SourceManager& srcMgr_,
+  clang::SourceLocation from_,
+  clang::SourceLocation to_,
+  bool inclusiveEnd_)
+{
+  clang::LangOptions lopt;
+
+  if (inclusiveEnd_)
+    to_ = clang::Lexer::getLocForEndOfToken(to_, 0, srcMgr_, lopt);
+
+  clang::CharSourceRange range = clang::Lexer::getAsCharRange(
+    clang::SourceRange(from_, to_),
+    srcMgr_,
+    lopt);
+
+  return clang::Lexer::getSourceText(range, srcMgr_, lopt).str();
 }
 
 }
