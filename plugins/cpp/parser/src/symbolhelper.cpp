@@ -6,13 +6,10 @@
 
 #include <model/fileloc.h>
 #include <model/fileloc-odb.hxx>
-
 #include <util/logutil.h>
 
 #include "symbolhelper.h"
 
-// ugly gsd hack
-#include <iostream>
 
 namespace
 {
@@ -81,21 +78,24 @@ std::string getMangledName(
 
     if (const clang::DeclContext* dc = nd_->getParentFunctionOrMethod())
     {
-      // there are contexts which getParentFunctionOrMethod() is not null
-      // but the result is not FunctionDecl
-      // like CapturedDecl	    
-      if ( 0 == llvm::dyn_cast<clang::FunctionDecl>(dc) )
+      // Workaround ISSUE #415 Parser segfaults.
+      // There are contexts which getParentFunctionOrMethod() is not null
+      // but the result is not FunctionDecl (like CapturedDecl)
+      // In that case we go up until we reach a Function or TU decl context
+      while (!llvm::isa<clang::FunctionDecl>(dc) &&
+        !llvm::isa<clang::TranslationUnitDecl>(dc))
       {
         LOG(debug) << "Yet another getparentFunctionMethod() && "
-		      "! llvm::dyn_cast<clang::FunctionDecl>(dc) ";
-	LOG(debug) << dc->getDeclKindName();
+          "! llvm::dyn_cast<clang::FunctionDecl>(dc) ";
+        LOG(debug) << dc->getDeclKindName();
 
-	dc = dc->getLookupParent();
+        dc = dc->getLookupParent();
       }
-      	    
-      result += ':' + getMangledName(
-        mangleContext_,
-        llvm::dyn_cast<clang::FunctionDecl>(dc));
+
+      if (const auto* dcfd = llvm::dyn_cast<clang::FunctionDecl>(dc))
+        result += ':' + getMangledName(mangleContext_, dcfd);
+      else if (llvm::isa<clang::TranslationUnitDecl>(dc))
+        result += ':' + std::to_string(fileLoc_.file.object_id());
 
       if (const clang::ParmVarDecl* pvd =
           llvm::dyn_cast<clang::ParmVarDecl>(nd_))
