@@ -153,23 +153,54 @@ void CompetenceParser::traverseCommits(
   // Initiate repository.
   RepositoryPtr repo = createRepository(repoPath_);
 
-  // Initiate walker.
-  RevWalkPtr walker = createRevWalk(repo.get());
-  git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-  git_revwalk_push_head(walker.get());
-
-  std::vector<std::pair<git_oid, CommitPtr>> commits;
-  git_oid oid;
-  int commitCounter = 0;
-  while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
+  if (!_ctx.options.count("skip-forgetting"))
   {
-    // Retrieve commit.
-    CommitPtr commit = createCommit(repo.get(), oid);
-    CommitJob job(repoPath_, root_, oid, commit.get(), ++commitCounter);
-    _pool->enqueue(job);
+    // Initiate walker.
+    RevWalkPtr walker = createRevWalk(repo.get());
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+    git_revwalk_push_head(walker.get());
+
+    git_oid oid;
+    int allCommits = 0;
+    while (git_revwalk_next(&oid, walker.get()) == 0)
+      ++allCommits;
+
+    git_revwalk_push_head(walker.get());
+    // TODO: nice function to determine sample size
+    int sampleSize = 5;
+    if (allCommits >= 500)
+      sampleSize = allCommits / 50;
+
+    int commitCounter = 0;
+    while (git_revwalk_next(&oid, walker.get()) == 0)
+    {
+      ++commitCounter;
+      if (!(commitCounter % sampleSize))
+        // TODO: analysing function
+        ;
+    }
   }
-  _commitCount = _maxCommitCount;
-  _pool->wait();
+
+  if (!_ctx.options.count("skip-competence"))
+  {
+    // Initiate walker.
+    RevWalkPtr walker = createRevWalk(repo.get());
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+    git_revwalk_push_head(walker.get());
+
+    std::vector<std::pair<git_oid, CommitPtr>> commits;
+    git_oid oid;
+    int commitCounter = 0;
+    while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
+    {
+      // Retrieve commit.
+      CommitPtr commit = createCommit(repo.get(), oid);
+      CommitJob job(repoPath_, root_, oid, commit.get(), ++commitCounter);
+      _pool->enqueue(job);
+    }
+    _commitCount = _maxCommitCount;
+    _pool->wait();
+  }
 }
 
 void CompetenceParser::commitWorker(CommitJob& job)
@@ -570,7 +601,12 @@ extern "C"
       ("commit-count", po::value<int>(),
         "This is a threshold value. It is the number of commits the competence parser"
         "will process if value is given. If both commit-history and commit-count is given,"
-        "the value of commit-count will be the threshold value.");
+        "the value of commit-count will be the threshold value."),
+      ("skip-forgetting",
+        "If this flag is given, the competence parser will skip the file competence anaysis."),
+      ("skip-competence",
+        "If this flag is given, the competence parser will only execute the file"
+        "frequency calculation, and skip the file competence anaysis.");
 
     return description;
   }
