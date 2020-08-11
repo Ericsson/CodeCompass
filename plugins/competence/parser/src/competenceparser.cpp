@@ -7,6 +7,8 @@
 #include <model/commitdata-odb.hxx>
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
+#include <model/sampledata.h>
+#include <model/sampledata-odb.hxx>
 #include <model/useremail.h>
 #include <model/useremail-odb.hxx>
 
@@ -165,20 +167,28 @@ void CompetenceParser::traverseCommits(
     while (git_revwalk_next(&oid, walker.get()) == 0)
       ++allCommits;
 
-    git_revwalk_push_head(walker.get());
+    LOG(info) << "[competenceparser] Sampling " << allCommits << " commits in git repository.";
+
     // TODO: nice function to determine sample size
-    int sampleSize = 5;
-    if (allCommits >= 500)
-      sampleSize = allCommits / 50;
+    int sampleSize = std::sqrt((double)allCommits);
+    LOG(info) << "[competenceparser] Sample size is " << sampleSize << ".";
+
+    RevWalkPtr walker2 = createRevWalk(repo.get());
+    git_revwalk_sorting(walker2.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+    git_revwalk_push_head(walker2.get());
 
     int commitCounter = 0;
-    while (git_revwalk_next(&oid, walker.get()) == 0)
+    while (git_revwalk_next(&oid, walker2.get()) == 0)
     {
       ++commitCounter;
-      if (!(commitCounter % sampleSize))
-        // TODO: analysing function
-        ;
+      if (commitCounter % sampleSize == 0)
+      {
+        CommitPtr commit = createCommit(repo.get(), oid);
+        CommitJob job(repoPath_, root_, oid, commit.get(), commitCounter);
+        sampleCommits(job);
+      }
     }
+    persistSampleData();
   }
 
   if (!_ctx.options.count("skip-competence"))
@@ -409,6 +419,63 @@ util::DirIterCallback CompetenceParser::persistNoDataFiles()
   };
 }
 
+void CompetenceParser::sampleCommits(CommitJob& job_)
+{
+  RepositoryPtr repo = createRepository(job_._repoPath);
+
+  // Retrieve parent of commit.
+  CommitPtr parent = createParentCommit(job_._commit);
+
+  if (!parent)
+    return;
+
+  // Get git tree of both commits.
+  TreePtr commitTree = createTree(job_._commit);
+  TreePtr parentTree = createTree(parent.get());
+
+  if (!commitTree || !parentTree)
+    return;
+
+  // Calculate diff of trees.
+  DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
+
+  // Loop through each delta.
+  size_t num_deltas = git_diff_num_deltas(diff.get());
+  if (num_deltas == 0)
+    return;
+
+  // Analyse every file that was affected by the commit.
+  for (size_t j = 0; j < num_deltas; ++j)
+  {
+    const git_diff_delta *delta = git_diff_get_delta(diff.get(), j);
+    git_diff_file diffFile = delta->new_file;
+    model::FilePtr file = _ctx.srcMgr.getFile(job_._root + "/" + diffFile.path);
+    if (!file)
+      continue;
+
+    auto iter = _commitSample.find(file);
+    if (iter == _commitSample.end())
+      _commitSample.insert({file, 1});
+    else
+      ++(iter->second);
+  }
+}
+
+void CompetenceParser::persistSampleData()
+{
+  for (const auto& pair : _commitSample)
+  {
+    util::OdbTransaction transaction(_ctx.db);
+    transaction([&, this]
+    {
+      model::SampleData sample;
+      sample.file = pair.first->id;
+      sample.occurrences = pair.second;
+      _ctx.db->persist(sample);
+    });
+  }
+}
+
 bool CompetenceParser::fileEditionContains(const std::string& path_)
 {
   for (const auto& fe : _fileEditions)
@@ -601,9 +668,9 @@ extern "C"
       ("commit-count", po::value<int>(),
         "This is a threshold value. It is the number of commits the competence parser"
         "will process if value is given. If both commit-history and commit-count is given,"
-        "the value of commit-count will be the threshold value."),
+        "the value of commit-count will be the threshold value.")
       ("skip-forgetting",
-        "If this flag is given, the competence parser will skip the file competence anaysis."),
+        "If this flag is given, the competence parser will skip the file competence anaysis.")
       ("skip-competence",
         "If this flag is given, the competence parser will only execute the file"
         "frequency calculation, and skip the file competence anaysis.");

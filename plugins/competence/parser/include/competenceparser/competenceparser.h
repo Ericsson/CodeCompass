@@ -101,6 +101,10 @@ private:
 
   void persistFileComprehensionData();
   util::DirIterCallback persistNoDataFiles();
+
+  void sampleCommits(CommitJob& job_);
+  void persistSampleData();
+
   void setUserCompany();
 
   bool fileEditionContains(const std::string& path);
@@ -140,6 +144,7 @@ private:
   std::vector<FileEdition> _fileEditions;
   std::set<UserEmail> _emailAddresses;
   std::map<std::string, std::string> _companyList;
+  std::map<model::FilePtr, int> _commitSample;
 
   std::mutex _calculateFileData;
 

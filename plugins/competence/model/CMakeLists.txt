@@ -1,6 +1,7 @@
 set(ODB_SOURCES
   include/model/filecomprehension.h
-  include/model/commitdata.h)
+  include/model/commitdata.h
+  include/model/sampledata.h)
 
 generate_odb_files("${ODB_SOURCES}")
 
