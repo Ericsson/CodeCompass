@@ -117,6 +117,10 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  void primeFilesDiagram(
+    util::Graph &graph_,
+    const core::FileId &fileId_);
+
   /**
    * Returns the expert company for a file.
    */
