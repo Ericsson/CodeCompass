@@ -14,7 +14,7 @@
 
 #include <util/logutil.h>
 
-#include "manglednamecache.h"
+#include "entitycache.h"
 
 namespace cc
 {
@@ -27,7 +27,7 @@ public:
   PPIncludeCallback(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
+    EntityCache& entityCache_,
     clang::Preprocessor& pp_);
 
   ~PPIncludeCallback();
@@ -56,7 +56,7 @@ private:
   const std::string _cppSourceType;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
-  MangledNameCache& _mangledNameCache;
+  EntityCache& _entityCache;
 
   std::vector<model::CppAstNodePtr>         _astNodes;
   std::vector<model::CppHeaderInclusionPtr> _headerIncs;

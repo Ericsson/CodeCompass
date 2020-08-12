@@ -13,14 +13,14 @@ namespace parser
 PPMacroCallback::PPMacroCallback(
   ParserContext& ctx_,
   clang::ASTContext& astContext_,
-  MangledNameCache& mangledNameCache_,
+  EntityCache& entityCache_,
   clang::Preprocessor& pp_) :
     _ctx(ctx_),
     _pp(pp_),
     _cppSourceType("CPP"),
     _clangSrcMgr(astContext_.getSourceManager()),
     _fileLocUtil(astContext_.getSourceManager()),
-    _mangledNameCache(mangledNameCache_)
+    _entityCache(entityCache_)
 {
 }
 
@@ -50,7 +50,7 @@ void PPMacroCallback::MacroExpands(
 
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
-  if (!mi || getMangledName(mi).empty())
+  if (!mi || getUSR(mi).empty())
     return;
 
   const char* begin = _clangSrcMgr.getCharacterData(range_.getBegin());
@@ -136,7 +136,7 @@ void PPMacroCallback::MacroExpands(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_entityCache.insert(*astNode))
   {
     _astNodes.push_back(astNode);
 
@@ -154,7 +154,7 @@ void PPMacroCallback::MacroDefined(
 {
   const clang::MacroInfo* mi = md_->getMacroInfo();
 
-  if (!mi || isBuiltInMacro(mi) || getMangledName(mi).empty())
+  if (!mi || isBuiltInMacro(mi) || getUSR(mi).empty())
     return;
 
   model::CppAstNodePtr astNode = createMacroAstNode(macroNameTok_, mi);
@@ -162,13 +162,13 @@ void PPMacroCallback::MacroDefined(
   addFileLoc(astNode, mi->getDefinitionLoc(), mi->getDefinitionEndLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_entityCache.insert(*astNode))
   {
     _astNodes.push_back(astNode);
 
     model::CppMacroPtr macro = std::make_shared<model::CppMacro>();
     macro->astNodeId = astNode->id;
-    macro->mangledNameHash = astNode->mangledNameHash;
+    macro->entityHash = astNode->entityHash;
     macro->name = astNode->astValue;
     macro->qualifiedName = astNode->astValue;
     _macros.push_back(macro);
@@ -182,7 +182,7 @@ void PPMacroCallback::MacroUndefined(
 {
   const clang::MacroInfo* mi = md_.getMacroInfo();
 
-  if (!mi || isBuiltInMacro(mi) || getMangledName(mi).empty())
+  if (!mi || isBuiltInMacro(mi) || getUSR(mi).empty())
     return;
 
   auto astNode = createMacroAstNode(macroNameTok_, mi);
@@ -190,7 +190,7 @@ void PPMacroCallback::MacroUndefined(
   addFileLoc(astNode, macroNameTok_.getLocation(), macroNameTok_.getLastLoc());
   astNode->id = model::createIdentifier(*astNode);
 
-  if (_mangledNameCache.insert(*astNode))
+  if (_entityCache.insert(*astNode))
     _astNodes.push_back(astNode);
 }
 
@@ -201,7 +201,7 @@ model::CppAstNodePtr PPMacroCallback::createMacroAstNode(
   model::CppAstNodePtr astNode(new model::CppAstNode);
 
   astNode->astValue = macroNameTok_.getIdentifierInfo()->getName().str();
-  astNode->mangledNameHash = util::fnvHash(getMangledName(mi_));
+  astNode->entityHash = util::fnvHash(getUSR(mi_));
   astNode->symbolType = model::CppAstNode::SymbolType::Macro;
 
   return astNode;
@@ -242,7 +242,7 @@ bool PPMacroCallback::isBuiltInMacro(const clang::MacroInfo* mi_) const
   return fileName == "<built-in>" || fileName == "<command line>";
 }
 
-std::string PPMacroCallback::getMangledName(const clang::MacroInfo* mi_)
+std::string PPMacroCallback::getUSR(const clang::MacroInfo* mi_)
 {
   clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(
     _clangSrcMgr.getExpansionLoc(mi_->getDefinitionLoc()));

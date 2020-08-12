@@ -1,5 +1,5 @@
-#ifndef CC_PARSER_MANGLEDNAMECACHE_H
-#define CC_PARSER_MANGLEDNAMECACHE_H
+#ifndef CC_PARSER_ENTITYCACHE_H
+#define CC_PARSER_ENTITYCACHE_H
 
 #include <unordered_map>
 #include <mutex>
@@ -12,9 +12,9 @@ namespace parser
 {
 
 /**
- * Thread safe mangled name cache.
+ * Thread safe entity cache.
  */
-class MangledNameCache
+class EntityCache
 {
 public:
   /**
@@ -38,11 +38,11 @@ public:
   void clear();
 
 private:
-  std::unordered_map<model::CppAstNodeId, std::uint64_t> _mangledNameCache;
+  std::unordered_map<model::CppAstNodeId, std::uint64_t> _entityCache;
   mutable std::mutex _cacheMutex;
 };
 
 } // parser
 } // cc
 
-#endif // CC_PARSER_MANGLEDNAMECACHE_H
+#endif // CC_PARSER_ENTITYCACHE_H

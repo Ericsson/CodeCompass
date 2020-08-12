@@ -39,7 +39,7 @@
 
 #include <cppparser/filelocutil.h>
 
-#include "manglednamecache.h"
+#include "entitycache.h"
 #include "symbolhelper.h"
 
 namespace cc
@@ -70,7 +70,7 @@ public:
   ClangASTVisitor(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
+    EntityCache& entityCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
     : _isImplicit(false),
       _ctx(ctx_),
@@ -79,7 +79,7 @@ public:
       _astContext(astContext_),
       _mngCtx(astContext_.createMangleContext()),
       _cppSourceType("CPP"),
-      _mangledNameCache(mangledNameCache_),
+      _entityCache(entityCache_),
       _clangToAstNodeId(clangToAstNodeId_)
   {
   }
@@ -334,7 +334,7 @@ public:
     astNode->astType = model::CppAstNode::AstType::TypeLocation;
     astNode->astValue = td->getNameAsString();
     astNode->symbolType = model::CppAstNode::SymbolType::Typedef;
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, td));
+    astNode->entityHash = util::fnvHash(getUSR(td));
 
     _locToTypeLoc[tl_.getBeginLoc().getRawEncoding()] = astNode;
 
@@ -354,7 +354,7 @@ public:
     astNode->astType = model::CppAstNode::AstType::TypeLocation;
     astNode->astValue = ed->getNameAsString();
     astNode->symbolType = model::CppAstNode::SymbolType::Enum;
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, ed));
+    astNode->entityHash = util::fnvHash(getUSR(ed));
 
     _locToTypeLoc[tl_.getBeginLoc().getRawEncoding()] = astNode;
 
@@ -374,7 +374,7 @@ public:
     astNode->astType = model::CppAstNode::AstType::TypeLocation;
     astNode->astValue = rd->getNameAsString();
     astNode->symbolType = model::CppAstNode::SymbolType::Type;
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, rd));
+    astNode->entityHash = util::fnvHash(getUSR(rd));
 
     _locToTypeLoc[tl_.getBeginLoc().getRawEncoding()] = astNode;
 
@@ -396,8 +396,7 @@ public:
 
     astNode->astValue = getDeclPartAsString(_clangSrcMgr, rd_);
     astNode->location = getFileLoc(rd_->getBeginLoc(), rd_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(
-      getMangledName(_mngCtx, rd_, astNode->location));
+    astNode->entityHash = util::fnvHash(getUSR(rd_));
     astNode->symbolType = model::CppAstNode::SymbolType::Type;
     astNode->astType
       = rd_->isThisDeclarationADefinition()
@@ -419,7 +418,7 @@ public:
     model::CppRecordPtr cppRecord = _typeStack.top();
 
     cppRecord->astNodeId = astNode->id;
-    cppRecord->mangledNameHash = astNode->mangledNameHash;
+    cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
     if (const clang::CXXRecordDecl* crd
@@ -447,9 +446,8 @@ public:
             = std::make_shared<model::CppInheritance>();
           _inheritances.push_back(inheritance);
 
-          inheritance->derived = cppRecord->mangledNameHash;
-          inheritance->base
-            = util::fnvHash(getMangledName(_mngCtx, baseDecl));
+          inheritance->derived = cppRecord->entityHash;
+          inheritance->base = util::fnvHash(getUSR(baseDecl));
           inheritance->isVirtual = it->isVirtual();
           inheritance->visibility = getVisibility(it->getAccessSpecifier());
 
@@ -482,9 +480,8 @@ public:
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
-          friendship->target = cppRecord->mangledNameHash;
-          friendship->theFriend
-            = util::fnvHash(getMangledName(_mngCtx, cxxRecordDecl));
+          friendship->target = cppRecord->entityHash;
+          friendship->theFriend = util::fnvHash(getUSR(cxxRecordDecl));
 
           clang::SourceRange range = (*it)->getSourceRange();
           _locToAstValue[tsi->getTypeLoc().getBeginLoc().getRawEncoding()]
@@ -499,9 +496,8 @@ public:
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
-          friendship->target = cppRecord->mangledNameHash;
-          friendship->theFriend
-            = util::fnvHash(getMangledName(_mngCtx, friendDecl));
+          friendship->target = cppRecord->entityHash;
+          friendship->theFriend = util::fnvHash(getUSR(friendDecl));
         }
       }
     }
@@ -517,7 +513,7 @@ public:
 
     astNode->astValue = getDeclPartAsString(_clangSrcMgr, ed_);
     astNode->location = getFileLoc(ed_->getBeginLoc(), ed_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, ed_));
+    astNode->entityHash = util::fnvHash(getUSR(ed_));
     astNode->symbolType = model::CppAstNode::SymbolType::Enum;
     astNode->astType
       = ed_->isThisDeclarationADefinition()
@@ -540,7 +536,7 @@ public:
       name = "<anonymous>";
 
     cppEnum->astNodeId = astNode->id;
-    cppEnum->mangledNameHash = astNode->mangledNameHash;
+    cppEnum->entityHash = astNode->entityHash;
     cppEnum->name = name;
     cppEnum->qualifiedName = ed_->getQualifiedNameAsString();
 
@@ -555,7 +551,7 @@ public:
 
     astNode->astValue = ec_->getNameAsString();
     astNode->location = getFileLoc(ec_->getBeginLoc(), ec_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, ec_));
+    astNode->entityHash = util::fnvHash(getUSR(ec_));
     astNode->symbolType = model::CppAstNode::SymbolType::EnumConstant;
     astNode->astType = model::CppAstNode::AstType::Definition;
 
@@ -573,7 +569,7 @@ public:
     _enumConstants.push_back(enumConstant);
 
     enumConstant->astNodeId = astNode->id;
-    enumConstant->mangledNameHash = astNode->mangledNameHash;
+    enumConstant->entityHash = astNode->entityHash;
     enumConstant->name = ec_->getNameAsString();
     enumConstant->qualifiedName = ec_->getQualifiedNameAsString();
     enumConstant->value = ec_->getInitVal().getLimitedValue();
@@ -587,7 +583,6 @@ public:
   {
     //--- CppAstNode ---//
 
-    // TODO: Originally mangled name was appended by some suffix. Why?
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
     astNode->astValue = getSourceText(
@@ -596,7 +591,7 @@ public:
       td_->getSourceRange().getEnd(),
       true);
     astNode->location = getFileLoc(td_->getBeginLoc(), td_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, td_));
+    astNode->entityHash = util::fnvHash(getUSR(td_));
     astNode->symbolType = model::CppAstNode::SymbolType::Typedef;
     astNode->astType = model::CppAstNode::AstType::Definition;
 
@@ -615,10 +610,10 @@ public:
     clang::QualType qualType = td_->getUnderlyingType();
 
     cppTypedef->astNodeId = astNode->id;
-    cppTypedef->mangledNameHash = astNode->mangledNameHash;
+    cppTypedef->entityHash = astNode->entityHash;
     cppTypedef->name = td_->getNameAsString();
     cppTypedef->qualifiedName = td_->getQualifiedNameAsString();
-    cppTypedef->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    cppTypedef->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppTypedef->qualifiedType = qualType.getAsString();
 
     //--- AST type for aliased type ---//
@@ -644,7 +639,7 @@ public:
 
     astNode->astValue = getSignature(fn_);
     astNode->location = getFileLoc(fn_->getBeginLoc(), fn_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, fn_));
+    astNode->entityHash = util::fnvHash(getUSR(fn_));
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
       = fn_->isThisDeclarationADefinition()
@@ -665,10 +660,10 @@ public:
     clang::QualType qualType = fn_->getReturnType();
 
     cppFunction->astNodeId = astNode->id;
-    cppFunction->mangledNameHash = astNode->mangledNameHash;
+    cppFunction->entityHash = astNode->entityHash;
     cppFunction->name = fn_->getNameAsString();
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
-    cppFunction->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
@@ -710,7 +705,7 @@ public:
       _members.push_back(member);
 
       member->memberAstNode = astNode;
-      member->typeHash = _typeStack.top()->mangledNameHash;
+      member->typeHash = _typeStack.top()->entityHash;
       member->memberTypeHash = cppFunction->typeHash;
       member->kind = model::CppMemberType::Kind::Method;
       member->visibility = getMemberVisibility(md);
@@ -735,8 +730,7 @@ public:
       astNode->location = getFileLoc(
         init->getSourceRange().getBegin(),
         init->getSourceRange().getEnd());
-      astNode->mangledNameHash = util::fnvHash(
-        getMangledName(_mngCtx, member));
+      astNode->entityHash = util::fnvHash(getUSR(member));
       astNode->symbolType
         = isFunctionPointer(member)
         ? model::CppAstNode::SymbolType::FunctionPtr
@@ -764,7 +758,7 @@ public:
       fd_->getSourceRange().getEnd(),
       true);
     astNode->location = getFileLoc(fd_->getBeginLoc(), fd_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, fd_));
+    astNode->entityHash = util::fnvHash(getUSR(fd_));
     astNode->symbolType
       = isFunctionPointer(fd_)
       ? model::CppAstNode::SymbolType::FunctionPtr
@@ -785,9 +779,9 @@ public:
 
     clang::QualType qualType = fd_->getType();
 
-    member->typeHash = _typeStack.top()->mangledNameHash;
+    member->typeHash = _typeStack.top()->entityHash;
     member->memberAstNode = astNode;
-    member->memberTypeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    member->memberTypeHash = util::fnvHash(getUSR(qualType, _astContext));
     member->kind = model::CppMemberType::Kind::Field;
     member->visibility = getMemberVisibility(fd_);
 
@@ -797,7 +791,7 @@ public:
     _variables.push_back(variable);
 
     variable->astNodeId = astNode->id;
-    variable->mangledNameHash = astNode->mangledNameHash;
+    variable->entityHash = astNode->entityHash;
     variable->name = fd_->getNameAsString();
     variable->qualifiedName = fd_->getQualifiedNameAsString();
     variable->typeHash = member->memberTypeHash;
@@ -827,8 +821,7 @@ public:
       vd_->getEndLoc(),
       true);
     astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocation());
-    astNode->mangledNameHash = util::fnvHash(
-      getMangledName(_mngCtx, vd_, astNode->location));
+    astNode->entityHash = util::fnvHash(getUSR(vd_));
     astNode->symbolType
       = isFunctionPointer(vd_)
       ? model::CppAstNode::SymbolType::FunctionPtr
@@ -866,10 +859,10 @@ public:
     clang::QualType qualType = vd_->getType();
 
     variable->astNodeId = astNode->id;
-    variable->mangledNameHash = astNode->mangledNameHash;
+    variable->entityHash = astNode->entityHash;
     variable->name = vd_->getNameAsString();
     variable->qualifiedName = vd_->getQualifiedNameAsString();
-    variable->typeHash = util::fnvHash(getMangledName(_mngCtx, qualType));
+    variable->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     variable->qualifiedType = qualType.getAsString();
 
     if (_functionStack.empty())
@@ -884,7 +877,7 @@ public:
       model::CppMemberTypePtr member = std::make_shared<model::CppMemberType>();
       _members.push_back(member);
 
-      member->typeHash = _typeStack.top()->mangledNameHash;
+      member->typeHash = _typeStack.top()->entityHash;
       member->memberAstNode = astNode;
       member->memberTypeHash = variable->typeHash;
       member->kind = model::CppMemberType::Kind::Field;
@@ -920,14 +913,14 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    std::string mangledName = getMangledName(_mngCtx, nd_, astNode->location);
     astNode->astValue = getSourceText(
       _clangSrcMgr,
       nd_->getBeginLoc(),
       nd_->getLocation(),
       true);
+    std::string usr = getUSR(nd_);
     astNode->location = getFileLoc(nd_->getBeginLoc(), nd_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(mangledName);
+    astNode->entityHash = util::fnvHash(usr);
     astNode->symbolType = model::CppAstNode::SymbolType::Namespace;
     astNode->astType = model::CppAstNode::AstType::Definition;
 
@@ -944,9 +937,9 @@ public:
     _namespaces.push_back(ns);
 
     ns->astNodeId = astNode->id;
-    ns->mangledNameHash = astNode->mangledNameHash;
+    ns->entityHash = astNode->entityHash;
     ns->name = nd_->getNameAsString();
-    ns->qualifiedName = mangledName;
+    ns->qualifiedName = usr;
 
     return true;
   }
@@ -959,7 +952,7 @@ public:
 
     astNode->astValue = getSignature(ctor);
     astNode->location = getFileLoc(ce_->getBeginLoc(), ce_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, ctor));
+    astNode->entityHash = util::fnvHash(getUSR(ctor));
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType = model::CppAstNode::AstType::Usage;
     astNode->visibleInSourceCode = false;
@@ -987,8 +980,7 @@ public:
 
     astNode->astValue = getSignature(functionDecl);
     astNode->location = getFileLoc(ne_->getBeginLoc(), ne_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(
-      getMangledName(_mngCtx, functionDecl));
+    astNode->entityHash = util::fnvHash(getUSR(functionDecl));
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType = model::CppAstNode::AstType::Usage;
 
@@ -1022,8 +1014,7 @@ public:
 
     astNode->astValue = getSignature(functionDecl);
     astNode->location = getFileLoc(de_->getBeginLoc(), de_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(
-      getMangledName(_mngCtx, functionDecl));
+    astNode->entityHash = util::fnvHash(getUSR(functionDecl));
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType = model::CppAstNode::AstType::Usage;
     astNode->id = model::createIdentifier(*astNode);
@@ -1049,17 +1040,14 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    std::string mangledName = getMangledName(
-      _mngCtx,
-      namedCallee,
-      getFileLoc(namedCallee->getBeginLoc(), namedCallee->getEndLoc()));
+    std::string usr = getUSR(namedCallee);
 
     astNode->astValue
       = funcCallee
       ? getSignature(funcCallee)
       : namedCallee->getNameAsString();
     astNode->location = getFileLoc(ce_->getBeginLoc(), ce_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(mangledName);
+    astNode->entityHash = util::fnvHash(usr);
     astNode->symbolType = model::CppAstNode::SymbolType::Function;
     astNode->astType
       = isVirtualCall(ce_)
@@ -1100,8 +1088,7 @@ public:
         astNode->astValue = vd->getNameAsString();
 
       astNode->location = getFileLoc(dr_->getBeginLoc(), dr_->getEndLoc());
-      astNode->mangledNameHash = util::fnvHash(
-        getMangledName(_mngCtx, vd, location));
+      astNode->entityHash = util::fnvHash(getUSR(vd));
       astNode->symbolType
         = isFunctionPointer(vd)
         ? model::CppAstNode::SymbolType::FunctionPtr
@@ -1131,7 +1118,7 @@ public:
         astNode->astValue = ec->getNameAsString();
 
       astNode->location = getFileLoc(dr_->getBeginLoc(), dr_->getEndLoc());
-      astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, ec));
+      astNode->entityHash = util::fnvHash(getUSR(ec));
       astNode->symbolType = model::CppAstNode::SymbolType::EnumConstant;
       astNode->astType = model::CppAstNode::AstType::Usage;
 
@@ -1156,7 +1143,7 @@ public:
 
     astNode->astValue = method ? getSignature(method) : vd->getNameAsString();
     astNode->location = getFileLoc(me_->getBeginLoc(), me_->getEndLoc());
-    astNode->mangledNameHash = util::fnvHash(getMangledName(_mngCtx, vd));
+    astNode->entityHash = util::fnvHash(getUSR(vd));
     astNode->symbolType
       = method
       ? model::CppAstNode::SymbolType::Function
@@ -1190,8 +1177,8 @@ public:
 
       model::CppRelationPtr rel = std::make_shared<model::CppRelation>();
       rel->kind = model::CppRelation::Kind::Override;
-      rel->lhs = _mangledNameCache.at(left->second);
-      rel->rhs = _mangledNameCache.at(right->second);
+      rel->lhs = _entityCache.at(left->second);
+      rel->rhs = _entityCache.at(right->second);
       _relations.push_back(rel);
     }
 
@@ -1213,7 +1200,7 @@ private:
   bool insertToCache(const void* clangPtr_, model::CppAstNodePtr node_)
   {
     _clangToAstNodeId[clangPtr_] = node_->id;
-    return _mangledNameCache.insert(*node_);
+    return _entityCache.insert(*node_);
   }
 
   /**
@@ -1489,7 +1476,7 @@ private:
   const std::string _cppSourceType;
   std::unordered_map<std::string, model::FilePtr> _files;
 
-  MangledNameCache& _mangledNameCache;
+  EntityCache& _entityCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 
   // clang::TypeLoc for type names is like clang::DeclRefExpr for objects: it

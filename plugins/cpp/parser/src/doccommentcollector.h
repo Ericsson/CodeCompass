@@ -16,7 +16,7 @@
 #include <model/cppdoccomment-odb.hxx>
 
 #include "doccommentformatter.h"
-#include "manglednamecache.h"
+#include "entitycache.h"
 
 namespace cc
 {
@@ -30,12 +30,12 @@ public:
   DocCommentCollector(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
+    EntityCache& entityCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
       : _ctx(ctx_),
         _astContext(astContext_),
         _clangSrcMgr(astContext_.getSourceManager()),
-        _mangledNameCache(mangledNameCache_),
+        _entityCache(entityCache_),
         _clangToAstNodeId(clangToAstNodeId_)
   {
   }
@@ -59,9 +59,9 @@ public:
     model::CppDocCommentPtr pc(new model::CppDocComment);
     pc->content = dcFmt.format(fc, _astContext);
     pc->contentHash = util::fnvHash(pc->content);
-    pc->mangledNameHash = _mangledNameCache.at(it->second);
+    pc->entityHash = _entityCache.at(it->second);
     _docComments.insert(std::make_pair(
-      std::make_pair(pc->mangledNameHash, pc->contentHash), pc));
+      std::make_pair(pc->entityHash, pc->contentHash), pc));
 
     return true;
   }
@@ -83,7 +83,7 @@ private:
   ParserContext& _ctx;
   const clang::ASTContext& _astContext;
   const clang::SourceManager& _clangSrcMgr;
-  MangledNameCache& _mangledNameCache;
+  EntityCache& _entityCache;
   std::unordered_map<const void*, model::CppAstNodeId>& _clangToAstNodeId;
 };
 

@@ -27,14 +27,14 @@ struct CppEntity
   #pragma db unique
   CppAstNodeId astNodeId;
 
-  std::uint64_t mangledNameHash = 0;
+  std::uint64_t entityHash = 0;
 
   std::string name;
   std::string qualifiedName;
 
   std::set<Tag> tags;
 
-#pragma db index member(mangledNameHash)
+#pragma db index member(entityHash)
 };
 
 typedef std::shared_ptr<CppEntity> CppEntityPtr;

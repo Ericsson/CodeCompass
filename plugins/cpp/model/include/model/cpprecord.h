@@ -58,7 +58,7 @@ struct CppRecord : CppEntity
 
     ret
       .append("\nid = ").append(std::to_string(id))
-      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nentityHash = ").append(std::to_string(entityHash))
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nisAbstract = ").append(std::to_string(isAbstract))
       .append("\nisPOD = ").append(std::to_string(isPOD));

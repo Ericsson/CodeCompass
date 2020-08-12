@@ -16,7 +16,7 @@
 
 #include <util/logutil.h>
 
-#include "manglednamecache.h"
+#include "entitycache.h"
 
 namespace cc
 {
@@ -29,7 +29,7 @@ public:
   PPMacroCallback(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
-    MangledNameCache& mangledNameCache_,
+    EntityCache& entityCache_,
     clang::Preprocessor& pp_);
 
   ~PPMacroCallback();
@@ -64,9 +64,13 @@ private:
   bool isBuiltInMacro(const clang::MacroInfo* mi_) const;
 
   /**
-   * This function returns the mangled name of the macro.
+   * This function returns a unique identifier of the macro.
+   *
+   * TODO: In Clang there is a function named generateUSRForMacro(), but we're
+   * not using that in this implementation. That function gets a
+   * MacroDefinitionRecord as parameter, but here we have a MacroInfo.
    */
-  std::string getMangledName(const clang::MacroInfo *MI);
+  std::string getUSR(const clang::MacroInfo *MI);
 
   /**
    * This function add fill the file location of the AST node.
@@ -84,7 +88,7 @@ private:
 
   bool _disabled = false;
 
-  MangledNameCache& _mangledNameCache;
+  EntityCache& _entityCache;
   std::vector<model::CppAstNodePtr>        _astNodes;
   std::vector<model::CppMacroPtr>          _macros;
   std::vector<model::CppMacroExpansionPtr> _macrosExpansion;

@@ -70,7 +70,7 @@ struct CppAstNode
   #pragma db null
   FileLoc location;
 
-  std::uint64_t mangledNameHash;
+  std::uint64_t entityHash;
 
   SymbolType symbolType = SymbolType::Other;
 
@@ -84,7 +84,7 @@ struct CppAstNode
   bool operator==(const CppAstNode& other) const { return id == other.id; }
 
 #pragma db index("location_file_idx") member(location.file)
-#pragma db index("mangledNameHash_astType_idx") members(mangledNameHash, astType)
+#pragma db index("entityHash_astType_idx") members(entityHash, astType)
 #pragma db index("astType_symbolType_idx") members(astType, symbolType)
 };
 
@@ -183,7 +183,7 @@ inline std::uint64_t createIdentifier(const CppAstNode& astNode_)
 
   res
     .append(astNode_.astValue).append(":")
-    .append(std::to_string(astNode_.mangledNameHash)).append(":")
+    .append(std::to_string(astNode_.entityHash)).append(":")
     .append(std::to_string(
       static_cast<SymbolTypeInt>(astNode_.symbolType))).append(":")
     .append(std::to_string(

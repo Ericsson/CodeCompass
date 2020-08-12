@@ -39,7 +39,7 @@ add_definitions(${LLVM_DEFINITIONS})
 add_library(cppparser SHARED
   src/cppparser.cpp
   src/symbolhelper.cpp
-  src/manglednamecache.cpp
+  src/entitycache.cpp
   src/ppincludecallback.cpp
   src/ppmacrocallback.cpp
   src/relationcollector.cpp
@@ -60,6 +60,7 @@ target_link_libraries(cppparser
   clangAST
   clangLex
   clangBasic
+  clangIndex
   clang)
 
 target_compile_options(cppparser PUBLIC -Wno-unknown-pragmas)
