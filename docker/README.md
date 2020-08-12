@@ -117,7 +117,7 @@ CodeCompass_webserver \
 For a production environment you can build and use the runtime environment image, 
 which contains the built CodeCompass binaries and their dependencies:
 ```bash
-docker build -t codecompass:runtime --no-cache --file docker/web/Dockerfile .
+docker build -t codecompass:runtime --no-cache --file docker/runtime/Dockerfile .
 ```
 
 By default this image download the `master` branch of the CodeCompass GitHub 
@@ -134,7 +134,7 @@ variables:
 The below example builds the `codecompass:runtime` image with *pgsql* configuration:
 ```bash
 docker build -t codecompass:runtime --build-arg CC_DATABASE=pgsql \
-  --no-cache --file docker/web/Dockerfile .
+  --no-cache --file docker/runtime/Dockerfile .
 ```
 
 *Note*: the `codecompass:dev` is a prerequisite to build the `codecompass:runtime` image.
