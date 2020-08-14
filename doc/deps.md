@@ -16,7 +16,7 @@ be installed from the official repository of the given Linux distribution.
   is required. (Alternatively, you can compile with Clang.)
 - **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`clang-7`**, **`libclang-7-dev`**: C++ parser uses
+- **`llvm-10-dev`**, **`clang-10`**, **`libclang-10-dev`**: C++ parser uses
   LLVM/Clang for parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
@@ -68,7 +68,7 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 
 ```bash
 sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
-  llvm-7-dev clang-7 libclang-7-dev \
+  llvm-10-dev clang-10 libclang-10-dev \
   default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
@@ -77,7 +77,7 @@ sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
 
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
-  llvm-7-dev clang-7 libclang-7-dev \
+  llvm-10-dev clang-10 libclang-10-dev \
   odb libodb-dev thrift-compiler libthrift-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
@@ -277,8 +277,8 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<CodeCompass_install_dir> \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type> \
-  -DLLVM_DIR=/usr/lib/llvm-7/cmake \
-  -DClang_DIR=/usr/lib/cmake/clang-7
+  -DLLVM_DIR=/usr/lib/llvm-10/cmake \
+  -DClang_DIR=/usr/lib/cmake/clang-10
 
 # To specify linker for building CodeCompass use
 #   -DCODECOMPASS_LINKER=<path_to_linker>

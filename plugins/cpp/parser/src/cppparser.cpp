@@ -62,9 +62,9 @@ public:
   {
   }
 
-  clang::FrontendAction* create() override
+  std::unique_ptr<clang::FrontendAction> create() override
   {
-    return new MyFrontendAction(_ctx);
+    return std::make_unique<MyFrontendAction>(_ctx);
   }
 
 private:

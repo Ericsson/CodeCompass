@@ -22,7 +22,7 @@ RUN set -x && apt-get update -qq \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
-  llvm-7 clang-7 llvm-7-dev libclang-7-dev \
+  llvm-10 clang-10 llvm-10-dev libclang-10-dev \
   npm \
   thrift-compiler libthrift-dev \
   odb libodb-sqlite-dev libodb-pgsql-dev && \
