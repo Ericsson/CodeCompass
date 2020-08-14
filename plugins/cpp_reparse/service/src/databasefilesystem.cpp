@@ -14,7 +14,7 @@
 #include "databasefilesystem.h"
 
 using namespace llvm;
-using namespace clang::vfs;
+using namespace llvm::vfs;
 
 namespace
 {
@@ -56,9 +56,7 @@ std::vector<model::FilePtr> getChildrenOfFile(
   return result;
 }
 
-Status fileToStatus(
-  odb::database& db_,
-  const model::File& file_)
+directory_entry fileToEntry(const model::File& file_)
 {
   using namespace llvm::sys::fs;
 
@@ -69,6 +67,16 @@ Status fileToStatus(
     fileType = file_type::block_file;
   else if (file_.type == "CPP")
     fileType = file_type::regular_file;
+
+  return {file_.path, fileType};
+}
+
+Status fileToStatus(
+  odb::database& db_,
+  const model::File& file_)
+{
+  using namespace llvm::sys::fs;
+  vfs::directory_entry entry = fileToEntry(file_);
 
   size_t size = 0;
   if (file_.content)
@@ -83,15 +91,15 @@ Status fileToStatus(
     });
 
   return Status(file_.path, UniqueID(0, file_.id),
-                llvm::sys::toTimePoint(file_.timestamp), 0, 0,
-                size, fileType, perms::all_read);
+                sys::toTimePoint(file_.timestamp), 0, 0,
+                size, entry.type(), perms::all_read);
 }
 
 /**
  * A Clang VFS directory iterator over the children of a directory that is
  * stored in the database.
  */
-class DatabaseDirectoryIterator : public clang::vfs::detail::DirIterImpl
+class DatabaseDirectoryIterator : public vfs::detail::DirIterImpl
 {
 public:
   DatabaseDirectoryIterator(odb::database& db_,
@@ -118,11 +126,11 @@ public:
   {
     if (_remainingEntries.empty())
     {
-      CurrentEntry = Status();
+      CurrentEntry = directory_entry{};
       return std::error_code(ENOENT, std::generic_category());
     }
 
-    CurrentEntry = fileToStatus(_db, *_remainingEntries.front());
+    CurrentEntry = fileToEntry(*_remainingEntries.front());
     _remainingEntries.pop_front();
     return std::error_code();
   }
@@ -168,10 +176,7 @@ public:
     return MemoryBuffer::getMemBufferCopy(_content, _status.getName());
   }
 
-  std::error_code close() override
-  {
-    return std::error_code();
-  }
+  std::error_code close() override { return {}; }
 
 private:
   const Status _status;
@@ -243,12 +248,13 @@ ErrorOr<std::string> DatabaseFileSystem::getCurrentWorkingDirectory() const
 std::error_code
 DatabaseFileSystem::setCurrentWorkingDirectory(const Twine& path_)
 {
-  SmallString<128> path(path_.str());
-  std::error_code error = sys::fs::make_absolute(_currentWorkingDirectory,
-                                                 path);
+  SmallString<128> fullPath;
+  sys::fs::make_absolute(_currentWorkingDirectory, fullPath);
+  sys::path::append(fullPath, path_);
+  std::error_code error = sys::fs::make_absolute(fullPath);
 
   if (!error)
-    _currentWorkingDirectory = path.str().str();
+    _currentWorkingDirectory = fullPath.str().str();
 
   getCurrentWorkingDirectory();
   return error;
