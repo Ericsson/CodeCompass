@@ -6,80 +6,6 @@ services:
 
 # ---------------------------- APT configuration -----------------------------
 
-.apt_xenial_config: &apt_xenial_config
-  update: true
-  sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-xenial-7
-
-.apt_xenial_sqlite: &apt_xenial_sqlite
-  <<: *apt_xenial_config
-  packages:
-    # Boost
-    - libboost-all-dev
-    # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
-    # Java
-    - default-jdk
-    # ODB
-    - odb
-    - libodb-dev
-    # SQLite
-    - libodb-sqlite-dev
-    - libsqlite3-dev
-    # Parser
-    - libmagic-dev
-    - libgit2-dev
-    - ctags
-    # Service
-    - libgraphviz-dev
-    - nodejs-legacy
-    - npm
-    # GTest
-    - libgtest-dev
-    # Thrift
-    - libssl-dev
-    # Thrift (compile)
-    - byacc
-    - flex
-
-.apt_xenial_pgsql: &apt_xenial_pgsql
-  <<: *apt_xenial_config
-  packages:
-    # Boost
-    - libboost-all-dev
-    # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
-    # Java
-    - default-jdk
-    # ODB
-    - odb
-    - libodb-dev
-    # PostgreSQL
-    - libodb-pgsql-dev
-    - postgresql-server-dev-9.5
-    # Parser
-    - libmagic-dev
-    - libgit2-dev
-    - ctags
-    # Service
-    - libgraphviz-dev
-    - nodejs-legacy
-    - npm
-    # GTest
-    - libgtest-dev
-    # Thrift
-    - libssl-dev
-    # Thrift (compile)
-    - byacc
-    - flex
-
 .apt_bionic_config: &apt_bionic_config
   update: true
 
@@ -263,22 +189,6 @@ services:
     bpkg install --all --recursive
   fi
 
-.install_gtest_xenial: &install_gtest_xenial
-  |
-  if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
-    echo "Building GoogleTest..."
-    cd $HOME
-    mkdir gtest
-    cp -R /usr/src/gtest/* ./gtest
-    cd gtest
-    mkdir build && cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest_install
-    make -j $(nproc)
-
-    mkdir -p $HOME/gtest_install/lib
-    cp libgtest.a libgtest_main.a $HOME/gtest_install/lib/
-  fi
-
 .install_gtest_bionic: &install_gtest_bionic
   |
   if [ ! -f "$HOME/gtest_install/lib/libgtest.a" ]; then
@@ -386,31 +296,6 @@ stages:
 
 jobs:
   include:
-    - name: "Xenial Xerus (16.04), PostgreSQL"
-      dist: xenial
-      addons:
-        apt:
-          <<: *apt_xenial_pgsql
-        postgresql: "9.5"
-      env:
-        - DATABASE=pgsql
-      install:
-        - *install_thrift
-        - *install_gtest_xenial
-      script:
-        *build_postgres
-    - name: "Xenial Xerus (16.04), SQLite"
-      dist: xenial
-      addons:
-        apt:
-          <<: *apt_xenial_sqlite
-      env:
-        - DATABASE=sqlite
-      install:
-        - *install_thrift
-        - *install_gtest_xenial
-      script:
-        *build_sqlite
     - name: "Bionic Beaver (18.04), PostgreSQL"
       dist: bionic
       addons:
