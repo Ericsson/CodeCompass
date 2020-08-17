@@ -78,6 +78,21 @@ int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
   if (handler)
     return handler->beginRequest(conn_);
 
+  if (uri == "ga.txt")
+  {
+    if (!gaTrackingIdPath.empty())
+    {
+      mg_send_file(conn_, gaTrackingIdPath.c_str());
+      return MG_MORE;
+    }
+    else
+    {
+      mg_send_status(conn_, 404); // 404 Not Found.
+      mg_printf_data(conn_, "%s", "Not Found.");
+      return MG_TRUE;
+    }
+  }
+
   if (uri.find("doxygen/") == 0)
   {
     mg_send_file(conn_, getDocDirByURI(uri).c_str());

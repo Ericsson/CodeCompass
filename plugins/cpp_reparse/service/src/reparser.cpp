@@ -163,8 +163,8 @@ CppReparser::getASTForTranslationUnitFile(
     // TODO: FIXME: Change this into the shortcutting overlay creation once the interface is upstreamed. (https://reviews.llvm.org/D45094)
     IntrusiveRefCntPtr<DatabaseFileSystem> dbfs(
       new DatabaseFileSystem(_db));
-    IntrusiveRefCntPtr<vfs::OverlayFileSystem> overlayFs(
-      new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
+    IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlayFs(
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
     overlayFs->pushOverlay(dbfs);
 
     auto compileDb = std::move(

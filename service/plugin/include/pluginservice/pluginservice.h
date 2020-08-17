@@ -22,6 +22,8 @@ public:
 
   void getPlugins(std::vector<std::string>& return_) override;
 
+  void getThriftPlugins(std::vector<std::string> & _return) override;
+
   void getWebPlugins(std::vector<std::string> & _return) override;
 
   void getWebStylePlugins(std::vector<std::string> & _return) override;

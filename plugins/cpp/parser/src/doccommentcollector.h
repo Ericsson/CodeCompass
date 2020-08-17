@@ -57,8 +57,8 @@ public:
     DocCommentFormatter dcFmt;
 
     model::CppDocCommentPtr pc(new model::CppDocComment);
-    pc->contentHTML = dcFmt.format(fc, _astContext);
-    pc->contentHash = util::fnvHash(pc->contentHTML);
+    pc->content = dcFmt.format(fc, _astContext);
+    pc->contentHash = util::fnvHash(pc->content);
     pc->mangledNameHash = _mangledNameCache.at(it->second);
     _docComments.insert(std::make_pair(
       std::make_pair(pc->mangledNameHash, pc->contentHash), pc));

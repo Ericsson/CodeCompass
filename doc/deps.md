@@ -16,7 +16,7 @@ be installed from the official repository of the given Linux distribution.
   is required. (Alternatively, you can compile with Clang.)
 - **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-7-dev`**, **`clang-7`**, **`libclang-7-dev`**: C++ parser uses
+- **`llvm-10-dev`**, **`clang-10`**, **`libclang-10-dev`**: C++ parser uses
   LLVM/Clang for parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
@@ -48,17 +48,17 @@ known issues.
 
 #### Ubuntu 16.04 ("Xenial Xerus") LTS
 
-The standard Ubuntu Xenial package repository contains only LLCM/Clang version
-6, which is not sufficient for CodeCompass, as at least version 7.0 is
+The standard Ubuntu Xenial package repository contains only LLVM/Clang version
+6, which is not sufficient for CodeCompass, as at least version 10.0 is
 required.  Therefore LLVM and Clang should be installed from the official LLVM
 repositories:
 
 ```bash
-sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
-sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
+sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
+sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
 
 sudo apt-get install git cmake make g++ libboost-all-dev \
-  llvm-7-dev libclang-7-dev \
+  llvm-10-dev libclang-10-dev \
   odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
@@ -68,7 +68,7 @@ sudo apt-get install git cmake make g++ libboost-all-dev \
 
 ```bash
 sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
-  llvm-7-dev clang-7 libclang-7-dev \
+  llvm-10-dev clang-10 libclang-10-dev \
   default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
 ```
@@ -77,7 +77,7 @@ sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
 
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
-  llvm-7-dev clang-7 libclang-7-dev \
+  llvm-10-dev clang-10 libclang-10-dev \
   odb libodb-dev thrift-compiler libthrift-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm
@@ -133,8 +133,8 @@ The ODB installation uses the build2 build system. (Build2 is not needed for
 CodeCompass so you may delete it right after the installation of ODB.)
 
 ```bash
-wget https://download.build2.org/0.12.0/build2-install-0.12.0.sh
-sh build2-install-0.12.0.sh --yes --trust yes "<build2_install_dir>"
+wget https://download.build2.org/0.13.0/build2-install-0.13.0.sh
+sh build2-install-0.13.0.sh --yes --trust yes "<build2_install_dir>"
 ```
 
 Now, utilizing the *Build2* toolchain, we can build the *ODB* compiler and
@@ -203,7 +203,8 @@ cd thrift-0.13.0
   --without-ruby --without-csharp --without-erlang --without-perl   \
   --without-php --without-php_extension --without-dart              \
   --without-haskell --without-go --without-rs --without-haxe        \
-  --without-dotnetcore --without-d --without-qt4 --without-qt5
+  --without-dotnetcore --without-d --without-qt4 --without-qt5      \
+  --without-java
 
 make install -j $(nproc)
 ```
@@ -276,8 +277,8 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<CodeCompass_install_dir> \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type> \
-  -DLLVM_DIR=/usr/lib/llvm-7/cmake \
-  -DClang_DIR=/usr/lib/cmake/clang-7
+  -DLLVM_DIR=/usr/lib/llvm-10/cmake \
+  -DClang_DIR=/usr/lib/cmake/clang-10
 
 # To specify linker for building CodeCompass use
 #   -DCODECOMPASS_LINKER=<path_to_linker>

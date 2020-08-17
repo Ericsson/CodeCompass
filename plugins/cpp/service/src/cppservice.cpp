@@ -169,7 +169,7 @@ void CppServiceHandler::getDocumentation(
       DocCommentQuery::mangledNameHash == node.mangledNameHash);
 
     if (!docComment.empty())
-      return_ = "<div class=\"main-doc\">" + docComment.begin()->contentHTML
+      return_ = "<div class=\"main-doc\">" + docComment.begin()->content
         + "</div>";
 
     switch (node.symbolType)
@@ -212,7 +212,7 @@ void CppServiceHandler::getDocumentation(
             DocCommentQuery::mangledNameHash == method.mangledNameHash);
 
           if (!doc.empty())
-            return_ += doc.begin()->contentHTML;
+            return_ += doc.begin()->content;
 
           return_ += "</div>";
         }
@@ -1238,7 +1238,7 @@ void CppServiceHandler::getFileDiagramTypes(
     return_["This module depends on"]               = EXTERNAL_DEPENDENCY;
     return_["Users of this module"]                 = EXTERNAL_USERS;
   }
-  else
+  else if (file->type == "CPP")
   {
     return_["Include Dependency"]                   = INCLUDE_DEPENDENCY;
     return_["Component Users"]                      = COMPONENT_USERS;

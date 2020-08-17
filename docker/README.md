@@ -34,8 +34,9 @@ Table of Contents
     * [How to parse a project](#how-to-parse-a-project)
     * [How to start a webserver](#how-to-start-a-webserver)
 * [Deployment](#deployment)
-  * [Build image for web](#build-image-for-web)
-  * [How to run CodeCompass webserver in docker](#how-to-run-codecompass-webserver-in-docker)
+  * [Build image for runtime](#build-image-for-runtime)
+  * [Build image for webserver](#build-image-for-webserver)
+    * [How to use the webserver executing container](#how-to-use-the-webserver-executing-container)
 
 # Development
 ## Build image from development
@@ -112,18 +113,44 @@ CodeCompass_webserver \
 
 # Deployment
 
-## Build image for web
-Build the web environment image from CodeCompass `master` branch:
+## Build image for runtime
+For a production environment you can build and use the runtime environment image, 
+which contains the built CodeCompass binaries and their dependencies:
+```bash
+docker build -t codecompass:runtime --no-cache --file docker/runtime/Dockerfile .
 ```
+
+By default this image download the `master` branch of the CodeCompass GitHub 
+repository and build it in `Release` mode with `sqlite` database configuration.
+You can override these default values through the following build-time
+variables:
+
+|       Variable       |                  Meaning                 |
+| -------------------- | ---------------------------------------- |
+| `CC_VERSION` |  The branch, version hash or tag of the CodeCompass repository to use. |
+| `CC_DATABASE`|  Database type. Possible values are **sqlite**, **pgsql**. |
+| `CC_BUILD_TYPE` | Specifies the build type. Supported values are **`Debug`** and **`Release`**. |
+
+The below example builds the `codecompass:runtime` image with *pgsql* configuration:
+```bash
+docker build -t codecompass:runtime --build-arg CC_DATABASE=pgsql \
+  --no-cache --file docker/runtime/Dockerfile .
+```
+
+*Note*: the `codecompass:dev` is a prerequisite to build the `codecompass:runtime` image.
+
+## Build image for webserver
+You can use the `codecompass:runtime` image created
+[above](#build-image-for-runtime) to build an executing container for the webserver:
+```bash
 docker build -t codecompass:web --no-cache --file docker/web/Dockerfile .
 ```
 
 See more information [below](#how-to-run-codecompass-webserver-in-docker) how
 to use this image to start a CodeCompass webserver.
 
-## How to run CodeCompass webserver in docker
-You can use the `codecompass:web` image created
-[above](#build-image-for-web) to start a CodeCompass webserver.
+### How to use the webserver executing container
+You can use the `codecompass:web` image to start a CodeCompass webserver.
 For this run the following command:
 ```bash
 docker run \
