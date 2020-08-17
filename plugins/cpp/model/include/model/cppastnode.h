@@ -183,6 +183,7 @@ inline std::uint64_t createIdentifier(const CppAstNode& astNode_)
 
   res
     .append(astNode_.astValue).append(":")
+    .append(std::to_string(astNode_.mangledNameHash)).append(":")
     .append(std::to_string(
       static_cast<SymbolTypeInt>(astNode_.symbolType))).append(":")
     .append(std::to_string(
