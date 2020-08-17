@@ -17,7 +17,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
-    llvm-7 \
+    llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
     postgresql-server-dev-12 \
