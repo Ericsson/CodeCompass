@@ -10,7 +10,8 @@ services:
   update: true
   sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-xenial-8
+    - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main"
+      key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
 
 .apt_xenial_sqlite: &apt_xenial_sqlite
   <<: *apt_xenial_config
@@ -18,10 +19,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-8
-    - llvm-8-dev
-    - clang-8
-    - libclang-8-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -52,10 +53,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-8
-    - llvm-8-dev
-    - clang-8
-    - libclang-8-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB

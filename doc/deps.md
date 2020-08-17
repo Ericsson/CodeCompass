@@ -48,17 +48,17 @@ known issues.
 
 #### Ubuntu 16.04 ("Xenial Xerus") LTS
 
-The standard Ubuntu Xenial package repository contains only LLCM/Clang version
-6, which is not sufficient for CodeCompass, as at least version 7.0 is
+The standard Ubuntu Xenial package repository contains only LLVM/Clang version
+6, which is not sufficient for CodeCompass, as at least version 10.0 is
 required.  Therefore LLVM and Clang should be installed from the official LLVM
 repositories:
 
 ```bash
-sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
-sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main
+sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
+sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
 
 sudo apt-get install git cmake make g++ libboost-all-dev \
-  llvm-7-dev libclang-7-dev \
+  llvm-10-dev libclang-10-dev \
   odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
