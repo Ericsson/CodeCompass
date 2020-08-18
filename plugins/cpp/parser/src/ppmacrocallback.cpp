@@ -101,7 +101,7 @@ void PPMacroCallback::MacroExpands(
   _disabled = true;
   clang::DiagnosticsEngine *OldDiags = &_pp.getDiagnostics();
   _pp.setDiagnostics(TmpDiags);
-  _pp.EnterTokenStream(tokens, false);
+  _pp.EnterTokenStream(tokens, false, false);
 
   std::string expansion;
   _pp.Lex(tok);

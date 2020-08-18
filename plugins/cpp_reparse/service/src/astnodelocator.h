@@ -47,7 +47,7 @@ public:
 
     if (node_)
     {
-      clang::SourceLocation start = node_->getLocStart();
+      clang::SourceLocation start = node_->getBeginLoc();
       clang::PresumedLoc presumedLoc =
         _context.getSourceManager().getPresumedLoc(start);
 
@@ -61,7 +61,7 @@ public:
         return false;
 
       model::Range declRange;
-      _locUtil.setRange(start, node_->getLocEnd(), declRange);
+      _locUtil.setRange(start, node_->getEndLoc(), declRange);
 
       if (declRange == _dbNode->location.range)
         return true;

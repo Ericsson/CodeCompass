@@ -88,6 +88,7 @@ int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
     else
     {
       mg_send_status(conn_, 404); // 404 Not Found.
+      mg_send_header(conn_, "Content-Type", "text/plain");
       mg_printf_data(conn_, "%s", "Not Found.");
       return MG_TRUE;
     }
