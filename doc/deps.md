@@ -58,7 +58,7 @@ sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
 sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
 
 sudo apt-get install git cmake make g++ libboost-all-dev \
-  llvm-10-dev libclang-10-dev \
+  llvm-10-dev clang-10 libclang-10-dev \
   odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
   libgtest-dev npm nodejs-legacy
