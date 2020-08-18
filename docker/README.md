@@ -37,6 +37,7 @@ Table of Contents
   * [Build image for runtime](#build-image-for-runtime)
   * [Build image for webserver](#build-image-for-webserver)
     * [How to use the webserver executing container](#how-to-use-the-webserver-executing-container)
+* [Official DockerHub images](#official-dockerhub-images)
 
 # Development
 ## Build image from development
@@ -159,3 +160,23 @@ docker run \
   codecompass:web \
   CodeCompass_webserver -w /workspace
 ```
+
+# Official DockerHub images
+
+Prebuilt images can be downloaded from DockerHub, from the 
+[modelcpp/codecompass](https://hub.docker.com/r/modelcpp/codecompass) 
+repository.
+
+The following image tags are available:
+
+| Name | Description |
+| ---- | ------------|
+| `dev` | Development image |
+| `runtime-sqlite` | Runtime image containing CodeCompass binaries built against SQLite |
+| `runtime-pgsql` | Runtime image containing CodeCompass binaries built against PostrgreSQL |
+| `web-sqlite` | Webserver executing container image built against SQLite |
+| `web-pgsql` | Webserver executing container image built against PostgreSQL |
+
+The default `latest` is an alias to `:runtime-pgsql`.
+To download (or update) an image from DockerHub, issue the command 
+`docker pull modelcpp/codecompass:latest`. (Replace `latest` with the desired tag.)
