@@ -959,8 +959,7 @@ void CppServiceHandler::getReferences(
     }
 
     if (referenceId_ != PARAMETER &&
-        referenceId_ != ENUM_CONSTANTS &&
-        referenceId_ != LOCAL_VAR)
+        referenceId_ != ENUM_CONSTANTS)
       std::sort(nodes.begin(), nodes.end(), compareByValue);
 
     return_.reserve(nodes.size());
