@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <clang/Basic/Diagnostic.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
+#include <llvm/Support/raw_ostream.h>
 #include <model/buildlog-odb.hxx>
 #include <parser/sourcemanager.h>
 
@@ -11,10 +13,12 @@ namespace cc
 namespace parser
 {
 
-class DiagnosticMessageHandler : public clang::DiagnosticConsumer
+class DiagnosticMessageHandler : public clang::TextDiagnosticPrinter
 {
 public:
   DiagnosticMessageHandler(
+    llvm::raw_ostream& os,
+    clang::DiagnosticOptions* diags,
     SourceManager& srcMgr_,
     std::shared_ptr<odb::database> db_);
   ~DiagnosticMessageHandler();
