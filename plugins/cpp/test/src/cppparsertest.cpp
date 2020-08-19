@@ -357,10 +357,11 @@ TEST_F(CppParserTest, Record)
       {
         case -1: 
           EXPECT_TRUE(
-            // Compiler generated assignment operator return value.
-            n.astType == model::CppAstNode::AstType::ReturnTypeLoc ||
-            // TODO: What's this? Maybe a compiler generated copy constructor
-            // parameter's type? Then why isn't this a ParameterTypeLoc?
+          // TODO: investigate the type of this. It is possibly the parameter of a
+          // compiler generated copy constructor or assignment operator.
+          // The type should also be visible as a return type of the compiler generated
+          // assignment operator.
+            n.astType == model::CppAstNode::AstType::ParameterTypeLoc ||
             n.astType == model::CppAstNode::AstType::TypeLocation);
           break;
 
