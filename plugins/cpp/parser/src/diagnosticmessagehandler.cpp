@@ -8,11 +8,10 @@ namespace parser
 {
 
 DiagnosticMessageHandler::DiagnosticMessageHandler(
-  llvm::raw_ostream& os,
   clang::DiagnosticOptions* diags,
   SourceManager& srcMgr_,
   std::shared_ptr<odb::database> db_)
-    : TextDiagnosticPrinter(os, diags), _srcMgr(srcMgr_), _db(db_)
+    : TextDiagnosticPrinter(llvm::errs(), diags), _srcMgr(srcMgr_), _db(db_)
 {
 }
 

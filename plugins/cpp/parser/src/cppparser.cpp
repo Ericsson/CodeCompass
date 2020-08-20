@@ -12,7 +12,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#include "clang/Basic/LLVM.h"
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendAction.h>
 
@@ -328,7 +327,7 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
   clang::tooling::ClangTool tool(*compilationDb, command_.Filename);
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
-  DiagnosticMessageHandler diagMsgHandler(llvm::errs(), diagOpts.get(), _ctx.srcMgr, _ctx.db);
+  DiagnosticMessageHandler diagMsgHandler(diagOpts.get(), _ctx.srcMgr, _ctx.db);
   tool.setDiagnosticConsumer(&diagMsgHandler);
 
   int error = tool.run(&factory);
