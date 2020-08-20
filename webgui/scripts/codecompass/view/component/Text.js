@@ -490,6 +490,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       while (end < line.length && line[end] && line[end].match(pattern))
         ++end;
 
+      this._getSyntaxHighlight(this._fileInfo);
+
       return {
         string : line.substring(start, end),
         start  : start + 1,
