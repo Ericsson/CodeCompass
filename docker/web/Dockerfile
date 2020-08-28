@@ -16,7 +16,7 @@ FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
-  && apt-get install -qqy --no-install-recommends \
+  && apt-get install -qq --yes --no-install-recommends \
     llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
@@ -31,7 +31,7 @@ RUN set -x && apt-get update -qq \
     # To switch user and exec command.
     gosu \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
+  && rm --recursive --force /var/lib/apt/lists/ \
   && set +x
 
 ARG CC_GID=960
@@ -43,8 +43,8 @@ ENV CC_UID ${CC_UID}
 ENV TINI_VERSION v0.18.0
 
 # Create user and group for CodeCompass.
-RUN groupadd -r codecompass -g ${CC_GID} && \
-    useradd -r --no-log-init -M -u ${CC_UID} -g codecompass codecompass
+RUN groupadd --system codecompass --gid ${CC_GID} && \
+    useradd --system --no-log-init --no-create-home --uid ${CC_UID} --gid codecompass codecompass
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 # TODO: only the webserver's binaries should be included in this image.

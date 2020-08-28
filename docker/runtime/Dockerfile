@@ -13,7 +13,7 @@ ENV CC_DATABASE ${CC_DATABASE}
 ARG CC_BUILD_TYPE=Release
 ENV CC_BUILD_TYPE ${CC_BUILD_TYPE}
 
-RUN apt-get install -y git
+RUN apt-get install --yes git
 
 # Download CodeCompass release.
 RUN git clone https://github.com/Ericsson/CodeCompass.git /CodeCompass
@@ -27,7 +27,7 @@ RUN mkdir /CodeCompass-build && \
     -DDATABASE=$CC_DATABASE \
     -DCMAKE_INSTALL_PREFIX=/CodeCompass-install \
     -DCMAKE_BUILD_TYPE=$CC_BUILD_TYPE && \
-  make -j $(nproc) && \
+  make --jobs $(nproc) && \
   make install
 
 ###############################################################################
@@ -42,7 +42,7 @@ FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
-  && apt-get install -qqy --no-install-recommends \
+  && apt-get install -qq --yes --no-install-recommends \
     llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
@@ -57,7 +57,7 @@ RUN set -x && apt-get update -qq \
     libodb-pgsql-dev \
     ctags \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
+  && rm --recursive --force /var/lib/apt/lists/ \
   && set +x
 
 ENV TINI_VERSION v0.18.0

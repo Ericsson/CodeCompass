@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
-  && apt-get -y install --no-install-recommends \
+  && apt-get --yes install --no-install-recommends \
   cmake make \
   default-jdk \
   ctags \
@@ -26,8 +26,8 @@ RUN set -x && apt-get update -qq \
   npm \
   thrift-compiler libthrift-dev \
   odb libodb-sqlite-dev libodb-pgsql-dev && \
-  ln -s /usr/bin/gcc-9 /usr/bin/gcc && \
-  ln -s /usr/bin/g++-9 /usr/bin/g++
+  ln --symbolic /usr/bin/gcc-9 /usr/bin/gcc && \
+  ln --symbolic /usr/bin/g++-9 /usr/bin/g++
 
 # Build GTest.
 RUN cd /usr/src/googletest && \
@@ -36,7 +36,7 @@ RUN cd /usr/src/googletest && \
   cmake .. && \
   make install && \
   cd / && \
-  rm -rf /usr/src/googletest/build
+  rm --recursive --force /usr/src/googletest/build
 
 # Adding CodeCompass builder script.
 COPY docker/dev/codecompass-build.sh /usr/local/bin

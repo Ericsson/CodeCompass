@@ -47,7 +47,7 @@ CodeCompass source.**
 
 ```
 cd CodeCompass
-docker build -t codecompass:dev --file docker/dev/Dockerfile .
+docker build --tag codecompass:dev --file docker/dev/Dockerfile .
 ```
 
 See more information [below](#how-to-use-docker-to-develop-codecompass) how to
@@ -59,11 +59,11 @@ You can use the `codecompass:dev` image created
 First, you have to start a docker container from this image, which will mount
 your CodeCompass directory from your host and starts a shell:
 ```bash
-docker run --rm -ti \
+docker run --rm --interactive --tty \ #Or one can use the shorthand version --rm -it
   --env DATABASE=sqlite --env BUILD_TYPE=Release \
   --volume /path/to/host/CodeCompass:/CodeCompass \
   --volume /path/to/your/host/project:/projects/myproject \
-  -p 8001:8080 \
+  --publish 8001:8080 \
   codecompass:dev \
   /bin/bash
 ```
@@ -115,13 +115,13 @@ CodeCompass_webserver \
 # Deployment
 
 ## Build image for runtime
-For a production environment you can build and use the runtime environment image, 
+For a production environment you can build and use the runtime environment image,
 which contains the built CodeCompass binaries and their dependencies:
 ```bash
-docker build -t codecompass:runtime --no-cache --file docker/runtime/Dockerfile .
+docker build --tag codecompass:runtime --no-cache --file docker/runtime/Dockerfile .
 ```
 
-By default this image download the `master` branch of the CodeCompass GitHub 
+By default this image download the `master` branch of the CodeCompass GitHub
 repository and build it in `Release` mode with `sqlite` database configuration.
 You can override these default values through the following build-time
 variables:
@@ -134,7 +134,7 @@ variables:
 
 The below example builds the `codecompass:runtime` image with *pgsql* configuration:
 ```bash
-docker build -t codecompass:runtime --build-arg CC_DATABASE=pgsql \
+docker build --tag codecompass:runtime --build-arg CC_DATABASE=pgsql \
   --no-cache --file docker/runtime/Dockerfile .
 ```
 
@@ -144,7 +144,8 @@ docker build -t codecompass:runtime --build-arg CC_DATABASE=pgsql \
 You can use the `codecompass:runtime` image created
 [above](#build-image-for-runtime) to build an executing container for the webserver:
 ```bash
-docker build -t codecompass:web --no-cache --file docker/web/Dockerfile .
+docker build --tag codecompass:web --no-cache \
+  --file docker/web/Dockerfile .
 ```
 
 See more information [below](#how-to-run-codecompass-webserver-in-docker) how
@@ -156,15 +157,15 @@ For this run the following command:
 ```bash
 docker run \
   --volume /path/to/host/workspace/:/workspace \
-  -p 8010:8080 \
+  --publish 8010:8080 \
   codecompass:web \
   CodeCompass_webserver -w /workspace
 ```
 
 # Official DockerHub images
 
-Prebuilt images can be downloaded from DockerHub, from the 
-[modelcpp/codecompass](https://hub.docker.com/r/modelcpp/codecompass) 
+Prebuilt images can be downloaded from DockerHub, from the
+[modelcpp/codecompass](https://hub.docker.com/r/modelcpp/codecompass)
 repository.
 
 The following image tags are available:
@@ -178,5 +179,5 @@ The following image tags are available:
 | `web-pgsql` | Webserver executing container image built against PostgreSQL |
 
 The default `latest` is an alias to `:runtime-pgsql`.
-To download (or update) an image from DockerHub, issue the command 
+To download (or update) an image from DockerHub, issue the command
 `docker pull modelcpp/codecompass:latest`. (Replace `latest` with the desired tag.)

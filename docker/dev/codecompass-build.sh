@@ -12,7 +12,7 @@ set -Eeuxo pipefail
 
 if [ ! -d $BUILD_DIR ]; then
   mkdir $BUILD_DIR
-  mkdir -p $TEST_WORKSPACE
+  mkdir --parent $TEST_WORKSPACE
 
 cd $BUILD_DIR
 cmake \

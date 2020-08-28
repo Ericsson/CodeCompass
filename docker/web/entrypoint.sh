@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ "$(id -u)" == '0' ]; then
+if [ "$(id --user)" == '0' ]; then
   # Change the owner of the workspace directory
-  mkdir -p /workspace
+  mkdir --parents /workspace
   chown codecompass:codecompass /workspace
 
   # Execute this script again with codecompass user.
