@@ -35,6 +35,7 @@
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
+#include "diagnosticmessagehandler.h"
 
 namespace cc
 {
@@ -61,9 +62,9 @@ public:
   {
   }
 
-  clang::FrontendAction* create() override
+  std::unique_ptr<clang::FrontendAction> create() override
   {
-    return new MyFrontendAction(_ctx);
+    return std::make_unique<MyFrontendAction>(_ctx);
   }
 
 private:
@@ -324,6 +325,10 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   VisitorActionFactory factory(_ctx);
   clang::tooling::ClangTool tool(*compilationDb, command_.Filename);
+
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
+  DiagnosticMessageHandler diagMsgHandler(diagOpts.get(), _ctx.srcMgr, _ctx.db);
+  tool.setDiagnosticConsumer(&diagMsgHandler);
 
   int error = tool.run(&factory);
 

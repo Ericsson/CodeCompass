@@ -85,7 +85,7 @@ public:
    */
   std::string getFilePath(const clang::SourceLocation& loc_)
   {
-    clang::SourceLocation expLoc =_clangSrcMan.getExpansionLoc(loc_);
+    clang::SourceLocation expLoc = _clangSrcMan.getExpansionLoc(loc_);
     clang::FileID fid = _clangSrcMan.getFileID(expLoc);
 
     if (fid.isInvalid())

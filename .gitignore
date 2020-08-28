@@ -4,4 +4,4 @@ nbproject/
 .idea/
 *.swp
 build/
-
+build_*/

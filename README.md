@@ -29,6 +29,7 @@ Features
 Documentations
 --------
 - [User guide](doc/usage.md)
+- [Docker guide](docker/README.md)
 
 Development
 --------

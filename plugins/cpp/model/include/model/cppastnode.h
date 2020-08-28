@@ -70,9 +70,6 @@ struct CppAstNode
   #pragma db null
   FileLoc location;
 
-  #pragma db null
-  std::string mangledName;
-
   std::uint64_t mangledNameHash;
 
   SymbolType symbolType = SymbolType::Other;
@@ -145,7 +142,6 @@ inline std::string CppAstNode::toString() const
   return std::string("CppAstNode")
     .append("\nid = ").append(std::to_string(id))
     .append("\nastValue = ").append(astValue)
-    .append("\nmangledName = ").append(mangledName)
     .append("\nlocation = ").append(location.file->path).append(" (")
     .append(std::to_string(
       static_cast<signed>(location.range.start.line))).append(":")
@@ -187,7 +183,7 @@ inline std::uint64_t createIdentifier(const CppAstNode& astNode_)
 
   res
     .append(astNode_.astValue).append(":")
-    .append(astNode_.mangledName).append(":")
+    .append(std::to_string(astNode_.mangledNameHash)).append(":")
     .append(std::to_string(
       static_cast<SymbolTypeInt>(astNode_.symbolType))).append(":")
     .append(std::to_string(

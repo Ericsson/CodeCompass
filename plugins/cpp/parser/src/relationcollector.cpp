@@ -61,7 +61,7 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
   //--- Function declaration and definition ---//
 
   model::FilePtr declFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(fd_->getLocStart()));
+    _fileLocUtil.getFilePath(fd_->getBeginLoc()));
 
   if (!declFile)
     return true;
@@ -71,7 +71,7 @@ bool RelationCollector::VisitFunctionDecl(clang::FunctionDecl* fd_)
     return true;
 
   model::FilePtr defFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(def->getLocStart()));
+    _fileLocUtil.getFilePath(def->getBeginLoc()));
 
   if (!defFile)
     return true;
@@ -97,7 +97,7 @@ bool RelationCollector::VisitValueDecl(clang::ValueDecl* vd_)
   //--- Find user ---//
 
   model::FilePtr userFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(vd_->getLocStart()));
+    _fileLocUtil.getFilePath(vd_->getBeginLoc()));
 
   if (!userFile)
     return true;
@@ -111,7 +111,7 @@ bool RelationCollector::VisitValueDecl(clang::ValueDecl* vd_)
     return true;
 
   model::FilePtr usedFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(recordDecl->getLocStart()));
+    _fileLocUtil.getFilePath(recordDecl->getBeginLoc()));
 
   if (!usedFile)
     return true;
@@ -129,7 +129,7 @@ bool RelationCollector::VisitCallExpr(clang::CallExpr* ce_)
   //--- Find user ---//
 
   model::FilePtr userFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(ce_->getLocStart()));
+    _fileLocUtil.getFilePath(ce_->getBeginLoc()));
 
   if (!userFile)
     return true;
@@ -142,7 +142,7 @@ bool RelationCollector::VisitCallExpr(clang::CallExpr* ce_)
     return true;
 
   model::FilePtr usedFile = _ctx.srcMgr.getFile(
-    _fileLocUtil.getFilePath(calleeDecl->getLocStart()));
+    _fileLocUtil.getFilePath(calleeDecl->getBeginLoc()));
 
   if (!usedFile)
     return true;

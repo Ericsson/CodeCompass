@@ -117,6 +117,20 @@ int main(int argc, char* argv[])
         std::make_unique<SessionManager>(authHandler.get_ptr())};
     requestHandler.sessionManager = sessions.get();
 
+    //--- Set up Google Analytics monitoring---//
+
+    auto gaFilePath = boost::filesystem::path(
+      vm["workspace"].as<std::string>()).append("ga.txt");
+    if (boost::filesystem::is_regular_file(gaFilePath))
+    {
+      requestHandler.gaTrackingIdPath = gaFilePath.string();
+      LOG(info) << "Google Analytics monitoring enabled.";
+    }
+    else
+    {
+      LOG(debug) << "Google Analytics monitoring disabled.";
+    }
+
     //--- Process workspaces ---//
 
     cc::webserver::ServerContext ctx(compassRoot, vm, sessions.get());

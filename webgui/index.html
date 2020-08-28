@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="scripts/node_modules/codemirror/lib/codemirror.css" />
     <link rel="stylesheet" href="scripts/node_modules/codemirror/addon/dialog/dialog.css" />
     <link rel="stylesheet" href="scripts/node_modules/codemirror/addon/fold/foldgutter.css" />
-    <link rel="stylesheet" href="scripts/node_modules/dojo/resources/dojo.css" />
-    <link rel="stylesheet" href="scripts/node_modules/dijit/themes/claro/claro.css"/>
-    <link rel="stylesheet" href="scripts/node_modules/dojox/layout/resources/ResizeHandle.css" />
-    <link rel="stylesheet" href="scripts/node_modules/dojox/layout/resources/FloatingPane.css" />
-    <link rel="stylesheet" href="scripts/node_modules/dojox/image/resources/Lightbox.css" />
-    <link rel="stylesheet" href="scripts/node_modules/dojox/grid/resources/claroGrid.css" />
+    <link rel="stylesheet" href="scripts/release/dojo/resources/dojo.css" />
+    <link rel="stylesheet" href="scripts/release/dijit/themes/claro/claro.css"/>
+    <link rel="stylesheet" href="scripts/release/dojox/layout/resources/ResizeHandle.css" />
+    <link rel="stylesheet" href="scripts/release/dojox/layout/resources/FloatingPane.css" />
+    <link rel="stylesheet" href="scripts/release/dojox/image/resources/Lightbox.css" />
+    <link rel="stylesheet" href="scripts/release/dojox/grid/resources/claroGrid.css" />
 
     <!-- Third party libraries -->
 
@@ -44,24 +44,29 @@
     <script type="text/javascript" src="scripts/node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
     <script type="text/javascript" src="scripts/node_modules/marked/lib/marked.js"></script>
     <script type="text/javascript" src="scripts/node_modules/d3/d3.min.js"></script>
-    
+    <script type="text/javascript" src="scripts/node_modules/js-cookie/src/js.cookie.js"></script>
 
     <script type="text/javascript">
+      if (Cookies.get('dojo-cache') === undefined) {
+        Cookies.set('dojo-cache', Date.now(), { expires: 7 });
+      }
+
       var dojoConfig = {
-        baseUrl: 'scripts/',
+        baseUrl: 'scripts/release/',
         tlmSiblingOfDojo: false,
         defaultDuration: 1,
         async: true,
-        cacheBust: true,
+        cacheBust: Cookies.get('dojo-cache'),
         packages: [
-          { name: 'dojo',  location: 'node_modules/dojo'  },
-          { name: 'dijit', location: 'node_modules/dijit' },
-          { name: 'dojox', location: 'node_modules/dojox' }
+          { name: 'dojo',  location: 'dojo'  },
+          { name: 'dijit', location: 'dijit' },
+          { name: 'dojox', location: 'dojox' },
+          { name: 'codecompass', location: 'codecompass' }
         ]
       };
     </script>
 
-    <script type="text/javascript" src="scripts/node_modules/dojo/dojo.js"></script>
+    <script type="text/javascript" src="scripts/release/dojo/dojo.js"></script>
 
     <script type="text/javascript">
       var commonModules = [
@@ -78,7 +83,7 @@
         'scripts/codecompass/generated/WorkspaceService.js'
       ];
 
-      require(commonModules, function(){
+      require(commonModules, function(){ // load common thrift modules
         require([
           'dojo/_base/array',
           'dojo/dom-construct',
@@ -93,21 +98,29 @@
             }, document.getElementsByTagName('head')[0]);
           });
 
-          var modules = model.plugin.getWebPlugins();
-          var diffModule = array.filter(modules, function(module){
+          var thriftModules = model.plugin.getThriftPlugins();
+          var diffModules = array.filter(thriftModules, function(module){
             return commonModules.indexOf(module) < 0;
           });
-          require(diffModule, function(){
-            require([
-              'codecompass/codecompass',
-              'dojo/domReady!'],
-            function (codecompass) {
-              codecompass();
+          require(diffModules, function() { // load plugin thrift modules
+            require(['scripts/release/codecompass/bundle.js'], function() { // load codecompass bundle
+              var webModules = model.plugin.getWebPlugins();
+              require(webModules, function() { // load any module not in bundle
+                require([
+                  'codecompass/codecompass',
+                  'dojo/domReady!'
+                ], function (codecompass) {
+                  codecompass();
+                });
+              });
             });
           });
         });
       });
     </script>
+
+    <!-- Google Analytics (optionally loaded!) -->
+    <script type="text/javascript" src="scripts/ga.js"></script>
   </head>
   <body class="claro">
   </body>

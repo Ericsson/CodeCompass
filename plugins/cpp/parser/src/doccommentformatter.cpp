@@ -146,11 +146,11 @@ FullCommentParts::FullCommentParts(
 }
 
 // https://llvm.org/svn/llvm-project/cfe/trunk/lib/Index/CommentToXML.cpp
-class CommentToHTMLConverter
-  : public ConstCommentVisitor<CommentToHTMLConverter>
+class CommentToMarkdownConverter
+  : public ConstCommentVisitor<CommentToMarkdownConverter>
 {
 public:
-  CommentToHTMLConverter(
+  CommentToMarkdownConverter(
     const FullComment* fullComment_,
     const CommandTraits& traits_,
     std::stringstream& res_)
@@ -225,12 +225,6 @@ public:
    */
   void visitNonStandaloneParagraphComment(const ParagraphComment* c_);
 
-  /**
-   * This function escapes html elements from parameter and appends the escaped
-   * string to the result.
-   */
-  void appendToResultWithHTMLEscaping(const clang::StringRef& str_);
-
 private:
   const FullComment* _fullComment;
   const CommandTraits& _traits;
@@ -239,33 +233,12 @@ private:
 
 }
 
-void CommentToHTMLConverter::appendToResultWithHTMLEscaping(
-  const clang::StringRef& str_)
+void CommentToMarkdownConverter::visitTextComment(const TextComment* c_)
 {
-  for (clang::StringRef::iterator it = str_.begin(), end = str_.end();
-    it != end; ++it)
-  {
-    switch (*it)
-    {
-      case '&':  _res << "&amp;";  break;
-      case '<':  _res << "&lt;";   break;
-      case '>':  _res << "&gt;";   break;
-      case '"':  _res << "&quot;"; break;
-      case '\'': _res << "&#39;";  break;
-      case '/':  _res << "&#47;";  break;
-      default:   _res << *it;      break;
-    }
-  }
+  _res << c_->getText().ltrim().str() << ' ';
 }
 
-void CommentToHTMLConverter::visitTextComment(const TextComment* c_)
-{
-  _res << "<div class=\"comment\">";
-  appendToResultWithHTMLEscaping(c_->getText());
-  _res << "</div>";
-}
-
-void CommentToHTMLConverter::visitInlineCommandComment(
+void CommentToMarkdownConverter::visitInlineCommandComment(
   const InlineCommandComment* c_)
 {
   // Nothing to render if argument is empty.
@@ -280,94 +253,77 @@ void CommentToHTMLConverter::visitInlineCommandComment(
   {
     case InlineCommandComment::RenderNormal:
       for (unsigned i = 0, e = c_->getNumArgs(); i != e; ++i)
-      {
-        appendToResultWithHTMLEscaping(c_->getArgText(i));
-        _res << " ";
-      }
+        _res << c_->getArgText(i).str() << ' ';
       return;
 
     case InlineCommandComment::RenderBold:
       assert(c_->getNumArgs() == 1);
-      _res << "<b>";
-      appendToResultWithHTMLEscaping(arg0);
-      _res << "</b>";
+      _res << "**" << arg0.str() << "**";
       return;
 
     case InlineCommandComment::RenderMonospaced:
       assert(c_->getNumArgs() == 1);
-      _res << "<tt>";
-      appendToResultWithHTMLEscaping(arg0);
-      _res<< "</tt>";
+      _res << '`' << arg0.str() << '`';
       return;
 
     case InlineCommandComment::RenderEmphasized:
       assert(c_->getNumArgs() == 1);
-      _res << "<em>";
-      appendToResultWithHTMLEscaping(arg0);
-      _res << "</em>";
+      _res << '*' << arg0.str() << '*';
       return;
   }
 }
 
-void CommentToHTMLConverter::visitHTMLStartTagComment(
+void CommentToMarkdownConverter::visitHTMLStartTagComment(
   const HTMLStartTagComment* c_)
 {
-  _res << "<" << c_->getTagName().str();
+  _res << '<' << c_->getTagName().str();
 
   if (c_->getNumAttrs())
     for (unsigned i = 0, e = c_->getNumAttrs(); i != e; i++)
     {
-      _res << " ";
+      _res << ' ';
       const HTMLStartTagComment::Attribute &Attr = c_->getAttr(i);
       _res << Attr.Name.str();
       if (!Attr.Value.empty())
-        _res << "=\"" << Attr.Value.str() << "\"";
+        _res << "=\"" << Attr.Value.str() << '"';
     }
 
   if (!c_->isSelfClosing())
-    _res << ">";
+    _res << '>';
   else
     _res << "/>";
 }
 
-void CommentToHTMLConverter::visitHTMLEndTagComment(const HTMLEndTagComment* c_)
+void CommentToMarkdownConverter::visitHTMLEndTagComment(
+  const HTMLEndTagComment* c_)
 {
-  _res << "</" << c_->getTagName().str() << ">";
+  _res << "</" << c_->getTagName().str() << '>';
 }
 
-void CommentToHTMLConverter::visitParagraphComment(const ParagraphComment* c_)
+void CommentToMarkdownConverter::visitParagraphComment(
+  const ParagraphComment* c_)
 {
   if (c_->isWhitespace())
     return;
 
-  _res << "<div>";
   for (Comment::child_iterator it = c_->child_begin(), end = c_->child_end();
        it != end; ++it)
     visit(*it);
-
-  _res << "</div>";
 }
 
-void CommentToHTMLConverter::visitBlockCommandComment(
+void CommentToMarkdownConverter::visitBlockCommandComment(
   const BlockCommandComment* c_)
 {
   const CommandInfo *info = _traits.getCommandInfo(c_->getCommandID());
   if (info->IsBriefCommand)
   {
-    _res << "<div class=\"para-brief\">";
     visitNonStandaloneParagraphComment(c_->getParagraph());
-    _res << "</div>";
-
     return;
   }
 
   if (info->IsReturnsCommand)
   {
-    _res << "<div class=\"para-returns\">"
-            "<span class=\"word-returns\">Returns</span> ";
     visitNonStandaloneParagraphComment(c_->getParagraph());
-    _res << "</div>";
-
     return;
   }
 
@@ -375,45 +331,33 @@ void CommentToHTMLConverter::visitBlockCommandComment(
   visit(c_->getParagraph());
 }
 
-void CommentToHTMLConverter::visitParamCommandComment(
+void CommentToMarkdownConverter::visitParamCommandComment(
   const ParamCommandComment* c_)
 {
-  _res << "<dl class=\"param\"><dt>Parameter</dt><dd>";
-  _res << "<div class=\"dir\">";
-
   switch (c_->getDirection())
   {
-    case ParamCommandComment::In:    _res << "in";     break;
-    case ParamCommandComment::Out:   _res << "out";    break;
-    case ParamCommandComment::InOut: _res << "in,out"; break;
+    case ParamCommandComment::In:    _res << "- *in*: ";     break;
+    case ParamCommandComment::Out:   _res << "- *out*: ";    break;
+    case ParamCommandComment::InOut: _res << "- *in,out*: "; break;
   }
 
-  _res << "</div><div class=\"name\">";
-
-  appendToResultWithHTMLEscaping(c_->isParamIndexValid()
+  _res << "**" << (c_->isParamIndexValid()
     ? c_->getParamName(_fullComment)
-    : c_->getParamNameAsWritten());
-
-  _res << "</div>";
+    : c_->getParamNameAsWritten()).str() << "** ";
 
   visit(c_->getParagraph());
-
-  _res << "</dd></dl>";
+  _res << '\n';
 }
 
-void CommentToHTMLConverter::visitTParamCommandComment(
+void CommentToMarkdownConverter::visitTParamCommandComment(
   const TParamCommandComment* c_)
 {
-  _res << "<dl class=\"tparam\"><dt>Template parameter</dt><dd>";
-  _res << "<div class=\"name\">";
-  appendToResultWithHTMLEscaping(c_->getParamNameAsWritten());
-  _res << "</div>";
-
+  _res << "- **" << c_->getParamNameAsWritten().str() << "**: ";
   visitNonStandaloneParagraphComment(c_->getParagraph());
-  _res << "</dd></dl>";
+  _res << '\n';
 }
 
-void CommentToHTMLConverter::visitVerbatimBlockComment(
+void CommentToMarkdownConverter::visitVerbatimBlockComment(
   const VerbatimBlockComment* c_)
 {
   unsigned numLines = c_->getNumLines();
@@ -421,25 +365,23 @@ void CommentToHTMLConverter::visitVerbatimBlockComment(
   if (!numLines)
     return;
 
-  _res << "<pre>";
+  _res << "```\n";
   for (unsigned i = 0; i != numLines; ++i)
   {
-    appendToResultWithHTMLEscaping(c_->getText(i));
+    _res << c_->getText(i).str();
     if (i + 1 != numLines)
       _res << '\n';
   }
-  _res << "</pre>";
+  _res << "\n```";
 }
 
-void CommentToHTMLConverter::visitVerbatimLineComment(
+void CommentToMarkdownConverter::visitVerbatimLineComment(
   const VerbatimLineComment* c_)
 {
-  _res << "<pre>";
-  appendToResultWithHTMLEscaping(c_->getText());
-  _res << "</pre>";
+  _res << '`' << c_->getText().str() << '`';
 }
 
-void CommentToHTMLConverter::visitFullComment(const FullComment* c_)
+void CommentToMarkdownConverter::visitFullComment(const FullComment* c_)
 {
   FullCommentParts parts(c_, _traits);
 
@@ -450,13 +392,11 @@ void CommentToHTMLConverter::visitFullComment(const FullComment* c_)
 
   if (parts._brief)
     visit(parts._brief);
-
   else if (parts._firstParagraph)
   {
-    _res << "<div class=\"para-_brief\">";
     visitNonStandaloneParagraphComment(parts._firstParagraph);
-    _res << "</div>";
     _firstParagraphIsBrief = true;
+    _res << "\n\n";
   }
 
   for (unsigned i = 0, e = parts._miscBlocks.size(); i != e; ++i)
@@ -467,40 +407,35 @@ void CommentToHTMLConverter::visitFullComment(const FullComment* c_)
       continue;
 
     visit(C);
+    _res << "\n\n";
   }
 
   if (parts._tParams.size() != 0)
   {
-    _res << "<dl>";
+    _res << "\n**Template parameters:**\n";
 
     for (unsigned i = 0, e = parts._tParams.size(); i != e; ++i)
       visit(parts._tParams[i]);
-
-    _res << "</dl>";
   }
 
   if (parts._params.size() != 0)
   {
-    _res << "<dl>";
+    _res << "\n**Parameters:**\n";
 
     for (unsigned i = 0, e = parts._params.size(); i != e; ++i)
       visit(parts._params[i]);
-
-    _res << "</dl>";
   }
 
   if (parts._returns.size() != 0)
   {
-    _res << "<div class=\"result-discussion\">";
+    _res << "\n**Return:**\n";
 
     for (unsigned i = 0, e = parts._returns.size(); i != e; ++i)
       visit(parts._returns[i]);
-
-    _res << "</div>";
   }
 }
 
-void CommentToHTMLConverter::visitNonStandaloneParagraphComment(
+void CommentToMarkdownConverter::visitNonStandaloneParagraphComment(
   const ParagraphComment* c_)
 {
   if (!c_)
@@ -522,9 +457,9 @@ std::string DocCommentFormatter::format(
   const clang::ASTContext& ctx_)
 {
   std::stringstream res;
-  CommentToHTMLConverter htmlConverter(
+  CommentToMarkdownConverter markdownConverter(
     fc_, ctx_.getCommentCommandTraits(), res);
-  htmlConverter.visit(fc_);
+  markdownConverter.visit(fc_);
 
   return res.str();
 }
