@@ -83,7 +83,7 @@ inline cc::service::git::GitObjectType::type convertToThriftType(
       return cc::service::git::GitObjectType::Reserved1;
   }
 }
-#elif LIGBIT2_VER_MAJOR == 0 && LIBGIT2_VER_MINOR < 27
+#elif LIGBIT2_VER_MAJOR == 0 && LIBGIT2_VER_MINOR < 28
 // Older versions are supplied by Ubuntu 18 and 16.
 inline cc::service::git::GitObjectType::type convertToThriftType(
   ::git_otype gitType)
