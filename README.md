@@ -22,15 +22,13 @@
 
 ## Documentation
 
-* [Getting Started](https://github.com/Ericsson/CodeCompass/wiki/Getting-Started)
-* [How To Parse A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Parse-A-Project)
-* [How To Manage Workspaces](https://github.com/Ericsson/CodeCompass/wiki/How-To-Manage-Workspaces)
-* [How To Start CodeCompass Webserver](https://github.com/Ericsson/CodeCompass/wiki/How-To-Start-CodeCompass-Webserver)
-* [How To Add CodeChecker To A Project](https://github.com/Ericsson/CodeCompass/wiki/How-To-Add-CodeChecker-To-A-Project)
-* [Lazy Dog](https://github.com/Ericsson/CodeCompass/wiki/Lazy-Dog)
-* [How To Build Codecompass](https://github.com/Ericsson/CodeCompass/wiki/How-To-Build-Codecompass)
-
-See the [Wiki](https://github.com/Ericsson/CodeCompass/wiki) for full documentation.
+* [Getting Started](docs/getting_started.md)
+* [How To Parse A Project](docs/parse_a_project.md)
+* [How To Manage Workspaces](docs/manage_workspaces.md)
+* [How To Start CodeCompass Webserver](docs/start_codecompass_webserver.md)
+* [How To Add CodeChecker To A Project](docs/add_codechecker_to_a_project.md)
+* [Lazy Dog](docs/lazy_dog.md)
+* [How To Build Codecompass](docs/build_codecompass.md)
 
 ## Examples
 
