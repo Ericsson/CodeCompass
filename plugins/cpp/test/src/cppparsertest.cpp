@@ -11,8 +11,8 @@
 #include <model/cppfunction-odb.hxx>
 #include <model/cppnamespace.h>
 #include <model/cppnamespace-odb.hxx>
-#include <model/cpptype.h>
-#include <model/cpptype-odb.hxx>
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
 #include <model/cppvariable.h>
 #include <model/cppvariable-odb.hxx>
 #include <model/file.h>
@@ -30,7 +30,7 @@ using QCppFunction = odb::query<model::CppFunction>;
 using QCppEnum = odb::query<model::CppEnum>;
 using QCppEnumConstant = odb::query<model::CppEnumConstant>;
 using QCppNamespace = odb::query<model::CppNamespace>;
-using QCppType = odb::query<model::CppType>;
+using QCppRecord = odb::query<model::CppRecord>;
 using QCppVariable = odb::query<model::CppVariable>;
 using QFile = odb::query<model::File>;
 using RCppAstNode = odb::result<model::CppAstNode>;
@@ -344,8 +344,8 @@ TEST_F(CppParserTest, Typedef)
 TEST_F(CppParserTest, Record)
 {
   _transaction([&, this] {
-    model::CppType myClass = _db->query_value<model::CppType>(
-      QCppType::name == "MyClass");
+    model::CppRecord myClass = _db->query_value<model::CppRecord>(
+      QCppRecord::name == "MyClass");
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::mangledNameHash == myClass.mangledNameHash);
 

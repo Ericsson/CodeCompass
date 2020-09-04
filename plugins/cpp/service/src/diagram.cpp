@@ -1,7 +1,7 @@
 #include <model/cppvariable.h>
 #include <model/cppvariable-odb.hxx>
-#include <model/cpptype.h>
-#include <model/cpptype-odb.hxx>
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
 
 #include <util/legendbuilder.h>
 #include <util/util.h>

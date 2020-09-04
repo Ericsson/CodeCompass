@@ -47,14 +47,14 @@ struct CppMemberType
 typedef std::shared_ptr<CppMemberType> CppMemberTypePtr;
 
 #pragma db object
-struct CppType : CppEntity
+struct CppRecord : CppEntity
 {
   bool isAbstract = false;
   bool isPOD = false;
 
   std::string toString() const
   {
-    std::string ret("CppType");
+    std::string ret("CppRecord");
 
     ret
       .append("\nid = ").append(std::to_string(id))
@@ -74,7 +74,7 @@ struct CppType : CppEntity
   }
 };
 
-typedef std::shared_ptr<CppType> CppTypePtr;
+typedef std::shared_ptr<CppRecord> CppRecordPtr;
 
 #pragma db view object(CppMemberType)
 struct CppMemberTypeCount
@@ -83,10 +83,10 @@ struct CppMemberTypeCount
   std::size_t count;
 };
 
-#pragma db view object(CppType)
-struct CppTypeCount
+#pragma db view object(CppRecord)
+struct CppRecordCount
 {
-  #pragma db column("count(" + CppType::id + ")")
+  #pragma db column("count(" + CppRecord::id + ")")
   std::size_t count;
 };
 
