@@ -43,8 +43,8 @@ ENV CC_UID ${CC_UID}
 ENV TINI_VERSION v0.18.0
 
 # Create user and group for CodeCompass.
-RUN groupadd -r codecompass -g ${CC_GID} && \
-    useradd -r --no-log-init -M -u ${CC_UID} -g codecompass codecompass
+RUN groupadd --system codecompass --gid ${CC_GID} && \
+    useradd --system --no-log-init --no-create-home --uid ${CC_UID} --gid codecompass codecompass
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 # TODO: only the webserver's binaries should be included in this image.
