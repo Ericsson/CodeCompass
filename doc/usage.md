@@ -253,6 +253,21 @@ The certificate of the CA that signed your certificate
 -----END CERTIFICATE-----
 ~~~
 
+### Enabling Google Analytics
+
+To enable this feature, a `ga.txt` file should be created under
+the workspace directory (`--workspace` or `-w` flag given to the server).
+The `ga.txt` file shall consist of a single line, containing the 
+Google Analytics *Tracking ID* (format `UA-XXXXXX-X`) or *Measurement ID* 
+(format `G-XXXXXXX`).
+When configured correctly, upon starting a `CodeCompass_webserver`, the 
+*"Google Analytics monitoring enabled."* informational status message will 
+be displayed.
+
+**Note:** without explicitly creating the `ga.txt` file in the workspace 
+directory, the Google Analytics integration is disabled and no related code 
+is executed in the browser. **This is the default behaviour.**
+
 ### Usage example
 
 ```bash

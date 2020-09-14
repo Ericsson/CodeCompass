@@ -87,6 +87,10 @@ private:
 
   void commitWorker(CommitJob& job_);
 
+  void commitSampling(
+    const std::string& root_,
+    boost::filesystem::path& repoPath_);
+
   void traverseCommits(
     const std::string& root_,
     boost::filesystem::path& repoPath_);

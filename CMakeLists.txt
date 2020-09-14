@@ -31,10 +31,9 @@ add_subdirectory(parser)
 add_subdirectory(scripts)
 add_subdirectory(service)
 add_subdirectory(util)
+add_subdirectory(plugins) # must precede webgui
 add_subdirectory(webgui)
 add_subdirectory(webserver)
-# Plugins
-add_subdirectory(plugins)
 
 # Install java libraries
 install(DIRECTORY

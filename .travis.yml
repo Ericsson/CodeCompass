@@ -10,7 +10,8 @@ services:
   update: true
   sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-xenial-7
+    - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main"
+      key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
 
 .apt_xenial_sqlite: &apt_xenial_sqlite
   <<: *apt_xenial_config
@@ -18,10 +19,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -52,10 +53,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -89,10 +90,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -120,10 +121,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -154,10 +155,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -186,10 +187,10 @@ services:
     # Boost
     - libboost-all-dev
     # LLVM/clang
-    - llvm-7
-    - llvm-7-dev
-    - clang-7
-    - libclang-7-dev
+    - llvm-10
+    - llvm-10-dev
+    - clang-10
+    - libclang-10-dev
     # Java
     - default-jdk
     # ODB
@@ -323,8 +324,8 @@ before_script:
   - llvm-config --version --has-rtti
   - javac -version
   # LLVM/Clang test from package install
-  - /usr/bin/clang-7 --version
-  - /usr/bin/llvm-config-7 --version --has-rtti
+  - /usr/bin/clang-10 --version
+  - /usr/bin/llvm-config-10 --version --has-rtti
   # ODB
   - export CMAKE_PREFIX_PATH=$HOME/odb_install:$CMAKE_PREFIX_PATH
   - export PATH=$HOME/odb_install/bin:$PATH
@@ -358,8 +359,8 @@ before_script:
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
-    -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR=/usr/lib/cmake/clang-7
+    -DLLVM_DIR=/usr/lib/llvm-10/cmake
+    -DClang_DIR=/usr/lib/cmake/clang-10
   - make install -j $(nproc)
   - make test ARGS=-V
 
@@ -372,12 +373,17 @@ before_script:
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_sqlite
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
-    -DLLVM_DIR=/usr/lib/llvm-7/cmake
-    -DClang_DIR=/usr/lib/cmake/clang-7
+    -DLLVM_DIR=/usr/lib/llvm-10/cmake
+    -DClang_DIR=/usr/lib/cmake/clang-10
   - make install -j $(nproc)
   - make test ARGS=-V
 
 # ----------------------------------- Jobs -----------------------------------
+
+stages:
+  - test
+  - name: deploy
+    if: (branch = master) AND (type = push) AND (fork = false)
 
 jobs:
   include:
@@ -459,3 +465,27 @@ jobs:
       script:
         *build_sqlite
 
+    - stage: deploy
+      name: "DockerHub deployment"
+      dist: focal
+      services:
+        - docker
+      before_script:
+        - docker --version
+      script:
+        - docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
+        - docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+        - docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
+        - docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+        - docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
+        - docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
+        - |
+          if [ -n "$DOCKER_USERNAME" ]; then
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push modelcpp/codecompass:dev
+            docker push modelcpp/codecompass:runtime-sqlite
+            docker push modelcpp/codecompass:runtime-pgsql
+            docker push modelcpp/codecompass:web-sqlite
+            docker push modelcpp/codecompass:web-pgsql
+            docker push modelcpp/codecompass:latest
+          fi

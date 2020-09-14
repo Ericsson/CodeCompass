@@ -17,7 +17,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
-    llvm-7 \
+    llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
     postgresql-server-dev-12 \
@@ -47,6 +47,7 @@ RUN groupadd -r codecompass -g ${CC_GID} && \
     useradd -r --no-log-init -M -u ${CC_UID} -g codecompass codecompass
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
+# TODO: only the webserver's binaries should be included in this image.
 COPY --from=runtime --chown=codecompass:codecompass /codecompass /codecompass
 
 ENV PATH="/codecompass/bin:$PATH"

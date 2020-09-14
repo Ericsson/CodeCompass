@@ -102,6 +102,7 @@ bool CompetenceParser::parse()
         _ctx.db->erase(ue);
     });
 
+    commitSampling(path, repoPath);
     traverseCommits(path, repoPath);
     persistFileComprehensionData();
 
@@ -148,7 +149,7 @@ util::DirIterCallback CompetenceParser::getParserCallbackRepo(
   };
 }
 
-void CompetenceParser::traverseCommits(
+void CompetenceParser::commitSampling(
   const std::string& root_,
   boost::filesystem::path& repoPath_)
 {
@@ -190,6 +191,14 @@ void CompetenceParser::traverseCommits(
     }
     persistSampleData();
   }
+}
+
+void CompetenceParser::traverseCommits(
+  const std::string& root_,
+  boost::filesystem::path& repoPath_)
+{
+  // Initiate repository.
+  RepositoryPtr repo = createRepository(repoPath_);
 
   if (!_ctx.options.count("skip-competence"))
   {

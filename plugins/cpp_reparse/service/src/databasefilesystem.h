@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <clang/Basic/VirtualFileSystem.h>
+#include <llvm/Support/VirtualFileSystem.h>
 
 #include <odb/database.hxx>
 
@@ -20,19 +20,19 @@ namespace reparse
  * A Clang Virtual File System implementation that retrieves file information
  * and contents from CodeCompass' database.
  */
-class DatabaseFileSystem : public clang::vfs::FileSystem
+class DatabaseFileSystem : public llvm::vfs::FileSystem
 {
 public:
   DatabaseFileSystem(std::shared_ptr<odb::database> db_);
 
   virtual ~DatabaseFileSystem() = default;
 
-  llvm::ErrorOr<clang::vfs::Status> status(const llvm::Twine& path_) override;
+  llvm::ErrorOr<llvm::vfs::Status> status(const llvm::Twine& path_) override;
 
-  llvm::ErrorOr<std::unique_ptr<clang::vfs::File>>
+  llvm::ErrorOr<std::unique_ptr<llvm::vfs::File>>
   openFileForRead(const llvm::Twine& path_) override;
 
-  clang::vfs::directory_iterator
+  llvm::vfs::directory_iterator
   dir_begin(const llvm::Twine& dir_, std::error_code& ec_) override;
 
   llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override;

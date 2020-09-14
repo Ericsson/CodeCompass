@@ -65,7 +65,7 @@ function (declare, dom, style, topic, ContentPane, FloatingPane, TabContainer,
     },
 
     _setDocumentationAttr : function (documentation){
-      this._documentationPane.set('content', documentation);
+      this._documentationPane.set('content', marked(documentation));
       this._documentationPane.resize();
       this.resize();
     },

@@ -1,0 +1,91 @@
+// Based on the dojo-boilerplate
+// https://github.com/csnover/dojo-boilerplate
+
+var profile = {
+    // `basePath` is relative to the directory containing this profile file; in this case, it is being set to the
+    // src/ directory, which is the same place as the `baseUrl` directory in the loader configuration. (If you change
+    // this, you will also need to update run.js.)
+    basePath: './',
+
+    // This is the root directory where the build should go.
+    // The builder will attempt to create this directly and will overwrite anything it finds there.
+    // It is relative to the `basePath`
+    releaseDir: './release',
+
+    // Builds a new release.
+    action: 'release',
+
+    // Strips all comments and whitespace from CSS files and inlines @imports where possible.
+    cssOptimize: 'comments',
+
+    // Excludes tests, demos, and original template files from being included in the built version.
+    mini: true,
+
+    // Uses Closure Compiler as the JavaScript minifier. This can also be set to "shrinksafe" to use ShrinkSafe,
+    // though ShrinkSafe is deprecated and not recommended.
+    // This option defaults to "" (no compression) if not provided.
+    optimize: '@DOJO_OPTIMIZE@', // CMake will insert the value
+
+    // We're building layers, so we need to set the minifier to use for those, too.
+    // This defaults to "shrinksafe" if not provided.
+    layerOptimize: '@DOJO_LAYEROPTIMIZE@', // CMake will insert the value
+
+    // A list of packages that will be built. The same packages defined in the loader should be defined here in the
+    // build profile.
+    packages: [
+        // Using a string as a package is shorthand for `{ name: 'app', location: 'app' }`
+        //'app',
+        { name: 'dojo',  location: 'node_modules/dojo'  },
+        { name: 'dijit', location: 'node_modules/dijit' },
+        { name: 'dojox', location: 'node_modules/dojox' },
+        { name: 'codecompass', location: 'codecompass' },
+        { name: 'login', location: 'login' }
+    ],
+
+    // Strips all calls to console functions within the code. You can also set this to "warn" to strip everything
+    // but console.error, and any other truthy value to strip everything but console.warn and console.error.
+    // This defaults to "normal" (strip all but warn and error) if not provided.
+    stripConsole: 'normal', // all | warn | normal | none
+
+    // The default selector engine is not included by default in a dojo.js build in order to make mobile builds
+    // smaller. We add it back here to avoid that extra HTTP request. There is also an "acme" selector available; if
+    // you use that, you will need to set the `selectorEngine` property in index.html, too.
+    selectorEngine: 'lite',
+
+    // Any module in an application can be converted into a "layer" module, which consists of the original module +
+    // additional dependencies built into the same file. Using layers allows applications to reduce the number of HTTP
+    // requests by combining all JavaScript into a single file.
+    layers: {
+        // This is the main loader module. It is a little special because it is treated like an AMD module even though
+        // it is actually just plain JavaScript. There is some extra magic in the build system specifically for this
+        // module ID.
+        'dojo/dojo': {
+            // By default, the build system will try to include `dojo/main` in the built `dojo/dojo` layer, which adds
+            // a bunch of stuff we do not want or need. We want the initial script load to be as small and quick to
+            // load as possible, so we configure it as a custom, bootable base.
+            boot: true,
+            customBase: true,
+
+            include: [
+                'dojo/_base/array',
+                'dojo/dom-construct',
+                'dojo/domReady'
+            ]
+        },
+
+        // Further application-specific layers. Note that when you create a new layer, the module referenced by the
+        // layer is always included in the layer, so it does not need to be explicitly defined in the `include` array.
+        'codecompass/bundle': {
+            include: [
+                'codecompass/codecompass',
+                @DOJO_VIEWLIST@ // CMake will insert the list of files
+            ]
+        },
+
+        'login/bundle': {
+            include: [
+                'login/login'
+            ]
+        }
+    }
+};

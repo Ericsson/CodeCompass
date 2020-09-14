@@ -169,7 +169,7 @@ void CppServiceHandler::getDocumentation(
       DocCommentQuery::mangledNameHash == node.mangledNameHash);
 
     if (!docComment.empty())
-      return_ = "<div class=\"main-doc\">" + docComment.begin()->contentHTML
+      return_ = "<div class=\"main-doc\">" + docComment.begin()->content
         + "</div>";
 
     switch (node.symbolType)
@@ -212,7 +212,7 @@ void CppServiceHandler::getDocumentation(
             DocCommentQuery::mangledNameHash == method.mangledNameHash);
 
           if (!doc.empty())
-            return_ += doc.begin()->contentHTML;
+            return_ += doc.begin()->content;
 
           return_ += "</div>";
         }

@@ -26,7 +26,7 @@ struct CppDocComment
   unsigned long long contentHash;
 
   #pragma db not_null
-  std::string contentHTML;
+  std::string content;
 
   #pragma db not_null index
   unsigned long long mangledNameHash;
