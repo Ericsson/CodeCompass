@@ -26,8 +26,8 @@
 #include <model/cppnamespace-odb.hxx>
 #include <model/cpprelation.h>
 #include <model/cpprelation-odb.hxx>
-#include <model/cpptype.h>
-#include <model/cpptype-odb.hxx>
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
 #include <model/cpptypedef.h>
 #include <model/cpptypedef-odb.hxx>
 
@@ -208,7 +208,7 @@ public:
 
   bool TraverseRecordDecl(clang::RecordDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppType>());
+    _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseRecordDecl(rd_);
 
@@ -221,7 +221,7 @@ public:
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppType>());
+    _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseCXXRecordDecl(rd_);
 
@@ -235,7 +235,7 @@ public:
   bool TraverseClassTemplateSpecializationDecl(
     clang::ClassTemplateSpecializationDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppType>());
+    _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseClassTemplateSpecializationDecl(rd_);
 
@@ -249,7 +249,7 @@ public:
   bool TraverseClassTemplatePartialSpecializationDecl(
     clang::ClassTemplatePartialSpecializationDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppType>());
+    _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseClassTemplatePartialSpecializationDecl(rd_);
 
@@ -411,22 +411,22 @@ public:
     else
       return true;
 
-    //--- CppType ---//
+    //--- CppRecord ---//
 
     if (!rd_->isThisDeclarationADefinition())
       return true;
 
-    model::CppTypePtr cppType = _typeStack.top();
+    model::CppRecordPtr cppRecord = _typeStack.top();
 
-    cppType->astNodeId = astNode->id;
-    cppType->mangledNameHash = astNode->mangledNameHash;
-    cppType->name = rd_->getNameAsString();
-    cppType->qualifiedName = rd_->getQualifiedNameAsString();
+    cppRecord->astNodeId = astNode->id;
+    cppRecord->mangledNameHash = astNode->mangledNameHash;
+    cppRecord->name = rd_->getNameAsString();
+    cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
     if (const clang::CXXRecordDecl* crd
         = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
-      cppType->isAbstract = crd->isAbstract();
-      cppType->isPOD = crd->isPOD();
+      cppRecord->isAbstract = crd->isAbstract();
+      cppRecord->isPOD = crd->isPOD();
     }
 
     if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
@@ -447,7 +447,7 @@ public:
             = std::make_shared<model::CppInheritance>();
           _inheritances.push_back(inheritance);
 
-          inheritance->derived = cppType->mangledNameHash;
+          inheritance->derived = cppRecord->mangledNameHash;
           inheritance->base
             = util::fnvHash(getMangledName(_mngCtx, baseDecl));
           inheritance->isVirtual = it->isVirtual();
@@ -482,7 +482,7 @@ public:
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
-          friendship->target = cppType->mangledNameHash;
+          friendship->target = cppRecord->mangledNameHash;
           friendship->theFriend
             = util::fnvHash(getMangledName(_mngCtx, cxxRecordDecl));
 
@@ -499,7 +499,7 @@ public:
             = std::make_shared<model::CppFriendship>();
           _friends.push_back(friendship);
 
-          friendship->target = cppType->mangledNameHash;
+          friendship->target = cppRecord->mangledNameHash;
           friendship->theFriend
             = util::fnvHash(getMangledName(_mngCtx, friendDecl));
         }
@@ -1464,7 +1464,7 @@ private:
   std::vector<model::CppEnumConstantPtr> _enumConstants;
   std::vector<model::CppEnumPtr>         _enums;
   std::vector<model::CppFunctionPtr>     _functions;
-  std::vector<model::CppTypePtr>         _types;
+  std::vector<model::CppRecordPtr>         _types;
   std::vector<model::CppTypedefPtr>      _typedefs;
   std::vector<model::CppVariablePtr>     _variables;
   std::vector<model::CppNamespacePtr>    _namespaces;
@@ -1477,7 +1477,7 @@ private:
   // Check lambda.
   // TODO: _enumStack also doesn't have to be a stack.
   std::stack<model::CppFunctionPtr> _functionStack;
-  std::stack<model::CppTypePtr>     _typeStack;
+  std::stack<model::CppRecordPtr>     _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
 
   bool _isImplicit;

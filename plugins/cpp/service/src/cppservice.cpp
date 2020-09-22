@@ -9,8 +9,8 @@
 #include <model/cppfunction-odb.hxx>
 #include <model/cppvariable.h>
 #include <model/cppvariable-odb.hxx>
-#include <model/cpptype.h>
-#include <model/cpptype-odb.hxx>
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
 #include <model/cpptypedef.h>
 #include <model/cpptypedef-odb.hxx>
 #include <model/cppinheritance.h>
@@ -39,8 +39,8 @@ namespace
   typedef odb::result<cc::model::CppRelation> RelResult;
   typedef odb::query<cc::model::CppVariable> VarQuery;
   typedef odb::result<cc::model::CppVariable> VarResult;
-  typedef odb::query<cc::model::CppType> TypeQuery;
-  typedef odb::result<cc::model::CppType> TypeResult;
+  typedef odb::query<cc::model::CppRecord> TypeQuery;
+  typedef odb::result<cc::model::CppRecord> TypeResult;
   typedef odb::query<cc::model::CppTypedef> TypedefQuery;
   typedef odb::result<cc::model::CppTypedef> TypedefResult;
   typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
@@ -304,9 +304,9 @@ void CppServiceHandler::getProperties(
 
       case model::CppAstNode::SymbolType::Type:
       {
-        TypeResult types = _db->query<model::CppType>(
+        TypeResult types = _db->query<model::CppRecord>(
           TypeQuery::mangledNameHash == node.mangledNameHash);
-        model::CppType type = *types.begin();
+        model::CppRecord type = *types.begin();
 
         if (type.isAbstract)
           return_["Abstract type"] = "true";
@@ -452,7 +452,7 @@ std::int32_t CppServiceHandler::getReferenceCount(
 
         const model::CppFunction& function = *functions.begin();
 
-        return _db->query_value<model::CppTypeCount>(
+        return _db->query_value<model::CppRecordCount>(
           TypeQuery::mangledNameHash == function.typeHash).count;
 
         break;
@@ -481,7 +481,7 @@ std::int32_t CppServiceHandler::getReferenceCount(
 
         const model::CppVariable& variable = *varNodes.begin();
 
-        return _db->query_value<model::CppTypeCount>(
+        return _db->query_value<model::CppRecordCount>(
           TypeQuery::mangledNameHash == variable.typeHash).count;
 
         break;
@@ -751,10 +751,10 @@ void CppServiceHandler::getReferences(
           FuncQuery::mangledNameHash == node.mangledNameHash);
         model::CppFunction function = *functions.begin();
 
-        TypeResult result = _db->query<model::CppType>(
+        TypeResult result = _db->query<model::CppRecord>(
           TypeQuery::mangledNameHash == function.typeHash);
 
-        for (const model::CppType& type : result)
+        for (const model::CppRecord& type : result)
         {
           std::vector<model::CppAstNode> defs =
             queryDefinitions(std::to_string(type.astNodeId));
@@ -808,10 +808,10 @@ void CppServiceHandler::getReferences(
 
         const model::CppVariable& variable = *varNodes.begin();
 
-        TypeResult result = _db->query<model::CppType>(
+        TypeResult result = _db->query<model::CppRecord>(
           TypeQuery::mangledNameHash == variable.typeHash);
 
-        for (const model::CppType& type : result)
+        for (const model::CppRecord& type : result)
         {
           std::vector<model::CppAstNode> defs =
             queryDefinitions(std::to_string(type.astNodeId));
