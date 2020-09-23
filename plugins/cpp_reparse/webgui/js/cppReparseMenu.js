@@ -44,34 +44,4 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     type     : viewHandler.moduleType.TextContextMenu,
     priority : 10
   });
-
-  //--- Reparse menu for source files in the project manager ---//
-  var fileMenu = {
-    id : 'cppreparse-file',
-    render : function (fileInfo) {
-      if (fileInfo.type !== "CPP")
-        return;
-
-      var submenu = new Menu();
-
-      submenu.addChild(new MenuItem({
-        label : 'Show AST HTML',
-        onClick : function () {
-          topic.publish('codecompass/cppreparsefile', {
-            fileInfo : fileInfo
-          });
-        }
-      }));
-
-      return new PopupMenuItem({
-        label : 'C++',
-        popup : submenu
-      });
-    }
-  };
-
-  viewHandler.registerModule(fileMenu, {
-    type     : viewHandler.moduleType.FileManagerContextMenu,
-    priority : 10
-  });
 });
