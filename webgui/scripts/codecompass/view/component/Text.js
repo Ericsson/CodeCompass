@@ -411,6 +411,16 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         this.set('selection', [pos[0], token.start, pos[0], token.end]);
       }
 
+      //--- Open Info Tree ---//
+
+      var astNodeInfo
+        = astHelper.getAstNodeInfoByPosition(pos, this._fileInfo);
+
+      topic.publish('codecompass/infotree', {
+        fileType : this._fileInfo.type,
+        elementInfo : astNodeInfo
+      });
+
       //--- Highlighting the same occurrence of the selected entity ---//
 
       this._markUsages(pos, this._fileInfo);
@@ -423,8 +433,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //--- Ctrl-click ---//
 
       if (event.button === 0 && event.ctrlKey) {
-        var astNodeInfo
-          = astHelper.getAstNodeInfoByPosition(pos, this._fileInfo);
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
