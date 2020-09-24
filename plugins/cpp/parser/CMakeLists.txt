@@ -1,17 +1,25 @@
+# Find LLVM
 find_package(LLVM REQUIRED CONFIG)
-find_package(Clang REQUIRED CONFIG)
-
-# Check whether RTTI is on for LLVM
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
+
+# Check whether RTTI is on for LLVM
 message(STATUS "Using RTTI for LLVM: ${LLVM_ENABLE_RTTI}")
 if(NOT LLVM_ENABLE_RTTI)
     message(SEND_ERROR "RTTI is required for LLVM")
 endif()
 
+# Check LLVM version
+if (${LLVM_PACKAGE_VERSION} VERSION_LESS "10")
+    message(SEND_ERROR "Loaded LLVM version must be at least 10.0, ${LLVM_PACKAGE_VERSION} found.")
+endif()
+
 # Add LLVM to the library path
 mark_as_run_env_path(LD_LIBRARY_PATH "${LLVM_BUILD_LIBRARY_DIR}")
+
+# Find Clang
+find_package(Clang REQUIRED CONFIG)
+message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 
 include_directories(
   include
