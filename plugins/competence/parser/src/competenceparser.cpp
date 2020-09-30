@@ -171,7 +171,7 @@ void CompetenceParser::commitSampling(
     LOG(info) << "[competenceparser] Sampling " << allCommits << " commits in git repository.";
 
     // TODO: nice function to determine sample size
-    int sampleSize = (int)std::sqrt((double)allCommits);
+    int sampleSize = 1;//(int)std::sqrt((double)allCommits);
     LOG(info) << "[competenceparser] Sample size is " << sampleSize << ".";
 
     RevWalkPtr walker2 = createRevWalk(repo.get());
