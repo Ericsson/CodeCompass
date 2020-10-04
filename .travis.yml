@@ -345,7 +345,7 @@ before_script:
 
 .build_postgres: &build_postgres
   - cd $TRAVIS_BUILD_DIR
-  - rm -rf install_pgsql
+  - rm -rf build_pgsql install_pgsql
   - mkdir build_pgsql && cd build_pgsql
   - >
     cmake ..
@@ -361,7 +361,7 @@ before_script:
 
 .build_sqlite: &build_sqlite
   - cd $TRAVIS_BUILD_DIR
-  - rm -rf install_sqlite
+  - rm -rf build_sqlite install_sqlite
   - mkdir build_sqlite && cd build_sqlite
   - >
     cmake ..
@@ -385,6 +385,8 @@ cache:
     - $HOME/thrift_install
     - $TRAVIS_BUILD_DIR/install_pgsql
     - $TRAVIS_BUILD_DIR/install_sqlite
+    - $TRAVIS_BUILD_DIR/build_pgsql
+    - $TRAVIS_BUILD_DIR/build_sqlite
 
 # ----------------------------------- Jobs -----------------------------------
 
