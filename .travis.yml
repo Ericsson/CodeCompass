@@ -306,13 +306,6 @@ services:
     make install -j $(nproc)
   fi
 
-cache:
-  directories:
-    - $HOME/build2_install
-    - $HOME/gtest_install
-    - $HOME/odb_install
-    - $HOME/thrift_install
-
 # ---------------------------------- Setup -----------------------------------
 
 before_script:
@@ -352,6 +345,7 @@ before_script:
 
 .build_postgres: &build_postgres
   - cd $TRAVIS_BUILD_DIR
+  - rm -rf install_pgsql
   - mkdir build_pgsql && cd build_pgsql
   - >
     cmake ..
@@ -361,11 +355,13 @@ before_script:
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   - make install -j $(nproc)
   - make test ARGS=-V
 
 .build_sqlite: &build_sqlite
   - cd $TRAVIS_BUILD_DIR
+  - rm -rf install_sqlite
   - mkdir build_sqlite && cd build_sqlite
   - >
     cmake ..
@@ -375,8 +371,20 @@ before_script:
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   - make install -j $(nproc)
   - make test ARGS=-V
+
+# ----------------------------------- Cache -----------------------------------
+
+cache:
+  directories:
+    - $HOME/build2_install
+    - $HOME/gtest_install
+    - $HOME/odb_install
+    - $HOME/thrift_install
+    - $TRAVIS_BUILD_DIR/install_pgsql
+    - $TRAVIS_BUILD_DIR/install_sqlite
 
 # ----------------------------------- Jobs -----------------------------------
 
@@ -478,20 +486,7 @@ jobs:
         - DATABASE=pgsql
       before_install:
         - *fix_focal_travis_postgresql_server
-      install:
-        - *install_gtest_focal
       script:
-        - cd $TRAVIS_BUILD_DIR
-        - mkdir build_pgsql && cd build_pgsql
-        - >
-          cmake ..
-          -DDATABASE=pgsql
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
-          -DLLVM_DIR=/usr/lib/llvm-10/cmake
-          -DClang_DIR=/usr/lib/cmake/clang-10
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-        - make install -j $(nproc)
         - cd $TRAVIS_BUILD_DIR/install_pgsql/bin
         - >
           ./CodeCompass_parser
