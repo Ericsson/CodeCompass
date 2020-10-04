@@ -477,15 +477,17 @@ jobs:
 
     - stage: test
       name: "Parse CodeCompass"
-      dist: focal
+      dist: bionic
       addons:
         apt:
-          <<: *apt_focal_pgsql
-        postgresql: "12"
+          <<: *apt_bionic_pgsql
+        postgresql: "10"
       env:
         - DATABASE=pgsql
-      before_install:
-        - *fix_focal_travis_postgresql_server
+      install:
+        - *install_odb
+        - *install_thrift
+        - *install_gtest_bionic
       script:
         - cd $TRAVIS_BUILD_DIR/install_pgsql/bin
         - >
