@@ -306,13 +306,6 @@ services:
     make install -j $(nproc)
   fi
 
-cache:
-  directories:
-    - $HOME/build2_install
-    - $HOME/gtest_install
-    - $HOME/odb_install
-    - $HOME/thrift_install
-
 # ---------------------------------- Setup -----------------------------------
 
 before_script:
@@ -352,6 +345,7 @@ before_script:
 
 .build_postgres: &build_postgres
   - cd $TRAVIS_BUILD_DIR
+  - rm -rf build_pgsql install_pgsql
   - mkdir build_pgsql && cd build_pgsql
   - >
     cmake ..
@@ -361,11 +355,13 @@ before_script:
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   - make install -j $(nproc)
   - make test ARGS=-V
 
 .build_sqlite: &build_sqlite
   - cd $TRAVIS_BUILD_DIR
+  - rm -rf build_sqlite install_sqlite
   - mkdir build_sqlite && cd build_sqlite
   - >
     cmake ..
@@ -375,19 +371,35 @@ before_script:
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   - make install -j $(nproc)
   - make test ARGS=-V
+
+# ----------------------------------- Cache -----------------------------------
+
+cache:
+  directories:
+    - $HOME/build2_install
+    - $HOME/gtest_install
+    - $HOME/odb_install
+    - $HOME/thrift_install
+    - $TRAVIS_BUILD_DIR/install_pgsql
+    - $TRAVIS_BUILD_DIR/install_sqlite
+    - $TRAVIS_BUILD_DIR/build_pgsql
+    - $TRAVIS_BUILD_DIR/build_sqlite
 
 # ----------------------------------- Jobs -----------------------------------
 
 stages:
+  - compile
   - test
   - name: deploy
     if: (branch = master) AND (type = push) AND (fork = false)
 
 jobs:
   include:
-    - name: "Xenial Xerus (16.04), PostgreSQL"
+    - stage: compile
+      name: "Xenial Xerus (16.04), PostgreSQL"
       dist: xenial
       addons:
         apt:
@@ -464,6 +476,29 @@ jobs:
         - *install_gtest_focal
       script:
         *build_sqlite
+
+    - stage: test
+      name: "Parse CodeCompass"
+      dist: bionic
+      addons:
+        apt:
+          <<: *apt_bionic_pgsql
+        postgresql: "10"
+      env:
+        - DATABASE=pgsql
+      install:
+        - *install_odb
+        - *install_thrift
+        - *install_gtest_bionic
+      script:
+        - cd $TRAVIS_BUILD_DIR/install_pgsql/bin
+        - >
+          ./CodeCompass_parser
+          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=cc"
+          -w $HOME/ws_pgsql/
+          -n CodeCompass
+          -i $TRAVIS_BUILD_DIR
+          -i $TRAVIS_BUILD_DIR/build_pgsql/compile_commands.json
 
     - stage: deploy
       name: "DockerHub deployment"
