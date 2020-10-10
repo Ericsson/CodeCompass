@@ -1,3 +1,6 @@
+# Utility functions
+include(../Functions.cmake)
+
 message("Install npm packages...")
 
 if(${CC_PACKAGE} IS_NEWER_THAN ${INSTALL_SCRIPTS_DIR}/package.json)
@@ -25,7 +28,7 @@ foreach(_jsfile ${_jsfiles})
   string(REGEX REPLACE "\\.js*$" "" _jsfile ${_jsfile})
   list(APPEND DOJO_VIEWLIST "'${_jsfile}'")
 endforeach()
-list(JOIN DOJO_VIEWLIST  ", " DOJO_VIEWLIST)
+join("${DOJO_VIEWLIST}"  ", " DOJO_VIEWLIST)
 
 set(DOJO_OPTIMIZE "")       # optimization for non-layer modules
 set(DOJO_LAYEROPTIMIZE "")  # optimization for layer modules
