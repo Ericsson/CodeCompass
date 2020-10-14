@@ -384,9 +384,9 @@ cache:
     - $HOME/odb_install
     - $HOME/thrift_install
     - $TRAVIS_BUILD_DIR/install_pgsql
-    - $TRAVIS_BUILD_DIR/install_sqlite
     - $TRAVIS_BUILD_DIR/build_pgsql
-    - $TRAVIS_BUILD_DIR/build_sqlite
+    #- $TRAVIS_BUILD_DIR/install_sqlite
+    #- $TRAVIS_BUILD_DIR/build_sqlite
 
 # ----------------------------------- Jobs -----------------------------------
 
