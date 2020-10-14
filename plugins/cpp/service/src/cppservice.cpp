@@ -958,7 +958,9 @@ void CppServiceHandler::getReferences(
         break;
     }
 
-    std::sort(nodes.begin(), nodes.end(), compareByValue);
+    if (referenceId_ != PARAMETER &&
+        referenceId_ != ENUM_CONSTANTS)
+      std::sort(nodes.begin(), nodes.end(), compareByValue);
 
     return_.reserve(nodes.size());
     _transaction([this, &return_, &nodes](){
