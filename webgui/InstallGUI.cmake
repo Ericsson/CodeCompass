@@ -1,5 +1,5 @@
 # Utility functions
-include(../Functions.cmake)
+include(${CMAKE_SOURCE_DIR}/Functions.cmake)
 
 message("Install npm packages...")
 
