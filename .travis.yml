@@ -1,6 +1,6 @@
 os: linux
 dist: bionic
-language: generic
+language: minimal
 services:
   - postgresql
 
@@ -17,7 +17,10 @@ services:
   <<: *apt_xenial_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -51,7 +54,10 @@ services:
   <<: *apt_xenial_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -64,6 +70,7 @@ services:
     - libodb-dev
     # PostgreSQL
     - libodb-pgsql-dev
+    - postgresql-9.5
     - postgresql-server-dev-9.5
     # Parser
     - libmagic-dev
@@ -88,7 +95,10 @@ services:
   <<: *apt_bionic_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -119,7 +129,10 @@ services:
   <<: *apt_bionic_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -130,6 +143,7 @@ services:
     # ODB
     - gcc-7-plugin-dev
     # PostgreSQL
+    - postgresql-10
     - postgresql-server-dev-10
     # Parser
     - libmagic-dev
@@ -153,7 +167,10 @@ services:
   <<: *apt_focal_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -185,7 +202,10 @@ services:
   <<: *apt_focal_config
   packages:
     # Boost
-    - libboost-all-dev
+    - libboost-filesystem-dev
+    - libboost-log-dev
+    - libboost-program-options-dev
+    - libboost-regex-dev
     # LLVM/clang
     - llvm-10
     - llvm-10-dev
@@ -332,9 +352,9 @@ before_script:
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
 
-.fix_focal_travis_postgresql_server: &fix_focal_travis_postgresql_server
+.fix_travis_postgresql_server: &fix_travis_postgresql_server
   # Newer PostgreSQL servers on Travis don't automatically allow connecting
-  # with the 'postgresql' user.
+  # with the 'postgres' user.
   # !! YOU SHOULD **NEVER** DO THIS ON A LIVE SYSTEM !!
   - sudo cat /etc/postgresql/*/main/pg_hba.conf
   - sudo sed -i "s/peer/trust/g" /etc/postgresql/*/main/pg_hba.conf
@@ -344,14 +364,14 @@ before_script:
   - sudo service postgresql status
 
 .build_postgres: &build_postgres
-  - cd $TRAVIS_BUILD_DIR
+  - cd $HOME
   - rm -rf build_pgsql install_pgsql
   - mkdir build_pgsql && cd build_pgsql
   - >
-    cmake ..
+    cmake $TRAVIS_BUILD_DIR
     -DDATABASE=pgsql
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_pgsql
+    -DCMAKE_INSTALL_PREFIX=$HOME/install_pgsql
     -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
@@ -360,14 +380,14 @@ before_script:
   - make test ARGS=-V
 
 .build_sqlite: &build_sqlite
-  - cd $TRAVIS_BUILD_DIR
+  - cd $HOME
   - rm -rf build_sqlite install_sqlite
   - mkdir build_sqlite && cd build_sqlite
   - >
-    cmake ..
+    cmake $TRAVIS_BUILD_DIR
     -DDATABASE=sqlite
     -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/install_sqlite
+    -DCMAKE_INSTALL_PREFIX=$HOME/install_sqlite
     -DTEST_DB="sqlite:database=$HOME/cc_test.sqlite"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
@@ -383,10 +403,10 @@ cache:
     - $HOME/gtest_install
     - $HOME/odb_install
     - $HOME/thrift_install
-    - $TRAVIS_BUILD_DIR/install_pgsql
-    - $TRAVIS_BUILD_DIR/build_pgsql
-    #- $TRAVIS_BUILD_DIR/install_sqlite
-    #- $TRAVIS_BUILD_DIR/build_sqlite
+    - $HOME/install_pgsql
+    - $HOME/install_sqlite
+    - $HOME/build_pgsql
+    - $HOME/build_sqlite
 
 # ----------------------------------- Jobs -----------------------------------
 
@@ -407,6 +427,8 @@ jobs:
         postgresql: "9.5"
       env:
         - DATABASE=pgsql
+      before_install:
+        - *fix_travis_postgresql_server
       install:
         - *install_thrift
         - *install_gtest_xenial
@@ -432,6 +454,8 @@ jobs:
         postgresql: "10"
       env:
         - DATABASE=pgsql
+      before_install:
+        - *fix_travis_postgresql_server
       install:
         - *install_odb
         - *install_thrift
@@ -460,7 +484,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_focal_travis_postgresql_server
+        - *fix_travis_postgresql_server
       install:
         - *install_gtest_focal
       script:
@@ -486,19 +510,23 @@ jobs:
         postgresql: "10"
       env:
         - DATABASE=pgsql
+      before_install:
+        - *fix_travis_postgresql_server
       install:
         - *install_odb
         - *install_thrift
-        - *install_gtest_bionic
       script:
-        - cd $TRAVIS_BUILD_DIR/install_pgsql/bin
+        *build_postgres
+      script:
+        - cd $HOME/install_pgsql/bin
         - >
           ./CodeCompass_parser
           -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=cc"
           -w $HOME/ws_pgsql/
           -n CodeCompass
           -i $TRAVIS_BUILD_DIR
-          -i $TRAVIS_BUILD_DIR/build_pgsql/compile_commands.json
+          -i $HOME/build_pgsql/compile_commands.json
+          -j $(nproc)
 
     - stage: deploy
       name: "DockerHub deployment"
@@ -524,3 +552,4 @@ jobs:
             docker push modelcpp/codecompass:web-pgsql
             docker push modelcpp/codecompass:latest
           fi
+
