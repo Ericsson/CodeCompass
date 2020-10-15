@@ -19,7 +19,7 @@ struct CppEnumConstant : CppEntity
 
     ret
       .append("\nid = ").append(std::to_string(id))
-      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nentityHash = ").append(std::to_string(entityHash))
       .append("\nqualifiedName = ").append(qualifiedName)
       .append("\nvalue = ").append(std::to_string(value));
 
@@ -47,7 +47,7 @@ struct CppEnum : CppEntity
 
     ret
       .append("\nid = ").append(std::to_string(id))
-      .append("\nmangledNameHash = ").append(std::to_string(mangledNameHash))
+      .append("\nentityHash = ").append(std::to_string(entityHash))
       .append("\nqualifiedName = ").append(qualifiedName);
 
     if (!tags.empty())

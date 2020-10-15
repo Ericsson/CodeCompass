@@ -145,9 +145,7 @@ private:
       queried. */
 
     USAGE, /*!< By this option the usages of the AST node can be queried, i.e.
-      the nodes of which the mangled name is identical to the queried one. The
-      parser creates a mangled name even for variables and types, which is
-      unique for the element. */
+      the nodes of which the entity hash is identical to the queried one. */
 
     THIS_CALLS, /*!< Get function calls in a function. WARNING: If the
       definition of the AST node is not unique then it returns the callees of
@@ -279,7 +277,7 @@ private:
 
   /**
    * This function returns the model::CppAstNode objects which meet the
-   * requirements of the given query and have the same mangled name as the given
+   * requirements of the given query and have the same entity hash as the given
    * AST node.
    */
   std::vector<model::CppAstNode> queryCppAstNodes(
@@ -307,7 +305,7 @@ private:
 
   /**
    * This function returns the model::CppAstNode objects which have the same
-   * mangled name as the given astNodeId_ and have
+   * entity hash as the given astNodeId_ and have
    * model::CppAstNode::AstType::Definition type. Unfortunately the definition
    * of an entity is not unequivocal, since in different translation units
    * different definitions may occure for example because of an #ifdef block.

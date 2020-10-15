@@ -16,15 +16,8 @@ namespace parser
 
 const clang::Type* getStrippedType(const clang::QualType& qt_);
 
-std::string getMangledName(
-  clang::MangleContext* mangleContext_,
-  const clang::NamedDecl* nd_,
-  const model::FileLoc& fileLoc_ = model::FileLoc());
-
-std::string getMangledName(
-  clang::MangleContext* mangleContext_,
-  const clang::QualType& qt_,
-  const model::FileLoc& fileLoc_ = model::FileLoc());
+std::string getUSR(const clang::NamedDecl* nd_);
+std::string getUSR(const clang::QualType& qt_, clang::ASTContext& ctx_);
 
 bool isFunction(const clang::Type* type_);
 

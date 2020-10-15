@@ -29,7 +29,7 @@ struct CppDocComment
   std::string content;
 
   #pragma db not_null index
-  unsigned long long mangledNameHash;
+  unsigned long long entityHash;
 };
 
 } //model

@@ -81,7 +81,7 @@ namespace
       cc::service::language::AstNodeInfo ret;
 
       ret.__set_id(std::to_string(astNode_.id));
-      ret.__set_mangledNameHash(astNode_.mangledNameHash);
+      ret.__set_entityHash(astNode_.entityHash);
       ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
       ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
       ret.__set_astNodeValue(astNode_.astValue);
@@ -166,7 +166,7 @@ void CppServiceHandler::getDocumentation(
     model::CppAstNode node = queryCppAstNode(astNodeId_);
 
     DocCommentResult docComment = _db->query<model::CppDocComment>(
-      DocCommentQuery::mangledNameHash == node.mangledNameHash);
+      DocCommentQuery::entityHash == node.entityHash);
 
     if (!docComment.empty())
       return_ = "<div class=\"main-doc\">" + docComment.begin()->content
@@ -209,7 +209,7 @@ void CppServiceHandler::getDocumentation(
           //--- Query documentation of members ---//
 
           DocCommentResult doc = _db->query<model::CppDocComment>(
-            DocCommentQuery::mangledNameHash == method.mangledNameHash);
+            DocCommentQuery::entityHash == method.entityHash);
 
           if (!doc.empty())
             return_ += doc.begin()->content;
@@ -279,7 +279,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Variable:
       {
         VarResult variables = _db->query<model::CppVariable>(
-          VarQuery::mangledNameHash == node.mangledNameHash);
+          VarQuery::entityHash == node.entityHash);
         model::CppVariable variable = *variables.begin();
 
         return_["Name"] = variable.name;
@@ -291,7 +291,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Function:
       {
         FuncResult functions = _db->query<model::CppFunction>(
-          FuncQuery::mangledNameHash == node.mangledNameHash);
+          FuncQuery::entityHash == node.entityHash);
         model::CppFunction function = *functions.begin();
 
         return_["Name"] = function.qualifiedName.substr(
@@ -305,7 +305,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Type:
       {
         TypeResult types = _db->query<model::CppRecord>(
-          TypeQuery::mangledNameHash == node.mangledNameHash);
+          TypeQuery::entityHash == node.entityHash);
         model::CppRecord type = *types.begin();
 
         if (type.isAbstract)
@@ -322,7 +322,7 @@ void CppServiceHandler::getProperties(
       case model::CppAstNode::SymbolType::Typedef:
       {
         TypedefResult types = _db->query<model::CppTypedef>(
-          TypedefQuery::mangledNameHash == node.mangledNameHash);
+          TypedefQuery::entityHash == node.entityHash);
         model::CppTypedef type = *types.begin();
 
         return_["Name"] = type.name;
@@ -335,7 +335,7 @@ void CppServiceHandler::getProperties(
       {
         EnumConstResult enumConsts
           = _db->query<model::CppEnumConstant>(
-              EnumConstQuery::mangledNameHash == node.mangledNameHash);
+              EnumConstQuery::entityHash == node.entityHash);
         model::CppEnumConstant enumConst = *enumConsts.begin();
 
         return_["Name"] = enumConst.name;
@@ -382,12 +382,12 @@ std::int32_t CppServiceHandler::getReferenceCount(
         for (const model::CppAstNode& call : queryCalls(astNodeId_))
         {
           model::CppAstNode node = queryCppAstNode(std::to_string(call.id));
-          defHashes.insert(node.mangledNameHash);
+          defHashes.insert(node.entityHash);
         }
 
         if (!defHashes.empty())
           count += _db->query_value<model::CppAstCount>(
-            AstQuery::mangledNameHash.in_range(
+            AstQuery::entityHash.in_range(
               defHashes.begin(), defHashes.end()) &&
             AstQuery::astType == model::CppAstNode::AstType::Definition &&
             AstQuery::location.range.end.line != model::Position::npos).count;
@@ -421,13 +421,13 @@ std::int32_t CppServiceHandler::getReferenceCount(
         std::unordered_set<std::uint64_t> fptrCallers
           = transitiveClosureOfRel(
               model::CppRelation::Kind::Assign,
-              node.mangledNameHash,
+              node.entityHash,
               true);
 
-        for (std::uint64_t mangledNameHash : fptrCallers)
+        for (std::uint64_t entityHash : fptrCallers)
         {
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == mangledNameHash &&
+            AstQuery::entityHash == entityHash &&
             AstQuery::astType == model::CppAstNode::AstType::Usage);
           count += result.size();
         }
@@ -448,12 +448,12 @@ std::int32_t CppServiceHandler::getReferenceCount(
         node = queryCppAstNode(astNodeId_);
 
         FuncResult functions = _db->query<cc::model::CppFunction>(
-          FuncQuery::mangledNameHash == node.mangledNameHash);
+          FuncQuery::entityHash == node.entityHash);
 
         const model::CppFunction& function = *functions.begin();
 
         return _db->query_value<model::CppRecordCount>(
-          TypeQuery::mangledNameHash == function.typeHash).count;
+          TypeQuery::entityHash == function.typeHash).count;
 
         break;
       }
@@ -477,49 +477,49 @@ std::int32_t CppServiceHandler::getReferenceCount(
         node = queryCppAstNode(astNodeId_);
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
-          VarQuery::mangledNameHash == node.mangledNameHash);
+          VarQuery::entityHash == node.entityHash);
 
         const model::CppVariable& variable = *varNodes.begin();
 
         return _db->query_value<model::CppRecordCount>(
-          TypeQuery::mangledNameHash == variable.typeHash).count;
+          TypeQuery::entityHash == variable.typeHash).count;
 
         break;
       }
 
       case ALIAS:
         return _db->query_value<model::CppTypedefCount>(
-          TypedefQuery::typeHash == node.mangledNameHash).count;
+          TypedefQuery::typeHash == node.entityHash).count;
 
       case INHERIT_FROM:
         return _db->query_value<model::CppInheritanceCount>(
-          InhQuery::derived == node.mangledNameHash).count;
+          InhQuery::derived == node.entityHash).count;
 
       case INHERIT_BY:
         return _db->query_value<model::CppInheritanceCount>(
-          InhQuery::base == node.mangledNameHash).count;
+          InhQuery::base == node.entityHash).count;
 
       case DATA_MEMBER:
         return _db->query_value<model::CppMemberTypeCount>(
-          MemTypeQuery::typeHash == node.mangledNameHash &&
+          MemTypeQuery::typeHash == node.entityHash &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Field).count;
 
       case METHOD:
         return _db->query_value<model::CppMemberTypeCount>(
-          MemTypeQuery::typeHash == node.mangledNameHash &&
+          MemTypeQuery::typeHash == node.entityHash &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Method).count;
 
       case FRIEND:
         return _db->query_value<model::CppFriendshipCount>(
-          FriendQuery::target == node.mangledNameHash).count;
+          FriendQuery::target == node.entityHash).count;
 
       case UNDERLYING_TYPE:
         return _db->query_value<model::CppTypedefCount>(
-          TypedefQuery::mangledNameHash == node.mangledNameHash).count;
+          TypedefQuery::entityHash == node.entityHash).count;
 
       case ENUM_CONSTANTS:
         return _db->query_value<model::CppEnumConstantsCount>(
-          EnumQuery::mangledNameHash == node.mangledNameHash).count;
+          EnumQuery::entityHash == node.entityHash).count;
 
       case EXPANSION:
         return _db->query_value<model::CppMacroExpansionCount>(
@@ -699,13 +699,13 @@ void CppServiceHandler::getReferences(
         std::unordered_set<std::uint64_t> fptrCallers
           = transitiveClosureOfRel(
               model::CppRelation::Kind::Assign,
-              node.mangledNameHash,
+              node.entityHash,
               true);
 
-        for (std::uint64_t mangledNameHash : fptrCallers)
+        for (std::uint64_t entityHash : fptrCallers)
         {
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == mangledNameHash &&
+            AstQuery::entityHash == entityHash &&
             AstQuery::astType == model::CppAstNode::AstType::Usage);
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
@@ -718,7 +718,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         FuncResult functions = _db->query<model::CppFunction>(
-          FuncQuery::mangledNameHash == node.mangledNameHash);
+          FuncQuery::entityHash == node.entityHash);
         model::CppFunction function = *functions.begin();
 
         for (auto var : function.parameters)
@@ -733,7 +733,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         FuncResult functions = _db->query<model::CppFunction>(
-          FuncQuery::mangledNameHash == node.mangledNameHash);
+          FuncQuery::entityHash == node.entityHash);
         model::CppFunction function = *functions.begin();
 
         for (auto var : function.locals)
@@ -748,11 +748,11 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         FuncResult functions = _db->query<model::CppFunction>(
-          FuncQuery::mangledNameHash == node.mangledNameHash);
+          FuncQuery::entityHash == node.entityHash);
         model::CppFunction function = *functions.begin();
 
         TypeResult result = _db->query<model::CppRecord>(
-          TypeQuery::mangledNameHash == function.typeHash);
+          TypeQuery::entityHash == function.typeHash);
 
         for (const model::CppRecord& type : result)
         {
@@ -791,7 +791,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         TypedefResult result = _db->query<model::CppTypedef>(
-          TypedefQuery::typeHash == node.mangledNameHash);
+          TypedefQuery::typeHash == node.entityHash);
 
         for (const auto& typeDef : result)
           nodes.push_back(queryCppAstNode(std::to_string(typeDef.astNodeId)));
@@ -804,12 +804,12 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
-          VarQuery::mangledNameHash == node.mangledNameHash);
+          VarQuery::entityHash == node.entityHash);
 
         const model::CppVariable& variable = *varNodes.begin();
 
         TypeResult result = _db->query<model::CppRecord>(
-          TypeQuery::mangledNameHash == variable.typeHash);
+          TypeQuery::entityHash == variable.typeHash);
 
         for (const model::CppRecord& type : result)
         {
@@ -826,10 +826,10 @@ void CppServiceHandler::getReferences(
 
         for (const model::CppInheritance& inh :
           _db->query<model::CppInheritance>(
-            InhQuery::derived == node.mangledNameHash)) // TODO: Filter by tags
+            InhQuery::derived == node.entityHash)) // TODO: Filter by tags
         {
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == inh.base &&
+            AstQuery::entityHash == inh.base &&
             AstQuery::astType == model::CppAstNode::AstType::Definition);
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
@@ -841,10 +841,10 @@ void CppServiceHandler::getReferences(
 
         for (const model::CppInheritance& inh :
           _db->query<model::CppInheritance>(
-            InhQuery::base == node.mangledNameHash )) // TODO: Filter by tags
+            InhQuery::base == node.entityHash )) // TODO: Filter by tags
         {
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == inh.derived &&
+            AstQuery::entityHash == inh.derived &&
             AstQuery::astType == model::CppAstNode::AstType::Definition);
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
@@ -855,7 +855,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-          MemTypeQuery::typeHash == node.mangledNameHash &&
+          MemTypeQuery::typeHash == node.entityHash &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Field))
           // TODO: Filter by tags
         {
@@ -872,7 +872,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
-          MemTypeQuery::typeHash == node.mangledNameHash &&
+          MemTypeQuery::typeHash == node.entityHash &&
           MemTypeQuery::kind == model::CppMemberType::Kind::Method))
           // TODO: Filter by tags
         {
@@ -887,10 +887,10 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         for (const model::CppFriendship& fr : _db->query<model::CppFriendship>(
-          FriendQuery::target == node.mangledNameHash))
+          FriendQuery::target == node.entityHash))
         {
           AstResult result = _db->query<model::CppAstNode>(
-            AstQuery::mangledNameHash == fr.theFriend &&
+            AstQuery::entityHash == fr.theFriend &&
             AstQuery::astType == model::CppAstNode::AstType::Definition);
           nodes.insert(nodes.end(), result.begin(), result.end());
         }
@@ -902,11 +902,11 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         TypedefResult types = _db->query<model::CppTypedef>(
-          TypedefQuery::mangledNameHash == node.mangledNameHash);
+          TypedefQuery::entityHash == node.entityHash);
         model::CppTypedef type = *types.begin();
 
         AstResult result = _db->query<model::CppAstNode>(
-          AstQuery::mangledNameHash == type.typeHash &&
+          AstQuery::entityHash == type.typeHash &&
           AstQuery::astType == model::CppAstNode::AstType::Definition);
 
         nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
@@ -919,7 +919,7 @@ void CppServiceHandler::getReferences(
         node = queryCppAstNode(astNodeId_);
 
         EnumResult cppEnums = _db->query<model::CppEnum>(
-          EnumQuery::mangledNameHash == node.mangledNameHash);
+          EnumQuery::entityHash == node.entityHash);
         model::CppEnum cppEnum = *cppEnums.begin();
 
         std::transform(
@@ -1361,7 +1361,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodes(
   model::CppAstNode node = queryCppAstNode(astNodeId_);
 
   AstResult result = _db->query<model::CppAstNode>(
-    AstQuery::mangledNameHash == node.mangledNameHash &&
+    AstQuery::entityHash == node.entityHash &&
     AstQuery::location.range.end.line != model::Position::npos &&
     query_);
 
@@ -1441,7 +1441,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryOverrides(
   std::unordered_set<std::uint64_t> overrides
     = transitiveClosureOfRel(
         model::CppRelation::Kind::Override,
-        node.mangledNameHash,
+        node.entityHash,
         reverse_);
 
   std::transform(
@@ -1450,7 +1450,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryOverrides(
     std::back_inserter(nodes),
     [this](std::uint64_t mnh){
       AstResult result
-        = _db->query<model::CppAstNode>(AstQuery::mangledNameHash == mnh);
+        = _db->query<model::CppAstNode>(AstQuery::entityHash == mnh);
 
       return *result.begin();
     });
@@ -1526,7 +1526,7 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
         //--- Virtual Tag ---//
 
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
-          FuncQuery::mangledNameHash == defNode.mangledNameHash);
+          FuncQuery::entityHash == defNode.entityHash);
         const model::CppFunction& funcNode = *funcNodes.begin();
 
         for (const model::Tag& tag : funcNode.tags)
@@ -1553,7 +1553,7 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
         //--- Global Tag ---//
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
-          VarQuery::mangledNameHash == defNode.mangledNameHash);
+          VarQuery::entityHash == defNode.entityHash);
         const model::CppVariable& varNode = *varNodes.begin();
 
         for (const model::Tag& tag : varNode.tags)
@@ -1574,7 +1574,7 @@ std::size_t CppServiceHandler::queryCppAstNodeCount(
   model::CppAstNode node = queryCppAstNode(astNodeId_);
 
   model::CppAstCount q = _db->query_value<model::CppAstCount>(
-    AstQuery::mangledNameHash == node.mangledNameHash &&
+    AstQuery::entityHash == node.entityHash &&
     AstQuery::location.range.end.line != model::Position::npos &&
     query_);
 
@@ -1588,7 +1588,7 @@ std::size_t CppServiceHandler::queryOverridesCount(
   model::CppAstNode node = queryCppAstNode(astNodeId_);
 
   return transitiveClosureOfRel( model::CppRelation::Kind::Override,
-    node.mangledNameHash, reverse_).size();
+    node.entityHash, reverse_).size();
 }
 
 std::size_t CppServiceHandler::queryCallsCount(

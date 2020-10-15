@@ -6,7 +6,7 @@ namespace cpp cc.service.language
 struct AstNodeInfo
 {
   1:common.AstNodeId id /** Unique id of the AST node for the whole workspace. */
-  2:i64    mangledNameHash /** To resolve unique names of the AST node. */
+  2:i64    entityHash /** To resolve unique names of the AST node. */
   3:string astNodeType /** String representation of AST type (e.g. Statement/Declaration/Usage). */
   4:string symbolType /** String representation of Symbol type (e.g. Function/Type/Variable). */
   5:string astNodeValue /** String representation of an AST node. */
