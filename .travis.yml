@@ -525,6 +525,62 @@ jobs:
           -i $TRAVIS_BUILD_DIR
           -i $HOME/build_pgsql/compile_commands.json
           -j $(nproc)
+    - name: "Parse TinyXML"
+      dist: bionic
+      addons:
+        apt:
+          <<: *apt_bionic_pgsql
+        postgresql: "10"
+      env:
+        - DATABASE=pgsql
+      before_install:
+        - *fix_travis_postgresql_server
+      install:
+        - *install_odb
+        - *install_thrift
+      script:
+        - cd $HOME
+        - git clone https://github.com/leethomason/tinyxml2
+        - mkdir build_tinyxml2 && cd build_tinyxml2
+        - cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+        - make -j $(nproc)
+        - cd $HOME/install_pgsql/bin
+        - >
+          ./CodeCompass_parser
+          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=tinymxl2"
+          -w $HOME/ws_pgsql/
+          -n TinyXML2
+          -i $HOME/tinyxml2
+          -i $HOME/build_tinyxml2/compile_commands.json
+          -j $(nproc)
+    - name: "Parse Xerces-C++"
+      dist: bionic
+      addons:
+        apt:
+          <<: *apt_bionic_pgsql
+        postgresql: "10"
+      env:
+        - DATABASE=pgsql
+      before_install:
+        - *fix_travis_postgresql_server
+      install:
+        - *install_odb
+        - *install_thrift
+      script:
+        - cd $HOME
+        - git clone https://github.com/apache/xerces-c/
+        - mkdir build_xerces-c && cd build_xerces-c
+        - cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+        - make -j $(nproc)
+        - cd $HOME/install_pgsql/bin
+        - >
+          ./CodeCompass_parser
+          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=xerces_c"
+          -w $HOME/ws_pgsql/
+          -n "Xerces-C"
+          -i $HOME/xerces-c
+          -i $HOME/build_xerces-c/compile_commands.json
+          -j $(nproc)
 
     - stage: deploy
       name: "DockerHub deployment"
