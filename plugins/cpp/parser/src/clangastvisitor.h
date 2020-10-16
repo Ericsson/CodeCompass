@@ -154,6 +154,19 @@ public:
     return b;
   }
 
+  bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+
+    bool b = Base::TraverseFunctionDecl(fd_);
+
+    if (_functionStack.top()->astNodeId)
+      _functions.push_back(_functionStack.top());
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXMethodDecl(clang::CXXMethodDecl* fd_)
   {
     _functionStack.push(std::make_shared<model::CppFunction>());
