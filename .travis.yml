@@ -516,8 +516,6 @@ jobs:
         - *install_odb
         - *install_thrift
       script:
-        *build_postgres
-      script:
         - cd $HOME/install_pgsql/bin
         - >
           ./CodeCompass_parser
