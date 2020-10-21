@@ -158,7 +158,7 @@ public:
   {
     _functionStack.push(std::make_shared<model::CppFunction>());
 
-    bool b = Base::TraverseFunctionDecl(fd_);
+    bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
 
     if (_functionStack.top()->astNodeId)
       _functions.push_back(_functionStack.top());
