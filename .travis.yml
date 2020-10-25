@@ -352,16 +352,18 @@ before_script:
   # GTest
   - export GTEST_ROOT=$HOME/gtest_install
 
-.fix_travis_postgresql_server: &fix_travis_postgresql_server
-  # Newer PostgreSQL servers on Travis don't automatically allow connecting
-  # with the 'postgres' user.
+.create_postgres_user: &create_postgres_user
+  # Newer PostgreSQL servers on Travis don't automatically allow connecting with the 'postgres' user.
+  # Enable trust authentication method for the PostgreSQL server to create the cc user.
   # !! YOU SHOULD **NEVER** DO THIS ON A LIVE SYSTEM !!
   - sudo cat /etc/postgresql/*/main/pg_hba.conf
   - sudo sed -i "s/peer/trust/g" /etc/postgresql/*/main/pg_hba.conf
   - sudo sed -i "s/md5/trust/g" /etc/postgresql/*/main/pg_hba.conf
   - sudo cat /etc/postgresql/*/main/pg_hba.conf
-  - sudo service postgresql restart 12
+  - sudo service postgresql restart
   - sudo service postgresql status
+  - psql -h localhost -p 5432 -U postgres -c "CREATE USER cc WITH SUPERUSER LOGIN PASSWORD 'cc'";
+  - echo "localhost:5432:*:cc:cc" > $HOME/.pgpass
 
 .build_postgres: &build_postgres
   - cd $HOME
@@ -372,7 +374,7 @@ before_script:
     -DDATABASE=pgsql
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=$HOME/install_pgsql
-    -DTEST_DB="pgsql:host=localhost;port=5432;user=postgres;password=;database=cc_test"
+    -DTEST_DB="pgsql:host=localhost;port=5432;user=cc;password=cc;database=cc_test"
     -DLLVM_DIR=/usr/lib/llvm-10/cmake
     -DClang_DIR=/usr/lib/cmake/clang-10
     -DCMAKE_EXPORT_COMPILE_COMMANDS=1
@@ -428,7 +430,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_thrift
         - *install_gtest_xenial
@@ -455,7 +457,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_odb
         - *install_thrift
@@ -484,7 +486,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_gtest_focal
       script:
@@ -511,7 +513,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_odb
         - *install_thrift
@@ -519,7 +521,7 @@ jobs:
         - cd $HOME/install_pgsql/bin
         - >
           ./CodeCompass_parser
-          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=cc"
+          -d "pgsql:host=localhost;port=5432;user=cc;password=cc;database=cc"
           -w $HOME/ws_pgsql/
           -n CodeCompass
           -i $TRAVIS_BUILD_DIR
@@ -534,7 +536,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_odb
         - *install_thrift
@@ -547,7 +549,7 @@ jobs:
         - cd $HOME/install_pgsql/bin
         - >
           ./CodeCompass_parser
-          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=tinymxl2"
+          -d "pgsql:host=localhost;port=5432;user=cc;password=cc;database=tinyxml2"
           -w $HOME/ws_pgsql/
           -n TinyXML2
           -i $HOME/tinyxml2
@@ -562,7 +564,7 @@ jobs:
       env:
         - DATABASE=pgsql
       before_install:
-        - *fix_travis_postgresql_server
+        - *create_postgres_user
       install:
         - *install_odb
         - *install_thrift
@@ -575,7 +577,7 @@ jobs:
         - cd $HOME/install_pgsql/bin
         - >
           ./CodeCompass_parser
-          -d "pgsql:host=localhost;port=5432;user=postgres;password=;database=xerces_c"
+          -d "pgsql:host=localhost;port=5432;user=cc;password=cc;database=xerces_c"
           -w $HOME/ws_pgsql/
           -n "Xerces-C"
           -i $HOME/xerces-c
