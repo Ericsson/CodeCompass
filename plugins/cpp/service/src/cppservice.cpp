@@ -1523,14 +1523,17 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(visibility);
         }
 
-        //--- Virtual Tag ---//
+        if (defNode.symbolType == model::CppAstNode::SymbolType::Function)
+        {
+          //--- Virtual Tag ---//
 
-        FuncResult funcNodes = _db->query<cc::model::CppFunction>(
-          FuncQuery::entityHash == defNode.entityHash);
-        const model::CppFunction& funcNode = *funcNodes.begin();
+          FuncResult funcNodes = _db->query<cc::model::CppFunction>(
+            FuncQuery::entityHash == defNode.entityHash);
+          const model::CppFunction& funcNode = *funcNodes.begin();
 
-        for (const model::Tag& tag : funcNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+          for (const model::Tag& tag : funcNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
 
         break;
       }
