@@ -956,6 +956,33 @@ public:
 
     return true;
   }
+  
+  
+  
+  bool VisitUsingDecl(clang::UsingDecl* ud_)
+  {
+
+    //--- CppAstNode ---//
+    
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+    
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      ud_->getBeginLoc(),
+      ud_->getLocation(),
+      true);
+    std::string usr = getUSR(ud_);
+    astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
+    astNode->entityHash = util::fnvHash(usr);
+    astNode->astType = model::CppAstNode::AstType::Definition;
+    astNode->id = model::createIdentifier(*astNode);
+    
+    if (insertToCache(ud_, astNode))
+      _astNodes.push_back(astNode);
+    
+    return true;
+  }
+  
 
   bool VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
   {
