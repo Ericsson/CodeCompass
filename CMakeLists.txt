@@ -10,7 +10,7 @@ include(Functions.cmake)
 # Do some sanity check on the testing setup and enable testing if applicable.
 include(Testing.cmake)
 
-find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
+find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread python)
 find_package(Java    REQUIRED)
 find_package(Odb     REQUIRED)
 find_package(Threads REQUIRED)

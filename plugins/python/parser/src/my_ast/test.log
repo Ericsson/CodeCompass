@@ -1,0 +1,27 @@
+
+FILE: __init__
+=========================================
+Var: __all__ (line: 1, column: 0, length: 7) {global - } [list<str>]
+
+FILE: asdf
+=========================================
+
+FILE: qwer
+=========================================
+Func: g (line: 1, column: 0, length: 1) {global - } []
+
+FILE: asdf
+=========================================
+Func: g (line: 0, column: 0, length: 0) {global - } []
+Func: f (line: 4, column: 0, length: 1) {global - } []
+Var: a (line: 4, column: 0, length: 1) {function - f} [Placeholder]
+Var: b (line: 4, column: 0, length: 1) {function - f} [Placeholder]
+Var Usage: a (line: 5, column: 10, length: 1) [Placeholder]
+Var Usage: a (line: 5, column: 10, length: 1) [Placeholder]
+Var Usage: b (line: 6, column: 10, length: 1) [Placeholder]
+Var Usage: b (line: 6, column: 10, length: 1) [Placeholder]
+Func Usage: g (line: 7, column: 4, length: 1) []
+
+FILE: __init__
+=========================================
+Var: __all__ (line: 1, column: 0, length: 7) {global - } [list<str>]
