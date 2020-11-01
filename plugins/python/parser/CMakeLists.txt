@@ -15,7 +15,12 @@ add_library(pythonparser SHARED
 
 find_package (Python)
 
-target_link_libraries(pythonparser model ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(pythonparser
+        util
+        model
+        pythonmodel
+        ${PYTHON_LIBRARIES}
+        ${Boost_LIBRARIES})
 
 target_compile_options(pythonparser PUBLIC -Wno-unknown-pragmas)
 target_link_options(pythonparser PUBLIC -Xlinker -export-dynamic)

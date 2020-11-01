@@ -18,7 +18,7 @@ target_compile_options(pythonservice PUBLIC -Wno-unknown-pragmas)
 target_link_libraries(pythonservice
         util
         model
-        cppmodel
+        pythonmodel
         mongoose
         projectservice
         languagethrift
