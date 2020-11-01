@@ -7,6 +7,8 @@
 
 #include <model/pythonastnode.h>
 #include <model/pythonastnode-odb.hxx>
+#include <model/pythonclass.h>
+#include <model/pythonentity.h>
 
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
@@ -212,7 +214,7 @@ private:
             const odb::query<model::PythonAstNode>& query_
             = odb::query<model::PythonAstNode>(true));
 
-    std::vector<model::PythonAstNode> queryDeclarations(const core::AstNodeId& astNodeId_)
+    std::vector<model::PythonAstNode> queryDeclarations(const core::AstNodeId& astNodeId_);
 
     odb::query<model::PythonAstNode> astCallsQuery(const model::PythonAstNode& astNode_);
 
@@ -224,6 +226,10 @@ private:
             = odb::query<model::PythonAstNode>(true));
 
     std::size_t queryCallsCount(const core::AstNodeId& astNodeId_);
+
+    std::vector<model::PythonClass> queryTypes(const model::PythonEntity& entity);
+
+    model::PythonEntity queryPythonEntity(const model::PythonEntityId& id);
 
     std::shared_ptr<odb::database> _db;
     util::OdbTransaction _transaction;

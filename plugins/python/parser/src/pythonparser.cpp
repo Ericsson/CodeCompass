@@ -21,13 +21,21 @@
 #include <model/buildsourcetarget-odb.hxx>
 
 #include <model/pythonastnode.h>
+#include <model/pythonastnode-odb.hxx>
 #include <model/pythonclass.h>
+#include <model/pythonclass-odb.hxx>
 #include <model/pythondocumentation.h>
+#include <model/pythondocumentation-odb.hxx>
 #include <model/pythonfunction.h>
+#include <model/pythonfunction-odb.hxx>
 #include <model/pythoninheritance.h>
+#include <model/pythoninheritance-odb.hxx>
 #include <model/pythonimport.h>
+#include <model/pythonimport-odb.hxx>
 #include <model/pythontype.h>
+#include <model/pythontype-odb.hxx>
 #include <model/pythonvariable.h>
+#include <model/pythonvariable-odb.hxx>
 
 namespace cc {
 namespace parser{
@@ -53,6 +61,8 @@ private:
 
 void Persistence::persistFile(boost::python::object pyFile)
 {
+    try{
+    std::cout << "0" << std::endl;
     model::FilePtr file = nullptr;
     model::BuildSource buildSource;
 
@@ -101,6 +111,9 @@ void Persistence::persistFile(boost::python::object pyFile)
             std::cout << "Exception: " << ex.what() << " - " << typeid(ex).name() << std::endl;
         }
     }
+}catch(std::exception e){
+    std::cout << e.what() << std::endl;
+}
 //    std::cout << std::endl << "START >>>" << std::endl;
 //
 //    try{
@@ -216,6 +229,8 @@ void Persistence::persistFile(boost::python::object pyFile)
 
 void Persistence::persistVariable(boost::python::object pyVariable)
 {
+    try{
+    std::cout << "1" << std::endl;
     boost::python::object name = pyVariable.attr("name");
     boost::python::object qualifiedName = pyVariable.attr("qualified_name");
 
@@ -278,10 +293,15 @@ void Persistence::persistVariable(boost::python::object pyVariable)
             ctx.db->persist(usageAstNode);
         });
     }
+}catch(std::exception e){
+    std::cout << e.what() << std::endl;
+}
 }
 
 void Persistence::persistFunction(boost::python::object pyFunction)
 {
+    try{
+    std::cout << "2" << std::endl;
     boost::python::object name = pyFunction.attr("name");
     boost::python::object qualifiedName = pyFunction.attr("qualified_name");
 
@@ -355,10 +375,15 @@ void Persistence::persistFunction(boost::python::object pyFunction)
             ctx.db->persist(usageAstNode);
         });
     }
+}catch(std::exception e){
+    std::cout << e.what() << std::endl;
+}
 }
 
 void Persistence::persistClass(boost::python::object pyClass)
 {
+    try{
+    std::cout << "3" << std::endl;
     boost::python::object name = pyClass.attr("name");
     boost::python::object qualifiedName = pyClass.attr("qualified_name");
 
@@ -510,53 +535,61 @@ void Persistence::persistClass(boost::python::object pyClass)
             ctx.db->persist(classMember);
         });
     }
+}catch(std::exception e){
+    std::cout << e.what() << std::endl;
+}
 }
 
 void Persistence::persistImport(boost::python::object pyImport)
 {
-    model::FilePtr file = ctx.srcMgr.getFile(boost::python::extract<std::string>(pyImport.attr("importer")));
+    try {
+        std::cout << "4" << std::endl;
+        model::FilePtr file = ctx.srcMgr.getFile(boost::python::extract<std::string>(pyImport.attr("importer")));
 
-    boost::python::list importedModules =
-            boost::python::extract<boost::python::list>(pyImport.attr("imported_modules"));
+        boost::python::list importedModules =
+                boost::python::extract<boost::python::list>(pyImport.attr("imported_modules"));
 
-    boost::python::dict importedSymbols =
-            boost::python::extract<boost::python::dict>(pyImport.attr("imported_symbols"));
+        boost::python::dict importedSymbols =
+                boost::python::extract<boost::python::dict>(pyImport.attr("imported_symbols"));
 
-    if(file == nullptr || importedModules.is_none() || importedSymbols.is_none()){
-        return;
-    }
-
-    util::OdbTransaction transaction{ctx.db};
-
-    for(int i = 0; i<boost::python::len(importedModules); ++i){
-        model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(importedModules[i]));
-        if(moduleFile == nullptr){
-            continue;
+        if (file == nullptr || importedModules.is_none() || importedSymbols.is_none()) {
+            return;
         }
-        model::PythonImportPtr moduleImport(new model::PythonImport);
-        moduleImport->importer = file;
-        moduleImport->imported = moduleFile;
 
-        transaction([&, this] {
-            ctx.db->persist(moduleImport);
-        });
-    }
+        util::OdbTransaction transaction{ctx.db};
 
-    boost::python::list importDict = importedSymbols.items();
-    for(int i = 0; i<boost::python::len(importDict); ++i){
-        boost::python::tuple import = boost::python::extract<boost::python::tuple>(importDict[i]);
-        model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(import[0]));
-        if(moduleFile == nullptr){
-            continue;
+        for (int i = 0; i < boost::python::len(importedModules); ++i) {
+            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(importedModules[i]));
+            if (moduleFile == nullptr) {
+                continue;
+            }
+            model::PythonImportPtr moduleImport(new model::PythonImport);
+            moduleImport->importer = file;
+            moduleImport->imported = moduleFile;
+
+            transaction([&, this] {
+                ctx.db->persist(moduleImport);
+            });
         }
-        model::PythonImportPtr moduleImport(new model::PythonImport);
-        moduleImport->importer = file;
-        moduleImport->imported = moduleFile;
+
+        boost::python::list importDict = importedSymbols.items();
+        for (int i = 0; i < boost::python::len(importDict); ++i) {
+            boost::python::tuple import = boost::python::extract<boost::python::tuple>(importDict[i]);
+            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(import[0]));
+            if (moduleFile == nullptr) {
+                continue;
+            }
+            model::PythonImportPtr moduleImport(new model::PythonImport);
+            moduleImport->importer = file;
+            moduleImport->imported = moduleFile;
 //        moduleImport->importedSymbol = getPythonEntityIdByQualifiedName(boost::python::extract<std::string>(import[1]));
 
-        transaction([&, this] {
-            ctx.db->persist(moduleImport);
-        });
+            transaction([&, this] {
+                ctx.db->persist(moduleImport);
+            });
+        }
+    }catch(std::exception e){
+        std::cout << e.what() << std::endl;
     }
 }
 
