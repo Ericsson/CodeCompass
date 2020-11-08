@@ -40,6 +40,8 @@ namespace
     typedef odb::result<cc::model::PythonInheritance> InhResult;
     typedef odb::query<cc::model::PythonType> TypeQuery;
     typedef odb::result<cc::model::PythonType> TypeResult;
+    typedef odb::query<cc::model::PythonDocumentation> DocQuery;
+    typedef odb::result<cc::model::PythonDocumentation> DocResult;
     typedef odb::query<cc::model::File> FileQuery;
     typedef odb::result<cc::model::File> FileResult;
 
@@ -158,9 +160,16 @@ void PythonServiceHandler::getDocumentation(
     std::string& return_,
     const core::AstNodeId& astNodeId_)
 {
-    // The ast module does not include comments (~documentation).
-    // TODO: try to use the tokenize module.
-    return_ = std::string();
+    PythonEntity entity = queryPythonEntityByAstNode(astNodeId_);
+
+    DocResult doc = _db->query<model::PythonDocumentation>(
+            DocQuery::documented == entity.id);
+
+    if (doc.empty()){
+        return std::string();
+    }
+
+    return_ = doc.begin()->documentation;
 }
 
 void PythonServiceHandler::getProperties(
@@ -1011,6 +1020,12 @@ std::vector<model::PythonClass> PythonServiceHandler::queryTypes(const model::Py
 model::PythonEntity PythonServiceHandler::queryPythonEntity(const model::PythonEntityId& id)
 {
     EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::id == id);
+    return *entities.begin();
+}
+
+model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const model::AstNodeId& id)
+{
+    EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::astNodeId == id);
     return *entities.begin();
 }
 

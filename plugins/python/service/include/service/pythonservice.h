@@ -231,6 +231,8 @@ private:
 
     model::PythonEntity queryPythonEntity(const model::PythonEntityId& id);
 
+    model::PythonEntity queryPythonEntityByAstNode(const model::AstNodeId& id);
+
     std::shared_ptr<odb::database> _db;
     util::OdbTransaction _transaction;
 
