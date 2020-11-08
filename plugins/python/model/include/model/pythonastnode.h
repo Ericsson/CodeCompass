@@ -9,6 +9,8 @@
 
 #include <model/fileloc.h>
 
+#include <util/hash.h>
+
 namespace cc
 {
 namespace model
@@ -101,6 +103,35 @@ inline std::string PythonAstNode::toString() const
                 static_cast<signed>(location.range.end.column))).append(")")
         .append("\nsymbolType = ").append(symbolTypeToString(symbolType))
         .append("\nastType = ").append(astTypeToString(astType));
+}
+
+inline std::uint64_t createIdentifier(const PythonAstNode& astNode_)
+{
+    using SymbolTypeInt
+    = std::underlying_type<model::PythonAstNode::SymbolType>::type;
+    using AstTypeInt
+    = std::underlying_type<model::PythonAstNode::AstType>::type;
+
+    std::string res;
+
+    res
+        .append(astNode_.astValue).append(":")
+        .append(std::to_string(astNode_.qualifiedName)).append(":")
+        .append(std::to_string(static_cast<SymbolTypeInt>(astNode_.symbolType))).append(":")
+        .append(std::to_string(static_cast<AstTypeInt>(astNode_.astType))).append(":");
+
+    if (astNode_.location.file != nullptr){
+        res
+            .append(std::to_string(astNode_.location.file->id)).append(":")
+            .append(std::to_string(astNode_.location.file->range.start.line)).append(":")
+            .append(std::to_string(astNode_.location.file->range.start.column)).append(":")
+            .append(std::to_string(astNode_.location.file->range.end.line)).append(":")
+            .append(std::to_string(astNode_.location.file->range.end.column)).append(":");
+    } else {
+        res.append("null");
+    }
+
+    return util::fnvHash(res);
 }
 
 #pragma db view \
