@@ -45,27 +45,43 @@ namespace
     typedef odb::query<cc::model::File> FileQuery;
     typedef odb::result<cc::model::File> FileResult;
 
-    cc::service::language::AstNodeInfo createAstNodeInfo(const cc::model::PythonAstNode& astNode_)
+    struct CreateAstNodeInfo
     {
-        cc::service::language::AstNodeInfo ret;
+        typedef std::map<cc::model::PythonAstNodeId, std::string> VisibilityMap;
 
-        ret.__set_id(std::to_string(astNode_.id));
-        ret.__set_entityHash(0);
-        ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
-        ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
-        ret.__set_astNodeValue(astNode_.astValue);
-
-        ret.range.range.startpos.line = astNode_.location.range.start.line;
-        ret.range.range.startpos.column = astNode_.location.range.start.column;
-        ret.range.range.endpos.line = astNode_.location.range.end.line;
-        ret.range.range.endpos.column = astNode_.location.range.end.column;
-
-        if (astNode_.location.file){
-            ret.range.file = std::to_string(astNode_.location.file.object_id());
+        CreateAstNodeInfo(const VisibilityMap& visibilities_ = {}) : _visibilities(visibilities_)
+        {
         }
 
-        return ret;
-    }
+        cc::service::language::AstNodeInfo operator()(const cc::model::PythonAstNode& astNode_)
+        {
+            cc::service::language::AstNodeInfo ret;
+
+            ret.__set_id(std::to_string(astNode_.id));
+            ret.__set_entityHash(0);
+            ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
+            ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
+            ret.__set_astNodeValue(astNode_.astValue);
+
+            VisibilityMap::const_iterator it = _visibilities.find(astNode_.id);
+            if (it != _visibilities.end()){
+                ret.__set_tags({it->second});
+            }
+
+            ret.range.range.startpos.line = astNode_.location.range.start.line;
+            ret.range.range.startpos.column = astNode_.location.range.start.column;
+            ret.range.range.endpos.line = astNode_.location.range.end.line;
+            ret.range.range.endpos.column = astNode_.location.range.end.column;
+
+            if (astNode_.location.file){
+                ret.range.file = std::to_string(astNode_.location.file.object_id());
+            }
+
+            return ret;
+        }
+
+        const VisibilityMap& _visibilities;
+    };
 }
 
 namespace cc {
@@ -94,7 +110,7 @@ void PythonServiceHandler::getAstNodeInfo(
     const core::AstNodeId& astNodeId_)
 {
     return_ = _transaction([this, &astNodeId_](){
-        return createAstNodeInfo(queryPythonAstNode(astNodeId_));
+        return CreateAstNodeInfo()(queryPythonAstNode(astNodeId_));
     });
 }
 
@@ -131,7 +147,7 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
         }
 
         return_ = _transaction([this, &min](){
-            return createAstNodeInfo(min);
+            return CreateAstNodeInfo(getVisibilities({min}))(min);
         });
     });
 }
@@ -218,18 +234,18 @@ void PythonServiceHandler::getProperties(
                 break;
             }
 
-//            case model::PythonAstNode::SymbolType::Module:
-//            {
-//                ModImpResult modules = _db->query<model::PythonImport>(
-//                        ModImpQuery::astNodeId == node.id);
-//                model::PythonImport module = *modules.begin();
-//
-//                return_["From"] = module.imported->filename;
-//                return_["To"] = module.importer->filename;
-//                //return_["Symbol"] = imported symbol
-//
-//                break;
-//            }
+            case model::PythonAstNode::SymbolType::Module:
+            {
+                ModImpResult modules = _db->query<model::PythonImport>(
+                        ModImpQuery::astNodeId == node.id);
+                model::PythonImport module = *modules.begin();
+
+                return_["From"] = module.imported->filename;
+                //return_["To"] = module.importer->filename;
+                //return_["Symbol"] = imported symbol
+
+                break;
+            }
         }
     });
 }
@@ -561,7 +577,7 @@ void PythonServiceHandler::getReferences(
             std::transform(
                     nodes.begin(), nodes.end(),
                     std::back_inserter(return_),
-                    createAstNodeInfo);
+                    CreateAstNodeInfo(getVisibilities(nodes)));
         });
     });
 }
@@ -767,7 +783,7 @@ void PythonServiceHandler::getFileReferences(
             std::transform(
                     nodes.begin(), nodes.end(),
                     std::back_inserter(return_),
-                    createAstNodeInfo);
+                    CreateAstNodeInfo(getVisibilities(nodes)));
         });
     });
 }
@@ -1027,6 +1043,26 @@ model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const model
 {
     EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::astNodeId == id);
     return *entities.begin();
+}
+
+std::map<model::PythonAstNodeId, std::string> PythonServiceHandler::getVisibilities(
+        const std::vector<model::PythonAstNode>& nodes_)
+{
+    std::map<model::PythonAstNodeId, std::string> visibilities;
+
+    for (const model::PythonAstNode& node : nodes_)
+    {
+        switch(node.symbolType){
+            case mode::PythonAstNode::SymbolType::Variable:
+            case mode::PythonAstNode::SymbolType::Function:
+            case mode::PythonAstNode::SymbolType::Class:
+                model::PythonEntity entity = queryPythonEntity(node);
+                visibilities[node.id] = entity.visibility;
+                break;
+        }
+    }
+
+    return visibilities;
 }
 
 }

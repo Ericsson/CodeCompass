@@ -3,6 +3,8 @@
 
 #include <LanguageService.h>
 
+#include <map>
+
 #include <odb/database.hxx>
 
 #include <model/pythonastnode.h>
@@ -232,6 +234,8 @@ private:
     model::PythonEntity queryPythonEntity(const model::PythonEntityId& id);
 
     model::PythonEntity queryPythonEntityByAstNode(const model::AstNodeId& id);
+
+    std::map<model::PythonAstNodeId, std::string> getVisibilities(const std::vector<model::PythonAstNode>& nodes_);
 
     std::shared_ptr<odb::database> _db;
     util::OdbTransaction _transaction;
