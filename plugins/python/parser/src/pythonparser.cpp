@@ -123,6 +123,7 @@ void Persistence::persistVariable(boost::python::object pyVariable)
         std::cout << "1" << std::endl;
         boost::python::object name = pyVariable.attr("name");
         boost::python::object qualifiedName = pyVariable.attr("qualified_name");
+        boost::python::object visibility = pyVariable.attr("visibility");
 
         boost::optional<model::FileLoc> fileLoc = createFileLocFromPythonFilePosition(pyVariable.attr("file_position"));
 
@@ -154,6 +155,7 @@ void Persistence::persistVariable(boost::python::object pyVariable)
         variable->astNodeId = varAstNode->id;
         variable->name = boost::python::extract<std::string>(name);
         variable->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        variable->visibility = boost::python::extract<std::string>(visibility);
 
         variable->id = model::createIdentifier(*variable);
 
@@ -198,6 +200,8 @@ void Persistence::persistFunction(boost::python::object pyFunction)
         std::cout << "2" << std::endl;
         boost::python::object name = pyFunction.attr("name");
         boost::python::object qualifiedName = pyFunction.attr("qualified_name");
+        boost::python::object visibility = pyFunction.attr("visibility");
+
 
         boost::optional<model::FileLoc> fileLoc = createFileLocFromPythonFilePosition(pyFunction.attr("file_position"));
 
@@ -231,6 +235,7 @@ void Persistence::persistFunction(boost::python::object pyFunction)
         function->astNodeId = funcAstNode->id;
         function->name = boost::python::extract<std::string>(name);
         function->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        function->visibility = boost::python::extract<std::string>(visibility);
 
         function->id = model::createIdentifier(*function);
 
@@ -284,6 +289,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         std::cout << "3" << std::endl;
         boost::python::object name = pyClass.attr("name");
         boost::python::object qualifiedName = pyClass.attr("qualified_name");
+        boost::python::object visibility = pyClass.attr("visibility");
 
         boost::optional<model::FileLoc> fileLoc = createFileLocFromPythonFilePosition(pyClass.attr("file_position"));
 
@@ -319,6 +325,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         cl->astNodeId = classAstNode->id;
         cl->name = boost::python::extract<std::string>(name);
         cl->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        cl->visibility = boost::python::extract<std::string>(visibility);
 
         cl->id = model::creatIdentifier(*cl);
 

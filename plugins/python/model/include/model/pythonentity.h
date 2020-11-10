@@ -27,6 +27,7 @@ struct PythonEntity
 
     std::string name;
     std::string qualifiedName;
+    std::string visibility;
 };
 
 typedef std::shared_ptr <PythonEntity> PythonEntityPtr;
