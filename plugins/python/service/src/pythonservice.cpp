@@ -58,7 +58,7 @@ namespace
             cc::service::language::AstNodeInfo ret;
 
             ret.__set_id(std::to_string(astNode_.id));
-            ret.__set_entityHash(0);
+            ret.__set_entityHash(cc::model::createAstNodeInfoEntityHash(astNode_));
             ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
             ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
             ret.__set_astNodeValue(astNode_.astValue);
@@ -217,7 +217,7 @@ void PythonServiceHandler::getProperties(
                 return_["Name"] = function.qualifiedName.substr(
                         function.qualifiedName.find_last_of('.') + 1);
                 return_["Qualified name"] = function.qualifiedName;
-                return_["Signature"] = function.name;
+                return_["Signature"] = function.name;       // TODO
 
                 break;
             }

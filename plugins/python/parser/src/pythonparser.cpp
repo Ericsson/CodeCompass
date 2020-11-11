@@ -57,7 +57,7 @@ public:
 
 private:
     boost::optional<model::FileLoc> createFileLocFromPythonFilePosition(boost::python::object filePosition);
-    model::PythonEntity* getPythonEntity(const std::string& qualifiedName, const model::FileLoc& fileLoc);
+    model::PythonEntity* getPythonEntity(const std::string& qualifiedName);
 };
 
 void Persistence::persistFile(boost::python::object pyFile)
@@ -165,7 +165,7 @@ void Persistence::persistVariable(boost::python::object pyVariable)
 
         for(int i = 0; i<boost::python::len(types); ++i) {
             model::PythonTypePtr type(new model::PythonType);
-    //        type->type = getPythonEntityIdByQualifiedName(boost::python::extract<std::string>(types[i]));
+            type->type = getPythonEntity(boost::python::extract<std::string>(types[i]))->id;
             type->symbol = variable->id;
 
             transaction([&, this] {
@@ -254,7 +254,7 @@ void Persistence::persistFunction(boost::python::object pyFunction)
 
         for(int i = 0; i<boost::python::len(types); ++i) {
             model::PythonTypePtr type(new model::PythonType);
-    //        type->type = getPythonEntityIdByQualifiedName(boost::python::extract<std::string>(types[i]));
+            type->type = getPythonEntity(boost::python::extract<std::string>(types[i]))->id;
             type->symbol = function->id;
 
             transaction([&, this] {
@@ -362,7 +362,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(baseClasses); ++i){
             model::PythonInheritancePtr inheritance(new model::PythonInheritance);
             inheritance->derived = cl->id;
-    //        inheritance->base = getPythonEntityIdByQualifiedName(boost::python::extract<std::string>(baseClasses[i]));
+            inheritance->base = getPythonEntity(boost::python::extract<std::string>(baseClasses[i]))->id;
 
             transaction([&, this] {
                 ctx.db->persist(inheritance);
@@ -383,7 +383,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(methods); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-    //        classMember->memberId = search for function declaration
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(methods[i]))->id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Method;
             classMember->staticMember = false;
@@ -396,7 +396,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(staticMethods); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-    //        classMember->memberId = search for function declaration
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticMethods[i]))->id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Method;
             classMember->staticMember = true;
@@ -409,7 +409,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(attributes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-    //        classMember->memberId = search for variable declaration
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(attributes[i]))->id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Attribute;
             classMember->staticMember = false;
@@ -422,7 +422,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(staticAttributes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-    //        classMember->memberId = search for variable declaration
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticAttributes[i]))->id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Attribute;
             classMember->staticMember = true;
@@ -435,7 +435,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(classes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-    //        classMember->memberId = search for class declaration
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(classes[i]))->id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Class;
             classMember->staticMember = false;
@@ -491,7 +491,7 @@ void Persistence::persistImport(boost::python::object pyImport)
             model::PythonImportPtr moduleImport(new model::PythonImport);
             moduleImport->importer = file;
             moduleImport->imported = moduleFile;
-//            moduleImport->importedSymbol = getPythonEntity(boost::python::extract<std::string>(import[1]));
+            moduleImport->importedSymbol = getPythonEntity(boost::python::extract<std::string>(import[1]))->id;
 
             transaction([&, this] {
                 ctx.db->persist(moduleImport);
@@ -536,32 +536,13 @@ boost::optional<model::FileLoc> Persistence::createFileLocFromPythonFilePosition
     return fileLoc;
 }
 
-model::PythonEntity* Persistence::getPythonEntity(const std::string& qualifiedName, const model::FileLoc& fileLoc)
+model::PythonEntity* Persistence::getPythonEntity(const std::string& qualifiedName)
 {
-    using odb::query<model::PythonAstNode> AstQuery;
-    using odb::result<model::PythonAstNode> AstResult;
     using odb::query<model::PythonEntity> EntityQuery;
     using odb::result<model::PythonEntity> EntityResult;
 
-    const model::Position& start = astNode_.location.range.start;
-    const model::Position& end = astNode_.location.range.end;
-
-    AstResult astNode = ctx.db->query<model::PythonAstNode>(
-            AstQuery::location.file == astNode_.location.file.object_id() &&
-            // StartPos == Pos
-            (AstQuery::location.range.start.line == start.line &&
-            AstQuery::location.range.start.column == start.column) &&
-            // Pos == EndPos
-            (AstQuery::location.range.end.line == end.line &&
-            AstQuery::location.range.end.column == end.column));
-
-    if (astNode.empty()){
-        return nullptr;
-    }
-
     EntityResult entity = ctx.db->query<model::PythonEntity>(
-            EntityQuery::qualifiedName == qualifiedName &&
-            EntityQuery::astNodeId == astNode.begin()->id);
+            EntityQuery::qualifiedName == qualifiedName);
 
     if (entity.empty()){
         return nullptr;

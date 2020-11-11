@@ -134,6 +134,11 @@ inline std::uint64_t createIdentifier(const PythonAstNode& astNode_)
     return util::fnvHash(res);
 }
 
+inline std::uint64_t createAstNodeInfoEntityHash(const PythonAstNode& astNode_)
+{
+    return util::fnvHash(astNode_.qualifiedName);
+}
+
 #pragma db view \
   object(PythonAstNode) object(File = LocFile : PythonAstNode::location.file) \
   query ((?) + "GROUP BY" + LocFile::id + "ORDER BY" + LocFile::id)
