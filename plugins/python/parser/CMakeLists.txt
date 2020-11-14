@@ -10,8 +10,7 @@ include_directories(
         ${PLUGIN_DIR}/model/include)
 
 add_library(pythonparser SHARED
-        src/pythonparser.cpp
-        src/a/asdf.py)
+        src/pythonparser.cpp)
 
 find_package (Python)
 

@@ -36,6 +36,7 @@
 #include <model/pythontype-odb.hxx>
 #include <model/pythonvariable.h>
 #include <model/pythonvariable-odb.hxx>
+#include <model/pythonentity-odb.hxx>
 
 namespace cc {
 namespace parser{
@@ -57,7 +58,7 @@ public:
 
 private:
     boost::optional<model::FileLoc> createFileLocFromPythonFilePosition(boost::python::object filePosition);
-    model::PythonEntity* getPythonEntity(const std::string& qualifiedName);
+    boost::optional<model::PythonEntity> getPythonEntity(const std::string& qualifiedName);
 };
 
 void Persistence::persistFile(boost::python::object pyFile)
@@ -165,7 +166,7 @@ void Persistence::persistVariable(boost::python::object pyVariable)
 
         for(int i = 0; i<boost::python::len(types); ++i) {
             model::PythonTypePtr type(new model::PythonType);
-            type->type = getPythonEntity(boost::python::extract<std::string>(types[i]))->id;
+            type->type = getPythonEntity(boost::python::extract<std::string>(types[i])).get().id;
             type->symbol = variable->id;
 
             transaction([&, this] {
@@ -254,7 +255,7 @@ void Persistence::persistFunction(boost::python::object pyFunction)
 
         for(int i = 0; i<boost::python::len(types); ++i) {
             model::PythonTypePtr type(new model::PythonType);
-            type->type = getPythonEntity(boost::python::extract<std::string>(types[i]))->id;
+            type->type = getPythonEntity(boost::python::extract<std::string>(types[i])).get().id;
             type->symbol = function->id;
 
             transaction([&, this] {
@@ -327,7 +328,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         cl->qualifiedName = boost::python::extract<std::string>(qualifiedName);
         cl->visibility = boost::python::extract<std::string>(visibility);
 
-        cl->id = model::creatIdentifier(*cl);
+        cl->id = model::createIdentifier(*cl);
 
         transaction([&, this] {
             ctx.db->persist(cl);
@@ -362,7 +363,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(baseClasses); ++i){
             model::PythonInheritancePtr inheritance(new model::PythonInheritance);
             inheritance->derived = cl->id;
-            inheritance->base = getPythonEntity(boost::python::extract<std::string>(baseClasses[i]))->id;
+            inheritance->base = getPythonEntity(boost::python::extract<std::string>(baseClasses[i])).get().id;
 
             transaction([&, this] {
                 ctx.db->persist(inheritance);
@@ -383,7 +384,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(methods); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(methods[i]))->id;
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(methods[i])).get().id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Method;
             classMember->staticMember = false;
@@ -396,7 +397,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(staticMethods); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticMethods[i]))->id;
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticMethods[i])).get().id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Method;
             classMember->staticMember = true;
@@ -409,7 +410,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(attributes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(attributes[i]))->id;
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(attributes[i])).get().id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Attribute;
             classMember->staticMember = false;
@@ -422,7 +423,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(staticAttributes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticAttributes[i]))->id;
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(staticAttributes[i])).get().id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Attribute;
             classMember->staticMember = true;
@@ -435,7 +436,7 @@ void Persistence::persistClass(boost::python::object pyClass)
         for(int i = 0; i<boost::python::len(classes); ++i){
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             classMember->astNodeId = classAstNode->id;
-            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(classes[i]))->id;
+            classMember->memberId = getPythonEntity(boost::python::extract<std::string>(classes[i])).get().id;
             classMember->classId = cl->id;
             classMember->kind = model::PythonClassMember::Class;
             classMember->staticMember = false;
@@ -468,15 +469,30 @@ void Persistence::persistImport(boost::python::object pyImport)
         util::OdbTransaction transaction{ctx.db};
 
         for (int i = 0; i < boost::python::len(importedModules); ++i) {
-            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(importedModules[i]));
-            if (moduleFile == nullptr) {
+            boost::python::object importData = importedModules[i];
+
+            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(importData.attr("imported")));
+            boost::optional<model::FileLoc> fileLoc = createFileLocFromPythonFilePosition(importData.attr("position"));
+
+            if (moduleFile == nullptr || fileLoc == boost::none) {
                 continue;
             }
+
+            model::PythonAstNodePtr moduleAstNode(new model::PythonAstNode);
+            moduleAstNode->location = fileLoc.get();
+            moduleAstNode->qualifiedName = "";
+            moduleAstNode->symbolType = model::PythonAstNode::SymbolType::Module;
+            moduleAstNode->astType = model::PythonAstNode::AstType::Declaration;
+
+            moduleAstNode->id = model::createIdentifier(*moduleAstNode);
+
             model::PythonImportPtr moduleImport(new model::PythonImport);
+            moduleImport->astNodeId = moduleAstNode->id;
             moduleImport->importer = file;
             moduleImport->imported = moduleFile;
 
             transaction([&, this] {
+                ctx.db->persist(moduleAstNode);
                 ctx.db->persist(moduleImport);
             });
         }
@@ -484,17 +500,38 @@ void Persistence::persistImport(boost::python::object pyImport)
         boost::python::list importDict = importedSymbols.items();
         for (int i = 0; i < boost::python::len(importDict); ++i) {
             boost::python::tuple import = boost::python::extract<boost::python::tuple>(importDict[i]);
-            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(import[0]));
-            if (moduleFile == nullptr) {
+
+            boost::python::object importData = import[0];
+
+            model::FilePtr moduleFile = ctx.srcMgr.getFile(boost::python::extract<std::string>(importData.attr("imported")));
+            boost::optional<model::FileLoc> fileLoc = createFileLocFromPythonFilePosition(importData.attr("position"));
+
+            if (moduleFile == nullptr || fileLoc == boost::none) {
                 continue;
             }
-            model::PythonImportPtr moduleImport(new model::PythonImport);
-            moduleImport->importer = file;
-            moduleImport->imported = moduleFile;
-            moduleImport->importedSymbol = getPythonEntity(boost::python::extract<std::string>(import[1]))->id;
+
+            model::PythonAstNodePtr moduleAstNode(new model::PythonAstNode);
+            moduleAstNode->location = fileLoc.get();
+            moduleAstNode->qualifiedName = "";
+            moduleAstNode->symbolType = model::PythonAstNode::SymbolType::Module;
+            moduleAstNode->astType = model::PythonAstNode::AstType::Declaration;
+
+            moduleAstNode->id = model::createIdentifier(*moduleAstNode);
+
+            for (int j = 0; j < boost::python::len(import[1]); ++j){
+                model::PythonImportPtr moduleImport(new model::PythonImport);
+                moduleImport->astNodeId = moduleAstNode->id;
+                moduleImport->importer = file;
+                moduleImport->imported = moduleFile;
+                moduleImport->importedSymbol = getPythonEntity(boost::python::extract<std::string>(import[1][j])).get().id;
+
+                transaction([&, this] {
+                    ctx.db->persist(moduleImport);
+                });
+            }
 
             transaction([&, this] {
-                ctx.db->persist(moduleImport);
+                ctx.db->persist(moduleAstNode);
             });
         }
     } catch(std::exception e){
@@ -536,19 +573,19 @@ boost::optional<model::FileLoc> Persistence::createFileLocFromPythonFilePosition
     return fileLoc;
 }
 
-model::PythonEntity* Persistence::getPythonEntity(const std::string& qualifiedName)
+boost::optional<model::PythonEntity> Persistence::getPythonEntity(const std::string& qualifiedName)
 {
-    using odb::query<model::PythonEntity> EntityQuery;
-    using odb::result<model::PythonEntity> EntityResult;
+    using EntityQuery = odb::query<model::PythonEntity>;
+    using EntityResult = odb::result<model::PythonEntity>;
 
     EntityResult entity = ctx.db->query<model::PythonEntity>(
             EntityQuery::qualifiedName == qualifiedName);
 
     if (entity.empty()){
-        return nullptr;
+        return boost::none;
     }
 
-    return entity.begin();
+    return *entity.begin();
 }
 
 typedef boost::shared_ptr<Persistence> PersistencePtr;

@@ -5,6 +5,8 @@
 
 #include <model/file.h>
 
+#include <model/pythonastnode.h>
+
 #include "pythonentity.h"
 
 namespace cc
@@ -17,6 +19,9 @@ struct PythonImport
 {
     #pragma db id auto
     int id;
+
+    #pragma db unique
+    PythonAstNodeId astNodeId;
 
     #pragma db not_null
     #pragma db on_delete(cascade)
