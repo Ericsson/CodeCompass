@@ -176,16 +176,17 @@ void PythonServiceHandler::getDocumentation(
     std::string& return_,
     const core::AstNodeId& astNodeId_)
 {
-    PythonEntity entity = queryPythonEntityByAstNode(astNodeId_);
+    model::PythonAstNode node = queryPythonAstNode(astNodeId_);
+    model::PythonEntity entity = queryPythonEntityByAstNode(node.id);
 
     DocResult doc = _db->query<model::PythonDocumentation>(
             DocQuery::documented == entity.id);
 
     if (doc.empty()){
-        return std::string();
+        return_ = std::string();
+    } else {
+        return_ = doc.begin()->documentation;
     }
-
-    return_ = doc.begin()->documentation;
 }
 
 void PythonServiceHandler::getProperties(
@@ -1039,7 +1040,7 @@ model::PythonEntity PythonServiceHandler::queryPythonEntity(const model::PythonE
     return *entities.begin();
 }
 
-model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const model::AstNodeId& id)
+model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const model::PythonAstNodeId& id)
 {
     EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::astNodeId == id);
     return *entities.begin();
@@ -1053,10 +1054,10 @@ std::map<model::PythonAstNodeId, std::string> PythonServiceHandler::getVisibilit
     for (const model::PythonAstNode& node : nodes_)
     {
         switch(node.symbolType){
-            case mode::PythonAstNode::SymbolType::Variable:
-            case mode::PythonAstNode::SymbolType::Function:
-            case mode::PythonAstNode::SymbolType::Class:
-                model::PythonEntity entity = queryPythonEntity(node);
+            case model::PythonAstNode::SymbolType::Variable:
+            case model::PythonAstNode::SymbolType::Function:
+            case model::PythonAstNode::SymbolType::Class:
+                model::PythonEntity entity = queryPythonEntityByAstNode(node.id);
                 visibilities[node.id] = entity.visibility;
                 break;
         }

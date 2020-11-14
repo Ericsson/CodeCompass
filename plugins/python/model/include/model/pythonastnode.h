@@ -116,17 +116,17 @@ inline std::uint64_t createIdentifier(const PythonAstNode& astNode_)
 
     res
         .append(astNode_.astValue).append(":")
-        .append(std::to_string(astNode_.qualifiedName)).append(":")
+        .append(astNode_.qualifiedName).append(":")
         .append(std::to_string(static_cast<SymbolTypeInt>(astNode_.symbolType))).append(":")
         .append(std::to_string(static_cast<AstTypeInt>(astNode_.astType))).append(":");
 
-    if (astNode_.location.file != nullptr){
+    if (astNode_.location.file){
         res
             .append(std::to_string(astNode_.location.file->id)).append(":")
-            .append(std::to_string(astNode_.location.file->range.start.line)).append(":")
-            .append(std::to_string(astNode_.location.file->range.start.column)).append(":")
-            .append(std::to_string(astNode_.location.file->range.end.line)).append(":")
-            .append(std::to_string(astNode_.location.file->range.end.column)).append(":");
+            .append(std::to_string(astNode_.location.range.start.line)).append(":")
+            .append(std::to_string(astNode_.location.range.start.column)).append(":")
+            .append(std::to_string(astNode_.location.range.end.line)).append(":")
+            .append(std::to_string(astNode_.location.range.end.column)).append(":");
     } else {
         res.append("null");
     }

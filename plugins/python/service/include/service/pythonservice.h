@@ -233,7 +233,7 @@ private:
 
     model::PythonEntity queryPythonEntity(const model::PythonEntityId& id);
 
-    model::PythonEntity queryPythonEntityByAstNode(const model::AstNodeId& id);
+    model::PythonEntity queryPythonEntityByAstNode(const model::PythonAstNodeId& id);
 
     std::map<model::PythonAstNodeId, std::string> getVisibilities(const std::vector<model::PythonAstNode>& nodes_);
 
