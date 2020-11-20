@@ -415,6 +415,21 @@ std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
       fileNameToVertex.erase(path);
     }
 
+    /* Circular dependencies in the parsed code would cause
+     * this loop to be infinite. If no files were put in
+     * the current cleanup level, there is probably a
+     * circular dependency somewhere. The rest of the
+     * to-be-cleaned up files can be put in an additional level.
+     */
+    if (order[index].size() == 0)
+    {
+      for (const auto& item : fileNameToVertex)
+      {
+        order[index].push_back(item.first);
+      }
+      fileNameToVertex.clear();
+    }
+
     ++index;
   }
   LOG(debug) << "[cppparser] Topology has " << index << " levels.";
