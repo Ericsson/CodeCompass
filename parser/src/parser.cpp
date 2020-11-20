@@ -373,6 +373,11 @@ int main(int argc, char* argv[])
     LOG(info) << "The number of changed files exceeds the given incremental "
                  "threshold ratio, full parse will be forced.";
     vm.insert(std::make_pair("force", po::variable_value()));
+
+    cc::util::removeTables(db, SQL_DIR);
+    cc::util::createTables(db, SQL_DIR);
+
+    srcMgr.cacheFiles();
   }
 
   if (!vm.count("force"))
