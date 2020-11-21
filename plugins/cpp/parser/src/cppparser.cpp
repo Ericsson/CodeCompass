@@ -427,7 +427,10 @@ std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
       {
         order[index].push_back(item.first);
       }
+      
       fileNameToVertex.clear();
+
+      LOG(debug) << "[cppparser] Circular dependency detected.";
     }
 
     ++index;
