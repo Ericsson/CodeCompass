@@ -680,6 +680,8 @@ bool CppParser::cleanupWorker(const std::string& path_)
 
 bool CppParser::parse()
 {
+  return true;
+  
   initBuildActions();
   VisitorActionFactory::init(_ctx);
 
