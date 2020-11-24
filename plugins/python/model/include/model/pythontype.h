@@ -16,6 +16,14 @@ struct PythonType
 
     PythonEntityId type;
     PythonEntityId symbol;
+
+    std::string toString() const
+    {
+        return std::string("PythonType")
+                .append("\nid = ").append(std::to_string(id))
+                .append("\ntype = ").append(std::to_string(type))
+                .append("\nsymbol = ").append(std::to_string(symbol));
+    }
 };
 
 typedef std::shared_ptr<PythonType> PythonTypePtr;

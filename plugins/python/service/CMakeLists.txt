@@ -11,7 +11,8 @@ include_directories(SYSTEM
         ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_library(pythonservice SHARED
-        src/pythonservice.cpp)
+        src/pythonservice.cpp
+        src/plugin.cpp)
 
 target_compile_options(pythonservice PUBLIC -Wno-unknown-pragmas)
 

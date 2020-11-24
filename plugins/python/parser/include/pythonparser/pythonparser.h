@@ -7,22 +7,23 @@
 
 namespace cc
 {
-    namespace parser
-    {
+namespace parser
+{
 
-        class PythonParser : public AbstractParser {
-        public:
-            PythonParser(ParserContext &ctx_);
+class PythonParser : public AbstractParser {
+public:
+    PythonParser(ParserContext &ctx_);
 
-            virtual ~PythonParser();
+    virtual ~PythonParser();
 
-            virtual void markModifiedFiles() override;
+    virtual void markModifiedFiles() override;
 
-            virtual bool cleanupDatabase() override;
+    virtual bool cleanupDatabase() override;
 
-            virtual bool parse() override;
-        };
-    } // parser
+    virtual bool parse() override;
+};
+
+} // parser
 } // cc
 
 #endif //CODECOMPASS_PYTHONPARSER_H
