@@ -20,11 +20,11 @@ extern "C"
   {
     namespace po = boost::program_options;
 
-    po::options_description description("Dummy Plugin");
+    po::options_description description("Java Plugin");
 
     description.add_options()
-      ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
-        "This value will be returned by the dummy service.");
+      ("java-result", po::value<std::string>()->default_value("Java result"),
+        "This value will be returned by the java service.");
 
     return description;
   }
@@ -36,8 +36,8 @@ extern "C"
     cc::webserver::registerPluginSimple(
       context_,
       pluginHandler_,
-      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Dummy, dummy),
-      "DummyService");
+      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Java, java),
+      "JavaService");
   }
 }
 #pragma clang diagnostic pop

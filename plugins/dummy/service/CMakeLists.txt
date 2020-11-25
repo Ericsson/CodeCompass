@@ -33,7 +33,7 @@ add_library(dummythrift STATIC
 target_compile_options(dummythrift PUBLIC -fPIC)
 
 add_library(dummyservice SHARED
-  src/dummyservice.cpp
+        src/javaservice.cpp
   src/plugin.cpp)
 
 target_compile_options(dummyservice PUBLIC -Wno-unknown-pragmas)

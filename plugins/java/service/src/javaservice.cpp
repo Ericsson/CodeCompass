@@ -1,14 +1,14 @@
-#include <service/dummyservice.h>
+#include <service/javaservice.h>
 #include <util/dbutil.h>
 
 namespace cc
 {
 namespace service
 {
-namespace dummy
+namespace java
 {
 
-DummyServiceHandler::DummyServiceHandler(
+JavaServiceHandler::JavaServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> /*datadir_*/,
   const cc::webserver::ServerContext& context_)
@@ -16,11 +16,11 @@ DummyServiceHandler::DummyServiceHandler(
 {
 }
 
-void DummyServiceHandler::getDummyString(std::string& str_)
+void JavaServiceHandler::getJavaString(std::string& str_)
 {
-  str_ = _config["dummy-result"].as<std::string>();
+  str_ = _config["java-result"].as<std::string>();
 }
 
-} // dummy
+} // java
 } // service
 } // cc
