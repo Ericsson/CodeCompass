@@ -378,6 +378,7 @@ int main(int argc, char* argv[])
     cc::util::createTables(db, SQL_DIR);
 
     srcMgr.cacheFiles();
+    ctx.fileStatus.clear();
   }
 
   if (!vm.count("force"))
