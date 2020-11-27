@@ -217,6 +217,8 @@ int main(int argc, char* argv[])
   const std::string PARSER_PLUGIN_DIR = compassRoot + "/lib/parserplugin";
   const std::string SQL_DIR = compassRoot + "/share/codecompass/sql";
 
+  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
+
   cc::util::initLogger();
 
   //--- Process command line arguments ---//
@@ -235,7 +237,6 @@ int main(int argc, char* argv[])
 
   //--- Load parsers ---//
 
-  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
   pHandler.loadPlugins(skipParserList);
 
   //--- Add arguments of parsers ---//
