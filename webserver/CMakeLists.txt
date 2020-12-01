@@ -1,5 +1,11 @@
 add_subdirectory(authenticators)
 
+find_package(PythonLibs REQUIRED)
+
+find_package (Python)
+
+include_directories(CodeCompass_webserver ${PYTHON_INCLUDE_DIRS})
+
 add_executable(CodeCompass_webserver
   src/webserver.cpp
   src/authentication.cpp
@@ -27,8 +33,11 @@ target_link_libraries(CodeCompass_webserver
   mongoose
   ${Boost_LIBRARIES}
   ${ODB_LIBRARIES}
+  ${PYTHON_LIBRARIES}
   pthread
   dl)
+
+target_link_options(CodeCompass_parser PUBLIC -Xlinker -export-dynamic)
 
 install(TARGETS CodeCompass_webserver
   RUNTIME DESTINATION ${INSTALL_BIN_DIR}

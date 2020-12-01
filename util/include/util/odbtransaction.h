@@ -176,7 +176,7 @@ void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
         << item->toString();
       LOG(warning)
         << ex.what() << std::endl
-        << "Further changes in this transaction will be ignored!";
+        << "Further changes in this transaction will be ignored! -> " << item->toString();
     }
     catch (const odb::database_exception& ex)
     {
@@ -190,7 +190,7 @@ void persistAll(Cont& cont_, std::shared_ptr<odb::database> db_)
       }
 #endif
 
-      LOG(error) << ex.what() << std::endl;
+      LOG(error) << ex.what() << " -> " << item->toString() << std::endl;
       throw;
     }
   }

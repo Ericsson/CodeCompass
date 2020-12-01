@@ -219,6 +219,8 @@ void Persistence::persistVariable(boost::python::object pyVariable)
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Variable;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
+            usageAstNode->id = model::createIdentifier(*usageAstNode);
+
             // transaction([&, this] {
             //     ctx.db->persist(usageAstNode);
             // });
@@ -227,15 +229,12 @@ void Persistence::persistVariable(boost::python::object pyVariable)
 
     } catch (const odb::object_already_persistent& ex)
     {
-        std::cout << "Var exception already persistent:" << std::endl;
-        std::cout << ex.what() << std::endl;
+        std::cout << "Var exception already persistent: " << ex.what() << std::endl;
     } catch (const odb::database_exception& ex)
     {
-        std::cout << "Var exception db exception:" << std::endl;
-        std::cout << ex.what() << std::endl;
+        std::cout << "Var exception db exception: " << ex.what() << std::endl;
     } catch(std::exception ex){
-        std::cout << "Var exception:" << std::endl;
-        std::cout << ex.what() << std::endl;
+        std::cout << "Var exception: " << ex.what() << std::endl;
     }
 }
 
@@ -320,14 +319,15 @@ void Persistence::persistFunction(boost::python::object pyFunction)
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Function;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
+            usageAstNode->id = model::createIdentifier(*usageAstNode);
+
             // transaction([&, this] {
             //     ctx.db->persist(usageAstNode);
             // });
             _astNodes.push_back(usageAstNode);
         }
     } catch(std::exception e){
-        std::cout << "Func exception:" << std::endl;
-        std::cout << e.what() << std::endl;
+        std::cout << "Func exception:" << e.what() << std::endl;
     }
 }
 
@@ -402,6 +402,8 @@ void Persistence::persistClass(boost::python::object pyClass)
             usageAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Class;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
+
+            usageAstNode->id = model::createIdentifier(*usageAstNode);
 
             // transaction([&, this] {
             //     ctx.db->persist(usageAstNode);
@@ -501,8 +503,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             _members.push_back(classMember);
         }
     } catch(std::exception e){
-        std::cout << "Class exception:" << std::endl;
-        std::cout << e.what() << std::endl;
+        std::cout << "Class exception:" << e.what() << std::endl;
     }
 }
 
@@ -580,6 +581,7 @@ void Persistence::persistImport(boost::python::object pyImport)
                 moduleImport->astNodeId = moduleAstNode->id;
                 moduleImport->importer = file;
                 moduleImport->imported = moduleFile;
+                print(boost::python::extract<std::string>(import[1][j]));
                 moduleImport->importedSymbol = getPythonEntity(boost::python::extract<std::string>(import[1][j])).get().id;
 
                 // transaction([&, this] {
@@ -594,8 +596,7 @@ void Persistence::persistImport(boost::python::object pyImport)
             _astNodes.push_back(moduleAstNode);
         }
     } catch(std::exception e){
-        std::cout << "Import exception:" << std::endl;
-        std::cout << e.what() << std::endl;
+        std::cout << "Import exception:" << e.what() << std::endl;
     }
 }
 
@@ -635,6 +636,7 @@ boost::optional<model::FileLoc> Persistence::createFileLocFromPythonFilePosition
 
 boost::optional<model::PythonEntity> Persistence::getPythonEntity(const std::string& qualifiedName)
 {
+    print("qualified name: " + qualifiedName);
     auto varIt = std::find_if(_variables.begin(), _variables.end(), [&](const auto& var){ return var->qualifiedName == qualifiedName; });
     if (varIt != _variables.end()){
         return **varIt;
