@@ -1,10 +1,15 @@
+find_package(PythonLibs REQUIRED)
+
+find_package (Python)
+
 include_directories(
   ${PLUGIN_DIR}/model/include
   ${PLUGIN_DIR}/service/include
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
-  ${PROJECT_SOURCE_DIR}/util/include)
+  ${PROJECT_SOURCE_DIR}/util/include
+  ${PYTHON_INCLUDE_DIRS})
 
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
@@ -19,8 +24,8 @@ add_executable(cppparsertest
   src/cpptest.cpp
   src/cppparsertest.cpp)
 
-target_compile_options(cppservicetest PUBLIC -Wno-unknown-pragmas)
-target_compile_options(cppparsertest PUBLIC -Wno-unknown-pragmas)
+target_compile_options(cppservicetest PUBLIC -Wno-unknown-pragmas -Xlinker -export-dynamic)
+target_compile_options(cppparsertest PUBLIC -Wno-unknown-pragmas -Xlinker -export-dynamic)
 
 target_link_libraries(cppservicetest
   util
@@ -28,6 +33,7 @@ target_link_libraries(cppservicetest
   cppmodel
   cppservice
   ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
   ${GTEST_BOTH_LIBRARIES}
   pthread)
 
@@ -36,6 +42,7 @@ target_link_libraries(cppparsertest
   model
   cppmodel
   ${Boost_LIBRARIES}
+  ${PYTHON_LIBRARIES}
   ${GTEST_BOTH_LIBRARIES}
   pthread)
 
