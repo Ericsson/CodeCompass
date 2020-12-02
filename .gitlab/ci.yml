@@ -107,6 +107,8 @@ tarball ubuntu-16.04:
         - apt-get install -yqq curl wget bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
+        # build tools for ctags
+        - apt-get install -yqq dh-autoreconf pkg-config
         # build tools for ccdb-tools
         - apt-get install -yqq libffi-dev
         # show GLIBC verison

@@ -292,12 +292,14 @@ rm -f $PACKAGES_DIR/libgit2-1.1.0.tar.gz
 #########
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber http://prdownloads.sourceforge.net/ctags/ctags-5.8.tar.gz
-tar -xf ctags-5.8.tar.gz
-cd ctags-5.8
+wget --no-verbose --no-clobber https://github.com/universal-ctags/ctags/archive/p5.9.20201129.0.tar.gz \
+  -O ctags-p5.9.20201129.0.tar.gz
+tar -xf ctags-p5.9.20201129.0.tar.gz
+cd ctags-p5.9.20201129.0
+./autogen.sh
 ./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/ctags-install
 make install --quiet --jobs $(nproc)
-rm -f $PACKAGES_DIR/ctags-5.8.tar.gz
+rm -f $PACKAGES_DIR/ctags-p5.9.20201129.0.tar.gz
 
 #########
 # Boost #
