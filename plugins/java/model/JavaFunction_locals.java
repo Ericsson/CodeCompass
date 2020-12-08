@@ -1,32 +1,28 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="\"JavaFunction_locals\"")
 public class JavaFunction_locals {
-    @Column(name = "object_id")
-    private int object_id;
+    @JoinColumn(name = "object_id")
+    @OneToOne
+    private JavaFunction object_id;
 
     @Column(name = "index")
     private int index;
 
-    @Column(name = "value")
-    private int value;
-
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
+    @JoinColumn(name = "value")
+    @OneToOne
+    private JavaVariable value;
 
     // Getters and setters
 
-    public int getObject_id() {
+    public JavaFunction getObject_id() {
         return object_id;
     }
 
-    public void setObject_id(int object_id) {
+    public void setObject_id(JavaFunction object_id) {
         this.object_id = object_id;
     }
 
@@ -38,19 +34,11 @@ public class JavaFunction_locals {
         this.index = index;
     }
 
-    public int getValue() {
+    public JavaVariable getValue() {
         return value;
     }
 
-    public void setValue(int value) {
+    public void setValue(JavaVariable value) {
         this.value = value;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

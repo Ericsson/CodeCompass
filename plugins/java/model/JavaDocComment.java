@@ -12,10 +12,6 @@ public class JavaDocComment {
     @Column(name = "id")
     private int id;
 
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
-
     @Column(name = "\"contentHash\"")
     private int contentHash;
 
@@ -57,13 +53,5 @@ public class JavaDocComment {
 
     public void setMangledNameHash(int mangledNameHash) {
         this.mangledNameHash = mangledNameHash;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

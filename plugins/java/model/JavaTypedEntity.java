@@ -2,35 +2,23 @@ package model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.Inheritance;
 import javax.persistence.Table;
+
+import static javax.persistence.InheritanceType.JOINED;
 
 @Entity
 @Table(name="\"JavaTypedEntity\"")
-public class JavaTypedEntity {
-    @Id
-    @Column(name = "id")
-    private int id;
-
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
-
+@Inheritance(strategy = JOINED)
+public class JavaTypedEntity extends JavaEntity {
     @Column(name = "\"typeHash\"")
     private int typeHash;
 
     @Column(name = "\"qualifiedType\"")
     private String qualifiedType;
 
+
     // Getters and setters
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public int getTypeHash() {
         return typeHash;
@@ -46,13 +34,5 @@ public class JavaTypedEntity {
 
     public void setQualifiedType(String qualifiedType) {
         this.qualifiedType = qualifiedType;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

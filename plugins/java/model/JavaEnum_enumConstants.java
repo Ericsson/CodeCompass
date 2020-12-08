@@ -1,32 +1,28 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="\"JavaEnum_enumConstant\"")
 public class JavaEnum_enumConstants {
-    @Column(name = "object_id")
-    private int object_id;
+    @JoinColumn(name = "object_id")
+    @OneToOne
+    private JavaEnum object_id;
 
     @Column(name = "index")
     private int index;
 
-    @Column(name = "value")
-    private int value;
-
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
+    @JoinColumn(name = "value")
+    @OneToOne
+    private JavaEnumConstant value;
 
     // Getters and setters
 
-    public int getObject_id() {
+    public JavaEnum getObject_id() {
         return object_id;
     }
 
-    public void setObject_id(int object_id) {
+    public void setObject_id(JavaEnum object_id) {
         this.object_id = object_id;
     }
 
@@ -38,19 +34,11 @@ public class JavaEnum_enumConstants {
         this.index = index;
     }
 
-    public int getValue() {
+    public JavaEnumConstant getValue() {
         return value;
     }
 
-    public void setValue(int value) {
+    public void setValue(JavaEnumConstant value) {
         this.value = value;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

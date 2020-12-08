@@ -21,7 +21,6 @@ public class Parser {
                     String str_path = p.toString();
                     System.out.println(p);
                     parse_file(str_path, new String[]{path});
-                    System.out.println("----------------------------------------------------------------------------");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -30,7 +29,6 @@ public class Parser {
         } catch (IOException e){
             e.printStackTrace();
         }
-
     }
 
     private static void parse_file(String path, String[] sources) throws IOException {
@@ -50,48 +48,5 @@ public class Parser {
 
         AstVisitor visitor = new AstVisitor(cu);
         cu.accept(visitor);
-
-        for (PositionInfo w : visitor.getWhileInfo()) {
-
-            System.out.println("----------------------------------------------------------------------------");
-
-        }
-
-        /*
-        System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Package information:");
-
-        for (PackageDeclaration p : visitor.getPackageDeclarations()) {
-            System.out.println("Package name: " + p.getName());
-        }
-
-        System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Single member annotations:");
-
-        for (SingleMemberAnnotation a : visitor.getSingleMemberAnnotations()) {
-            System.out.println("Annotation values: " + a.getValue());
-        }
-
-        System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Method declarations:");
-
-        for (MethodDeclaration m : visitor.getMethodDeclarations()) {
-            System.out.println("Method name: " + m.getName() + ", Return type: " + m.getReturnType2() + ", Parameters: " + m.parameters());
-        }
-
-        System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Method invocations:");
-
-        for (MethodInvocation m : visitor.getMethodInvocations()) {
-            System.out.println("Method name: " + m.getName() + ", Arguments: " + m.arguments() + ", Expression: " + m.getExpression());
-        }
-
-        System.out.println("----------------------------------------------------------------------------");
-        System.out.println("String literals:");
-
-        for (StringLiteral s : visitor.getStringLiterals()) {
-            System.out.println("Literal value: " + s.getLiteralValue() + " Escaped value: " + s.getEscapedValue());
-        }
-        */
     }
 }

@@ -1,20 +1,17 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+
+import static javax.persistence.InheritanceType.JOINED;
 
 @Entity
 @Table(name = "\"JavaEntity\"")
+@Inheritance(strategy = JOINED)
 public class JavaEntity {
     @Id
+    @GeneratedValue
     @Column(name = "id")
     private int id;
-
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
 
     @Column(name = "\"typeId\"")
     private int typeId;
@@ -30,6 +27,7 @@ public class JavaEntity {
 
     @Column(name = "\"qualifiedName\"")
     private String qualifiedName;
+
 
     // Getters and setters
 
@@ -79,13 +77,5 @@ public class JavaEntity {
 
     public void setQualifiedName(String qualifiedName) {
         this.qualifiedName = qualifiedName;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

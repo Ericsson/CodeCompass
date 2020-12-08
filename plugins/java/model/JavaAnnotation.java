@@ -4,15 +4,11 @@ import javax.persistence.*;
 
 @Entity
 @Table(name="\"JavaAnnotation\"")
-public class JavaAnnotation {
+public class JavaAnnotation extends JavaEntity {
     @Id
     @GeneratedValue
     @Column(name = "id")
     private int id;
-
-    @JoinColumn(name="\"astNode\"")
-	@ManyToOne
-	JavaAstNode astNode;
 
     // Getters and setters
 
@@ -22,13 +18,5 @@ public class JavaAnnotation {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-    
-	public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }

@@ -12,10 +12,6 @@ public class JavaImport {
     @Column(name = "id")
     private int id;
 
-    @JoinColumn(name="\"astNode\"")
-    @ManyToOne
-    JavaAstNode astNode;
-
     @Column(name = "imported")
     private int imported;
 
@@ -35,13 +31,5 @@ public class JavaImport {
 
     public void setImported(int imported) {
         this.imported = imported;
-    }
-
-    public JavaAstNode getAstNode() {
-        return astNode;
-    }
-
-    public void setAstNode(JavaAstNode astNode) {
-        this.astNode = astNode;
     }
 }
