@@ -1,0 +1,142 @@
+name: Build project
+
+on: [push]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        db: [postgresql, sqlite3]
+        os: [ubuntu-20.04, ubuntu-18.04]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Update apt-get
+        run: sudo apt-get update
+
+      - name: Install required packages Ubuntu 20
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        run: sudo apt-get install -y git cmake make g++ libboost-all-dev llvm-10-dev clang-10 libclang-10-dev odb libodb-dev thrift-compiler libthrift-dev default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags libgtest-dev npm
+
+      - name: Install required packages Ubuntu 18
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run: sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libboost-all-dev llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags libgtest-dev npm
+
+      - name: Install Postgresql Ubuntu 20
+        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
+        run: sudo apt-get install libodb-pgsql-dev postgresql-server-dev-12
+
+      - name: Install Postgresql Ubuntu 18
+        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
+        run: sudo apt-get install postgresql-server-dev-10
+
+      - name: Install SQLite3 Ubuntu 20
+        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'sqlite3' }}
+        run: sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+
+      - name: Install SQLite3 Ubuntu 18
+        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'sqlite3' }}
+        run: sudo apt-get install libsqlite3-dev
+
+      - name: Install Thrift
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run: |
+          cd $HOME
+          wget -O thrift-0.13.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz"
+          tar -xvf ./thrift-0.13.0.tar.gz
+          cd thrift-0.13.0
+          ./configure --prefix=$HOME/thrift_install --without-python --enable-libtool-lock --enable-tutorial=no --enable-tests=no --with-libevent --with-zlib --without-nodejs --without-lua --without-ruby --without-csharp --without-erlang --without-perl --without-php --without-php_extension --without-dart --without-haskell --without-go --without-rs --without-haxe --without-dotnetcore --without-d --without-qt4 --without-qt5 --without-java --without-swift
+          make install -j $(nproc)
+          echo "CMAKE_PREFIX_PATH=$HOME/thrift_install:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/thrift_install/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install ODB
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run: |
+          cd $HOME
+          mkdir /tmp/build2src
+          cd /tmp/build2src
+          curl -sSfO https://download.build2.org/0.13.0/build2-install-0.13.0.sh
+          sh build2-install-0.13.0.sh --yes --trust yes "$HOME/build2_install/"
+          export PATH=$PATH:$HOME/build2_install/bin/
+          mkdir /tmp/odb_build
+          cd /tmp/odb_build
+          bpkg create --quiet --jobs $(nproc) cc config.cxx=g++ config.cc.coptions=-O3 config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" config.install.sudo=sudo
+          bpkg add https://pkg.cppget.org/1/beta --trust-yes
+          bpkg fetch --trust-yes
+          bpkg build odb --yes
+          bpkg build libodb --yes
+          bpkg build libodb-sqlite --yes
+          bpkg build libodb-pgsql --yes
+          bpkg install --all --recursive
+          echo "CMAKE_PREFIX_PATH=$HOME/odb_install:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "PATH=$HOME/odb_install/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install GoogleTest
+        run: |
+          echo $PATH
+          cd $HOME
+          mkdir gtest
+          cp -R /usr/src/googletest/* ./gtest
+
+          cd gtest
+          mkdir build
+          cd build
+
+          cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/gtest-install
+          make install -j $(nproc)
+          echo "GTEST_ROOT=$HOME/gtest-install" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        working-directory: ${{github.workspace}}
+        run: cmake -E make_directory ${{github.workspace}}/build
+
+      - name: Run CMake (Postgresql)
+        if: ${{ matrix.db == 'postgresql' }}
+        working-directory: ${{github.workspace}}/build
+        run: cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install -DDATABASE=pgsql -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/lib/llvm-10/cmake -DClang_DIR=/usr/lib/cmake/clang-10 -DTEST_DB="pgsql:host=localhost;username=postgres;password=postgres;port=5432;database=cc_test"
+
+      - name: Run CMake (SQLite3)
+        if: ${{ matrix.db == 'sqlite3' }}
+        working-directory: ${{github.workspace}}/build
+        run: cmake .. -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install -DDATABASE=sqlite -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DLLVM_DIR=/usr/lib/llvm-10/cmake -DClang_DIR=/usr/lib/cmake/clang-10 -DTEST_DB="sqlite:database=$HOME/mydatabase.sqlite"
+
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        run: make -j $(nproc)
+
+      - name: Install
+        working-directory: ${{github.workspace}}/build
+        run: make install
+
+      - name: Run tests
+        working-directory: ${{github.workspace}}/build
+        run: make test ARGS=-V
+
+
