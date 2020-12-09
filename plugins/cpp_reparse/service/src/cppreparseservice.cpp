@@ -106,7 +106,8 @@ void CppReparseServiceHandler::getAsHTMLForNode(
   _transaction([&, this](){
     astNode = _db->query_one<model::CppAstNode>(
       AstQuery::id == std::stoull(nodeId_));
-    astNode->location.file.load();
+    if(astNode)
+      astNode->location.file.load();
   });
 
   if (!astNode)
