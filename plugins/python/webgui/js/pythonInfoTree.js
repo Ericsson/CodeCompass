@@ -6,11 +6,10 @@ function (model, viewHandler, util){
   model.addService('pythonservice', 'PythonService', LanguageServiceClient);
 
   function createLabel(astNodeInfo) {
-    var labelValue = astNodeInfo.astNodeValue;
-
-    var label = astNodeInfo.range.range.startpos.line + ':'
+    return '<span class="">'
+        + astNodeInfo.range.range.startpos.line + ':'
         + astNodeInfo.range.range.startpos.column + ': '
-        + labelValue
+        + astNodeInfo.astNodeValue
         + '</span>';
   }
 
@@ -79,8 +78,7 @@ function (model, viewHandler, util){
             : elementInfo.name)
         + '</span>';
 
-    var label = createTagLabels(elementInfo.tags)   // no tags in python
-        + '<span class="root label">'
+    var label = '<span class="root label">'
         + rootLabel + ': ' + rootValue
         + '</span>';
 
@@ -206,6 +204,7 @@ function (model, viewHandler, util){
   }
 
   var pythonInfoTree = {
+    id: 'python-info-tree',
     render : function (elementInfo){
       var ret = [];
 
@@ -217,7 +216,7 @@ function (model, viewHandler, util){
         for (var propertyName in properties) {
           var propertyId = propertyName.replace(/ /g, '-');
           var label =
-              '<span class="label">' + propertyName + '</span>' +
+              '<span class="label">' + propertyName + '</span>: ' +
               '<span class="value">' + properties[propertyName] +'</span>';
 
           ret.push({
