@@ -1,4 +1,5 @@
 #include <regex>
+#include <iostream>
 
 #include <service/pythonservice.h>
 
@@ -61,7 +62,9 @@ namespace
             ret.__set_entityHash(cc::model::createAstNodeInfoEntityHash(astNode_));
             ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
             ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
-            ret.__set_astNodeValue(astNode_.astValue);
+            std::size_t start = astNode_.qualifiedName.find_last_of(".") + 1;
+            std::size_t size = astNode_.qualifiedName.find_last_of(":") - start;
+            ret.__set_astNodeValue(astNode_.qualifiedName.substr(start, size));
 
             VisibilityMap::const_iterator it = _visibilities.find(astNode_.id);
             if (it != _visibilities.end()){
@@ -69,9 +72,9 @@ namespace
             }
 
             ret.range.range.startpos.line = astNode_.location.range.start.line;
-            ret.range.range.startpos.column = astNode_.location.range.start.column;
+            ret.range.range.startpos.column = astNode_.location.range.start.column+1;
             ret.range.range.endpos.line = astNode_.location.range.end.line;
-            ret.range.range.endpos.column = astNode_.location.range.end.column;
+            ret.range.range.endpos.column = astNode_.location.range.end.column+1;
 
             if (astNode_.location.file){
                 ret.range.file = std::to_string(astNode_.location.file.object_id());
@@ -125,21 +128,26 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
             AstQuery::location.file == std::stoull(fpos_.file) &&
             // StartPos <= Pos
             ((AstQuery::location.range.start.line == fpos_.pos.line &&
-              AstQuery::location.range.start.column <= fpos_.pos.column) ||
+              AstQuery::location.range.start.column <= fpos_.pos.column-1) ||
              AstQuery::location.range.start.line < fpos_.pos.line) &&
             // Pos < EndPos
             ((AstQuery::location.range.end.line == fpos_.pos.line &&
-              AstQuery::location.range.end.column > fpos_.pos.column) ||
+              AstQuery::location.range.end.column > fpos_.pos.column-1) ||
              AstQuery::location.range.end.line > fpos_.pos.line));
 
         //--- Select innermost clickable node ---//
+        std::cout << "pos: " << fpos_.pos.line << ", " << fpos_.pos.column << std::endl;
 
         model::Range minRange(model::Position(0, 0), model::Position());
         model::PythonAstNode min;
 
+        std::cout << "numlim: " << std::numeric_limits<std::uint64_t>::max() << std::endl;
+
+        int size = 0;
         for (const model::PythonAstNode& node : nodes)
         {
-            if (node.location.range < minRange)
+            std::cout << "node(" << ++size << "): " << node.id << "..." << (std::int64_t)node.id << std::endl;
+            if (!isGeneratedVariable(node) && node.location.range < minRange)
             {
                 min = node;
                 minRange = node.location.range;
@@ -147,8 +155,13 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
         }
 
         return_ = _transaction([this, &min](){
-            return CreateAstNodeInfo(getVisibilities({min}))(min);
+            std::cout << "astnodeinfobypos: 1" << std::endl;
+            if(min.astType == model::PythonAstNode::AstType::Declaration){
+                return CreateAstNodeInfo(getVisibilities({min}))(min);
+            }
+            return CreateAstNodeInfo(getVisibilities({}))(min);
         });
+        std::cout << "astnodeinfobypos: 2" << std::endl;
     });
 }
 
@@ -176,17 +189,19 @@ void PythonServiceHandler::getDocumentation(
     std::string& return_,
     const core::AstNodeId& astNodeId_)
 {
-    model::PythonAstNode node = queryPythonAstNode(astNodeId_);
-    model::PythonEntity entity = queryPythonEntityByAstNode(node.id);
+    _transaction([&, this](){
+        model::PythonAstNode node = queryPythonAstNode(astNodeId_);
+        model::PythonEntity entity = queryPythonEntityByAstNode(node.qualifiedName);
 
-    DocResult doc = _db->query<model::PythonDocumentation>(
-            DocQuery::documented == entity.id);
+        DocResult doc = _db->query<model::PythonDocumentation>(
+                DocQuery::documented == entity.id);
 
-    if (doc.empty()){
-        return_ = std::string();
-    } else {
-        return_ = doc.begin()->documentation;
-    }
+        if (doc.empty()){
+            return_ = std::string();
+        } else {
+            return_ = doc.begin()->documentation;
+        }
+    });
 }
 
 void PythonServiceHandler::getProperties(
@@ -201,7 +216,7 @@ void PythonServiceHandler::getProperties(
             case model::PythonAstNode::SymbolType::Variable:
             {
                 VarResult variables = _db->query<model::PythonVariable>(
-                        VarQuery::astNodeId == node.id);
+                        VarQuery::qualifiedName == node.qualifiedName);
                 model::PythonVariable variable = *variables.begin();
 
                 return_["Name"] = variable.name;
@@ -212,7 +227,7 @@ void PythonServiceHandler::getProperties(
             case model::PythonAstNode::SymbolType::Function:
             {
                 FuncResult functions = _db->query<model::PythonFunction>(
-                        FuncQuery::astNodeId == node.id);
+                        FuncQuery::qualifiedName == node.qualifiedName);
                 model::PythonFunction function = *functions.begin();
 
                 return_["Name"] = function.qualifiedName.substr(
@@ -226,7 +241,7 @@ void PythonServiceHandler::getProperties(
             case model::PythonAstNode::SymbolType::Class:
             {
                 ClassResult classes = _db->query<model::PythonClass>(
-                        ClassQuery::astNodeId == node.id);
+                        ClassQuery::qualifiedName == node.qualifiedName);
                 model::PythonClass cl = *classes.begin();
 
                 return_["Name"] = cl.name;
@@ -237,11 +252,12 @@ void PythonServiceHandler::getProperties(
 
             case model::PythonAstNode::SymbolType::Module:
             {
+                std::cout << "core: " << astNodeId_ << " ast: " << (int64_t)node.id << " q: " << node.qualifiedName << std::endl;
                 ModImpResult modules = _db->query<model::PythonImport>(
                         ModImpQuery::astNodeId == node.id);
                 model::PythonImport module = *modules.begin();
-
-                return_["From"] = module.imported->filename;
+                std::cout << "import ok " << std::endl;
+                return_["From"] = module.imported.load()->filename;
                 //return_["To"] = module.importer->filename;
                 //return_["Symbol"] = imported symbol
 
@@ -327,6 +343,7 @@ void PythonServiceHandler::getReferenceTypes(
             break;
 
         case model::PythonAstNode::SymbolType::Module:
+            return_["Imported symbols"]      = IMPORTED_SYMBOLS;
             break;
     }
 }
@@ -338,15 +355,14 @@ void PythonServiceHandler::getReferences(
     const std::vector<std::string>& /*tags_*/)
 {
     std::vector<model::PythonAstNode> nodes;
-    model::PythonAstNode node;
+    model::PythonAstNode node = queryPythonAstNode(astNodeId_);
 
     return _transaction([&, this](){
+        std::cout << "ref id: " << referenceId_ << std::endl;
         switch (referenceId_)
         {
             case DECLARATION:
-                nodes = queryPythonAstNodes(
-                        astNodeId_,
-                        AstQuery::astType == model::PythonAstNode::AstType::Declaration);
+                nodes = queryDeclarations(astNodeId_);
                 break;
 
             case USAGE:
@@ -408,8 +424,6 @@ void PythonServiceHandler::getReferences(
 
             case PARAMETER:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 FuncResult functions = _db->query<model::PythonFunction>(
                         FuncQuery::astNodeId == node.id);
                 model::PythonFunction function = *functions.begin();
@@ -424,8 +438,6 @@ void PythonServiceHandler::getReferences(
 
             case LOCAL_VAR:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 FuncResult functions = _db->query<model::PythonFunction>(
                         FuncQuery::astNodeId == node.id);
                 model::PythonFunction function = *functions.begin();
@@ -440,8 +452,6 @@ void PythonServiceHandler::getReferences(
 
             case RETURN_TYPE:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 FuncResult functions = _db->query<model::PythonFunction>(
                         FuncQuery::astNodeId == node.id);
                 model::PythonFunction function = *functions.begin();
@@ -460,10 +470,8 @@ void PythonServiceHandler::getReferences(
 
             case TYPE:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 VarResult varNodes = _db->query<cc::model::PythonVariable>(
-                        VarQuery::astNodeId == node.id);
+                        VarQuery::qualifiedName == node.qualifiedName);
 
                 const model::PythonVariable& variable = *varNodes.begin();
 
@@ -480,11 +488,12 @@ void PythonServiceHandler::getReferences(
             }
 
             case INHERIT_FROM:
-                node = queryPythonAstNode(astNodeId_);
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
 
                 for (const model::PythonInheritance& inh :
                         _db->query<model::PythonInheritance>(
-                                InhQuery::derived == node.id))
+                                InhQuery::derived == cl.id))
                 {
                     model::PythonEntity cl = _db->query_value<model::PythonEntity>(
                             EntityQuery::id == inh.base);
@@ -495,16 +504,18 @@ void PythonServiceHandler::getReferences(
                 }
 
                 break;
+            }
 
             case INHERIT_BY:
-                node = queryPythonAstNode(astNodeId_);
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
 
                 for (const model::PythonInheritance& inh :
                         _db->query<model::PythonInheritance>(
-                                InhQuery::base == node.id ))
+                                InhQuery::base == cl.id ))
                 {
                     model::PythonEntity cl = _db->query_value<model::PythonEntity>(
-                            EntityQuery::id == inh.base);
+                            EntityQuery::id == inh.derived);
                     AstResult result = _db->query<model::PythonAstNode>(
                             AstQuery::id == cl.astNodeId &&
                             AstQuery::astType == model::PythonAstNode::AstType::Declaration);
@@ -512,13 +523,14 @@ void PythonServiceHandler::getReferences(
                 }
 
                 break;
+            }
 
             case DATA_MEMBER:
             {
-                node = queryPythonAstNode(astNodeId_);
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
 
                 for (const model::PythonClassMember& mem : _db->query<model::PythonClassMember>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Attribute))
                 {
                     for (const model::PythonVariable& var : _db->query<model::PythonVariable>(
@@ -536,15 +548,18 @@ void PythonServiceHandler::getReferences(
 
             case METHOD:
             {
-                node = queryPythonAstNode(astNodeId_);
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
+                std::cout << "nodeid: " << astNodeId_ << "class: " << (std::int64_t)cl.id << std::endl;
 
                 for (const model::PythonClassMember& mem : _db->query<model::PythonClassMember>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Method))
                 {
+                    std::cout << "method: " << (std::int64_t)mem.memberId << std::endl;
                     for (const model::PythonFunction& func : _db->query<model::PythonFunction>(
                             FuncQuery::id == mem.memberId))
                     {
+                        std::cout << "func: " << func.qualifiedName << std::endl;
                         nodes.push_back(queryPythonAstNode(std::to_string(func.astNodeId)));
                     }
                 }
@@ -554,10 +569,10 @@ void PythonServiceHandler::getReferences(
 
             case NESTED_CLASS:
             {
-                node = queryPythonAstNode(astNodeId_);
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
 
                 for (const model::PythonClassMember& mem : _db->query<model::PythonClassMember>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Class))
                 {
                     for (const model::PythonClass& cl : _db->query<model::PythonClass>(
@@ -566,6 +581,24 @@ void PythonServiceHandler::getReferences(
                         nodes.push_back(queryPythonAstNode(std::to_string(cl.astNodeId)));
                     }
                 }
+
+                break;
+            }
+
+            case IMPORTED_SYMBOLS:
+            {
+                std::cout << "impast: " << (std::int64_t)node.id << std::endl;
+
+                for (const model::PythonImport& imp : _db->query<model::PythonImport>(
+                    ModImpQuery::astNodeId == node.id &&
+                    ModImpQuery::importedSymbol != 0))
+                    {
+                        std::cout << "imp: " << (std::int64_t)imp.id << std::endl;
+                        EntityResult symb = _db->query<model::PythonEntity>(
+                            EntityQuery::id == imp.importedSymbol);
+
+                        nodes.push_back(queryPythonAstNode(std::to_string(symb.begin()->astNodeId)));
+                    }
 
                 break;
             }
@@ -590,6 +623,7 @@ std::int32_t PythonServiceHandler::getReferenceCount(
     model::PythonAstNode node = queryPythonAstNode(astNodeId_);
 
     return _transaction([&, this]() -> std::int32_t {
+        std::cout << "refcountid: " << referenceId_ << " ast: " << astNodeId_ << " nodeid: " << (std::int64_t)node.id << std::endl;
         switch (referenceId_)
         {
             case DECLARATION:
@@ -637,76 +671,79 @@ std::int32_t PythonServiceHandler::getReferenceCount(
 
             case PARAMETER:
                 return _db->query_value<model::PythonFunctionParamCount>(
-                        FuncQuery::astNodeId == node.id).count;
+                        FuncQuery::qualifiedName == node.qualifiedName).count;
 
             case LOCAL_VAR:
                 return _db->query_value<model::PythonFunctionLocalCount>(
-                        FuncQuery::astNodeId == node.id).count;
+                        FuncQuery::qualifiedName == node.qualifiedName).count;
 
             case RETURN_TYPE:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 FuncResult functions = _db->query<cc::model::PythonFunction>(
-                        FuncQuery::astNodeId == node.id);
+                        FuncQuery::qualifiedName == node.qualifiedName);
 
                 const model::PythonFunction& function = *functions.begin();
 
                 std::vector<model::PythonClass> types = queryTypes(function);
 
-                std::int32_t result = 0;
-
-                for(const model::PythonClass& cl : types){
-                    result += _db->query_value<model::PythonClassCount>(
-                            ClassQuery::id == function.id).count;
-                }
-
-                return result;
+                return types.size();
             }
 
             case TYPE:
             {
-                node = queryPythonAstNode(astNodeId_);
-
                 VarResult varNodes = _db->query<cc::model::PythonVariable>(
-                        VarQuery::astNodeId == node.id);
+                        VarQuery::qualifiedName == node.qualifiedName);
+
+                std::cout << varNodes.begin()->toString() << std::endl;
 
                 const model::PythonVariable& variable = *varNodes.begin();
 
                 std::vector<model::PythonClass> types = queryTypes(variable);
 
-                std::int32_t result = 0;
-
-                for(const model::PythonClass& cl : types){
-                    result += _db->query_value<model::PythonClassCount>(
-                            ClassQuery::id == cl.id).count;
-                }
-
-                return result;
+                return types.size();
             }
 
             case INHERIT_FROM:
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
                 return _db->query_value<model::PythonInheritanceCount>(
-                        InhQuery::derived == node.id).count;
+                        InhQuery::derived == cl.id).count;
+            }
 
             case INHERIT_BY:
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
                 return _db->query_value<model::PythonInheritanceCount>(
-                        InhQuery::base == node.id).count;
+                        InhQuery::base == cl.id).count;
+            }
 
             case DATA_MEMBER:
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
                 return _db->query_value<model::PythonClassMemberCount>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Attribute).count;
+            }
 
             case METHOD:
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
                 return _db->query_value<model::PythonClassMemberCount>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Method).count;
+            }
 
             case NESTED_CLASS:
+            {
+                model::PythonEntity cl = queryPythonEntityByAstNode(node.qualifiedName);
                 return _db->query_value<model::PythonClassMemberCount>(
-                        ClassMemQuery::astNodeId == node.id &&
+                        ClassMemQuery::classId == cl.id &&
                         ClassMemQuery::kind == model::PythonClassMember::Kind::Class).count;
+            }
+
+            case IMPORTED_SYMBOLS:
+                return _db->query_value<model::PythonImportCount>(
+                        ModImpQuery::importer == node.location.file.object_id()).count;
 
             default:
                 return 0;
@@ -886,6 +923,9 @@ void PythonServiceHandler::getSyntaxHighlight(
                     syntax.className = symbolClass + " " +
                                        symbolClass + "-" + model::astTypeToString(node.astType);
 
+                    std::cout << "syntax highlight: " << syntax.range.startpos.line << ", " << syntax.range.startpos.column
+                    << " - " << syntax.range.endpos.line << ", " << syntax.range.endpos.column << std::endl;
+
                     return_.push_back(std::move(syntax));
                 }
             }
@@ -915,6 +955,7 @@ model::PythonAstNode PythonServiceHandler::queryPythonAstNode(const core::AstNod
         if (!_db->find(std::stoull(astNodeId_), node))
         {
             core::InvalidId ex;
+            std::cout << "Invalid PythonAstNode ID: " << astNodeId_ << std::endl;
             ex.__set_msg("Invalid PythonAstNode ID");
             ex.__set_nodeid(astNodeId_);
             throw ex;
@@ -931,7 +972,7 @@ std::vector<model::PythonAstNode> PythonServiceHandler::queryPythonAstNodes(
     model::PythonAstNode node = queryPythonAstNode(astNodeId_);
 
     AstResult result = _db->query<model::PythonAstNode>(
-            AstQuery::id == node.id &&
+            AstQuery::qualifiedName == node.qualifiedName &&
             AstQuery::location.range.end.line != model::Position::npos &&
             query_);
 
@@ -983,11 +1024,14 @@ odb::query<model::PythonAstNode> PythonServiceHandler::astCallsQuery(const model
 
 std::vector<model::PythonAstNode> PythonServiceHandler::queryCalls(const core::AstNodeId& astNodeId_)
 {
+    std::cout << "qc1" << std::endl;
     std::vector<model::PythonAstNode> nodes = queryDeclarations(astNodeId_);
 
     if (nodes.empty()){
         return nodes;
     }
+
+    std::cout << "qc2: " << (std::int64_t)nodes.front().id << std::endl;
 
     model::PythonAstNode node = nodes.front();
     AstResult result = _db->query<model::PythonAstNode>(astCallsQuery(node));
@@ -1002,7 +1046,7 @@ std::size_t PythonServiceHandler::queryPythonAstNodeCount(
     model::PythonAstNode node = queryPythonAstNode(astNodeId_);
 
     model::PythonAstCount q = _db->query_value<model::PythonAstCount>(
-            AstQuery::id == node.id &&
+            AstQuery::qualifiedName == node.qualifiedName &&
             AstQuery::location.range.end.line != model::Position::npos &&
             query_);
 
@@ -1025,11 +1069,18 @@ std::size_t PythonServiceHandler::queryCallsCount(const core::AstNodeId& astNode
 std::vector<model::PythonClass> PythonServiceHandler::queryTypes(const model::PythonEntity& entity)
 {
     std::vector<model::PythonClass> result;
+    std::cout << "type: " << (std::int64_t)entity.id << std::endl;
 
     for(const model::PythonType& type : _db->query<model::PythonType>(TypeQuery::symbol == entity.id)){
+        std::cout << "t: " << entity.qualifiedName << " type: " << (std::int64_t)type.type << std::endl;
         ClassResult cl = _db->query<model::PythonClass>(ClassQuery::id == type.type);
+        std::cout << "ttt" << std::endl;
+        // for(auto& t : cl){
+        //     std::cout << "tc: " << t.qualifiedName << std::endl;
+        // }
         result.push_back(*cl.begin());
     }
+    std::cout << "t.." << std::endl;
 
     return result;
 }
@@ -1040,9 +1091,9 @@ model::PythonEntity PythonServiceHandler::queryPythonEntity(const model::PythonE
     return *entities.begin();
 }
 
-model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const model::PythonAstNodeId& id)
+model::PythonEntity PythonServiceHandler::queryPythonEntityByAstNode(const std::string& qualifiedName)
 {
-    EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::astNodeId == id);
+    EntityResult entities = _db->query<model::PythonEntity>(EntityQuery::qualifiedName == qualifiedName);
     return *entities.begin();
 }
 
@@ -1057,13 +1108,22 @@ std::map<model::PythonAstNodeId, std::string> PythonServiceHandler::getVisibilit
             case model::PythonAstNode::SymbolType::Variable:
             case model::PythonAstNode::SymbolType::Function:
             case model::PythonAstNode::SymbolType::Class:
-                model::PythonEntity entity = queryPythonEntityByAstNode(node.id);
+                std::cout << "visibility: " << (std::int64_t)node.id << std::endl;
+                model::PythonEntity entity = queryPythonEntityByAstNode(node.qualifiedName);
                 visibilities[node.id] = entity.visibility;
                 break;
         }
     }
 
     return visibilities;
+}
+
+bool PythonServiceHandler::isGeneratedVariable(const model::PythonAstNode& node_) const
+{
+    const std::vector<std::string> generatedVariables {"__dict__", "__doc__", "__module__"};
+    return std::any_of(generatedVariables.begin(), generatedVariables.end(),
+                    [&](const std::string& name){ return node_.qualifiedName.find(name) != std::string::npos; }) &&
+            node_.astType == model::PythonAstNode::AstType::Declaration;
 }
 
 }

@@ -355,18 +355,18 @@ TEST_F(CppParserTest, Record)
 
       switch (n.location.range.start.line)
       {
-        // case -1: 
-        //   EXPECT_TRUE(
-        //     // TODO: investigate the type of this. It is possibly the parameter
-        //     // of a compiler generated copy constructor or assignment operator.
-        //     // ParameterTypeLoc and ReturnTypeLoc are both listed here,
-        //     // however, only one of them is found. Earlier when we generated
-        //     // mangled names manually, the function parameter was stored, now
-        //     // with USRs we have the return type.
-        //     n.astType == model::CppAstNode::AstType::ParameterTypeLoc ||
-        //     n.astType == model::CppAstNode::AstType::ReturnTypeLoc ||
-        //     n.astType == model::CppAstNode::AstType::TypeLocation);
-        //   break;
+        case -1: 
+          EXPECT_TRUE(
+            // TODO: investigate the type of this. It is possibly the parameter
+            // of a compiler generated copy constructor or assignment operator.
+            // ParameterTypeLoc and ReturnTypeLoc are both listed here,
+            // however, only one of them is found. Earlier when we generated
+            // mangled names manually, the function parameter was stored, now
+            // with USRs we have the return type.
+            n.astType == model::CppAstNode::AstType::ParameterTypeLoc ||
+            n.astType == model::CppAstNode::AstType::ReturnTypeLoc ||
+            n.astType == model::CppAstNode::AstType::TypeLocation);
+          break;
 
         case 1: // Forward declaration.
           EXPECT_EQ(n.astType, model::CppAstNode::AstType::Declaration);
@@ -639,7 +639,7 @@ TEST_F(CppParserTest, Variable)
     for (const model::CppAstNode& n : astNodes)
       switch (n.location.range.start.line)
       {
-        // case -1: // Access by compiler generated constructors.
+        case -1: // Access by compiler generated constructors.
         case 44: // Simple access for read.
           EXPECT_EQ(n.astType, model::CppAstNode::AstType::Read);
           break;

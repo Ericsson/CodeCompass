@@ -48,6 +48,13 @@ struct PythonImport
 
 typedef std::shared_ptr<PythonImport> PythonImportPtr;
 
+#pragma db view object(PythonImport)
+struct PythonImportCount
+{
+    #pragma db column("count(" + PythonImport::id + ")")
+    std::size_t count;
+};
+
 }
 }
 

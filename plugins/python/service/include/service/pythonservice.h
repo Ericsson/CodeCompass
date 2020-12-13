@@ -177,7 +177,9 @@ private:
 
         METHOD, /*!< Members of a class. */
 
-        NESTED_CLASS /*!< Nested classes. */
+        NESTED_CLASS, /*!< Nested classes. */
+
+        IMPORTED_SYMBOLS
     };
 
     enum FileReferenceType
@@ -233,9 +235,11 @@ private:
 
     model::PythonEntity queryPythonEntity(const model::PythonEntityId& id);
 
-    model::PythonEntity queryPythonEntityByAstNode(const model::PythonAstNodeId& id);
+    model::PythonEntity queryPythonEntityByAstNode(const std::string& qualifiedName);
 
     std::map<model::PythonAstNodeId, std::string> getVisibilities(const std::vector<model::PythonAstNode>& nodes_);
+
+    bool isGeneratedVariable(const model::PythonAstNode& node_) const;
 
     std::shared_ptr<odb::database> _db;
     util::OdbTransaction _transaction;

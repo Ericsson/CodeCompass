@@ -25,3 +25,7 @@ target_compile_options(pythonparser PUBLIC -Wno-unknown-pragmas)
 target_link_options(pythonparser PUBLIC -Xlinker -export-dynamic)
 
 install(TARGETS pythonparser DESTINATION ${INSTALL_PARSER_DIR})
+install(
+        DIRECTORY ${PLUGIN_DIR}/parser/src/scripts/
+        DESTINATION ${INSTALL_PARSER_DIR}/scripts/python
+        FILES_MATCHING PATTERN "*.py")

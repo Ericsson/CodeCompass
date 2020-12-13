@@ -1,12 +1,7 @@
-find_package(PythonLibs REQUIRED)
-
-find_package (Python)
-
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${PYTHON_INCLUDE_DIRS})
+  ${PROJECT_SOURCE_DIR}/model/include)
 
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
@@ -24,7 +19,6 @@ target_link_libraries(CodeCompass_parser
   util
   model
   ${Boost_LIBRARIES}
-  ${PYTHON_LIBRARIES}
   ${ODB_LIBRARIES}
   ${CMAKE_DL_LIBS}
   magic

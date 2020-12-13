@@ -449,10 +449,15 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       if (!astNodeInfo)
         return;
 
-      var refTypes = model.cppservice.getReferenceTypes(astNodeInfo.id);
-      var usages = model.cppservice.getReferences(
-        astNodeInfo.id,
-        refTypes['Usage']);
+      var service = model.getLanguageService(fileInfo.type);
+      if(service){
+        var refTypes = service.getReferenceTypes(astNodeInfo.id);
+        var usages = service.getReferences(
+          astNodeInfo.id,
+          refTypes['Usage']);
+      } else {
+        var usages = [];
+      }
 
       this.clearSelection();
 

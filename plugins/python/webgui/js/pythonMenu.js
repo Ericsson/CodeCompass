@@ -9,8 +9,8 @@ require([
 function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler){
   model.addService('pythonservice', 'PythonService', LanguageServiceClient);
 
-  var getdefintion = {
-    id : 'python-text-getdefintion',
+  var getdefinition = {
+    id : 'python-text-getdefinition',
     render : function (nodeInfo, fileInfo) {
       return new MenuItem({
         label : 'Jump to definition',
@@ -27,7 +27,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler){
     }
   };
 
-  viewHandler.registerModule(getdefintion, {
+  viewHandler.registerModule(getdefinition, {
     type : viewHandler.moduleType.TextContextMenu,
     service : model.pythonservice
   });
