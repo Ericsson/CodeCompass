@@ -44,7 +44,7 @@ public:
    * This function (re)populates the cache with the files that are
    * reloaded from the database.
    */
-  void cacheFiles();
+  void reloadCache();
 
   /**
    * This function returns a pointer to the corresponding model::File object

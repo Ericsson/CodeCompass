@@ -18,7 +18,7 @@ SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
 {
   //--- Reload files from database ---//
 
-  cacheFiles();
+  reloadCache();
 
   //--- Initialize magic for plain text testing ---//
 
@@ -46,7 +46,7 @@ SourceManager::~SourceManager()
     ::magic_close(_magicCookie);
 }
 
-void SourceManager::cacheFiles()
+void SourceManager::reloadCache()
 {
   _files.clear();
   _persistedFiles.clear();
