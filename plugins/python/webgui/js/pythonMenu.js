@@ -75,4 +75,50 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler){
     type : viewHandler.moduleType.TextContextMenu,
     service : model.pythonservice
   });
+
+  var diagrams = {
+    id : 'python-text-diagrams',
+    render : function (nodeInfo, fileInfo) {
+      if (!nodeInfo || !fileInfo)
+        return;
+
+      var submenu = new Menu();
+
+      // var diagramTypes = model.pythonservice.getDiagramTypes(nodeInfo.id);
+      // for (diagramType in diagramTypes)
+      //   submenu.addChild(new MenuItem({
+      //     label   : diagramType,
+      //     type    : diagramType,
+      //     onClick : function () {
+      //       var that = this;
+
+      //       topic.publish('codecompass/openDiagram', {
+      //         handler : 'python-ast-diagram',
+      //         diagramType : diagramTypes[that.type],
+      //         node : nodeInfo.id
+      //       });
+      //     }
+      //   }));
+
+      submenu.addChild(new MenuItem({
+        label : "CodeBites",
+        onClick : function () {
+          topic.publish('codecompass/codebites', {
+            node : nodeInfo
+          });
+        }
+      }));
+
+      //if (Object.keys(diagramTypes).length !== 0)
+        return new PopupMenuItem({
+          label : 'Diagrams',
+          popup : submenu
+        });
+    }
+  };
+  
+  viewHandler.registerModule(diagrams, {
+    type : viewHandler.moduleType.TextContextMenu,
+    service : model.pythonservice
+  });
 });
