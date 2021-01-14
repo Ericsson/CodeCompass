@@ -958,6 +958,8 @@ void CppServiceHandler::getReferences(
         break;
     }
 
+    // In the InfoTree we'd like to see AST nodes in alphabetical order except
+    // for function parameters and enum constants where the order is important.
     if (referenceId_ != PARAMETER &&
         referenceId_ != ENUM_CONSTANTS)
       std::sort(nodes.begin(), nodes.end(), compareByValue);
@@ -1523,17 +1525,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(visibility);
         }
 
-        if (defNode.symbolType == model::CppAstNode::SymbolType::Function)
-        {
-          //--- Virtual Tag ---//
+        //--- Virtual Tag ---//
 
-          FuncResult funcNodes = _db->query<cc::model::CppFunction>(
-            FuncQuery::entityHash == defNode.entityHash);
-          const model::CppFunction& funcNode = *funcNodes.begin();
+        FuncResult funcNodes = _db->query<cc::model::CppFunction>(
+          FuncQuery::entityHash == defNode.entityHash);
+        const model::CppFunction& funcNode = *funcNodes.begin();
 
-          for (const model::Tag& tag : funcNode.tags)
-            tags[node.id].push_back(model::tagToString(tag));
-        }
+        for (const model::Tag& tag : funcNode.tags)
+          tags[node.id].push_back(model::tagToString(tag));
 
         break;
       }
