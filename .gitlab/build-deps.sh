@@ -313,7 +313,7 @@ if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/boost-install/lib/libboost_program_options.s
 
   ./bootstrap.sh \
     --prefix=$DEPS_INSTALL_RUNTIME_DIR/boost-install \
-    --with-python=$DEPS_INSTALL_RUNTIME_DIR/python-install/bin/python
+    --with-python=$DEPS_INSTALL_RUNTIME_DIR/python-install/bin/python3
   ./b2 -j $(nproc) install
 
   rm -f $PACKAGES_DIR/boost_1_74_0.tar.gz
