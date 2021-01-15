@@ -10,7 +10,7 @@
 #include "authentication.h"
 
 #define INVALID_CFG_FILE_PATH "/dev/null"
-#define CODECOMPASS_DEFAULT_SESSION_LIFETIME 1440 // One hour.
+#define CODECOMPASS_DEFAULT_SESSION_LIFETIME 3600 // One hour.
 
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;

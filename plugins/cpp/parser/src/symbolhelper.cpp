@@ -3,6 +3,8 @@
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
+#include <clang/Index/USRGeneration.h>
+#include <clang/Lex/Lexer.h>
 
 #include <model/fileloc.h>
 #include <model/fileloc-odb.hxx>
@@ -12,17 +14,6 @@
 
 namespace
 {
-
-std::string getSuffixFromLoc(const cc::model::FileLoc& fileLoc_)
-{
-  if (!fileLoc_.file)
-    return std::string();
-
-  return
-      std::to_string(fileLoc_.file.object_id()) + ':'
-    + std::to_string(fileLoc_.range.start.line) + ':'
-    + std::to_string(fileLoc_.range.start.column);
-}
 
 /**
  * This function removes the first occurence of what_ in str_ if any.
@@ -65,146 +56,54 @@ const clang::Type* getStrippedType(const clang::QualType& qt_)
   return type;
 }
 
-std::string getMangledName(
-  clang::MangleContext* mangleContext_,
-  const clang::NamedDecl* nd_,
-  const model::FileLoc& fileLoc_)
+std::string getUSR(const clang::NamedDecl* nd_)
 {
-  if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(nd_))
-  {
-    std::string result = nd_->getQualifiedNameAsString();
-
-    if (const clang::DeclContext* dc = nd_->getParentFunctionOrMethod())
-    {
-      // Fixes issue #415 of parser segfaults.
-      // https://github.com/Ericsson/CodeCompass/issues/415
-      //
-      // There are contexts in which getParentFunctionOrMethod() is not
-      // null, but the result is not FunctionDecl (such as CapturedDecl),
-      // e.g. when the to-be-mangled node is inside an OMP block.
-      // In that case, try to find some parent DeclContext we can
-      // reasonably mangle.
-      while (!llvm::isa<clang::FunctionDecl>(dc) &&
-        !llvm::isa<clang::TranslationUnitDecl>(dc))
-      {
-        LOG(debug) << "Yet another getparentFunctionMethod() && "
-          "! llvm::dyn_cast<clang::FunctionDecl>(dc) ";
-        LOG(debug) << dc->getDeclKindName();
-
-        dc = dc->getLookupParent();
-      }
-
-      if (const auto* dcfd = llvm::dyn_cast<clang::FunctionDecl>(dc))
-        result += ':' + getMangledName(mangleContext_, dcfd);
-      else if (llvm::isa<clang::TranslationUnitDecl>(dc))
-        result += ':' + std::to_string(fileLoc_.file.object_id());
-
-      if (const clang::ParmVarDecl* pvd =
-          llvm::dyn_cast<clang::ParmVarDecl>(nd_))
-        result += ':' + std::to_string(pvd->getFunctionScopeIndex());
-    }
-
-    if (vd->isLocalVarDecl() || llvm::isa<clang::ParmVarDecl>(nd_))
-      result += ':' + getSuffixFromLoc(fileLoc_);
-
-    return result;
-  }
-  else if (llvm::isa<clang::NamespaceDecl>(nd_))
-  {
-    const clang::NamespaceDecl* na_ = llvm::dyn_cast<clang::NamespaceDecl>(nd_);
-    return na_->isAnonymousNamespace()
-      ? "anonymous-ns:" + std::to_string(fileLoc_.file.object_id())
-      : nd_->getQualifiedNameAsString();
-  }
-  else if (const clang::CXXRecordDecl* rd
-    = llvm::dyn_cast<clang::CXXRecordDecl>(nd_))
-  {
-    // AST nodes of type CXXRecordDecl contain another CXXRecordDecl node. The
-    // outer one is for the definition (and its position is the whole
-    // definition) and the inner one is for a declaration (of which the position
-    // is the "class" keyword and the class name.
-    // The qualified name of the inner node is ClassName::ClassName, although we
-    // should choose the same mangled name i.e. the qualified name of its
-    // parent.
-
-    const clang::CXXRecordDecl* parent
-      = llvm::dyn_cast<clang::CXXRecordDecl>(rd->getParent());
-
-    return parent && parent->getName() == rd->getName()
-      ? parent->getQualifiedNameAsString()
-      : rd->getQualifiedNameAsString();
-  }
-
-  // TODO: For some reason some named decls don't have name.
-  // Function parameters without name (e.g. compiler generated functions) don't
-  // have a name, but we can generate them a unique name later.
-  if (nd_->getNameAsString().empty() && !llvm::isa<clang::FunctionDecl>(nd_))
-    return nd_->getQualifiedNameAsString();
-
-  // No need to mangle C sources or declarations in extern "C".
-  if (!mangleContext_->shouldMangleDeclName(nd_))
-    return nd_->getQualifiedNameAsString();
-
-  const clang::FunctionDecl* fd = llvm::dyn_cast<clang::FunctionDecl>(nd_);
-  if (fd && llvm::isa<clang::FunctionProtoType>(
-    fd->getType()->getAs<clang::FunctionType>()))
-  {
-    // FIXME: Workaround for a crash reported in #236
-    // From Clang's code:
-    // We should never mangle anything without a prototype.
-
-    std::string str;
-    llvm::raw_string_ostream out(str);
-
-    if (const clang::CXXConstructorDecl* ctor
-        = llvm::dyn_cast<clang::CXXConstructorDecl>(fd))
-      mangleContext_->mangleCXXCtor(ctor, clang::Ctor_Complete, out);
-    else if (const clang::CXXDestructorDecl* dtor
-        = llvm::dyn_cast<clang::CXXDestructorDecl>(fd))
-      mangleContext_->mangleCXXDtor(dtor, clang::Dtor_Complete, out);
-    else
-      mangleContext_->mangleName(fd, out);
-    
-    // TODO: In the case when a function has a template and a non-template
-    // version then their mangled name is the same as long as the template is
-    // not instantiated. Distinguising them by their locations is not good,
-    // because if there is a function which has two versions in an #ifdef ...
-    // #else ... #endif section then every usage will also have two versions.
-    // So if a function has a template and a non-template version at the same
-    // time then querying the definition of the non-template usage the template
-    // version also returns.
-    return out.str();
-  }
-
-  return nd_->getQualifiedNameAsString();
+  // Function generateUSRForDecl() returns a boolean value which indicates
+  // whether the generated USR should be ignored or not. It is easily seen in
+  // the implementation when this boolean is true:
+  // https://clang.llvm.org/doxygen/USRGeneration_8cpp_source.html
+  // Just search for "IgnoreResults" variable and see where it's set true.
+  // Some examples are the AST node for linkage specifiers (i.e. extern "C"),
+  // the "using" directive, and some unnamed symbols, like the parameter of
+  // this function pointer: void (*f)(int);
+  // This last one is important from CodeCompass point of view: we store a
+  // CppEntity in the database for the parameter variable of this function
+  // declaration, however, according to Clang documentation the generated USR
+  // for this node is supposed to be ignored. I can't see why the generation of
+  // this USR can't be finished. Maybe it is not possible to distinguish this
+  // node from another one we don't know about. Anyway, the generated USR is
+  // good enough for us to identify this unnamed variable, because according to
+  // our experiences it is quite unique and the variable can't be clicked on
+  // the GUI (since it has no name to click on).
+  // So far I have met only one case when an USR which is supposed to be
+  // ignored is not good enough: the unnamed parameter of a compiler-generated
+  // copy/move constructor and assignment operator. The USR of these parameters
+  // is the same as the USR of these functions themselves.
+  // So skipping the return value of generateUSRForDecl() is a conscious
+  // choice.
+  llvm::SmallVector<char, 64> usr;
+  clang::index::generateUSRForDecl(nd_, usr);
+  char* data = usr.data();
+  return std::string(data, data + usr.size());
 }
 
-std::string getMangledName(
-  clang::MangleContext* mangleContext_,
-  const clang::QualType& qt_,
-  const model::FileLoc& fileLoc_)
+std::string getUSR(const clang::QualType& qt_, clang::ASTContext& ctx_)
 {
-  const clang::Type* type = getStrippedType(qt_);
+  const clang::Type* type = qt_.getTypePtr();
 
-  // TODO: How can this happen?
-  if (!type)
-    return std::string();
-
-  // TODO: What about primitive types?
   if (const clang::TypedefType* td = type->getAs<clang::TypedefType>())
   {
     if (const clang::TypedefNameDecl* tDecl = td->getDecl())
-      return getMangledName(mangleContext_, tDecl, fileLoc_);
+      return getUSR(tDecl);
   }
-  else if (const clang::CXXRecordDecl* rDecl = type->getAsCXXRecordDecl())
-    return getMangledName(mangleContext_, rDecl);
-  else if (const clang::EnumType* et = type->getAs<clang::EnumType>())
-    if (const clang::Decl* decl = et->getDecl())
-      return getMangledName(
-        mangleContext_,
-        llvm::dyn_cast<clang::NamedDecl>(decl));
+  else if (const clang::TagDecl* tDecl = type->getAsTagDecl())
+    return getUSR(tDecl);
 
-  return std::string();
+  // This is supposed to run only for base types.
+  llvm::SmallVector<char, 64> usr;
+  clang::index::generateUSRForType(qt_, ctx_, usr);
+  char* data = usr.data();
+  return std::string(data, data + usr.size());
 }
 
 bool isFunction(const clang::Type* type_)
@@ -289,6 +188,41 @@ std::string getSignature(const clang::FunctionDecl* fn_)
   }
 
   return signature;
+}
+
+std::string getDeclPartAsString(
+  const clang::SourceManager& srcMgr_,
+  const clang::TagDecl* td_)
+{
+  return td_->isThisDeclarationADefinition()
+    ? getSourceText(
+        srcMgr_,
+        td_->getOuterLocStart(),
+        td_->getBraceRange().getBegin())
+    : getSourceText(
+        srcMgr_,
+        td_->getOuterLocStart(),
+        td_->getEndLoc(),
+        true);
+}
+
+std::string getSourceText(
+  const clang::SourceManager& srcMgr_,
+  clang::SourceLocation from_,
+  clang::SourceLocation to_,
+  bool inclusiveEnd_)
+{
+  clang::LangOptions lopt;
+
+  if (inclusiveEnd_)
+    to_ = clang::Lexer::getLocForEndOfToken(to_, 0, srcMgr_, lopt);
+
+  clang::CharSourceRange range = clang::Lexer::getAsCharRange(
+    clang::SourceRange(from_, to_),
+    srcMgr_,
+    lopt);
+
+  return clang::Lexer::getSourceText(range, srcMgr_, lopt).str();
 }
 
 }

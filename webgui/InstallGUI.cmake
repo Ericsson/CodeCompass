@@ -1,12 +1,17 @@
+# Utility functions
+include(${CMAKE_SOURCE_DIR}/Functions.cmake)
+
 message("Install npm packages...")
 
-execute_process(
-  COMMAND cp ${CC_PACKAGE} ${INSTALL_SCRIPTS_DIR}/package.json
-  WORKING_DIRECTORY ${INSTALL_SCRIPTS_DIR})
+if(${CC_PACKAGE} IS_NEWER_THAN ${INSTALL_SCRIPTS_DIR}/package.json)
+  execute_process(
+    COMMAND cp ${CC_PACKAGE} ${INSTALL_SCRIPTS_DIR}/package.json
+    WORKING_DIRECTORY ${INSTALL_SCRIPTS_DIR})
 
-execute_process(
-  COMMAND npm install
-  WORKING_DIRECTORY ${INSTALL_SCRIPTS_DIR})
+  execute_process(
+    COMMAND npm install
+    WORKING_DIRECTORY ${INSTALL_SCRIPTS_DIR})
+endif()
 
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E create_symlink dojo-util node_modules/util
@@ -23,7 +28,7 @@ foreach(_jsfile ${_jsfiles})
   string(REGEX REPLACE "\\.js*$" "" _jsfile ${_jsfile})
   list(APPEND DOJO_VIEWLIST "'${_jsfile}'")
 endforeach()
-list(JOIN DOJO_VIEWLIST  ", " DOJO_VIEWLIST)
+join("${DOJO_VIEWLIST}"  ", " DOJO_VIEWLIST)
 
 set(DOJO_OPTIMIZE "")       # optimization for non-layer modules
 set(DOJO_LAYEROPTIMIZE "")  # optimization for layer modules

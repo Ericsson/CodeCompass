@@ -31,7 +31,7 @@
 
 #include "clangastvisitor.h"
 #include "relationcollector.h"
-#include "manglednamecache.h"
+#include "entitycache.h"
 #include "ppincludecallback.h"
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
@@ -47,14 +47,14 @@ class VisitorActionFactory : public clang::tooling::FrontendActionFactory
 public:
   static void cleanUp()
   {
-    MyFrontendAction::_mangledNameCache.clear();
+    MyFrontendAction::_entityCache.clear();
   }
 
   static void init(ParserContext& ctx_)
   {
     util::OdbTransaction {ctx_.db} ([&] {
       for (const model::CppAstNode& node : ctx_.db->query<model::CppAstNode>())
-        MyFrontendAction::_mangledNameCache.insert(node);
+        MyFrontendAction::_entityCache.insert(node);
     });
   }
 
@@ -74,8 +74,8 @@ private:
     MyConsumer(
       ParserContext& ctx_,
       clang::ASTContext& context_,
-      MangledNameCache& mangledNameCache_)
-        : _mangledNameCache(mangledNameCache_), _ctx(ctx_), _context(context_)
+      EntityCache& entityCache_)
+        : _entityCache(entityCache_), _ctx(ctx_), _context(context_)
     {
     }
 
@@ -83,7 +83,7 @@ private:
     {
       {
         ClangASTVisitor clangAstVisitor(
-          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+          _ctx, _context, _entityCache, _clangToAstNodeId);
         clangAstVisitor.TraverseDecl(context_.getTranslationUnitDecl());
       }
 
@@ -96,7 +96,7 @@ private:
       if (!_ctx.options.count("skip-doccomment"))
       {
         DocCommentCollector docCommentCollector(
-          _ctx, _context, _mangledNameCache, _clangToAstNodeId);
+          _ctx, _context, _entityCache, _clangToAstNodeId);
         docCommentCollector.TraverseDecl(context_.getTranslationUnitDecl());
       }
       else
@@ -104,7 +104,7 @@ private:
     }
 
   private:
-    MangledNameCache& _mangledNameCache;
+    EntityCache& _entityCache;
     std::unordered_map<const void*, model::CppAstNodeId> _clangToAstNodeId;
 
     ParserContext& _ctx;
@@ -127,9 +127,9 @@ private:
       auto& pp = compiler_.getPreprocessor();
 
       pp.addPPCallbacks(std::make_unique<PPIncludeCallback>(
-        _ctx, compiler_.getASTContext(), _mangledNameCache, pp));
+        _ctx, compiler_.getASTContext(), _entityCache, pp));
       pp.addPPCallbacks(std::make_unique<PPMacroCallback>(
-        _ctx, compiler_.getASTContext(), _mangledNameCache, pp));
+        _ctx, compiler_.getASTContext(), _entityCache, pp));
 
       return true;
     }
@@ -138,11 +138,11 @@ private:
       clang::CompilerInstance& compiler_, llvm::StringRef) override
     {
       return std::unique_ptr<clang::ASTConsumer>(
-        new MyConsumer(_ctx, compiler_.getASTContext(), _mangledNameCache));
+        new MyConsumer(_ctx, compiler_.getASTContext(), _entityCache));
     }
 
   private:
-    static MangledNameCache _mangledNameCache;
+    static EntityCache _entityCache;
 
     ParserContext& _ctx;
   };
@@ -150,7 +150,7 @@ private:
   ParserContext& _ctx;
 };
 
-MangledNameCache VisitorActionFactory::MyFrontendAction::_mangledNameCache;
+EntityCache VisitorActionFactory::MyFrontendAction::_entityCache;
 
 bool CppParser::isSourceFile(const std::string& file_) const
 {
@@ -415,6 +415,24 @@ std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
       fileNameToVertex.erase(path);
     }
 
+    /* Circular dependencies in the parsed code would cause
+     * this loop to be infinite. If no files were put in
+     * the current cleanup level, there is probably a
+     * circular dependency somewhere. The rest of the
+     * to-be-cleaned up files can be put in an additional level.
+     */
+    if (order[index].size() == 0)
+    {
+      for (const auto& item : fileNameToVertex)
+      {
+        order[index].push_back(item.first);
+      }
+      
+      fileNameToVertex.clear();
+
+      LOG(debug) << "[cppparser] Circular dependency detected.";
+    }
+
     ++index;
   }
   LOG(debug) << "[cppparser] Topology has " << index << " levels.";
@@ -611,11 +629,11 @@ bool CppParser::cleanupWorker(const std::string& path_)
               {
                 // Delete CppInheritance
                 _ctx.db->erase_query<model::CppInheritance>(
-                  odb::query<model::CppInheritance>::derived == astNode.mangledNameHash);
+                  odb::query<model::CppInheritance>::derived == astNode.entityHash);
 
                 // Delete CppFriendship
                 _ctx.db->erase_query<model::CppFriendship>(
-                  odb::query<model::CppFriendship>::target == astNode.mangledNameHash);
+                  odb::query<model::CppFriendship>::target == astNode.entityHash);
               }
             }
 

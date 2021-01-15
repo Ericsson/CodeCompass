@@ -195,8 +195,7 @@ function (model, viewHandler, util) {
                       refTypes['This calls']);
 
                     calls.forEach(function (call) {
-                      if (call.mangledNameHash ===
-                          nodeInfo.mangledNameHash)
+                      if (call.entityHash === nodeInfo.entityHash)
                         res.push({
                           name        : createLabel(call),
                           refType     : parentNode.refType,

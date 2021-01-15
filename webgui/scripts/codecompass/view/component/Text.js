@@ -387,6 +387,13 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this._marks = {};
     },
 
+    clearSelection : function () {
+      for (var markId in this._marks) {
+        if (this._marks[markId].className === 'cb-marked-select')
+          this.clearMark(markId);
+      }
+    },
+
     _eventHandler : function (event) {
       //--- Select the clicked word ---//
 
@@ -404,6 +411,16 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         this.set('selection', [pos[0], token.start, pos[0], token.end]);
       }
 
+      //--- Open Info Tree ---//
+
+      var astNodeInfo
+        = astHelper.getAstNodeInfoByPosition(pos, this._fileInfo);
+
+      topic.publish('codecompass/infotree', {
+        fileType : this._fileInfo.type,
+        elementInfo : astNodeInfo
+      });
+
       //--- Highlighting the same occurrence of the selected entity ---//
 
       this._markUsages(pos, this._fileInfo);
@@ -416,8 +433,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       //--- Ctrl-click ---//
 
       if (event.button === 0 && event.ctrlKey) {
-        var astNodeInfo
-          = astHelper.getAstNodeInfoByPosition(pos, this._fileInfo);
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
@@ -439,7 +454,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         astNodeInfo.id,
         refTypes['Usage']);
 
-      this.clearAllMarks();
+      this.clearSelection();
 
       var fl = that._codeMirror.options.firstLineNumber;
       usages.forEach(function (astNodeInfo) {
@@ -511,7 +526,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       }
 
       setTimeout(function () {
-        that.clearAllMarks();
         var lines = urlHandler.getFileContent().split('\n').length;
         for (var i = 0; i < lines; i += that._syntaxHighlightStep) {
           var range = new FileRange({
@@ -526,7 +540,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
             syntax.forEach(function (s) {
               this.markText(s.range.startpos, s.range.endpos, {
                 className: s.className
-              }, true);
+              });
             }, that);
           });
         }
@@ -584,8 +598,6 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     _setSelectionAttr : function (range) {
       var that = this;
       this.selection = range;
-
-      this.clearAllMarks();
 
       setTimeout(function () {
         var fl = that._codeMirror.options.firstLineNumber;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.5.1)
 project(CodeCompass)
 
 # Common config variables and settings

@@ -117,3 +117,11 @@ function(fancy_message _str _colour _isBold)
     ${CMAKE_COMMAND} -E env CLICOLOR_FORCE=1
     ${CMAKE_COMMAND} -E cmake_echo_color ${COLOUR_TAG} ${BOLD_TAG} ${_str})
 endfunction(fancy_message)
+
+# Joins a list of elements with a given glue string.
+# See: https://stackoverflow.com/questions/7172670/best-shortest-way-to-join-a-list-in-cmake
+function(join _values _glue _output)
+  string (REGEX REPLACE "([^\\]|^);" "\\1${_glue}" _tmpStr "${_values}")
+  string (REGEX REPLACE "[\\](.)" "\\1" _tmpStr "${_tmpStr}") #fixes escaping
+  set (${_output} "${_tmpStr}" PARENT_SCOPE)
+endfunction(join)

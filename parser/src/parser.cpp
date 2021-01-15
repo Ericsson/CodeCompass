@@ -217,6 +217,8 @@ int main(int argc, char* argv[])
   const std::string PARSER_PLUGIN_DIR = compassRoot + "/lib/parserplugin";
   const std::string SQL_DIR = compassRoot + "/share/codecompass/sql";
 
+  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
+
   cc::util::initLogger();
 
   //--- Process command line arguments ---//
@@ -235,7 +237,6 @@ int main(int argc, char* argv[])
 
   //--- Load parsers ---//
 
-  cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
   pHandler.loadPlugins(skipParserList);
 
   //--- Add arguments of parsers ---//
@@ -373,6 +374,12 @@ int main(int argc, char* argv[])
     LOG(info) << "The number of changed files exceeds the given incremental "
                  "threshold ratio, full parse will be forced.";
     vm.insert(std::make_pair("force", po::variable_value()));
+
+    cc::util::removeTables(db, SQL_DIR);
+    cc::util::createTables(db, SQL_DIR);
+
+    srcMgr.cacheFiles();
+    ctx.fileStatus.clear();
   }
 
   if (!vm.count("force"))

@@ -8,7 +8,7 @@ set(ODB_SOURCES
   include/model/cppnamespace.h
   include/model/cpprelation.h
   include/model/cpptypedef.h
-  include/model/cpptype.h
+  include/model/cpprecord.h
   include/model/cppvariable.h
   include/model/cppheaderinclusion.h
   include/model/cppmacro.h
