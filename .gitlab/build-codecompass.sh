@@ -47,7 +47,8 @@ export CMAKE_PREFIX_PATH=$DEPS_INSTALL_RUNTIME_DIR/libgit2-install\
 :$DEPS_INSTALL_RUNTIME_DIR/odb-install\
 :$DEPS_INSTALL_RUNTIME_DIR/thrift-install\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install\
-:$DEPS_INSTALL_RUNTIME_DIR/llvm-install
+:$DEPS_INSTALL_RUNTIME_DIR/llvm-install\
+:$DEPS_INSTALL_RUNTIME_DIR/python-install
 
 export GTEST_ROOT=$DEPS_INSTALL_BUILD_DIR/gtest-install
 
