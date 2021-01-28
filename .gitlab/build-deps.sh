@@ -240,11 +240,14 @@ export LD_LIBRARY_PATH=$DEPS_INSTALL_RUNTIME_DIR/openssl-install/lib:$LD_LIBRARY
   --quiet \
   --prefix=$DEPS_INSTALL_RUNTIME_DIR/python-install \
   --with-openssl=$DEPS_INSTALL_RUNTIME_DIR/openssl-install \
+  --enable-shared \
   --enable-optimizations
 make install --quiet --jobs $(nproc)
 rm -f $PACKAGES_DIR/Python-3.9.0.tar.xz
 
 export PATH=$DEPS_INSTALL_RUNTIME_DIR/python-install/bin:$PATH
+export LD_LIBRARY_PATH=$DEPS_INSTALL_RUNTIME_DIR/python-install/lib:$LD_LIBRARY_PATH
+# --enabled-shared: build libpython.so instead of libpython.a, must be on LD_LIBRARY_PATH
 
 ##############
 # LLVM/Clang #
