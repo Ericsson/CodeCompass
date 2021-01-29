@@ -1,4 +1,5 @@
 find_package(PythonLibs REQUIRED)
+find_package(Boost      REQUIRED COMPONENTS filesystem log program_options regex system thread python)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 
@@ -11,8 +12,6 @@ include_directories(
 
 add_library(pythonparser SHARED
         src/pythonparser.cpp)
-
-find_package (Python)
 
 target_link_libraries(pythonparser
         util
