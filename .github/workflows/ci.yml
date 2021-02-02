@@ -192,37 +192,26 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: make test ARGS=-V
 
-      - name: Parse CodeCompass Postgresql
-        if: ${{ matrix.db == 'postgresql' }}
-        run: >
-          mkdir $HOME/ws_pgsql
-
-          ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install/bin/CodeCompass_parser
-          -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=codecompass"
-          -w $HOME/ws_pgsql/
-          -n "CodeCompass"
-          -i ${{github.workspace}}
-          -i ${{github.workspace}}/build/compile_commands.json
-          -j $(nproc)
-
-      - name: Parse CodeCompass SQLite3
-        if: ${{ matrix.db == 'sqlite3' }}
-        run: >
-          mkdir $HOME/ws_pgsql
-
-          ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install/bin/CodeCompass_parser
-          -d "sqlite:database=$HOME/codecompass.sqlite"
-          -w $HOME/ws_pgsql/
-          -n "CodeCompass"
-          -i ${{github.workspace}}
-          -i ${{github.workspace}}/build/compile_commands.json
-          -j $(nproc)
-
       - name: Archive CodeCompass binaries
         uses: actions/upload-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
           path: ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+
+      - name: Archive CodeCompass compile-time source files
+        uses: actions/upload-artifact@v2
+        with:
+          name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
+          path: |
+            ${{github.workspace}}/build/**/*.c
+            ${{github.workspace}}/build/**/*.h
+            ${{github.workspace}}/build/**/*.cpp
+            ${{github.workspace}}/build/**/*.hpp
+            ${{github.workspace}}/build/**/*.cxx
+            ${{github.workspace}}/build/**/*.hxx
+            ${{github.workspace}}/build/**/*.ixx
+            ${{github.workspace}}/build/**/*.js
+            ${{github.workspace}}/build/**/compile_commands.json
 
   parse:
     needs: build
@@ -255,13 +244,16 @@ jobs:
           - 5432:5432
 
     steps:
+      - uses: actions/checkout@v2
+
       # Ubuntu 18.04 commands
       - name: Install required packages Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' }}
         run: >
-          sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libboost-all-dev
-          llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev
-          libmagic-dev libgit2-dev ctags
+          sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libgraphviz-dev
+          libboost-filesystem-dev libboost-log-dev libboost-program-options-dev
+          llvm-10-dev clang-10 libclang-10-dev default-jre libssl1.0-dev libmagic-dev
+          libgit2-dev ctags libgtest-dev
 
       - name: Install Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
@@ -297,9 +289,10 @@ jobs:
       - name: Install required packages Ubuntu 20
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run: >
-          sudo apt-get install -y git cmake make g++ libboost-all-dev llvm-10-dev
-          clang-10 libclang-10-dev odb libodb-dev libthrift-dev default-jdk
-          libssl-dev libmagic-dev libgit2-dev ctags
+          sudo apt-get install -y git cmake make g++ libboost-filesystem-dev
+          libboost-log-dev libboost-program-options-dev llvm-10-dev clang-10
+          libclang-10-dev libgraphviz-dev libgtest-dev odb libodb-dev
+          libthrift-dev default-jre libssl1.1 libmagic-dev libgit2-dev ctags
 
       - name: Install Postgresql Ubuntu 20
         if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
@@ -314,9 +307,17 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
+          path: ${{github.workspace}}/install
 
-      - name: Add execute right to parser
-        run: chmod +x ${{github.workspace}}/bin/CodeCompass_parser
+      - name: Download CodeCompass compile-time source files
+        uses: actions/download-artifact@v2
+        with:
+          name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
+          path: ${{github.workspace}}/build
+
+      - name: Add execute right to parser and move source files
+        run: |
+          chmod +x ${{github.workspace}}/install/bin/CodeCompass_parser
 
       # Parsing with Postgresql
       - name: Parse TinyXML Postgresql
@@ -327,8 +328,19 @@ jobs:
           mkdir build_tinyxml2 && cd build_tinyxml2
           cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/bin
+          cd ${{github.workspace}}/install/bin
           ./CodeCompass_parser  -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=tinyxml2" -w $HOME/ws_pgsql/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
+
+      - name: Parse CodeCompass Postgresql
+        if: ${{ matrix.db == 'postgresql' }}
+        run: >
+          ${{github.workspace}}/install/bin/CodeCompass_parser
+          -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=codecompass"
+          -w $HOME/ws_pgsql/
+          -n "CodeCompass"
+          -i ${{github.workspace}}
+          -i ${{github.workspace}}/build/compile_commands.json
+          -j $(nproc)
 
       - name: Parse Xerces-C Postgresql
         if: ${{ matrix.db == 'postgresql' }}
@@ -338,7 +350,7 @@ jobs:
           mkdir build_xerces-c && cd build_xerces-c
           cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/bin
+          cd ${{github.workspace}}/install/bin
           ./CodeCompass_parser -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=xerces_c" -w $HOME/ws_pgsql/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
 
       # Parsing with SQLite3
@@ -350,8 +362,19 @@ jobs:
           mkdir build_tinyxml2 && cd build_tinyxml2
           cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/bin
+          cd ${{github.workspace}}/install/bin
           ./CodeCompass_parser  -d "sqlite:database=$HOME/tinyxml2.sqlite" -w $HOME/ws_pgsql/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
+
+      - name: Parse CodeCompass SQLite3
+        if: ${{ matrix.db == 'sqlite3' }}
+        run: >
+          ${{github.workspace}}/install/bin/CodeCompass_parser
+          -d "sqlite:database=$HOME/codecompass.sqlite"
+          -w $HOME/ws_pgsql/
+          -n "CodeCompass"
+          -i ${{github.workspace}}
+          -i ${{github.workspace}}/build/compile_commands.json
+          -j $(nproc)
 
       - name: Parse Xerces-C SQLite3
         if: ${{ matrix.db == 'sqlite3' }}
@@ -361,5 +384,5 @@ jobs:
           mkdir build_xerces-c && cd build_xerces-c
           cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/bin
+          cd ${{github.workspace}}/install/bin
           ./CodeCompass_parser -d "sqlite:database=$HOME/xerces.sqlite" -w $HOME/ws_pgsql/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
