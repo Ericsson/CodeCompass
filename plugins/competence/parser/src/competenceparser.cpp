@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <memory>
+#include <cctype>
 
 #include <model/commitdata.h>
 #include <model/commitdata-odb.hxx>
@@ -229,6 +230,25 @@ void CompetenceParser::commitWorker(CommitJob& job)
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
   const git_signature* commitAuthor = git_commit_author(job._commit);
+  bool valid = true;
+  for (int i = 0; i < 5; ++i)
+  {
+    valid = std::isgraph(commitAuthor->name[i]);
+    if (!valid)
+      break;
+  }
+  if (commitAuthor)
+    if (valid)
+      LOG(info) << "commit author name:" << commitAuthor->name;
+    else
+      LOG(info) << "commit author is garbage";
+  else
+    LOG(info) << "commit author is null";
+  const git_signature* committer = git_commit_committer(job._commit);
+  if (committer)
+    LOG(info) << "commit committer name:" << commitAuthor->name;
+  else
+    LOG(info) << "commit committer is null";
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
     std::chrono::system_clock::now()) - commitAuthor->when.time;
