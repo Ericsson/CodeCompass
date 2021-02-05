@@ -40,6 +40,7 @@ RUN cd /usr/src/googletest && \
 
 # Adding CodeCompass builder script.
 COPY docker/dev/codecompass-build.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/codecompass-build.sh
 
 # Setting the environment.
 ENV DATABASE=sqlite \
