@@ -22,6 +22,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
     postCreate : function () {
       this.inherited(arguments);
 
+      this.set('title', 'Build logs');
       this._table = dom.create('table', { class : 'buildlogtable' });
 
       this._addHeader();
@@ -228,7 +229,26 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       this._header = {
         header      : dom.create('div',  { class : 'header'      }),
-        parsestatus : dom.create('span', { class : 'parsestatus' }),
+        parsestatus : dom.create('span', {
+          class     : 'parsestatus',
+          onclick   : function () {
+            var dialog = new BuildDialog();
+            var file = urlHandler.getFileInfo();
+            var buildLogs = model.project.getBuildLog(file.id);
+
+            if (buildLogs.length === 0)
+            {
+              new Dialog({
+                title   : 'Build logs',
+                content : '<b>No build logs for this file.</b>'
+              }).show();
+              return;
+            }
+
+            dialog.addBuildLogs(buildLogs);
+            dialog.show();
+          }
+        }),
         filename    : dom.create('span', { class : 'filename'    }),
         path        : dom.create('span', { class : 'path'        }),
         colons      : dom.toDom('<span class="colons">::</span>')
