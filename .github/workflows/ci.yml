@@ -37,8 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      #- name: Update apt-get
-      #  run: sudo apt-get update
+      - name: Update apt-get
+        run: sudo apt-get update
 
       # Ubuntu 18.04 commands
       - name: Install required packages Ubuntu 18
@@ -245,6 +245,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      
+      - name: Update apt-get
+        run: sudo apt-get update
 
       # Ubuntu 18.04 commands
       - name: Install required packages Ubuntu 18
