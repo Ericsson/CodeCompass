@@ -43,10 +43,12 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
           if (!that.textmodule)
             console.error("Editor object must be given in constructor");
 
-          that.textmodule.set('selection', {
-            from : buildLog.range.startpos,
-            to   : buildLog.range.endpos
-          });
+          that.textmodule.set('selection', [
+            buildLog.range.startpos.line,
+            buildLog.range.startpos.column,
+            buildLog.range.endpos.line,
+            buildLog.range.endpos.column
+          ]);
 
           that.textmodule.jumpToPos(
             buildLog.range.startpos.line,
@@ -108,7 +110,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
      */
     clearBuildLogs : function () {
       dom.empty(this._table);
-      _addHeader();
+      this._addHeader();
     },
 
     /**
@@ -232,7 +234,9 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         parsestatus : dom.create('span', {
           class     : 'parsestatus',
           onclick   : function () {
-            var dialog = new BuildDialog();
+            var dialog = that._buildDialog;
+            dialog.clearBuildLogs();
+
             var file = urlHandler.getFileInfo();
             var buildLogs = model.project.getBuildLog(file.id);
 
