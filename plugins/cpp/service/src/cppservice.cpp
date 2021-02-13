@@ -281,13 +281,16 @@ void CppServiceHandler::getProperties(
         VarResult variables = _db->query<model::CppVariable>(
           VarQuery::entityHash == node.entityHash);
         
-        if(!variables.empty())
+        if (!variables.empty())
         {
           model::CppVariable variable = *variables.begin();
           return_["Name"] = variable.name;
           return_["Qualified name"] = variable.qualifiedName;
           return_["Type"] = variable.qualifiedType;
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -297,7 +300,7 @@ void CppServiceHandler::getProperties(
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::entityHash == node.entityHash);
 
-        if(!functions.empty()) 
+        if (!functions.empty())
         {
           model::CppFunction function = *functions.begin();
 
@@ -306,6 +309,9 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = function.qualifiedName;
           return_["Signature"] = function.name;
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -315,7 +321,7 @@ void CppServiceHandler::getProperties(
         TypeResult types = _db->query<model::CppRecord>(
           TypeQuery::entityHash == node.entityHash);
 
-        if(!types.empty())
+        if (!types.empty())
         {
           model::CppRecord type = *types.begin();
 
@@ -327,6 +333,9 @@ void CppServiceHandler::getProperties(
           return_["Name"] = type.name;
           return_["Qualified name"] = type.qualifiedName;
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -336,13 +345,16 @@ void CppServiceHandler::getProperties(
         TypedefResult types = _db->query<model::CppTypedef>(
           TypedefQuery::entityHash == node.entityHash);
 
-        if(!types.empty())
+        if (!types.empty())
         {
           model::CppTypedef type = *types.begin();
 
           return_["Name"] = type.name;
           return_["Qualified name"] = type.qualifiedName;
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
          
         break;
       }
@@ -352,7 +364,7 @@ void CppServiceHandler::getProperties(
         EnumConstResult enumConsts
           = _db->query<model::CppEnumConstant>(
               EnumConstQuery::entityHash == node.entityHash);
-        if(!enumConsts.empty())
+        if (!enumConsts.empty())
         {
           model::CppEnumConstant enumConst = *enumConsts.begin();
 
@@ -360,6 +372,9 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = enumConst.qualifiedName;
           return_["Value"] = std::to_string(enumConst.value);
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
       }
     }
   });
@@ -469,16 +484,18 @@ std::int32_t CppServiceHandler::getReferenceCount(
         FuncResult functions = _db->query<cc::model::CppFunction>(
           FuncQuery::entityHash == node.entityHash);
 
-        if(!functions.empty())
+        if (!functions.empty())
         {
           const model::CppFunction& function = *functions.begin();
 
           return _db->query_value<model::CppRecordCount>(
             TypeQuery::entityHash == function.typeHash).count;
         }
-        return 0;
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
-        break;
+        return 0;
       }
 
       case OVERRIDE:
@@ -501,15 +518,18 @@ std::int32_t CppServiceHandler::getReferenceCount(
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::entityHash == node.entityHash);
-        if(!varNodes.empty())
+        if (!varNodes.empty())
         {
           const model::CppVariable& variable = *varNodes.begin();
 
           return _db->query_value<model::CppRecordCount>(
             TypeQuery::entityHash == variable.typeHash).count;
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
+
         return 0;
-        break;
       }
 
       case ALIAS:
@@ -688,8 +708,8 @@ void CppServiceHandler::getReferences(
             ((AstQuery::location.range.end.line == end.line &&
               AstQuery::location.range.end.column > end.column) ||
              AstQuery::location.range.end.line > end.line));
-          if(!result.empty())
-            nodes.insert(nodes.end(), result.begin(), result.end());
+
+          nodes.insert(nodes.end(), result.begin(), result.end());
         }
 
         std::sort(nodes.begin(), nodes.end());
@@ -732,8 +752,8 @@ void CppServiceHandler::getReferences(
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::entityHash == entityHash &&
             AstQuery::astType == model::CppAstNode::AstType::Usage);
-          if(!result.empty())
-            nodes.insert(nodes.end(), result.begin(), result.end());
+
+          nodes.insert(nodes.end(), result.begin(), result.end());
         }
 
         break;
@@ -745,7 +765,7 @@ void CppServiceHandler::getReferences(
 
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::entityHash == node.entityHash);
-        if(!functions.empty())
+        if (!functions.empty())
         {
           model::CppFunction function = *functions.begin();
 
@@ -753,6 +773,9 @@ void CppServiceHandler::getReferences(
             nodes.push_back(queryCppAstNode(
               std::to_string(var.load()->astNodeId)));
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -763,7 +786,7 @@ void CppServiceHandler::getReferences(
 
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::entityHash == node.entityHash);
-        if(!functions.empty())
+        if (!functions.empty())
         {
           model::CppFunction function = *functions.begin();
 
@@ -771,6 +794,9 @@ void CppServiceHandler::getReferences(
             nodes.push_back(queryCppAstNode(
               std::to_string(var.load()->astNodeId)));
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -781,7 +807,7 @@ void CppServiceHandler::getReferences(
 
         FuncResult functions = _db->query<model::CppFunction>(
           FuncQuery::entityHash == node.entityHash);
-        if(!functions.empty())
+        if (!functions.empty())
         {
           model::CppFunction function = *functions.begin();
 
@@ -795,6 +821,9 @@ void CppServiceHandler::getReferences(
             nodes.insert(nodes.end(), defs.begin(), defs.end());
           }
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -840,7 +869,7 @@ void CppServiceHandler::getReferences(
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::entityHash == node.entityHash);
-        if(!varNodes.empty())
+        if (!varNodes.empty())
         {
           const model::CppVariable& variable = *varNodes.begin();
 
@@ -854,6 +883,9 @@ void CppServiceHandler::getReferences(
             nodes.insert(nodes.end(), defs.begin(), defs.end());
           }
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -929,8 +961,7 @@ void CppServiceHandler::getReferences(
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::entityHash == fr.theFriend &&
             AstQuery::astType == model::CppAstNode::AstType::Definition);
-          if(!result.empty())
-            nodes.insert(nodes.end(), result.begin(), result.end());
+          nodes.insert(nodes.end(), result.begin(), result.end());
         }
 
         break;
@@ -941,16 +972,19 @@ void CppServiceHandler::getReferences(
 
         TypedefResult types = _db->query<model::CppTypedef>(
           TypedefQuery::entityHash == node.entityHash);
-        if(!types.empty())
+        if (!types.empty())
         {
           model::CppTypedef type = *types.begin();
 
           AstResult result = _db->query<model::CppAstNode>(
             AstQuery::entityHash == type.typeHash &&
             AstQuery::astType == model::CppAstNode::AstType::Definition);
-          if(!result.empty())
-            nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
+
+          nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -961,7 +995,7 @@ void CppServiceHandler::getReferences(
 
         EnumResult cppEnums = _db->query<model::CppEnum>(
           EnumQuery::entityHash == node.entityHash);
-        if(!cppEnums.empty())
+        if (!cppEnums.empty())
         {
           model::CppEnum cppEnum = *cppEnums.begin();
 
@@ -974,6 +1008,9 @@ void CppServiceHandler::getReferences(
                 std::to_string(enumConst.load()->astNodeId));
             });
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
@@ -1168,10 +1205,7 @@ void CppServiceHandler::getSyntaxHighlight(
     model::FilePtr file = _db->query_one<model::File>(
       FileQuery::id == std::stoull(range_.file));
 
-    if(!file)
-      return;
-
-    if (!file->content.load())
+    if (!file || !file->content.load())
       return;
 
     std::istringstream s(file->content->content);
@@ -1283,7 +1317,7 @@ void CppServiceHandler::getFileDiagramTypes(
       FileQuery::id == std::stoull(fileId_));
   });
 
-  if(file)
+  if (file)
   {
     if (file->type == model::File::DIRECTORY_TYPE)
     {
@@ -1416,9 +1450,8 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodes(
     AstQuery::entityHash == node.entityHash &&
     AstQuery::location.range.end.line != model::Position::npos &&
     query_);
-  if(!result.empty())
-    return std::vector<model::CppAstNode>(result.begin(), result.end());
-  return std::vector<model::CppAstNode>();
+
+  return std::vector<model::CppAstNode>(result.begin(), result.end());
 }
 
 std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodesInFile(
@@ -1428,9 +1461,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCppAstNodesInFile(
   AstResult result = _db->query<model::CppAstNode>(
     AstQuery::location.file == std::stoull(fileId_) && query_);
 
-  if(!result.empty())
-    return std::vector<model::CppAstNode>(result.begin(), result.end());
-  return std::vector<model::CppAstNode>();
+  return std::vector<model::CppAstNode>(result.begin(), result.end());
 }
 
 std::uint32_t CppServiceHandler::queryCppAstNodeCountInFile(
@@ -1480,13 +1511,7 @@ std::vector<model::CppAstNode> CppServiceHandler::queryCalls(
   model::CppAstNode node = nodes.front();
   AstResult result = _db->query<model::CppAstNode>(astCallsQuery(node));
 
-  if(!result.empty())
-    nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
-  else
-  {
-    nodes = std::vector<model::CppAstNode>();
-  }
-  
+  nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
 
   return nodes;
 }
@@ -1615,13 +1640,16 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         VarResult varNodes = _db->query<cc::model::CppVariable>(
           VarQuery::entityHash == defNode.entityHash);
-        if(!varNodes.empty())
+        if (!varNodes.empty())
         {
           const model::CppVariable& varNode = *varNodes.begin();
 
           for (const model::Tag& tag : varNode.tags)
             tags[node.id].push_back(model::tagToString(tag));
         }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
 
         break;
       }
