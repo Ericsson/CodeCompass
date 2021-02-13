@@ -245,7 +245,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Update apt-get
         run: sudo apt-get update
 
@@ -389,3 +389,18 @@ jobs:
           make -j $(nproc)
           cd ${{github.workspace}}/install/bin
           ./CodeCompass_parser -d "sqlite:database=$HOME/xerces.sqlite" -w $HOME/ws_pgsql/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
+
+  tarball:
+    needs: parse
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Update apt-get
+        run: sudo apt-get update
+
+      - name: Install curl
+        run: sudo apt-get install curl
+
+      - name: Trigget GitLab CI
+        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=master https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
