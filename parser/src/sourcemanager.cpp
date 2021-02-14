@@ -16,19 +16,9 @@ namespace parser
 SourceManager::SourceManager(std::shared_ptr<odb::database> db_)
   : _db(db_), _transaction(db_), _magicCookie(nullptr)
 {
-  _transaction([&, this]() {
+  //--- Reload files from database ---//
 
-    //--- Reload files from database ---//
-
-    for (const model::File& file : db_->query<model::File>())
-    {
-      _files[file.path] = std::make_shared<model::File>(file);
-      _persistedFiles.insert(file.id);
-    }
-
-    for (const auto& fileContentId : db_->query<model::FileContentIds>())
-      _persistedContents.insert(fileContentId.hash);
-  });
+  reloadCache();
 
   //--- Initialize magic for plain text testing ---//
 
@@ -54,6 +44,25 @@ SourceManager::~SourceManager()
 
   if (_magicCookie)
     ::magic_close(_magicCookie);
+}
+
+void SourceManager::reloadCache()
+{
+  _files.clear();
+  _persistedFiles.clear();
+  _persistedContents.clear();
+
+  _transaction([&, this]() {
+
+    for (const model::File& file : _db->query<model::File>())
+    {
+      _files[file.path] = std::make_shared<model::File>(file);
+      _persistedFiles.insert(file.id);
+    }
+
+    for (const auto& fileContentId : _db->query<model::FileContentIds>())
+      _persistedContents.insert(fileContentId.hash);
+  });
 }
 
 model::FileContentPtr SourceManager::createFileContent(

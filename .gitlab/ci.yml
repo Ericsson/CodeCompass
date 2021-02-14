@@ -1,0 +1,150 @@
+stages:
+    - prepare
+    - package
+    - deploy
+
+variables:
+    BUILD_DIR: $CI_PROJECT_DIR/build
+    PACKAGES_DIR: $CI_PROJECT_DIR/build/packages
+    DEPS_INSTALL_BUILD_DIR: $CI_PROJECT_DIR/build/deps-build
+    DEPS_INSTALL_RUNTIME_DIR: $CI_PROJECT_DIR/build/deps-runtime
+    CC_SRC_DIR: $CI_PROJECT_DIR
+    CC_BUILD_DIR: $CI_PROJECT_DIR/build/cc-build
+    CC_INSTALL_DIR: $CI_PROJECT_DIR/build/cc-install
+
+.tarball:
+    stage: package
+    when: manual
+    allow_failure: false
+    timeout: 12h
+    tags: ["long-running"]
+    script:
+        - cd .gitlab
+        - chmod +x build-deps.sh build-codecompass.sh
+        - ./build-deps.sh
+        - ./build-codecompass.sh
+        - cd $BUILD_DIR
+        - cp $CI_PROJECT_DIR/.gitlab/cc-env.sh .
+        - cp $CI_PROJECT_DIR/.gitlab/README.md .
+        - tar -czf codecompass.tar.gz --transform "s|^\.|codecompass|" ./deps-runtime ./cc-install ./ccdb-tool ./cc-env.sh ./README.md
+        - "echo Tarball size: $(du -m codecompass.tar.gz | cut -f1) MB"
+    artifacts:
+        paths:
+            - build/codecompass.tar.gz
+        expire_in: 1 week
+    cache:
+        paths:
+            - $DEPS_INSTALL_BUILD_DIR/gcc-install/
+            - $DEPS_INSTALL_RUNTIME_DIR/odb-install/
+            - $DEPS_INSTALL_RUNTIME_DIR/llvm-install/
+            - $DEPS_INSTALL_RUNTIME_DIR/boost-install/
+
+.show-glibc-version: &show-glibc-version
+  - |
+    if ! GLIBC_VERSION=$(ldd --version | grep -Po "(?<=GLIBC )[0-9.]+"); then
+      GLIBC_VERSION=$(ldd --version | grep -Po "[0-9.]+[0-9]$")
+    fi
+    if LIBSTDC_PATH=$(ldconfig -p | grep -m1 "stdc++" | grep -Po "(?<=\=\> ).*"); then
+      GLIBCXX_VERSIONS=$(strings $LIBSTDC_PATH | grep -Po "(?<=GLIBCXX_)[0-9.]+")
+      GLIBCXX_VERSIONS="${GLIBCXX_VERSIONS//$'\n'/ }" # replace newlines with spaces
+    fi
+    echo "GLIBC version: $GLIBC_VERSION"
+    echo "GLIBCXX versions: $GLIBCXX_VERSIONS"
+
+tarball suse-15:
+    extends: .tarball
+    image: opensuse/leap:15
+    cache:
+        key: "leap"
+    variables:
+        GCC_VERSION: 7.5.0
+        ODB_VERSION: 2.5.0
+    before_script:
+        - zypper refresh
+        - zypper update -y
+        # download tools
+        - zypper install -y curl wget bzip2 unzip ca-certificates
+        # build tools for CodeCompass
+        - zypper install -y -t pattern devel_basis
+        - zypper install -y binutils gcc-c++ gmp-devel
+        # build tools for ccdb-tools
+        - zypper install -y libffi-devel
+        # show GLIBC verison
+        - *show-glibc-version
+
+tarball suse-42.1:
+    extends: .tarball
+    image: opensuse/archive:42.1
+    cache:
+        key: "malachite"
+    variables:
+        GCC_VERSION: 5.5.0
+        ODB_VERSION: 2.4.0
+    before_script:
+        - zypper refresh
+        - zypper update -y
+        # download tools
+        - zypper install -y curl wget bzip2 unzip ca-certificates
+        # build tools for CodeCompass
+        - zypper install -y -t pattern devel_basis
+        - zypper install -y binutils gcc-c++ gmp-devel
+        # build tools for ccdb-tools
+        - zypper install -y libffi-devel
+        # show GLIBC verison
+        - *show-glibc-version
+
+tarball ubuntu-16.04:
+    extends: .tarball
+    image: ubuntu:16.04
+    cache:
+        key: "xenial"
+    variables:
+        GCC_VERSION: 5.5.0
+        ODB_VERSION: 2.4.0
+    before_script:
+        - apt-get update -yqq
+        # download tools
+        - apt-get install -yqq curl wget bzip2 unzip ca-certificates
+        # build tools for CodeCompass
+        - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
+        # build tools for ctags
+        - apt-get install -yqq dh-autoreconf pkg-config
+        # build tools for ccdb-tools
+        - apt-get install -yqq libffi-dev
+        # show GLIBC verison
+        - *show-glibc-version
+
+.upload:
+    stage: deploy
+    image: ubuntu:20.04
+    when: manual
+    allow_failure: false
+    variables:
+        FILENAME: codecompass-$CI_COMMIT_BRANCH.tar.gz
+    before_script:
+        - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+        - mkdir -p ~/.ssh
+        - eval $(ssh-agent -s)
+        - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    script:
+        - ssh-add <(echo "$CD_PRIVATE_KEY")
+        - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
+        - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
+
+upload suse-15:
+    extends: .upload
+    variables:
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-15.tar.gz
+    needs: ["tarball suse-15"]
+
+upload suse-42.1:
+    extends: .upload
+    variables:
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-42.1.tar.gz
+    needs: ["tarball suse-42.1"]
+
+upload ubuntu-16.04:
+    extends: .upload
+    variables:
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-ubuntu-16.04.tar.gz
+    needs: ["tarball ubuntu-16.04"]

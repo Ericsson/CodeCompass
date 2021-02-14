@@ -172,7 +172,7 @@ bool checkPsqlDatbase(
 
     if (!exists && create_)
     {
-      std::string createCmd = "CREATE DATABASE " + dbName_
+      std::string createCmd = "CREATE DATABASE \"" + dbName_ + "\""
         + " ENCODING = 'SQL_ASCII'"
         + " LC_CTYPE='C'"
         + " LC_COLLATE='C'"

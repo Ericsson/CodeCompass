@@ -1061,7 +1061,10 @@ public:
       : namedCallee->getNameAsString();
     astNode->location = getFileLoc(ce_->getBeginLoc(), ce_->getEndLoc());
     astNode->entityHash = util::fnvHash(usr);
-    astNode->symbolType = model::CppAstNode::SymbolType::Function;
+    astNode->symbolType
+      = funcCallee
+      ? model::CppAstNode::SymbolType::Function
+      : model::CppAstNode::SymbolType::FunctionPtr;
     astNode->astType
       = isVirtualCall(ce_)
       ? model::CppAstNode::AstType::VirtualCall
