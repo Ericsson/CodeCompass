@@ -3,6 +3,9 @@
 #include <chrono>
 #include <memory>
 #include <cctype>
+#include <iostream>
+#include <fstream>
+#include <functional>
 
 #include <model/commitdata.h>
 #include <model/commitdata-odb.hxx>
@@ -223,6 +226,40 @@ void CompetenceParser::traverseCommits(
   }
 }
 
+int CompetenceParser::walkCb(const char* root,
+                             const git_tree_entry* entry,
+                             void* payload)
+{
+  LOG(info) << git_tree_entry_name(entry);
+  Walk_data* data = static_cast<Walk_data*>(payload);
+
+  /*const char* path = NULL;
+  if (std::find_if(data->deltas.begin(), data->deltas.end(),
+      [&](const git_diff_delta* delta)
+      {
+        if (data->isParent)
+          path = delta->old_file.path;
+        else
+          path = delta->new_file.path;
+        return delta->new_file.path == git_tree_entry_name(entry);
+      }) != data->deltas.end())
+  {
+    LOG(info) << "beszarok";
+  }*/
+  std::string path(data->delta->new_file.path);
+  std::string entryName(git_tree_entry_name(entry));
+  if (git_tree_entry_filemode(entry) == GIT_FILEMODE_TREE
+      && path.compare(0, entryName.size(), entryName) == 0)
+  {
+    data->prefix.append(entryName + "/");
+    const git_oid* entryOid = git_tree_entry_id(entry);
+    git_tree* subTree;
+    git_tree_lookup(&subTree, data->repo, entryOid);
+    git_tree_walk(subTree, GIT_TREEWALK_PRE, &CompetenceParser::walkCb, data);
+  }
+  return 1;
+}
+
 void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
@@ -230,25 +267,13 @@ void CompetenceParser::commitWorker(CommitJob& job)
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
   const git_signature* commitAuthor = git_commit_author(job._commit);
-  bool valid = true;
-  for (int i = 0; i < 5; ++i)
+
+  if (commitAuthor && !std::isgraph(commitAuthor->name[0]))
   {
-    valid = std::isgraph(commitAuthor->name[i]);
-    if (!valid)
-      break;
+    LOG(info) << "[competenceparser] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
+    return;
   }
-  if (commitAuthor)
-    if (valid)
-      LOG(info) << "commit author name:" << commitAuthor->name;
-    else
-      LOG(info) << "commit author is garbage";
-  else
-    LOG(info) << "commit author is null";
-  const git_signature* committer = git_commit_committer(job._commit);
-  if (committer)
-    LOG(info) << "commit committer name:" << commitAuthor->name;
-  else
-    LOG(info) << "commit committer is null";
+
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
     std::chrono::system_clock::now()) - commitAuthor->when.time;
@@ -270,6 +295,44 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (!commitTree || !parentTree)
     return;
 
+  /*std::string path("/home/efekane/jplag/files/a/");
+  size_t entryCount = git_tree_entrycount(commitTree.get());
+  std::vector<const git_tree_entry*> commitEntries;
+  for (size_t i = 0; i < entryCount; ++i)
+  {
+    commitEntries.push_back(git_tree_entry_byindex(commitTree.get(), i));
+    if (git_tree_entry_filemode(commitEntries[i]) == GIT_FILEMODE_BLOB)
+    {
+      const git_oid *entryId = git_tree_entry_id(commitEntries[i]);
+      git_blob *blob = NULL;
+      git_blob_lookup(&blob, repo.get(), entryId);
+      //fwrite(git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob), 1, stdout);
+      std::ofstream currentFile;
+      currentFile.open(path + git_tree_entry_name(commitEntries[i]));
+      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
+      currentFile.close();
+    }
+  }
+
+  std::string otherPath("/home/efekane/jplag/files/b/");
+  size_t entryCountParent = git_tree_entrycount(parentTree.get());
+  std::vector<const git_tree_entry*> parentEntries;
+  for (size_t i = 0; i < entryCountParent; ++i)
+  {
+    parentEntries.push_back(git_tree_entry_byindex(parentTree.get(), i));
+    if (git_tree_entry_filemode(parentEntries[i]) == GIT_FILEMODE_BLOB)
+    {
+      const git_oid *entryId = git_tree_entry_id(parentEntries[i]);
+      git_blob *blob = NULL;
+      git_blob_lookup(&blob, repo.get(), entryId);
+      //fwrite(git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob), 1, stdout);
+      std::ofstream currentFile;
+      currentFile.open(otherPath + git_tree_entry_name(parentEntries[i]));
+      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
+      currentFile.close();
+    }
+  }*/
+
   // Calculate diff of trees.
   DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
 
@@ -278,11 +341,32 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (num_deltas == 0)
     return;
 
+  std::vector<const git_diff_delta*> deltas;
+  for (size_t j = 0; j < num_deltas; ++j)
+  {
+     //deltas.push_back(git_diff_get_delta(diff.get(), j));
+     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
+     Walk_data commitData = {delta, "", repo.get(), false};
+     git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
+     LOG(info) << deltas[j]->new_file.path;
+  }
+
+  //Walk_data commitData = {deltas, false};
+  //git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, CompetenceParser::walkCb, &commitData);
+
   // Analyse every file that was affected by the commit.
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
     git_diff_file diffFile = delta->new_file;
+
+    /*std::string command("java -jar /home/efekane/jplag/jplag-2.12.1-SNAPSHOT-jar-with-dependencies.jar -l c/c++ -c ");
+    command.append(job._root + delta->old_file.path);
+    command.append(" -c ");
+    command.append(job._root + delta->new_file.path);
+    LOG(info) << command;
+    system(command.c_str());*/
+
     model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
     if (!file)
       continue;

@@ -78,6 +78,15 @@ private:
         _commit(commit_), _commitCounter(commitCounter_) {}
   };
 
+  struct Walk_data
+  {
+    //std::vector<const git_diff_delta*> deltas;
+    const git_diff_delta* delta;
+    std::string prefix;
+    git_repository* repo;
+    bool isParent = false;
+  };
+
   bool accept(const std::string& path_);
 
   std::shared_ptr<odb::database> _db;
@@ -85,6 +94,9 @@ private:
   util::DirIterCallback getParserCallbackRepo(
     boost::filesystem::path& repoPath_);
 
+  static int walkCb(const char* root,
+             const git_tree_entry* entry,
+             void* payload);
   void commitWorker(CommitJob& job_);
 
   void commitSampling(
