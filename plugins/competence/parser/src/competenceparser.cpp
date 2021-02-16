@@ -230,34 +230,36 @@ int CompetenceParser::walkCb(const char* root,
                              const git_tree_entry* entry,
                              void* payload)
 {
-  LOG(info) << git_tree_entry_name(entry);
+  //LOG(info) << git_tree_entry_name(entry);
   Walk_data* data = static_cast<Walk_data*>(payload);
+  if (data->found)
+    return 0;
 
-  /*const char* path = NULL;
-  if (std::find_if(data->deltas.begin(), data->deltas.end(),
-      [&](const git_diff_delta* delta)
-      {
-        if (data->isParent)
-          path = delta->old_file.path;
-        else
-          path = delta->new_file.path;
-        return delta->new_file.path == git_tree_entry_name(entry);
-      }) != data->deltas.end())
-  {
-    LOG(info) << "beszarok";
-  }*/
+  //LOG(info) << data->prefix;
   std::string path(data->delta->new_file.path);
   std::string entryName(git_tree_entry_name(entry));
-  if (git_tree_entry_filemode(entry) == GIT_FILEMODE_TREE
-      && path.compare(0, entryName.size(), entryName) == 0)
+  std::string current(data->prefix + entryName);
+  if (path.compare(0, current.size(), current) == 0)
   {
-    data->prefix.append(entryName + "/");
-    const git_oid* entryOid = git_tree_entry_id(entry);
-    git_tree* subTree;
-    git_tree_lookup(&subTree, data->repo, entryOid);
-    git_tree_walk(subTree, GIT_TREEWALK_PRE, &CompetenceParser::walkCb, data);
+    if (git_tree_entry_filemode(entry) == GIT_FILEMODE_TREE)
+    {
+      data->prefix.append(entryName + "/");
+      const git_oid* entryOid = git_tree_entry_id(entry);
+      git_tree* subTree;
+      git_tree_lookup(&subTree, data->repo, entryOid);
+      git_tree_walk(subTree, GIT_TREEWALK_PRE, &CompetenceParser::walkCb, payload);
+      return 1;
+    }
+    else if (git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
+    {
+      LOG(info) << "FOUND IT!!!!!!";
+      LOG(info) << path << "\n";
+      data->found = true;
+      return 1;
+    }
   }
-  return 1;
+  else
+    return 1;
 }
 
 void CompetenceParser::commitWorker(CommitJob& job)
@@ -348,7 +350,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
      const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
      Walk_data commitData = {delta, "", repo.get(), false};
      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
-     LOG(info) << deltas[j]->new_file.path;
+     //LOG(info) << deltas[j]->new_file.path;
   }
 
   //Walk_data commitData = {deltas, false};

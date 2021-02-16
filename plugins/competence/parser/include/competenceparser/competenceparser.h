@@ -85,6 +85,7 @@ private:
     std::string prefix;
     git_repository* repo;
     bool isParent = false;
+    bool found = false;
   };
 
   bool accept(const std::string& path_);
