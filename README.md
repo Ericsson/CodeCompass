@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/Ericsson/CodeCompass.svg?branch=master)](https://travis-ci.com/Ericsson/CodeCompass)
+![Build project](https://github.com/Ericsson/CodeCompass/workflows/Build%20project/badge.svg)
+![Tarball packaging](https://img.shields.io/gitlab/pipeline/codecompass/CodeCompass/master?gitlab_url=https%3A%2F%2Fgitlab.inf.elte.hu&label=Tarball%20packaging)
 
 CodeCompass
 ===========
