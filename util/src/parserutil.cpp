@@ -50,9 +50,17 @@ bool iterateDirectoryRecursive(
 
   fs::path p(path_);
 
-  if (!fs::exists(p))
+  try
   {
-    LOG(warning) << "Not found: " << p;
+    if (!fs::exists(p))
+    {
+      LOG(warning) << "Not found: " << p;
+      return true;
+    }
+  }
+  catch (const std::exception& ex_)
+  {
+    LOG(warning) << "Parser threw an exception: " << ex_.what();
     return true;
   }
 
