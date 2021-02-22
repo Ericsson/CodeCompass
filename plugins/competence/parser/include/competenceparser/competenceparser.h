@@ -82,7 +82,6 @@ private:
   {
     //std::vector<const git_diff_delta*> deltas;
     const git_diff_delta* delta;
-    std::string prefix;
     git_repository* repo;
     int jobNumber;
     bool isParent = false;

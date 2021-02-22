@@ -232,7 +232,7 @@ int CompetenceParser::walkCb(const char* root,
 {
   Walk_data* data = static_cast<Walk_data*>(payload);
   if (data->found)
-    return 0;
+    return 1;
 
   std::string path(data->delta->new_file.path);
   std::string entryName(git_tree_entry_name(entry));
@@ -252,13 +252,12 @@ int CompetenceParser::walkCb(const char* root,
     git_blob *blob = NULL;
     git_blob_lookup(&blob, data->repo, entryId);
     std::ofstream currentFile;
-    std::string fileName(root + entryName);
-    std::replace(fileName.begin(), fileName.end(), '/', '_');
-    currentFile.open(outPath + "/" + fileName);
+    std::replace(current.begin(), current.end(), '/', '_');
+    currentFile.open(outPath + "/" + current);
     currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
     currentFile.close();
     data->found = true;
-    return 1;
+    return -1;
   }
   else
     return 0;
@@ -348,14 +347,32 @@ void CompetenceParser::commitWorker(CommitJob& job)
   std::vector<const git_diff_delta*> deltas;
   for (size_t j = 0; j < num_deltas; ++j)
   {
-     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
-     LOG(info) << job._commitCounter << ": " << delta->new_file.path;
+    const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
+    if (git_oid_iszero(&delta->old_file.id))
+      LOG(info) << "old file does not exist";
+    if (git_oid_iszero(&delta->new_file.id))
+      LOG(info) << "new file does not exist";
 
-     Walk_data commitData = {delta, "", repo.get(), job._commitCounter, false};
+    char* oldId, *newId;
+    git_oid_tostr(oldId, GIT_OID_HEXSZ+1, &delta->old_file.id);
+    git_oid_tostr(oldId, GIT_OID_HEXSZ+1, &delta->new_file.id);
+    LOG(info) << job._commitCounter << " old path: " << oldId;
+    LOG(info) << job._commitCounter << " new path: " << newId;
+
+     /*Walk_data commitData = {delta, repo.get(), job._commitCounter, false};
      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
 
-     Walk_data parentData = {delta, "", repo.get(), job._commitCounter, true};
+     Walk_data parentData = {delta, repo.get(), job._commitCounter, true};
      git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
+
+    std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
+    std::string path(delta->new_file.path);
+    std::replace()
+    command.append("/home/efekane/jplag/files/" + job._commitCounter + "_old/");
+    command.append(" -c ");
+    command.append(job._root + delta->new_file.path);
+    LOG(info) << command;
+    system(command.c_str());*/
   }
 
   //Walk_data commitData = {deltas, false};
