@@ -230,12 +230,10 @@ int CompetenceParser::walkCb(const char* root,
                              const git_tree_entry* entry,
                              void* payload)
 {
-  //LOG(info) << git_tree_entry_name(entry);
   Walk_data* data = static_cast<Walk_data*>(payload);
   if (data->found)
     return 0;
 
-  //LOG(info) << data->prefix;
   std::string path(data->delta->new_file.path);
   std::string entryName(git_tree_entry_name(entry));
   std::string current(data->prefix + entryName);
@@ -252,14 +250,24 @@ int CompetenceParser::walkCb(const char* root,
     }
     else if (git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
     {
-      LOG(info) << "FOUND IT!!!!!!";
-      LOG(info) << path << "\n";
+      std::string outPath("/home/efekane/jplag/files/" + data->thread_number);  // TODO: general output path
+      if (data->isParent)
+        outPath.append("_old");
+      else
+        outPath.append("_new");
+      const git_oid *entryId = git_tree_entry_id(entry);
+      git_blob *blob = NULL;
+      git_blob_lookup(&blob, data->repo, entryId);
+      std::ofstream currentFile;
+      currentFile.open(outPath + entryName);
+      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
+      currentFile.close();
       data->found = true;
       return 1;
     }
   }
   else
-    return 1;
+    return 0;
 }
 
 void CompetenceParser::commitWorker(CommitJob& job)
@@ -346,11 +354,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
   std::vector<const git_diff_delta*> deltas;
   for (size_t j = 0; j < num_deltas; ++j)
   {
-     //deltas.push_back(git_diff_get_delta(diff.get(), j));
      const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
+     LOG(info) << job._commitCounter << ": " << delta->new_file.path;
      Walk_data commitData = {delta, "", repo.get(), false};
      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
-     //LOG(info) << deltas[j]->new_file.path;
   }
 
   //Walk_data commitData = {deltas, false};
