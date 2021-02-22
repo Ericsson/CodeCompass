@@ -50,17 +50,17 @@ bool iterateDirectoryRecursive(
 
   fs::path p(path_);
 
-  try
+  boost::system::error_code ec;
+  auto target = fs::canonical(p, ec);
+  if (ec)
   {
-    if (!fs::exists(p))
-    {
-      LOG(warning) << "Not found: " << p;
-      return true;
-    }
+    LOG(warning) << p << ": " << ec.message();
+    return true;
   }
-  catch (const std::exception& ex_)
+
+  if (!fs::exists(p))
   {
-    LOG(warning) << "Parser threw an exception: " << ex_.what();
+    LOG(warning) << "Not found: " << p;
     return true;
   }
 
