@@ -236,35 +236,29 @@ int CompetenceParser::walkCb(const char* root,
 
   std::string path(data->delta->new_file.path);
   std::string entryName(git_tree_entry_name(entry));
-  std::string current(data->prefix + entryName);
-  if (path.compare(0, current.size(), current) == 0)
+  std::string current(root + entryName);
+  if (path.compare(0, current.size(), current) == 0
+      && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
-    if (git_tree_entry_filemode(entry) == GIT_FILEMODE_TREE)
-    {
-      data->prefix.append(entryName + "/");
-      const git_oid* entryOid = git_tree_entry_id(entry);
-      git_tree* subTree;
-      git_tree_lookup(&subTree, data->repo, entryOid);
-      git_tree_walk(subTree, GIT_TREEWALK_PRE, &CompetenceParser::walkCb, payload);
-      return 1;
-    }
-    else if (git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
-    {
-      std::string outPath("/home/efekane/jplag/files/" + data->thread_number);  // TODO: general output path
-      if (data->isParent)
-        outPath.append("_old");
-      else
-        outPath.append("_new");
-      const git_oid *entryId = git_tree_entry_id(entry);
-      git_blob *blob = NULL;
-      git_blob_lookup(&blob, data->repo, entryId);
-      std::ofstream currentFile;
-      currentFile.open(outPath + entryName);
-      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
-      currentFile.close();
-      data->found = true;
-      return 1;
-    }
+    std::string outPath("/home/efekane/jplag/files/" + std::to_string(data->jobNumber));  // TODO: general output path
+    if (data->isParent)
+      outPath.append("_old");
+    else
+      outPath.append("_new");
+    std::string command("mkdir -p " + outPath);
+    system(command.c_str());
+
+    const git_oid *entryId = git_tree_entry_id(entry);
+    git_blob *blob = NULL;
+    git_blob_lookup(&blob, data->repo, entryId);
+    std::ofstream currentFile;
+    std::string fileName(root + entryName);
+    std::replace(fileName.begin(), fileName.end(), '/', '_');
+    currentFile.open(outPath + "/" + fileName);
+    currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
+    currentFile.close();
+    data->found = true;
+    return 1;
   }
   else
     return 0;
@@ -356,8 +350,12 @@ void CompetenceParser::commitWorker(CommitJob& job)
   {
      const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
      LOG(info) << job._commitCounter << ": " << delta->new_file.path;
-     Walk_data commitData = {delta, "", repo.get(), false};
+
+     Walk_data commitData = {delta, "", repo.get(), job._commitCounter, false};
      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
+
+     Walk_data parentData = {delta, "", repo.get(), job._commitCounter, true};
+     git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
   }
 
   //Walk_data commitData = {deltas, false};

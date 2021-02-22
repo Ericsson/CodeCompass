@@ -84,7 +84,7 @@ private:
     const git_diff_delta* delta;
     std::string prefix;
     git_repository* repo;
-    int thread_number = 0;
+    int jobNumber;
     bool isParent = false;
     bool found = false;
   };
