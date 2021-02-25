@@ -14,6 +14,8 @@
 #include <util/parserutil.h>
 #include <util/threadpool.h>
 
+namespace fs = boost::filesystem;
+
 namespace cc
 {
 namespace parser
@@ -83,7 +85,7 @@ private:
     //std::vector<const git_diff_delta*> deltas;
     const git_diff_delta* delta;
     git_repository* repo;
-    int jobNumber;
+    boost::filesystem::path basePath;
     bool isParent = false;
     bool found = false;
   };
@@ -170,6 +172,8 @@ private:
 
   int _maxCommitCount = 0;
   int _commitCount = 0;
+
+  boost::filesystem::path basePath;
 };
   
 } // parser

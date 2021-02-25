@@ -240,20 +240,18 @@ int CompetenceParser::walkCb(const char* root,
   if (path.compare(0, current.size(), current) == 0
       && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
-    std::string outPath("/home/efekane/jplag/files/" + std::to_string(data->jobNumber));  // TODO: general output path
     if (data->isParent)
-      outPath.append("_old");
+      data->basePath.append("/old/");
     else
-      outPath.append("_new");
-    std::string command("mkdir -p " + outPath);
-    system(command.c_str());
+      data->basePath.append("/new/");
+    fs::create_directories(data->basePath);
 
-    const git_oid *entryId = git_tree_entry_id(entry);
+    const git_oid* entryId = git_tree_entry_id(entry);
     git_blob *blob = NULL;
     git_blob_lookup(&blob, data->repo, entryId);
     std::ofstream currentFile;
     std::replace(current.begin(), current.end(), '/', '_');
-    currentFile.open(outPath + "/" + current);
+    currentFile.open(data->basePath.string() + current);
     currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
     currentFile.close();
     data->found = true;
@@ -276,6 +274,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
     LOG(info) << "[competenceparser] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
     return;
   }
+
+  basePath = boost::filesystem::path(_ctx.options["workspace"].as<std::string>());
+  basePath.append(_ctx.options["name"].as<std::string>() + "/competence/");
+  LOG(info) << basePath;
 
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -344,28 +346,29 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (num_deltas == 0)
     return;
 
+  fs::path outPath(basePath);
+  outPath.append(std::to_string(job._commitCounter));
+  fs::create_directories(outPath);
+
   std::vector<const git_diff_delta*> deltas;
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
-    if (git_oid_iszero(&delta->old_file.id))
-      LOG(info) << "old file does not exist";
-    if (git_oid_iszero(&delta->new_file.id))
-      LOG(info) << "new file does not exist";
 
-    char* oldId, *newId;
-    git_oid_tostr(oldId, GIT_OID_HEXSZ+1, &delta->old_file.id);
-    git_oid_tostr(oldId, GIT_OID_HEXSZ+1, &delta->new_file.id);
-    LOG(info) << job._commitCounter << " old path: " << oldId;
-    LOG(info) << job._commitCounter << " new path: " << newId;
+    if (delta->status == GIT_DELTA_MODIFIED)
+    {
+      Walk_data commitData = { delta, repo.get(), outPath, false };
+      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
 
-     /*Walk_data commitData = {delta, repo.get(), job._commitCounter, false};
-     git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
+      Walk_data parentData = { delta, repo.get(), outPath, true };
+      git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
+    }
 
-     Walk_data parentData = {delta, repo.get(), job._commitCounter, true};
-     git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
+    //TODO: run jplag and acquire information
 
-    std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
+    //fs::remove_all(outPath);
+
+    /*std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
     std::string path(delta->new_file.path);
     std::replace()
     command.append("/home/efekane/jplag/files/" + job._commitCounter + "_old/");
