@@ -352,17 +352,14 @@ void CompetenceParser::commitWorker(CommitJob& job)
       Walk_data parentData = { delta, repo.get(), outPath, true };
       git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
     }
-
-
-
-    //std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
-
   }
 
   fs::path newPath(outPath);
   newPath.append("/new/");
   fs::path oldPath(outPath);
   oldPath.append("/old/");
+
+  std::map<fs::path, double> plagValues;
   for (const auto& f : fs::directory_iterator(newPath))
   {
     std::string command = plagiarismCommand(fs::extension(f.path()));
@@ -383,11 +380,25 @@ void CompetenceParser::commitWorker(CommitJob& job)
       return;
 
     command.append(it->path().string());
-    boost::process::system(command);
+    fs::path logPath(outPath);
+    std::future<std::string> log;
+    boost::process::system(command, boost::process::std_out > log);
+    std::string logStr = log.get();
+    auto index = logStr.find_last_of(' ');
+
+    try
+    {
+      double value = std::stod(logStr.substr(++index));
+      plagValues.insert(std::make_pair(f.path().filename(), value));
+    }
+    catch(std::exception& ex)
+    {
+      LOG(warning) << "Plagiarism detection unsuccessful: " << ex.what();
+    }
   }
 
-  //TODO: run jplag and acquire information
-
+  for (const auto& p : plagValues)
+    LOG(info) << p.first << ": " << p.second;
   //fs::remove_all(outPath);
 
   // Analyse every file that was affected by the commit.
@@ -395,13 +406,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
     git_diff_file diffFile = delta->new_file;
-
-    /*std::string command("java -jar /home/efekane/jplag/jplag-2.12.1-SNAPSHOT-jar-with-dependencies.jar -l c/c++ -c ");
-    command.append(job._root + delta->old_file.path);
-    command.append(" -c ");
-    command.append(job._root + delta->new_file.path);
-    LOG(info) << command;
-    system(command.c_str());*/
 
     model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
     if (!file)
