@@ -100,6 +100,7 @@ private:
   static int walkCb(const char* root,
              const git_tree_entry* entry,
              void* payload);
+  std::string plagiarismCommand(const std::string& extension);
   void commitWorker(CommitJob& job_);
 
   void commitSampling(

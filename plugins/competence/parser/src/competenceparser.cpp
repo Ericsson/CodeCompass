@@ -1,5 +1,8 @@
 #include <competenceparser/competenceparser.h>
 
+#include <boost/foreach.hpp>
+#include <boost/process.hpp>
+
 #include <chrono>
 #include <memory>
 #include <cctype>
@@ -261,6 +264,30 @@ int CompetenceParser::walkCb(const char* root,
     return 0;
 }
 
+std::string CompetenceParser::plagiarismCommand(const std::string& extension)
+{
+  std::string command("java -jar ../lib/java/jplag-2.12.1.jar -t 1 -vq -l ");
+
+  std::vector<std::string> cppExt = { ".cpp", ".CPP", ".cxx", ".CXX", ".c++", ".C++",
+                                      ".c", ".C", ".cc", ".CC", ".h", ".H",
+                                      ".hpp", ".HPP", ".hh", ".HH" };
+  std::vector<std::string> txtExt = { ".TXT", ".txt", ".ASC", ".asc", ".TEX", ".tex" };
+  if (std::find(cppExt.begin(), cppExt.end(), extension) != cppExt.end())
+    command.append("c/c++ ");
+  else if (extension == ".cs" || extension == ".CS")
+    command.append("c#-1.2");
+  else if (extension == ".java" || extension == ".JAVA")
+    command.append("java19 ");
+  else if (extension == ".py")
+    command.append("python3 ");
+  else if (std::find(txtExt.begin(), txtExt.end(), extension) != txtExt.end())
+    command.append("text ");
+  else
+    return "";
+
+  return command;
+}
+
 void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
@@ -300,44 +327,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (!commitTree || !parentTree)
     return;
 
-  /*std::string path("/home/efekane/jplag/files/a/");
-  size_t entryCount = git_tree_entrycount(commitTree.get());
-  std::vector<const git_tree_entry*> commitEntries;
-  for (size_t i = 0; i < entryCount; ++i)
-  {
-    commitEntries.push_back(git_tree_entry_byindex(commitTree.get(), i));
-    if (git_tree_entry_filemode(commitEntries[i]) == GIT_FILEMODE_BLOB)
-    {
-      const git_oid *entryId = git_tree_entry_id(commitEntries[i]);
-      git_blob *blob = NULL;
-      git_blob_lookup(&blob, repo.get(), entryId);
-      //fwrite(git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob), 1, stdout);
-      std::ofstream currentFile;
-      currentFile.open(path + git_tree_entry_name(commitEntries[i]));
-      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
-      currentFile.close();
-    }
-  }
-
-  std::string otherPath("/home/efekane/jplag/files/b/");
-  size_t entryCountParent = git_tree_entrycount(parentTree.get());
-  std::vector<const git_tree_entry*> parentEntries;
-  for (size_t i = 0; i < entryCountParent; ++i)
-  {
-    parentEntries.push_back(git_tree_entry_byindex(parentTree.get(), i));
-    if (git_tree_entry_filemode(parentEntries[i]) == GIT_FILEMODE_BLOB)
-    {
-      const git_oid *entryId = git_tree_entry_id(parentEntries[i]);
-      git_blob *blob = NULL;
-      git_blob_lookup(&blob, repo.get(), entryId);
-      //fwrite(git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob), 1, stdout);
-      std::ofstream currentFile;
-      currentFile.open(otherPath + git_tree_entry_name(parentEntries[i]));
-      currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
-      currentFile.close();
-    }
-  }*/
-
   // Calculate diff of trees.
   DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
 
@@ -364,22 +353,42 @@ void CompetenceParser::commitWorker(CommitJob& job)
       git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
     }
 
-    //TODO: run jplag and acquire information
 
-    //fs::remove_all(outPath);
 
-    /*std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
-    std::string path(delta->new_file.path);
-    std::replace()
-    command.append("/home/efekane/jplag/files/" + job._commitCounter + "_old/");
-    command.append(" -c ");
-    command.append(job._root + delta->new_file.path);
-    LOG(info) << command;
-    system(command.c_str());*/
+    //std::string command("java -jar /home/efekane/jplag/jplag-2.12.1.jar -l c/c++ -t 1 -vq -c ");
+
   }
 
-  //Walk_data commitData = {deltas, false};
-  //git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, CompetenceParser::walkCb, &commitData);
+  fs::path newPath(outPath);
+  newPath.append("/new/");
+  fs::path oldPath(outPath);
+  oldPath.append("/old/");
+  for (const auto& f : fs::directory_iterator(newPath))
+  {
+    std::string command = plagiarismCommand(fs::extension(f.path()));
+
+    if (command.empty())
+    {
+      LOG(info) << "Plagiarism detector does not support file type: " << f.path().filename();
+      continue;
+    }
+
+    command.append("-c " + f.path().string() + " ");
+    const fs::recursive_directory_iterator end;
+    const auto it = std::find_if(fs::recursive_directory_iterator(oldPath), end,
+                    [&f](const fs::directory_entry& entry) {
+                      return entry.path().filename() == f.path().filename();
+                    });
+    if (it == end)
+      return;
+
+    command.append(it->path().string());
+    boost::process::system(command);
+  }
+
+  //TODO: run jplag and acquire information
+
+  //fs::remove_all(outPath);
 
   // Analyse every file that was affected by the commit.
   for (size_t j = 0; j < num_deltas; ++j)
