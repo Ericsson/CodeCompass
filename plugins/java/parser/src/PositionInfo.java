@@ -1,8 +1,7 @@
+package parser.src;
+
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.PackageDeclaration;
-
-import java.awt.*;
 
 public class PositionInfo {
     private final int start;
@@ -16,8 +15,8 @@ public class PositionInfo {
         this.start = node.getStartPosition();
         this.end = node.getStartPosition() + node.getLength();
         this.startLine = cu.getLineNumber(start);
-        this.startColumn = cu.getColumnNumber(start);;
-        this.endLine = cu.getColumnNumber(end);;
+        this.startColumn = cu.getColumnNumber(start);
+        this.endLine = cu.getColumnNumber(end);
         this.endColumn = cu.getColumnNumber(end);
     }
 

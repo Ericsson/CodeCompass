@@ -1,3 +1,5 @@
+package parser.src;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
@@ -35,7 +37,7 @@ public class Parser {
         File file = new File(path);
         String str = FileUtils.readFileToString(file, "UTF-8");
 
-        ASTParser parser = ASTParser.newParser(AST.JLS14);
+        ASTParser parser = ASTParser.newParser(AST.JLS_Latest);
         parser.setKind(ASTParser.K_COMPILATION_UNIT);
 
         Map<String, String> options = JavaCore.getOptions();

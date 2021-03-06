@@ -1,6 +1,6 @@
-import org.eclipse.jdt.core.dom.*;
+package parser.src;
 
-import java.util.ArrayList;
+import org.eclipse.jdt.core.dom.*;
 
 public class AstVisitor extends ASTVisitor {
 
