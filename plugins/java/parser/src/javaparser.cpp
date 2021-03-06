@@ -18,7 +18,7 @@ JavaParser::JavaParser(ParserContext& ctx_): AbstractParser(ctx_)
 bool JavaParser::accept(const std::string& path_)
 {
   std::string ext = boost::filesystem::extension(path_);
-  return ext == ".dummy";
+  return ext == ".java";
 }
 
 bool JavaParser::parse()
@@ -53,11 +53,11 @@ extern "C"
 {
   boost::program_options::options_description getOptions()
   {
-    boost::program_options::options_description description("Dummy Plugin");
+    boost::program_options::options_description description("Java Plugin");
 
     description.add_options()
-        ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),
-          "This argument will be used by the dummy parser.");
+        ("java-arg", po::value<std::string>()->default_value("Java arg"),
+          "This argument will be used by the Java parser.");
 
     return description;
   }

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-class DummyServiceTest : public ::testing::Test
+class JavaServiceTest : public ::testing::Test
 {
 protected:  
   /**
@@ -18,7 +18,7 @@ protected:
   }
 };
 
-TEST_F(DummyServiceTest, simpleDummyServiceTest)
+TEST_F(JavaServiceTest, simpleJavaServiceTest)
 {
   EXPECT_EQ(7,7);
 }

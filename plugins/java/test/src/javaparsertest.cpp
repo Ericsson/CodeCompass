@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-class DummyParserTest : public ::testing::Test
+class JavaParserTest : public ::testing::Test
 {
 protected:  
   /**
@@ -18,12 +18,12 @@ protected:
   }
 };
 
-TEST_F(DummyParserTest, simpleDummyParserTest)
+TEST_F(JavaParserTest, simpleJavaParserTest)
 {
   ASSERT_EQ(1,1);
 }
 
-TEST_F(DummyParserTest, simpleDummyParserTest2)
+TEST_F(JavaParserTest, simpleJavaParserTest2)
 {
   ASSERT_TRUE(true);
 }
