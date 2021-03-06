@@ -50,6 +50,14 @@ bool iterateDirectoryRecursive(
 
   fs::path p(path_);
 
+  boost::system::error_code ec;
+  auto target = fs::canonical(p, ec);
+  if (ec)
+  {
+    LOG(warning) << p << ": " << ec.message();
+    return true;
+  }
+
   if (!fs::exists(p))
   {
     LOG(warning) << "Not found: " << p;

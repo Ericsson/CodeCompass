@@ -1,3 +1,11 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - when: never
+
 stages:
     - prepare
     - package
@@ -14,7 +22,6 @@ variables:
 
 .tarball:
     stage: package
-    when: manual
     allow_failure: false
     timeout: 12h
     tags: ["long-running"]
@@ -117,7 +124,6 @@ tarball ubuntu-16.04:
 .upload:
     stage: deploy
     image: ubuntu:20.04
-    when: manual
     allow_failure: false
     variables:
         FILENAME: codecompass-$CI_COMMIT_BRANCH.tar.gz
