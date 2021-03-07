@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public class Parser {
     private static final String[] CLASSPATH = { "C:\\Program Files\\Java\\jre1.8.0_261\\lib\\rt.jar" };
 
-    public static void parse_project(String path) {
+    public static void parse(String path) {
 
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
             paths.filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".java")).forEach(p -> {
