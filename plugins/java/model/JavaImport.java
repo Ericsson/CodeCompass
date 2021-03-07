@@ -6,30 +6,30 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="\"JavaImport\"")
+@Table(name = "\"JavaImport\"")
 public class JavaImport {
-    @Id
-    @Column(name = "id")
-    private int id;
+  @Id
+  @Column(name = "id")
+  private int id;
 
-    @Column(name = "imported")
-    private int imported;
+  @Column(name = "imported")
+  private int imported;
 
-    // Getters and setters
+  // Getters and setters
 
-    public int getId() {
-        return id;
-    }
+  public int getId() {
+    return id;
+  }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-    public int getImported() {
-        return imported;
-    }
+  public int getImported() {
+    return imported;
+  }
 
-    public void setImported(int imported) {
-        this.imported = imported;
-    }
+  public void setImported(int imported) {
+    this.imported = imported;
+  }
 }

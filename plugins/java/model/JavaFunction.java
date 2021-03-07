@@ -4,6 +4,6 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="\"JavaFunction\"")
+@Table(name = "\"JavaFunction\"")
 public class JavaFunction extends JavaTypedEntity {
 }

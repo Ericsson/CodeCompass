@@ -3,20 +3,20 @@ package model;
 import javax.persistence.*;
 
 @Entity
-@Table(name="\"JavaAnnotation\"")
+@Table(name = "\"JavaAnnotation\"")
 public class JavaAnnotation extends JavaEntity {
-    @Id
-    @GeneratedValue
-    @Column(name = "id")
-    private int id;
+  @Id
+  @GeneratedValue
+  @Column(name = "id")
+  private int id;
 
-    // Getters and setters
+  // Getters and setters
 
-    public int getId() {
-        return id;
-    }
+  public int getId() {
+    return id;
+  }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+  public void setId(int id) {
+    this.id = id;
+  }
 }

@@ -6,52 +6,53 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="\"JavaDocComment\"")
+@Table(name = "\"JavaDocComment\"")
 public class JavaDocComment {
-    @Id
-    @Column(name = "id")
-    private int id;
+  @Id
+  @Column(name = "id")
+  private int id;
 
-    @Column(name = "\"contentHash\"")
-    private int contentHash;
+  @Column(name = "\"contentHash\"")
+  private int contentHash;
 
-    @Column(name = "\"contentHTML\"")
-    private int contentHTML;
+  @Column(name = "\"contentHTML\"")
+  private int contentHTML;
 
-    @Column(name = "\"mangledNameHash\"")
-    private int mangledNameHash;
+  @Column(name = "\"mangledNameHash\"")
+  private int mangledNameHash;
 
-    // Getters and setters
+// Getters and setters
 
-    public int getId() {
-        return id;
-    }
+  public int getId() {
+    return id;
+  }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-    public int getContentHash() {
-        return contentHash;
-    }
+  public int getContentHash() {
+    return contentHash;
+  }
 
-    public void setContentHash(int contentHash) {
-        this.contentHash = contentHash;
-    }
+  public void setContentHash(int contentHash) {
+    this.contentHash = contentHash;
+  }
 
-    public int getContentHTML() {
-        return contentHTML;
-    }
+  public int getContentHTML() {
+    return contentHTML;
+  }
 
-    public void setContentHTML(int contentHTML) {
-        this.contentHTML = contentHTML;
-    }
+  public void setContentHTML(int contentHTML) {
+    this.contentHTML = contentHTML;
+  }
 
-    public int getMangledNameHash() {
-        return mangledNameHash;
-    }
+  public int getMangledNameHash() {
+    return mangledNameHash;
+  }
 
-    public void setMangledNameHash(int mangledNameHash) {
-        this.mangledNameHash = mangledNameHash;
-    }
+  public void setMangledNameHash(int mangledNameHash) {
+    this.mangledNameHash = mangledNameHash;
+  }
+
 }

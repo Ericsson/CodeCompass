@@ -8,74 +8,74 @@ import static javax.persistence.InheritanceType.JOINED;
 @Table(name = "\"JavaEntity\"")
 @Inheritance(strategy = JOINED)
 public class JavaEntity {
-    @Id
-    @GeneratedValue
-    @Column(name = "id")
-    private int id;
+  @Id
+  @GeneratedValue
+  @Column(name = "id")
+  private int id;
 
-    @Column(name = "\"typeId\"")
-    private int typeId;
+  @Column(name = "\"typeId\"")
+  private int typeId;
 
-    @Column(name = "\"astNodeId\"")
-    private int astNodeId;
+  @Column(name = "\"astNodeId\"")
+  private int astNodeId;
 
-    @Column(name = "\"mangledNameHash\"")
-    private int mangledNameHash;
+  @Column(name = "\"mangledNameHash\"")
+  private int mangledNameHash;
 
-    @Column(name = "name")
-    private String name;
+  @Column(name = "name")
+  private String name;
 
-    @Column(name = "\"qualifiedName\"")
-    private String qualifiedName;
+  @Column(name = "\"qualifiedName\"")
+  private String qualifiedName;
 
 
-    // Getters and setters
+  // Getters and setters
 
-    public int getId() {
-        return id;
-    }
+  public int getId() {
+    return id;
+  }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+  public void setId(int id) {
+    this.id = id;
+  }
 
-    public int getTypeId() {
-        return typeId;
-    }
+  public int getTypeId() {
+    return typeId;
+  }
 
-    public void setTypeId(int typeId) {
-        this.typeId = typeId;
-    }
+  public void setTypeId(int typeId) {
+    this.typeId = typeId;
+  }
 
-    public int getAstNodeId() {
-        return astNodeId;
-    }
+  public int getAstNodeId() {
+    return astNodeId;
+  }
 
-    public void setAstNodeId(int astNodeId) {
-        this.astNodeId = astNodeId;
-    }
+  public void setAstNodeId(int astNodeId) {
+    this.astNodeId = astNodeId;
+  }
 
-    public int getMangledNameHash() {
-        return mangledNameHash;
-    }
+  public int getMangledNameHash() {
+    return mangledNameHash;
+  }
 
-    public void setMangledNameHash(int mangledNameHash) {
-        this.mangledNameHash = mangledNameHash;
-    }
+  public void setMangledNameHash(int mangledNameHash) {
+    this.mangledNameHash = mangledNameHash;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public String getQualifiedName() {
-        return qualifiedName;
-    }
+  public String getQualifiedName() {
+    return qualifiedName;
+  }
 
-    public void setQualifiedName(String qualifiedName) {
-        this.qualifiedName = qualifiedName;
-    }
+  public void setQualifiedName(String qualifiedName) {
+    this.qualifiedName = qualifiedName;
+  }
 }

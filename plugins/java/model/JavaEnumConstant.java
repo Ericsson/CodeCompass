@@ -5,19 +5,19 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="\"JavaEnumConstant\"")
-public class JavaEnumConstant extends JavaEntity{
+@Table(name = "\"JavaEnumConstant\"")
+public class JavaEnumConstant extends JavaEntity {
 
-    @Column(name = "value")
-    private int value;
+  @Column(name = "value")
+  private int value;
 
-    // Getters and setters
+  // Getters and setters
 
-    public int getValue() {
-        return value;
-    }
+  public int getValue() {
+    return value;
+  }
 
-    public void setValue(int value) {
-        this.value = value;
-    }
+  public void setValue(int value) {
+    this.value = value;
+  }
 }
