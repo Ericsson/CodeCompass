@@ -342,6 +342,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.set('header', this._fileInfo);
 
       this._getSyntaxHighlight(this._fileInfo);
+
+      if (gtag) {
+        gtag('event', 'page_view', {
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.hash,
+          page_title: urlFileInfo.path
+        });
+      }
     },
 
     /**
