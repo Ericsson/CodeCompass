@@ -13,6 +13,8 @@
 #include <model/cppnamespace-odb.hxx>
 #include <model/cpprecord.h>
 #include <model/cpprecord-odb.hxx>
+#include <model/cpptypedef.h>
+#include <model/cpptypedef-odb.hxx>
 #include <model/cppvariable.h>
 #include <model/cppvariable-odb.hxx>
 #include <model/file.h>
@@ -31,8 +33,11 @@ using QCppEnum = odb::query<model::CppEnum>;
 using QCppEnumConstant = odb::query<model::CppEnumConstant>;
 using QCppNamespace = odb::query<model::CppNamespace>;
 using QCppRecord = odb::query<model::CppRecord>;
+using QCppTypedef = odb::query<model::CppTypedef>;
 using QCppVariable = odb::query<model::CppVariable>;
 using QFile = odb::query<model::File>;
+using RCppEnum = odb::result<model::CppEnum>;
+using RCppFunction = odb::result<model::CppFunction>;
 using RCppAstNode = odb::result<model::CppAstNode>;
 
 class CppParserTest : public ::testing::Test
@@ -135,10 +140,12 @@ TEST_F(CppParserTest, FunctionDeclarationOnly)
 TEST_F(CppParserTest, FunctionWithMultipleDeclarations)
 {
   _transaction([&, this]() {
-    model::CppFunction callee = _db->query_value<model::CppFunction>(
+    RCppFunction callees = _db->query<model::CppFunction>(
       QCppFunction::name == "multiFunction");
+    EXPECT_GT(callees.size(), 0);
+
     RCppAstNode multiFuncAstNode = _db->query<model::CppAstNode>(
-      QCppAstNode::entityHash == callee.entityHash);
+      QCppAstNode::entityHash == callees.begin()->entityHash);
 
     int numDecl = 0, numDef = 0, numOther = 0;
     for (const model::CppAstNode& n : multiFuncAstNode)
@@ -296,10 +303,11 @@ TEST_F(CppParserTest, FunctionCall)
 TEST_F(CppParserTest, Typedef)
 {
   _transaction([&, this]() {
-    model::CppEnum integer = _db->query_value<model::CppEnum>(
-      QCppEnum::name == "Integer");
+    model::CppTypedef integer = _db->query_value<model::CppTypedef>(
+      QCppTypedef::name == "Integer");
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == integer.entityHash);
+    EXPECT_GT(astNodes.size(), 0);
 
     for (const model::CppAstNode& n : astNodes)
     {
@@ -449,11 +457,15 @@ TEST_F(CppParserTest, Record)
 
 TEST_F(CppParserTest, Enum)
 {
-  _transaction([&, this] {
-    model::CppEnum enumeration = _db->query_value<model::CppEnum>(
+  _transaction([&, this]
+  {
+    RCppEnum enumerations = _db->query<model::CppEnum>(
       QCppEnum::name == "Enumeration");
+    EXPECT_GT(enumerations.size(), 0);
+
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
-      QCppAstNode::entityHash == enumeration.entityHash);
+      QCppAstNode::entityHash == enumerations.begin()->entityHash);
+    EXPECT_GT(astNodes.size(), 0);
 
     for (const model::CppAstNode& n : astNodes)
     {
@@ -526,10 +538,15 @@ TEST_F(CppParserTest, Enum)
           break;
       }
     }
+  });
+}
 
-    model::CppFunction fieldFunction = _db->query_value<model::CppFunction>(
+TEST_F(CppParserTest, Fields)
+{
+  _transaction([&, this] {
+    model::CppVariable fieldFunction = _db->query_value<model::CppVariable>(
       QCppFunction::name == "fieldFunction");
-    astNodes = _db->query<model::CppAstNode>(
+    RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == fieldFunction.entityHash);
 
     for (const model::CppAstNode& n : astNodes)
