@@ -142,7 +142,7 @@ TEST_F(CppParserTest, FunctionWithMultipleDeclarations)
   _transaction([&, this]() {
     RCppFunction callees = _db->query<model::CppFunction>(
       QCppFunction::name == "multiFunction");
-    EXPECT_GT(callees.size(), 0);
+    EXPECT_FALSE(callees.empty());
 
     RCppAstNode multiFuncAstNode = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == callees.begin()->entityHash);
@@ -307,7 +307,7 @@ TEST_F(CppParserTest, Typedef)
       QCppTypedef::name == "Integer");
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == integer.entityHash);
-    EXPECT_GT(astNodes.size(), 0);
+    EXPECT_FALSE(astNodes.empty());
 
     for (const model::CppAstNode& n : astNodes)
     {
@@ -461,11 +461,11 @@ TEST_F(CppParserTest, Enum)
   {
     RCppEnum enumerations = _db->query<model::CppEnum>(
       QCppEnum::name == "Enumeration");
-    EXPECT_GT(enumerations.size(), 0);
+    EXPECT_FALSE(enumerations.empty());
 
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == enumerations.begin()->entityHash);
-    EXPECT_GT(astNodes.size(), 0);
+    EXPECT_FALSE(astNodes.empty());
 
     for (const model::CppAstNode& n : astNodes)
     {
