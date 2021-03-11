@@ -8,6 +8,7 @@ DEPS_INSTALL_DIR=$ROOT_DIR/deps-runtime
 CC_INSTALL_DIR=$ROOT_DIR/cc-install
 
 export LD_LIBRARY_PATH=$DEPS_INSTALL_DIR/libgit2-install/lib64\
+:$DEPS_INSTALL_DIR/libgit2-install/lib\
 :$DEPS_INSTALL_DIR/openssl-install/lib\
 :$DEPS_INSTALL_DIR/graphviz-install/lib\
 :$DEPS_INSTALL_DIR/libmagic-install/lib\
@@ -19,11 +20,13 @@ export LD_LIBRARY_PATH=$DEPS_INSTALL_DIR/libgit2-install/lib64\
 :$DEPS_INSTALL_DIR/postgresql-install/lib\
 :$DEPS_INSTALL_DIR/python-install/lib\
 :$LD_LIBRARY_PATH
+# Note: libgit2-install/lib required on Ubuntu; libgit2-install/lib64 on SUSE
 
 export PATH=$DEPS_INSTALL_DIR/jdk-install/bin\
 :$DEPS_INSTALL_DIR/ctags-install/bin\
 :$DEPS_INSTALL_DIR/python-install/bin\
 :$DEPS_INSTALL_DIR/node-install/bin\
+:$DEPS_INSTALL_DIR/postgresql-install/bin\
 :$CC_INSTALL_DIR/bin\
 :$PATH
 
