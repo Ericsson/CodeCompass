@@ -90,9 +90,11 @@ private:
     bool found = false;
   };
 
-  struct DiffFileData
+  struct WalkDeltaHunkData
   {
-    int commitNumber;
+    const git_diff_delta* delta;
+    const int commitNumber;
+    git_repository* repo;
   };
 
   bool accept(const std::string& path_);
@@ -101,6 +103,10 @@ private:
 
   util::DirIterCallback getParserCallbackRepo(
     boost::filesystem::path& repoPath_);
+
+  static int walkDeltaHunkCb(const char* root,
+                             const git_tree_entry* entry,
+                             void* payload);
 
   static int walkCb(const char* root,
              const git_tree_entry* entry,
@@ -123,10 +129,6 @@ private:
     const std::map<UserEmail, UserBlameLines>& userBlame_,
     const float totalLines,
     const std::time_t& commitDate_);
-
-  static int hunkLineCb(const git_diff_delta* delta,
-                 const git_diff_hunk* hunk,
-                 void* payload);
 
   void collectFileLocData(CommitJob& job);
   void persistFileLocData();
@@ -178,7 +180,8 @@ private:
   std::map<std::string, std::string> _companyList;
   std::map<model::FilePtr, int> _commitSample;
   //static std::vector<std::tuple<model::FilePtr, int, std::time_t>> _fileLocData;
-  static std::map<std::pair<std::string, int>, int> _fileLocData;
+  static std::map<std::pair<std::string, int>, int> _fileCommitLocData;
+  std::map<std::string, std::vector<int>>  _fileLocData;
 
   std::mutex _calculateFileData;
 

@@ -32,7 +32,7 @@ namespace cc
 namespace parser
 {
 
-std::map<std::pair<std::string, int>, int> CompetenceParser::_fileLocData = {};
+std::map<std::pair<std::string, int>, int> CompetenceParser::_fileCommitLocData = {};
 
 CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
@@ -224,13 +224,42 @@ void CompetenceParser::traverseCommits(
     while (git_revwalk_next(&fileLocOid, fileLocWalker.get()) == 0 && _maxCommitCount > commitCounter)
     {
       CommitPtr commit = createCommit(repo.get(), fileLocOid);
+      //const git_oid* lofaszoid = git_commit_id(commit.get());
+      //LOG(warning) << git_oid_tostr_s(lofaszoid);
       CommitJob job(repoPath_, root_, fileLocOid, commit.get(), ++commitCounter);
       collectFileLocData(job);
     }
 
-    for (const auto& x : _fileLocData)
+    for (const auto& data : _fileCommitLocData)
     {
-      LOG(info) << x.first.first << ", " << x.first.second << ", " << x.second;
+      auto iter = _fileLocData.find(data.first.first);
+      if (iter != _fileLocData.end())
+      {
+        iter->second.push_back(data.second);
+      }
+      else
+      {
+        _fileLocData.insert(std::make_pair(data.first.first, std::vector<int>{data.second}));
+      }
+    }
+
+    auto current = _fileLocData.begin(), next = _fileLocData.begin();
+    while (next != _fileLocData.end())
+    {
+      current = next++;
+      if (std::count(current->second.begin(), current->second.end(), 0) == current->second.size())
+      {
+        _fileLocData.erase(current);
+      }
+      else
+      {
+        std::sort(current->second.begin(), current->second.end());
+        /*LOG(warning) << current->first << ", ";
+        for (const int& i : current->second)
+        {
+          LOG(info) << i;
+        }*/
+      }
     }
 
     // Initiate walker.
@@ -252,31 +281,42 @@ void CompetenceParser::traverseCommits(
   }
 }
 
-int CompetenceParser::hunkLineCb(const git_diff_delta* delta,
-               const git_diff_hunk* hunk,
-               void* payload)
+int CompetenceParser::walkDeltaHunkCb(const char* root,
+                                     const git_tree_entry* entry,
+                                     void* payload)
 {
-  DiffFileData* data = (DiffFileData*)payload;
-  LOG(info) << data->commitNumber << ", " << delta->new_file.path << ", " << hunk->new_lines;
-  auto iter = _fileLocData.find({delta->new_file.path, data->commitNumber});
-  if (iter != _fileLocData.end())
+  WalkDeltaHunkData* data = (WalkDeltaHunkData*)payload;
+  const git_oid* entryId = git_tree_entry_id(entry);
+
+  std::string deltaStr(data->delta->new_file.path);
+  std::string entryName(root);
+  entryName.append(git_tree_entry_name(entry));
+  if (deltaStr.compare(entryName) == 0
+      && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
-    iter->second += hunk->new_lines;
+    git_blob *blob = NULL;
+    git_blob_lookup(&blob, data->repo, entryId);
+    std::string text((const char *) git_blob_rawcontent(blob));
+    int lineNumber = std::count(text.begin(), text.end(), '\n');
+
+    auto iter = _fileCommitLocData.find({data->delta->new_file.path, data->commitNumber});
+    if (iter != _fileCommitLocData.end())
+    {
+      iter->second += lineNumber;
+    }
+    else
+    {
+      _fileCommitLocData.insert(std::make_pair(std::make_pair(data->delta->new_file.path, data->commitNumber), lineNumber));
+    }
   }
-  else
-  {
-    _fileLocData.insert(std::make_pair(
-      std::make_pair(delta->new_file.path, data->commitNumber),
-      hunk->new_lines));
-  }
-  return 0;
 }
 
 void CompetenceParser::collectFileLocData(CommitJob& job)
 {
   RepositoryPtr repo = createRepository(job._repoPath);
 
-  LOG(info) << "[competenceparser] Calculating file LOC in " << job._commitCounter << "/" << _commitCount << " of version control history.";
+  //LOG(info) << "[competenceparser] Calculating file LOC in " << job._commitCounter
+    //        << "/" << _commitCount << " of version control history.";
 
   // Retrieve parent of commit.
   CommitPtr parent = createParentCommit(job._commit);
@@ -295,19 +335,12 @@ void CompetenceParser::collectFileLocData(CommitJob& job)
   if (numDeltas == 0)
     return;
 
-  //std::map<model::FilePtr, int> linesInFiles;
-  /*for (int i = 0; i < numDeltas; ++i)
+  for (size_t i = 0; i < numDeltas; ++i)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), i);
-    git_diff_file diffFile = delta->new_file;
-    model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
-    if (!file)
-      continue;
-    _fileLocData.insert(std::make_pair(std::make_pair(file, job._commitCounter), 0));
-  }*/
-
-  DiffFileData deltaData = { job._commitCounter };
-  git_diff_foreach(diff.get(), NULL, NULL, &hunkLineCb, NULL, &deltaData);
+    WalkDeltaHunkData deltaData = { delta, job._commitCounter, repo.get() };
+    git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkDeltaHunkCb, &deltaData);
+  }
 }
 
 void CompetenceParser::persistFileLocData()
@@ -503,8 +536,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
       }
     }
 
-    //for (const auto &p : plagValues)
-      //LOG(info) << p.first << ": " << p.second;
+    for (const auto &p : plagValues)
+      LOG(info) << p.first << ": " << p.second;
 
     fs::remove_all(outPath);
   }
@@ -525,7 +558,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
     if (!file)
       continue;
 
-    double currentPlagValue = -1;
+    /*double currentPlagValue = -1;
     if (hasModifiedFiles)
     {
       if (delta->status == GIT_DELTA_MODIFIED)
@@ -543,7 +576,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
                   << " did not reach the threshold: " << currentPlagValue;
         continue;
       }
-    }
+    }*/
 
     float totalLines = 0;
 
@@ -609,7 +642,24 @@ void CompetenceParser::commitWorker(CommitJob& job)
       if (pair.second != 0)
       {
         // Calculate the retained memory depending on the elapsed time.
-        double percentage = pair.second / totalLines * std::exp(-months) * 100;
+        //double percentage = pair.second / totalLines * std::exp(-months) * 100;
+        auto fileLocIter = _fileLocData.find(delta->new_file.path);
+        double strength;
+        if (fileLocIter == _fileLocData.end())
+        {
+          strength = (double)pair.second / (double)totalLines;
+        }
+        else
+        {
+          const auto medianIter = fileLocIter->second.begin() + fileLocIter->second.size() / 2;
+          std::nth_element(fileLocIter->second.begin(), medianIter , fileLocIter->second.end());
+          strength = (double)pair.second / (double)*medianIter;
+          LOG(info) << "median: " << *medianIter << ", strength: " << strength;
+        }
+
+        //double percentage = std::exp(-(months/strength)) * 100;
+        double percentage = strength * 100;
+        //LOG(info) << file->path << ": " << percentage
 
         auto fileIter = _fileEditions.end();
         for (auto it = _fileEditions.begin(); it != _fileEditions.end(); ++it)
