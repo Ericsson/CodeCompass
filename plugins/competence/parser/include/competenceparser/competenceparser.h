@@ -80,7 +80,7 @@ private:
         _commit(commit_), _commitCounter(commitCounter_) {}
   };
 
-  struct Walk_data
+  struct WalkData
   {
     //std::vector<const git_diff_delta*> deltas;
     const git_diff_delta* delta;
@@ -88,6 +88,11 @@ private:
     boost::filesystem::path basePath;
     bool isParent = false;
     bool found = false;
+  };
+
+  struct DiffFileData
+  {
+    int commitNumber;
   };
 
   bool accept(const std::string& path_);
@@ -118,6 +123,13 @@ private:
     const std::map<UserEmail, UserBlameLines>& userBlame_,
     const float totalLines,
     const std::time_t& commitDate_);
+
+  static int hunkLineCb(const git_diff_delta* delta,
+                 const git_diff_hunk* hunk,
+                 void* payload);
+
+  void collectFileLocData(CommitJob& job);
+  void persistFileLocData();
 
   void persistFileComprehensionData();
   util::DirIterCallback persistNoDataFiles();
@@ -165,11 +177,14 @@ private:
   std::set<UserEmail> _emailAddresses;
   std::map<std::string, std::string> _companyList;
   std::map<model::FilePtr, int> _commitSample;
+  //static std::vector<std::tuple<model::FilePtr, int, std::time_t>> _fileLocData;
+  static std::map<std::pair<std::string, int>, int> _fileLocData;
 
   std::mutex _calculateFileData;
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
+  const double plagThreshold = 98.0;
 
   int _maxCommitCount = 0;
   int _commitCount = 0;

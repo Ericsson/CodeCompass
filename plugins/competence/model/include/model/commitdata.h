@@ -24,7 +24,7 @@ struct CommitData
   FileId file;
 
   #pragma db not_null
-  std::string committerEmail;
+  std::string committerEmail;  // TODO: rename this to authorEmail
 
   #pragma db not_null
   uint16_t committedLines;
