@@ -12,6 +12,8 @@
 
 #include <JavaService.h>
 
+#include <service/javaprocess.h>
+
 namespace cc
 {
 namespace service
@@ -22,6 +24,7 @@ namespace java
 class JavaServiceHandler : virtual public JavaServiceIf
 {
 public:
+
   JavaServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,

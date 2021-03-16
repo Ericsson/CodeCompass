@@ -5,6 +5,7 @@
 #include <util/logutil.h>
 
 #include <memory>
+#include "../include/javaparser/javaparser.h"
 
 namespace cc
 {
