@@ -2,7 +2,7 @@
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
-FROM modelcpp/codecompass:dev as builder
+FROM codecompass:dev as builder
 
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
@@ -13,7 +13,7 @@ ENV CC_DATABASE ${CC_DATABASE}
 ARG CC_BUILD_TYPE=Release
 ENV CC_BUILD_TYPE ${CC_BUILD_TYPE}
 
-RUN apt-get update && \
+RUN apt-get update -qq && \
     apt-get install --yes git
 
 # Download CodeCompass release.
