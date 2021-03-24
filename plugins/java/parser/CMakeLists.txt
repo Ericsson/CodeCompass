@@ -1,3 +1,7 @@
+set(CMAKE_JAVA_INCLUDE_PATH
+  ${PROJECT_SOURCE_DIR}/lib/java/*
+  ${PLUGIN_DIR}/lib/java/*)
+
 include_directories(
   include
   ${PROJECT_SOURCE_DIR}/model/include
