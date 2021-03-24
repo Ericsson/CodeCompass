@@ -34,20 +34,19 @@ add_library(javathrift STATIC
 
 target_compile_options(javathrift PUBLIC -fPIC)
 
-add_dependencies(javathrift commonthrift projectthrift)
+#add_dependencies(javathrift commonthrift projectthrift)
 
-set(CMAKE_JAVA_INCLUDE_PATH
-  ${PROJECT_SOURCE_DIR}/lib/java/*
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/
-  ${PROJECT_BINARY_DIR}/service/project/gen-java/)
+#set(CMAKE_JAVA_INCLUDE_PATH
+ # ${PROJECT_SOURCE_DIR}/lib/java/*
+ # ${CMAKE_CURRENT_BINARY_DIR}/gen-java/
+ # ${PROJECT_BINARY_DIR}/service/project/gen-java/)
 
 # Create java library from thrift files
-add_jar(javathriftjava
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/java/JavaService.java
-  OUTPUT_NAME javathrift
-  INCLUDE_JARS javacommonjava)
+#add_jar(javathriftjava
+#  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/java/JavaService.java
+#  OUTPUT_NAME javathrift)
 
-add_dependencies(javathriftjava javathrift)
+#add_dependencies(javathriftjava javathrift)
 
 add_library(javaservice SHARED
   src/javaservice.cpp
@@ -62,4 +61,4 @@ target_link_libraries(javaservice
   javathrift)
 
 install(TARGETS javaservice DESTINATION ${INSTALL_SERVICE_DIR})
-install_jar(javathriftjava ${INSTALL_JAVA_LIB_DIR})
+#install_jar(javathriftjava ${INSTALL_JAVA_LIB_DIR})
