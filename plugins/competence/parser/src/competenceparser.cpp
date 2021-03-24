@@ -438,7 +438,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
   // Calculate elapsed time in full months since current commit.
   std::time_t elapsed = std::chrono::system_clock::to_time_t(
     std::chrono::system_clock::now()) - commitAuthor->when.time;
-  double months = elapsed / (double) (secondsInDay * daysInMonth);
+  //double months = elapsed / (double) (secondsInDay * daysInMonth);
+  double months = elapsed / (double)secondsInDay / 7;
 
   //if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
     //return;
@@ -472,6 +473,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
   std::vector<const git_diff_delta*> deltas;
   bool hasModifiedFiles = false;
+  std::map<fs::path, double> plagValues;
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
@@ -486,6 +488,13 @@ void CompetenceParser::commitWorker(CommitJob& job)
       WalkData parentData = {delta, repo.get(), outPath, true };
       git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
     }
+
+    if (delta->status == GIT_DELTA_ADDED)
+    {
+      std::string replacedStr(delta->new_file.path);
+      std::replace(replacedStr.begin(), replacedStr.end(), '/', '_');
+      plagValues.insert(std::make_pair(replacedStr, 0));
+    }
   }
 
   fs::path newPath(outPath);
@@ -494,7 +503,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   oldPath.append("/old/");
 
   // Determine plagiarism command based on file extension.
-  std::map<fs::path, double> plagValues;
   if (hasModifiedFiles && fs::exists(newPath) && fs::exists(oldPath))
   {
     for (const auto &f : fs::directory_iterator(newPath))
@@ -536,14 +544,14 @@ void CompetenceParser::commitWorker(CommitJob& job)
       }
     }
 
-    for (const auto &p : plagValues)
-      LOG(info) << p.first << ": " << p.second;
+    //for (const auto &p : plagValues)
+      //LOG(info) << p.first << ": " << p.second;
 
     fs::remove_all(outPath);
   }
   else
   {
-    LOG(warning) << "Commit " << job._commitCounter << "eihter has no modified files or "
+    LOG(warning) << "Commit " << job._commitCounter << " either has no modified files or "
       " has relevant modified files but "
       " they couldn't be copied to the workspace directory.";
   }
@@ -558,16 +566,21 @@ void CompetenceParser::commitWorker(CommitJob& job)
     if (!file)
       continue;
 
-    /*double currentPlagValue = -1;
+    double currentPlagValue = -1.0;
     if (hasModifiedFiles)
     {
-      if (delta->status == GIT_DELTA_MODIFIED)
+      if (delta->status == GIT_DELTA_MODIFIED
+          || delta->status == GIT_DELTA_ADDED)
       {
         std::string pathReplace(delta->new_file.path);
         std::replace(pathReplace.begin(), pathReplace.end(), '/', '_');
         auto iter = plagValues.find(pathReplace);
         if (iter != plagValues.end())
           currentPlagValue = iter->second;
+        else
+        {
+          LOG(warning) << "did not find file: " << pathReplace;
+        }
       }
 
       if (currentPlagValue >= plagThreshold)
@@ -576,7 +589,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
                   << " did not reach the threshold: " << currentPlagValue;
         continue;
       }
-    }*/
+    }
 
     float totalLines = 0;
 
@@ -645,20 +658,31 @@ void CompetenceParser::commitWorker(CommitJob& job)
         //double percentage = pair.second / totalLines * std::exp(-months) * 100;
         auto fileLocIter = _fileLocData.find(delta->new_file.path);
         double strength;
-        if (fileLocIter == _fileLocData.end())
+        if (currentPlagValue == -1)
         {
           strength = (double)pair.second / (double)totalLines;
         }
         else
         {
+          strength = 100 - currentPlagValue;
+        }
+        /*else if (fileLocIter == _fileLocData.end())
+        {
+          strength = (double)pair.second; // / (double)totalLines;
+        }
+        else
+        {
           const auto medianIter = fileLocIter->second.begin() + fileLocIter->second.size() / 2;
           std::nth_element(fileLocIter->second.begin(), medianIter , fileLocIter->second.end());
-          strength = (double)pair.second / (double)*medianIter;
+          strength = (double)pair.second; // / (double)*medianIter;
+          //strength = (double)pair.second; // / totalLines;
           LOG(info) << "median: " << *medianIter << ", strength: " << strength;
-        }
+        }*/
 
         //double percentage = std::exp(-(months/strength)) * 100;
-        double percentage = strength * 100;
+        //double percentage = strength * 100;
+        double percentage = strength;
+        //LOG(info) << percentage;
         //LOG(info) << file->path << ": " << percentage
 
         auto fileIter = _fileEditions.end();
@@ -674,8 +698,11 @@ void CompetenceParser::commitWorker(CommitJob& job)
           auto userIter = fileIter->_editions.find(pair.first);
           if (userIter != fileIter->_editions.end())
           {
-            userIter->second.first += (int)percentage;
-            ++(userIter->second.second);
+            if (userIter->second.first < percentage)
+            {
+              userIter->second.first = percentage;
+              ++(userIter->second.second);
+            }
           }
           else
           {
@@ -731,7 +758,9 @@ void CompetenceParser::persistFileComprehensionData()
         model::FileComprehension fileComprehension;
         fileComprehension.file = edition._file->id;
         fileComprehension.userEmail = pair.first;
-        fileComprehension.repoRatio = pair.second.first / pair.second.second;
+        //LOG(info) << pair.second.first;
+        //fileComprehension.repoRatio = std::exp(-pair.second.first) * 100; // / pair.second.second;
+        fileComprehension.repoRatio = pair.second.first;
         fileComprehension.userRatio = fileComprehension.repoRatio.get();
         fileComprehension.inputType = model::FileComprehension::InputType::REPO;
         _ctx.db->persist(fileComprehension);

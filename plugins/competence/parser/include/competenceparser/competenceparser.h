@@ -31,7 +31,7 @@ typedef std::unique_ptr<git_tree, decltype(&git_tree_free)> TreePtr;
 
 typedef std::string UserEmail;
 typedef int RelevantCommitCount;
-typedef int Percentage;
+typedef double Percentage;
 typedef int UserBlameLines;
 typedef std::pair<Percentage, RelevantCommitCount> FileDataPair;
 
@@ -187,7 +187,7 @@ private:
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
-  const double plagThreshold = 98.0;
+  const double plagThreshold = 100.0;
 
   int _maxCommitCount = 0;
   int _commitCount = 0;
