@@ -767,22 +767,17 @@ std::string CompetenceDiagram::generateColor(const std::string& email_)
   if (_userColorCodes.find(email_) != _userColorCodes.end())
     return _userColorCodes.at(email_);
 
-  if (email_.size() < 6)
+  if (email_ == "")
     return _white;
 
+  std::size_t emailHash = std::hash<std::string>{}(email_);
   std::stringstream ss;
   ss << "#";
+  ss << std::hex << emailHash;
+  std::string hash(ss.str().substr(0, 7));
 
-  int red, green, blue;
-  red = (_charCodes[email_.at(0)] + _charCodes[email_.at(1)]) * 3;
-  green = (_charCodes[email_.at(2)] + _charCodes[email_.at(3)]) * 3;
-  blue = (_charCodes[email_.at(4)] + _charCodes[email_.at(5)]) * 3;
-
-  ss << std::hex << (red << 16 | green << 8 | blue);
-
-  _userColorCodes.insert(std::make_pair(email_, ss.str()));
-
-  return ss.str();
+  _userColorCodes.insert(std::make_pair(email_, hash));
+  return hash;
 }
 
 void CompetenceDiagram::setCharCodes()
