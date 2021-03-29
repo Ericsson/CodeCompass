@@ -3,9 +3,10 @@ require([
   'dijit/Menu',
   'dijit/MenuItem',
   'dijit/PopupMenuItem',
+  'dijit/Tooltip',
   'codecompass/model',
   'codecompass/viewHandler'],
-function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
+function (topic, Menu, MenuItem, PopupMenuItem, Tooltip, model, viewHandler) {
 
   model.addService('competenceservice', 'CompetenceService', CompetenceServiceClient);
 
@@ -28,6 +29,14 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
     getDiagramLegend : function (diagramType) {
       return model.competenceservice.getDiagramLegend(diagramType);
+    },
+
+    mouseOverInfo : function (diagramType, nodeId) {
+      new Tooltip({
+        connectId: nodeId,
+        label: "value <b>74</b>",
+        position: "above"
+      });
     }
   };
 

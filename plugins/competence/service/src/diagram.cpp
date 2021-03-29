@@ -771,10 +771,14 @@ std::string CompetenceDiagram::generateColor(const std::string& email_)
     return _white;
 
   std::size_t emailHash = std::hash<std::string>{}(email_);
+  emailHash %= (std::size_t)std::pow(2, 24);
   std::stringstream ss;
   ss << "#";
   ss << std::hex << emailHash;
-  std::string hash(ss.str().substr(0, 7));
+
+  std::string hash(ss.str());
+  while (hash.size() < 7)
+    hash.append("0");
 
   _userColorCodes.insert(std::make_pair(email_, hash));
   return hash;
