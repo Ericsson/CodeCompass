@@ -16,10 +16,11 @@ JavaServiceHandler::JavaServiceHandler(
   const cc::webserver::ServerContext& context_)
     : _db(db_), _transaction(db_), _config(context_.options)
 {
-  new JavaProcess(*datadir_ + "/java", context_.compassRoot);
+  _javaProcess.reset(new JavaProcess(*datadir_ + "/java",
+                                     context_.compassRoot));
 }
 
-void java::JavaServiceHandler::getJavaString(std::string &str_)
+void JavaServiceHandler::getJavaString(std::string &str_)
 {
   str_ = _config["java-result"].as<std::string>();
 }

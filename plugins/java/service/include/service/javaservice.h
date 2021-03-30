@@ -37,6 +37,7 @@ private:
   util::OdbTransaction _transaction;
 
   const boost::program_options::variables_map& _config;
+  std::unique_ptr<JavaProcess> _javaProcess;
 };
 
 } // java
