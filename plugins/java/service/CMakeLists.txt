@@ -54,6 +54,9 @@ add_jar(javathriftjava
 
 add_dependencies(javathriftjava javathrift)
 
+# Src java
+add_subdirectory(src-java)
+
 add_library(javaservice SHARED
   src/javaservice.cpp
   src/plugin.cpp)
@@ -62,6 +65,8 @@ target_compile_options(javaservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(javaservice
   util
+  model
+  mongoose
   javathrift
   projectservice
   projectthrift
