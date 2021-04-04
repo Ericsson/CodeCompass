@@ -3,7 +3,7 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PLUGIN_DIR}/lib/java/*)
 
 add_jar(javaservicejava
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/java/service/app/service/JavaHandler.java
+  JavaHandler.java
   OUTPUT_NAME javaservice
   INCLUDE_JARS corethriftjava javathriftjava)
 
