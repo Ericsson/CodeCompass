@@ -1,6 +1,5 @@
 #include <service/javaservice.h>
 #include <util/dbutil.h>
-#include "../include/service/javaservice.h"
 
 #include <iostream>
 
