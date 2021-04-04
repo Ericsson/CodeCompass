@@ -12,9 +12,9 @@ add_library(javaparser SHARED
         src/javaparser.cpp)
 
 add_jar(javaparserjava
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/AstVisitor.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Parser.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/PositionInfo.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/src-java/AstVisitor.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/src-java/Parser.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/src-java/PositionInfo.java
   OUTPUT_NAME javaparser)
 
 add_dependencies(javaparserjava javaparser)
