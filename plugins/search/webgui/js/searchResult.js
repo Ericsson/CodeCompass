@@ -7,13 +7,14 @@ require([
   'dojo/topic',
   'dojo/mouse',
   'codecompass/model',
+  'codecompass/urlHandler',
   'codecompass/util',
   'codecompass/view/component/HtmlTree',
   'codecompass/view/component/Pager',
   'codecompass/view/component/TooltipTreeMixin',
   'codecompass/viewHandler'],
 function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
-  mouse, model, util, HtmlTree, Pager, TooltipTreeMixin, viewHandler) {
+  mouse, model, urlHandler, util, HtmlTree, Pager, TooltipTreeMixin, viewHandler) {
 
   var moreSize = 5;
   var moreText = 'More ...';
@@ -251,11 +252,18 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
       params.query   = data.text;
       params.range   = range;
       params.filter  = filter;
+
+      if (gtag) {
+        gtag ('event', 'search: ' + data.searchType.toString(), {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : params.query
+        });
+      }
   
       //--- Build new tree ---//
   
       this._moreMap = {};
-  
+
       try {
         var searchResult
           = data.searchType === SearchOptions.SearchForFileName
