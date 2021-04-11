@@ -5,8 +5,9 @@ require([
   'dijit/PopupMenuItem',
   'codecompass/astHelper',
   'codecompass/model',
+  'codecompass/urlHandler',
   'codecompass/viewHandler'],
-function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
+function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, viewHandler) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
@@ -65,6 +66,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
             fileType    : fileInfo.type,
             elementInfo : nodeInfo
           });
+
+          if (gtag) {
+            gtag ('event', 'documentation', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                            + ': '
+                            + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }
