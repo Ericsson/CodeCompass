@@ -3,7 +3,31 @@ include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
 # Add all subdirectories to the build
-file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
+if(NOT WITH_PLUGIN AND NOT WITHOUT_PLUGIN)
+  file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
+else()
+  file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/metrics")
+  file(GLOB _plugin RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/search")
+  list(APPEND plugins ${_plugin})
+
+  if(WITH_PLUGIN)
+    foreach(p IN WITH_PLUGIN)
+      if(NOT ${p} IN_LIST plugins)
+        file(GLOB _plugin RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/${p}")
+        list(APPEND plugins ${_plugin})
+      endif()
+    endforeach()
+
+  elseif(WITHOUT_PLUGIN)
+    foreach(p ${CMAKE_CURRENT_SOURCE_DIR}/)
+      message("current: ${p}")
+      if(NOT ${p} IN LISTS WITHOUT_PLUGIN)
+        file(GLOB _plugin RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/${p}")
+        list(APPEND plugins ${_plugin})
+      endif()
+    endforeach()
+  endif()
+endif()
 
 # Set unique plugin directory variable for each plugin
 message(STATUS "Found the following CodeCompass plugins:")
