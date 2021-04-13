@@ -3,7 +3,7 @@ name: Build project
 on: [push, pull_request, workflow_dispatch]
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 jobs:
   build:
