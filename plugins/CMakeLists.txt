@@ -2,6 +2,7 @@
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
+# Throw error if WITH_PLUGIN and WITHOUT_PLUGIN are used together
 if(WITH_PLUGIN AND WITHOUT_PLUGIN)
   message(FATAL_ERROR "The WITH_PLUGIN and WITHOUT_PLUGIN options cannot be used together.")
 endif()
@@ -10,31 +11,21 @@ endif()
 file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
 
 # Remove subdirectories according to the provided WITH_PLUGIN or WITHOUT_PLUGIN variables
-if(WITH_PLUGIN)
-  if(NOT ("metrics" IN_LIST WITH_PLUGIN)
-      OR NOT ("search" IN_LIST WITH_PLUGIN))
-    message(WARNING "The search and metrics plugins cannot be left out, "
-            "they will be compiled anyway.")
-  endif()
-  foreach(_plugin ${plugins})
-    if(NOT ("${_plugin}" IN_LIST WITH_PLUGIN)
-       AND NOT ("${_plugin}" STREQUAL "metrics")
-       AND NOT ("${_plugin}" STREQUAL "search")
-       AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${_plugin}")
-      list(REMOVE_ITEM plugins ${_plugin})
+set(baseline "search")
+if(WITH_PLUGIN OR WITHOUT_PLUGIN)
+  foreach(_base ${baseline})
+    if((WITH_PLUGIN AND NOT ("${_base}" IN_LIST WITH_PLUGIN))
+       OR (WITHOUT_PLUGIN AND "${_base}" IN_LIST WITHOUT_PLUGIN))
+      message(WARNING "The ${_base} plugin cannot be left out, "
+              "it will be compiled anyway.")
     endif()
   endforeach()
-elseif(WITHOUT_PLUGIN)
-  if("metrics" IN_LIST WITHOUT_PLUGIN
-     OR "search" IN_LIST WITHOUT_PLUGIN)
-    message(WARNING "The search and metrics plugins cannot be left out, "
-            "they will be compiled anyway.")
-  endif()
+
   foreach(_plugin ${plugins})
-    if(("${_plugin}" IN_LIST WITHOUT_PLUGIN)
-       AND NOT ("${_plugin}" STREQUAL "metrics")
-       AND NOT ("${_plugin}" STREQUAL "search")
-       AND (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${_plugin}"))
+    if(((WITH_PLUGIN AND NOT ("${_plugin}" IN_LIST WITH_PLUGIN))
+       OR (WITHOUT_PLUGIN AND ("${_plugin}" IN_LIST WITHOUT_PLUGIN)))
+       AND NOT ("${_plugin}" IN_LIST baseline)
+       AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${_plugin}")
       list(REMOVE_ITEM plugins ${_plugin})
     endif()
   endforeach()
