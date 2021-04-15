@@ -12,7 +12,7 @@
 
 #include <JavaService.h>
 
-#include <service/javaprocess.h>
+#include <service/javaserviceprocess.h>
 
 namespace cc
 {
@@ -37,7 +37,7 @@ private:
   util::OdbTransaction _transaction;
 
   const boost::program_options::variables_map& _config;
-  std::unique_ptr<JavaProcess> _javaProcess;
+  std::unique_ptr<JavaServiceProcess> _javaProcess;
 };
 
 } // java

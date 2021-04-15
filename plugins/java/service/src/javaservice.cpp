@@ -1,8 +1,6 @@
 #include <service/javaservice.h>
 #include <util/dbutil.h>
 
-#include <iostream>
-
 
 namespace cc
 {
@@ -17,8 +15,8 @@ JavaServiceHandler::JavaServiceHandler(
   const cc::webserver::ServerContext& context_)
     : _db(db_), _transaction(db_), _config(context_.options)
 {
-  _javaProcess.reset(new JavaProcess(*datadir_ + "/java",
-                                     context_.compassRoot));
+  _javaProcess.reset(new JavaServiceProcess(*datadir_ + "/java",
+                                            context_.compassRoot));
 }
 
 void JavaServiceHandler::getJavaString(std::string &str_)

@@ -26,21 +26,21 @@ add_custom_command(
     ${THRIFT_EXECUTABLE} --gen cpp --gen java
       -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
-        ${CMAKE_CURRENT_SOURCE_DIR}/java.thrift
+  ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
   DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/java.thrift
+  ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
   COMMENT
-    "Generating Thrift for java.thrift")
+    "Generating Thrift for javaservice.thrift")
 
 # Create cpp static library from thrift files
-add_library(javathrift STATIC
+add_library(javaservicethrift STATIC
   # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_constants.cpp
   # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.cpp)
 
-target_compile_options(javathrift PUBLIC -fPIC)
+target_compile_options(javaservicethrift PUBLIC -fPIC)
 
-add_dependencies(javathrift commonthrift projectthrift)
+add_dependencies(javaservicethrift commonthrift projectthrift)
 
 set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_SOURCE_DIR}/lib/java/*
@@ -48,11 +48,11 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_BINARY_DIR}/service/project/gen-java/)
 
 # Create java library from thrift files
-add_jar(javathriftjava
+add_jar(javaservicethriftjava
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/java/JavaService.java
-  OUTPUT_NAME javathrift)
+  OUTPUT_NAME javaservicethrift)
 
-add_dependencies(javathriftjava javathrift)
+add_dependencies(javaservicethriftjava javaservicethrift)
 
 # Src java
 add_subdirectory(src-java)
@@ -67,7 +67,7 @@ target_link_libraries(javaservice
   util
   model
   mongoose
-  javathrift
+  javaservicethrift
   projectservice
   projectthrift
   languagethrift
@@ -75,4 +75,4 @@ target_link_libraries(javaservice
   ${ODB_LIBRARIES})
 
 install(TARGETS javaservice DESTINATION ${INSTALL_SERVICE_DIR})
-install_jar(javathriftjava ${INSTALL_JAVA_LIB_DIR})
+install_jar(javaservicethriftjava ${INSTALL_JAVA_LIB_DIR})

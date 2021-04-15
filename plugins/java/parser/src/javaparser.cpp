@@ -1,72 +1,59 @@
-#include <javaparser/javaparser.h>
+#include <parser/javaparser.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/process.hpp>
 
 #include <util/logutil.h>
 
 #include <memory>
-#include "../include/javaparser/javaparser.h"
 
 namespace cc
 {
 namespace parser
 {
 
-JavaParser::JavaParser(ParserContext& ctx_): AbstractParser(ctx_)
-{
+JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_) {
 }
 
-bool JavaParser::accept(const std::string& path_)
-{
+bool JavaParser::accept(const std::string &path_) {
   std::string ext = boost::filesystem::extension(path_);
   return ext == ".java";
 }
 
-bool JavaParser::parse()
-{        
-  for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
-  {
-    if(accept(path))
-    {
+bool JavaParser::parse() {
+  namespace bp = boost::process;
+  for (std::string path : _ctx.options["input"].as < std::vector < std::string >> ()) {
+    LOG(info) << "===================";
+    std::string command = "java -jar ../lib/java/javaparser.jar " + path;
+    bp::system(command);
+    LOG(info) << "===================";
+    if (accept(path)) {
       LOG(info) << "JavaParser parse path: " << path;
     }
   }
   return true;
 }
 
-JavaParser::~JavaParser()
-{
+JavaParser::~JavaParser() {
 }
 
-/* These two methods are used by the plugin manager to allow dynamic loading
-   of CodeCompass Parser plugins. Clang (>= version 6.0) gives a warning that
-   these C-linkage specified methods return types that are not proper from a
-   C code.
-
-   These codes are NOT to be called from any C code. The C linkage is used to
-   turn off the name mangling so that the dynamic loader can easily find the
-   symbol table needed to set the plugin up.
-*/
-// When writing a plugin, please do NOT copy this notice to your code.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
-  boost::program_options::options_description getOptions()
-  {
-    boost::program_options::options_description description("Java Plugin");
+boost::program_options::options_description getOptions() {
+  boost::program_options::options_description description("Java Plugin");
 
-    description.add_options()
-        ("java-arg", po::value<std::string>()->default_value("Java arg"),
-          "This argument will be used by the Java parser.");
+  description.add_options()
+  ("java-arg", po::value<std::string>()->default_value("Java arg"),
+   "This argument will be used by the Java parser.");
 
-    return description;
-  }
+  return description;
+}
 
-  std::shared_ptr<JavaParser> make(ParserContext& ctx_)
-  {
-    return std::make_shared<JavaParser>(ctx_);
-  }
+std::shared_ptr <JavaParser> make(ParserContext &ctx_) {
+  return std::make_shared<JavaParser>(ctx_);
+}
 }
 #pragma clang diagnostic pop
 

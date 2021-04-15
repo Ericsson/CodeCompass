@@ -8,18 +8,20 @@ namespace cc
 {
 namespace parser
 {
-  
-class JavaParser : public AbstractParser
-{
+
+class JavaParser : public AbstractParser {
 public:
-  JavaParser(ParserContext& ctx_);
+  JavaParser(ParserContext &ctx_);
+
   virtual ~JavaParser();
+
   virtual bool parse() override;
+
 private:
-  bool accept(const std::string& path_);
+  bool accept(const std::string &path_);
 };
-  
+
 } // parser
 } // cc
 
-#endif // CC_PLUGINS_PARSER_JAVAPARSER_H
+#endif // CC_PARSER_JAVAPARSER_H

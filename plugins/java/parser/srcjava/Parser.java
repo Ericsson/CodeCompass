@@ -1,4 +1,4 @@
-package parser.src;
+package parser.srcjava;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.JavaCore;

@@ -18,7 +18,7 @@ namespace service
 namespace java
 {
 
-class JavaProcess : public JavaServiceIf, public util::PipedProcess
+class JavaServiceProcess : public JavaServiceIf, public util::PipedProcess
 {
 public:
   class ProcessDied : public apache::thrift::TException
@@ -32,8 +32,8 @@ public:
    *
    * @param indexDatabase_ path to a index database
    */
-  JavaProcess(const std::string& indexDatabase_,
-              const std::string& compassRoot_) :
+  JavaServiceProcess(const std::string& indexDatabase_,
+                     const std::string& compassRoot_) :
   _indexDatabase(indexDatabase_)
   {
     openPipe(_pipeFd2[0], _pipeFd2[1]);
@@ -84,7 +84,7 @@ public:
     }
   }
 
-  ~JavaProcess()
+  ~JavaServiceProcess()
   {
     try
     {
@@ -174,4 +174,4 @@ private:
 } // service
 } // cc
 
-#endif // CC_SERVICE_JAVAPROCESS_H
+#endif // CC_SERVICE_JAVASERVICEPROCESS_H

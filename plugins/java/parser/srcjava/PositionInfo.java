@@ -1,4 +1,4 @@
-package parser.src;
+package parser.srcjava;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
