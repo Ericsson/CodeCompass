@@ -1,4 +1,5 @@
 import ast
+import sys
 from typing import Optional, List, Any, Union
 
 
@@ -205,19 +206,29 @@ class MemberAccessCollector(ast.NodeVisitor):
 
     @staticmethod
     def collect_slice(subscript: ast.Subscript) -> List[Union[SubscriptData.Index, SubscriptData.Slice]]:
-        # TODO: in python 3.9 this must be changed (ast.Index, ast.ExtSlice are deprecated)
         sub_slice = []
 
-        def process_slice(node: (ast.Index, ast.Slice, ast.ExtSlice)):
-            if isinstance(node, ast.Index):
-                sub_slice.append(MemberAccessCollector.SubscriptData.Index(node))
-            elif isinstance(node, ast.Slice):
-                sub_slice.append(MemberAccessCollector.SubscriptData.Slice(node.lower, node.upper, node.step))
-            elif isinstance(node, ast.ExtSlice):  # 3.9 -> ast.Tuple
-                for dim in node.dims:
-                    process_slice(dim)
-            else:
-                assert False, "Unknown slice: " + str(type(node))
+        # since python 3.9 ast.Index, ast.ExtSlice are deprecated
+        if sys.version_info[0] == 3 and sys.version_info[1] >= 9:
+            def process_slice(node: (ast.Name, ast.Slice)):
+                if isinstance(node, ast.Slice):
+                    sub_slice.append(MemberAccessCollector.SubscriptData.Slice(node.lower, node.upper, node.step))
+                elif isinstance(node, ast.Tuple):
+                    for elem in node.elts:
+                        process_slice(elem)
+                else:
+                    sub_slice.append(MemberAccessCollector.SubscriptData.Index(node))
+        else:
+            def process_slice(node: (ast.Index, ast.Slice, ast.ExtSlice)):
+                if isinstance(node, ast.Index):
+                    sub_slice.append(MemberAccessCollector.SubscriptData.Index(node))
+                elif isinstance(node, ast.Slice):
+                    sub_slice.append(MemberAccessCollector.SubscriptData.Slice(node.lower, node.upper, node.step))
+                elif isinstance(node, ast.ExtSlice):
+                    for dim in node.dims:
+                        process_slice(dim)
+                else:
+                    assert False, f"Unknown slice: str(type(node))"
 
         process_slice(subscript.slice)
         return sub_slice

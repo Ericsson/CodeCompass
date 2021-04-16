@@ -3,7 +3,7 @@ from pathlib import PurePath
 from typing import List, Optional, Any, Union, Set, TypeVar
 
 from cc_python_parser.built_in_functions import get_built_in_function
-from cc_python_parser.built_in_types import GenericType, BuiltIn
+from cc_python_parser.built_in_types import GenericType, BuiltIn, List as BuiltInList
 from cc_python_parser.common.file_position import FilePosition
 from cc_python_parser.common.utils import create_range_from_ast_node
 from cc_python_parser.function_symbol_collector_factory import FunctionSymbolCollectorFactory
@@ -14,7 +14,6 @@ from cc_python_parser.base_data import Declaration, Usage, ImportedDeclaration
 from cc_python_parser.class_data import ClassDeclaration, ImportedClassDeclaration
 from cc_python_parser.class_preprocessor import PreprocessedClass
 from cc_python_parser.common.parser_tree import ParserTree
-from cc_python_parser.common.position import Range
 from cc_python_parser.import_finder import ImportFinder
 from cc_python_parser.import_preprocessor import ImportTable
 from cc_python_parser.logger import logger
@@ -696,7 +695,13 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
                 for elem in variables.elts:
                     handle_vars(elem, types)
             elif isinstance(variables, (ast.Attribute, ast.Subscript)):
-                pass  # TODO: handle ast.Attribute and ast.Subscript eg: Lib > test > test_buffer.py
+                pass    # TODO: handle ast.Attribute and ast.Subscript eg: Lib > test > test_buffer.py
+            elif isinstance(variables, ast.Starred):
+                r = create_range_from_ast_node(variables)
+                t = {BuiltInList(types)}
+                qn = self.scope_manager.get_qualified_name_from_current_scope(variables.value.id, r.start_position.line)
+                new_variable = VariableDeclaration(variables.value.id, qn, FilePosition(self.current_file, r), t)
+                self.scope_manager.append_variable_to_current_scope(new_variable)
             else:
                 assert False
 

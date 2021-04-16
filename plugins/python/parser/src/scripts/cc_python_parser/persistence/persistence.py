@@ -11,7 +11,7 @@ class ModelPersistence:
     def __init__(self, c_persistence):
         self.c_persistence = c_persistence
         self.check_c_persistence()
-        self.log = open(str(PurePath(__file__).parent.joinpath('persistence_log.txt')), 'w+')
+        self.log = open(str(PurePath(__file__).parent.joinpath('persistence_log.txt')), 'w+', encoding='utf-8')
 
     def __del__(self):
         self.log.close()
