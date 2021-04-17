@@ -120,7 +120,7 @@ tarball ubuntu-16.04:
     when: manual
     allow_failure: false
     variables:
-        FILENAME: codecompass.tar.gz
+        FILENAME: codecompass-$CI_COMMIT_BRANCH.tar.gz
     before_script:
         - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
         - mkdir -p ~/.ssh
@@ -134,17 +134,17 @@ tarball ubuntu-16.04:
 upload suse-15:
     extends: .upload
     variables:
-        FILENAME: codecompass-suse-15.tar.gz
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-15.tar.gz
     needs: ["tarball suse-15"]
 
 upload suse-42.1:
     extends: .upload
     variables:
-        FILENAME: codecompass-suse-42.1.tar.gz
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-42.1.tar.gz
     needs: ["tarball suse-42.1"]
 
 upload ubuntu-16.04:
     extends: .upload
     variables:
-        FILENAME: codecompass-ubuntu-16.04.tar.gz
+        FILENAME: codecompass-$CI_COMMIT_BRANCH-ubuntu-16.04.tar.gz
     needs: ["tarball ubuntu-16.04"]
