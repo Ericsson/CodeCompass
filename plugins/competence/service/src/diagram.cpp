@@ -59,6 +59,9 @@ void CompetenceDiagram::getCompetenceDiagram(
     case 4:
       riskViewDiagram(graph_, fileId_);
       break;
+    case 5:
+      teamViewDiagram(graph_, fileId_, true);
+      break;
   }
 }
 
@@ -200,9 +203,106 @@ std::string CompetenceDiagram::getUserViewDiagramLegend()
   return builder.getOutput();
 }
 
+std::map<util::Graph::Node, std::string> CompetenceDiagram::getDirExpertNodes(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  std::map<core::FileId, std::string> comprehension;
+  _transaction([&, this]
+  {
+    auto contained = _db->query<model::File>(
+      FileQuery::parent == std::stoull(node_) &&
+      FileQuery::type == model::File::DIRECTORY_TYPE ||
+      FileQuery::id == std::stoull(node_)
+    );
+
+    // subdirs
+    for (const model::File& file : contained)
+    {
+      std::map<core::FileId, std::pair<std::string, double>> containedFilesComp;
+
+      auto containedFiles = _db->query<model::File>(
+      FileQuery::parent == file.id &&
+       FileQuery::type != model::File::DIRECTORY_TYPE ||
+       FileQuery::id == file.id
+      );
+
+      std::map<std::string, double> userValues;
+      for (const auto& contFile : containedFiles)
+      {
+        auto comp = _db->query<model::FileComprehension>(
+          FileComprehensionQuery::file == contFile.id);
+
+        for (const auto& c : comp)
+        {
+          auto it = userValues.find(c.userEmail);
+          if (it != userValues.end())
+          {
+            it->second += c.userRatio;
+          }
+          else
+          {
+            userValues.insert(std::make_pair(c.userEmail, c.userRatio));
+          }
+        }
+
+        if (!userValues.empty())
+        {
+          auto max = userValues.begin();
+          for (auto it = userValues.begin(); it != userValues.end(); ++it)
+            if (it->second > max->second)
+              max = it;
+          LOG(info) << "comprehension insert: " << contFile.id << ", " << max->first;
+          containedFilesComp.insert(std::make_pair(std::to_string(contFile.id), *max));
+        }
+        else
+        {
+          containedFilesComp.insert(std::make_pair(std::to_string(contFile.id), std::make_pair("", 0)));
+        }
+      }
+
+      std::map<std::string, double> accumulated;
+      for (const auto& elem : containedFilesComp)
+      {
+        auto it = accumulated.find(elem.second.first);
+        if (it != accumulated.end())
+        {
+          it->second += elem.second.second;
+        }
+        else
+        {
+          accumulated.insert(elem.second);
+        }
+      }
+
+      auto max = accumulated.begin();
+      for (auto it = accumulated.begin(); it != accumulated.end(); ++it)
+      {
+        if (it->second > max->second)
+        {
+          max = it;
+        }
+      }
+      comprehension.insert(std::make_pair(std::to_string(file.id), max->first));
+    }
+  });
+
+  std::map<util::Graph::Node, std::string> annotated;
+  for (const auto& pair : comprehension)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, pair.first);
+
+    annotated.insert(std::make_pair(addNode(graph_, fileInfo), pair.second));
+  }
+
+  return annotated;
+}
+
 void CompetenceDiagram::teamViewDiagram(
   util::Graph &graph_,
-  const core::FileId &fileId_)
+  const core::FileId &fileId_,
+  bool accumulated)
 {
   core::FileInfo fileInfo;
   _projectHandler.getFileInfo(fileInfo, fileId_);
@@ -218,7 +318,8 @@ void CompetenceDiagram::teamViewDiagram(
 
   for (const util::Graph::Node& subdir : subdirs)
   {
-    for (const auto& node : getFileExpertNodes(graph_, subdir))
+    auto nodes = accumulated ? getDirExpertNodes(graph_, subdir) : getFileExpertNodes(graph_, subdir);
+    for (const auto& node : nodes)
     {
       if (node.first != subdir)
       {
@@ -654,7 +755,7 @@ model::FileComprehension CompetenceDiagram::maxCompetence(
   FileComprehensionResult& result)
 {
   model::FileComprehension max = *(result.begin());
-  for (const auto &f : result)
+  for (const auto& f : result)
     if (f.userRatio > max.userRatio)
       max = f;
 

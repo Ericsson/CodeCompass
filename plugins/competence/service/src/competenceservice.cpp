@@ -118,6 +118,7 @@ void CompetenceServiceHandler::getDiagramLegend(
       return_ = diagram.getUserViewDiagramLegend();
       break;
     case 1:
+    case 5:
       return_ = diagram.getTeamViewDiagramLegend();
       break;
     case 2:

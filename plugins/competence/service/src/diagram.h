@@ -60,6 +60,10 @@ private:
     const util::Graph::Node& node_,
     const std::vector<std::string>& emails_);
 
+  std::map<util::Graph::Node, std::string> getDirExpertNodes(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
   /**
    * This method generates a graph for a single file or
    * a directory recursively to show who the most knowledgeable
@@ -67,7 +71,8 @@ private:
    */
   void teamViewDiagram(
     util::Graph &graph_,
-    const core::FileId &fileId_);
+    const core::FileId &fileId_,
+    bool accumulated = false);
 
   std::map<util::Graph::Node, std::string> getFileExpertNodes(
     util::Graph& graph_,

@@ -119,6 +119,20 @@ function (topic, Menu, MenuItem, PopupMenuItem, Tooltip, model, viewHandler) {
       }));
 
       submenu.addChild(new MenuItem({
+        label : "Team view for directory",
+        type : 5,
+        onClick : function () {
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : this.type,  // In case there are other diagrams.
+            node : fileInfo.id
+          });
+        }
+      }));
+
+      submenu.addChild(new MenuItem({
         label : "Person-by-person company view",
         type : 2,
         onClick : function () {
