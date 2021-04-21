@@ -112,6 +112,7 @@ class ScopeManager:
         def is_same_declaration(var: VariableDeclaration) -> bool:
             return isinstance(var, ModuleVariableDeclaration) and \
                    var.imported_module_location == module_variable.imported_module_location
+
         scope = self.get_current_lifetime_scope()
         if len([v for v in scope.variable_declarations if is_same_declaration(v)]) == 0:
             scope.append_variable(module_variable)
@@ -154,12 +155,12 @@ class ScopeManager:
     def get_declaration(self, name: str) -> Optional[Union[Declaration, PlaceholderType]]:
         for scope in self.reverse():
             if isinstance(scope, ClassScope) and scope is not self.get_current_lifetime_scope():
-                continue        # members can be accessed via self, except from the current class scope
+                continue  # members can be accessed via self, except from the current class scope
             declaration = self.get_declaration_from_scope(name, scope)
             if declaration is not None:
                 from cc_python_parser.variable_data import TypeVariableDeclaration
                 if isinstance(declaration, TypeVariableDeclaration):
-                    pass    # print("NEED FIX: TypeVariable")
+                    pass  # print("NEED FIX: TypeVariable")
                 return declaration
         current_class_scope = self.get_current_class_scope()
         if current_class_scope is not None:
@@ -403,7 +404,8 @@ class ScopeManager:
     def get_current_class_declaration(self) -> Optional[ClassDeclaration]:
         current_class_scope_found = False
         for scope in self.reverse():
-            if current_class_scope_found and isinstance(scope, LifetimeScope):
+            if current_class_scope_found and isinstance(scope, LifetimeScope) and \
+                    not isinstance(scope, PartialLifetimeScope):
                 return scope.class_declarations[-1]
             elif not current_class_scope_found:
                 current_class_scope_found = isinstance(scope, ClassScope)
