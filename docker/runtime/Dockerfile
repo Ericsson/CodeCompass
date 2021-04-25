@@ -51,6 +51,7 @@ RUN set -x && apt-get update -qq \
     libgit2-dev \
     libssl1.1 \
     libgvc6 \
+    libldap-2.4-2 \
     libmagic-dev \
     libthrift-dev \
     libodb-sqlite-dev \

@@ -40,6 +40,7 @@ be installed from the official repository of the given Linux distribution.
 - **`ctags`**: For search parsing.
 - **`libgtest-dev`**: For testing CodeCompass.
   ***See [Known issues](#known-issues)!***
+- **`libldap2-dev`**: For LDAP authentication.
 
 ## Quick guide
 

@@ -19,6 +19,7 @@ RUN set -x && apt-get update -qq \
   libgit2-dev \
   libgraphviz-dev \
   libgtest-dev \
+  libldap2-dev \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \

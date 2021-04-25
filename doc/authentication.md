@@ -64,6 +64,23 @@ be separated by `:`.
     }
 ~~~~
 
+LDAP authentication (`ldap`)
+---------------------------------------------------------
+
+The configuration of the LDAP server should be given under the `ldap` key.
+
+~~~~{.json}
+    "ldap": {
+        "enabled": true,
+        "host": "ldap://mydomain.com:389",
+        "baseDn": "OU=...,DC=...,DC=...,DC=...",
+        "bindDn": "CN=...,OU=...,DC=...,DC=...,DC=...",
+        "bindPw": "bindPassword",
+        "uidAttr": "sAMAccountName"
+    }
+~~~~
+
+
 
 `AuthenticationService` API
 ---------------------------
