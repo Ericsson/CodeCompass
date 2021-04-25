@@ -71,8 +71,8 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
           if (that._currentQueryData) {
             that._pagerChanged = true;
             topic.publish(
-                'codecompass/search',
-                that._currentQueryData);
+              'codecompass/search',
+              that._currentQueryData);
           }
         }
       });
@@ -128,14 +128,14 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
             that._store.remove(item.id);
 
             that._moreMap[item.parent].splice(0, moreSize).forEach(
-                function (lineMatch) {
-                  that._store.add({
-                    name: lineMatch.text,
-                    parent: item.parent,
-                    fileRange: lineMatch.range,
-                    fileName: item.fileName
-                  });
+              function (lineMatch) {
+                that._store.add({
+                  name: lineMatch.text,
+                  parent: item.parent,
+                  fileRange: lineMatch.range,
+                  fileName: item.fileName
                 });
+              });
 
             if (that._moreMap[item.parent].length !== 0)
               that._store.add(item);
@@ -272,15 +272,15 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
 
       try {
         var searchResult
-            = data.searchType === SearchOptions.SearchForFileName
-            ? model.searchservice.searchFile(params)
-            : model.searchservice.search(params);
+          = data.searchType === SearchOptions.SearchForFileName
+          ? model.searchservice.searchFile(params)
+          : model.searchservice.search(params);
       } catch (ex) {
         topic.publish('codecompass/searchError', {exception: ex});
       }
 
       this._pager.set(
-          'total', searchResult ? searchResult.totalFiles : 0);
+        'total', searchResult ? searchResult.totalFiles : 0);
 
       if (!searchResult || searchResult.totalFiles === 0) {
         this._store.add({
@@ -299,14 +299,14 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
           var fileNode = that._createDirsByFInfo(searchResultEntry.finfo);
 
           searchResultEntry.matchingLines.splice(0, moreSize).forEach(
-              function (lineMatch) {
-                that._store.add({
-                  name: util.escapeTags(lineMatch.text),
-                  parent: searchResultEntry.finfo.path,
-                  fileRange: lineMatch.range,
-                  fileName: searchResultEntry.finfo.name
-                });
+            function (lineMatch) {
+              that._store.add({
+                name: util.escapeTags(lineMatch.text),
+                parent: searchResultEntry.finfo.path,
+                fileRange: lineMatch.range,
+                fileName: searchResultEntry.finfo.name
               });
+            });
 
           if (searchResultEntry.matchingLines.length !== 0)
             that._store.add({
