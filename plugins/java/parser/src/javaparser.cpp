@@ -1,7 +1,6 @@
-#include <parser/javaparser.h>
+#include <unordered_set>
 
-#include <boost/filesystem.hpp>
-#include <boost/process.hpp>
+#include <parser/javaparser.h>
 
 #include <util/logutil.h>
 
@@ -13,21 +12,19 @@ namespace parser
 {
 
 JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_) {
+  java_path = bp::search_path("java");
 }
 
 bool JavaParser::accept(const std::string &path_) {
-  std::string ext = boost::filesystem::extension(path_);
-  return ext == ".java";
+  std::string ext = fs::extension(path_);
+  return ext == ".json";
 }
 
 bool JavaParser::parse() {
-  namespace bp = boost::process;
-  for (std::string path : _ctx.options["input"].as < std::vector < std::string >> ()) {
-    LOG(info) << "===================";
-    std::string command = "java -jar ../lib/java/javaparser.jar " + path;
-    bp::system(command);
-    LOG(info) << "===================";
+  for (std::string path :
+      _ctx.options["input"].as < std::vector < std::string >> ()) {
     if (accept(path)) {
+      bp::system(java_path, "-jar", "../lib/java/javaparser.jar", path);
       LOG(info) << "JavaParser parse path: " << path;
     }
   }

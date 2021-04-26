@@ -12,6 +12,8 @@ add_library(javaparser SHARED
   src/javaparser.cpp)
 
 add_jar(javaparserjava
+  ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/enums/ValidCommands.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/ArgParser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/AstVisitor.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/Parser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/PositionInfo.java
