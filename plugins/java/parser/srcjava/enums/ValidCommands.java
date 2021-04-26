@@ -10,8 +10,8 @@ public enum ValidCommands {
 
   private final String name;
 
-  ValidCommands(String value) {
-    this.name = value;
+  ValidCommands(String name) {
+    this.name = name;
   }
 
   // Getter
