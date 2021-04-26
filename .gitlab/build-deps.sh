@@ -89,8 +89,8 @@ rm -f $PACKAGES_DIR/openssl-1.1.1h.tar.gz
 ############
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://github.com/threatstack/libmagic/archive/5.18.tar.gz
-tar -xf 5.18.tar.gz
+wget --no-verbose --no-clobber https://skynet.elte.hu/libmagic-5.18.tar.gz
+tar -xf libmagic-5.18.tar.gz
 cd libmagic-5.18/
 
 ./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/libmagic-install

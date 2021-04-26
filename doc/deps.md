@@ -304,3 +304,4 @@ relevant during compilation.
 | `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. Optional. |
 | `CODECOMPASS_LINKER` | The path of the linker, if the system's default linker is to be overridden. |
+| `WITH_PLUGIN`/`WITHOUT_PLUGIN` | The names of the plugins to be built/skipped at build. Possible values are **cpp**, **cpp_reparse**, **dummy**, **git**, **metrics**, **search**. The `metrics` and `search` plugins are fundamental, they will be compiled even if not included. `WITH_PLUGIN` **cannot** be used together with `WITHOUT_PLUGIN`. Example: `-DWITH_PLUGIN="cpp;git"` This will compile the cpp, git, metrics and search plugins. |
