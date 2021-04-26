@@ -1,2 +1,12 @@
 Manifest-Version: 1.0
+Class-Path: commons-io-2.8.0.jar
+            json-simple-1.1.1.jar
+            org.eclipse.core.contenttype_3.7.600.v20200124-1609.jar
+            org.eclipse.core.jobs_3.10.600.v20191122-2104.jar
+            org.eclipse.core.resources_3.13.600.v20191122-2104.jar
+            org.eclipse.core.runtime_3.17.100.v20200203-0917.jar
+            org.eclipse.equinox.common_3.10.600.v20191004-1420.jar
+            org.eclipse.equinox.preferences_3.7.500.v20190815-1535.jar
+            org.eclipse.jdt.core_3.24.0.v20201123-0742.jar
+            org.eclipse.osgi_3.15.0.v20190830-1434.jar
 Main-Class: parser.srcjava.Main
