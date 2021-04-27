@@ -32,6 +32,7 @@ export PATH=$DEPS_INSTALL_DIR/jdk-install/bin\
 
 export MAGIC=$DEPS_INSTALL_DIR/libmagic-install/share/misc/magic.mgc
 export JAVA_HOME=$DEPS_INSTALL_DIR/jdk-install
+export PYTHONHOME=$DEPS_INSTALL_DIR/python-install
 
 if [ -f $ROOT_DIR/ccdb-tool/venv/bin/activate ]; then
   source $ROOT_DIR/ccdb-tool/venv/bin/activate
