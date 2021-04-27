@@ -34,7 +34,6 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
   });
 
   var SearchResult = declare(BorderContainer, {
-    searchTypes : model.searchservice.getSearchTypes(),
     constructor: function () {
       var that = this;
 
@@ -52,6 +51,8 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
           dirFilter: message.dirFilter,
           searchType: message.searchType
         };
+
+        that._searchTypes = model.searchservice.getSearchTypes();
 
         that._loadResults();
 
@@ -259,7 +260,7 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
       params.filter = filter;
 
       if (gtag) {
-        var type = this.searchTypes.find(t => t.id === data.searchType);
+        var type = this._searchTypes.find(t => t.id === data.searchType);
         gtag('event', 'search: ' + type.name, {
           'event_category': urlHandler.getState('wsid'),
           'event_label': params.query
