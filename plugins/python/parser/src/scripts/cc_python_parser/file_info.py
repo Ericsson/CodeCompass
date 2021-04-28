@@ -2,7 +2,7 @@ from enum import Enum, unique, auto
 from pathlib import PurePath, Path
 from typing import Optional
 
-from cc_python_parser.common.utils import ENCODINGS
+from cc_python_parser.common.utils import process_file_content
 from cc_python_parser.persistence.file_content_dto import FileContentDTO
 from cc_python_parser.persistence.file_dto import FileDTO
 from cc_python_parser.preprocessed_file import PreprocessedFile
@@ -51,15 +51,14 @@ class FileInfo:
 
     @staticmethod
     def get_content(file: PurePath) -> str:
-        for e in ENCODINGS:
-            try:
-                with open(str(file), "r", encoding=e) as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                pass
-            else:
-                return content
-        assert False, f"Unhandled coding in {str(file)}"
+        content = ""
+
+        def handle_file_content(c, _):
+            nonlocal content
+            content = c
+
+        process_file_content(file, handle_file_content)
+        return content
 
     @staticmethod
     def get_parse_status(status: ProcessStatus) -> int:
