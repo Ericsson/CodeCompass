@@ -1,6 +1,7 @@
 import os
 import json
 from copy import copy
+from json import JSONDecodeError
 from pathlib import PurePath, Path
 from typing import List, Final
 
@@ -28,7 +29,14 @@ def read_config() -> List[str]:
     project_roots = []
     if Path(config_file_name).exists():
         with open(config_file_name, 'r') as config_file:
-            config = json.load(config_file)
+            try:
+                config = json.load(config_file)
+            except JSONDecodeError as e:
+                print(f"Invalid JSON file: config.json (line: {e.lineno}, column: {e.colno})")
+                return project_roots
+            except Exception as e:
+                print(f"Error during config.json decoding: {e}")
+                return project_roots
             for project in config['projects']:
                 if project['status']:
                     project_roots.append(project['project'])
