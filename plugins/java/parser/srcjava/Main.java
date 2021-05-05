@@ -7,7 +7,8 @@ import java.io.IOException;
 public class Main {
   public static void main(String[] args) {
     try {
-      Parser.parse(args[0]);
+      Parser parser = new Parser();
+      parser.parse(args[0]);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (ParseException e) {

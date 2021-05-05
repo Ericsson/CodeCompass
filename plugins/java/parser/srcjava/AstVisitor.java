@@ -60,9 +60,9 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(Assignment node) {
-    System.out.println("===========================");
-    System.out.println(node);
-    System.out.println("===========================");
+    // System.out.println("===========================");
+    // System.out.println(node);
+    // System.out.println("===========================");
     return super.visit(node);
   }
 
