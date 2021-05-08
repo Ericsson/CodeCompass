@@ -468,6 +468,15 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
+
+      if (gtag) {
+        gtag('event', 'click_on_word', {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+                        + ': '
+                        + this._getWordAt(pos).string
+        });
+      }
     },
 
     /**
