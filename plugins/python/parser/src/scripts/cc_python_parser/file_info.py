@@ -18,12 +18,17 @@ class ProcessStatus(Enum):
 
 # TODO: expr_1; import; expr_2; - correct script -> not a problem
 class FileInfo:
-    def __init__(self, file: str, path: Optional[PurePath]):  # TODO: remove optional
-        self.file: str = file
-        self.path: Optional[PurePath] = path
+    def __init__(self, path: PurePath):
+        self.path: PurePath = path
         self.symbol_collector: Optional[SymbolCollector] = None
         self.preprocessed_file: PreprocessedFile = PreprocessedFile(path)
         self.status: ProcessStatus = ProcessStatus.WAITING
+
+    def get_file(self):
+        return self.path.name
+
+    def get_file_name(self):
+        return self.path.stem
 
     def preprocess_file(self, tree) -> None:
         self.preprocessed_file.visit(tree)
@@ -36,7 +41,7 @@ class FileInfo:
     def create_dto(self) -> FileDTO:
         file_dto = FileDTO()
         file_dto.path = str(self.path)
-        file_dto.file_name = self.file
+        file_dto.file_name = self.path.name
         file_dto.timestamp = Path(self.path).stat().st_mtime
         file_dto.content = FileContentDTO(self.get_content(self.path))
         file_dto.parent = str(self.path.parent)
