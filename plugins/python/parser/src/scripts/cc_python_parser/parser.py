@@ -1,7 +1,7 @@
 import ast
 import os
 import sys
-from pathlib import PurePath
+from pathlib import PurePath, Path
 from typing import List, Optional, Union, Set, Tuple
 
 from cc_python_parser.common.parser_tree import ParserTree
@@ -48,23 +48,15 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             self.process_directory(PurePath(directory))
 
     def process_directory(self, directory: PurePath):
-        sub_directories = []
-        for element in os.listdir(str(directory)):
-            path = directory.joinpath(element)
-            if os.path.isfile(str(path)):
-                if self.exceptions.is_file_exception(path):
-                    continue
-                if element.endswith(".py"):
-                    self.files.append(FileInfo(element, path))
-            elif os.path.isdir(str(path)):
-                if self.exceptions.is_dictionary_exception(path):
-                    continue
-                sub_directories.append(path)
-            else:
-                assert False, "Unknown element (file, directory): " + str(path)
-
-        for subdir in sub_directories:
-            self.process_directory(subdir)
+        for root, folders, files in os.walk(directory, followlinks=True):
+            for file in files:
+                file_path = Path(root, file)
+                if file_path.is_symlink():
+                    if not file_path.exists():
+                        continue
+                    file_path = file_path.resolve()
+                if file_path.suffix == '.py':
+                    self.files.append(FileInfo(file_path))
 
     def parse(self) -> None:
         metrics.start_parsing()
@@ -77,11 +69,11 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
 
     def parse_file(self, file_info: FileInfo) -> None:
         global current_file
-        current_file = file_info.file
+        current_file = file_info.get_file()
         if file_info.status != ProcessStatus.WAITING or current_file[-3:] != '.py':
             return
-        logger.debug('\nFILE: ' + file_info.file[:-3] + '\n=========================================')
-        db_logger.debug('\nFILE: ' + file_info.file[:-3] + '\n=========================================')
+        logger.debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
+        db_logger.debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
         if file_info.path is None:
             return
 
@@ -115,10 +107,10 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             elif len(dependency_file_info) == 1:
                 if dependency_file_info[0].status is ProcessStatus.WAITING:
                     self.parse_file(dependency_file_info[0])
-                    current_file = file_info.file
-                    logger.debug('\nFILE: ' + file_info.file[:-3] + '\n=========================================')
+                    current_file = file_info.get_file()
+                    logger.debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
                     db_logger. \
-                        debug('\nFILE: ' + file_info.file[:-3] + '\n=========================================')
+                        debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
             else:
                 assert False, 'Multiple file occurrence: ' + dependency.get_file()
         sc = SymbolCollector(ParserTree(tree), file_info.path, file_info.preprocessed_file,
@@ -138,7 +130,7 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             if not any(PurePath(mm) in m.parents for mm in self.directories) and \
                     m not in self.other_modules:
                 self.other_modules.add(m)
-                new_file_info = FileInfo(m.name, m)
+                new_file_info = FileInfo(m)
                 self.other_module_files.append(new_file_info)
                 self.parse_file(new_file_info)
 
