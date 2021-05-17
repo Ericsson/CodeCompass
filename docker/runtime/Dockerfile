@@ -13,7 +13,8 @@ ENV CC_DATABASE ${CC_DATABASE}
 ARG CC_BUILD_TYPE=Release
 ENV CC_BUILD_TYPE ${CC_BUILD_TYPE}
 
-RUN apt-get install -y git
+RUN apt-get update -qq && \
+    apt-get install --yes git
 
 # Download CodeCompass release.
 RUN git clone https://github.com/Ericsson/CodeCompass.git /CodeCompass
@@ -41,24 +42,32 @@ FROM ubuntu:20.04
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN set -x && apt-get update -qq \
-  && apt-get install -qqy --no-install-recommends \
+RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
+    apt-get update -qq --yes && \
+    apt-get install -qq --yes --no-install-recommends \
+    postgresql-server-dev-12 \   
+    libodb-pgsql-dev; \
+    else \
+    apt-get update -qq && \
+    apt-get install -qq --yes --no-install-recommends \
+    libsqlite3-dev \
+    libodb-sqlite-dev; \
+    fi;
+    
+RUN set -x && apt-get update -qq && \
+    apt-get install -qq --yes --no-install-recommends \
     llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
-    libsqlite3-dev \
-    postgresql-server-dev-12 \
     default-jre \
     libgit2-dev \
     libssl1.1 \
     libgvc6 \
     libmagic-dev \
     libthrift-dev \
-    libodb-sqlite-dev \
-    libodb-pgsql-dev \
-    ctags \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
-  && set +x
+    ctags && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/ && \
+    set +x
 
 ENV TINI_VERSION v0.18.0
 
