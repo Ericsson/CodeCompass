@@ -27,6 +27,7 @@ RUN mkdir /CodeCompass-build && \
     -DDATABASE=$CC_DATABASE \
     -DCMAKE_INSTALL_PREFIX=/CodeCompass-install \
     -DCMAKE_BUILD_TYPE=$CC_BUILD_TYPE && \
+    -DWITH_AUTH="plain;ldap" \
   make -j $(nproc) && \
   make install
 
