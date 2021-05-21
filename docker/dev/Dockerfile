@@ -19,6 +19,7 @@ RUN set -x && apt-get update -qq \
   libgit2-dev \
   libgraphviz-dev \
   libgtest-dev \
+  libldap2-dev \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
@@ -49,6 +50,7 @@ ENV DATABASE=sqlite \
     INSTALL_DIR=/CodeCompass/install \
     SOURCE_DIR=/CodeCompass/CodeCompass \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
-    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
+    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
+    WITH_AUTH="plain;ldap"
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"

@@ -28,6 +28,7 @@ RUN mkdir /CodeCompass-build && \
     -DDATABASE=$CC_DATABASE \
     -DCMAKE_INSTALL_PREFIX=/CodeCompass-install \
     -DCMAKE_BUILD_TYPE=$CC_BUILD_TYPE && \
+    -DWITH_AUTH="plain;ldap" \
   make -j $(nproc) && \
   make install
 
@@ -62,6 +63,7 @@ RUN set -x && apt-get update -qq && \
     libgit2-dev \
     libssl1.1 \
     libgvc6 \
+    libldap-2.4-2 \
     libmagic-dev \
     libthrift-dev \
     ctags && \
