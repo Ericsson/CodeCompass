@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.2">
+    <persistence-unit name="ParserPU" transaction-type="RESOURCE_LOCAL">
+
+        <class>model.JavaAnnotation</class>
+        <class>model.JavaAstNode</class>
+        <class>model.JavaDocComment</class>
+        <class>model.JavaEntity</class>
+        <class>model.JavaEnum</class>
+        <class>model.JavaEnum_enumConstants</class>
+        <class>model.JavaEnumConstant</class>
+        <class>model.JavaFunction</class>
+        <class>model.JavaFunction_locals</class>
+        <class>model.JavaFunction_parameters</class>
+        <class>model.JavaImport</class>
+        <class>model.JavaType</class>
+        <class>model.JavaTypedEntity</class>
+        <class>model.JavaVariable</class>
+
+        <properties>
+            <!-- EclipseLink should create the database schema automatically -->
+            <property name="eclipselink.ddl-generation" value="create-tables" />
+            <property name="eclipselink.ddl-generation.output-mode" value="database" />
+        </properties>
+    </persistence-unit>
+</persistence>
