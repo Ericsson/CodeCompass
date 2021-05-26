@@ -3,21 +3,22 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PLUGIN_DIR}/lib/java/*)
 
 add_jar(javamodel
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaAnnotation.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaAstNode.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaDocComment.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaEntity.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum_enumConstants.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnumConstant.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_locals.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_parameters.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaImport.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaType.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaTypedEntity.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaVariable.java
-  # /META-INF/persistance.xml
+  SOURCES
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAnnotation.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAstNode.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaDocComment.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEntity.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum_enumConstants.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnumConstant.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_locals.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_parameters.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaImport.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaType.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaTypedEntity.java
+   ${CMAKE_CURRENT_SOURCE_DIR}/JavaVariable.java
+   META-INF/persistence.xml
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
   OUTPUT_NAME javamodel)
 
@@ -30,16 +31,22 @@ install_jar(javamodel "${INSTALL_JAVA_LIB_DIR}")
 # execute_process(COMMAND
 #   jar uf javamodel.jar
 #     ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/persistence.xml
-#
-#   WORKING_DIRECTORY {INSTALL_JAVA_LIB_DIR}
+
+   #WORKING_DIRECTORY {INSTALL_JAVA_LIB_DIR}
 # )
 
-add_custom_command(
-  OUTPUT
-    ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
-  COMMAND
-    jar uf ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
-      ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/persistence.xml
-  DEPENDS
-    ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
-  COMMENT "Adding persistence.xml to javamodel.jar.")
+#add_custom_command(
+#  OUTPUT
+#    ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
+#  COMMAND
+#    jar uf ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
+#      ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/persistence.xml
+#  DEPENDS
+#    ${INSTALL_JAVA_LIB_DIR}/javamodel.jar
+#  COMMENT "Adding persistence.xml to javamodel.jar.")
+
+#add_custom_target(runAddingXml ALL
+#    COMMAND
+#        jar uf ${INSTALL_JAVA_LIB_DIR}/javamodel.jar ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/persistence.xml
+#    DEPENDS
+#        ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/persistence.xml)
