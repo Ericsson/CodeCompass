@@ -429,6 +429,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (commitAuthor && !std::isgraph(commitAuthor->name[0]))
   {
     LOG(info) << "[competenceparser] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
+    ++faultyCommits;
     return;
   }
 
@@ -448,14 +449,20 @@ void CompetenceParser::commitWorker(CommitJob& job)
   CommitPtr parent = createParentCommit(job._commit);
 
   if (!parent)
+  {
+    ++faultyCommits;
     return;
+  }
 
   // Get git tree of both commits.
   TreePtr commitTree = createTree(job._commit);
   TreePtr parentTree = createTree(parent.get());
 
   if (!commitTree || !parentTree)
+  {
+    ++faultyCommits;
     return;
+  }
 
   // Calculate diff of trees.
   DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
@@ -463,7 +470,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
   // Loop through each delta.
   size_t num_deltas = git_diff_num_deltas(diff.get());
   if (num_deltas == 0)
+  {
+    ++faultyCommits;
     return;
+  }
 
   // Copy all modified files to workspace dir.
   // Old and new version goes to separate directories.
@@ -505,24 +515,33 @@ void CompetenceParser::commitWorker(CommitJob& job)
   // Determine plagiarism command based on file extension.
   if (hasModifiedFiles && fs::exists(newPath) && fs::exists(oldPath))
   {
+    int allFiles = 0, notSupported = 0;
     for (const auto &f : fs::directory_iterator(newPath))
     {
+      ++allFiles;
       std::string command = plagiarismCommand(fs::extension(f.path()));
 
       if (command.empty())
       {
         LOG(info) << "Plagiarism detector does not support file type: " << f.path().filename();
+        ++notSupported;
         continue;
       }
 
       command.append("-c " + f.path().string() + " ");
       const fs::recursive_directory_iterator end;
       const auto it = std::find_if(fs::recursive_directory_iterator(oldPath), end,
-                                   [&f](const fs::directory_entry &entry) {
+                                   [&f](const fs::directory_entry &entry)
+                                   {
                                      return entry.path().filename() == f.path().filename();
                                    });
       if (it == end)
+      {
+        //++faultyCommits;
+        // why return???????
+        LOG(warning) << "amugy ebbe belefutottam";
         return;
+      }
 
       command.append(it->path().string());
       fs::path logPath(outPath);
@@ -539,11 +558,13 @@ void CompetenceParser::commitWorker(CommitJob& job)
         double value = std::stod(logStr.substr(++index));
         plagValues.insert(std::make_pair(f.path().filename(), value));
       }
-      catch (std::exception &ex) {
+      catch (std::exception &ex)
+      {
         LOG(warning) << "Plagiarism detection unsuccessful (" << ex.what() << "): " << logStr;
       }
     }
-
+    if (allFiles == notSupported)
+      ++allNotSupported;
     //for (const auto &p : plagValues)
       //LOG(info) << p.first << ": " << p.second;
 
@@ -557,6 +578,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   // Analyse every file that was affected by the commit.
+  int hundredpercent = 0, notSaved = 0;
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
@@ -564,7 +586,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
     model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
     if (!file)
+    {
+      ++notSaved;
       continue;
+    }
 
     double currentPlagValue = -1.0;
     if (hasModifiedFiles)
@@ -587,6 +612,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
       {
         LOG(info) << "Commit " << job._commitCounter << "/" << _commitCount
                   << " did not reach the threshold: " << currentPlagValue;
+        ++hundredpercent;
+        ++notSaved;
         continue;
       }
     }
@@ -598,7 +625,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
     BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get());
 
     if (!blame)
+    {
+      ++notSaved;
       continue;
+    }
 
     // Store the current number of blame lines for each user.
     std::map<UserEmail, UserBlameLines> userBlame;
@@ -658,7 +688,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
         //double percentage = pair.second / totalLines * std::exp(-months) * 100;
         auto fileLocIter = _fileLocData.find(delta->new_file.path);
         double strength;
-        if (currentPlagValue == -1)
+        if (currentPlagValue == -1.0)
         {
           strength = (double)pair.second / (double)totalLines;
         }
@@ -720,6 +750,12 @@ void CompetenceParser::commitWorker(CommitJob& job)
     _calculateFileData.unlock();
   }
 
+  if (num_deltas == hundredpercent)
+  {
+    LOG(warning) << job._commitCounter << "/" << _commitCount << ", " << git_oid_tostr_s(git_commit_id(job._commit))
+    << " had all 100 files.";
+  }
+  LOG(warning) << "not saved: " << notSaved;
   LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
 

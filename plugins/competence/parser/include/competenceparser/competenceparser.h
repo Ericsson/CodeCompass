@@ -192,6 +192,10 @@ private:
   int _maxCommitCount = 0;
   int _commitCount = 0;
 
+  int _notSaved = 0;
+  int allNotSupported = 0;
+  int faultyCommits = 0;
+
   boost::filesystem::path basePath;
 };
   
