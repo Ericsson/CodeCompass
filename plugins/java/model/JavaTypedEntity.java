@@ -12,7 +12,7 @@ import static javax.persistence.InheritanceType.JOINED;
 @Inheritance(strategy = JOINED)
 public class JavaTypedEntity extends JavaEntity {
   @Column(name = "\"typeHash\"")
-  private int typeHash;
+  private long typeHash;
 
   @Column(name = "\"qualifiedType\"")
   private String qualifiedType;
@@ -20,11 +20,11 @@ public class JavaTypedEntity extends JavaEntity {
 
   // Getters and setters
 
-  public int getTypeHash() {
+  public long getTypeHash() {
     return typeHash;
   }
 
-  public void setTypeHash(int typeHash) {
+  public void setTypeHash(long typeHash) {
     this.typeHash = typeHash;
   }
 

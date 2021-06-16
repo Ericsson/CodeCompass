@@ -19,6 +19,7 @@ add_jar(javaparserjava
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/PositionInfo.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/Main.java
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/META-INF/MANIFEST.MF
+  INCLUDE_JARS javamodel
   OUTPUT_NAME javaparser)
 
 add_dependencies(javaparserjava javaparser)

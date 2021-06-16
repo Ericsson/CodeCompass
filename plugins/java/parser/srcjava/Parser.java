@@ -17,7 +17,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static model.EMFactory.createEntityManager;
+
 public class Parser {
+  // EntityManager em;
   private ASTParser parser;
 
   public Parser() {}
@@ -36,6 +39,8 @@ public class Parser {
             filePathStr.endsWith(".java")) {
           if (!javaFound) {
             javaFound = true;
+            /* em = */
+            createEntityManager();
             parser = ASTParser.newParser(AST.JLS_Latest);
             parser.setKind(ASTParser.K_COMPILATION_UNIT);
           }
@@ -59,14 +64,17 @@ public class Parser {
     File file = new File(path);
     String str = FileUtils.readFileToString(file, "UTF-8");
 
-    // parser.setEnvironment(
-    //   argsMap.get("classpath").toArray(new String[0]),
-    //   argsMap.get("sourcepath").toArray(new String[0]),
-    //   new String[]{"UTF-8"}, false);
+    /*
+    parser.setEnvironment(
+      argsMap.get("classpath").toArray(new String[0]),
+      argsMap.get("sourcepath").toArray(new String[0]),
+      new String[]{"UTF-8"}, false
+    );
+    */
     parser.setSource(str.toCharArray());
 
     CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-    AstVisitor visitor = new AstVisitor(cu);
+    AstVisitor visitor = new AstVisitor(cu, null);
     cu.accept(visitor);
   }
 }

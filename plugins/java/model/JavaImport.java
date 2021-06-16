@@ -12,8 +12,11 @@ public class JavaImport {
   @Column(name = "id")
   private int id;
 
+  @Column(name = "importer")
+  private long importer;
+
   @Column(name = "imported")
-  private int imported;
+  private long imported;
 
   // Getters and setters
 
@@ -25,11 +28,19 @@ public class JavaImport {
     this.id = id;
   }
 
-  public int getImported() {
+  public long getImporter() {
+    return importer;
+  }
+
+  public void setImporter(long importer) {
+    this.importer = importer;
+  }
+
+  public long getImported() {
     return imported;
   }
 
-  public void setImported(int imported) {
+  public void setImported(long imported) {
     this.imported = imported;
   }
 }

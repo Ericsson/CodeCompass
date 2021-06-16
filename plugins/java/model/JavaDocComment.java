@@ -13,13 +13,13 @@ public class JavaDocComment {
   private int id;
 
   @Column(name = "\"contentHash\"")
-  private int contentHash;
+  private long contentHash;
 
   @Column(name = "\"contentHTML\"")
   private int contentHTML;
 
   @Column(name = "\"mangledNameHash\"")
-  private int mangledNameHash;
+  private long mangledNameHash;
 
 // Getters and setters
 
@@ -31,11 +31,11 @@ public class JavaDocComment {
     this.id = id;
   }
 
-  public int getContentHash() {
+  public long getContentHash() {
     return contentHash;
   }
 
-  public void setContentHash(int contentHash) {
+  public void setContentHash(long contentHash) {
     this.contentHash = contentHash;
   }
 
@@ -47,11 +47,11 @@ public class JavaDocComment {
     this.contentHTML = contentHTML;
   }
 
-  public int getMangledNameHash() {
+  public long getMangledNameHash() {
     return mangledNameHash;
   }
 
-  public void setMangledNameHash(int mangledNameHash) {
+  public void setMangledNameHash(long mangledNameHash) {
     this.mangledNameHash = mangledNameHash;
   }
 

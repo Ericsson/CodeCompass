@@ -11,16 +11,16 @@ public class JavaEntity {
   @Id
   @GeneratedValue
   @Column(name = "id")
-  private int id;
+  private long id;
 
   @Column(name = "\"typeId\"")
   private int typeId;
 
   @Column(name = "\"astNodeId\"")
-  private int astNodeId;
+  private long astNodeId;
 
   @Column(name = "\"mangledNameHash\"")
-  private int mangledNameHash;
+  private long mangledNameHash;
 
   @Column(name = "name")
   private String name;
@@ -31,11 +31,11 @@ public class JavaEntity {
 
   // Getters and setters
 
-  public int getId() {
+  public long getId() {
     return id;
   }
 
-  public void setId(int id) {
+  public void setId(long id) {
     this.id = id;
   }
 
@@ -47,19 +47,19 @@ public class JavaEntity {
     this.typeId = typeId;
   }
 
-  public int getAstNodeId() {
+  public long getAstNodeId() {
     return astNodeId;
   }
 
-  public void setAstNodeId(int astNodeId) {
+  public void setAstNodeId(long astNodeId) {
     this.astNodeId = astNodeId;
   }
 
-  public int getMangledNameHash() {
+  public long getMangledNameHash() {
     return mangledNameHash;
   }
 
-  public void setMangledNameHash(int mangledNameHash) {
+  public void setMangledNameHash(long mangledNameHash) {
     this.mangledNameHash = mangledNameHash;
   }
 

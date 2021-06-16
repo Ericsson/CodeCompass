@@ -1,1 +1,4 @@
 Manifest-Version: 1.0
+Class-Path: .
+            eclipselink-2.7.8.jar
+            jakarta.persistence-api-2.2.3.jar

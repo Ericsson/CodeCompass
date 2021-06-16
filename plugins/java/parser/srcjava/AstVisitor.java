@@ -1,13 +1,18 @@
 package parser.srcjava;
 
+import model.JavaImport;
 import org.eclipse.jdt.core.dom.*;
+
+import javax.persistence.EntityManager;
 
 public class AstVisitor extends ASTVisitor {
 
   private final CompilationUnit cu;
+  private final EntityManager em;
 
-  public AstVisitor(CompilationUnit cu) {
+  public AstVisitor(CompilationUnit cu, EntityManager em) {
     this.cu = cu;
+    this.em = em;
   }
 
   @Override
@@ -60,9 +65,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(Assignment node) {
-    // System.out.println("===========================");
     // System.out.println(node);
-    // System.out.println("===========================");
     return super.visit(node);
   }
 
@@ -170,13 +173,20 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(EnumConstantDeclaration node) {
+    // JavaEnumConstant enumConstant = new JavaEnumConstant();
+    // enumConstant.setValue(node.getFlags());
+    // em.persist(enumConstant);
+    // em.getTransaction().commit();
     // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(EnumDeclaration node) {
-    // System.out.println(node);
+    // JavaEnum _enum = new JavaEnum();
+    // _enum.setName(node.getName().toString());
+    // em.persist(_enum);
+    // em.getTransaction().commit();
     return super.visit(node);
   }
 
@@ -224,7 +234,14 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
-    // System.out.println(node);
+    JavaImport _import = new JavaImport();
+    _import.setImported(node.getFlags());
+    // em.persist(_import);
+    // em.getTransaction().commit();
+    System.out.println("========================");
+    System.out.println(node.getName());
+    System.out.println(em);
+    System.out.println("========================");
     return super.visit(node);
   }
 

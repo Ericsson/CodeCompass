@@ -10,31 +10,31 @@ import javax.persistence.Table;
 public class JavaAstNode {
   @Id
   @Column(name = "id")
-  private int id;
+  private long id;
 
   @Column(name = "\"astValue\"")
   private String astValue;
 
   @Column(name = "location_range_start_line")
-  private int location_range_start_line;
+  private long location_range_start_line;
 
   @Column(name = "location_range_start_column")
-  private int location_range_start_column;
+  private long location_range_start_column;
 
   @Column(name = "location_range_end_line")
-  private int location_range_end_line;
+  private long location_range_end_line;
 
   @Column(name = "location_range_end_column")
-  private int location_range_end_column;
+  private long location_range_end_column;
 
   @Column(name = "location_file")
-  private int location_file;
+  private long location_file;
 
   @Column(name = "\"mangledName\"")
   private String mangledName;
 
   @Column(name = "\"mangledNameHash\"")
-  private int mangledNameHash;
+  private long mangledNameHash;
 
   @Column(name = "\"symbolType\"")
   private int symbolType;
@@ -48,11 +48,11 @@ public class JavaAstNode {
 
   // Getters and setters
 
-  public int getId() {
+  public long getId() {
     return id;
   }
 
-  public void setId(int id) {
+  public void setId(long id) {
     this.id = id;
   }
 
@@ -64,43 +64,43 @@ public class JavaAstNode {
     this.astValue = astValue;
   }
 
-  public int getLocation_range_start_line() {
+  public long getLocation_range_start_line() {
     return location_range_start_line;
   }
 
-  public void setLocation_range_start_line(int location_range_start_line) {
+  public void setLocation_range_start_line(long location_range_start_line) {
     this.location_range_start_line = location_range_start_line;
   }
 
-  public int getLocation_range_start_column() {
+  public long getLocation_range_start_column() {
     return location_range_start_column;
   }
 
-  public void setLocation_range_start_column(int location_range_start_column) {
+  public void setLocation_range_start_column(long location_range_start_column) {
     this.location_range_start_column = location_range_start_column;
   }
 
-  public int getLocation_range_end_line() {
+  public long getLocation_range_end_line() {
     return location_range_end_line;
   }
 
-  public void setLocation_range_end_line(int location_range_end_line) {
+  public void setLocation_range_end_line(long location_range_end_line) {
     this.location_range_end_line = location_range_end_line;
   }
 
-  public int getLocation_range_end_column() {
+  public long getLocation_range_end_column() {
     return location_range_end_column;
   }
 
-  public void setLocation_range_end_column(int location_range_end_column) {
+  public void setLocation_range_end_column(long location_range_end_column) {
     this.location_range_end_column = location_range_end_column;
   }
 
-  public int getLocation_file() {
+  public long getLocation_file() {
     return location_file;
   }
 
-  public void setLocation_file(int location_file) {
+  public void setLocation_file(long location_file) {
     this.location_file = location_file;
   }
 
@@ -112,11 +112,11 @@ public class JavaAstNode {
     this.mangledName = mangledName;
   }
 
-  public int getMangledNameHash() {
+  public long getMangledNameHash() {
     return mangledNameHash;
   }
 
-  public void setMangledNameHash(int mangledNameHash) {
+  public void setMangledNameHash(long mangledNameHash) {
     this.mangledNameHash = mangledNameHash;
   }
 

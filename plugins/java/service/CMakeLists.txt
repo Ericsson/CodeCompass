@@ -26,9 +26,9 @@ add_custom_command(
     ${THRIFT_EXECUTABLE} --gen cpp --gen java
       -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
-  ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
+    ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
   DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
+    ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
   COMMENT
     "Generating Thrift for javaservice.thrift")
 
