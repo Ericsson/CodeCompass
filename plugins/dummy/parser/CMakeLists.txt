@@ -5,7 +5,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/parser/include)
 
 add_library(dummyparser SHARED
-        src/javaparser.cpp)
+        src/dummyparser.cpp)
 
 target_compile_options(dummyparser PUBLIC -Wno-unknown-pragmas)
 

@@ -1,4 +1,4 @@
-#include <dummyparser/javaparser.h>
+#include <dummyparser/dummyparser.h>
 
 #include <boost/filesystem.hpp>
 
