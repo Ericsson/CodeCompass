@@ -5,7 +5,7 @@
              http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd"
              version="2.2">
 
-    <persistence-unit name="ParserPU" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="ParserPU">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
 
         <class>model.JavaAnnotation</class>

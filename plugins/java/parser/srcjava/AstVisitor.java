@@ -1,6 +1,5 @@
 package parser.srcjava;
 
-import model.JavaImport;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;
@@ -234,14 +233,14 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
-    JavaImport _import = new JavaImport();
-    _import.setImported(node.getFlags());
+    // JavaImport _import = new JavaImport();
+    // _import.setImported(node.getFlags());
     // em.persist(_import);
     // em.getTransaction().commit();
-    System.out.println("========================");
-    System.out.println(node.getName());
-    System.out.println(em);
-    System.out.println("========================");
+    // System.out.println("========================");
+    // System.out.println(node.getName());
+    // System.out.println(em);
+    // System.out.println("========================");
     return super.visit(node);
   }
 
