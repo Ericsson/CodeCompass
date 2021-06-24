@@ -4,19 +4,17 @@ set(CMAKE_JAVA_INCLUDE_PATH
 
 add_jar(javamodel
   SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/DbContext.java
   ${CMAKE_CURRENT_SOURCE_DIR}/EMFactory.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAnnotation.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAstNode.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaDocComment.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEntity.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnum_enumConstants.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnumConstant.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_locals.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction_parameters.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaImport.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaType.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/JavaRecord.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaTypedEntity.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaVariable.java
   META-INF/persistence.xml

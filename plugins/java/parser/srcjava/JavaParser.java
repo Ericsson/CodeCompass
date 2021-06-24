@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,15 +21,17 @@ import java.util.HashMap;
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser {
-  // EntityManager em;
+  EntityManager em;
   private ASTParser parser;
 
   public JavaParser() {}
 
-  public void parse(String path) throws ParseException, IOException {
+  public void parse(String rawDbContext, String jsonPath)
+    throws ParseException, IOException
+  {
     boolean javaFound = false;
     JSONParser jsonParser = new JSONParser();
-    JSONArray commands = (JSONArray) jsonParser.parse(new FileReader(path));
+    JSONArray commands = (JSONArray) jsonParser.parse(new FileReader(jsonPath));
 
     ArgParser argParser = new ArgParser();
 
@@ -39,8 +42,7 @@ public class JavaParser {
             filePathStr.endsWith(".java")) {
           if (!javaFound) {
             javaFound = true;
-            /* em = */
-            createEntityManager();
+            em = createEntityManager(rawDbContext);
             parser = ASTParser.newParser(AST.JLS_Latest);
             parser.setKind(ASTParser.K_COMPILATION_UNIT);
           }

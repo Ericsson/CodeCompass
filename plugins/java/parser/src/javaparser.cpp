@@ -24,7 +24,10 @@ bool JavaParser::parse() {
   for (std::string path :
       _ctx.options["input"].as < std::vector < std::string >> ()) {
     if (accept(path)) {
-      bp::system(java_path, "-jar", "../lib/java/javaparser.jar", path);
+      bp::system(
+        java_path, "-jar", "../lib/java/javaparser.jar",
+        _ctx.options["database"].as<std::string>(), path
+      );
       LOG(info) << "JavaParser parse path: " << path;
     }
   }

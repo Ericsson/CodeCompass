@@ -9,27 +9,28 @@ import java.util.HashMap;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.*;
 
 public class EMFactory {
-  public static EntityManager createEntityManager() {
+  public static EntityManager createEntityManager(String rawDbContext) {
     EntityManagerFactory emf =
       Persistence.createEntityManagerFactory(
-        "ParserPU", initProperties()
+        "ParserPU", initProperties(rawDbContext)
       );
     return emf.createEntityManager();
   }
 
-  private static HashMap<String, Object> initProperties() {
+  private static HashMap<String, Object> initProperties(String rawDbContext) {
     HashMap<String, Object> properties = new HashMap<>();
+    DbContext dbContext = new DbContext(rawDbContext);
 
     properties.put(
       TRANSACTION_TYPE,
       PersistenceUnitTransactionType.RESOURCE_LOCAL.name()
     );
-    properties.put(JDBC_DRIVER, "org.postgresql.Driver");
+    properties.put(JDBC_DRIVER, dbContext.getDriver());
     properties.put(
-      JDBC_URL, "jdbc:postgresql://localhost:5432/mydatabase"
+      JDBC_URL, dbContext.getConnString()
     );
-    properties.put(JDBC_USER, "compass");
-    properties.put(JDBC_PASSWORD, "password");
+    properties.put(JDBC_USER, dbContext.getUser());
+    properties.put(JDBC_PASSWORD, dbContext.getPassword());
 
     return properties;
   }

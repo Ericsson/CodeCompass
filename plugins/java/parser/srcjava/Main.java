@@ -8,7 +8,7 @@ public class Main {
   public static void main(String[] args) {
     try {
       JavaParser javaParser = new JavaParser();
-      javaParser.parse(args[0]);
+      javaParser.parse(args[0], args[1]);
     } catch (IOException e) {
       e.printStackTrace();
     } catch (ParseException e) {
