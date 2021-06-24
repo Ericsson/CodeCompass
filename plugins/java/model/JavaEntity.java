@@ -19,8 +19,8 @@ public class JavaEntity {
   @Column(name = "\"astNodeId\"")
   private long astNodeId;
 
-  @Column(name = "\"mangledNameHash\"")
-  private long mangledNameHash;
+  @Column(name = "\"entityHash\"")
+  private long entityHash;
 
   @Column(name = "name")
   private String name;
@@ -55,12 +55,12 @@ public class JavaEntity {
     this.astNodeId = astNodeId;
   }
 
-  public long getMangledNameHash() {
-    return mangledNameHash;
+  public long getEntityHash() {
+    return entityHash;
   }
 
-  public void setMangledNameHash(long mangledNameHash) {
-    this.mangledNameHash = mangledNameHash;
+  public void setEntityHash(long mangledNameHash) {
+    this.entityHash = mangledNameHash;
   }
 
   public String getName() {

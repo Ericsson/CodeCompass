@@ -1,8 +1,7 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "\"JavaEnumConstant\"")
@@ -11,7 +10,10 @@ public class JavaEnumConstant extends JavaEntity {
   @Column(name = "value")
   private int value;
 
-  // Getters and setters
+  @ManyToMany(mappedBy = "javaEnumConstants")
+  Set<JavaEnum> javaEnums;
+
+// Getters and setters
 
   public int getValue() {
     return value;

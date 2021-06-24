@@ -13,13 +13,10 @@
         <class>model.JavaDocComment</class>
         <class>model.JavaEntity</class>
         <class>model.JavaEnum</class>
-        <class>model.JavaEnum_enumConstants</class>
         <class>model.JavaEnumConstant</class>
         <class>model.JavaFunction</class>
-        <class>model.JavaFunction_locals</class>
-        <class>model.JavaFunction_parameters</class>
         <class>model.JavaImport</class>
-        <class>model.JavaType</class>
+        <class>model.JavaRecord</class>
         <class>model.JavaTypedEntity</class>
         <class>model.JavaVariable</class>
 

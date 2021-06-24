@@ -5,8 +5,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "\"JavaType\"")
-public class JavaType extends JavaEntity {
+@Table(name = "\"JavaRecord\"")
+public class JavaRecord extends JavaEntity {
   @Column(name = "\"isAbstract\"")
   private boolean isAbstract;
 
