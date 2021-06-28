@@ -15,16 +15,17 @@ namespace parser
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-class JavaParser : public AbstractParser {
+class JavaParser : public AbstractParser
+{
 public:
-  JavaParser(ParserContext &ctx_);
+  JavaParser(ParserContext& ctx_);
 
   virtual ~JavaParser();
 
   virtual bool parse() override;
 
 private:
-  boost::filesystem::path java_path;
+  boost::filesystem::path _java_path;
   bool accept(const std::string &path_);
 };
 
