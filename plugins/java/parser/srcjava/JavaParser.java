@@ -76,7 +76,7 @@ public class JavaParser {
     parser.setSource(str.toCharArray());
 
     CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-    AstVisitor visitor = new AstVisitor(cu, null);
+    AstVisitor visitor = new AstVisitor(cu, em);
     cu.accept(visitor);
   }
 }

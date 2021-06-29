@@ -1,5 +1,6 @@
 package parser.srcjava;
 
+import model.JavaImport;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;
@@ -172,20 +173,27 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(EnumConstantDeclaration node) {
-    // JavaEnumConstant enumConstant = new JavaEnumConstant();
-    // enumConstant.setValue(node.getFlags());
-    // em.persist(enumConstant);
-    // em.getTransaction().commit();
-    // System.out.println(node);
+    /*
+    JavaEnumConstant enumConstant = new JavaEnumConstant();
+    enumConstant.setValue(node.getFlags());
+    enumConstant.setTypeId(node.getNodeType());
+    enumConstant.setQualifiedName(node.getName().toString());
+    em.persist(enumConstant);
+    em.getTransaction().commit();
+    System.out.println(node);
+    */
     return super.visit(node);
   }
 
   @Override
   public boolean visit(EnumDeclaration node) {
-    // JavaEnum _enum = new JavaEnum();
-    // _enum.setName(node.getName().toString());
-    // em.persist(_enum);
-    // em.getTransaction().commit();
+    /*
+    JavaEnum _enum = new JavaEnum();
+    _enum.setName(node.getName().toString());
+    _enum.setTypeId(node.getNodeType());
+    em.persist(_enum);
+    em.getTransaction().commit();
+    */
     return super.visit(node);
   }
 
@@ -233,14 +241,11 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
-    // JavaImport _import = new JavaImport();
-    // _import.setImported(node.getFlags());
-    // em.persist(_import);
-    // em.getTransaction().commit();
-    // System.out.println("========================");
-    // System.out.println(node.getName());
-    // System.out.println(em);
-    // System.out.println("========================");
+    JavaImport _import = new JavaImport();
+    // _import.setImporter(...);
+    _import.setImported(node.getFlags());
+
+    persistRow(_import);
     return super.visit(node);
   }
 
@@ -620,5 +625,11 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(WildcardType node) {
     // System.out.println(node);
     return super.visit(node);
+  }
+
+  private void persistRow(Object jpaObject) {
+    em.getTransaction().begin();
+    em.persist(jpaObject);
+    em.getTransaction().commit();
   }
 }

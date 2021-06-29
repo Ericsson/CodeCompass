@@ -6,7 +6,6 @@ import java.util.Set;
 @Entity
 @Table(name = "\"JavaEnum\"")
 public class JavaEnum extends JavaEntity {
-
   @ManyToMany
   @JoinTable(
     name = "\"JavaEnum_enumConstants\"",

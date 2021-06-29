@@ -4,7 +4,6 @@ set(CMAKE_JAVA_INCLUDE_PATH
 
 add_jar(javamodel
   SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/DbContext.java
   ${CMAKE_CURRENT_SOURCE_DIR}/EMFactory.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAnnotation.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAstNode.java
