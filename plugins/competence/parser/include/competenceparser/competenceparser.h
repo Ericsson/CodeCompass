@@ -6,7 +6,8 @@
 #include <boost/filesystem.hpp>
 #include <odb/database.hxx>
 
-#include <git2.h>
+//#include <git2.h>
+#include "gitoperations.h"
 
 #include <model/file.h>
 #include <parser/abstractparser.h>
@@ -35,7 +36,7 @@ typedef double Percentage;
 typedef int UserBlameLines;
 typedef std::pair<Percentage, RelevantCommitCount> FileDataPair;
 
-struct GitSignature
+/*struct GitSignature
 {
   std::string name;
   std::string email;
@@ -44,10 +45,11 @@ struct GitSignature
 
 struct GitBlameHunk
 {
-  std::uint32_t linesInHunk;       /**< The number of lines in this hunk. */
+  std::uint32_t linesInHunk;       /**< The number of lines in this hunk.
   GitSignature finalSignature;     /**< Signature of the commit who this line
-                                   last changed. */
+                                   last changed.
 };
+*/
   
 class CompetenceParser : public AbstractParser
 {
@@ -143,33 +145,6 @@ private:
 
   bool fileEditionContains(const std::string& path);
 
-  RevWalkPtr createRevWalk(git_repository* repo_);
-
-  BlamePtr createBlame(
-    git_repository* repo_,
-    const std::string& path_,
-    git_blame_options* opts_);
-
-  BlameOptsPtr createBlameOpts(const git_oid& newCommitOid_);
-
-  RepositoryPtr createRepository(
-    const boost::filesystem::path& repoPath_);
-
-  CommitPtr createCommit(
-    git_repository *repo_,
-    const git_oid& id_);
-
-  CommitPtr createParentCommit(
-    git_commit* commit_);
-
-  TreePtr createTree(
-    git_commit* commit_);
-
-  DiffPtr createDiffTree(
-    git_repository* repo_,
-    git_tree* first_,
-    git_tree* second_);
-
   // Temporary function to fill company list
   void setCompanyList();
 
@@ -184,6 +159,8 @@ private:
   std::map<std::string, std::vector<int>>  _fileLocData;
 
   std::mutex _calculateFileData;
+
+  GitOperations _gitOps;
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;

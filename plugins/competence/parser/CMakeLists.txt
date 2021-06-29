@@ -6,7 +6,8 @@ include_directories(
   ${PLUGIN_DIR}/model/include)
 
 add_library(competenceparser SHARED
-        src/competenceparser.cpp)
+        src/competenceparser.cpp
+        src/gitoperations.cpp)
 
 target_link_libraries(competenceparser
         model

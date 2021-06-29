@@ -6,8 +6,6 @@
 #include <chrono>
 #include <memory>
 #include <cctype>
-#include <iostream>
-#include <fstream>
 #include <functional>
 
 #include <model/commitdata.h>
@@ -36,8 +34,6 @@ std::map<std::pair<std::string, int>, int> CompetenceParser::_fileCommitLocData 
 
 CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
-  git_libgit2_init();
-
   srand(time(nullptr));
 
   int threadNum = _ctx.options["jobs"].as<int>();
@@ -55,8 +51,7 @@ CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_)
 
     if (_maxCommitCount < 1)
     {
-      LOG(fatal) << "Commit count is too small!";
-      throw std::logic_error("");
+      throw std::logic_error("Commit count is too small!");
     }
     LOG(info) << "[competenceparser] Commit history of " << _maxCommitCount << " commits will be parsed.";
     return;
@@ -96,7 +91,7 @@ bool CompetenceParser::parse()
     }
 
     std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
-    RepositoryPtr repo = createRepository(repoPath);
+    RepositoryPtr repo = _gitOps.createRepository(repoPath);
 
     if (!repo)
       continue;
@@ -165,12 +160,12 @@ void CompetenceParser::commitSampling(
   boost::filesystem::path& repoPath_)
 {
   // Initiate repository.
-  RepositoryPtr repo = createRepository(repoPath_);
+  RepositoryPtr repo = _gitOps.createRepository(repoPath_);
 
   if (!_ctx.options.count("skip-forgetting"))
   {
     // Initiate walker.
-    RevWalkPtr walker = createRevWalk(repo.get());
+    RevWalkPtr walker = _gitOps.createRevWalk(repo.get());
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
     git_revwalk_push_head(walker.get());
 
@@ -185,7 +180,7 @@ void CompetenceParser::commitSampling(
     int sampleSize = 1;//(int)std::sqrt((double)allCommits);
     LOG(info) << "[competenceparser] Sample size is " << sampleSize << ".";
 
-    RevWalkPtr walker2 = createRevWalk(repo.get());
+    RevWalkPtr walker2 = _gitOps.createRevWalk(repo.get());
     git_revwalk_sorting(walker2.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
     git_revwalk_push_head(walker2.get());
 
@@ -195,7 +190,7 @@ void CompetenceParser::commitSampling(
       ++commitCounter;
       if (commitCounter % sampleSize == 0)
       {
-        CommitPtr commit = createCommit(repo.get(), oid);
+        CommitPtr commit = _gitOps.createCommit(repo.get(), oid);
         CommitJob job(repoPath_, root_, oid, commit.get(), commitCounter);
         sampleCommits(job);
       }
@@ -209,12 +204,12 @@ void CompetenceParser::traverseCommits(
   boost::filesystem::path& repoPath_)
 {
   // Initiate repository.
-  RepositoryPtr repo = createRepository(repoPath_);
+  RepositoryPtr repo = _gitOps.createRepository(repoPath_);
 
   if (!_ctx.options.count("skip-competence"))
   {
     // Initiate walker.
-    RevWalkPtr fileLocWalker = createRevWalk(repo.get());
+    RevWalkPtr fileLocWalker = _gitOps.createRevWalk(repo.get());
     git_revwalk_sorting(fileLocWalker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
     git_revwalk_push_head(fileLocWalker.get());
 
@@ -223,7 +218,7 @@ void CompetenceParser::traverseCommits(
     _commitCount = _maxCommitCount;
     while (git_revwalk_next(&fileLocOid, fileLocWalker.get()) == 0 && _maxCommitCount > commitCounter)
     {
-      CommitPtr commit = createCommit(repo.get(), fileLocOid);
+      CommitPtr commit = _gitOps.createCommit(repo.get(), fileLocOid);
       //const git_oid* lofaszoid = git_commit_id(commit.get());
       //LOG(warning) << git_oid_tostr_s(lofaszoid);
       CommitJob job(repoPath_, root_, fileLocOid, commit.get(), ++commitCounter);
@@ -263,7 +258,7 @@ void CompetenceParser::traverseCommits(
     }
 
     // Initiate walker.
-    RevWalkPtr walker = createRevWalk(repo.get());
+    RevWalkPtr walker = _gitOps.createRevWalk(repo.get());
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
     git_revwalk_push_head(walker.get());
 
@@ -273,7 +268,7 @@ void CompetenceParser::traverseCommits(
     while (git_revwalk_next(&oid, walker.get()) == 0 && _maxCommitCount > commitCounter)
     {
       // Retrieve commit.
-      CommitPtr commit = createCommit(repo.get(), oid);
+      CommitPtr commit = _gitOps.createCommit(repo.get(), oid);
       CommitJob job(repoPath_, root_, oid, commit.get(), ++commitCounter);
       _pool->enqueue(job);
     }
@@ -294,7 +289,7 @@ int CompetenceParser::walkDeltaHunkCb(const char* root,
   if (deltaStr.compare(entryName) == 0
       && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
-    git_blob *blob = NULL;
+    git_blob *blob = nullptr;
     git_blob_lookup(&blob, data->repo, entryId);
     std::string text((const char *) git_blob_rawcontent(blob));
     int lineNumber = std::count(text.begin(), text.end(), '\n');
@@ -313,24 +308,31 @@ int CompetenceParser::walkDeltaHunkCb(const char* root,
 
 void CompetenceParser::collectFileLocData(CommitJob& job)
 {
-  RepositoryPtr repo = createRepository(job._repoPath);
+  RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
 
   //LOG(info) << "[competenceparser] Calculating file LOC in " << job._commitCounter
     //        << "/" << _commitCount << " of version control history.";
 
   // Retrieve parent of commit.
-  CommitPtr parent = createParentCommit(job._commit);
+  CommitPtr parent = _gitOps.createParentCommit(job._commit);
   if (!parent)
     return;
 
   // Get git tree of both commits.
-  TreePtr commitTree = createTree(job._commit);
-  TreePtr parentTree = createTree(parent.get());
+  TreePtr commitTree = _gitOps.createTree(job._commit);
+  LOG(warning) << "Commit " << job._commitCounter << " id: "
+               << git_oid_tostr_s(git_commit_id(job._commit));
+  for (int i = 0; i < git_commit_parentcount(job._commit); ++i)
+  {
+    LOG(warning) << "Commit " << job._commitCounter << " parents: "
+      << git_oid_tostr_s(git_commit_parent_id(job._commit, i));
+  }
+  TreePtr parentTree = _gitOps.createTree(parent.get());
   if (!commitTree || !parentTree)
     return;
 
   // Calculate diff of trees.
-  DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
+  DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
   size_t numDeltas = git_diff_num_deltas(diff.get());
   if (numDeltas == 0)
     return;
@@ -365,7 +367,10 @@ int CompetenceParser::walkCb(const char* root,
 {
   WalkData* data = static_cast<WalkData*>(payload);
   if (data->found)
+  {
+    //delete data;
     return 1;
+  }
 
   std::string path(data->delta->new_file.path);
   std::string entryName(git_tree_entry_name(entry));
@@ -388,10 +393,16 @@ int CompetenceParser::walkCb(const char* root,
     currentFile.write((const char*)git_blob_rawcontent(blob), (size_t) git_blob_rawsize(blob));
     currentFile.close();
     data->found = true;
+    //delete blob;
+    //delete entryId;
+    //delete data;
     return -1;
   }
   else
+  {
+    //delete data;
     return 0;
+  }
 }
 
 std::string CompetenceParser::plagiarismCommand(const std::string& extension)
@@ -420,7 +431,7 @@ std::string CompetenceParser::plagiarismCommand(const std::string& extension)
 
 void CompetenceParser::commitWorker(CommitJob& job)
 {
-  RepositoryPtr repo = createRepository(job._repoPath);
+  RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
 
   LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
@@ -446,7 +457,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
     //return;
 
   // Retrieve parent of commit.
-  CommitPtr parent = createParentCommit(job._commit);
+  CommitPtr parent = _gitOps.createParentCommit(job._commit);
 
   if (!parent)
   {
@@ -455,8 +466,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   // Get git tree of both commits.
-  TreePtr commitTree = createTree(job._commit);
-  TreePtr parentTree = createTree(parent.get());
+  TreePtr commitTree = _gitOps.createTree(job._commit);
+  TreePtr parentTree = _gitOps.createTree(parent.get());
 
   if (!commitTree || !parentTree)
   {
@@ -465,7 +476,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   // Calculate diff of trees.
-  DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
+  DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
 
   // Loop through each delta.
   size_t num_deltas = git_diff_num_deltas(diff.get());
@@ -621,8 +632,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
     float totalLines = 0;
 
     // Get blame for file.
-    BlameOptsPtr opt = createBlameOpts(job._oid);
-    BlamePtr blame = createBlame(repo.get(), diffFile.path, opt.get());
+    BlameOptsPtr opt = _gitOps.createBlameOpts(job._oid);
+    BlamePtr blame = _gitOps.createBlame(repo.get(), diffFile.path, opt.get());
 
     if (!blame)
     {
@@ -656,7 +667,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
         // It should be replaced with git_oid_is_zero in case of upgrading libgit2.
       else if (!git_oid_iszero(&hunk->final_commit_id))
       {
-        CommitPtr newCommit = createCommit(repo.get(), hunk->final_commit_id);
+        CommitPtr newCommit = _gitOps.createCommit(repo.get(), hunk->final_commit_id);
         const git_signature* author = git_commit_author(newCommit.get());
         blameHunk.finalSignature.email = author->email;
       }
@@ -824,23 +835,23 @@ util::DirIterCallback CompetenceParser::persistNoDataFiles()
 
 void CompetenceParser::sampleCommits(CommitJob& job_)
 {
-  RepositoryPtr repo = createRepository(job_._repoPath);
+  RepositoryPtr repo = _gitOps.createRepository(job_._repoPath);
 
   // Retrieve parent of commit.
-  CommitPtr parent = createParentCommit(job_._commit);
+  CommitPtr parent = _gitOps.createParentCommit(job_._commit);
 
   if (!parent)
     return;
 
   // Get git tree of both commits.
-  TreePtr commitTree = createTree(job_._commit);
-  TreePtr parentTree = createTree(parent.get());
+  TreePtr commitTree = _gitOps.createTree(job_._commit);
+  TreePtr parentTree = _gitOps.createTree(parent.get());
 
   if (!commitTree || !parentTree)
     return;
 
   // Calculate diff of trees.
-  DiffPtr diff = createDiffTree(repo.get(), parentTree.get(), commitTree.get());
+  DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
 
   // Loop through each delta.
   size_t num_deltas = git_diff_num_deltas(diff.get());
@@ -927,102 +938,6 @@ void CompetenceParser::persistEmailAddress()
       _ctx.db->persist(userEmail);
     });
   }
-}
-
-RevWalkPtr CompetenceParser::createRevWalk(git_repository* repo_)
-{
-  git_revwalk* walker = nullptr;
-  int error = git_revwalk_new(&walker, repo_);
-
-  if (error)
-    LOG(error) << "Creating revision walker failed: " << error;
-
-  return RevWalkPtr { walker, &git_revwalk_free };
-}
-
-RepositoryPtr CompetenceParser::createRepository(
-  const boost::filesystem::path& repoPath_)
-{
-  git_repository* repository = nullptr;
-  int error = git_repository_open(&repository, repoPath_.c_str());
-
-  if (error)
-    LOG(error) << "Opening repository " << repoPath_ << " failed: " << error;
-
-  return RepositoryPtr { repository, &git_repository_free };
-}
-
-BlamePtr CompetenceParser::createBlame(
-  git_repository* repo_,
-  const std::string& path_,
-  git_blame_options* opts_)
-{
-  git_blame* blame = nullptr;
-  int error = git_blame_file(&blame, repo_, path_.c_str(), opts_);
-
-  if (error)
-    LOG(error) << "Getting blame object failed: " << error;
-
-  return BlamePtr { blame, &git_blame_free };
-}
-
-CommitPtr CompetenceParser::createCommit(
-  git_repository* repo_,
-  const git_oid& id_)
-{
-  git_commit* commit = nullptr;
-  int error = git_commit_lookup(&commit, repo_, &id_);
-
-  if (error)
-    LOG(error) << "Getting commit failed: " << error;
-
-  return CommitPtr { commit, &git_commit_free };
-}
-
-CommitPtr CompetenceParser::createParentCommit(
-  git_commit* commit_)
-{
-  git_commit* parent = nullptr;
-  int error = git_commit_parent(&parent, commit_, 0);
-
-  if (error)
-    LOG(error) << "Getting commit parent failed: " << error;
-
-  return CommitPtr { parent, &git_commit_free };
-}
-
-TreePtr CompetenceParser::createTree(
-  git_commit* commit_)
-{
-  git_tree* tree = nullptr;
-  int error = git_commit_tree(&tree, commit_);
-
-  if (error)
-    LOG(error) << "Getting commit tree failed: " << error;
-
-  return TreePtr { tree, &git_tree_free };
-}
-
-DiffPtr CompetenceParser::createDiffTree(
-  git_repository* repo_,
-  git_tree* first_,
-  git_tree* second_)
-{
-  git_diff* diff = nullptr;
-  int error = git_diff_tree_to_tree(&diff, repo_, first_, second_, nullptr);
-
-  if (error)
-    LOG(error) << "Getting commit diff failed: " << error;
-
-  return DiffPtr { diff, &git_diff_free };
-}
-
-BlameOptsPtr CompetenceParser::createBlameOpts(const git_oid& newCommitOid_)
-{
-  git_blame_options* blameOpts = new git_blame_options;
-  git_blame_init_options(blameOpts, GIT_BLAME_OPTIONS_VERSION);
-  blameOpts->newest_commit = newCommitOid_;
-  return BlameOptsPtr { blameOpts };
 }
 
 void CompetenceParser::setCompanyList()

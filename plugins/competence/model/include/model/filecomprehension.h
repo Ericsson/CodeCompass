@@ -1,7 +1,3 @@
-//
-// Created by efekane on 2020.01.03..
-//
-
 #ifndef CC_MODEL_FILECOMPREHENSION_H
 #define CC_MODEL_FILECOMPREHENSION_H
 
