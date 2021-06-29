@@ -60,6 +60,13 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
           that.set('content', astHtml);
         }
       );
+
+      if (gtag) {
+        gtag ('event', 'cpp_reparse_file', {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+        });
+      }
     },
 
     loadASTForNode : function (nodeInfo) {
@@ -72,6 +79,15 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
           that.set('content', astHtml);
         }
       );
+
+      if (gtag) {
+        gtag ('event', 'cpp_reparse_node', {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+              + ': '
+              + nodeInfo.astNodeValue
+        });
+      }
     },
 
     _subscribeTopics : function () {
