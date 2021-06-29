@@ -342,6 +342,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.set('header', this._fileInfo);
 
       this._getSyntaxHighlight(this._fileInfo);
+
+      if (gtag) {
+        gtag('event', 'page_view', {
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.hash,
+          page_title: urlFileInfo.path
+        });
+      }
     },
 
     /**
@@ -459,6 +467,15 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       if (event.button === 0 && event.ctrlKey) {
         var service = model.getLanguageService(this._fileInfo.type);
         astHelper.jumpToDef(astNodeInfo.id, service);
+      }
+
+      if (gtag) {
+        gtag('event', 'click_on_word', {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+                        + ': '
+                        + this._getWordAt(pos).string
+        });
       }
     },
 

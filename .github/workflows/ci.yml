@@ -3,7 +3,7 @@ name: Build project
 on: [push, pull_request, workflow_dispatch]
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: Debug
 
 jobs:
   build:
@@ -46,7 +46,7 @@ jobs:
         run: >
           sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libboost-all-dev
           llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev libgraphviz-dev
-          libmagic-dev libgit2-dev ctags libgtest-dev npm
+          libmagic-dev libgit2-dev ctags libgtest-dev npm libldap2-dev
 
       - name: Install Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
@@ -127,7 +127,7 @@ jobs:
         run: >
           sudo apt-get install -y git cmake make g++ libboost-all-dev llvm-10-dev clang-10
           libclang-10-dev odb libodb-dev thrift-compiler libthrift-dev default-jdk libssl-dev
-          libgraphviz-dev libmagic-dev libgit2-dev ctags libgtest-dev npm
+          libgraphviz-dev libmagic-dev libgit2-dev ctags libgtest-dev npm libldap2-dev
 
       - name: Install Postgresql Ubuntu 20
         if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
@@ -256,7 +256,7 @@ jobs:
           sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libgraphviz-dev
           libboost-filesystem-dev libboost-log-dev libboost-program-options-dev
           llvm-10-dev clang-10 libclang-10-dev default-jre libssl1.0-dev libmagic-dev
-          libgit2-dev ctags libgtest-dev
+          libgit2-dev ctags libgtest-dev libldap-2.4-2
 
       - name: Install Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
@@ -296,6 +296,7 @@ jobs:
           libboost-log-dev libboost-program-options-dev llvm-10-dev clang-10
           libclang-10-dev libgraphviz-dev libgtest-dev odb libodb-dev
           libthrift-dev default-jre libssl1.1 libmagic-dev libgit2-dev ctags
+          libldap-2.4-2
 
       - name: Install Postgresql Ubuntu 20
         if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}

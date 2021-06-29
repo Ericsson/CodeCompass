@@ -23,6 +23,7 @@ export PATH=$DEPS_INSTALL_DIR/jdk-install/bin\
 :$DEPS_INSTALL_DIR/ctags-install/bin\
 :$DEPS_INSTALL_DIR/python-install/bin\
 :$DEPS_INSTALL_DIR/node-install/bin\
+:$DEPS_INSTALL_DIR/postgresql-install/bin\
 :$CC_INSTALL_DIR/bin\
 :$PATH
 

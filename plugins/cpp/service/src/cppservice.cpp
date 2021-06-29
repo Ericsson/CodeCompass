@@ -1226,7 +1226,9 @@ void CppServiceHandler::getSyntaxHighlight(
         continue;
 
       // Regular expression to find element position
-      std::string reg = "\\b" + node.astValue + "\\b";
+      const std::regex specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
+      std::string sanitizedAstValue = std::regex_replace(node.astValue, specialChars, R"(\$&)");
+      std::string reg = "\\b" + sanitizedAstValue + "\\b";
 
       for (std::size_t i = node.location.range.start.line - 1;
            i < node.location.range.end.line && i < content.size();
