@@ -26,7 +26,7 @@ public class ArgParser {
       throw new IllegalArgumentException("Unknown command.");
     }
 
-    argsMap.put("classpath", new ArrayList<>(){{add(JREPathStr);}});
+    argsMap.put("classpath", new ArrayList<String>(){{add(JREPathStr);}});
     argsMap.put("sourcepath", new ArrayList<>());
 
     if (command.equals(ValidCommands.JAVAC.getName())) {
