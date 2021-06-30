@@ -219,8 +219,8 @@ void CompetenceParser::traverseCommits(
     while (git_revwalk_next(&fileLocOid, fileLocWalker.get()) == 0 && _maxCommitCount > commitCounter)
     {
       CommitPtr commit = _gitOps.createCommit(repo.get(), fileLocOid);
-      //const git_oid* lofaszoid = git_commit_id(commit.get());
-      //LOG(warning) << git_oid_tostr_s(lofaszoid);
+      if (git_commit_parentcount(commit.get()) > 1)
+        continue;
       CommitJob job(repoPath_, root_, fileLocOid, commit.get(), ++commitCounter);
       collectFileLocData(job);
     }
@@ -242,18 +242,14 @@ void CompetenceParser::traverseCommits(
     while (next != _fileLocData.end())
     {
       current = next++;
-      if (std::count(current->second.begin(), current->second.end(), 0) == current->second.size())
+      if (std::count(current->second.begin(), current->second.end(), 0)
+          == (long)current->second.size())
       {
         _fileLocData.erase(current);
       }
       else
       {
         std::sort(current->second.begin(), current->second.end());
-        /*LOG(warning) << current->first << ", ";
-        for (const int& i : current->second)
-        {
-          LOG(info) << i;
-        }*/
       }
     }
 
@@ -269,6 +265,8 @@ void CompetenceParser::traverseCommits(
     {
       // Retrieve commit.
       CommitPtr commit = _gitOps.createCommit(repo.get(), oid);
+      if (git_commit_parentcount(commit.get()) > 1)
+        continue;
       CommitJob job(repoPath_, root_, oid, commit.get(), ++commitCounter);
       _pool->enqueue(job);
     }
@@ -322,7 +320,7 @@ void CompetenceParser::collectFileLocData(CommitJob& job)
   TreePtr commitTree = _gitOps.createTree(job._commit);
   LOG(warning) << "Commit " << job._commitCounter << " id: "
                << git_oid_tostr_s(git_commit_id(job._commit));
-  for (int i = 0; i < git_commit_parentcount(job._commit); ++i)
+  for (unsigned i = 0; i < git_commit_parentcount(job._commit); ++i)
   {
     LOG(warning) << "Commit " << job._commitCounter << " parents: "
       << git_oid_tostr_s(git_commit_parent_id(job._commit, i));
@@ -368,7 +366,6 @@ int CompetenceParser::walkCb(const char* root,
   WalkData* data = static_cast<WalkData*>(payload);
   if (data->found)
   {
-    //delete data;
     return 1;
   }
 
@@ -429,6 +426,10 @@ std::string CompetenceParser::plagiarismCommand(const std::string& extension)
   return command;
 }
 
+// TODO
+// - refactoring git functions
+// - decrease memory leaks
+// - add documenting comments
 void CompetenceParser::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
@@ -440,7 +441,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (commitAuthor && !std::isgraph(commitAuthor->name[0]))
   {
     LOG(info) << "[competenceparser] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
-    ++faultyCommits;
     return;
   }
 
@@ -460,20 +460,14 @@ void CompetenceParser::commitWorker(CommitJob& job)
   CommitPtr parent = _gitOps.createParentCommit(job._commit);
 
   if (!parent)
-  {
-    ++faultyCommits;
     return;
-  }
 
   // Get git tree of both commits.
   TreePtr commitTree = _gitOps.createTree(job._commit);
   TreePtr parentTree = _gitOps.createTree(parent.get());
 
   if (!commitTree || !parentTree)
-  {
-    ++faultyCommits;
     return;
-  }
 
   // Calculate diff of trees.
   DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
@@ -481,10 +475,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   // Loop through each delta.
   size_t num_deltas = git_diff_num_deltas(diff.get());
   if (num_deltas == 0)
-  {
-    ++faultyCommits;
     return;
-  }
 
   // Copy all modified files to workspace dir.
   // Old and new version goes to separate directories.
@@ -526,16 +517,13 @@ void CompetenceParser::commitWorker(CommitJob& job)
   // Determine plagiarism command based on file extension.
   if (hasModifiedFiles && fs::exists(newPath) && fs::exists(oldPath))
   {
-    int allFiles = 0, notSupported = 0;
     for (const auto &f : fs::directory_iterator(newPath))
     {
-      ++allFiles;
       std::string command = plagiarismCommand(fs::extension(f.path()));
 
       if (command.empty())
       {
         LOG(info) << "Plagiarism detector does not support file type: " << f.path().filename();
-        ++notSupported;
         continue;
       }
 
@@ -548,7 +536,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
                                    });
       if (it == end)
       {
-        //++faultyCommits;
         // why return???????
         LOG(warning) << "amugy ebbe belefutottam";
         return;
@@ -574,11 +561,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
         LOG(warning) << "Plagiarism detection unsuccessful (" << ex.what() << "): " << logStr;
       }
     }
-    if (allFiles == notSupported)
-      ++allNotSupported;
-    //for (const auto &p : plagValues)
-      //LOG(info) << p.first << ": " << p.second;
-
     fs::remove_all(outPath);
   }
   else
@@ -589,7 +571,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
   }
 
   // Analyse every file that was affected by the commit.
-  int hundredpercent = 0, notSaved = 0;
+  int hundredpercent = 0;
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
@@ -597,12 +579,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
     model::FilePtr file = _ctx.srcMgr.getFile(job._root + "/" + diffFile.path);
     if (!file)
-    {
-      ++notSaved;
       continue;
-    }
 
     double currentPlagValue = -1.0;
+    bool irrelevantChange = false;
     if (hasModifiedFiles)
     {
       if (delta->status == GIT_DELTA_MODIFIED
@@ -624,8 +604,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
         LOG(info) << "Commit " << job._commitCounter << "/" << _commitCount
                   << " did not reach the threshold: " << currentPlagValue;
         ++hundredpercent;
-        ++notSaved;
-        continue;
+        irrelevantChange = true;
       }
     }
 
@@ -636,10 +615,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
     BlamePtr blame = _gitOps.createBlame(repo.get(), diffFile.path, opt.get());
 
     if (!blame)
-    {
-      ++notSaved;
       continue;
-    }
 
     // Store the current number of blame lines for each user.
     std::map<UserEmail, UserBlameLines> userBlame;
@@ -688,7 +664,9 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
       totalLines += blameHunk.linesInHunk;
     }
-    persistCommitData(file->id, userBlame, totalLines, commitAuthor->when.time);
+    persistCommitData(file->id, userBlame, totalLines, static_cast<git_status_t>(delta->status), commitAuthor->when.time);
+    if (irrelevantChange)
+      continue;
     _calculateFileData.lock();
 
     for (const auto& pair : userBlame)
@@ -697,7 +675,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
       {
         // Calculate the retained memory depending on the elapsed time.
         //double percentage = pair.second / totalLines * std::exp(-months) * 100;
-        auto fileLocIter = _fileLocData.find(delta->new_file.path);
+        //auto fileLocIter = _fileLocData.find(delta->new_file.path);
         double strength;
         if (currentPlagValue == -1.0)
         {
@@ -723,8 +701,6 @@ void CompetenceParser::commitWorker(CommitJob& job)
         //double percentage = std::exp(-(months/strength)) * 100;
         //double percentage = strength * 100;
         double percentage = strength;
-        //LOG(info) << percentage;
-        //LOG(info) << file->path << ": " << percentage
 
         auto fileIter = _fileEditions.end();
         for (auto it = _fileEditions.begin(); it != _fileEditions.end(); ++it)
@@ -755,18 +731,17 @@ void CompetenceParser::commitWorker(CommitJob& job)
           FileEdition fe { file, std::map<UserEmail, FileDataPair>() };
           fe._editions.insert(std::make_pair(pair.first, std::make_pair(percentage, 1)));
           _fileEditions.push_back(fe);
-       }
+        }
       }
     }
     _calculateFileData.unlock();
   }
 
-  if (num_deltas == hundredpercent)
+  if (num_deltas == (size_t)hundredpercent)
   {
     LOG(warning) << job._commitCounter << "/" << _commitCount << ", " << git_oid_tostr_s(git_commit_id(job._commit))
     << " had all 100 files.";
   }
-  LOG(warning) << "not saved: " << notSaved;
   LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
 
@@ -774,6 +749,7 @@ void CompetenceParser::persistCommitData(
   const model::FileId& fileId_,
   const std::map<UserEmail, UserBlameLines>& userBlame_,
   const float totalLines_,
+  git_status_t commitType_,
   const std::time_t& commitDate_)
 {
   util::OdbTransaction transaction(_ctx.db);
@@ -786,6 +762,7 @@ void CompetenceParser::persistCommitData(
       commitData.committerEmail = blame.first;
       commitData.committedLines = blame.second;
       commitData.totalLines = totalLines_;
+      commitData.commitType = commitType_;
       commitData.commitDate = commitDate_;
       _ctx.db->persist(commitData);
     }

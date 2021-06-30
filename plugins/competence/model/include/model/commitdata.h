@@ -20,6 +20,9 @@ struct CommitData
   #pragma db id auto
   std::uint64_t id;
 
+  //#pragma db not_null
+  //std::string commit_id;
+
   #pragma db not_null
   FileId file;
 
@@ -31,6 +34,9 @@ struct CommitData
 
   #pragma db not_null
   uint16_t totalLines;
+
+  #pragma db not_null
+  uint16_t commitType;
 
   #pragma db not_null
   std::uint64_t commitDate;  // elapsed seconds since 01/01/1970 to commit date

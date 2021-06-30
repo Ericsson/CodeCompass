@@ -6,7 +6,6 @@
 #include <boost/filesystem.hpp>
 #include <odb/database.hxx>
 
-//#include <git2.h>
 #include "gitoperations.h"
 
 #include <model/file.h>
@@ -130,6 +129,7 @@ private:
     const model::FileId& fileId_,
     const std::map<UserEmail, UserBlameLines>& userBlame_,
     const float totalLines,
+    git_status_t commitType_,
     const std::time_t& commitDate_);
 
   void collectFileLocData(CommitJob& job);
