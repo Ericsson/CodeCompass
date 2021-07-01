@@ -983,6 +983,33 @@ public:
     return true;
   }
   
+  
+  bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* udd_)
+  {
+        //--- CppAstNode ---//
+    
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+    
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      udd_->getBeginLoc(),
+      udd_->getLocation(),
+      true);
+    std::string usr = getUSR(udd_);
+    astNode->location = getFileLoc(udd_->getBeginLoc(), udd_->getEndLoc());
+    astNode->entityHash = util::fnvHash(usr);
+    astNode->astType = model::CppAstNode::AstType::Definition;
+    astNode->id = model::createIdentifier(*astNode);
+    
+    if (insertToCache(udd_, astNode))
+      _astNodes.push_back(astNode);
+    
+    return true;
+  
+  
+  }
+  
+  
 
   bool VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
   {
