@@ -1,4 +1,4 @@
-#include "../include/competenceparser/competenceparser.h"
+#include "competenceparser/expertisecalculation.h"
 
 #include <boost/foreach.hpp>
 #include <boost/process.hpp>
@@ -12,8 +12,6 @@
 #include <model/commitdata-odb.hxx>
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
-#include <model/sampledata.h>
-#include <model/sampledata-odb.hxx>
 #include <model/useremail.h>
 #include <model/useremail-odb.hxx>
 #include <model/filecommitloc.h>
@@ -30,173 +28,26 @@ namespace cc
 namespace parser
 {
 
-//std::map<std::pair<std::string, int>, int> CompetenceParser::_fileCommitLocData = {};
-//GitOperations CompetenceParser::_gitOps;
+std::map<std::pair<std::string, int>, int> ExpertiseCalculation::_fileCommitLocData = {};
+GitOperations ExpertiseCalculation::_gitOps;
 
-CompetenceParser::CompetenceParser(ParserContext& ctx_): AbstractParser(ctx_),
-                                                         _expertise(ctx_)
+ExpertiseCalculation::ExpertiseCalculation(ParserContext& ctx_)
+  : _ctx(ctx_)
 {
-  srand(time(nullptr));
 
-  _expertise.initialize();
-
-  _expertise.setCompanyList();
-
-  if (_ctx.options.count("commit-count"))
-  {
-    _expertise._maxCommitCount = _ctx.options["commit-count"].as<int>();
-
-    if (_expertise._maxCommitCount < 1)
-    {
-      throw std::logic_error("Commit count is too small!");
-    }
-    LOG(info) << "[competenceparser] Commit history of " << _expertise._maxCommitCount << " commits will be parsed.";
-    return;
-  }
 }
 
-bool CompetenceParser::accept(const std::string& path_)
+void ExpertiseCalculation::initialize()
 {
-  std::string ext = boost::filesystem::extension(path_);
-  return ext == ".competence";
-}
-
-bool CompetenceParser::parse()
-{        
-  for(const std::string& path :
-    _ctx.options["input"].as<std::vector<std::string>>())
-  {
-    LOG(info) << "Competence parse path: " << path;
-
-    boost::filesystem::path repoPath;
-
-    auto rcb = getParserCallbackRepo(repoPath);
-
-    try
+  int threadNum = _ctx.options["jobs"].as<int>();
+  _pool = util::make_thread_pool<ExpertiseCalculation::CommitJob>(
+    threadNum, [this](ExpertiseCalculation::CommitJob& job)
     {
-      util::iterateDirectoryRecursive(path, rcb);
-    }
-    catch (std::exception &ex_)
-    {
-      LOG(warning)
-        << "Competence parser threw an exception: " << ex_.what();
-    }
-    catch (...)
-    {
-      LOG(warning)
-        << "Competence parser failed with unknown exception!";
-    }
-
-    std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
-    RepositoryPtr repo = _expertise._gitOps.createRepository(repoPath);
-
-    if (!repo)
-      continue;
-
-    util::OdbTransaction transaction(_ctx.db);
-    transaction([&, this]
-    {
-      for (const model::FileComprehension& fc
-        : _ctx.db->query<model::FileComprehension>())
-        _ctx.db->erase(fc);
-
-      for (const model::UserEmail& ue
-        : _ctx.db->query<model::UserEmail>())
-        _ctx.db->erase(ue);
+      commitWorker(job);
     });
-
-    //commitSampling(path, repoPath);
-    _expertise.traverseCommits(path, repoPath);
-    _expertise.persistFileComprehensionData();
-
-    auto pcb = _expertise.persistNoDataFiles();
-
-    try
-    {
-      util::iterateDirectoryRecursive(path, pcb);
-    }
-    catch (std::exception &ex_)
-    {
-      LOG(warning)
-        << "Competence parser threw an exception: " << ex_.what();
-    }
-    catch (...)
-    {
-      LOG(warning)
-        << "Competence parser failed with unknown exception!";
-    }
-
-    _expertise.persistEmailAddress();
-    _expertise.setUserCompany();
-  }
-
-  return true;
 }
 
-util::DirIterCallback CompetenceParser::getParserCallbackRepo(
-  boost::filesystem::path& repoPath_)
-{
-  return [&](const std::string& path_)
-  {
-    boost::filesystem::path path(path_);
-
-    if (!boost::filesystem::is_directory(path) || ".git" != path.filename())
-      return true;
-
-    path = boost::filesystem::canonical(path);
-
-    LOG(info) << "Competence parser found a git repo at: " << path;
-    repoPath_ = path_;
-
-    return true;
-  };
-}
-/*
-void CompetenceParser::commitSampling(
-  const std::string& root_,
-  boost::filesystem::path& repoPath_)
-{
-  // Initiate repository.
-  RepositoryPtr repo = _gitOps.createRepository(repoPath_);
-
-  if (!_ctx.options.count("skip-forgetting"))
-  {
-    // Initiate walker.
-    RevWalkPtr walker = _gitOps.createRevWalk(repo.get());
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-    git_revwalk_push_head(walker.get());
-
-    git_oid oid;
-    int allCommits = 0;
-    while (git_revwalk_next(&oid, walker.get()) == 0)
-      ++allCommits;
-
-    LOG(info) << "[competenceparser] Sampling " << allCommits << " commits in git repository.";
-
-    // TODO: nice function to determine sample size
-    int sampleSize = 1;//(int)std::sqrt((double)allCommits);
-    LOG(info) << "[competenceparser] Sample size is " << sampleSize << ".";
-
-    RevWalkPtr walker2 = _gitOps.createRevWalk(repo.get());
-    git_revwalk_sorting(walker2.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
-    git_revwalk_push_head(walker2.get());
-
-    int commitCounter = 0;
-    while (git_revwalk_next(&oid, walker2.get()) == 0)
-    {
-      ++commitCounter;
-      if (commitCounter % sampleSize == 0)
-      {
-        CommitPtr commit = _gitOps.createCommit(repo.get(), oid);
-        ExpertiseCalculation::CommitJob job(repoPath_, root_, oid, commit.get(), commitCounter);
-        sampleCommits(job);
-      }
-    }
-    persistSampleData();
-  }
-}*/
-/*
-void CompetenceParser::traverseCommits(
+void ExpertiseCalculation::traverseCommits(
   const std::string& root_,
   boost::filesystem::path& repoPath_)
 {
@@ -240,7 +91,7 @@ void CompetenceParser::traverseCommits(
     {
       current = next++;
       if (std::count(current->second.begin(), current->second.end(), 0)
-          == (long)current->second.size())
+        == (long)current->second.size())
       {
         _fileLocData.erase(current);
       }
@@ -271,9 +122,9 @@ void CompetenceParser::traverseCommits(
   }
 }
 
-int CompetenceParser::walkDeltaHunkCb(const char* root,
-                                     const git_tree_entry* entry,
-                                     void* payload)
+int ExpertiseCalculation::walkDeltaHunkCb(const char* root,
+                                      const git_tree_entry* entry,
+                                      void* payload)
 {
   WalkDeltaHunkData* data = (WalkDeltaHunkData*)payload;
   const git_oid* entryId = git_tree_entry_id(entry);
@@ -282,7 +133,7 @@ int CompetenceParser::walkDeltaHunkCb(const char* root,
   std::string entryName(root);
   entryName.append(git_tree_entry_name(entry));
   if (deltaStr.compare(entryName) == 0
-      && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
+    && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
     BlobPtr blob = _gitOps.createBlob(data->repo, entryId);
     std::string text((const char *) git_blob_rawcontent(blob.get()));
@@ -299,17 +150,17 @@ int CompetenceParser::walkDeltaHunkCb(const char* root,
       _fileCommitLocData.insert(std::make_pair(
         std::make_pair(data->delta->new_file.path,
                        data->commitNumber),
-                       lineNumber));
+        lineNumber));
     }
   }
 }
 
-void CompetenceParser::collectFileLocData(CommitJob& job)
+void ExpertiseCalculation::collectFileLocData(CommitJob& job)
 {
   RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
 
-  //LOG(info) << "[competenceparser] Calculating file LOC in " << job._commitCounter
-    //        << "/" << _commitCount << " of version control history.";
+  //LOG(info) << "[ExpertiseCalculation] Calculating file LOC in " << job._commitCounter
+  //        << "/" << _commitCount << " of version control history.";
 
   // Retrieve parent of commit.
   CommitPtr parent = _gitOps.createParentCommit(job._commit);
@@ -323,7 +174,7 @@ void CompetenceParser::collectFileLocData(CommitJob& job)
   for (unsigned i = 0; i < _gitOps.getCommitParentCount(job._commit); ++i)
   {
     LOG(warning) << "Commit " << job._commitCounter << " parents: "
-      << git_oid_tostr_s(git_commit_parent_id(job._commit, i));
+                 << git_oid_tostr_s(git_commit_parent_id(job._commit, i));
   }
   TreePtr parentTree = _gitOps.createTree(parent.get());
   if (!commitTree || !parentTree)
@@ -339,27 +190,11 @@ void CompetenceParser::collectFileLocData(CommitJob& job)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), i);
     WalkDeltaHunkData deltaData = { delta, job._commitCounter, repo.get() };
-    git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkDeltaHunkCb, &deltaData);
+    git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &ExpertiseCalculation::walkDeltaHunkCb, &deltaData);
   }
 }
 
-void CompetenceParser::persistFileLocData()
-{
-  util::OdbTransaction transaction(_ctx.db);
-  transaction([&, this]
-  {
-    /*for (const auto& data : _fileLocData)
-    {
-      model::FileCommitLoc fileLoc;
-      fileLoc.file = std::get<0>(data)->id;
-      fileLoc.totalLines = std::get<1>(data);
-      fileLoc.commitDate = std::get<2>(data);
-      _ctx.db->persist(fileLoc);
-    }
-  });
-}
-
-int CompetenceParser::walkCb(const char* root,
+int ExpertiseCalculation::walkCb(const char* root,
                              const git_tree_entry* entry,
                              void* payload)
 {
@@ -373,7 +208,7 @@ int CompetenceParser::walkCb(const char* root,
   std::string entryName(git_tree_entry_name(entry));
   std::string current(root + entryName);
   if (path.compare(0, current.size(), current) == 0
-      && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
+    && git_tree_entry_filemode(entry) == GIT_FILEMODE_BLOB)
   {
     if (data->isParent)
       data->basePath.append("/old/");
@@ -399,7 +234,7 @@ int CompetenceParser::walkCb(const char* root,
   }
 }
 
-std::string CompetenceParser::plagiarismCommand(const std::string& extension)
+std::string ExpertiseCalculation::plagiarismCommand(const std::string& extension)
 {
   std::string command("java -jar ../lib/java/jplag-2.12.1.jar -t 1 -vq -l ");
 
@@ -427,17 +262,17 @@ std::string CompetenceParser::plagiarismCommand(const std::string& extension)
 // - refactoring git functions
 // - decrease memory leaks
 // - add documenting comments
-void CompetenceParser::commitWorker(CommitJob& job)
+void ExpertiseCalculation::commitWorker(CommitJob& job)
 {
   RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
 
-  LOG(info) << "[competenceparser] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
+  LOG(info) << "[ExpertiseCalculation] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
 
   const git_signature* commitAuthor = git_commit_author(job._commit);
 
   if (commitAuthor && !std::isgraph(commitAuthor->name[0]))
   {
-    LOG(info) << "[competenceparser] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
+    LOG(info) << "[ExpertiseCalculation] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
     return;
   }
 
@@ -446,12 +281,12 @@ void CompetenceParser::commitWorker(CommitJob& job)
 
   // Calculate elapsed time in full months since current commit.
   //std::time_t elapsed = std::chrono::system_clock::to_time_t(
-    //std::chrono::system_clock::now()) - commitAuthor->when.time;
+  //std::chrono::system_clock::now()) - commitAuthor->when.time;
   //double months = elapsed / (double) (secondsInDay * daysInMonth);
   //double months = elapsed / (double)secondsInDay / 7;
 
   //if (_maxCommitHistoryLength > 0 && months > _maxCommitHistoryLength)
-    //return;
+  //return;
 
   // Retrieve parent of commit.
   CommitPtr parent = _gitOps.createParentCommit(job._commit);
@@ -492,10 +327,10 @@ void CompetenceParser::commitWorker(CommitJob& job)
     {
       hasModifiedFiles = true;
       WalkData commitData = {delta, repo.get(), outPath, false };
-      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &commitData);
+      git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &ExpertiseCalculation::walkCb, &commitData);
 
       WalkData parentData = {delta, repo.get(), outPath, true };
-      git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &CompetenceParser::walkCb, &parentData);
+      git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &ExpertiseCalculation::walkCb, &parentData);
     }
 
     if (delta->status == GIT_DELTA_ADDED)
@@ -563,8 +398,8 @@ void CompetenceParser::commitWorker(CommitJob& job)
   else
   {
     LOG(warning) << "Commit " << job._commitCounter << " either has no modified files or "
-      " has relevant modified files but "
-      " they couldn't be copied to the workspace directory.";
+                                                       " has relevant modified files but "
+                                                       " they couldn't be copied to the workspace directory.";
   }
 
   // Analyse every file that was affected by the commit.
@@ -583,7 +418,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
     if (hasModifiedFiles)
     {
       if (delta->status == GIT_DELTA_MODIFIED
-          || delta->status == GIT_DELTA_ADDED)
+        || delta->status == GIT_DELTA_ADDED)
       {
         std::string pathReplace(delta->new_file.path);
         std::replace(pathReplace.begin(), pathReplace.end(), '/', '_');
@@ -633,7 +468,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
       {
         blameHunk.finalSignature.email = hunk->final_signature->email;
       }
-      //else
+        //else
         //continue;
         // TODO
         // git_oid_iszero is deprecated.
@@ -693,7 +528,7 @@ void CompetenceParser::commitWorker(CommitJob& job)
           strength = (double)pair.second; // / (double)*medianIter;
           //strength = (double)pair.second; // / totalLines;
           LOG(info) << "median: " << *medianIter << ", strength: " << strength;
-        }
+        }*/
 
         //double percentage = std::exp(-(months/strength)) * 100;
         //double percentage = strength * 100;
@@ -739,12 +574,12 @@ void CompetenceParser::commitWorker(CommitJob& job)
   if (num_deltas == (size_t)hundredpercent)
   {
     LOG(warning) << job._commitCounter << "/" << _commitCount << ", " << git_oid_tostr_s(git_commit_id(job._commit))
-    << " had all 100 files.";
+                 << " had all 100 files.";
   }
-  LOG(info) << "[competenceparser] Finished parsing " << job._commitCounter << "/" << _commitCount;
+  LOG(info) << "[ExpertiseCalculation] Finished parsing " << job._commitCounter << "/" << _commitCount;
 }
 
-void CompetenceParser::persistCommitData(
+void ExpertiseCalculation::persistCommitData(
   const model::FileId& fileId_,
   const std::map<UserEmail, UserBlameLines>& userBlame_,
   const float totalLines_,
@@ -753,121 +588,63 @@ void CompetenceParser::persistCommitData(
 {
   util::OdbTransaction transaction(_ctx.db);
   transaction([&, this]
-  {
-    for (const auto& blame : userBlame_)
-    {
-      model::CommitData commitData;
-      commitData.file = fileId_;
-      commitData.committerEmail = blame.first;
-      commitData.committedLines = blame.second;
-      commitData.totalLines = totalLines_;
-      commitData.commitType = commitType_;
-      commitData.commitDate = commitDate_;
-      _ctx.db->persist(commitData);
-    }
-  });
+              {
+                for (const auto& blame : userBlame_)
+                {
+                  model::CommitData commitData;
+                  commitData.file = fileId_;
+                  commitData.committerEmail = blame.first;
+                  commitData.committedLines = blame.second;
+                  commitData.totalLines = totalLines_;
+                  commitData.commitType = commitType_;
+                  commitData.commitDate = commitDate_;
+                  _ctx.db->persist(commitData);
+                }
+              });
 }
 
-void CompetenceParser::persistFileComprehensionData()
+void ExpertiseCalculation::persistFileComprehensionData()
 {
   for (const auto& edition : _fileEditions)
   {
-    LOG(info) << "[competenceparser] " << edition._file->path << ": ";
+    LOG(info) << "[ExpertiseCalculation] " << edition._file->path << ": ";
     for (const auto& pair : edition._editions)
     {
       util::OdbTransaction transaction(_ctx.db);
       transaction([&, this]
-      {
-        model::FileComprehension fileComprehension;
-        fileComprehension.file = edition._file->id;
-        fileComprehension.userEmail = pair.first;
-        //LOG(info) << pair.second.first;
-        //fileComprehension.repoRatio = std::exp(-pair.second.first) * 100; // / pair.second.second;
-        fileComprehension.repoRatio = pair.second.first;
-        fileComprehension.userRatio = fileComprehension.repoRatio.get();
-        fileComprehension.inputType = model::FileComprehension::InputType::REPO;
-        _ctx.db->persist(fileComprehension);
+                  {
+                    model::FileComprehension fileComprehension;
+                    fileComprehension.file = edition._file->id;
+                    fileComprehension.userEmail = pair.first;
+                    //LOG(info) << pair.second.first;
+                    //fileComprehension.repoRatio = std::exp(-pair.second.first) * 100; // / pair.second.second;
+                    fileComprehension.repoRatio = pair.second.first;
+                    fileComprehension.userRatio = fileComprehension.repoRatio.get();
+                    fileComprehension.inputType = model::FileComprehension::InputType::REPO;
+                    _ctx.db->persist(fileComprehension);
 
-        LOG(info) << pair.first << " " << fileComprehension.repoRatio.get() << "%";
-      });
+                    LOG(info) << pair.first << " " << fileComprehension.repoRatio.get() << "%";
+                  });
     }
   }
 }
 
-util::DirIterCallback CompetenceParser::persistNoDataFiles()
+util::DirIterCallback ExpertiseCalculation::persistNoDataFiles()
 {
   return [this](const std::string& currPath_)
   {
     boost::filesystem::path path
-    = boost::filesystem::canonical(currPath_);
+      = boost::filesystem::canonical(currPath_);
 
     if (boost::filesystem::is_regular_file(path) &&
-        !fileEditionContains(currPath_))
+      !fileEditionContains(currPath_))
       _ctx.srcMgr.getFile(currPath_);
 
     return true;
   };
 }
-*/
-/*
-void CompetenceParser::sampleCommits(ExpertiseCalculation::CommitJob& job_)
-{
-  RepositoryPtr repo = _gitOps.createRepository(job_._repoPath);
 
-  // Retrieve parent of commit.
-  CommitPtr parent = _expertise._gitOps.createParentCommit(job_._commit);
-
-  if (!parent)
-    return;
-
-  // Get git tree of both commits.
-  TreePtr commitTree = _gitOps.createTree(job_._commit);
-  TreePtr parentTree = _gitOps.createTree(parent.get());
-
-  if (!commitTree || !parentTree)
-    return;
-
-  // Calculate diff of trees.
-  DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
-
-  // Loop through each delta.
-  size_t num_deltas = git_diff_num_deltas(diff.get());
-  if (num_deltas == 0)
-    return;
-
-  // Analyse every file that was affected by the commit.
-  for (size_t j = 0; j < num_deltas; ++j)
-  {
-    const git_diff_delta *delta = git_diff_get_delta(diff.get(), j);
-    git_diff_file diffFile = delta->new_file;
-    model::FilePtr file = _ctx.srcMgr.getFile(job_._root + "/" + diffFile.path);
-    if (!file)
-      continue;
-
-    auto iter = _commitSample.find(file);
-    if (iter == _commitSample.end())
-      _commitSample.insert({file, 1});
-    else
-      ++(iter->second);
-  }
-}
-
-void CompetenceParser::persistSampleData()
-{
-  for (const auto& pair : _commitSample)
-  {
-    util::OdbTransaction transaction(_ctx.db);
-    transaction([&, this]
-    {
-      model::SampleData sample;
-      sample.file = pair.first->id;
-      sample.occurrences = pair.second;
-      _ctx.db->persist(sample);
-    });
-  }
-}*/
-/*
-bool CompetenceParser::fileEditionContains(const std::string& path_)
+bool ExpertiseCalculation::fileEditionContains(const std::string& path_)
 {
   for (const auto& fe : _fileEditions)
     if (fe._file->path == path_)
@@ -877,47 +654,47 @@ bool CompetenceParser::fileEditionContains(const std::string& path_)
 }
 
 
-void CompetenceParser::setUserCompany()
+void ExpertiseCalculation::setUserCompany()
 {
   util::OdbTransaction transaction(_ctx.db);
   transaction([&, this]
-  {
-    auto users = _ctx.db->query<model::UserEmail>();
-    for (auto& user : users)
-      for (const auto& p : _companyList)
-        if (user.email.find(p.first) != std::string::npos)
-        {
-          user.company = p.second;
-          _ctx.db->update(user);
-          break;
-        }
-  });
+              {
+                auto users = _ctx.db->query<model::UserEmail>();
+                for (auto& user : users)
+                  for (const auto& p : _companyList)
+                    if (user.email.find(p.first) != std::string::npos)
+                    {
+                      user.company = p.second;
+                      _ctx.db->update(user);
+                      break;
+                    }
+              });
 }
 
-void CompetenceParser::persistEmailAddress()
+void ExpertiseCalculation::persistEmailAddress()
 {
   util::OdbTransaction transaction(_ctx.db);
   transaction([&, this]
-  {
-    auto query = _ctx.db->query<model::UserEmail>();
-    for (const auto& user : query)
-      if (_emailAddresses.find(user.email) != _emailAddresses.end())
-        _emailAddresses.erase(user.email);
-  });
+              {
+                auto query = _ctx.db->query<model::UserEmail>();
+                for (const auto& user : query)
+                  if (_emailAddresses.find(user.email) != _emailAddresses.end())
+                    _emailAddresses.erase(user.email);
+              });
 
   for (const auto& address : _emailAddresses)
   {
     util::OdbTransaction transaction(_ctx.db);
     transaction([&, this]
-    {
-      model::UserEmail userEmail;
-      userEmail.email = address;
-      _ctx.db->persist(userEmail);
-    });
+                {
+                  model::UserEmail userEmail;
+                  userEmail.email = address;
+                  _ctx.db->persist(userEmail);
+                });
   }
 }
 
-void CompetenceParser::setCompanyList()
+void ExpertiseCalculation::setCompanyList()
 {
   _companyList.insert({"amd.com", "AMD"});
   _companyList.insert({"apple.com", "Apple"});
@@ -935,50 +712,5 @@ void CompetenceParser::setCompanyList()
   _companyList.insert({"sony.com", "Sony"});
   _companyList.insert({"samsung.com", "Samsung"});
 }
-*/
-CompetenceParser::~CompetenceParser()
-{
-  git_libgit2_shutdown();
 }
-
-/* These two methods are used by the plugin manager to allow dynamic loading
-   of CodeCompass Parser plugins. Clang (>= version 6.0) gives a warning that
-   these C-linkage specified methods return types that are not proper from a
-   C code.
-
-   These codes are NOT to be called from any C code. The C linkage is used to
-   turn off the name mangling so that the dynamic loader can easily find the
-   symbol table needed to set the plugin up.
-*/
-// When writing a plugin, please do NOT copy this notice to your code.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-extern "C"
-{
-  boost::program_options::options_description getOptions()
-  {
-    boost::program_options::options_description description("Competence Plugin");
-
-    description.add_options()
-      ("commit-count", po::value<int>(),
-        "This is a threshold value. It is the number of commits the competence parser"
-        "will process if value is given. If both commit-history and commit-count is given,"
-        "the value of commit-count will be the threshold value.")
-      ("skip-forgetting",
-        "If this flag is given, the competence parser will skip the file competence anaysis.")
-      ("skip-competence",
-        "If this flag is given, the competence parser will only execute the file"
-        "frequency calculation, and skip the file competence anaysis.");
-
-    return description;
-  }
-
-  std::shared_ptr<CompetenceParser> make(ParserContext& ctx_)
-  {
-    return std::make_shared<CompetenceParser>(ctx_);
-  }
 }
-#pragma clang diagnostic pop
-
-} // parser
-} // cc

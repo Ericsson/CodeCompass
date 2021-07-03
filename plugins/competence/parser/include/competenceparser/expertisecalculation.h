@@ -1,13 +1,12 @@
-#ifndef CC_PARSER_COMPETENCEPARSER_H
-#define CC_PARSER_COMPETENCEPARSER_H
+#ifndef CC_PARSER_EXPERTISECALCULATION_H
+#define CC_PARSER_EXPERTISECALCULATION_H
 
-#include <c++/7/memory>
+#include <memory>
 
 #include <boost/filesystem.hpp>
 #include <odb/database.hxx>
 
-#include "gitoperations.h"
-#include "expertisecalculation.h"
+#include <competenceparser/gitoperations.h>
 
 #include <model/file.h>
 #include <parser/abstractparser.h>
@@ -22,48 +21,16 @@ namespace cc
 namespace parser
 {
 
-typedef std::unique_ptr<git_blame, decltype(&git_blame_free)> BlamePtr;
-typedef std::unique_ptr<git_blame_options> BlameOptsPtr;
-typedef std::unique_ptr<git_commit, decltype(&git_commit_free)> CommitPtr;
-typedef std::unique_ptr<git_diff, decltype(&git_diff_free)> DiffPtr;
-typedef std::unique_ptr<git_repository, decltype(&git_repository_free)> RepositoryPtr;
-typedef std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)> RevWalkPtr;
-typedef std::unique_ptr<git_tree, decltype(&git_tree_free)> TreePtr;
-
 typedef std::string UserEmail;
 typedef int RelevantCommitCount;
 typedef double Percentage;
 typedef int UserBlameLines;
 typedef std::pair<Percentage, RelevantCommitCount> FileDataPair;
 
-/*struct GitSignature
-{
-  std::string name;
-  std::string email;
-  std::uint64_t time;
-};
-
-struct GitBlameHunk
-{
-  std::uint32_t linesInHunk;       /**< The number of lines in this hunk.
-  GitSignature finalSignature;     /**< Signature of the commit who this line
-                                   last changed.
-};
-*/
-  
-class CompetenceParser : public AbstractParser
+class ExpertiseCalculation
 {
 public:
-  CompetenceParser(ParserContext& ctx_);
-  virtual ~CompetenceParser();
-  virtual bool parse() override;
-
-private:
-  /*struct FileEdition
-  {
-    model::FilePtr _file;
-    std::map<UserEmail, FileDataPair> _editions;
-  };
+  ExpertiseCalculation(ParserContext& ctx_);
 
   struct CommitJob
   {
@@ -82,6 +49,15 @@ private:
         _commit(commit_), _commitCounter(commitCounter_) {}
   };
 
+  void initialize();
+
+private:
+  struct FileEdition
+  {
+    model::FilePtr _file;
+    std::map<UserEmail, FileDataPair> _editions;
+  };
+
   struct WalkData
   {
     //std::vector<const git_diff_delta*> deltas;
@@ -98,27 +74,17 @@ private:
     const int commitNumber;
     git_repository* repo;
   };
-*/
-  bool accept(const std::string& path_);
 
-  std::shared_ptr<odb::database> _db;
-
-  util::DirIterCallback getParserCallbackRepo(
-    boost::filesystem::path& repoPath_);
-/*
   static int walkDeltaHunkCb(const char* root,
                              const git_tree_entry* entry,
                              void* payload);
 
   static int walkCb(const char* root,
-             const git_tree_entry* entry,
-             void* payload);
+                    const git_tree_entry* entry,
+                    void* payload);
+public:
   std::string plagiarismCommand(const std::string& extension);
   void commitWorker(CommitJob& job_);
-
-  void commitSampling(
-    const std::string& root_,
-    boost::filesystem::path& repoPath_);
 
   void traverseCommits(
     const std::string& root_,
@@ -134,36 +100,28 @@ private:
     const std::time_t& commitDate_);
 
   void collectFileLocData(CommitJob& job);
-  void persistFileLocData();
 
   void persistFileComprehensionData();
   util::DirIterCallback persistNoDataFiles();
-*/
-  //void sampleCommits(CommitJob& job_);
-  //void persistSampleData();
-/*
+
   void setUserCompany();
 
   bool fileEditionContains(const std::string& path);
 
   // Temporary function to fill company list
   void setCompanyList();
-*/
-  //std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
-/*
+
+  std::unique_ptr<util::JobQueueThreadPool<CommitJob>> _pool;
+
   std::vector<FileEdition> _fileEditions;
   std::set<UserEmail> _emailAddresses;
-  std::map<std::string, std::string> _companyList;*/
-  std::map<model::FilePtr, int> _commitSample;
-  ExpertiseCalculation _expertise;
-  static GitOperations _gitOps;
-  //static std::vector<std::tuple<model::FilePtr, int, std::time_t>> _fileLocData;
-  /*static std::map<std::pair<std::string, int>, int> _fileCommitLocData;
+  std::map<std::string, std::string> _companyList;
+  static std::map<std::pair<std::string, int>, int> _fileCommitLocData;
   std::map<std::string, std::vector<int>>  _fileLocData;
 
   std::mutex _calculateFileData;
 
-
+  static GitOperations _gitOps;
 
   const int secondsInDay = 86400;
   const int daysInMonth = 30;
@@ -172,14 +130,11 @@ private:
   int _maxCommitCount = 0;
   int _commitCount = 0;
 
-  int _notSaved = 0;
-  int allNotSupported = 0;
-  int faultyCommits = 0;
+  boost::filesystem::path basePath;
 
-  boost::filesystem::path basePath;*/
+  ParserContext& _ctx;
 };
-  
-} // parser
-} // cc
+}
+}
 
-#endif // CC_PLUGINS_PARSER_COMPETENCEPARSER_H
+#endif // CC_PARSER_EXPERTISECALCULATION_H

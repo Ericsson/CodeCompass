@@ -7,7 +7,8 @@ include_directories(
 
 add_library(competenceparser SHARED
         src/competenceparser.cpp
-        src/gitoperations.cpp)
+        src/gitoperations.cpp
+        src/expertisecalculation.cpp)
 
 target_link_libraries(competenceparser
         model

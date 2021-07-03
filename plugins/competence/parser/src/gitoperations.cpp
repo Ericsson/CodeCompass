@@ -113,5 +113,29 @@ BlameOptsPtr GitOperations::createBlameOpts(const git_oid& newCommitOid_)
   return BlameOptsPtr { blameOpts };
 }
 
+unsigned int GitOperations::getCommitParentCount(
+  git_commit* commit)
+{
+  return git_commit_parentcount(commit);
+}
+
+BlobPtr GitOperations::createBlob(git_repository* repo_, const git_oid* oid_)
+{
+  git_blob* blob = nullptr;
+  int error = git_blob_lookup(&blob, repo_, oid_);
+
+  if (error)
+    LOG(error) << "Getting blob object failed: " << error;
+
+  return BlobPtr { blob, &git_blob_free };
+}
+
+void GitOperations::freeSignature(
+  const git_signature* signature)
+{
+  delete signature->email;
+  delete signature->name;
+  delete signature;
+}
 } // parser
 } // cc

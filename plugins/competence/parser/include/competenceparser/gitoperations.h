@@ -13,11 +13,13 @@ namespace parser
 
 typedef std::unique_ptr<git_blame, decltype(&git_blame_free)> BlamePtr;
 typedef std::unique_ptr<git_blame_options> BlameOptsPtr;
+typedef std::unique_ptr<git_blob, decltype(&git_blob_free)> BlobPtr;
 typedef std::unique_ptr<git_commit, decltype(&git_commit_free)> CommitPtr;
 typedef std::unique_ptr<git_diff, decltype(&git_diff_free)> DiffPtr;
 typedef std::unique_ptr<git_repository, decltype(&git_repository_free)> RepositoryPtr;
 typedef std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)> RevWalkPtr;
 typedef std::unique_ptr<git_tree, decltype(&git_tree_free)> TreePtr;
+typedef std::unique_ptr<git_tree_entry, decltype(&git_tree_entry_free)> TreeEntryPtr;
 
 struct GitSignature
 {
@@ -65,6 +67,16 @@ public:
     git_repository* repo_,
     git_tree* first_,
     git_tree* second_);
+
+  unsigned int getCommitParentCount(
+    git_commit* commit);
+
+  BlobPtr createBlob(
+    git_repository* repo_,
+    const git_oid* oid_);
+
+  void freeSignature(
+    const git_signature* signature);
 
 private:
   git_repository* _repo;
