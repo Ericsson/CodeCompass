@@ -9,9 +9,16 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
+  if (!model.gitservice.isEnabled())
+    return;
+
   var nodeMenu = {
     id : 'git-text-team-node',
     render : function (nodeInfo, fileInfo) {
+      var res = model.gitservice.getRepositoryByProjectPath(fileInfo.path);
+      if (!res.isInRepository)
+        return;
+
       var submenu = new Menu();
 
       submenu.addChild(new MenuItem({
@@ -40,6 +47,10 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     id : 'git-text-team-file',
     render : function (fileInfo) {
       if (fileInfo.type === "Dir")
+        return;
+
+      var res = model.gitservice.getRepositoryByProjectPath(fileInfo.path);
+      if (!res.isInRepository)
         return;
 
       var submenu = new Menu();

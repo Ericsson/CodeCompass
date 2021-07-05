@@ -209,5 +209,11 @@ service GitService
     1:string repoId_,
     2:string hexOid_,
     3:string path_,
-    4:string localModificationsFileId_)
+    4:string localModificationsFileId_),
+
+   /**
+   * Check whether there is at least one repository
+   * in the workspace directory.
+   */
+    bool isEnabled()
 }
