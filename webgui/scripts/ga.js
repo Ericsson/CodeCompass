@@ -1,3 +1,4 @@
+var gtag = null;
 $(document).ready(function() {
     $.ajax({
         url: 'ga.txt',
@@ -8,7 +9,7 @@ $(document).ready(function() {
 
             window.dataLayer = window.dataLayer || [];
 
-            function gtag() {
+            gtag = function() {
                 dataLayer.push(arguments);
             }
 

@@ -42,6 +42,8 @@ namespace cc
 namespace parser
 {
 
+namespace fs = boost::filesystem;
+
 class VisitorActionFactory : public clang::tooling::FrontendActionFactory
 {
 public:
@@ -157,7 +159,7 @@ bool CppParser::isSourceFile(const std::string& file_) const
   const std::vector<std::string> cppExts{
     ".c", ".cc", ".cpp", ".cxx", ".o", ".so", ".a"};
 
-  std::string ext = boost::filesystem::extension(file_);
+  std::string ext = fs::extension(file_);
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
   return std::find(cppExts.begin(), cppExts.end(), ext) != cppExts.end();
@@ -188,16 +190,13 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   {
     if (state == OParam)
     {
-      boost::filesystem::path absolutePath =
-        boost::filesystem::absolute(arg, command_.Directory);
-
+      fs::path absolutePath = fs::absolute(arg, command_.Directory);
       output = absolutePath.native();
       state = None;
     }
     else if (isSourceFile(arg) && !isNonSourceFlag(arg))
     {
-      boost::filesystem::path absolutePath =
-        boost::filesystem::absolute(arg, command_.Directory);
+      fs::path absolutePath = fs::absolute(arg, command_.Directory);
       sources.insert(absolutePath.native());
     }
     else if (arg == "-c")
@@ -210,7 +209,7 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   {
     for (const std::string& src : sources)
     {
-      std::string extension = boost::filesystem::extension(src);
+      std::string extension = fs::extension(src);
       inToOut[src] = src.substr(0, src.size() - extension.size() - 1) + ".o";
     }
   }
@@ -233,7 +232,7 @@ model::BuildActionPtr CppParser::addBuildAction(
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
-  std::string extension = boost::filesystem::extension(command_.Filename);
+  std::string extension = fs::extension(command_.Filename);
 
   buildAction->command = boost::algorithm::join(command_.CommandLine, " ");
   buildAction->type
@@ -313,7 +312,9 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   if (!compilationDb)
   {
-    LOG(error) << "Failed to create compilation database from command-line. " << compilationDbLoadError;
+    LOG(error)
+      << "Failed to create compilation database from command-line. "
+      << compilationDbLoadError;
     return 1;
   }
 
@@ -323,10 +324,15 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   //--- Start the tool ---//
 
-  VisitorActionFactory factory(_ctx);
-  clang::tooling::ClangTool tool(*compilationDb, command_.Filename);
+  fs::path sourceFullPath(command_.Filename);
+  if (!sourceFullPath.is_absolute())
+    sourceFullPath = fs::path(command_.Directory) / command_.Filename;
 
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = new clang::DiagnosticOptions();
+  VisitorActionFactory factory(_ctx);
+  clang::tooling::ClangTool tool(*compilationDb, sourceFullPath.string());
+
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts
+    = new clang::DiagnosticOptions();
   DiagnosticMessageHandler diagMsgHandler(diagOpts.get(), _ctx.srcMgr, _ctx.db);
   tool.setDiagnosticConsumer(&diagMsgHandler);
 
@@ -427,7 +433,7 @@ std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
       {
         order[index].push_back(item.first);
       }
-      
+
       fileNameToVertex.clear();
 
       LOG(debug) << "[cppparser] Circular dependency detected.";
@@ -475,7 +481,7 @@ void CppParser::markModifiedFiles()
   // Detect changed translation units through the build actions.
   for (const std::string& input
     : _ctx.options["input"].as<std::vector<std::string>>())
-    if (boost::filesystem::is_regular_file(input))
+    if (fs::is_regular_file(input))
     {
       std::string errorMsg;
 
@@ -687,7 +693,7 @@ bool CppParser::parse()
 
   for (const std::string& input
     : _ctx.options["input"].as<std::vector<std::string>>())
-    if (boost::filesystem::is_regular_file(input))
+    if (fs::is_regular_file(input))
       success
         = success && parseByJson(input, _ctx.options["jobs"].as<int>());
 
@@ -709,7 +715,7 @@ void CppParser::markByInclusion(model::FilePtr file_)
 {
   auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
     odb::query<model::CppHeaderInclusion>::included == file_->id);
-  
+
   for (auto inc : inclusions)
   {
     model::FilePtr loaded = inc.includer.load();

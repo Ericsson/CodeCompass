@@ -1,7 +1,6 @@
 # Build Environment
 We build CodeCompass in a Linux environment. Currently, Ubuntu Long-Term
-Support releases are the main targets: Ubuntu 16.04 LTS, Ubuntu 18.04 LTS and
-Ubuntu 20.04 LTS.
+Support releases are the main targets: Ubuntu 18.04 LTS and Ubuntu 20.04 LTS.
 
 We also provide a Docker image that can be used as developer environment to
 CodeCompass. See its usage [in a seperate document](/docker/README.md).
@@ -35,34 +34,16 @@ be installed from the official repository of the given Linux distribution.
   visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
-- **`npm`** (and **`nodejs-legacy`** for Ubuntu 16.04): For handling
-  JavaScript dependencies for CodeCompass web GUI.
+- **`npm`**: For handling JavaScript dependencies for CodeCompass web GUI.
 - **`ctags`**: For search parsing.
 - **`libgtest-dev`**: For testing CodeCompass.
   ***See [Known issues](#known-issues)!***
+- **`libldap2-dev`**: For LDAP authentication.
 
 ## Quick guide
 
 The following command installs the packages except for those which have some
 known issues.
-
-#### Ubuntu 16.04 ("Xenial Xerus") LTS
-
-The standard Ubuntu Xenial package repository contains only LLVM/Clang version
-6, which is not sufficient for CodeCompass, as at least version 10.0 is
-required.  Therefore LLVM and Clang should be installed from the official LLVM
-repositories:
-
-```bash
-sudo deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
-sudo deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main
-
-sudo apt-get install git cmake make g++ libboost-all-dev \
-  llvm-10-dev clang-10 libclang-10-dev \
-  odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags \
-  libgtest-dev npm nodejs-legacy
-```
 
 #### Ubuntu 18.04 ("Bionic Beaver") LTS
 
@@ -88,16 +69,6 @@ sudo apt install git cmake make g++ libboost-all-dev \
 Depending on the desired database engines to be supported, the following
 packages should be installed:
 
-##### Ubuntu 16.04 ("Xenial Xerus") LTS and 20.04 ("Focal Fossa") LTS
-
-```bash
-# For SQLite database systems:
-sudo apt-get install libodb-sqlite-dev libsqlite3-dev
-
-# For PostgreSQL database systems:
-sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
-```
-
 ##### Ubuntu 18.04 ("Bionic Beaver")
 
 The database connector library must be compiled manually for this release,
@@ -111,6 +82,17 @@ sudo apt install libsqlite3-dev
 # For PostgreSQL database systems:
 sudo apt install postgresql-server-dev-<version>
 ```
+
+##### Ubuntu 20.04 ("Focal Fossa") LTS
+
+```bash
+# For SQLite database systems:
+sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+
+# For PostgreSQL database systems:
+sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
+```
+
 
 ## Known issues
 Some third-party tools are present in the distribution's package manager in a
@@ -170,7 +152,7 @@ time (depending on the machine one is using).
 > **Note:** now you may delete the *Build2* toolchain installed in the
 > `<build2_install_dir>` folder, if you do not need any longer.
 
-### Thrift (for Ubuntu 16.04 and 18.04)
+### Thrift (for Ubuntu 18.04)
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. A suitable version of
 Thrift is, unfortunately, not part of the official Ubuntu repositories for
@@ -213,27 +195,6 @@ make install -j $(nproc)
 The `libgtest-dev` package contains only the source files of GTest, but the
 binaries are missing. You have to compile GTest manually.
 
-#### Ubuntu 16.04 ("Xenial Xerus") LTS
-As further complications, under Ubuntu Xenial, the *install* instructions
-are also missing from GTest's build system, so the target binaries
-have to copied manually to the install location.
-
-```bash
-mkdir gtest
-cp -R /usr/src/gtest/* ./gtest
-
-cd gtest
-mkdir build
-cd build
-
-cmake ..
-make -j $(nproc)
-
-mkdir -p <gtest_install_dir>/lib
-cp libgtest.a libgtest_main.a <gtest_install_dir>/lib/
-```
-
-#### Ubuntu 18.04 ("Bionic Beaver") and 20.04 ("Focal Fossa") LTS
 ```bash
 mkdir gtest
 cp -R /usr/src/googletest/* ./gtest
@@ -253,7 +214,7 @@ seen by CMake. Please set this environment before executing the build.
 ```bash
 export GTEST_ROOT=<gtest_install_dir>
 
-# If using Ubuntu 16.04 or 18.04:
+# If using Ubuntu 18.04:
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
 
@@ -303,3 +264,5 @@ relevant during compilation.
 | `DATABASE` | Database type. Possible values are **sqlite**, **pgsql**. The default value is `sqlite`. |
 | `TEST_DB` | The connection string for the database that will be used when executing tests with `make test`. Optional. |
 | `CODECOMPASS_LINKER` | The path of the linker, if the system's default linker is to be overridden. |
+| `WITH_PLUGIN`/`WITHOUT_PLUGIN` | The names of the plugins to be built/skipped at build. Possible values are **cpp**, **cpp_reparse**, **dummy**, **git**, **metrics**, **search**. The `metrics` and `search` plugins are fundamental, they will be compiled even if not included. `WITH_PLUGIN` **cannot** be used together with `WITHOUT_PLUGIN`. Example: `-DWITH_PLUGIN="cpp;git"` This will compile the cpp, git, metrics and search plugins. |
+| `WITH_AUTH` | The names of the authentication plugins to be compiled. Possible values are **plain** and **ldap**. `plain` **cannot** be skipped. Example: `-DWITH_AUTH="plain;ldap"`|

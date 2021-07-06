@@ -129,7 +129,16 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
           cssClass : 'cb-label cb-label-' + colorIdx
         }]]
       });
-    
+
+    if (gtag) {
+      gtag ('event', 'code_bites', {
+        'event_category' : urlHandler.getState('wsid'),
+        'event_label' : urlHandler.getFileInfo().name
+                      + ': '
+                      + astNodeInfo.astNodeValue.toString()
+      });
+    }
+
     return newElement;
   }
 

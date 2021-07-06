@@ -23,6 +23,7 @@ RUN set -x && apt-get update -qq \
     postgresql-server-dev-12 \
     default-jre \
     libgit2-dev \
+    libldap-2.4-2 \
     libssl1.1 \
     libgvc6 \
     libthrift-dev \

@@ -1,6 +1,30 @@
 # Add all subdirectories to the build
 file(GLOB plugins RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*")
 
+set(baseline "plain")
+if(WITH_AUTH)
+    foreach(_base ${baseline})
+        if(NOT ("${_base}" IN_LIST WITH_AUTH))
+            message(WARNING "The ${_base} authenticator cannot be skipped, "
+                    "it will be compiled anyway.")
+        endif()
+    endforeach()
+
+    foreach(_plugin ${plugins})
+        if(NOT ("${_plugin}" IN_LIST WITH_AUTH)
+            AND NOT ("${_plugin}" IN_LIST baseline)
+            AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${_plugin}")
+                list(REMOVE_ITEM plugins ${_plugin})
+        endif()
+    endforeach()
+else()
+    foreach(_plugin ${plugins})
+        if(NOT ("${_plugin}" IN_LIST baseline))
+            list(REMOVE_ITEM plugins ${_plugin})
+        endif()
+    endforeach()
+endif()
+
 # Set unique plugin directory variable for each plugin.
 message(STATUS "Found the following authentication plugins:")
 foreach(_plugin ${plugins})
