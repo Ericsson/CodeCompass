@@ -116,7 +116,7 @@ public:
     const GitDiffOptions& options_,
     const bool isCompact_ = false) override;
 
-  virtual bool isEnabled() override;
+  virtual bool isRepositoryAvailable() override;
 
 private:
   /**

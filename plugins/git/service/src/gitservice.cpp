@@ -132,7 +132,7 @@ std::string GitServiceHandler::getRepoPath(const std::string& repoId_) const
   return *_datadir + "/version/" + repoId_;
 }
 
-bool GitServiceHandler::isEnabled()
+bool GitServiceHandler::isRepositoryAvailable()
 {
   namespace fs = ::boost::filesystem;
   return fs::exists(*_datadir + "/version") ||

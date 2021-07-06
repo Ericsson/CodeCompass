@@ -215,5 +215,5 @@ service GitService
    * Check whether there is at least one repository
    * in the workspace directory.
    */
-    bool isEnabled()
+    bool isRepositoryAvailable()
 }

@@ -9,7 +9,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
 
   model.addService('gitservice', 'GitService', GitServiceClient);
 
-  if (!model.gitservice.isEnabled())
+  if (!model.gitservice.isRepositoryAvailable())
     return;
 
   var nodeMenu = {
