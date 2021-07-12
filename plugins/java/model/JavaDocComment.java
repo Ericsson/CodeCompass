@@ -1,27 +1,25 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "\"JavaDocComment\"")
 public class JavaDocComment {
   @Id
+  @GeneratedValue
   @Column(name = "id")
   private int id;
 
   @Column(name = "\"contentHash\"")
   private long contentHash;
 
-  @Column(name = "\"contentHTML\"")
-  private int contentHTML;
+  @Column(name = "\"content\"")
+  private int content;
 
-  @Column(name = "\"mangledNameHash\"")
-  private long mangledNameHash;
+  @Column(name = "\"entityHash\"")
+  private long entityHash;
 
-// Getters and setters
+  // Getters and setters
 
   public int getId() {
     return id;
@@ -39,20 +37,20 @@ public class JavaDocComment {
     this.contentHash = contentHash;
   }
 
-  public int getContentHTML() {
-    return contentHTML;
+  public int getContent() {
+    return content;
   }
 
-  public void setContentHTML(int contentHTML) {
-    this.contentHTML = contentHTML;
+  public void setContent(int content) {
+    this.content = content;
   }
 
-  public long getMangledNameHash() {
-    return mangledNameHash;
+  public long getEntityHash() {
+    return entityHash;
   }
 
-  public void setMangledNameHash(long mangledNameHash) {
-    this.mangledNameHash = mangledNameHash;
+  public void setMangledNameHash(long entityHash) {
+    this.entityHash = entityHash;
   }
 
 }

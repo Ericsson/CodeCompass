@@ -13,6 +13,7 @@ add_jar(javamodel
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaEnumConstant.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaFunction.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaImport.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/JavaInheritance.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaRecord.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaTypedEntity.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaVariable.java

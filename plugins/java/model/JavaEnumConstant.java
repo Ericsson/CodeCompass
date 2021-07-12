@@ -6,7 +6,6 @@ import java.util.Set;
 @Entity
 @Table(name = "\"JavaEnumConstant\"")
 public class JavaEnumConstant extends JavaEntity {
-
   @Column(name = "value")
   private int value;
 

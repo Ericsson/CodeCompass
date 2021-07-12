@@ -1,9 +1,11 @@
 package parser.srcjava;
 
-import model.JavaImport;
+import model.*;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class AstVisitor extends ASTVisitor {
 
@@ -317,7 +319,19 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodDeclaration node) {
-    // System.out.println(node);
+    if (!node.isConstructor()) {
+      JavaFunction javaFunction = new JavaFunction();
+      String typeString = node.getReturnType2().toString();
+
+      persistJavaAstNodeRow(node);
+
+      setJavaEntityFields(javaFunction, node);
+      javaFunction.setTypeHash(typeString.hashCode());
+      javaFunction.setQualifiedType(typeString);
+
+      persistRow(javaFunction);
+    }
+
     return super.visit(node);
   }
 
@@ -473,7 +487,17 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SingleVariableDeclaration node) {
-    // System.out.println(node);
+    JavaVariable javaVariable = new JavaVariable();
+    String typeString = node.getType().toString();
+
+    persistJavaAstNodeRow(node);
+
+    setJavaEntityFields(javaVariable, node);
+    javaVariable.setTypeHash(typeString.hashCode());
+    javaVariable.setQualifiedType(typeString);
+
+    persistRow(javaVariable);
+
     return super.visit(node);
   }
 
@@ -625,6 +649,40 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(WildcardType node) {
     // System.out.println(node);
     return super.visit(node);
+  }
+
+  private void setJavaEntityFields(JavaEntity javaEntity, ASTNode node) {
+    try {
+      Method getNameMethod =
+              node.getClass().getMethod("getName", (Class<?>[]) null);
+      Name name =
+              (Name) getNameMethod.invoke(node, (Object[]) null);
+
+      // javaEntity.setAstNodeId(...);
+      javaEntity.setEntityHash(node.hashCode());
+      javaEntity.setName(name.toString());
+      javaEntity.setQualifiedName(name.getFullyQualifiedName());
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void persistJavaAstNodeRow(ASTNode node) {
+    JavaAstNode javaAstNode = new JavaAstNode();
+    PositionInfo positionInfo = new PositionInfo(this.cu, node);
+
+    javaAstNode.setAstValue(node.toString());
+    javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
+    javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
+    javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
+    javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
+    javaAstNode.setEntityHash(node.hashCode());
+
+    persistRow(javaAstNode);
   }
 
   private void persistRow(Object jpaObject) {

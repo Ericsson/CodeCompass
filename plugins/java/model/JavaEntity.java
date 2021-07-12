@@ -6,15 +6,16 @@ import static javax.persistence.InheritanceType.JOINED;
 
 @Entity
 @Table(name = "\"JavaEntity\"")
+@DiscriminatorColumn(
+        name = "typeid",
+        discriminatorType = DiscriminatorType.STRING
+)
 @Inheritance(strategy = JOINED)
-public class JavaEntity {
+public abstract class JavaEntity {
   @Id
   @GeneratedValue
   @Column(name = "id")
   private long id;
-
-  @Column(name = "\"typeId\"")
-  private int typeId;
 
   @Column(name = "\"astNodeId\"")
   private long astNodeId;
@@ -37,14 +38,6 @@ public class JavaEntity {
 
   public void setId(long id) {
     this.id = id;
-  }
-
-  public int getTypeId() {
-    return typeId;
-  }
-
-  public void setTypeId(int typeId) {
-    this.typeId = typeId;
   }
 
   public long getAstNodeId() {

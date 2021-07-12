@@ -1,17 +1,16 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "\"JavaAstNode\"")
 public class JavaAstNode {
   @Id
+  @GeneratedValue
   @Column(name = "id")
   private long id;
 
+  @Lob
   @Column(name = "\"astValue\"")
   private String astValue;
 
@@ -30,11 +29,8 @@ public class JavaAstNode {
   @Column(name = "location_file")
   private long location_file;
 
-  @Column(name = "\"mangledName\"")
-  private String mangledName;
-
-  @Column(name = "\"mangledNameHash\"")
-  private long mangledNameHash;
+  @Column(name = "\"entityHash\"")
+  private long entityHash;
 
   @Column(name = "\"symbolType\"")
   private int symbolType;
@@ -104,20 +100,12 @@ public class JavaAstNode {
     this.location_file = location_file;
   }
 
-  public String getMangledName() {
-    return mangledName;
+  public long getEntityHash() {
+    return entityHash;
   }
 
-  public void setMangledName(String mangledName) {
-    this.mangledName = mangledName;
-  }
-
-  public long getMangledNameHash() {
-    return mangledNameHash;
-  }
-
-  public void setMangledNameHash(long mangledNameHash) {
-    this.mangledNameHash = mangledNameHash;
+  public void setEntityHash(long mangledNameHash) {
+    this.entityHash = mangledNameHash;
   }
 
   public int getSymbolType() {

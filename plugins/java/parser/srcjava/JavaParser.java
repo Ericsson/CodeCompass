@@ -1,6 +1,7 @@
 package parser.srcjava;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -75,6 +76,7 @@ public class JavaParser {
     */
     parser.setSource(str.toCharArray());
 
+    System.out.println(path);
     CompilationUnit cu = (CompilationUnit) parser.createAST(null);
     AstVisitor visitor = new AstVisitor(cu, em);
     cu.accept(visitor);

@@ -16,7 +16,7 @@ public class PositionInfo {
     this.end = node.getStartPosition() + node.getLength();
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
-    this.endLine = cu.getColumnNumber(end);
+    this.endLine = cu.getLineNumber(end);
     this.endColumn = cu.getColumnNumber(end);
   }
 

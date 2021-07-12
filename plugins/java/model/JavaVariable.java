@@ -10,7 +10,6 @@ import static javax.persistence.InheritanceType.JOINED;
 
 @Entity
 @Table(name = "\"JavaVariable\"")
-@Inheritance(strategy = JOINED)
 public class JavaVariable extends JavaTypedEntity {
   @ManyToMany(mappedBy = "javaVariableParams")
   Set<JavaFunction> javaFunctionParams;
