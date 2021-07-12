@@ -71,6 +71,13 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
       this._handlerId = handlerId;
       this._diagramType = diagramType;
 
+      if (gtag) {
+        gtag ('event', 'load_diagram: ' + diagramType.toString(), {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+        });
+      }
+
       try {
         this._diagCont.set('content', dom.create('span', {
           class : 'diagram-loading'

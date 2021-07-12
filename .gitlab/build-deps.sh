@@ -89,8 +89,8 @@ rm -f $PACKAGES_DIR/openssl-1.1.1h.tar.gz
 ############
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://github.com/threatstack/libmagic/archive/5.18.tar.gz
-tar -xf 5.18.tar.gz
+wget --no-verbose --no-clobber https://skynet.elte.hu/libmagic-5.18.tar.gz
+tar -xf libmagic-5.18.tar.gz
 cd libmagic-5.18/
 
 ./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/libmagic-install
@@ -307,7 +307,7 @@ rm -f $PACKAGES_DIR/ctags-p5.9.20201129.0.tar.gz
 
 if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/boost-install/lib/libboost_program_options.so ]; then
   cd $PACKAGES_DIR
-  wget --no-verbose --no-clobber https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz
+  wget --no-verbose --no-clobber https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.gz
   tar -xf boost_1_74_0.tar.gz
   cd boost_1_74_0
 
