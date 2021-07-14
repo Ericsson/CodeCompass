@@ -169,13 +169,6 @@ void ExpertiseCalculation::collectFileLocData(CommitJob& job)
 
   // Get git tree of both commits.
   TreePtr commitTree = _gitOps.createTree(job._commit);
-  LOG(warning) << "Commit " << job._commitCounter << " id: "
-               << git_oid_tostr_s(git_commit_id(job._commit));
-  for (unsigned i = 0; i < _gitOps.getCommitParentCount(job._commit); ++i)
-  {
-    LOG(warning) << "Commit " << job._commitCounter << " parents: "
-                 << git_oid_tostr_s(git_commit_parent_id(job._commit, i));
-  }
   TreePtr parentTree = _gitOps.createTree(parent.get());
   if (!commitTree || !parentTree)
     return;
@@ -267,9 +260,9 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
   RepositoryPtr repo = _gitOps.createRepository(job._repoPath);
 
   LOG(info) << "[ExpertiseCalculation] Parsing " << job._commitCounter << "/" << _commitCount << " of version control history.";
-
+  LOG(warning) << "step 1";
   const git_signature* commitAuthor = git_commit_author(job._commit);
-
+  LOG(warning) << "step 2";
   if (commitAuthor && !std::isgraph(commitAuthor->name[0]))
   {
     LOG(info) << "[ExpertiseCalculation] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
@@ -278,6 +271,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
 
   basePath = boost::filesystem::path(_ctx.options["workspace"].as<std::string>());
   basePath.append(_ctx.options["name"].as<std::string>() + "/competence/");
+  LOG(warning) << "step 3";
 
   // Calculate elapsed time in full months since current commit.
   //std::time_t elapsed = std::chrono::system_clock::to_time_t(
@@ -290,6 +284,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
 
   // Retrieve parent of commit.
   CommitPtr parent = _gitOps.createParentCommit(job._commit);
+  LOG(warning) << "step 4";
 
   if (!parent)
     return;
@@ -297,23 +292,27 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
   // Get git tree of both commits.
   TreePtr commitTree = _gitOps.createTree(job._commit);
   TreePtr parentTree = _gitOps.createTree(parent.get());
+  LOG(warning) << "step 5";
 
   if (!commitTree || !parentTree)
     return;
 
   // Calculate diff of trees.
   DiffPtr diff = _gitOps.createDiffTree(repo.get(), parentTree.get(), commitTree.get());
+  LOG(warning) << "step 6";
 
   // Loop through each delta.
   size_t num_deltas = git_diff_num_deltas(diff.get());
   if (num_deltas == 0)
     return;
+  LOG(warning) << "step 7";
 
   // Copy all modified files to workspace dir.
   // Old and new version goes to separate directories.
   fs::path outPath(basePath);
   outPath.append(std::to_string(job._commitCounter));
   fs::create_directories(outPath);
+  LOG(warning) << "step 7";
 
   std::vector<const git_diff_delta*> deltas;
   bool hasModifiedFiles = false;
@@ -321,16 +320,18 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
   for (size_t j = 0; j < num_deltas; ++j)
   {
     const git_diff_delta* delta = git_diff_get_delta(diff.get(), j);
-
+    LOG(warning) << "step 8";
     // Walk diff tree to find modified file.
     if (delta->status == GIT_DELTA_MODIFIED)
     {
       hasModifiedFiles = true;
       WalkData commitData = {delta, repo.get(), outPath, false };
       git_tree_walk(commitTree.get(), GIT_TREEWALK_PRE, &ExpertiseCalculation::walkCb, &commitData);
+      LOG(warning) << "step 9";
 
       WalkData parentData = {delta, repo.get(), outPath, true };
       git_tree_walk(parentTree.get(), GIT_TREEWALK_PRE, &ExpertiseCalculation::walkCb, &parentData);
+      LOG(warning) << "step 10";
     }
 
     if (delta->status == GIT_DELTA_ADDED)
@@ -339,12 +340,14 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
       std::replace(replacedStr.begin(), replacedStr.end(), '/', '_');
       plagValues.insert(std::make_pair(replacedStr, 0));
     }
+    LOG(warning) << "step 11";
   }
 
   fs::path newPath(outPath);
   newPath.append("/new/");
   fs::path oldPath(outPath);
   oldPath.append("/old/");
+  LOG(warning) << "step 12";
 
   // Determine plagiarism command based on file extension.
   if (hasModifiedFiles && fs::exists(newPath) && fs::exists(oldPath))
@@ -352,13 +355,13 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
     for (const auto &f : fs::directory_iterator(newPath))
     {
       std::string command = plagiarismCommand(fs::extension(f.path()));
-
+      LOG(warning) << "step 13";
       if (command.empty())
       {
         LOG(info) << "Plagiarism detector does not support file type: " << f.path().filename();
         continue;
       }
-
+      LOG(warning) << "step 14";
       command.append("-c " + f.path().string() + " ");
       const fs::recursive_directory_iterator end;
       const auto it = std::find_if(fs::recursive_directory_iterator(oldPath), end,
@@ -372,15 +375,18 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
         LOG(warning) << "amugy ebbe belefutottam";
         return;
       }
+      LOG(warning) << "step 15";
 
       command.append(it->path().string());
       fs::path logPath(outPath);
       std::future<std::string> log;
       boost::process::system(command, boost::process::std_out > log);
+      LOG(warning) << "step 16";
 
       // Retrieve results from JPlag log (stored in memory).
       std::string logStr = log.get();
       auto index = logStr.find_last_of(' ');
+      LOG(warning) << "step 17";
 
       try
       {
@@ -393,6 +399,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
         LOG(warning) << "Plagiarism detection unsuccessful (" << ex.what() << "): " << logStr;
       }
     }
+    LOG(warning) << "step 18";
     fs::remove_all(outPath);
   }
   else
@@ -401,7 +408,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
                                                        " has relevant modified files but "
                                                        " they couldn't be copied to the workspace directory.";
   }
-
+  LOG(warning) << "step 19";
   // Analyse every file that was affected by the commit.
   int hundredpercent = 0;
   for (size_t j = 0; j < num_deltas; ++j)
