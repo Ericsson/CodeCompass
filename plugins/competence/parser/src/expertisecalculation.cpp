@@ -383,6 +383,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
       LOG(warning) << "step 15.2";
       std::future<std::string> log;
       LOG(warning) << "step 15.3";
+      LOG(warning) << command;
       boost::process::system(command, boost::process::std_out > log);
       LOG(warning) << "step 16";
 
