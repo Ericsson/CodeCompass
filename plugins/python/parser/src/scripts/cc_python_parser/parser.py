@@ -5,7 +5,7 @@ from pathlib import PurePath, Path
 from typing import List, Optional, Union, Set, Tuple
 
 from cc_python_parser.common.parser_tree import ParserTree
-from cc_python_parser.common.utils import ENCODINGS
+from cc_python_parser.common.utils import process_file_content
 from cc_python_parser.file_info import FileInfo, ProcessStatus
 from cc_python_parser.function_symbol_collector import FunctionSymbolCollector
 from cc_python_parser.function_symbol_collector_factory import FunctionSymbolCollectorFactory
@@ -48,8 +48,11 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             self.process_directory(PurePath(directory))
 
     def process_directory(self, directory: PurePath):
-        for root, folders, files in os.walk(directory, followlinks=True):
+        for root, dirs, files in os.walk(directory, topdown=True, followlinks=True):
+            dirs[:] = [d for d in dirs if not self.exceptions.is_dictionary_exception(d)]
             for file in files:
+                if self.exceptions.is_file_exception(file):
+                    continue
                 file_path = Path(root, file)
                 if file_path.is_symlink():
                     if not file_path.exists():
@@ -72,29 +75,23 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
         current_file = file_info.get_file()
         if file_info.status != ProcessStatus.WAITING or current_file[-3:] != '.py':
             return
-        logger.debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
-        db_logger.debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
+        logger.debug('\nFILE: ' + file_info.get_file_name() + '\n=========================================')
+        db_logger.debug('\nFILE: ' + file_info.get_file_name() + '\n=========================================')
         if file_info.path is None:
             return
 
         tree = None
-        for e in ENCODINGS:
+
+        def handle_file_content(c, line_num):
+            nonlocal tree
             try:
-                with open(str(file_info.path), "r", encoding=e) as source:
-                    t = ast.parse(source.read())
-                    source.seek(0)
-                    metrics.add_line_count(len(source.readlines()))
-                    metrics.add_file_count()
-            except UnicodeDecodeError:
-                pass
-            except FileNotFoundError:
-                print(f"File not found: {file_info.path}")
+                tree = ast.parse(c)
+                metrics.add_line_count(line_num)
+                metrics.add_file_count()
             except SyntaxError as e:
                 print(f"Syntax error in file {e.filename} at (line - {e.lineno}, column - {e.offset}): {e.text}")
-                break
-            else:
-                tree = t
-                break
+
+        process_file_content(file_info.path, handle_file_content)
 
         if tree is None:
             return

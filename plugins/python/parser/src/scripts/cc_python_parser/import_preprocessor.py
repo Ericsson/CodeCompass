@@ -81,6 +81,8 @@ class ImportTable:
                 pass    # print()
         except (AttributeError, ModuleNotFoundError, ImportError, ValueError):
             pass
+        except KeyError:
+            return
         finally:
             if m is None:
                 try:
@@ -88,6 +90,8 @@ class ImportTable:
                         m = util.find_spec(node.module)
                 except (AttributeError, ModuleNotFoundError, ImportError, ValueError):
                     pass
+                except KeyError:
+                    return
             if m is not None and m.origin is not None:
                 self.import_paths.add(PurePath(m.origin))
 
@@ -117,6 +121,8 @@ class ImportTable:
         except (AttributeError, ModuleNotFoundError, ImportError, ValueError):
             # v3.7: before: AttributeError, after: ModuleNotFoundError
             is_module = False
+        except KeyError:
+            return []
         imports = []
         r = create_range_from_ast_node(node)
         if is_module:  # modules
