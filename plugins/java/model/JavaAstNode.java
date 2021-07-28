@@ -1,5 +1,8 @@
 package model;
 
+import model.enums.AstType;
+import model.enums.SymbolType;
+
 import javax.persistence.*;
 
 @Entity
@@ -33,10 +36,12 @@ public class JavaAstNode {
   private long entityHash;
 
   @Column(name = "\"symbolType\"")
-  private int symbolType;
+  @Enumerated(EnumType.ORDINAL)
+  private SymbolType symbolType;
 
   @Column(name = "\"astType\"")
-  private int astType;
+  @Enumerated(EnumType.ORDINAL)
+  private AstType astType;
 
   @Column(name = "\"visibleInSourceCode\"")
   private boolean visibleInSourceCode;
@@ -108,19 +113,19 @@ public class JavaAstNode {
     this.entityHash = mangledNameHash;
   }
 
-  public int getSymbolType() {
+  public SymbolType getSymbolType() {
     return symbolType;
   }
 
-  public void setSymbolType(int symbolType) {
+  public void setSymbolType(SymbolType symbolType) {
     this.symbolType = symbolType;
   }
 
-  public int getAstType() {
+  public AstType getAstType() {
     return astType;
   }
 
-  public void setAstType(int astType) {
+  public void setAstType(AstType astType) {
     this.astType = astType;
   }
 

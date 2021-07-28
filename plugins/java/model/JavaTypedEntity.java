@@ -7,7 +7,7 @@ import static javax.persistence.InheritanceType.JOINED;
 @Entity
 @Table(name = "\"JavaTypedEntity\"")
 @Inheritance(strategy = JOINED)
-public class JavaTypedEntity extends JavaEntity {
+public abstract class JavaTypedEntity extends JavaEntity {
   @Column(name = "\"typeHash\"")
   private long typeHash;
 

@@ -1,6 +1,8 @@
 package parser.srcjava;
 
 import model.*;
+import model.enums.AstType;
+import model.enums.SymbolType;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;
@@ -243,6 +245,8 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
+    // mindkét mező egy fileid
+
     JavaImport _import = new JavaImport();
     // _import.setImporter(...);
     _import.setImported(node.getFlags());
@@ -320,16 +324,24 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(MethodDeclaration node) {
     if (!node.isConstructor()) {
-      JavaFunction javaFunction = new JavaFunction();
+      JavaMethod javaMethod = new JavaMethod();
       String typeString = node.getReturnType2().toString();
+      // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
+      // valószínóleg nem, de ez kéne
 
-      persistJavaAstNodeRow(node);
+      persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.DECLARATION);
 
-      setJavaEntityFields(javaFunction, node);
-      javaFunction.setTypeHash(typeString.hashCode());
-      javaFunction.setQualifiedType(typeString);
+      setJavaEntityFields(javaMethod, node);
+      javaMethod.setTypeHash(typeString.hashCode());
+      javaMethod.setQualifiedType(typeString);
 
-      persistRow(javaFunction);
+      persistRow(javaMethod);
+    } else {
+      JavaConstructor javaConstructor = new JavaConstructor();
+
+      persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.DECLARATION);
+      setJavaEntityFields(javaConstructor, node);
+      persistRow(javaConstructor);
     }
 
     return super.visit(node);
@@ -490,7 +502,7 @@ public class AstVisitor extends ASTVisitor {
     JavaVariable javaVariable = new JavaVariable();
     String typeString = node.getType().toString();
 
-    persistJavaAstNodeRow(node);
+    persistJavaAstNodeRow(node, SymbolType.VARIABLE, AstType.DECLARATION);
 
     setJavaEntityFields(javaVariable, node);
     javaVariable.setTypeHash(typeString.hashCode());
@@ -671,16 +683,41 @@ public class AstVisitor extends ASTVisitor {
     }
   }
 
-  private void persistJavaAstNodeRow(ASTNode node) {
+  private void persistJavaAstNodeRow(
+    ASTNode node, SymbolType symbolType, AstType astType
+  ) {
     JavaAstNode javaAstNode = new JavaAstNode();
     PositionInfo positionInfo = new PositionInfo(this.cu, node);
 
-    javaAstNode.setAstValue(node.toString());
+    // location_file = file id a File táblából
+
+    // symbol_type, ast_type = enum, megmondja, hogy milyen típusú a kifejezés (értékadás, def. stb..)
+    // symbol type = az adott identifier micsoda? változó, enum, enumkonstans, stb
+
+    // visibleinsourcecode: akkor lesz false, ha az adott függvényt, vagy akármit
+    // nem közvetlenül hívjuk a forráskódból, hanem hívunk valamit egy libraryből, ami meghívja aztán ezt
+    try {
+      Method getJavadocMethod =
+              node.getClass().getMethod("getJavadoc", (Class<?>[]) null);
+      Javadoc javadoc =
+              (Javadoc) getJavadocMethod.invoke(node, (Object[]) null);
+
+      javaAstNode.setAstValue(
+              node.toString().substring(javadoc.toString().length())
+      );
+    } catch (NoSuchMethodException | NullPointerException e) {
+      javaAstNode.setAstValue(node.toString());
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
     javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
     javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
     javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
     javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
     javaAstNode.setEntityHash(node.hashCode());
+    javaAstNode.setSymbolType(symbolType);
+    javaAstNode.setAstType(astType);
 
     persistRow(javaAstNode);
   }

@@ -1,11 +1,9 @@
 package model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
+@Table(name = "\"JavaInheritance\"")
 public class JavaInheritance {
     @Id
     @GeneratedValue

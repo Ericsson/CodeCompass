@@ -10,11 +10,12 @@
 
         <class>model.JavaAnnotation</class>
         <class>model.JavaAstNode</class>
+        <class>model.JavaConstructor</class>
         <class>model.JavaDocComment</class>
         <class>model.JavaEntity</class>
         <class>model.JavaEnum</class>
         <class>model.JavaEnumConstant</class>
-        <class>model.JavaFunction</class>
+        <class>model.JavaMethod</class>
         <class>model.JavaImport</class>
         <class>model.JavaInheritance</class>
         <class>model.JavaRecord</class>

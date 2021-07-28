@@ -9,9 +9,7 @@ public class Main {
     try {
       JavaParser javaParser = new JavaParser();
       javaParser.parse(args[0], args[1]);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (ParseException e) {
+    } catch (IOException | ParseException e) {
       e.printStackTrace();
     }
   }
