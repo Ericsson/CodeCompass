@@ -1,3 +1,5 @@
+ARG CC_DATABASE=sqlite
+
 ###############################################################################
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
@@ -7,7 +9,7 @@ FROM codecompass:dev as builder
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
 
-ARG CC_DATABASE=sqlite
+ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
 ARG CC_BUILD_TYPE=Release
@@ -42,6 +44,9 @@ FROM ubuntu:20.04
 # sets timezone interactively during the installation process. This environment
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
+
+ARG CC_DATABASE
+ENV CC_DATABASE ${CC_DATABASE}
 
 RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
     apt-get update -qq --yes && \
