@@ -86,18 +86,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(BooleanLiteral node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(BreakStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(CastExpression node) {
     // System.out.println(node);
     return super.visit(node);
@@ -110,25 +98,7 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(CharacterLiteral node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(ClassInstanceCreation node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(CompilationUnit node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(ConditionalExpression node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -140,64 +110,31 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(ContinueStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(CreationReference node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(Dimension node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(DoStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(EmptyStatement node) {
     // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
-  public boolean visit(EnhancedForStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(EnumConstantDeclaration node) {
-    /*
-    JavaEnumConstant enumConstant = new JavaEnumConstant();
-    enumConstant.setValue(node.getFlags());
-    enumConstant.setTypeId(node.getNodeType());
-    enumConstant.setQualifiedName(node.getName().toString());
-    em.persist(enumConstant);
-    em.getTransaction().commit();
-    System.out.println(node);
-    */
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(EnumDeclaration node) {
-    /*
     JavaEnum _enum = new JavaEnum();
-    _enum.setName(node.getName().toString());
-    _enum.setTypeId(node.getNodeType());
-    em.persist(_enum);
-    em.getTransaction().commit();
-    */
+
+    for (Object ecnObj : node.enumConstants()) {
+      EnumConstantDeclaration enumConstantNode =
+              ((EnumConstantDeclaration) ecnObj);
+      JavaEnumConstant enumConstant = new JavaEnumConstant();
+
+      enumConstant.setValue(enumConstantNode.getName().toString());
+      _enum.addJavaEnumConstant(enumConstant);
+
+      persistJavaAstNodeRow(
+              enumConstantNode, SymbolType.ENUM_CONSTANT, AstType.DECLARATION
+      );
+    }
+
+    persistJavaAstNodeRow(node, SymbolType.ENUM, AstType.DECLARATION);
+    persistRow(_enum);
+
     return super.visit(node);
   }
 
@@ -247,11 +184,14 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(ImportDeclaration node) {
     // mindkét mező egy fileid
 
+    /*
     JavaImport _import = new JavaImport();
-    // _import.setImporter(...);
-    _import.setImported(node.getFlags());
+    _import.setImporter(...);
+    _import.setImported(...);
 
     persistRow(_import);
+    */
+
     return super.visit(node);
   }
 
@@ -298,12 +238,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(LineComment node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(MarkerAnnotation node) {
     // System.out.println(node);
     return super.visit(node);
@@ -325,15 +259,23 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(MethodDeclaration node) {
     if (!node.isConstructor()) {
       JavaMethod javaMethod = new JavaMethod();
-      String typeString = node.getReturnType2().toString();
+      String qTypeString = "";
+      try {
+        qTypeString = node.getReturnType2().resolveBinding().getQualifiedName();
+      } catch (NullPointerException ignored) {
+        // System.out.println(node.getName());
+      }
+
+      // System.out.println(node.resolveBinding());
+      // System.out.println(node.getName().resolveBinding());
       // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
       // valószínóleg nem, de ez kéne
 
       persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.DECLARATION);
 
       setJavaEntityFields(javaMethod, node);
-      javaMethod.setTypeHash(typeString.hashCode());
-      javaMethod.setQualifiedType(typeString);
+      javaMethod.setTypeHash(qTypeString.hashCode());
+      javaMethod.setQualifiedType(qTypeString);
 
       persistRow(javaMethod);
     } else {
@@ -396,18 +338,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(NullLiteral node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(NumberLiteral node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(OpensDirective node) {
     // System.out.println(node);
     return super.visit(node);
@@ -432,24 +362,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(PostfixExpression node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(PrefixExpression node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(PrimitiveType node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(ProvidesDirective node) {
     // System.out.println(node);
     return super.visit(node);
@@ -463,18 +375,6 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(QualifiedType node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(RequiresDirective node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(ReturnStatement node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -500,22 +400,22 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(SingleVariableDeclaration node) {
     JavaVariable javaVariable = new JavaVariable();
-    String typeString = node.getType().toString();
+    String qTypeString = "";
+
+    try {
+      qTypeString = node.getType().resolveBinding().getQualifiedName();
+      javaVariable.setQualifiedType(qTypeString);
+    } catch (NullPointerException ignored) {
+      // System.out.println(node.getName());
+    }
 
     persistJavaAstNodeRow(node, SymbolType.VARIABLE, AstType.DECLARATION);
 
     setJavaEntityFields(javaVariable, node);
-    javaVariable.setTypeHash(typeString.hashCode());
-    javaVariable.setQualifiedType(typeString);
+    javaVariable.setTypeHash(qTypeString.hashCode());
 
     persistRow(javaVariable);
 
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(StringLiteral node) {
-    // System.out.println(node);
     return super.visit(node);
   }
 
@@ -544,36 +444,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(SwitchCase node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(SwitchStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(SynchronizedStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TagElement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TextElement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(ThisExpression node) {
     // System.out.println(node);
     return super.visit(node);
@@ -581,12 +451,6 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ThrowStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TryStatement node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -622,18 +486,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(UnionType node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(UsesDirective node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(VariableDeclarationExpression node) {
     // System.out.println(node);
     return super.visit(node);
@@ -647,18 +499,6 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(VariableDeclarationStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(WhileStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(WildcardType node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -687,13 +527,9 @@ public class AstVisitor extends ASTVisitor {
     ASTNode node, SymbolType symbolType, AstType astType
   ) {
     JavaAstNode javaAstNode = new JavaAstNode();
-    PositionInfo positionInfo = new PositionInfo(this.cu, node);
+    PositionInfo positionInfo;
 
     // location_file = file id a File táblából
-
-    // symbol_type, ast_type = enum, megmondja, hogy milyen típusú a kifejezés (értékadás, def. stb..)
-    // symbol type = az adott identifier micsoda? változó, enum, enumkonstans, stb
-
     // visibleinsourcecode: akkor lesz false, ha az adott függvényt, vagy akármit
     // nem közvetlenül hívjuk a forráskódból, hanem hívunk valamit egy libraryből, ami meghívja aztán ezt
     try {
@@ -702,19 +538,29 @@ public class AstVisitor extends ASTVisitor {
       Javadoc javadoc =
               (Javadoc) getJavadocMethod.invoke(node, (Object[]) null);
 
+      int javadocLen = javadoc.toString().length();
+      positionInfo = new PositionInfo(this.cu, node, javadocLen);
+
       javaAstNode.setAstValue(
-              node.toString().substring(javadoc.toString().length())
+              node.toString().substring(javadocLen)
       );
+      javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
+      javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
+      javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
+      javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
+
     } catch (NoSuchMethodException | NullPointerException e) {
+      positionInfo = new PositionInfo(this.cu, node);
+
       javaAstNode.setAstValue(node.toString());
+      javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
+      javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
+      javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
+      javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
+
     } catch (IllegalAccessException | InvocationTargetException e) {
       e.printStackTrace();
     }
-
-    javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
-    javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
-    javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
-    javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
     javaAstNode.setEntityHash(node.hashCode());
     javaAstNode.setSymbolType(symbolType);
     javaAstNode.setAstType(astType);

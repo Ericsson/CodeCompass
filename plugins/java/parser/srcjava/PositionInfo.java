@@ -20,6 +20,15 @@ public class PositionInfo {
     this.endColumn = cu.getColumnNumber(end);
   }
 
+  public PositionInfo(CompilationUnit cu, ASTNode node, int javadocLen) {
+    this.start = node.getStartPosition() + javadocLen;
+    this.end = node.getStartPosition() + node.getLength();
+    this.startLine = cu.getLineNumber(start);
+    this.startColumn = cu.getColumnNumber(start);
+    this.endLine = cu.getLineNumber(end);
+    this.endColumn = cu.getColumnNumber(end);
+  }
+
   public int getStart() {
     return start;
   }

@@ -3,5 +3,7 @@ package model.enums;
 public enum SymbolType {
     VARIABLE,
     CONSTRUCTOR,
-    METHOD
+    METHOD,
+    ENUM,
+    ENUM_CONSTANT
 }

@@ -29,6 +29,11 @@ bool JavaParser::parse()
   {
     if (accept(path))
     {
+      // _ctx.srcMgr.getFile(path); vagy nem path, hanem a java fájlok.
+      // Persist is megvan ezzel a függvénnyel.
+      // ODB transactiont kell csinálni majd.
+      // transaction-nel lekérem az összes build actiont,
+      // és az alapján persistelem a fájlokat, cppparserben minta
       bp::system(
               _java_path, "-jar", "../lib/java/javaparser.jar",
               _ctx.options["database"].as<std::string>(), path

@@ -16,6 +16,9 @@ public class JavaImport {
   @Column(name = "imported")
   private long imported;
 
+  @Column(name = "\"importedSymbol\"")
+  private String importedSymbol;
+
   // Getters and setters
 
   public int getId() {
@@ -40,5 +43,13 @@ public class JavaImport {
 
   public void setImported(long imported) {
     this.imported = imported;
+  }
+
+  public String getImportedSymbol() {
+    return importedSymbol;
+  }
+
+  public void setImportedSymbol(String importedSymbol) {
+    this.importedSymbol = importedSymbol;
   }
 }

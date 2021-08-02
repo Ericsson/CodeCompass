@@ -1,7 +1,7 @@
 package parser.srcjava;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -11,21 +11,24 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Enumerated;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser {
   EntityManager em;
   private ASTParser parser;
+  private final String javaVersion;
 
-  public JavaParser() {}
+  public JavaParser() {
+    this.javaVersion = getJavaVersion();
+  }
 
   public void parse(String rawDbContext, String jsonPath)
     throws ParseException, IOException
@@ -33,8 +36,6 @@ public class JavaParser {
     boolean javaFound = false;
     JSONParser jsonParser = new JSONParser();
     JSONArray commands = (JSONArray) jsonParser.parse(new FileReader(jsonPath));
-
-    ArgParser argParser = new ArgParser();
 
     for (Object c : commands) {
       if (c instanceof JSONObject) {
@@ -47,12 +48,8 @@ public class JavaParser {
             parser = ASTParser.newParser(AST.JLS_Latest);
             parser.setKind(ASTParser.K_COMPILATION_UNIT);
           }
-          HashMap<String, ArrayList<String>> argsMap =
-            argParser.parse(
-              ((JSONObject) c).get("command").toString(), filePathStr
-            );
 
-          parseFile(filePathStr, argsMap);
+          parseFile(filePathStr, new ArgParser((JSONObject) c));
         }
       } else {
         System.out.println("Command object has wrong syntax.");
@@ -61,24 +58,47 @@ public class JavaParser {
   }
 
   private void parseFile(
-    String path, HashMap<String, ArrayList<String>> argsMap)
+    String filePathStr, ArgParser argParser)
     throws IOException
   {
-    File file = new File(path);
-    String str = FileUtils.readFileToString(file, "UTF-8");
+    System.out.println("Parsing: " + filePathStr);
 
-    /*
+    File file = new File(filePathStr);
+    String fileStr = FileUtils.readFileToString(file, "UTF-8");
+
+    parser.setResolveBindings(true);
+    parser.setBindingsRecovery(true);
+    parser.setCompilerOptions(getJavaCoreOptions());
+    parser.setUnitName(argParser.getFilename());
     parser.setEnvironment(
-      argsMap.get("classpath").toArray(new String[0]),
-      argsMap.get("sourcepath").toArray(new String[0]),
+      argParser.getClasspath().toArray(new String[0]),
+      argParser.getSourcepath().toArray(new String[0]),
       new String[]{"UTF-8"}, false
     );
-    */
-    parser.setSource(str.toCharArray());
+    parser.setSource(fileStr.toCharArray());
 
-    System.out.println(path);
     CompilationUnit cu = (CompilationUnit) parser.createAST(null);
+
     AstVisitor visitor = new AstVisitor(cu, em);
     cu.accept(visitor);
+  }
+
+  private Hashtable<String, String> getJavaCoreOptions() {
+    Hashtable<String, String> options = JavaCore.getOptions();
+    JavaCore.setComplianceOptions(javaVersion, options);
+
+    return options;
+  }
+
+  private String getJavaVersion() {
+    String javaCoreVersion = System.getProperty("java.version");
+    int dot1 = javaCoreVersion.indexOf(".");
+
+    if (javaCoreVersion.startsWith("1.")) {
+      int dot2 = javaCoreVersion.indexOf(".", dot1 + 1);
+      return javaCoreVersion.substring(0, dot2);
+    }
+
+    return javaCoreVersion.substring(0, dot1);
   }
 }

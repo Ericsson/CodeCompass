@@ -1,21 +1,32 @@
 package parser.srcjava;
 
+import org.json.simple.JSONObject;
 import parser.srcjava.enums.ValidCommands;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 public class ArgParser {
-  private final String JREPathStr;
+  private static final String JREPathStr = System.getProperty("java.home");
+  private final String directory;
+  private final ArrayList<String> classpath;
+  private final ArrayList<String> sourcepath;
+  private final String filepath;
+  private final String filename;
 
-  public ArgParser() {
-    JREPathStr = this.getJREPath();
+  public ArgParser(JSONObject jsonObject) throws IllegalArgumentException {
+    this.directory = jsonObject.get("directory").toString();
+    this.classpath = new ArrayList<>();
+    this.sourcepath = new ArrayList<>();
+    this.filepath = jsonObject.get("file").toString();
+    this.filename = Paths.get(this.filepath).getFileName().toString();
+
+    parseCommand(jsonObject.get("command").toString());
   }
 
-  public HashMap<String, ArrayList<String>> parse(
-    String fullCommand, String filePathStr)
-    throws IllegalArgumentException
+  private void parseCommand(String fullCommand) throws IllegalArgumentException
   {
-    HashMap<String, ArrayList<String>> argsMap = new HashMap<>();
+    this.classpath.add(JREPathStr);
     List<String> rawArgs = Arrays.asList(fullCommand.split(" "));
     Iterator<String> argIt = rawArgs.iterator();
     String command = argIt.next();
@@ -26,28 +37,18 @@ public class ArgParser {
       throw new IllegalArgumentException("Unknown command.");
     }
 
-    argsMap.put("classpath", new ArrayList<String>(){{add(JREPathStr);}});
-    argsMap.put("sourcepath", new ArrayList<>());
-
     if (command.equals(ValidCommands.JAVAC.getName())) {
-      parseJavacCommand(argsMap, argIt, filePathStr);
+      parseJavacCommand(argIt);
     }
     /*
     UNDER CONSTRUCTION
     else if (command.equals(ValidCommands.MVN.getName())) {
     } etc...
     */
-
-    return argsMap;
-  }
-
-  private String getJREPath() {
-    return "";
   }
 
   private void parseJavacCommand(
-    HashMap<String, ArrayList<String>> argsMap,
-    Iterator<String> argIt, String filePathStr)
+    Iterator<String> argIt)
     throws IllegalArgumentException
   {
     int filePathCounter = 0;
@@ -60,13 +61,11 @@ public class ArgParser {
         }
         String flagName = nextArg.substring(1);
         if (flagName.equals("cp") || flagName.equals("classpath")) {
-          Arrays.stream(argIt.next().split(":"))
-            .forEach(cp -> argsMap.get("classpath").add(cp));
+          classpath.addAll(Arrays.asList(argIt.next().split(":")));
         } else if (flagName.equals("sourcepath")) {
-          Arrays.stream(argIt.next().split(":"))
-            .forEach(sp -> argsMap.get("sourcepath").add(sp));
+          sourcepath.addAll(Arrays.asList(argIt.next().split(":")));
         }
-      } else if (nextArg.equals(filePathStr)) {
+      } else if (nextArg.equals(filepath)) {
         filePathCounter += 1;
       } else {
         throw new IllegalArgumentException("Command has invalid syntax");
@@ -75,5 +74,29 @@ public class ArgParser {
     if (filePathCounter > 1) {
       throw new IllegalArgumentException("Command has invalid syntax");
     }
+  }
+
+  public static String getJREPathStr() {
+    return JREPathStr;
+  }
+
+  public String getDirectory() {
+    return directory;
+  }
+
+  public ArrayList<String> getClasspath() {
+    return classpath;
+  }
+
+  public ArrayList<String> getSourcepath() {
+    return sourcepath;
+  }
+
+  public String getFilepath() {
+    return filepath;
+  }
+
+  public String getFilename() {
+    return filename;
   }
 }
