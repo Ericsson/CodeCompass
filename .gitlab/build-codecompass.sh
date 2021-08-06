@@ -21,14 +21,16 @@ export CPLUS_INCLUDE_PATH=$DEPS_INSTALL_BUILD_DIR/gtest-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include
+:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include\
+:$DEPS_INSTALL_RUNTIME_DIR/openldap-install/include
 
 export C_INCLUDE_PATH=$DEPS_INSTALL_BUILD_DIR/gtest-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libgit2-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include
+:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include\
+:$DEPS_INSTALL_RUNTIME_DIR/openldap-install/include
 
 export LIBRARY_PATH=$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/lib\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/lib\
@@ -47,7 +49,8 @@ export CMAKE_PREFIX_PATH=$DEPS_INSTALL_RUNTIME_DIR/libgit2-install\
 :$DEPS_INSTALL_RUNTIME_DIR/odb-install\
 :$DEPS_INSTALL_RUNTIME_DIR/thrift-install\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install\
-:$DEPS_INSTALL_RUNTIME_DIR/llvm-install
+:$DEPS_INSTALL_RUNTIME_DIR/llvm-install\
+:$DEPS_INSTALL_RUNTIME_DIR/openldap-install
 
 export GTEST_ROOT=$DEPS_INSTALL_BUILD_DIR/gtest-install
 
@@ -61,5 +64,6 @@ cmake $CC_SRC_DIR \
   -DDATABASE=pgsql \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DLLVM_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/llvm/ \
-  -DClang_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/clang/
+  -DClang_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/clang \
+  -DWITH_AUTH="plain;ldap"
 make install --quiet --jobs $(nproc)
