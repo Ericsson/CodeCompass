@@ -74,6 +74,7 @@ tarball suse-15:
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
+        - zypper install -y groff groff-full
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
         # show GLIBC verison
@@ -95,6 +96,8 @@ tarball suse-42.1:
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
+        # build tools for OpenLDAP
+        - zypper install -y groff groff-full
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
         # show GLIBC verison
@@ -116,6 +119,8 @@ tarball ubuntu-16.04:
         - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
         # build tools for ctags
         - apt-get install -yqq dh-autoreconf pkg-config
+        # build tools for OpenLDAP
+        - apt install -yqq groff groff-base
         # build tools for ccdb-tools
         - apt-get install -yqq libffi-dev
         # show GLIBC verison
