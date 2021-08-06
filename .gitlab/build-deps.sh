@@ -392,7 +392,7 @@ wget --no-verbose --no-clobber http://mirror.eu.oneandone.net/software/openldap/
 tar -xf openldap-2.5.6.tgz
 
 cd openldap-2.5.6
-./configure --quiet --prefix=$DEPS_INSTALL_BUILD_DIR/openldap-install
+./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/openldap-install
 make depend
 make
 make install
