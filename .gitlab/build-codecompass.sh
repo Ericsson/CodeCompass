@@ -21,16 +21,14 @@ export CPLUS_INCLUDE_PATH=$DEPS_INSTALL_BUILD_DIR/gtest-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openldap-install/include
+:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include
 
 export C_INCLUDE_PATH=$DEPS_INSTALL_BUILD_DIR/gtest-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libgit2-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/include\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include\
-:$DEPS_INSTALL_RUNTIME_DIR/openldap-install/include
+:$DEPS_INSTALL_RUNTIME_DIR/openssl-install/include
 
 export LIBRARY_PATH=$DEPS_INSTALL_RUNTIME_DIR/graphviz-install/lib\
 :$DEPS_INSTALL_RUNTIME_DIR/libmagic-install/lib\
