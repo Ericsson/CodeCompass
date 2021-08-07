@@ -398,7 +398,6 @@ make
 make install
 
 rm -f $PACKAGES_DIR/openldap-2.5.6.tgz
-export PATH=$DEPS_INSTALL_RUNTIME_DIR/openldap-install/bin:$PATH
 
 #######
 # pip #
