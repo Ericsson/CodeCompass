@@ -119,10 +119,14 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(EnumDeclaration node) {
     JavaEnum _enum = new JavaEnum();
 
+    setJavaEntityFields(_enum, node);
+
     for (Object ecnObj : node.enumConstants()) {
       EnumConstantDeclaration enumConstantNode =
               ((EnumConstantDeclaration) ecnObj);
       JavaEnumConstant enumConstant = new JavaEnumConstant();
+
+      setJavaEntityFields(enumConstant, node);
 
       enumConstant.setValue(enumConstantNode.getName().toString());
       _enum.addJavaEnumConstant(enumConstant);
@@ -513,6 +517,8 @@ public class AstVisitor extends ASTVisitor {
       // javaEntity.setAstNodeId(...);
       javaEntity.setEntityHash(node.hashCode());
       javaEntity.setName(name.toString());
+
+      // resolveBindings ?
       javaEntity.setQualifiedName(name.getFullyQualifiedName());
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
