@@ -121,18 +121,19 @@ public class AstVisitor extends ASTVisitor {
 
     setJavaEntityFields(_enum, node);
 
+    // persist enum constants
     for (Object ecnObj : node.enumConstants()) {
       EnumConstantDeclaration enumConstantNode =
-              ((EnumConstantDeclaration) ecnObj);
+        ((EnumConstantDeclaration) ecnObj);
       JavaEnumConstant enumConstant = new JavaEnumConstant();
 
-      setJavaEntityFields(enumConstant, node);
+      setJavaEntityFields(enumConstant, enumConstantNode);
 
       enumConstant.setValue(enumConstantNode.getName().toString());
       _enum.addJavaEnumConstant(enumConstant);
 
       persistJavaAstNodeRow(
-              enumConstantNode, SymbolType.ENUM_CONSTANT, AstType.DECLARATION
+        enumConstantNode, SymbolType.ENUM_CONSTANT, AstType.DECLARATION
       );
     }
 
@@ -225,7 +226,14 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(Javadoc node) {
-    // System.out.println(node);
+    JavaDocComment javaDocComment = new JavaDocComment();
+    String commentString = node.toString();
+
+    javaDocComment.setContent(commentString);
+    javaDocComment.setContentHash(commentString.hashCode());
+
+    persistRow(javaDocComment);
+
     return super.visit(node);
   }
 
@@ -275,18 +283,49 @@ public class AstVisitor extends ASTVisitor {
       // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
       // valószínóleg nem, de ez kéne
 
-      persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.DECLARATION);
-
       setJavaEntityFields(javaMethod, node);
+
       javaMethod.setTypeHash(qTypeString.hashCode());
       javaMethod.setQualifiedType(qTypeString);
 
+      // persist method's parameters
+      for (Object svdObj : node.parameters()) {
+        SingleVariableDeclaration variableDeclarationNode =
+          ((SingleVariableDeclaration) svdObj);
+        JavaVariable javaVariable = new JavaVariable();
+
+        setJavaEntityFields(javaVariable, variableDeclarationNode);
+
+        javaMethod.addJavaMetVarParam(javaVariable);
+
+        persistJavaAstNodeRow(
+          variableDeclarationNode, SymbolType.VARIABLE, AstType.DECLARATION
+        );
+      }
+
+      persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.DECLARATION);
       persistRow(javaMethod);
     } else {
       JavaConstructor javaConstructor = new JavaConstructor();
 
-      persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.DECLARATION);
       setJavaEntityFields(javaConstructor, node);
+
+      // persist constructor's parameters
+      for (Object svdObj : node.parameters()) {
+        SingleVariableDeclaration variableDeclarationNode =
+          ((SingleVariableDeclaration) svdObj);
+        JavaVariable javaVariable = new JavaVariable();
+
+        setJavaEntityFields(javaVariable, variableDeclarationNode);
+
+        javaConstructor.addJavaConVarParam(javaVariable);
+
+        persistJavaAstNodeRow(
+          variableDeclarationNode, SymbolType.VARIABLE, AstType.DECLARATION
+        );
+      }
+
+      persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.DECLARATION);
       persistRow(javaConstructor);
     }
 

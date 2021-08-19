@@ -13,8 +13,9 @@ public class JavaDocComment {
   @Column(name = "\"contentHash\"")
   private long contentHash;
 
+  @Lob
   @Column(name = "\"content\"")
-  private int content;
+  private String content;
 
   @Column(name = "\"entityHash\"")
   private long entityHash;
@@ -37,11 +38,11 @@ public class JavaDocComment {
     this.contentHash = contentHash;
   }
 
-  public int getContent() {
+  public String getContent() {
     return content;
   }
 
-  public void setContent(int content) {
+  public void setContent(String content) {
     this.content = content;
   }
 

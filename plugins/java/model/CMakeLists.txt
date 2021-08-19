@@ -4,9 +4,9 @@ set(CMAKE_JAVA_INCLUDE_PATH
 
 add_jar(javamodel
   SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/EMFactory.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/SymbolType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/AstType.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/EMFactory.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAnnotation.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaAstNode.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaConstructor.java

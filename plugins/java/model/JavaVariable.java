@@ -3,22 +3,23 @@ package model;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "\"JavaVariable\"")
 public class JavaVariable extends JavaTypedEntity {
   @ManyToMany(mappedBy = "javaMetVarParams")
-  Set<JavaMethod> javaMethodParams;
+  Set<JavaMethod> javaMethodParams = new HashSet<>();
 
   @ManyToMany(mappedBy = "javaMetVarLocals")
-  Set<JavaMethod> javaMethodLocals;
+  Set<JavaMethod> javaMethodLocals = new HashSet<>();
 
   @ManyToMany(mappedBy = "javaConVarParams")
-  Set<JavaConstructor> javaConstructorParams;
+  Set<JavaConstructor> javaConstructorParams = new HashSet<>();
 
   @ManyToMany(mappedBy = "javaConVarLocals")
-  Set<JavaConstructor> javaConstructorLocals;
+  Set<JavaConstructor> javaConstructorLocals = new HashSet<>();
 
 
   // Getters and setters
