@@ -12,13 +12,15 @@ add_library(javaparser SHARED
   src/javaparser.cpp)
 
 add_jar(javaparserjava
+  SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/enums/ValidCommands.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/ArgParser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/AstVisitor.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/JavaParser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/PositionInfo.java
   ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/Main.java
-  MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/srcjava/META-INF/MANIFEST.MF
+  META-INF/logging.properties
+  MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
   INCLUDE_JARS javamodel
   OUTPUT_NAME javaparser)
 

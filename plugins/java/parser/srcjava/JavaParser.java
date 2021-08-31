@@ -11,20 +11,39 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Enumerated;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser {
+  private static Logger LOGGER = null;
   EntityManager em;
   private ASTParser parser;
   private final String javaVersion;
+
+  static {
+    InputStream stream = JavaParser.class.getClassLoader().
+            getResourceAsStream("META-INF/logging.properties");
+
+    try {
+      LogManager.getLogManager().readConfiguration(stream);
+      LOGGER= Logger.getLogger(JavaParser.class.getName());
+
+    } catch (IOException e) {
+      System.out.println(
+              "Logger initialization for Java plugin has been failed."
+      );
+    }
+  }
 
   public JavaParser() {
     this.javaVersion = getJavaVersion();
@@ -52,7 +71,7 @@ public class JavaParser {
           parseFile(filePathStr, new ArgParser((JSONObject) c));
         }
       } else {
-        System.out.println("Command object has wrong syntax.");
+        LOGGER.log(Level.SEVERE, "Command object has wrong syntax.");
       }
     }
   }
@@ -61,7 +80,7 @@ public class JavaParser {
     String filePathStr, ArgParser argParser)
     throws IOException
   {
-    System.out.println("Parsing: " + filePathStr);
+    LOGGER.log(Level.INFO,"Parsing " + filePathStr);
 
     File file = new File(filePathStr);
     String fileStr = FileUtils.readFileToString(file, "UTF-8");
