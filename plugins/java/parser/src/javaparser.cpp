@@ -21,7 +21,7 @@ namespace parser
 {
 
 namespace bp = boost::process;
-namespace bpt = boost::property_tree;
+namespace bt = boost::property_tree;
 
 JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_)
 {
@@ -30,7 +30,7 @@ JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_)
 
 bool JavaParser::accept(const std::string &path_)
 {
-  std::string ext = bfs::extension(path_);
+  std::string ext = bs::extension(path_);
   return ext == ".json";
 }
 
@@ -47,15 +47,15 @@ bool JavaParser::parse()
       // transaction-nel lekérem az összes build actiont,
       // és az alapján persistelem a fájlokat, cppparserben minta
 
-      bpt::ptree pt;
-      bpt::read_json(path, pt);
+      bt::ptree pt;
+      bt::read_json(path, pt);
 
-      for (bpt::ptree::value_type &c : pt)
-      {
-        model::BuildSource buildSource;
-        buildSource.file =
-          _ctx.srcMgr.getFile(c.second.get<std::string>("file"));
-      }
+      // for (bt::ptree::value_type &c : pt)
+      // {
+      //   model::BuildSource buildSource;
+      //   buildSource.file =
+      //     _ctx.srcMgr.getFile(c.second.get<std::string>("file"));
+      // }
 
       bp::system(
               _java_path, "-jar", "../lib/java/javaparser.jar",
