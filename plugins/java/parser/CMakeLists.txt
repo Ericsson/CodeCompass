@@ -6,7 +6,8 @@ include_directories(
   include
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/parser/include)
+  ${PROJECT_SOURCE_DIR}/parser/include
+  ${CMAKE_BINARY_DIR}/model/include)
 
 add_library(javaparser SHARED
   src/javaparser.cpp)

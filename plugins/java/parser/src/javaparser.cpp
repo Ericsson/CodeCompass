@@ -11,6 +11,7 @@
 
 #include <util/logutil.h>
 
+#include <parser/sourcemanager.h>
 #include <javaparser/javaparser.h>
 
 #include <memory>
@@ -50,12 +51,12 @@ bool JavaParser::parse()
       bt::ptree pt;
       bt::read_json(path, pt);
 
-      // for (bt::ptree::value_type &c : pt)
-      // {
-      //   model::BuildSource buildSource;
-      //   buildSource.file =
-      //     _ctx.srcMgr.getFile(c.second.get<std::string>("file"));
-      // }
+       for (bt::ptree::value_type &c : pt)
+       {
+         model::BuildSource buildSource;
+         buildSource.file =
+           _ctx.srcMgr.getFile(c.second.get<std::string>("file"));
+       }
 
       bp::system(
               _java_path, "-jar", "../lib/java/javaparser.jar",
