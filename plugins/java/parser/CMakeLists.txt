@@ -27,6 +27,9 @@ add_jar(javaparserjava
 
 add_dependencies(javaparserjava javaparser)
 
+target_link_libraries(javaparser
+  model)
+
 target_compile_options(javaparser PUBLIC -Wno-unknown-pragmas)
 
 install(TARGETS javaparser DESTINATION ${INSTALL_PARSER_DIR})

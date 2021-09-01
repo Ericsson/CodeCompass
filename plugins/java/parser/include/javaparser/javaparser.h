@@ -11,7 +11,9 @@ namespace cc
 namespace parser
 {
 
-namespace bs = boost::filesystem;
+namespace fs = boost::filesystem;
+namespace pr = boost::process;
+namespace pt = boost::property_tree;
 
 class JavaParser : public AbstractParser
 {
@@ -21,8 +23,16 @@ public:
   virtual bool parse() override;
 
 private:
-  bs::path _java_path;
+  fs::path _java_path;
   bool accept(const std::string &path_);
+
+  model::BuildActionPtr addBuildAction(
+    const pt::ptree::value_type& command_);
+
+  void addCompileCommand(
+    const pt::ptree::value_type& command_,
+    model::BuildActionPtr buildAction_,
+    bool error_ = false);
 };
 
 } // parser

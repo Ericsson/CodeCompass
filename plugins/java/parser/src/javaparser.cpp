@@ -6,10 +6,14 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <model/buildaction.h>
+#include <model/buildaction-odb.hxx>
 #include <model/buildsourcetarget.h>
+#include <model/buildsourcetarget-odb.hxx>
 #include <model/file.h>
+#include <model/file-odb.hxx>
 
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
 
 #include <parser/sourcemanager.h>
 #include <javaparser/javaparser.h>
@@ -21,18 +25,79 @@ namespace cc
 namespace parser
 {
 
-namespace bp = boost::process;
-namespace bt = boost::property_tree;
-
 JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_)
 {
-  _java_path = bp::search_path("java");
+  _java_path = pr::search_path("java");
 }
 
 bool JavaParser::accept(const std::string &path_)
 {
-  std::string ext = bs::extension(path_);
+  std::string ext = fs::extension(path_);
   return ext == ".json";
+}
+
+model::BuildActionPtr JavaParser::addBuildAction(
+  const pt::ptree::value_type& command_)
+{
+  util::OdbTransaction transaction(_ctx.db);
+
+  model::BuildActionPtr buildAction(new model::BuildAction);
+
+  std::string extension = fs::extension(
+    command_.second.get<std::string>("file"));
+
+  buildAction->command = command_.second.get<std::string>("command");
+  buildAction->type
+    = extension == ".class"
+    ? model::BuildAction::Link
+    : model::BuildAction::Compile;
+
+  transaction([&, this]{ _ctx.db->persist(buildAction); });
+
+  return buildAction;
+}
+
+void JavaParser::addCompileCommand(
+  const pt::ptree::value_type& command_,
+  model::BuildActionPtr buildAction_,
+  bool error_)
+{
+//  util::OdbTransaction transaction(_ctx.db);
+//
+//  std::vector<model::BuildSource> sources;
+//  std::vector<model::BuildTarget> targets;
+//
+//  for (const auto& srcTarget : extractInputOutputs(command_))
+//  {
+//    model::BuildSource buildSource;
+//    buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
+//    buildSource.file->parseStatus = error_
+//      ? model::File::PSPartiallyParsed
+//      : model::File::PSFullyParsed;
+//    _ctx.srcMgr.updateFile(*buildSource.file);
+//    buildSource.action = buildAction_;
+//    sources.push_back(std::move(buildSource));
+//
+//    model::BuildTarget buildTarget;
+//    buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
+//    buildTarget.action = buildAction_;
+//    if (buildTarget.file->type != model::File::BINARY_TYPE)
+//    {
+//      buildTarget.file->type = model::File::BINARY_TYPE;
+//      _ctx.srcMgr.updateFile(*buildTarget.file);
+//    }
+//
+//    targets.push_back(std::move(buildTarget));
+//  }
+//
+//  _ctx.srcMgr.persistFiles();
+//
+//  transaction([&, this] {
+//    for (model::BuildSource buildSource : sources)
+//      _ctx.db->persist(buildSource);
+//    for (model::BuildTarget buildTarget : targets)
+//      _ctx.db->persist(buildTarget);
+//  });
 }
 
 bool JavaParser::parse()
@@ -48,17 +113,20 @@ bool JavaParser::parse()
       // transaction-nel lekérem az összes build actiont,
       // és az alapján persistelem a fájlokat, cppparserben minta
 
-      bt::ptree pt;
-      bt::read_json(path, pt);
+      pt::ptree _pt;
+      pt::read_json(path, _pt);
 
-       for (bt::ptree::value_type &c : pt)
-       {
-         model::BuildSource buildSource;
-         buildSource.file =
-           _ctx.srcMgr.getFile(c.second.get<std::string>("file"));
-       }
+      for (pt::ptree::value_type& command_ : _pt)
+      {
+        model::BuildActionPtr buildAction = addBuildAction(command_);
 
-      bp::system(
+        // model::BuildSource buildSource;
+        // buildSource.file =
+        //   _ctx.srcMgr.getFile(
+        //     command_.second.get<std::string>("file"));
+      }
+
+      pr::system(
               _java_path, "-jar", "../lib/java/javaparser.jar",
               _ctx.options["database"].as<std::string>(), path
       );
