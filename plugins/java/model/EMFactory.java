@@ -25,9 +25,7 @@ public class EMFactory {
     String contextString = splitByColon[1];
     boolean isSqlite = dbType.equals("sqlite");
     String driver =
-      isSqlite ?
-        "org.sqlite.JDBC" :
-      "org.postgresql.Driver";
+      isSqlite ? "org.sqlite.JDBC" : "org.postgresql.Driver";
     String[] contextList = contextString.split(";");
     HashMap<String, String> contextMap = new HashMap<>();
 

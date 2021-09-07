@@ -1,5 +1,6 @@
 package parser.srcjava;
 
+import cc.parser.java.CompileCommand;
 import org.json.simple.JSONObject;
 import parser.srcjava.enums.ValidCommands;
 
@@ -14,18 +15,17 @@ public class ArgParser {
   private final String filepath;
   private final String filename;
 
-  public ArgParser(JSONObject jsonObject) throws IllegalArgumentException {
-    this.directory = jsonObject.get("directory").toString();
+  public ArgParser(CompileCommand compileCommand) {
+    this.directory = compileCommand.getDirectory();
     this.classpath = new ArrayList<>();
     this.sourcepath = new ArrayList<>();
-    this.filepath = jsonObject.get("file").toString();
+    this.filepath = compileCommand.getFile();
     this.filename = Paths.get(this.filepath).getFileName().toString();
 
-    parseCommand(jsonObject.get("command").toString());
+    parseCommand(compileCommand.getCommand());
   }
 
-  private void parseCommand(String fullCommand) throws IllegalArgumentException
-  {
+  private void parseCommand(String fullCommand) {
     this.classpath.add(JREPathStr);
     List<String> rawArgs = Arrays.asList(fullCommand.split(" "));
     Iterator<String> argIt = rawArgs.iterator();

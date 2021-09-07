@@ -2,6 +2,8 @@ Manifest-Version: 1.0
 Class-Path: commons-io-2.8.0.jar
             javax.persistence-api-2.2.jar
             json-simple-1.1.1.jar
+            libthrift-0.13.0.jar
+            log4j-1.2.17.jar
             org.eclipse.core.contenttype_3.7.600.v20200124-1609.jar
             org.eclipse.core.jobs_3.10.600.v20191122-2104.jar
             org.eclipse.core.resources_3.13.600.v20191122-2104.jar
@@ -10,5 +12,8 @@ Class-Path: commons-io-2.8.0.jar
             org.eclipse.equinox.preferences_3.7.500.v20190815-1535.jar
             org.eclipse.jdt.core_3.24.0.v20201123-0742.jar
             org.eclipse.osgi_3.15.0.v20190830-1434.jar
+            slf4j-api-1.7.25.jar
+            slf4j-log4j12-1.7.25.jar
             javamodel.jar
-Main-Class: parser.srcjava.Main
+            javaparserthrift.jar
+Main-Class: parser.srcjava.JavaServer

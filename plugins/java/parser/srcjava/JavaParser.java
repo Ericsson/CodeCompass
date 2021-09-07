@@ -5,111 +5,62 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import javax.persistence.EntityManager;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
+import cc.parser.java.JavaParserService;
+import cc.parser.java.CompileCommand;
+
+import static parser.srcjava.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
 
-public class JavaParser {
-  private static Logger LOGGER = null;
-  EntityManager em;
-  private ASTParser parser;
-  private final String javaVersion;
+public class JavaParser implements JavaParserService.Iface {
+  private static String javaVersion;
+  private static EntityManager em;
+  private static ASTParser parser;
 
-  static {
-    InputStream stream = JavaParser.class.getClassLoader().
-            getResourceAsStream("META-INF/logging.properties");
+  public JavaParser(String rawDbContext) {
+    javaVersion = getJavaVersion();
+    em = createEntityManager(rawDbContext);
+    parser = ASTParser.newParser(AST.JLS_Latest);
+    parser.setKind(ASTParser.K_COMPILATION_UNIT);
+  }
+
+  @Override
+  public void parseFile(CompileCommand compileCommand) {
+    String fileName = compileCommand.getFile();
+    ArgParser argParser = new ArgParser(compileCommand);
+    LOGGER.log(Level.INFO,"Parsing " + fileName);
 
     try {
-      LogManager.getLogManager().readConfiguration(stream);
-      LOGGER= Logger.getLogger(JavaParser.class.getName());
+      File file = new File(fileName);
+      String fileStr = FileUtils.readFileToString(file, "UTF-8");
 
-    } catch (IOException e) {
-      System.out.println(
-              "Logger initialization for Java plugin has been failed."
+      parser.setResolveBindings(true);
+      parser.setBindingsRecovery(true);
+      parser.setCompilerOptions(getJavaCoreOptions());
+      parser.setUnitName(argParser.getFilename());
+      parser.setEnvironment(
+        argParser.getClasspath().toArray(new String[0]),
+        argParser.getSourcepath().toArray(new String[0]),
+        new String[]{"UTF-8"}, false
       );
+      parser.setSource(fileStr.toCharArray());
+
+      CompilationUnit cu = (CompilationUnit) parser.createAST(null);
+
+      AstVisitor visitor = new AstVisitor(cu, em);
+      cu.accept(visitor);
+    } catch (IOException e) {
+      LOGGER.log(Level.SEVERE, "Parsing " + fileName + " failed");
     }
   }
 
-  public JavaParser() {
-    this.javaVersion = getJavaVersion();
-  }
-
-  public void parse(String rawDbContext, String jsonPath)
-    throws ParseException, IOException
-  {
-    boolean javaFound = false;
-    JSONParser jsonParser = new JSONParser();
-    JSONArray commands = (JSONArray) jsonParser.parse(new FileReader(jsonPath));
-
-    for (Object c : commands) {
-      if (c instanceof JSONObject) {
-        String filePathStr = ((JSONObject) c).get("file").toString();
-        if (Files.isRegularFile(Paths.get(filePathStr)) &&
-            filePathStr.endsWith(".java")) {
-          if (!javaFound) {
-            javaFound = true;
-            em = createEntityManager(rawDbContext);
-            parser = ASTParser.newParser(AST.JLS_Latest);
-            parser.setKind(ASTParser.K_COMPILATION_UNIT);
-          }
-
-          parseFile(filePathStr, new ArgParser((JSONObject) c));
-        }
-      } else {
-        LOGGER.log(Level.SEVERE, "Command object has wrong syntax.");
-      }
-    }
-  }
-
-  private void parseFile(
-    String filePathStr, ArgParser argParser)
-    throws IOException
-  {
-    LOGGER.log(Level.INFO,"Parsing " + filePathStr);
-
-    File file = new File(filePathStr);
-    String fileStr = FileUtils.readFileToString(file, "UTF-8");
-
-    parser.setResolveBindings(true);
-    parser.setBindingsRecovery(true);
-    parser.setCompilerOptions(getJavaCoreOptions());
-    parser.setUnitName(argParser.getFilename());
-    parser.setEnvironment(
-      argParser.getClasspath().toArray(new String[0]),
-      argParser.getSourcepath().toArray(new String[0]),
-      new String[]{"UTF-8"}, false
-    );
-    parser.setSource(fileStr.toCharArray());
-
-    CompilationUnit cu = (CompilationUnit) parser.createAST(null);
-
-    AstVisitor visitor = new AstVisitor(cu, em);
-    cu.accept(visitor);
-  }
-
-  private Hashtable<String, String> getJavaCoreOptions() {
-    Hashtable<String, String> options = JavaCore.getOptions();
-    JavaCore.setComplianceOptions(javaVersion, options);
-
-    return options;
-  }
-
-  private String getJavaVersion() {
+  private static String getJavaVersion() {
     String javaCoreVersion = System.getProperty("java.version");
     int dot1 = javaCoreVersion.indexOf(".");
 
@@ -119,5 +70,12 @@ public class JavaParser {
     }
 
     return javaCoreVersion.substring(0, dot1);
+  }
+
+  private Hashtable<String, String> getJavaCoreOptions() {
+    Hashtable<String, String> options = JavaCore.getOptions();
+    JavaCore.setComplianceOptions(javaVersion, options);
+
+    return options;
   }
 }
