@@ -13,10 +13,12 @@ public class AstVisitor extends ASTVisitor {
 
   private final CompilationUnit cu;
   private final EntityManager em;
+  private final long fileId;
 
-  public AstVisitor(CompilationUnit cu, EntityManager em) {
+  public AstVisitor(CompilationUnit cu, EntityManager em, long fileId) {
     this.cu = cu;
     this.em = em;
+    this.fileId = fileId;
   }
 
   @Override
@@ -99,7 +101,13 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ClassInstanceCreation node) {
-    // System.out.println(node);
+    JavaConstructor javaConstructor = new JavaConstructor();
+
+    setJavaEntityFields(javaConstructor, node, true);
+
+    persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.USAGE);
+    persistRow(javaConstructor);
+
     return super.visit(node);
   }
 
@@ -119,7 +127,7 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(EnumDeclaration node) {
     JavaEnum _enum = new JavaEnum();
 
-    setJavaEntityFields(_enum, node);
+    setJavaEntityFields(_enum, node, false);
 
     // persist enum constants
     for (Object ecnObj : node.enumConstants()) {
@@ -127,7 +135,7 @@ public class AstVisitor extends ASTVisitor {
         ((EnumConstantDeclaration) ecnObj);
       JavaEnumConstant enumConstant = new JavaEnumConstant();
 
-      setJavaEntityFields(enumConstant, enumConstantNode);
+      setJavaEntityFields(enumConstant, enumConstantNode, false);
 
       enumConstant.setValue(enumConstantNode.getName().toString());
       _enum.addJavaEnumConstant(enumConstant);
@@ -231,6 +239,7 @@ public class AstVisitor extends ASTVisitor {
 
     javaDocComment.setContent(commentString);
     javaDocComment.setContentHash(commentString.hashCode());
+    javaDocComment.setEntityHash(node.getParent().hashCode());
 
     persistRow(javaDocComment);
 
@@ -275,7 +284,7 @@ public class AstVisitor extends ASTVisitor {
       try {
         qTypeString = node.getReturnType2().resolveBinding().getQualifiedName();
       } catch (NullPointerException ignored) {
-        // System.out.println(node.getName());
+
       }
 
       // System.out.println(node.resolveBinding());
@@ -283,7 +292,7 @@ public class AstVisitor extends ASTVisitor {
       // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
       // valószínóleg nem, de ez kéne
 
-      setJavaEntityFields(javaMethod, node);
+      setJavaEntityFields(javaMethod, node, false);
 
       javaMethod.setTypeHash(qTypeString.hashCode());
       javaMethod.setQualifiedType(qTypeString);
@@ -294,7 +303,7 @@ public class AstVisitor extends ASTVisitor {
           ((SingleVariableDeclaration) svdObj);
         JavaVariable javaVariable = new JavaVariable();
 
-        setJavaEntityFields(javaVariable, variableDeclarationNode);
+        setJavaEntityFields(javaVariable, variableDeclarationNode, false);
 
         javaMethod.addJavaMetVarParam(javaVariable);
 
@@ -308,7 +317,7 @@ public class AstVisitor extends ASTVisitor {
     } else {
       JavaConstructor javaConstructor = new JavaConstructor();
 
-      setJavaEntityFields(javaConstructor, node);
+      setJavaEntityFields(javaConstructor, node, false);
 
       // persist constructor's parameters
       for (Object svdObj : node.parameters()) {
@@ -316,7 +325,7 @@ public class AstVisitor extends ASTVisitor {
           ((SingleVariableDeclaration) svdObj);
         JavaVariable javaVariable = new JavaVariable();
 
-        setJavaEntityFields(javaVariable, variableDeclarationNode);
+        setJavaEntityFields(javaVariable, variableDeclarationNode, false);
 
         javaConstructor.addJavaConVarParam(javaVariable);
 
@@ -334,7 +343,23 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodInvocation node) {
-    // System.out.println(node);
+    JavaMethod javaMethod = new JavaMethod();
+
+    String qTypeString = "";
+    try {
+      qTypeString =
+        node.getExpression().resolveTypeBinding().getQualifiedName();
+    } catch (NullPointerException ignored) {
+    }
+
+    setJavaEntityFields(javaMethod, node, false);
+
+    javaMethod.setTypeHash(qTypeString.hashCode());
+    javaMethod.setQualifiedType(qTypeString);
+
+    persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.USAGE);
+    persistRow(javaMethod);
+
     return super.visit(node);
   }
 
@@ -449,12 +474,11 @@ public class AstVisitor extends ASTVisitor {
       qTypeString = node.getType().resolveBinding().getQualifiedName();
       javaVariable.setQualifiedType(qTypeString);
     } catch (NullPointerException ignored) {
-      // System.out.println(node.getName());
     }
 
     persistJavaAstNodeRow(node, SymbolType.VARIABLE, AstType.DECLARATION);
 
-    setJavaEntityFields(javaVariable, node);
+    setJavaEntityFields(javaVariable, node, false);
     javaVariable.setTypeHash(qTypeString.hashCode());
 
     persistRow(javaVariable);
@@ -546,19 +570,33 @@ public class AstVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  private void setJavaEntityFields(JavaEntity javaEntity, ASTNode node) {
-    try {
-      Method getNameMethod =
-              node.getClass().getMethod("getName", (Class<?>[]) null);
-      Name name =
-              (Name) getNameMethod.invoke(node, (Object[]) null);
+  private void setJavaEntityFields(
+    JavaEntity javaEntity, ASTNode node, boolean typeAsName) {
+    javaEntity.setAstNodeId(fileId);
 
-      // javaEntity.setAstNodeId(...);
+    try {
+      if (typeAsName) {
+        Method getTypeMethod =
+          node.getClass().getMethod("getType", (Class<?>[]) null);
+        Type name =
+          (Type) getTypeMethod.invoke(node, (Object[]) null);
+
+        javaEntity.setName(name.toString());
+      } else {
+        Method getNameMethod =
+          node.getClass().getMethod("getName", (Class<?>[]) null);
+        Name name =
+          (Name) getNameMethod.invoke(node, (Object[]) null);
+
+        javaEntity.setName(name.toString());
+      }
+
       javaEntity.setEntityHash(node.hashCode());
-      javaEntity.setName(name.toString());
 
       // resolveBindings ?
-      javaEntity.setQualifiedName(name.getFullyQualifiedName());
+      // System.out.println(name.resolveBinding());
+      // System.out.println("=================================");
+      // javaEntity.setQualifiedName(name.resolveBinding().toString());
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
     } catch (IllegalAccessException e) {
@@ -574,7 +612,7 @@ public class AstVisitor extends ASTVisitor {
     JavaAstNode javaAstNode = new JavaAstNode();
     PositionInfo positionInfo;
 
-    // location_file = file id a File táblából
+    javaAstNode.setLocation_file(fileId);
     // visibleinsourcecode: akkor lesz false, ha az adott függvényt, vagy akármit
     // nem közvetlenül hívjuk a forráskódból, hanem hívunk valamit egy libraryből, ami meghívja aztán ezt
     try {

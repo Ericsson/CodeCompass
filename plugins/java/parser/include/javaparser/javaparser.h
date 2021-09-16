@@ -29,9 +29,9 @@ public:
     getClientInterface();
   }
 
-  void parseFile(const CompileCommand& compile_command) override
+  int parseFile(const CompileCommand& compile_command, long fileId) override
   {
-    _service -> parseFile(compile_command);
+    return _service -> parseFile(compile_command, fileId);
   }
 
 private:
@@ -76,11 +76,14 @@ private:
 
   bool accept(const std::string &path_);
 
+  CompileCommand getCompileCommand(
+    const pt::ptree::value_type &command_tree_);
+
   model::BuildActionPtr addBuildAction(
-    const pt::ptree::value_type &command_);
+    const CompileCommand &compile_command_);
 
   void addCompileCommand(
-    const pt::ptree::value_type &command_,
+    const CompileCommand &compile_command_,
     model::BuildActionPtr buildAction_,
     bool error_ = false);
 };

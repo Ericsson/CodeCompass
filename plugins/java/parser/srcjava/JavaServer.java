@@ -1,5 +1,6 @@
 package parser.srcjava;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;

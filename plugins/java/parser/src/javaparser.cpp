@@ -38,17 +38,29 @@ bool JavaParser::accept(const std::string &path_) {
   return ext == ".json";
 }
 
-model::BuildActionPtr JavaParser::addBuildAction(
+CompileCommand JavaParser::getCompileCommand(
   const pt::ptree::value_type &command_tree_) {
+  CompileCommand compile_command;
+
+  compile_command.directory =
+    command_tree_.second.get<std::string>("directory");
+  compile_command.command =
+    command_tree_.second.get<std::string>("command");
+  compile_command.file =
+    command_tree_.second.get<std::string>("file");
+
+  return compile_command;
+}
+
+model::BuildActionPtr JavaParser::addBuildAction(
+  const CompileCommand &compile_command_) {
   util::OdbTransaction transaction(_ctx.db);
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
-  std::string extension = fs::extension(
-    command_tree_.second.get<std::string>("file"));
+  std::string extension = fs::extension(compile_command_.file);
 
-  buildAction -> command =
-    command_tree_.second.get<std::string>("command");
+  buildAction -> command = compile_command_.command;
   buildAction -> type
     = extension == ".class"
       ? model::BuildAction::Link
@@ -60,15 +72,15 @@ model::BuildActionPtr JavaParser::addBuildAction(
 }
 
 void JavaParser::addCompileCommand(
-  const pt::ptree::value_type &command_,
+  const CompileCommand &compile_command_,
   model::BuildActionPtr buildAction_,
   bool error_) {
-//  util::OdbTransaction transaction(_ctx.db);
-//
-//  std::vector<model::BuildSource> sources;
-//  std::vector<model::BuildTarget> targets;
-//
-//  for (const auto& srcTarget : extractInputOutputs(command_))
+  util::OdbTransaction transaction(_ctx.db);
+
+  std::vector<model::BuildSource> sources;
+  std::vector<model::BuildTarget> targets;
+
+//  for (const auto& srcTarget : extractInputOutputs(compile_command_))
 //  {
 //    model::BuildSource buildSource;
 //    buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
@@ -129,21 +141,15 @@ bool JavaParser::parse() {
       pt::read_json(path, _pt);
 
       for (pt::ptree::value_type &command_tree_ : _pt) {
-        CompileCommand compile_command;
-        compile_command.directory =
-          command_tree_.second.get<std::string>("directory");
-        compile_command.command =
-          command_tree_.second.get<std::string>("command");
-        compile_command.file =
-          command_tree_.second.get<std::string>("file");
-        model::BuildActionPtr buildAction = addBuildAction(command_tree_);
+        CompileCommand compile_command =
+          getCompileCommand(command_tree_);
 
-        // model::BuildSource buildSource;
-        // buildSource.file =
-        //   _ctx.srcMgr.getFile(
-        //     command_.second.get<std::string>("file"));
+        model::BuildActionPtr buildAction = addBuildAction(compile_command);
+        addCompileCommand(compile_command, buildAction);
 
-        serviceHandler.parseFile(compile_command);
+        // Run Java function via Thrift
+        int asd = serviceHandler.parseFile(
+          compile_command, _ctx.srcMgr.getFile(compile_command.file) -> id);
       }
       LOG(info) << "JavaParser parse path: " << path;
     }

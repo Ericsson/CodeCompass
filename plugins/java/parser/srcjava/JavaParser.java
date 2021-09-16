@@ -31,7 +31,7 @@ public class JavaParser implements JavaParserService.Iface {
   }
 
   @Override
-  public void parseFile(CompileCommand compileCommand) {
+  public int parseFile(CompileCommand compileCommand, long fileId) {
     String fileName = compileCommand.getFile();
     ArgParser argParser = new ArgParser(compileCommand);
     LOGGER.log(Level.INFO,"Parsing " + fileName);
@@ -53,11 +53,14 @@ public class JavaParser implements JavaParserService.Iface {
 
       CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
-      AstVisitor visitor = new AstVisitor(cu, em);
+      AstVisitor visitor = new AstVisitor(cu, em, fileId);
       cu.accept(visitor);
     } catch (IOException e) {
       LOGGER.log(Level.SEVERE, "Parsing " + fileName + " failed");
+      return 1;
     }
+
+    return 0;
   }
 
   private static String getJavaVersion() {

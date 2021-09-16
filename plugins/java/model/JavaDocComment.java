@@ -50,7 +50,7 @@ public class JavaDocComment {
     return entityHash;
   }
 
-  public void setMangledNameHash(long entityHash) {
+  public void setEntityHash(long entityHash) {
     this.entityHash = entityHash;
   }
 

@@ -10,5 +10,5 @@ struct CompileCommand
 
 service JavaParserService
 {
-  void parseFile(1: CompileCommand jsonPath)
+  i32 parseFile(1: CompileCommand jsonPath, 2: i64 fileId)
 }
