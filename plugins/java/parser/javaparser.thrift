@@ -8,7 +8,18 @@ struct CompileCommand
   3: string file
 }
 
+struct CmdArgs
+{
+  1: string directory,
+  2: list<string> classpath,
+  3: list<string> sourcepath,
+  4: string filepath,
+  5: string filename
+}
+
 service JavaParserService
 {
-  i32 parseFile(1: CompileCommand jsonPath, 2: i64 fileId)
+  void parseFile(1: i64 fileId, 2: i32 fileIndex),
+  void setArgs(1: CompileCommand compileCommand),
+  CmdArgs getArgs()
 }

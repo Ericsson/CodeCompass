@@ -117,15 +117,34 @@ bool JavaParser::parse() {
   for (const std::string &path
     : _ctx.options["input"].as<std::vector<std::string>>()) {
     if (accept(path)) {
+      int file_index = 1;
+      pt::ptree _pt;
+      pt::read_json(path, _pt);
+      pt::ptree _pt_filtered;
       pr::ipstream is;
+
+      // Filter compile commands tree to contain only Java-related files
+      std::copy_if (
+        _pt.begin(),
+        _pt.end(),
+        std::back_inserter(_pt_filtered),
+        [](pt::ptree::value_type &command_tree_)
+        {
+            auto ext = fs::extension(
+              command_tree_.second.get<std::string>("file"));
+            return ext == ".java" || ext == ".class";
+        });
+
       std::vector<std::string> _java_args{
+        "-DrawDbContext=" + _ctx.options["database"].as<std::string>(),
+        "-Dsize=" + std::to_string(_pt_filtered.size()),
         "-jar",
-        "../lib/java/javaparser.jar",
-        _ctx.options["database"].as<std::string>()
+        "../lib/java/javaparser.jar"
+
       };
 
       pr::child c(_java_path, _java_args, pr::std_out > stdout);
-      std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
       LOG(info) << "Waiting done.";
 
       // std::string line;
@@ -137,19 +156,25 @@ bool JavaParser::parse() {
       // }
 
       JavaParserServiceHandler serviceHandler;
-      pt::ptree _pt;
-      pt::read_json(path, _pt);
 
-      for (pt::ptree::value_type &command_tree_ : _pt) {
+      // Process Java files
+      for (pt::ptree::value_type &command_tree_ : _pt_filtered) {
         CompileCommand compile_command =
           getCompileCommand(command_tree_);
 
+        model::FilePtr filePtr = _ctx.srcMgr.getFile(compile_command.file);
+        filePtr -> type = "JAVA";
         model::BuildActionPtr buildAction = addBuildAction(compile_command);
-        addCompileCommand(compile_command, buildAction);
 
-        // Run Java function via Thrift
-        int asd = serviceHandler.parseFile(
-          compile_command, _ctx.srcMgr.getFile(compile_command.file) -> id);
+        // Thrift functions
+
+        // Set arguments of the current command
+        serviceHandler.setArgs(compile_command);
+        // Run Java function
+        serviceHandler.parseFile(filePtr -> id, file_index);
+
+        addCompileCommand(compile_command, buildAction);
+        ++file_index;
       }
       LOG(info) << "JavaParser parse path: " << path;
     }

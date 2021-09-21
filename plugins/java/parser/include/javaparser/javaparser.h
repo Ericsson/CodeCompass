@@ -29,9 +29,19 @@ public:
     getClientInterface();
   }
 
-  int parseFile(const CompileCommand& compile_command, long fileId) override
+  void parseFile(long fileId, int fileIndex) override
   {
-    return _service -> parseFile(compile_command, fileId);
+    _service -> parseFile(fileId, fileIndex);
+  }
+
+  void setArgs(const CompileCommand& compileCommand) override
+  {
+    _service -> setArgs(compileCommand);
+  }
+
+  void getArgs(CmdArgs& _return) override
+  {
+    _service -> getArgs(_return);
   }
 
 private:

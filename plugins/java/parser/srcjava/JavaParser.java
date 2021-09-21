@@ -14,30 +14,36 @@ import java.util.logging.Level;
 
 import cc.parser.java.JavaParserService;
 import cc.parser.java.CompileCommand;
+import cc.parser.java.CmdArgs;
 
 import static parser.srcjava.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser implements JavaParserService.Iface {
-  private static String javaVersion;
-  private static EntityManager em;
-  private static ASTParser parser;
+  private static final String size;
+  private static final String javaVersion;
+  private static final EntityManager em;
+  private static final ASTParser parser;
+  private ArgParser argParser;
 
-  public JavaParser(String rawDbContext) {
+  static {
+    size = System.getProperty("size");
     javaVersion = getJavaVersion();
-    em = createEntityManager(rawDbContext);
+    em = createEntityManager(System.getProperty("rawDbContext"));
     parser = ASTParser.newParser(AST.JLS_Latest);
     parser.setKind(ASTParser.K_COMPILATION_UNIT);
   }
 
   @Override
-  public int parseFile(CompileCommand compileCommand, long fileId) {
-    String fileName = compileCommand.getFile();
-    ArgParser argParser = new ArgParser(compileCommand);
-    LOGGER.log(Level.INFO,"Parsing " + fileName);
+  public void parseFile(long fileId, int fileIndex) {
+    String filePath = argParser.getFilepath();
+    LOGGER.log(
+      Level.INFO,
+      "(" + fileIndex + "/" + size + ") " +
+      "Parsing " + filePath);
 
     try {
-      File file = new File(fileName);
+      File file = new File(filePath);
       String fileStr = FileUtils.readFileToString(file, "UTF-8");
 
       parser.setResolveBindings(true);
@@ -56,11 +62,28 @@ public class JavaParser implements JavaParserService.Iface {
       AstVisitor visitor = new AstVisitor(cu, em, fileId);
       cu.accept(visitor);
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Parsing " + fileName + " failed");
-      return 1;
+      LOGGER.log(
+        Level.SEVERE,
+        "(" + fileIndex + "/" + size + ") " +
+        "Parsing " + filePath + " failed");
     }
+  }
 
-    return 0;
+  @Override
+  public void setArgs(CompileCommand compileCommand) {
+    argParser = new ArgParser(compileCommand);
+  }
+
+  @Override
+  public CmdArgs getArgs() {
+    CmdArgs cmdArgs = new CmdArgs();
+    cmdArgs.directory = argParser.getDirectory();
+    cmdArgs.classpath = argParser.getClasspath();
+    cmdArgs.sourcepath = argParser.getSourcepath();
+    cmdArgs.filepath = argParser.getFilepath();
+    cmdArgs.filename = argParser.getFilename();
+
+    return cmdArgs;
   }
 
   private static String getJavaVersion() {

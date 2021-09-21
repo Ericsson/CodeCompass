@@ -1,6 +1,5 @@
 package parser.srcjava;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
@@ -18,14 +17,10 @@ public class JavaServer {
 
   public static void main(String [] args) {
     try {
-      javaParser = new JavaParser(args[0]);
+      javaParser = new JavaParser();
       processor = new JavaParserService.Processor<>(javaParser);
 
-      Runnable simple = new Runnable() {
-        public void run() {
-          simple(processor);
-        }
-      };
+      Runnable simple = () -> simple(processor);
 
       new Thread(simple).start();
     } catch (Exception x) {
