@@ -168,9 +168,9 @@ bool JavaParser::parse() {
 
         // Thrift functions
 
-        // Set arguments of the current command
+        // Set arguments of the current command (prepare for parsing)
         serviceHandler.setArgs(compile_command);
-        // Run Java function
+        // Run Java parser
         serviceHandler.parseFile(filePtr -> id, file_index);
 
         addCompileCommand(compile_command, buildAction);

@@ -1,6 +1,8 @@
 package parser.srcjava;
 
+import cc.parser.java.JavaParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.thrift.TException;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -20,14 +22,14 @@ import static parser.srcjava.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser implements JavaParserService.Iface {
-  private static final String size;
+  private static final int size;
   private static final String javaVersion;
   private static final EntityManager em;
   private static final ASTParser parser;
   private ArgParser argParser;
 
   static {
-    size = System.getProperty("size");
+    size = Integer.parseInt(System.getProperty("size"));
     javaVersion = getJavaVersion();
     em = createEntityManager(System.getProperty("rawDbContext"));
     parser = ASTParser.newParser(AST.JLS_Latest);
@@ -35,7 +37,7 @@ public class JavaParser implements JavaParserService.Iface {
   }
 
   @Override
-  public void parseFile(long fileId, int fileIndex) {
+  public void parseFile(long fileId, int fileIndex) throws TException {
     String filePath = argParser.getFilepath();
     LOGGER.log(
       Level.INFO,
@@ -60,12 +62,19 @@ public class JavaParser implements JavaParserService.Iface {
       CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
       AstVisitor visitor = new AstVisitor(cu, em, fileId);
-      cu.accept(visitor);
+      try {
+        cu.accept(visitor);
+      } catch (Exception e) {
+        LOGGER.log(
+          Level.SEVERE,
+          "(" + fileIndex + "/" + size + ") " +
+            "Parsing " + filePath + " failed");
+        JavaParseException ex = new JavaParseException();
+        ex.message = e.getMessage();
+        throw ex;
+      }
     } catch (IOException e) {
-      LOGGER.log(
-        Level.SEVERE,
-        "(" + fileIndex + "/" + size + ") " +
-        "Parsing " + filePath + " failed");
+      LOGGER.log(Level.SEVERE, "Cannot read file's content as a String");
     }
   }
 

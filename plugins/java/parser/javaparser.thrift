@@ -17,9 +17,15 @@ struct CmdArgs
   5: string filename
 }
 
+exception JavaParseException
+{
+    1: string message
+}
+
 service JavaParserService
 {
-  void parseFile(1: i64 fileId, 2: i32 fileIndex),
+  void parseFile(1: i64 fileId, 2: i32 fileIndex)
+    throws (1: JavaParseException jpe),
   void setArgs(1: CompileCommand compileCommand),
   CmdArgs getArgs()
 }
