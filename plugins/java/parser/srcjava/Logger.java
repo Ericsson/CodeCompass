@@ -16,7 +16,7 @@ public abstract class Logger {
       return java.util.logging.Logger.getLogger(JavaParser.class.getName());
 
     } catch (IOException e) {
-      System.out.println(
+      System.err.println(
         "Logger initialization for Java plugin has been failed."
       );
     }

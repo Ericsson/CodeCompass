@@ -14,7 +14,9 @@ struct CmdArgs
   2: list<string> classpath,
   3: list<string> sourcepath,
   4: string filepath,
-  5: string filename
+  5: string filename,
+  6: string bytecodeDir,
+  7: list<string> bytecodesPaths
 }
 
 exception JavaParseException

@@ -93,7 +93,7 @@ private:
     const CompileCommand &compile_command_);
 
   void addCompileCommand(
-    const CompileCommand &compile_command_,
+    const CmdArgs &cmd_args_,
     model::BuildActionPtr buildAction_,
     bool error_ = false);
 };

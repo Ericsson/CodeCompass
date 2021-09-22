@@ -66,15 +66,19 @@ public class JavaParser implements JavaParserService.Iface {
         cu.accept(visitor);
       } catch (Exception e) {
         LOGGER.log(
-          Level.SEVERE,
+          Level.WARNING,
           "(" + fileIndex + "/" + size + ") " +
-            "Parsing " + filePath + " failed");
+            "Parsing " + filePath + " has been failed");
         JavaParseException ex = new JavaParseException();
         ex.message = e.getMessage();
         throw ex;
       }
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Cannot read file's content as a String");
+      LOGGER.log(Level.WARNING, "Cannot read file's content as a String");
+      LOGGER.log(
+        Level.WARNING,
+        "(" + fileIndex + "/" + size + ") " +
+          "Parsing " + filePath + " has been failed");
     }
   }
 
@@ -91,6 +95,8 @@ public class JavaParser implements JavaParserService.Iface {
     cmdArgs.sourcepath = argParser.getSourcepath();
     cmdArgs.filepath = argParser.getFilepath();
     cmdArgs.filename = argParser.getFilename();
+    cmdArgs.bytecodeDir = argParser.getBytecodePath();
+    cmdArgs.bytecodesPaths = argParser.getBytecodesPaths();
 
     return cmdArgs;
   }

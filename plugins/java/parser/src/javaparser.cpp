@@ -72,45 +72,40 @@ model::BuildActionPtr JavaParser::addBuildAction(
 }
 
 void JavaParser::addCompileCommand(
-  const CompileCommand &compile_command_,
+  const CmdArgs &cmd_args_,
   model::BuildActionPtr buildAction_,
   bool error_) {
   util::OdbTransaction transaction(_ctx.db);
 
-  std::vector<model::BuildSource> sources;
   std::vector<model::BuildTarget> targets;
 
-//  for (const auto& srcTarget : extractInputOutputs(compile_command_))
-//  {
-//    model::BuildSource buildSource;
-//    buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
-//    buildSource.file->parseStatus = error_
-//      ? model::File::PSPartiallyParsed
-//      : model::File::PSFullyParsed;
-//    _ctx.srcMgr.updateFile(*buildSource.file);
-//    buildSource.action = buildAction_;
-//    sources.push_back(std::move(buildSource));
-//
-//    model::BuildTarget buildTarget;
-//    buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
-//    buildTarget.action = buildAction_;
-//    if (buildTarget.file->type != model::File::BINARY_TYPE)
-//    {
-//      buildTarget.file->type = model::File::BINARY_TYPE;
-//      _ctx.srcMgr.updateFile(*buildTarget.file);
-//    }
-//
-//    targets.push_back(std::move(buildTarget));
-//  }
-//
-//  _ctx.srcMgr.persistFiles();
-//
-//  transaction([&, this] {
-//    for (model::BuildSource buildSource : sources)
-//      _ctx.db->persist(buildSource);
-//    for (model::BuildTarget buildTarget : targets)
-//      _ctx.db->persist(buildTarget);
-//  });
+  model::BuildSource buildSource;
+  buildSource.file = _ctx.srcMgr.getFile(cmd_args_.filepath);
+//  buildSource.file->parseStatus = error_
+//    ? model::File::PSPartiallyParsed
+//    : model::File::PSFullyParsed;
+  _ctx.srcMgr.updateFile(*buildSource.file);
+  buildSource.action = buildAction_;
+
+  for (std::string target : cmd_args_.bytecodesPaths) {
+    model::BuildTarget buildTarget;
+    buildTarget.file = _ctx.srcMgr.getFile(target);
+    buildTarget.action = buildAction_;
+    if (buildTarget.file->type != model::File::BINARY_TYPE) {
+      buildTarget.file->type = model::File::BINARY_TYPE;
+      _ctx.srcMgr.updateFile(*buildTarget.file);
+    }
+
+    targets.push_back(std::move(buildTarget));
+  }
+
+  _ctx.srcMgr.persistFiles();
+
+  transaction([&, this] {
+    _ctx.db->persist(buildSource);
+    for (model::BuildTarget buildTarget : targets)
+      _ctx.db->persist(buildTarget);
+  });
 }
 
 bool JavaParser::parse() {
@@ -140,7 +135,6 @@ bool JavaParser::parse() {
         "-Dsize=" + std::to_string(_pt_filtered.size()),
         "-jar",
         "../lib/java/javaparser.jar"
-
       };
 
       pr::child c(_java_path, _java_args, pr::std_out > stdout);
@@ -173,7 +167,12 @@ bool JavaParser::parse() {
         // Run Java parser
         serviceHandler.parseFile(filePtr -> id, file_index);
 
-        addCompileCommand(compile_command, buildAction);
+        // Get arguments for the current file
+        CmdArgs cmdArgs;
+        serviceHandler.getArgs(cmdArgs);
+        
+        addCompileCommand(cmdArgs, buildAction);
+
         ++file_index;
       }
       LOG(info) << "JavaParser parse path: " << path;
