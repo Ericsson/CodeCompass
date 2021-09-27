@@ -383,6 +383,22 @@ cd $DEPS_INSTALL_RUNTIME_DIR
 mv node-v14.15.0-linux-x64 node-install
 export PATH=$DEPS_INSTALL_RUNTIME_DIR/node-install/bin:$PATH
 
+############
+# OpenLDAP #
+############
+
+cd $PACKAGES_DIR
+wget --no-verbose --no-clobber http://mirror.eu.oneandone.net/software/openldap/openldap-release/openldap-2.5.6.tgz
+tar -xf openldap-2.5.6.tgz
+
+cd openldap-2.5.6
+./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/openldap-install
+make depend
+make
+make install
+
+rm -f $PACKAGES_DIR/openldap-2.5.6.tgz
+
 #######
 # pip #
 #######

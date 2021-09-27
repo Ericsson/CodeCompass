@@ -47,7 +47,8 @@ export CMAKE_PREFIX_PATH=$DEPS_INSTALL_RUNTIME_DIR/libgit2-install\
 :$DEPS_INSTALL_RUNTIME_DIR/odb-install\
 :$DEPS_INSTALL_RUNTIME_DIR/thrift-install\
 :$DEPS_INSTALL_RUNTIME_DIR/boost-install\
-:$DEPS_INSTALL_RUNTIME_DIR/llvm-install
+:$DEPS_INSTALL_RUNTIME_DIR/llvm-install\
+:$DEPS_INSTALL_RUNTIME_DIR/openldap-install
 
 export GTEST_ROOT=$DEPS_INSTALL_BUILD_DIR/gtest-install
 
@@ -60,6 +61,7 @@ cmake $CC_SRC_DIR \
   -DCMAKE_INSTALL_PREFIX=$CC_INSTALL_DIR \
   -DDATABASE=pgsql \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DWITH_AUTH="plain;ldap" \
   -DLLVM_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/llvm/ \
   -DClang_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/clang/
 make install --quiet --jobs $(nproc)
