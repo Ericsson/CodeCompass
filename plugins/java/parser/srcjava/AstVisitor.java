@@ -647,6 +647,7 @@ public class AstVisitor extends ASTVisitor {
     javaAstNode.setEntityHash(node.hashCode());
     javaAstNode.setSymbolType(symbolType);
     javaAstNode.setAstType(astType);
+    javaAstNode.setVisibleInSourceCode(true);
 
     persistRow(javaAstNode);
   }

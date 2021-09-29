@@ -1,6 +1,6 @@
 package parser.srcjava;
 
-import cc.parser.java.JavaParseException;
+import cc.parser.java.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
 import org.eclipse.jdt.core.JavaCore;
@@ -13,10 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
-
-import cc.parser.java.JavaParserService;
-import cc.parser.java.CompileCommand;
-import cc.parser.java.CmdArgs;
 
 import static parser.srcjava.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
@@ -48,37 +44,44 @@ public class JavaParser implements JavaParserService.Iface {
       File file = new File(filePath);
       String fileStr = FileUtils.readFileToString(file, "UTF-8");
 
+      String[] classpathEntries =
+        argParser.getClasspath().toArray(new String[0]);
+      String[] sourcepathEntries =
+        argParser.getSourcepath().toArray(new String[0]);
+      String[] encodings = new String[sourcepathEntries.length];
+      Arrays.fill(encodings, "UTF-8");
+
       parser.setResolveBindings(true);
       parser.setBindingsRecovery(true);
       parser.setCompilerOptions(getJavaCoreOptions());
       parser.setUnitName(argParser.getFilename());
       parser.setEnvironment(
-        argParser.getClasspath().toArray(new String[0]),
-        argParser.getSourcepath().toArray(new String[0]),
-        new String[]{"UTF-8"}, false
+        classpathEntries, sourcepathEntries,
+        encodings, false
       );
       parser.setSource(fileStr.toCharArray());
 
       CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
       AstVisitor visitor = new AstVisitor(cu, em, fileId);
-      try {
-        cu.accept(visitor);
-      } catch (Exception e) {
-        LOGGER.log(
-          Level.WARNING,
-          "(" + fileIndex + "/" + size + ") " +
-            "Parsing " + filePath + " has been failed");
-        JavaParseException ex = new JavaParseException();
-        ex.message = e.getMessage();
-        throw ex;
-      }
+      cu.accept(visitor);
     } catch (IOException e) {
-      LOGGER.log(Level.WARNING, "Cannot read file's content as a String");
+      LOGGER.log(
+        Level.WARNING,
+        "(" + fileIndex + "/" + size + ") " +
+          "Parsing " + filePath + " has been failed before the start");
+      JavaBeforeParseException ex = new JavaBeforeParseException();
+      ex.message = e.getMessage();
+      throw ex;
+    } catch (Exception e) {
+      System.out.println(e);
       LOGGER.log(
         Level.WARNING,
         "(" + fileIndex + "/" + size + ") " +
           "Parsing " + filePath + " has been failed");
+      JavaParseException ex = new JavaParseException();
+      ex.message = e.getMessage();
+      throw ex;
     }
   }
 

@@ -95,7 +95,7 @@ private:
   void addCompileCommand(
     const CmdArgs &cmd_args_,
     model::BuildActionPtr buildAction_,
-    bool error_ = false);
+    short parse_state_);
 };
 
 } // java

@@ -1,11 +1,12 @@
 include_directories(
   include
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp
+  ${PROJECT_SOURCE_DIR}/service/project/include
   ${PLUGIN_DIR}/model/include)
 
 include_directories(SYSTEM
@@ -55,7 +56,7 @@ add_jar(javaservicethriftjava
 add_dependencies(javaservicethriftjava javaservicethrift)
 
 # Src java
-add_subdirectory(src-java)
+add_subdirectory(srcjava)
 
 add_library(javaservice SHARED
   src/javaservice.cpp
@@ -71,8 +72,8 @@ target_link_libraries(javaservice
   projectservice
   projectthrift
   languagethrift
-  ${THRIFT_LIBTHRIFT_LIBRARIES}
-  ${ODB_LIBRARIES})
+  gvc
+  ${THRIFT_LIBTHRIFT_LIBRARIES})
 
 install(TARGETS javaservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_jar(javaservicethriftjava ${INSTALL_JAVA_LIB_DIR})

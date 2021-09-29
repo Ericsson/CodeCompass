@@ -19,6 +19,11 @@ struct CmdArgs
   7: list<string> bytecodesPaths
 }
 
+exception JavaBeforeParseException
+{
+    1: string message
+}
+
 exception JavaParseException
 {
     1: string message
@@ -27,7 +32,7 @@ exception JavaParseException
 service JavaParserService
 {
   void parseFile(1: i64 fileId, 2: i32 fileIndex)
-    throws (1: JavaParseException jpe),
+    throws (1: JavaBeforeParseException jbe, 2: JavaParseException jpe),
   void setArgs(1: CompileCommand compileCommand),
   CmdArgs getArgs()
 }

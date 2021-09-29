@@ -74,16 +74,25 @@ model::BuildActionPtr JavaParser::addBuildAction(
 void JavaParser::addCompileCommand(
   const CmdArgs &cmd_args_,
   model::BuildActionPtr buildAction_,
-  bool error_) {
+  short parse_state_) {
   util::OdbTransaction transaction(_ctx.db);
 
   std::vector<model::BuildTarget> targets;
 
   model::BuildSource buildSource;
   buildSource.file = _ctx.srcMgr.getFile(cmd_args_.filepath);
-//  buildSource.file->parseStatus = error_
-//    ? model::File::PSPartiallyParsed
-//    : model::File::PSFullyParsed;
+
+  switch (parse_state_) {
+    case 0:
+      buildSource.file->parseStatus = model::File::PSNone;
+      break;
+    case 1:
+      buildSource.file->parseStatus = model::File::PSPartiallyParsed;
+      break;
+    case 2:
+      buildSource.file->parseStatus = model::File::PSFullyParsed;
+      break;
+  }
   _ctx.srcMgr.updateFile(*buildSource.file);
   buildSource.action = buildAction_;
 
@@ -155,23 +164,31 @@ bool JavaParser::parse() {
       for (pt::ptree::value_type &command_tree_ : _pt_filtered) {
         CompileCommand compile_command =
           getCompileCommand(command_tree_);
-
         model::FilePtr filePtr = _ctx.srcMgr.getFile(compile_command.file);
         filePtr -> type = "JAVA";
         model::BuildActionPtr buildAction = addBuildAction(compile_command);
+        short parse_state = 2;
 
         // Thrift functions
 
         // Set arguments of the current command (prepare for parsing)
         serviceHandler.setArgs(compile_command);
         // Run Java parser
-        serviceHandler.parseFile(filePtr -> id, file_index);
+        try {
+          serviceHandler.parseFile(filePtr->id, file_index);
+        }  catch (JavaBeforeParseException& ex) {
+          LOG(warning) << ex.message;
+          parse_state = 0;
+        } catch (JavaParseException& ex) {
+          LOG(warning) << ex.message;
+          parse_state = 1;
+        }
 
         // Get arguments for the current file
         CmdArgs cmdArgs;
         serviceHandler.getArgs(cmdArgs);
-        
-        addCompileCommand(cmdArgs, buildAction);
+
+        addCompileCommand(cmdArgs, buildAction, parse_state);
 
         ++file_index;
       }
