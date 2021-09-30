@@ -28,7 +28,7 @@ function (lang, Deferred, model) {
       ContextButton          :  3, /** Context button menu item (eg. File outline) **/
       TextContextMenu        :  4, /** Text module context menu. **/
       Diagram                :  5, /** Diagram (eg. CppDiagram)**/
-      InfoTree               :  6, /** Info tree item (eg. CppInforTree)**/
+      InfoTree               :  6, /** Info tree item (eg. CppInfoTree)**/
       FileManagerContextMenu :  7, /** File manager context menu (eg. Diagram directory)**/
       InfoPage               :  8, /** Info page (eg. Credit, User Guide) **/
     },

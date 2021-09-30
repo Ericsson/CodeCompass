@@ -4,6 +4,11 @@
 #include <memory>
 #include <vector>
 
+#include <thrift/transport/TFDTransport.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+
 #include <boost/program_options/variables_map.hpp>
 
 #include <LanguageService.h>
@@ -13,8 +18,6 @@
 #include <webserver/servercontext.h>
 
 #include <JavaService.h>
-
-#include <service/javaserviceprocess.h>
 
 namespace cc
 {
@@ -139,23 +142,43 @@ private:
 namespace java
 {
 
-class JavaServiceHandler : virtual public JavaServiceIf // virtual public LanguageServiceIf
+class JavaServiceHandler : virtual public JavaServiceIf
 {
 public:
 
-  JavaServiceHandler(
-    std::shared_ptr<odb::database> db_,
-    std::shared_ptr<std::string> datadir_,
-    const cc::webserver::ServerContext& context_);
+  JavaServiceHandler() {
+    getClientInterface();
+  }
 
-  void getJavaString(std::string& str_);
+  void getJavaString(std::string& str_) override
+  {
+    _service -> getJavaString(str_);
+  }
 
 private:
-  std::shared_ptr<odb::database> _db;
-  util::OdbTransaction _transaction;
+  /**
+ * Creates the client interface.
+ */
+  void getClientInterface()
+  {
+    using Transport = apache::thrift::transport::TTransport;
+    using BufferedTransport = apache::thrift::transport::TBufferedTransport;
+    using Socket = apache::thrift::transport::TSocket;
+    using Protocol = apache::thrift::protocol::TBinaryProtocol;
 
-  const boost::program_options::variables_map& _config;
-  std::unique_ptr<JavaServiceProcess> _javaProcess;
+    std::shared_ptr<Transport>
+      socket(new Socket("localhost", 9090));
+    std::shared_ptr<Transport>
+      transport(new BufferedTransport(socket));
+    std::shared_ptr<Protocol>
+      protocol(new Protocol(transport));
+
+    transport -> open();
+    _service.reset(new JavaServiceClient(protocol));
+  }
+
+private:
+  std::unique_ptr<JavaServiceIf> _service;
 };
 
 } // java

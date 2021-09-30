@@ -15,10 +15,6 @@ include_directories(SYSTEM
 # Generate thrift files
 add_custom_command(
   OUTPUT
-    # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_constants.cpp
-    # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_constants.h
-    # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_types.cpp
-    # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
@@ -35,8 +31,6 @@ add_custom_command(
 
 # Create cpp static library from thrift files
 add_library(javaservicethrift STATIC
-  # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_constants.cpp
-  # ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/java_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.cpp)
 
 target_compile_options(javaservicethrift PUBLIC -fPIC)
