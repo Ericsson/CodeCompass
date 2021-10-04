@@ -1,3 +1,4 @@
+add_subdirectory(logger)
 add_subdirectory(model)
 add_subdirectory(parser)
 # add_subdirectory(test)

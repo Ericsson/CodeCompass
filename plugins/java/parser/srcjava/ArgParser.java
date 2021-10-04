@@ -12,7 +12,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static parser.srcjava.Logger.LOGGER;
+import static logger.Logger.LOGGER;
 
 public class ArgParser {
   private static final String JREPathStr = System.getProperty("java.home");

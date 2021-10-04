@@ -8,7 +8,7 @@ import org.apache.thrift.transport.TServerTransport;
 
 import java.util.logging.Level;
 
-import static parser.srcjava.Logger.LOGGER;
+import static logger.Logger.LOGGER;
 import cc.parser.java.JavaParserService;
 
 public class JavaServer {

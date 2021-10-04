@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 
-import static parser.srcjava.Logger.LOGGER;
+import static logger.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
 
 public class JavaParser implements JavaParserService.Iface {
