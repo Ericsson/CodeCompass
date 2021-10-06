@@ -291,6 +291,7 @@ function (model, viewHandler, util) {
   }
 
   var javaInfoTree = {
+    id: 'java-infotree',
     render : function (elementInfo) {
       var ret = [];
 
