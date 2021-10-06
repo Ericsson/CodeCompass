@@ -4,28 +4,77 @@
 #include <memory>
 #include <vector>
 
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+#include <boost/program_options/variables_map.hpp>
+
 #include <thrift/transport/TFDTransport.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
-#include <boost/program_options/variables_map.hpp>
-
-#include <LanguageService.h>
-
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
 
+#include <LanguageService.h>
 #include <JavaService.h>
 
 namespace cc
 {
 namespace service
 {
+namespace java
+{
+
+namespace language = cc::service::language;
+namespace core = cc::service::core;
+
+class JavaQueryHandler : public JavaServiceIf
+{
+public:
+
+  JavaQueryHandler() {
+  }
+
+  /**
+ * Creates the client interface.
+ */
+  void getClientInterface()
+  {
+    using Transport = apache::thrift::transport::TTransport;
+    using BufferedTransport = apache::thrift::transport::TBufferedTransport;
+    using Socket = apache::thrift::transport::TSocket;
+    using Protocol = apache::thrift::protocol::TBinaryProtocol;
+
+    std::shared_ptr<Transport>
+      socket(new Socket("localhost", 9090));
+    std::shared_ptr<Transport>
+      transport(new BufferedTransport(socket));
+    std::shared_ptr<Protocol>
+      protocol(new Protocol(transport));
+
+    transport -> open();
+    _service.reset(new JavaServiceClient(protocol));
+  }
+
+  void getAstNodeInfoByPosition(
+    language::AstNodeInfo& return_, const core::FilePosition& fpos_) override
+  {
+    _service -> getAstNodeInfoByPosition(return_, fpos_);
+  }
+
+private:
+  std::unique_ptr<JavaServiceIf> _service;
+};
+
+} // java
 
 namespace language
 {
+
+namespace fs = boost::filesystem;
+namespace pr = boost::process;
 
 class JavaServiceHandler : virtual public LanguageServiceIf
 {
@@ -131,57 +180,16 @@ public:
 
 private:
   std::shared_ptr<odb::database> _db;
-  util::OdbTransaction _transaction;
 
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;
+
+  fs::path _java_path;
+  pr::child c;
+  cc::service::java::JavaQueryHandler javaQueryHandler;
 };
 
 } // language
-
-namespace java
-{
-
-class JavaServiceHandler : virtual public JavaServiceIf
-{
-public:
-
-  JavaServiceHandler() {
-    getClientInterface();
-  }
-
-  void getJavaString(std::string& str_) override
-  {
-    _service -> getJavaString(str_);
-  }
-
-private:
-  /**
- * Creates the client interface.
- */
-  void getClientInterface()
-  {
-    using Transport = apache::thrift::transport::TTransport;
-    using BufferedTransport = apache::thrift::transport::TBufferedTransport;
-    using Socket = apache::thrift::transport::TSocket;
-    using Protocol = apache::thrift::protocol::TBinaryProtocol;
-
-    std::shared_ptr<Transport>
-      socket(new Socket("localhost", 9090));
-    std::shared_ptr<Transport>
-      transport(new BufferedTransport(socket));
-    std::shared_ptr<Protocol>
-      protocol(new Protocol(transport));
-
-    transport -> open();
-    _service.reset(new JavaServiceClient(protocol));
-  }
-
-private:
-  std::unique_ptr<JavaServiceIf> _service;
-};
-
-} // java
 } // service
 } // cc
 

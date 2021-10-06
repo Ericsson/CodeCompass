@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Class-Path: javax.persistence-api-2.2.jar
+            libthrift-0.13.0.jar
+            javalogger.jar
+            javamodel.jar
+            javaservicethrift.jar
+Main-Class: service.srcjava.JavaQueryServer

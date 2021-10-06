@@ -15,7 +15,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
   DEPENDS
@@ -31,4 +31,16 @@ add_library(languagethrift STATIC
 target_compile_options(languagethrift PUBLIC -fPIC)
 
 add_dependencies(languagethrift projectthrift)
+
+set(CMAKE_JAVA_INCLUDE_PATH
+  ${PROJECT_SOURCE_DIR}/lib/java/*
+  ${PROJECT_BINARY_DIR}/service/project/gen-java)
+
+add_jar(languagethriftjava
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/language/AstNodeInfo.java
+  OUTPUT_NAME languagethrift)
+
+add_dependencies(languagethriftjava languagethrift)
+
+install_jar(languagethriftjava "${INSTALL_JAVA_LIB_DIR}")
 install_js_thrift()

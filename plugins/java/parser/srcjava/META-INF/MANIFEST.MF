@@ -14,4 +14,4 @@ Class-Path: commons-io-2.8.0.jar
             javalogger.jar
             javamodel.jar
             javaparserthrift.jar
-Main-Class: parser.srcjava.JavaServer
+Main-Class: parser.srcjava.JavaParserServer

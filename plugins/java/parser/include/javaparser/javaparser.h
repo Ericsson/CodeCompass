@@ -1,6 +1,11 @@
 #ifndef CC_PARSER_JAVAPARSER_H
 #define CC_PARSER_JAVAPARSER_H
 
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include <thrift/transport/TFDTransport.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>

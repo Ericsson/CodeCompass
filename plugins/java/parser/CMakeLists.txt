@@ -17,19 +17,19 @@ include_directories(SYSTEM
 # Generate thrift files
 add_custom_command(
   OUTPUT
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/javaparser_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/javaparser_types.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaParserService.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-java
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/javaparser_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/javaparser_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaParserService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-java
   COMMAND
-  ${THRIFT_EXECUTABLE} --gen cpp --gen java
-  -o ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/javaparser.thrift
+    ${THRIFT_EXECUTABLE} --gen cpp --gen java
+        -o ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/javaparser.thrift
   DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/javaparser.thrift
+    ${CMAKE_CURRENT_SOURCE_DIR}/javaparser.thrift
   COMMENT
-  "Generating Thrift for javaparser.thrift")
+    "Generating Thrift for javaparser.thrift")
 
 # Create cpp static library from thrift files
 add_library(javaparserthrift STATIC

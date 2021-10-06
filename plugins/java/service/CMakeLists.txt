@@ -16,13 +16,11 @@ include_directories(SYSTEM
 add_custom_command(
   OUTPUT
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/JavaService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-java
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen java
       -o ${CMAKE_CURRENT_BINARY_DIR}
-      -I ${PROJECT_SOURCE_DIR}/service
     ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/javaservice.thrift
@@ -40,6 +38,7 @@ add_dependencies(javaservicethrift commonthrift projectthrift)
 set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_SOURCE_DIR}/lib/java/*
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/
+  ${PROJECT_BINARY_DIR}/service/language/gen-java
   ${PROJECT_BINARY_DIR}/service/project/gen-java/)
 
 # Create java library from thrift files

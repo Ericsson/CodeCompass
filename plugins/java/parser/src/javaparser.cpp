@@ -1,10 +1,5 @@
 #include <unordered_set>
 
-#include <boost/filesystem.hpp>
-#include <boost/process.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include <model/buildaction.h>
 #include <model/buildaction-odb.hxx>
 #include <model/buildsourcetarget.h>
@@ -148,7 +143,7 @@ bool JavaParser::parse() {
 
       pr::child c(_java_path, _java_args, pr::std_out > stdout);
       std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      LOG(info) << "Waiting done.";
+      LOG(info) << "Waiting Java server done.";
 
       // std::string line;
       // while (c.running() && std::getline(is, line) && !line.empty()) {

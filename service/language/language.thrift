@@ -2,6 +2,7 @@ include "../project/common.thrift"
 include "../project/project.thrift"
 
 namespace cpp cc.service.language
+namespace java cc.service.language
 
 struct AstNodeInfo
 {
