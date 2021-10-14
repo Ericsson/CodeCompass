@@ -348,7 +348,7 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
       fPos.file   = this.astNodeInfo.range.file;
 
       var astNodeInfo    = languageService.getAstNodeInfoByPosition(fPos);
-      var refTypes       = model.cppservice.getReferenceTypes(astNodeInfo.id);
+      var refTypes       = languageService.getReferenceTypes(astNodeInfo.id);
       var defAstNodeInfo = languageService.getReferences(
           astNodeInfo.id, refTypes["Definition"])[0];
 
