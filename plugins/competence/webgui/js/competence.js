@@ -174,6 +174,34 @@ function (topic, Menu, MenuItem, PopupMenuItem, Tooltip, model, viewHandler) {
         }
       }));
 
+      submenu.addChild(new MenuItem({
+        label : "Number of modifications by users",
+        type : 6,
+        onClick : function () {
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : this.type,  // In case there are other diagrams.
+            node : fileInfo.id
+          });
+        }
+      }));
+
+      submenu.addChild(new MenuItem({
+        label : "Developed by",
+        type : 7,
+        onClick : function () {
+          topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+
+          topic.publish('codecompass/openDiagram', {
+            handler : 'competence-diagram-handler',
+            diagramType : this.type,  // In case there are other diagrams.
+            node : fileInfo.id
+          });
+        }
+      }));
+
       return new PopupMenuItem({
         label : "Competence",
         popup : submenu

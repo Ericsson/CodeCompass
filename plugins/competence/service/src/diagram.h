@@ -4,6 +4,8 @@
 #include <service/competenceservice.h>
 #include <projectservice/projectservice.h>
 
+#include <model/commitdata.h>
+#include <model/commitdata-odb.hxx>
 #include <model/filecomprehension.h>
 #include <model/filecomprehension-odb.hxx>
 #include <model/useremail.h>
@@ -40,6 +42,7 @@ public:
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
+  typedef odb::query<model::CommitData> CommitQuery;
   typedef odb::query<model::FileComprehension> FileComprehensionQuery;
   typedef odb::result<model::FileComprehension> FileComprehensionResult;
   typedef odb::query<model::File> FileQuery;
@@ -122,6 +125,14 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
+  void userFrequencyDiagram(
+    util::Graph& graph_,
+    const core::FileId& fileId_);
+
+  void fileModifiersDiagram(
+    util::Graph& graph_,
+    const core::FileId& fileId_);
+
   void primeFilesDiagram(
     util::Graph &graph_,
     const core::FileId &fileId_);
@@ -158,6 +169,10 @@ private:
   util::Graph::Node addNode(
     util::Graph& graph_,
     const core::FileInfo& fileInfo_);
+
+  util::Graph::Node addNode(
+    util::Graph& graph_,
+    const std::pair<std::string, int>& data_);
 
   std::vector<util::Graph::Node> getSubDirs(
     util::Graph& graph_,
@@ -197,6 +212,7 @@ private:
   static const Decoration directoryNodeDecoration;
 
   static const Decoration containsEdgeDecoration;
+  static const Decoration modifiedEdgeDecoration;
   static const Decoration subdirEdgeDecoration;
 
 };

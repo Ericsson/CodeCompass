@@ -57,25 +57,32 @@ bool CompetenceParser::parse()
   {
     LOG(info) << "Competence parse path: " << path;
 
-    boost::filesystem::path repoPath;
-
-    auto rcb = getParserCallbackRepo(repoPath);
-
-    try
+    boost::filesystem::path repoPath("");
+    if(boost::filesystem::exists(path + ".git"))
     {
-      util::iterateDirectoryRecursive(path, rcb);
+      repoPath = path + ".git";
     }
-    catch (std::exception &ex_)
+    else
     {
-      LOG(warning)
+      auto rcb = getParserCallbackRepo(repoPath);
+
+      try
+      {
+        util::iterateDirectoryRecursive(path, rcb);
+      }
+      catch (std::exception &ex_)
+      {
+        LOG(warning)
         << "Competence parser threw an exception: " << ex_.what();
-    }
-    catch (...)
-    {
-      LOG(warning)
+      }
+      catch (...)
+      {
+        LOG(warning)
         << "Competence parser failed with unknown exception!";
+      }
     }
 
+    LOG(warning) << "REPO PATH: " << repoPath;
     std::string repoId = std::to_string(util::fnvHash(repoPath.c_str()));
     RepositoryPtr repo = _expertise._gitOps.createRepository(repoPath);
 
@@ -98,7 +105,7 @@ bool CompetenceParser::parse()
     _expertise.traverseCommits(path, repoPath);
     _expertise.persistFileComprehensionData();
 
-    auto pcb = _expertise.persistNoDataFiles();
+    /*auto pcb = _expertise.persistNoDataFiles();
 
     try
     {
@@ -113,7 +120,7 @@ bool CompetenceParser::parse()
     {
       LOG(warning)
         << "Competence parser failed with unknown exception!";
-    }
+    }*/
 
     _expertise.persistEmailAddress();
     _expertise.setUserCompany();

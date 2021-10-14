@@ -19,7 +19,6 @@
 
 #include <parser/sourcemanager.h>
 
-#include <util/hash.h>
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
 
@@ -266,7 +265,7 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
     LOG(info) << "[ExpertiseCalculation] " << job._commitCounter << "/" << _commitCount << " commit author is invalid.";
     return;
   }
-
+  LOG(warning) << "step 1";
   basePath = boost::filesystem::path(_ctx.options["workspace"].as<std::string>());
   basePath.append(_ctx.options["name"].as<std::string>() + "/competence/");
 
@@ -364,7 +363,6 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
       command.append(it->path().string());
       fs::path logPath(outPath);
       std::future<std::string> log;
-      LOG(warning) << command;
       boost::process::system(command, boost::process::std_out > log);
 
       // Retrieve results from JPlag log (stored in memory).
@@ -557,8 +555,6 @@ void ExpertiseCalculation::commitWorker(CommitJob& job)
     _calculateFileData.unlock();
   }
 
-  //_gitOps.freeSignature(commitAuthor);
-
   if (num_deltas == (size_t)hundredpercent)
   {
     LOG(warning) << job._commitCounter << "/" << _commitCount << ", " << git_oid_tostr_s(git_commit_id(job._commit))
@@ -576,19 +572,19 @@ void ExpertiseCalculation::persistCommitData(
 {
   util::OdbTransaction transaction(_ctx.db);
   transaction([&, this]
-              {
-                for (const auto& blame : userBlame_)
-                {
-                  model::CommitData commitData;
-                  commitData.file = fileId_;
-                  commitData.committerEmail = blame.first;
-                  commitData.committedLines = blame.second;
-                  commitData.totalLines = totalLines_;
-                  commitData.commitType = commitType_;
-                  commitData.commitDate = commitDate_;
-                  _ctx.db->persist(commitData);
-                }
-              });
+  {
+    for (const auto& blame : userBlame_)
+    {
+      model::CommitData commitData;
+      commitData.file = fileId_;
+      commitData.committerEmail = blame.first;
+      commitData.committedLines = blame.second;
+      commitData.totalLines = totalLines_;
+      commitData.commitType = commitType_;
+      commitData.commitDate = commitDate_;
+      _ctx.db->persist(commitData);
+    }
+  });
 }
 
 void ExpertiseCalculation::persistFileComprehensionData()

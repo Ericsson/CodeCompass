@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <boost/filesystem.hpp>
-#include <odb/database.hxx>
+//#include <odb/database.hxx>
 
 #include <competenceparser/gitoperations.h>
 

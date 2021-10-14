@@ -62,6 +62,12 @@ void CompetenceDiagram::getCompetenceDiagram(
     case 5:
       teamViewDiagram(graph_, fileId_, true);
       break;
+    case 6:
+      userFrequencyDiagram(graph_, fileId_);
+      break;
+    case 7:
+      fileModifiersDiagram(graph_, fileId_);
+      break;
   }
 }
 
@@ -762,6 +768,72 @@ model::FileComprehension CompetenceDiagram::maxCompetence(
   return max;
 }
 
+void CompetenceDiagram::userFrequencyDiagram(
+  util::Graph &graph_,
+  const core::FileId &fileId_)
+{
+  std::map<std::string, int> modifiedFilesNumber;
+  _transaction([&, this]
+  {
+    auto commitData = _db->query<model::CommitData>();
+
+    for (auto it = commitData.begin(); it != commitData.end(); ++it)
+    {
+      if (modifiedFilesNumber.count(it->committerEmail) > 0)
+      {
+        ++modifiedFilesNumber.at(it->committerEmail);
+      }
+      else
+      {
+        modifiedFilesNumber.insert({it->committerEmail, 1});
+      }
+    }
+  });
+
+  for (auto it = modifiedFilesNumber.begin(); it != modifiedFilesNumber.end(); ++it)
+  {
+    addNode(graph_, {it->first, it->second});
+  }
+}
+
+void CompetenceDiagram::fileModifiersDiagram(
+  util::Graph& graph_,
+  const core::FileId& fileId_)
+{
+  core::FileInfo fileInfo;
+  _projectHandler.getFileInfo(fileInfo, fileId_);
+  util::Graph::Node fileNode = addNode(graph_, fileInfo);
+
+  _transaction([&, this]
+  {
+    LOG(info) << fileId_;
+    auto commitData = _db->query<model::CommitData>(
+      CommitQuery::file == std::stoull(fileId_));
+
+    std::map<std::string, int> modificationNumber;
+
+    for (auto it = commitData.begin(); it != commitData.end(); ++it)
+    {
+      if (modificationNumber.count(it->committerEmail) > 0)
+      {
+        ++modificationNumber.at(it->committerEmail);
+      }
+      else
+      {
+        modificationNumber.insert({it->committerEmail, 1});
+      }
+      LOG(info) << modificationNumber.at(it->committerEmail);
+    }
+
+    for (auto it = modificationNumber.begin(); it != modificationNumber.end(); ++it)
+    {
+      util::Graph::Node currentNode = addNode(graph_, {it->first, it->second});
+      util::Graph::Edge edge = graph_.createEdge(currentNode, fileNode);
+      decorateEdge(graph_, edge, modifiedEdgeDecoration);
+    }
+  });
+}
+
 util::Graph::Node CompetenceDiagram::addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_)
@@ -773,6 +845,19 @@ util::Graph::Node CompetenceDiagram::addNode(
     decorateNode(graph_, node, {{"shape", "folder"}});
   else
     decorateNode(graph_, node, {{"shape", "box"}});
+
+  return node;
+}
+
+util::Graph::Node CompetenceDiagram::addNode(
+  util::Graph& graph_,
+  const std::pair<std::string, int>& data_
+  )
+{
+  util::Graph::Node node = graph_.getOrCreateNode(data_.first);
+  graph_.setNodeAttribute(node, "label", data_.first);
+  decorateNode(graph_, node, {{"shape", "ellipse"},
+                              {"size", std::to_string(data_.second)}});
 
   return node;
 }
@@ -962,6 +1047,11 @@ const CompetenceDiagram::Decoration CompetenceDiagram::directoryNodeDecoration =
 
 const CompetenceDiagram::Decoration CompetenceDiagram::containsEdgeDecoration = {
   {"label", "contains"},
+  {"color", "blue"}
+};
+
+const CompetenceDiagram::Decoration CompetenceDiagram::modifiedEdgeDecoration = {
+  {"label", "modified"},
   {"color", "blue"}
 };
 
