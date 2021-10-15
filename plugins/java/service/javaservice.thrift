@@ -6,5 +6,22 @@ namespace java cc.service.java
 
 service JavaService
 {
-  language.AstNodeInfo getAstNodeInfoByPosition(1: common.FilePosition fpos)
+  language.AstNodeInfo getAstNodeInfoByPosition(1:common.FilePosition fpos)
+    throws (1:common.InvalidPos ex)
+
+  // map<string, i32> getFileDiagramTypes(1:common.FileId fileId)
+  //   throws (1:common.InvalidId ex)
+
+  map<string, i32> getReferenceTypes(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
+
+  i32 getReferenceCount(
+    1:common.AstNodeId astNodeId,
+    2:i32 referenceId)
+
+  list<language.AstNodeInfo> getReferences(
+    1:common.AstNodeId astNodeId,
+    2:i32 referenceId
+    3:list<string> tags)
+      throws (1:common.InvalidId ex)
 }

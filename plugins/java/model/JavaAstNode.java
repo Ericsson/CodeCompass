@@ -136,4 +136,25 @@ public class JavaAstNode {
   public void setVisibleInSourceCode(boolean visibleInSourceCode) {
     this.visibleInSourceCode = visibleInSourceCode;
   }
+
+  public boolean isRangeSmaller(JavaAstNode other) {
+    long other_start_line = other.getLocation_range_start_line();
+    long other_end_line = other.getLocation_range_end_line();
+    long other_start_column = other.getLocation_range_start_column();
+    long other_end_column = other.getLocation_range_end_column();
+
+    if (location_range_start_line == other_start_line) {
+      if (location_range_end_line == other_end_line) {
+        return location_range_end_column - location_range_start_column <
+          other_end_column - other_start_column;
+      }
+      return location_range_end_line < other_end_line;
+    } else if (location_range_end_line - location_range_start_line ==
+      other_end_line - other_start_line) {
+      return location_range_end_column - location_range_start_column <
+        other_end_column - other_start_column;
+    }
+    return location_range_end_line - location_range_start_line <
+      other_end_line - other_start_line;
+  }
 }

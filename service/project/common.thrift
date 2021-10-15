@@ -14,27 +14,6 @@ namespace java cc.service.core
 typedef string AstNodeId
 typedef string FileId
 
-/**********************
- * General Exceptions *
- **********************/
-
-exception InvalidId
-{
-  1:string msg,
-  2:optional FileId fid,
-  3:optional AstNodeId nodeid
-}
-
-exception InvalidInput
-{
-  1:string msg
-}
-
-exception Timeout
-{
-  1:string msg
-}
-
 /******************************
  * File positions & locations *
  ******************************/
@@ -61,6 +40,33 @@ struct FileRange
 {
   1:FileId file,
   2:Range range
+}
+
+/**********************
+ * General Exceptions *
+ **********************/
+
+exception InvalidId
+{
+  1:string msg,
+  2:optional FileId fid,
+  3:optional AstNodeId nodeid
+}
+
+exception InvalidInput
+{
+  1:string msg
+}
+
+exception InvalidPos
+{
+  1:string msg,
+  2:optional FilePosition fpos
+}
+
+exception Timeout
+{
+  1:string msg
 }
 
 /***************

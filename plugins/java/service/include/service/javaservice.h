@@ -7,6 +7,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <thrift/transport/TFDTransport.h>
 #include <thrift/transport/TSocket.h>
@@ -64,6 +66,29 @@ public:
     _service -> getAstNodeInfoByPosition(return_, fpos_);
   }
 
+  std::int32_t getReferenceCount(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_) override
+  {
+    return _service -> getReferenceCount(astNodeId_, referenceId_);
+  }
+
+  void getReferenceTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::AstNodeId& astNodeId_) override
+  {
+    _service -> getReferenceTypes(return_, astNodeId_);
+  }
+
+  void getReferences(
+    std::vector<language::AstNodeInfo>& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_,
+    const std::vector<std::string>& tags_)
+  {
+    _service -> getReferences(return_, astNodeId_, referenceId_, tags_);
+  }
+
 private:
   std::unique_ptr<JavaServiceIf> _service;
 };
@@ -75,6 +100,7 @@ namespace language
 
 namespace fs = boost::filesystem;
 namespace pr = boost::process;
+namespace pt = boost::property_tree;
 
 class JavaServiceHandler : virtual public LanguageServiceIf
 {
@@ -84,6 +110,8 @@ public:
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
+
+  std::string getRawDbContext();
 
   void getFileTypes(std::vector<std::string>& return_) override;
 

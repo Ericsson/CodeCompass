@@ -1,9 +1,19 @@
 package model.enums;
 
 public enum SymbolType {
-    VARIABLE,
-    CONSTRUCTOR,
-    METHOD,
-    ENUM,
-    ENUM_CONSTANT
+    VARIABLE("Variable"),
+    CONSTRUCTOR("Constructor"),
+    METHOD("Method"),
+    ENUM("Enum"),
+    ENUM_CONSTANT("Enum constant");
+
+    private final String name;
+
+    SymbolType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

@@ -17,9 +17,10 @@ JavaServiceHandler::JavaServiceHandler(
     _context(context_)
 {
   _java_path = pr::search_path("java");
+  std::string raw_db_context = getRawDbContext();
 
   std::vector<std::string> _java_args{
-    // "-DrawDbContext=" + _context.options["database"].as<std::string>(),
+    "-DrawDbContext=" + raw_db_context,
     "-jar",
     "../lib/java/javaservice.jar"
   };
@@ -30,12 +31,19 @@ JavaServiceHandler::JavaServiceHandler(
   LOG(info) << "Waiting java service server done.";
 }
 
+std::string JavaServiceHandler::getRawDbContext() {
+  pt::ptree _pt;
+  pt::read_json(*_datadir + "/project_info.json", _pt);
+
+  return _pt.get<std::string>("database");
+}
+
 void JavaServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
-  LOG(info) << "getFileTypes";
-
   return_.push_back("JAVA");
   return_.push_back("Dir");
+
+  LOG(info) << "getFileTypes";
 }
 
 void JavaServiceHandler::getAstNodeInfo(
@@ -49,9 +57,7 @@ void JavaServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_)
 {
-  // std::string _return;
-  // javaQueryHandler.getJavaString(_return);
-  // LOG(info) << _return;
+  javaQueryHandler.getAstNodeInfoByPosition(return_, fpos_);
   LOG(info) << "getAstNodeInfoByPosition";
 }
 
@@ -122,8 +128,9 @@ void JavaServiceHandler::getFileDiagramLegend(
 
 void JavaServiceHandler::getReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
-  const core::AstNodeId& astNodeId)
+  const core::AstNodeId& astNodeId_)
 {
+  javaQueryHandler.getReferenceTypes(return_, astNodeId_);
   LOG(info) << "getReferenceTypes";
 }
 
@@ -134,13 +141,16 @@ void JavaServiceHandler::getReferences(
   const std::vector<std::string>& tags_)
 {
   LOG(info) << "getReferences";
+  javaQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
 }
 
 std::int32_t JavaServiceHandler::getReferenceCount(
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_)
 {
+  return javaQueryHandler.getReferenceCount(astNodeId_, referenceId_);
   LOG(info) << "getReferenceCount";
+  return 1;
 }
 
 void JavaServiceHandler::getReferencesInFile(

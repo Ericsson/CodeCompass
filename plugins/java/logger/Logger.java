@@ -1,5 +1,7 @@
 package logger;
 
+import org.apache.log4j.BasicConfigurator;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.LogManager;
@@ -8,6 +10,8 @@ public abstract class Logger {
   public static final java.util.logging.Logger LOGGER = initLogger();
 
   private static java.util.logging.Logger initLogger() {
+    BasicConfigurator.configure();
+
     InputStream stream = Logger.class.getClassLoader().
       getResourceAsStream("META-INF/logging.properties");
 

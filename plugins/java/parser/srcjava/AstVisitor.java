@@ -102,10 +102,9 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(ClassInstanceCreation node) {
     JavaConstructor javaConstructor = new JavaConstructor();
-
-    setJavaEntityFields(javaConstructor, node, true);
-
-    persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.USAGE);
+    long javaAstNodeId = persistJavaAstNodeRow(
+      node, SymbolType.CONSTRUCTOR, AstType.USAGE);
+    setJavaEntityFields(javaConstructor, node, javaAstNodeId, true);
     persistRow(javaConstructor);
 
     return super.visit(node);
@@ -127,25 +126,25 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(EnumDeclaration node) {
     JavaEnum _enum = new JavaEnum();
 
-    setJavaEntityFields(_enum, node, false);
-
     // persist enum constants
     for (Object ecnObj : node.enumConstants()) {
       EnumConstantDeclaration enumConstantNode =
         ((EnumConstantDeclaration) ecnObj);
       JavaEnumConstant enumConstant = new JavaEnumConstant();
 
-      setJavaEntityFields(enumConstant, enumConstantNode, false);
-
       enumConstant.setValue(enumConstantNode.getName().toString());
       _enum.addJavaEnumConstant(enumConstant);
 
-      persistJavaAstNodeRow(
+      long javaAstNodeId = persistJavaAstNodeRow(
         enumConstantNode, SymbolType.ENUM_CONSTANT, AstType.DECLARATION
       );
+      setJavaEntityFields(
+        enumConstant, enumConstantNode, javaAstNodeId, false);
     }
 
-    persistJavaAstNodeRow(node, SymbolType.ENUM, AstType.DECLARATION);
+    long javaAstNodeId = persistJavaAstNodeRow(
+      node, SymbolType.ENUM, AstType.DECLARATION);
+    setJavaEntityFields(_enum, node, javaAstNodeId, false);
     persistRow(_enum);
 
     return super.visit(node);
@@ -292,8 +291,6 @@ public class AstVisitor extends ASTVisitor {
       // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
       // valószínóleg nem, de ez kéne
 
-      setJavaEntityFields(javaMethod, node, false);
-
       javaMethod.setTypeHash(qTypeString.hashCode());
       javaMethod.setQualifiedType(qTypeString);
 
@@ -303,21 +300,21 @@ public class AstVisitor extends ASTVisitor {
           ((SingleVariableDeclaration) svdObj);
         JavaVariable javaVariable = new JavaVariable();
 
-        setJavaEntityFields(javaVariable, variableDeclarationNode, false);
-
         javaMethod.addJavaMetVarParam(javaVariable);
 
-        persistJavaAstNodeRow(
+        long javaAstNodeId = persistJavaAstNodeRow(
           variableDeclarationNode, SymbolType.VARIABLE, AstType.DECLARATION
         );
+        setJavaEntityFields(
+          javaVariable, variableDeclarationNode, javaAstNodeId, false);
       }
 
-      persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.DECLARATION);
+      long javaAstNodeId = persistJavaAstNodeRow(
+        node, SymbolType.METHOD, AstType.DECLARATION);
+      setJavaEntityFields(javaMethod, node, javaAstNodeId, false);
       persistRow(javaMethod);
     } else {
       JavaConstructor javaConstructor = new JavaConstructor();
-
-      setJavaEntityFields(javaConstructor, node, false);
 
       // persist constructor's parameters
       for (Object svdObj : node.parameters()) {
@@ -325,16 +322,19 @@ public class AstVisitor extends ASTVisitor {
           ((SingleVariableDeclaration) svdObj);
         JavaVariable javaVariable = new JavaVariable();
 
-        setJavaEntityFields(javaVariable, variableDeclarationNode, false);
-
         javaConstructor.addJavaConVarParam(javaVariable);
 
-        persistJavaAstNodeRow(
+        long javaAstNodeId = persistJavaAstNodeRow(
           variableDeclarationNode, SymbolType.VARIABLE, AstType.DECLARATION
         );
+        setJavaEntityFields(
+          javaVariable, variableDeclarationNode, javaAstNodeId, false);
       }
 
-      persistJavaAstNodeRow(node, SymbolType.CONSTRUCTOR, AstType.DECLARATION);
+      long javaAstNodeId = persistJavaAstNodeRow(
+        node, SymbolType.CONSTRUCTOR, AstType.DECLARATION);
+      setJavaEntityFields(
+        javaConstructor, node, javaAstNodeId, false);
       persistRow(javaConstructor);
     }
 
@@ -352,12 +352,11 @@ public class AstVisitor extends ASTVisitor {
     } catch (NullPointerException ignored) {
     }
 
-    setJavaEntityFields(javaMethod, node, false);
-
     javaMethod.setTypeHash(qTypeString.hashCode());
     javaMethod.setQualifiedType(qTypeString);
 
-    persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.USAGE);
+    long javaAstNodeId = persistJavaAstNodeRow(node, SymbolType.METHOD, AstType.USAGE);
+    setJavaEntityFields(javaMethod, node, javaAstNodeId, false);
     persistRow(javaMethod);
 
     return super.visit(node);
@@ -476,11 +475,11 @@ public class AstVisitor extends ASTVisitor {
     } catch (NullPointerException ignored) {
     }
 
-    persistJavaAstNodeRow(node, SymbolType.VARIABLE, AstType.DECLARATION);
-
-    setJavaEntityFields(javaVariable, node, false);
     javaVariable.setTypeHash(qTypeString.hashCode());
 
+    long javaAstNodeId = persistJavaAstNodeRow(
+      node, SymbolType.VARIABLE, AstType.DECLARATION);
+    setJavaEntityFields(javaVariable, node, javaAstNodeId, false);
     persistRow(javaVariable);
 
     return super.visit(node);
@@ -571,8 +570,9 @@ public class AstVisitor extends ASTVisitor {
   }
 
   private void setJavaEntityFields(
-    JavaEntity javaEntity, ASTNode node, boolean typeAsName) {
-    javaEntity.setAstNodeId(fileId);
+    JavaEntity javaEntity, ASTNode node,
+    long javaAstNodeId, boolean typeAsName) {
+    javaEntity.setAstNodeId(javaAstNodeId);
 
     try {
       if (typeAsName) {
@@ -606,7 +606,7 @@ public class AstVisitor extends ASTVisitor {
     }
   }
 
-  private void persistJavaAstNodeRow(
+  private long persistJavaAstNodeRow(
     ASTNode node, SymbolType symbolType, AstType astType
   ) {
     JavaAstNode javaAstNode = new JavaAstNode();
@@ -650,6 +650,8 @@ public class AstVisitor extends ASTVisitor {
     javaAstNode.setVisibleInSourceCode(true);
 
     persistRow(javaAstNode);
+
+    return javaAstNode.getId();
   }
 
   private void persistRow(Object jpaObject) {

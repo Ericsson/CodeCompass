@@ -3,10 +3,11 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PLUGIN_DIR}/lib/java/*)
 
 add_jar(javaservicejava
+  ${CMAKE_CURRENT_SOURCE_DIR}/enums/ReferenceType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryServer.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryHandler.java
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
   OUTPUT_NAME javaservice
-  INCLUDE_JARS javalogger javamodel javaservicethriftjava)
+  INCLUDE_JARS javalogger javamodel corethriftjava javaservicethriftjava)
 
 install_jar(javaservicejava "${INSTALL_JAVA_LIB_DIR}")

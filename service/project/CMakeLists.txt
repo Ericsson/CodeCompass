@@ -69,6 +69,7 @@ add_jar(corethriftjava
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/FilePosition.java
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/FileRange.java
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/InvalidId.java
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/InvalidPos.java
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/InvalidInput.java
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Position.java
   ${CMAKE_CURRENT_BINARY_DIR}/gen-java/cc/service/core/Range.java
