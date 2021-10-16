@@ -4,18 +4,22 @@ import cc.service.core.*;
 import cc.service.java.JavaService;
 import cc.service.language.AstNodeInfo;
 import model.JavaAstNode;
+import model.JavaEntity;
 import model.JavaMethod;
+import model.enums.AstType;
 import model.enums.SymbolType;
 import org.apache.thrift.TException;
 import service.srcjava.enums.ReferenceType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -25,6 +29,7 @@ import static model.EMFactory.createEntityManager;
 class JavaQueryHandler implements JavaService.Iface {
   private static final EntityManager em =
     createEntityManager(System.getProperty("rawDbContext"));
+  private static final CriteriaBuilder cb = em.getCriteriaBuilder();
 
   @Override
   public AstNodeInfo getAstNodeInfoByPosition(FilePosition fpos)
@@ -83,11 +88,16 @@ class JavaQueryHandler implements JavaService.Iface {
     switch (ReferenceType.values()[referenceId])
     {
       case DEFINITION:
-        return queryJavaAstNodeCount(javaAstNodeIdLong);
+        break;
       case DECLARATION:
         break;
       case USAGE:
-        break;
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.equal(root.get("astType"), AstType.USAGE);
+
+        return queryJavaAstNodeCount(javaAstNode, cr, root, predicate);
       case THIS_CALLS:
         break;
       case CALLS_OF_THIS:
@@ -214,6 +224,14 @@ class JavaQueryHandler implements JavaService.Iface {
       case DECLARATION:
         break;
       case USAGE:
+        CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.equal(root.get("astType"), AstType.USAGE);
+
+        List<JavaAstNode> javaAstNodes =
+          queryJavaAstNodes(javaAstNode, cr, root, predicate);
+        javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
         break;
       case THIS_CALLS:
         break;
@@ -232,14 +250,8 @@ class JavaQueryHandler implements JavaService.Iface {
 
         try {
           JavaMethod javaMethod = queryJavaMethod.getSingleResult();
-          javaMethod.getJavaMetVarParams().forEach(
-            p -> javaAstNodeInfos.add(
-              createAstNodeInfo(
-                queryJavaAstNode(p.getAstNodeId())
-              )
-            )
-          );
-
+          javaAstNodeInfos =
+            createAstNodeInfos(javaMethod.getJavaMetVarParams());
         } catch (NoResultException e) {
           LOGGER.log(
             Level.WARNING,
@@ -276,6 +288,31 @@ class JavaQueryHandler implements JavaService.Iface {
 
     javaAstNodeInfos.sort(
       Comparator.comparingInt(n -> n.range.range.endpos.column)
+    );
+
+    return javaAstNodeInfos;
+  }
+
+  private List<AstNodeInfo> createAstNodeInfos(List<JavaAstNode> javaAstNodes) {
+    List<AstNodeInfo> javaAstNodeInfos = new ArrayList<>();
+
+    javaAstNodes.forEach(p -> javaAstNodeInfos.add(createAstNodeInfo(p)));
+
+    return javaAstNodeInfos;
+  }
+
+  private <T extends Collection<? extends JavaEntity>>
+  List<AstNodeInfo> createAstNodeInfos(
+    T collection)
+  {
+    List<AstNodeInfo> javaAstNodeInfos = new ArrayList<>();
+
+    collection.forEach(
+      p -> javaAstNodeInfos.add(
+        createAstNodeInfo(
+          queryJavaAstNode(p.getAstNodeId())
+        )
+      )
     );
 
     return javaAstNodeInfos;
@@ -318,13 +355,54 @@ class JavaQueryHandler implements JavaService.Iface {
     return queryJavaAstNode.getSingleResult();
   }
 
-  private int queryJavaAstNodeCount(long javaAstNodeId) {
+  private List<JavaAstNode> queryJavaAstNodes(long javaAstNodeId) {
     JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeId);
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
 
-    TypedQuery<Integer> queryJavaAstNodeCount =
-      em.createQuery("SELECT COUNT(n) from JavaAstNode n", Integer.class);
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
 
-    return 0;
+    return em.createQuery(cr).getResultList();
+  }
+
+  private List<JavaAstNode> queryJavaAstNodes(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaAstNode> cr,
+    Root<JavaAstNode> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+   private int queryJavaAstNodeCount(JavaAstNode javaAstNode) {
+    CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate entityHashPredicate =
+      cb.equal(root.get("entityHash"), javaAstNode.getEntityHash());
+
+    cr.select(cb.count(root)).where(entityHashPredicate);
+
+    return em.createQuery(cr).getSingleResult().intValue();
+  }
+
+  private int queryJavaAstNodeCount(
+    JavaAstNode javaAstNode, CriteriaQuery<Long> cr,
+    Root<JavaAstNode> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate =
+      cb.equal(root.get("entityHash"), javaAstNode.getEntityHash());
+
+    cr
+      .select(cb.count(root))
+      .where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getSingleResult().intValue();
   }
 
   private static String getCurrentPath() {

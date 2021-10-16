@@ -57,7 +57,7 @@ public class JavaParser implements JavaParserService.Iface {
       parser.setUnitName(argParser.getFilename());
       parser.setEnvironment(
         classpathEntries, sourcepathEntries,
-        encodings, false
+        encodings, true
       );
       parser.setSource(fileStr.toCharArray());
 
@@ -74,7 +74,6 @@ public class JavaParser implements JavaParserService.Iface {
       ex.message = e.getMessage();
       throw ex;
     } catch (Exception e) {
-      System.out.println(e);
       LOGGER.log(
         Level.WARNING,
         "(" + fileIndex + "/" + size + ") " +
