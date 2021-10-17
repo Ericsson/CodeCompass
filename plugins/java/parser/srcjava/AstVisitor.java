@@ -103,9 +103,16 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(ClassInstanceCreation node) {
     JavaConstructor javaConstructor = new JavaConstructor();
     int hashCode =
-      node.resolveConstructorBinding().getMethodDeclaration().hashCode();
+      node.resolveConstructorBinding().getMethodDeclaration().toString().hashCode();
+
+    // System.out.println(node.getType().resolveBinding().getQualifiedName() + node.resolveConstructorBinding().getMethodDeclaration());
+    // System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    // System.out.println(((MethodDeclaration)cu.findDeclaringNode(node.resolveConstructorBinding().getMethodDeclaration())));
+    // System.out.println(((MethodDeclaration)cu.findDeclaringNode(node.resolveConstructorBinding().getMethodDeclaration())));
+
     long javaAstNodeId = persistJavaAstNodeRow(
       node, SymbolType.CONSTRUCTOR, AstType.USAGE, hashCode);
+
     setJavaEntityFields(javaConstructor, node, javaAstNodeId, hashCode, true);
     persistRow(javaConstructor);
 
@@ -281,20 +288,17 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodDeclaration node) {
+
     if (!node.isConstructor()) {
+      int hashCode =
+        node.resolveBinding().getMethodDeclaration().toString().hashCode();
       JavaMethod javaMethod = new JavaMethod();
-      int hashCode = node.resolveBinding().getMethodDeclaration().hashCode();
       String qTypeString = "";
+
       try {
         qTypeString = node.getReturnType2().resolveBinding().getQualifiedName();
       } catch (NullPointerException ignored) {
-
       }
-
-      // System.out.println(node.resolveBinding());
-      // System.out.println(node.getName().resolveBinding());
-      // megnézni, hogy qualified-e, vagy nem, vagy egyszer ez, egyszer az
-      // valószínóleg nem, de ez kéne
 
       javaMethod.setTypeHash(qTypeString.hashCode());
       javaMethod.setQualifiedType(qTypeString);
@@ -321,8 +325,12 @@ public class AstVisitor extends ASTVisitor {
       setJavaEntityFields(javaMethod, node, javaAstNodeId, hashCode, false);
       persistRow(javaMethod);
     } else {
+      int hashCode = 0;
+      // try {
+      //   System.out.println("=================================");
+      //   System.out.println(node.getName().resolveBinding().getName());
+      // } catch (Exception e) {}
       JavaConstructor javaConstructor = new JavaConstructor();
-      int hashCode = node.hashCode();
 
       // persist constructor's parameters
       for (Object svdObj : node.parameters()) {
@@ -354,7 +362,7 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(MethodInvocation node) {
     JavaMethod javaMethod = new JavaMethod();
     int hashCode =
-      node.resolveMethodBinding().getMethodDeclaration().hashCode();
+      node.resolveMethodBinding().getMethodDeclaration().toString().hashCode();
 
     String qTypeString = "";
     try {
@@ -582,24 +590,42 @@ public class AstVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-  private void setJavaEntityFields(
-    JavaEntity javaEntity, ASTNode node,
+  private <T extends ASTNode> void setJavaEntityFields(
+    JavaEntity javaEntity, T node,
     long javaAstNodeId, int hashCode, boolean typeAsName) {
     javaEntity.setAstNodeId(javaAstNodeId);
 
-    String name = getNodeName(node, typeAsName);
+    try {
+      if (typeAsName) {
+        Method getTypeMethod =
+          node.getClass().getMethod("getType", (Class<?>[]) null);
+        Type name =
+          (Type) getTypeMethod.invoke(node, (Object[]) null);
 
-    javaEntity.setName(name);
+        javaEntity.setName(name.toString());
+        javaEntity.setQualifiedName(name.resolveBinding().getQualifiedName());
+      } else {
+        Method getNameMethod =
+          node.getClass().getMethod("getName", (Class<?>[]) null);
+        Name name =
+          (Name) getNameMethod.invoke(node, (Object[]) null);
+
+        javaEntity.setName(name.toString());
+        javaEntity.setQualifiedName(name.getFullyQualifiedName());
+      }
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
     javaEntity.setEntityHash(hashCode);
-
-    // resolveBindings ?
-    // System.out.println(name.resolveBinding());
-    // System.out.println("=================================");
-    // javaEntity.setQualifiedName(name.resolveBinding().toString());
   }
 
-  private long persistJavaAstNodeRow(
-    ASTNode node, SymbolType symbolType, AstType astType, int hashCode
+  private <T extends ASTNode> long persistJavaAstNodeRow(
+    T node, SymbolType symbolType, AstType astType, int hashCode
   ) {
     JavaAstNode javaAstNode = new JavaAstNode();
     PositionInfo positionInfo;
@@ -645,34 +671,6 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaAstNode);
 
     return javaAstNode.getId();
-  }
-
-  private String getNodeName(ASTNode node, boolean typeAsName)
-  {
-    try {
-      if (typeAsName) {
-        Method getTypeMethod =
-          node.getClass().getMethod("getType", (Class<?>[]) null);
-        Type name =
-          (Type) getTypeMethod.invoke(node, (Object[]) null);
-
-        return name.toString();
-      }
-      Method getNameMethod =
-        node.getClass().getMethod("getName", (Class<?>[]) null);
-      Name name =
-        (Name) getNameMethod.invoke(node, (Object[]) null);
-
-      return name.toString();
-    } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
-    }
-
-    return "";
   }
 
   private void persistRow(Object jpaObject) {
