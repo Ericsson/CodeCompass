@@ -33,7 +33,7 @@ add_library(javaservicethrift STATIC
 
 target_compile_options(javaservicethrift PUBLIC -fPIC)
 
-add_dependencies(javaservicethrift commonthrift projectthrift)
+add_dependencies(javaservicethrift languagethrift commonthrift projectthrift)
 
 set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_SOURCE_DIR}/lib/java/*
