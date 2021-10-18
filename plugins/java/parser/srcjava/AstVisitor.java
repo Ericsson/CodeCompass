@@ -639,9 +639,8 @@ public class AstVisitor extends ASTVisitor {
       Javadoc javadoc =
               (Javadoc) getJavadocMethod.invoke(node, (Object[]) null);
 
+      positionInfo = new PositionInfo(this.cu, node, javadoc);
       int javadocLen = javadoc.toString().length();
-      positionInfo = new PositionInfo(this.cu, node, javadocLen);
-
       javaAstNode.setAstValue(
               node.toString().substring(javadocLen)
       );

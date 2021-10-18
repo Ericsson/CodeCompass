@@ -3,9 +3,7 @@ package service.srcjava;
 import cc.service.core.*;
 import cc.service.java.JavaService;
 import cc.service.language.AstNodeInfo;
-import model.JavaAstNode;
-import model.JavaEntity;
-import model.JavaMethod;
+import model.*;
 import model.enums.AstType;
 import model.enums.SymbolType;
 import org.apache.thrift.TException;
@@ -15,10 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -36,28 +31,38 @@ class JavaQueryHandler implements JavaService.Iface {
     throws TException
   {
     long fileId = Long.parseUnsignedLong(fpos.file);
-    TypedQuery<JavaAstNode> queryJavaAstNodeByPosition = em.createQuery(
-      "SELECT " +
-          "n " +
-        "from " +
-          "JavaAstNode n " +
-        "where " +
-          "n.location_file = :fileId and " +
-          // StartPos <= Pos
-          "((n.location_range_start_line = :line and " +
-            "n.location_range_start_column <= :column) or " +
-           "n.location_range_start_line < :line) and " +
-          // Pos < EndPos
-          "((n.location_range_end_line = :line and " +
-            "n.location_range_end_column > :column) or " +
-           "n.location_range_end_line > :line)",
-      JavaAstNode.class
-    )
-      .setParameter("fileId", fileId)
-      .setParameter("line", fpos.pos.line)
-      .setParameter("column", fpos.pos.column);
 
-    List<JavaAstNode> javaAstNodes = queryJavaAstNodeByPosition.getResultList();
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    int line = fpos.pos.line;
+    int column = fpos.pos.column;
+    Path<Long> locationFile =
+      root.get("location_file");
+    Path<Integer> startLine =
+      root.get("location_range_start_line");
+    Path<Integer> endLine =
+      root.get("location_range_end_line");
+    Path<Integer> startColumn =
+      root.get("location_range_start_column");
+    Path<Integer> endColumn =
+      root.get("location_range_end_column");
+
+    Predicate sameFile = cb.equal(locationFile, fileId);
+    Predicate startPosLessEqualPos =
+      cb.or(
+        cb.and(cb.equal(startLine, line), cb.le(startColumn, column)),
+        cb.lt(startLine, line));
+    Predicate posLessThanEndPos =
+      cb.or(
+        cb.and(cb.equal(endLine, line), cb.gt(endColumn, column)),
+        cb.gt(endLine, line));
+
+    cr
+      .select(root)
+      .where(cb.and(sameFile, startPosLessEqualPos, posLessThanEndPos));
+
+    List<JavaAstNode> javaAstNodes = em.createQuery(cr).getResultList();
     JavaAstNode minJavaAstNode;
 
     if (javaAstNodes.isEmpty()) {
@@ -87,61 +92,103 @@ class JavaQueryHandler implements JavaService.Iface {
 
     switch (ReferenceType.values()[referenceId])
     {
-      case DEFINITION:
-        break;
-      case DECLARATION:
-        break;
-      case USAGE:
+      case DEFINITION: {
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.equal(root.get("astType"), AstType.DEFINITION);
+
+        return queryJavaAstNodeCount(javaAstNode, cr, root, predicate);
+      }
+      case DECLARATION: {
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.and(
+            cb.equal(root.get("astType"), AstType.DECLARATION),
+            cb.isTrue(root.get("visibleInSourceCode"))
+          );
+
+        return queryJavaAstNodeCount(javaAstNode, cr, root, predicate);
+      }
+      case USAGE: {
         CriteriaQuery<Long> cr = cb.createQuery(Long.class);
         Root<JavaAstNode> root = cr.from(JavaAstNode.class);
         Predicate predicate =
           cb.equal(root.get("astType"), AstType.USAGE);
 
         return queryJavaAstNodeCount(javaAstNode, cr, root, predicate);
-      case THIS_CALLS:
+      }
+      case THIS_CALLS: {
         break;
-      case CALLS_OF_THIS:
+      }
+      case CALLS_OF_THIS: {
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.equal(root.get("astType"), AstType.USAGE);
+
+        return queryJavaAstNodeCount(javaAstNode, cr, root, predicate);
+      }
+      case CALLEE: {
         break;
-      case CALLEE:
+      }
+      case CALLER: {
         break;
-      case CALLER:
+      }
+      case PARAMETER: {
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaMethod> root = cr.from(JavaMethod.class);
+
+        cr
+          .select(cb.count(root.get("javaMetVarParams")))
+          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
+
+        return em.createQuery(cr).getSingleResult().intValue();
+      }
+      case LOCAL_VAR: {
+        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
+        Root<JavaMethod> root = cr.from(JavaMethod.class);
+
+        cr
+          .select(cb.count(root.get("javaMetVarLocals")))
+          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
+
+        return em.createQuery(cr).getSingleResult().intValue();
+      }
+      case RETURN_TYPE: {
         break;
-      case PARAMETER:
-        TypedQuery<Long> queryParametersCount =
-          em.createQuery(
-            "SELECT " +
-                "COUNT(m.javaMetVarParams) " +
-              "FROM " +
-                "JavaMethod m " +
-              "WHERE " +
-                "m.astNodeId = :nId",
-            Long.class
-          ).setParameter("nId", javaAstNode.getId());
-        return queryParametersCount.getSingleResult().intValue();
-      case LOCAL_VAR:
+      }
+      case OVERRIDE: {
         break;
-      case RETURN_TYPE:
+      }
+      case OVERRIDDEN_BY: {
         break;
-      case OVERRIDE:
+      }
+      case READ: {
         break;
-      case OVERRIDDEN_BY:
+      }
+      case WRITE: {
         break;
-      case READ:
+      }
+      case TYPE: {
         break;
-      case WRITE:
+      }
+      case INHERIT_FROM: {
         break;
-      case TYPE:
+      }
+      case INHERIT_BY: {
         break;
-      case INHERIT_FROM:
+      }
+      case DATA_MEMBER: {
         break;
-      case INHERIT_BY:
+      }
+      case METHOD: {
         break;
-      case DATA_MEMBER:
+      }
+      case ENUM_CONSTANTS: {
         break;
-      case METHOD:
-        break;
-      case ENUM_CONSTANTS:
-        break;
+      }
     }
 
     return 0;
@@ -219,11 +266,26 @@ class JavaQueryHandler implements JavaService.Iface {
 
     switch (ReferenceType.values()[referenceId])
     {
-      case DEFINITION:
+      case DEFINITION: {
+        List<JavaAstNode> javaAstNodes = queryDefinitions(javaAstNode);
+        javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
         break;
-      case DECLARATION:
+      }
+      case DECLARATION: {
+        CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+        Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+        Predicate predicate =
+          cb.and(
+            cb.equal(root.get("astType"), AstType.DECLARATION),
+            cb.isTrue(root.get("visibleInSourceCode"))
+          );
+
+        List<JavaAstNode> javaAstNodes =
+          queryJavaAstNodes(javaAstNode, cr, root, predicate);
+        javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
         break;
-      case USAGE:
+      }
+      case USAGE: {
         CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
         Root<JavaAstNode> root = cr.from(JavaAstNode.class);
         Predicate predicate =
@@ -233,25 +295,38 @@ class JavaQueryHandler implements JavaService.Iface {
           queryJavaAstNodes(javaAstNode, cr, root, predicate);
         javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
         break;
-      case THIS_CALLS:
+      }
+      case THIS_CALLS: {
         break;
-      case CALLS_OF_THIS:
+      }
+      case CALLS_OF_THIS: {
         break;
-      case CALLEE:
+      }
+      case CALLEE: {
         break;
-      case CALLER:
+      }
+      case CALLER: {
         break;
-      case PARAMETER:
-        TypedQuery<JavaMethod> queryJavaMethod =
-          em.createQuery(
-            "SELECT m FROM JavaMethod m WHERE m.entityHash = :entityHash",
-            JavaMethod.class
-          ).setParameter("entityHash", javaAstNode.getEntityHash());
+      }
+      case PARAMETER: {
+        CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
+        Root<JavaEntity> root = cr.from(JavaEntity.class);
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
 
         try {
-          JavaMethod javaMethod = queryJavaMethod.getSingleResult();
-          javaAstNodeInfos =
-            createAstNodeInfos(javaMethod.getJavaMetVarParams());
+          JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
+
+          if (javaEntity instanceof JavaMethod) {
+            javaAstNodeInfos =
+              createAstNodeInfos(
+                ((JavaMethod) javaEntity).getJavaMetVarParams());
+          } else if (javaEntity instanceof JavaConstructor) {
+            javaAstNodeInfos =
+              createAstNodeInfos(
+                ((JavaConstructor) javaEntity).getJavaConVarLocals());
+          }
         } catch (NoResultException e) {
           LOGGER.log(
             Level.WARNING,
@@ -260,35 +335,58 @@ class JavaQueryHandler implements JavaService.Iface {
           );
         }
         break;
-      case LOCAL_VAR:
+      }
+      case LOCAL_VAR: {
         break;
-      case RETURN_TYPE:
+      }
+      case RETURN_TYPE: {
         break;
-      case OVERRIDE:
+      }
+      case OVERRIDE: {
         break;
-      case OVERRIDDEN_BY:
+      }
+      case OVERRIDDEN_BY: {
         break;
-      case READ:
+      }
+      case READ: {
         break;
-      case WRITE:
+      }
+      case WRITE: {
         break;
-      case TYPE:
+      }
+      case TYPE: {
         break;
-      case INHERIT_FROM:
+      }
+      case INHERIT_FROM: {
         break;
-      case INHERIT_BY:
+      }
+      case INHERIT_BY: {
         break;
-      case DATA_MEMBER:
+      }
+      case DATA_MEMBER: {
         break;
-      case METHOD:
+      }
+      case METHOD: {
         break;
-      case ENUM_CONSTANTS:
+      }
+      case ENUM_CONSTANTS: {
         break;
+      }
     }
 
-    javaAstNodeInfos.sort(
-      Comparator.comparingInt(n -> n.range.range.endpos.column)
-    );
+    javaAstNodeInfos.sort((n1, n2) -> {
+      Integer line1 = n1.range.range.endpos.line;
+      Integer line2 = n2.range.range.endpos.line;
+      int lineComp = line1.compareTo(line2);
+
+      if (lineComp != 0) {
+        return lineComp;
+      }
+
+      Integer col1 = n1.range.range.endpos.column;
+      Integer col2 = n2.range.range.endpos.column;
+      return col1.compareTo(col2);
+    });
 
     return javaAstNodeInfos;
   }
@@ -346,17 +444,27 @@ class JavaQueryHandler implements JavaService.Iface {
     return astNodeInfo;
   }
 
-  private JavaAstNode queryJavaAstNode(long javaAstNodeId) {
-    TypedQuery<JavaAstNode> queryJavaAstNode = em.createQuery(
-      "SELECT n from JavaAstNode n where n.id = :id",
-      JavaAstNode.class
-    ).setParameter("id", javaAstNodeId);
+  private List<JavaAstNode> queryDefinitions(JavaAstNode javaAstNode) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate =
+      cb.equal(root.get("astType"), AstType.DEFINITION);
 
-    return queryJavaAstNode.getSingleResult();
+    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
   }
 
-  private List<JavaAstNode> queryJavaAstNodes(long javaAstNodeId) {
-    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeId);
+  private JavaAstNode queryJavaAstNode(long javaAstNodeId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("id"), javaAstNodeId));
+
+    return em.createQuery(cr).getSingleResult();
+  }
+
+  private List<JavaAstNode> queryJavaAstNodes(JavaAstNode javaAstNode) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
 

@@ -2,6 +2,7 @@ package parser.srcjava;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Javadoc;
 
 public class PositionInfo {
   private final int start;
@@ -13,16 +14,16 @@ public class PositionInfo {
 
   public PositionInfo(CompilationUnit cu, ASTNode node) {
     this.start = node.getStartPosition();
-    this.end = node.getStartPosition() + node.getLength();
+    this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
     this.endLine = cu.getLineNumber(end);
     this.endColumn = cu.getColumnNumber(end);
   }
 
-  public PositionInfo(CompilationUnit cu, ASTNode node, int javadocLen) {
-    this.start = node.getStartPosition() + javadocLen;
-    this.end = node.getStartPosition() + node.getLength();
+  public PositionInfo(CompilationUnit cu, ASTNode node, Javadoc javadoc) {
+    this.start = javadoc.getStartPosition() + javadoc.getLength() + 1;
+    this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
     this.endLine = cu.getLineNumber(end);
