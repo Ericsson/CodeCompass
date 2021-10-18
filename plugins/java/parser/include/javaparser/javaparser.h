@@ -18,6 +18,8 @@
 
 #include <JavaParserService.h>
 
+#include <chrono>
+
 namespace cc
 {
 namespace parser
@@ -27,11 +29,11 @@ namespace java {
 namespace fs = boost::filesystem;
 namespace pr = boost::process;
 namespace pt = boost::property_tree;
+using TransportException = apache::thrift::transport::TTransportException;
 
 class JavaParserServiceHandler : public JavaParserServiceIf {
 public:
   JavaParserServiceHandler() {
-    getClientInterface();
   }
 
   void parseFile(long fileId, int fileIndex) override
@@ -49,25 +51,45 @@ public:
     _service -> getArgs(_return);
   }
 
-private:
   /**
  * Creates the client interface.
  */
-  void getClientInterface()
+  void getClientInterface(int timeout_in_ms)
   {
     using Transport = apache::thrift::transport::TTransport;
     using BufferedTransport = apache::thrift::transport::TBufferedTransport;
     using Socket = apache::thrift::transport::TSocket;
     using Protocol = apache::thrift::protocol::TBinaryProtocol;
+    namespace chrono = std::chrono;
+
+    std::string host = "localhost";
+    int port = 9090;
 
     std::shared_ptr<Transport>
-      socket(new Socket("localhost", 9090));
+      socket(new Socket(host, port));
     std::shared_ptr<Transport>
       transport(new BufferedTransport(socket));
     std::shared_ptr<Protocol>
       protocol(new Protocol(transport));
 
-    transport -> open();
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+
+    while (!transport->isOpen()) {
+      try {
+        transport->open();
+      } catch (TransportException& ex) {
+        chrono::steady_clock::time_point current = chrono::steady_clock::now();
+        float elapsed_time =
+          chrono::duration_cast<chrono::milliseconds>(current - begin).count();
+
+        if (elapsed_time > timeout_in_ms) {
+          LOG(debug) << "Connection refused, could not reach Java server on"
+            << host << ":" << port;
+          throw ex;
+        }
+      }
+    }
+
     _service.reset(new JavaParserServiceClient(protocol));
   }
 

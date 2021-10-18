@@ -25,10 +25,12 @@ JavaServiceHandler::JavaServiceHandler(
     "../lib/java/javaservice.jar"
   };
   c = pr::child(_java_path, _java_args, pr::std_out > stdout);
-  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-  javaQueryHandler.getClientInterface();
 
-  LOG(info) << "Waiting java service server done.";
+  try {
+    javaQueryHandler.getClientInterface(15000);
+  } catch (TransportException& ex) {
+    LOG(error) << "[javaservice] Starting service failed!";
+  }
 }
 
 std::string JavaServiceHandler::getRawDbContext() {

@@ -14,8 +14,6 @@
 #include <javaparser/javaparser.h>
 
 #include <memory>
-
-#include <chrono>
 #include <thread>
 
 namespace cc
@@ -116,6 +114,7 @@ bool JavaParser::parse() {
   for (const std::string &path
     : _ctx.options["input"].as<std::vector<std::string>>()) {
     if (accept(path)) {
+      JavaParserServiceHandler serviceHandler;
       int file_index = 1;
       pt::ptree _pt;
       pt::read_json(path, _pt);
@@ -142,18 +141,13 @@ bool JavaParser::parse() {
       };
 
       pr::child c(_java_path, _java_args, pr::std_out > stdout);
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      LOG(info) << "Waiting Java server done.";
 
-      // std::string line;
-      // while (c.running() && std::getline(is, line) && !line.empty()) {
-      //   LOG(info) << line;
-      //   if (line == "Starting the simple server...") {
-      //     break;
-      //   }
-      // }
-
-      JavaParserServiceHandler serviceHandler;
+      try {
+        serviceHandler.getClientInterface(15000);
+      } catch (TransportException& ex) {
+        LOG(error) << "[javaparser] Failed to parse!";
+        return false;
+      }
 
       // Process Java files
       for (pt::ptree::value_type &command_tree_ : _pt_filtered) {
