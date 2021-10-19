@@ -85,9 +85,24 @@ public:
   }
 
   void getAstNodeInfoByPosition(
-    language::AstNodeInfo& return_, const core::FilePosition& fpos_) override
+    language::AstNodeInfo& return_,
+    const core::FilePosition& fpos_) override
   {
     _service -> getAstNodeInfoByPosition(return_, fpos_);
+  }
+
+  void getProperties(
+    std::map<std::string, std::string>& return_,
+    const core::AstNodeId& astNodeId_) override
+  {
+    _service -> getProperties(return_, astNodeId_);
+  }
+
+  void getDocumentation(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_) override
+  {
+    _service -> getDocumentation(return_, astNodeId_);
   }
 
   std::int32_t getReferenceCount(

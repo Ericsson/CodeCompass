@@ -5,14 +5,11 @@ import cc.service.java.JavaService;
 import cc.service.language.AstNodeInfo;
 import model.*;
 import model.enums.AstType;
-import model.enums.SymbolType;
 import org.apache.thrift.TException;
 import service.srcjava.enums.ReferenceType;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 
 import java.util.*;
@@ -86,12 +83,140 @@ class JavaQueryHandler implements JavaService.Iface {
   }
 
   @Override
+  public Map<String, String> getProperties(String javaAstNodeId) {
+    Map<String, String> properties = new HashMap<>();
+    long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
+    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
+
+    switch (javaAstNode.getSymbolType()){
+      case VARIABLE: {
+        CriteriaQuery<JavaVariable> cr = cb.createQuery(JavaVariable.class);
+        Root<JavaVariable> root = cr.from(JavaVariable.class);
+
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+        List<JavaVariable> javaVariables = em.createQuery(cr).getResultList();
+
+        if (!javaVariables.isEmpty()) {
+          JavaVariable javaVariable = javaVariables.get(0);
+
+          properties.put("Name", javaVariable.getName());
+          properties.put("Qualified name", javaVariable.getQualifiedName());
+          properties.put("Type", javaVariable.getQualifiedType());
+
+          return properties;
+        } else {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+      }
+      case CONSTRUCTOR: {
+        CriteriaQuery<JavaConstructor> cr =
+          cb.createQuery(JavaConstructor.class);
+        Root<JavaConstructor> root = cr.from(JavaConstructor.class);
+
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+
+        List<JavaConstructor> javaConstructors = em.createQuery(cr).getResultList();
+
+        if (!javaConstructors.isEmpty()) {
+          JavaConstructor javaConstructor = javaConstructors.get(0);
+
+          properties.put("Name", javaConstructor.getName());
+          properties.put("Qualified name", javaConstructor.getQualifiedName());
+
+          return properties;
+        } else {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+      }
+      case METHOD: {
+        CriteriaQuery<JavaMethod> cr = cb.createQuery(JavaMethod.class);
+        Root<JavaMethod> root = cr.from(JavaMethod.class);
+
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+
+        List<JavaMethod> javaMethods = em.createQuery(cr).getResultList();
+
+        if (!javaMethods.isEmpty()) {
+          JavaMethod javaMethod = javaMethods.get(0);
+
+          properties.put("Name", javaMethod.getName());
+          properties.put("Qualified name", javaMethod.getQualifiedName());
+          properties.put("Type", javaMethod.getQualifiedType());
+
+          return properties;
+        } else {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+      }
+      // case TYPE: {
+      //   break;
+      // }
+      case ENUM_CONSTANT: {
+        CriteriaQuery<JavaEnumConstant> cr =
+          cb.createQuery(JavaEnumConstant.class);
+        Root<JavaEnumConstant> root = cr.from(JavaEnumConstant.class);
+
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+
+        List<JavaEnumConstant> javaEnumConstants =
+          em.createQuery(cr).getResultList();
+
+        if (!javaEnumConstants.isEmpty()) {
+          JavaEnumConstant javaEnumConstant = javaEnumConstants.get(0);
+
+          properties.put("Name", javaEnumConstant.getName());
+          properties.put("Qualified name", javaEnumConstant.getQualifiedName());
+          properties.put("Value", javaEnumConstant.getValue());
+
+          return properties;
+        } else {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+      }
+    }
+
+    return properties;
+  }
+
+  @Override
+  public String getDocumentation(String javaAstNodeId) {
+    return "";
+  }
+
+  @Override
   public int getReferenceCount(String javaAstNodeId, int referenceId) {
     long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
     JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
 
-    switch (ReferenceType.values()[referenceId])
-    {
+    switch (ReferenceType.values()[referenceId]) {
       case DEFINITION: {
         CriteriaQuery<Long> cr = cb.createQuery(Long.class);
         Root<JavaAstNode> root = cr.from(JavaAstNode.class);
@@ -204,8 +329,7 @@ class JavaQueryHandler implements JavaService.Iface {
     referenceTypes.put("Declaration", ReferenceType.DECLARATION.ordinal());
     referenceTypes.put("Usage", ReferenceType.USAGE.ordinal());
 
-    switch (javaAstNode.getSymbolType())
-    {
+    switch (javaAstNode.getSymbolType()) {
       case CONSTRUCTOR:
         referenceTypes.put(
           "This calls", ReferenceType.THIS_CALLS.ordinal());
@@ -264,8 +388,7 @@ class JavaQueryHandler implements JavaService.Iface {
     List<AstNodeInfo> javaAstNodeInfos = new ArrayList<>();
     JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
 
-    switch (ReferenceType.values()[referenceId])
-    {
+    switch (ReferenceType.values()[referenceId]) {
       case DEFINITION: {
         List<JavaAstNode> javaAstNodes = queryDefinitions(javaAstNode);
         javaAstNodeInfos = createAstNodeInfos(javaAstNodes);

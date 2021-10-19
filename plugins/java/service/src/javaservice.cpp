@@ -70,18 +70,20 @@ void JavaServiceHandler::getSourceText(
   LOG(info) << "getSourceText";
 }
 
-void JavaServiceHandler::getDocumentation(
-  std::string& return_,
-  const core::AstNodeId& astNodeId_)
-{
-  LOG(info) << "getDocumentation";
-}
-
 void JavaServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_)
 {
   LOG(info) << "getProperties";
+  javaQueryHandler.getProperties(return_, astNodeId_);
+}
+
+void JavaServiceHandler::getDocumentation(
+  std::string& return_,
+  const core::AstNodeId& astNodeId_)
+{
+  LOG(info) << "getDocumentation";
+  javaQueryHandler.getDocumentation(return_, astNodeId_);
 }
 
 void JavaServiceHandler::getDiagramTypes(
