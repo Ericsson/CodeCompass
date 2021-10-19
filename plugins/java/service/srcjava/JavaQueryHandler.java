@@ -208,7 +208,7 @@ class JavaQueryHandler implements JavaService.Iface {
 
   @Override
   public String getDocumentation(String javaAstNodeId) {
-    return "";
+    return " ";
   }
 
   @Override
