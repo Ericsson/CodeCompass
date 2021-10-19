@@ -246,10 +246,19 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(Javadoc node) {
     JavaDocComment javaDocComment = new JavaDocComment();
     String commentString = node.toString();
+    ASTNode parent = node.getParent();
 
     javaDocComment.setContent(commentString);
     javaDocComment.setContentHash(commentString.hashCode());
     javaDocComment.setEntityHash(node.getParent().hashCode());
+
+    if (parent instanceof MethodDeclaration) {
+      int hashCode =
+        ((MethodDeclaration) parent)
+          .resolveBinding().getMethodDeclaration().toString().hashCode();
+
+      javaDocComment.setEntityHash(hashCode);
+    }
 
     persistRow(javaDocComment);
 
@@ -367,7 +376,11 @@ public class AstVisitor extends ASTVisitor {
     String qTypeString = "";
     try {
       qTypeString =
-        node.getExpression().resolveTypeBinding().getQualifiedName();
+        node
+          .resolveMethodBinding()
+          .getMethodDeclaration()
+          .getReturnType()
+          .getQualifiedName();
     } catch (NullPointerException ignored) {
     }
 
