@@ -169,9 +169,35 @@ class JavaQueryHandler implements JavaService.Iface {
           );
         }
       }
-      // case TYPE: {
-      //   break;
-      // }
+      case TYPE: {
+        CriteriaQuery<JavaRecord> cr = cb.createQuery(JavaRecord.class);
+        Root<JavaRecord> root = cr.from(JavaRecord.class);
+
+        cr
+          .select(root)
+          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+
+        List<JavaRecord> javaRecords = em.createQuery(cr).getResultList();
+
+        if (!javaRecords.isEmpty()) {
+          JavaRecord javaRecord = javaRecords.get(0);
+
+          properties.put(
+            "Abstract type",
+            Boolean.toString(javaRecord.getIsAbstract()));
+          properties.put("Name", javaRecord.getName());
+          properties.put("Qualified name", javaRecord.getQualifiedName());
+
+          return properties;
+        } else {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+      }
       case ENUM_CONSTANT: {
         CriteriaQuery<JavaEnumConstant> cr =
           cb.createQuery(JavaEnumConstant.class);
@@ -208,7 +234,7 @@ class JavaQueryHandler implements JavaService.Iface {
 
   @Override
   public String getDocumentation(String javaAstNodeId) {
-    return " ";
+    return "";
   }
 
   @Override
