@@ -5,7 +5,8 @@ public enum SymbolType {
     CONSTRUCTOR("Constructor"),
     METHOD("Method"),
     ENUM("Enum"),
-    ENUM_CONSTANT("Enum constant");
+    ENUM_CONSTANT("Enum constant"),
+    TYPE("Type");
 
     private final String name;
 
