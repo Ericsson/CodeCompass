@@ -490,7 +490,7 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       if (!astNodeInfo)
         return;
 
-      var service = model.getLanguageService(this._fileInfo.type);
+      var service = model.getLanguageService(fileInfo.type);
       var refTypes = service.getReferenceTypes(astNodeInfo.id);
       var usages = service.getReferences(
         astNodeInfo.id,
