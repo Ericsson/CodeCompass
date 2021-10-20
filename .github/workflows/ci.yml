@@ -99,8 +99,8 @@ jobs:
           cd $HOME
           mkdir /tmp/build2src
           cd /tmp/build2src
-          curl -sSfO https://download.build2.org/0.13.0/build2-install-0.13.0.sh
-          sh build2-install-0.13.0.sh --yes --trust yes "$HOME/build2_install/"
+          curl -sSfO https://download.build2.org/0.14.0/build2-install-0.14.0.sh
+          sh build2-install-0.14.0.sh --yes --trust yes "$HOME/build2_install/"
           export PATH=$PATH:$HOME/build2_install/bin/
           mkdir /tmp/odb_build
           cd /tmp/odb_build
