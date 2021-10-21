@@ -22,6 +22,7 @@
 #include <LanguageService.h>
 #include <JavaService.h>
 
+#include <iostream>
 #include <chrono>
 
 namespace cc
@@ -31,6 +32,8 @@ namespace service
 namespace java
 {
 
+// std::stringstream javaservice_thrift_stream;
+
 namespace language = cc::service::language;
 namespace core = cc::service::core;
 using TransportException = apache::thrift::transport::TTransportException;
@@ -38,13 +41,12 @@ using TransportException = apache::thrift::transport::TTransportException;
 class JavaQueryHandler : public JavaServiceIf
 {
 public:
-
   JavaQueryHandler() {
   }
 
   /**
- * Creates the client interface.
- */
+   * Creates the client interface.
+   */
   void getClientInterface(int timeout_in_ms)
   {
     using Transport = apache::thrift::transport::TTransport;
@@ -63,6 +65,10 @@ public:
     std::shared_ptr<Protocol>
       protocol(new Protocol(transport));
 
+    // Redirect Thrift output into std::stringstream
+    apache::thrift::GlobalOutput.setOutputFunction(
+      [](const char* x) {thrift_ss << x;});
+
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
     while (!transport->isOpen()) {
@@ -74,12 +80,17 @@ public:
           chrono::duration_cast<chrono::milliseconds>(current - begin).count();
 
         if (elapsed_time > timeout_in_ms) {
-          LOG(debug) << "Connection refused, could not reach Java server on"
+          LOG(debug) << "Connection timeout, could not reach Java server on"
                      << host << ":" << port;
+          apache::thrift::GlobalOutput.setOutputFunction(
+            apache::thrift::TOutput::errorTimeWrapper);
           throw ex;
         }
       }
     }
+
+    apache::thrift::GlobalOutput.setOutputFunction(
+      apache::thrift::TOutput::errorTimeWrapper);
 
     _service.reset(new JavaServiceClient(protocol));
   }
@@ -129,7 +140,15 @@ public:
   }
 
 private:
+  /**
+   * Service interface for IPC communication.
+   */
   std::unique_ptr<JavaServiceIf> _service;
+
+  /**
+   * Object to store Thrift messages during connecting to the Java server
+   */
+  static std::stringstream thrift_ss;
 };
 
 } // java

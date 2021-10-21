@@ -27,7 +27,7 @@ JavaServiceHandler::JavaServiceHandler(
   c = pr::child(_java_path, _java_args, pr::std_out > stdout);
 
   try {
-    javaQueryHandler.getClientInterface(15000);
+    javaQueryHandler.getClientInterface(25000);
   } catch (TransportException& ex) {
     LOG(error) << "[javaservice] Starting service failed!";
   }
@@ -211,7 +211,8 @@ void JavaServiceHandler::getSyntaxHighlight(
 namespace java
 {
 
-
+// Initialize static member
+std::stringstream JavaQueryHandler::thrift_ss;
 
 } // java
 } // service

@@ -22,6 +22,9 @@ namespace parser
 {
 namespace java {
 
+// Initialize static member
+std::stringstream JavaParserServiceHandler::thrift_ss;
+
 JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_) {
   _java_path = pr::search_path("java");
 }
@@ -143,7 +146,7 @@ bool JavaParser::parse() {
       pr::child c(_java_path, _java_args, pr::std_out > stdout);
 
       try {
-        serviceHandler.getClientInterface(15000);
+        serviceHandler.getClientInterface(25000);
       } catch (TransportException& ex) {
         LOG(error) << "[javaparser] Failed to parse!";
         return false;
