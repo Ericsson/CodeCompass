@@ -100,6 +100,8 @@ public:
     apache::thrift::GlobalOutput.setOutputFunction(
       apache::thrift::TOutput::errorTimeWrapper);
 
+    LOG(info) << "[javaparser] Java server started!";
+
     _service.reset(new JavaParserServiceClient(protocol));
   }
 

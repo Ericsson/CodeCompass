@@ -1,5 +1,6 @@
 package parser.srcjava;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
@@ -16,14 +17,14 @@ public class JavaParserServer {
   public static JavaParserService.Processor<?> processor;
 
   public static void main(String [] args) {
+    BasicConfigurator.configure();
+
     try {
       javaParser = new JavaParser();
       processor = new JavaParserService.Processor<>(javaParser);
 
       Runnable simple = () -> simple(processor);
       new Thread(simple).start();
-
-      LOGGER.log(Level.INFO, "[javaparser] Java server started!");
     } catch (Exception e) {
       LOGGER.log(
         Level.SEVERE, "[javaparser] Java server starting failed!");

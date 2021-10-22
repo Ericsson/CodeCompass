@@ -1,5 +1,6 @@
 package service.srcjava;
 
+import org.apache.log4j.BasicConfigurator;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
@@ -16,14 +17,14 @@ public class JavaQueryServer {
   public static JavaService.Processor<?> processor;
 
   public static void main(String [] args) {
+    BasicConfigurator.configure();
+
     try {
       javaQueryHandler = new JavaQueryHandler();
       processor = new JavaService.Processor<>(javaQueryHandler);
 
       Runnable simple = () -> simple(processor);
       new Thread(simple).start();
-
-      LOGGER.log(Level.INFO, "Java server started!");
     } catch (Exception e) {
       LOGGER.log(
         Level.SEVERE, "Java server starting failed!");
