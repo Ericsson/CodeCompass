@@ -50,12 +50,12 @@ export PATH=$DEPS_INSTALL_BUILD_DIR/cmake-install/bin:$PATH
 ######
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.gz
-tar -xf m4-1.4.18.tar.gz
-cd m4-1.4.18
+wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.gz
+tar -xf m4-1.4.19.tar.gz
+cd m4-1.4.19
 ./configure --quiet --prefix=$DEPS_INSTALL_BUILD_DIR/m4-install
 make install --quiet --jobs $(nproc)
-rm -rf $PACKAGES_DIR/m4-1.4.18.tar.gz
+rm -rf $PACKAGES_DIR/m4-1.4.19.tar.gz
 
 ###########
 # libtool #
