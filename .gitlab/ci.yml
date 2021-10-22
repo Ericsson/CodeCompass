@@ -64,7 +64,7 @@ tarball suse-15:
     cache:
         key: "leap"
     variables:
-        GCC_VERSION: 7.5.0
+        GCC_VERSION: 9.3.0
         ODB_VERSION: 2.5.0
     before_script:
         - zypper refresh
