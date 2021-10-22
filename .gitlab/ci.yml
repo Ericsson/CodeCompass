@@ -101,6 +101,9 @@ tarball suse-42.1:
         - zypper install -y groff
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
+        # disable SSL certificate check (distribution's cacert is outdated)
+        - echo "check_certificate = off" >> /etc/wgetrc
+        - echo insecure >> ~/.curlrc
         # show GLIBC verison
         - *show-glibc-version
 
