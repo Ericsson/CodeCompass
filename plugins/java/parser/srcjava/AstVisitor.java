@@ -7,18 +7,24 @@ import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class AstVisitor extends ASTVisitor {
 
   private final CompilationUnit cu;
   private final EntityManager em;
+  private final CriteriaBuilder cb;
   private final long fileId;
 
   public AstVisitor(CompilationUnit cu, EntityManager em, long fileId) {
     this.cu = cu;
     this.em = em;
+    this.cb = em.getCriteriaBuilder();
     this.fileId = fileId;
   }
 
@@ -72,7 +78,9 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(Assignment node) {
-    // System.out.println(node);
+    // System.out.println("ASSIGNMENT");
+    // System.out.println(node.ge);
+    // System.out.println(node.getLeftHandSide());
     return super.visit(node);
   }
 
@@ -91,11 +99,12 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(ClassInstanceCreation node) {
     JavaConstructor javaConstructor = new JavaConstructor();
+    IMethodBinding methodBinding =
+      node.resolveConstructorBinding().getMethodDeclaration();
     String qualifiedName = node.getType().resolveBinding().getQualifiedName();
-    int hashCode = (
-      qualifiedName + " " +
-      node.resolveConstructorBinding().getMethodDeclaration().toString()
-    ).hashCode();
+    String hashCodeStr = String.join(
+      " ", qualifiedName, methodBinding.toString());
+    int hashCode = hashCodeStr.hashCode();
 
     long javaAstNodeId = persistJavaAstNodeRow(
       node, SymbolType.CONSTRUCTOR, AstType.USAGE, hashCode);
@@ -184,7 +193,9 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(FieldAccess node) {
+    // System.out.println("FIELDACCESS");
     // System.out.println(node);
+    // System.out.println(node.resolveFieldBinding().getType());
     return super.visit(node);
   }
 
@@ -200,6 +211,7 @@ public class AstVisitor extends ASTVisitor {
       declaringClassName =
         ((EnumDeclaration) parent).resolveBinding().getQualifiedName();
     }
+
     String qualifiedType = node.getType().resolveBinding().getQualifiedName();
 
     for (Object varDeclFragObj : node.fragments()) {
@@ -260,9 +272,9 @@ public class AstVisitor extends ASTVisitor {
     javaDocComment.setEntityHash(node.getParent().hashCode());
 
     if (parent instanceof MethodDeclaration) {
-      int hashCode =
-        ((MethodDeclaration) parent)
-          .resolveBinding().getMethodDeclaration().toString().hashCode();
+      IMethodBinding methodBinding =
+        ((MethodDeclaration) parent).resolveBinding().getMethodDeclaration();
+      int hashCode = methodBinding.toString().hashCode();
 
       javaDocComment.setEntityHash(hashCode);
     }
@@ -304,12 +316,12 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodDeclaration node) {
-    // Method
     if (!node.isConstructor()) {
+      // Method
       visitMethodDeclaration(node);
 
-    // Constructor
     } else {
+      // Constructor
       visitConstructorDeclaration(node);
     }
 
@@ -319,22 +331,16 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(MethodInvocation node) {
     JavaMethod javaMethod = new JavaMethod();
-    String qualifiedType = "";
-    String declaringClassName =
-      node.resolveMethodBinding().getDeclaringClass().getQualifiedName();
-    int hashCode = (
-      declaringClassName + " " +
-      node.resolveMethodBinding().getMethodDeclaration().toString()).hashCode();
-
-    try {
-      qualifiedType =
-        node
-          .resolveMethodBinding()
-          .getMethodDeclaration()
-          .getReturnType()
-          .getQualifiedName();
-    } catch (NullPointerException ignored) {
-    }
+    ITypeBinding classBinding =
+      node.resolveMethodBinding().getDeclaringClass();
+    IMethodBinding methodBinding =
+      node.resolveMethodBinding().getMethodDeclaration();
+    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr = methodBinding.toString();
+    String hashCodeStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    int hashCode = hashCodeStr.hashCode();
 
     javaMethod.setTypeHash(qualifiedType.hashCode());
     javaMethod.setQualifiedType(qualifiedType);
@@ -409,6 +415,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ParameterizedType node) {
+    // System.out.println(node);
     return super.visit(node);
   }
 
@@ -474,6 +481,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SingleVariableDeclaration node) {
+//     System.out.println(node);
 //     JavaVariable javaVariable = new JavaVariable();
 //     String qualifiedType = "";
 //     int hashCode = node.resolveBinding().toString().hashCode();
@@ -532,12 +540,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(ThrowStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(TypeDeclaration node) {
     JavaRecord javaRecord = new JavaRecord();
     String qualifiedName = node.resolveBinding().getQualifiedName();
@@ -585,6 +587,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(VariableDeclarationExpression node) {
+    // System.out.println("EXPRESSION");
     // System.out.println(node);
     return super.visit(node);
   }
@@ -597,7 +600,13 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(VariableDeclarationStatement node) {
-    // System.out.println(node);
+    // Method local variables
+    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
+
+    for (Object varDeclFragObj : node.fragments()) {
+      visitVariableDeclarationFragment(
+        (VariableDeclarationFragment) varDeclFragObj, qualifiedType);
+    }
     return super.visit(node);
   }
 
@@ -607,16 +616,12 @@ public class AstVisitor extends ASTVisitor {
   {
     JavaVariable javaVariable = new JavaVariable();
     String qualifiedName = node.getName().getFullyQualifiedName();
-
-    int hashCode = (
-      declaringClassName + " " +
-      qualifiedType + " " +
-      qualifiedName).hashCode();
+    String hashCodeStr = String.join(
+      " ", declaringClassName, qualifiedType, qualifiedName);
+    int hashCode = hashCodeStr.hashCode();
 
     javaVariable.setTypeHash(qualifiedType.hashCode());
     javaVariable.setQualifiedType(qualifiedType);
-
-    // node.getInitializer();
 
     long javaAstNodeId = persistJavaAstNodeRow(
       node, SymbolType.VARIABLE, AstType.DECLARATION, hashCode);
@@ -629,22 +634,77 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaVariable);
   }
 
+  private void visitVariableDeclarationFragment(
+    VariableDeclarationFragment node, String qualifiedType)
+  {
+    JavaVariable javaVariable = new JavaVariable();
+    String qualifiedName = node.getName().getFullyQualifiedName();
+    IMethodBinding methodBinding =
+      node.resolveBinding().getDeclaringMethod();
+    ITypeBinding classBinding = methodBinding.getDeclaringClass();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr = methodBinding.toString();
+    String methodHashCodeStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    String hashCodeStr = String.join(
+      " ",declaringClassName, methodBindingStr,
+      qualifiedType, qualifiedName);
+    int methodHashCode = methodHashCodeStr.hashCode();
+    int hashCode = hashCodeStr.hashCode();
+    List<JavaAstNode> javaAstNodes =
+      queryJavaAstNodeDefinitionsByEntityHash(methodHashCode);
+    JavaAstNode javaAstNode = javaAstNodes.get(0);
+
+    javaVariable.setTypeHash(qualifiedType.hashCode());
+    javaVariable.setQualifiedType(qualifiedType);
+
+    if (methodBinding.isConstructor()) {
+      CriteriaQuery<JavaConstructor> cr = cb.createQuery(JavaConstructor.class);
+      Root<JavaConstructor> root = cr.from(JavaConstructor.class);
+
+      JavaConstructor javaConstructor =
+        queryJavaEntityByAstNodeId(cr, root, javaAstNode.getId());
+
+      javaConstructor.addJavaConVarLocal(javaVariable);
+
+    } else {
+      CriteriaQuery<JavaMethod> cr = cb.createQuery(JavaMethod.class);
+      Root<JavaMethod> root = cr.from(JavaMethod.class);
+
+      JavaMethod javaMethod =
+        queryJavaEntityByAstNodeId(cr, root, javaAstNode.getId());
+
+      javaMethod.addJavaMetVarLocal(javaVariable);
+    }
+
+    long javaAstNodeId = persistJavaAstNodeRow(
+      node, SymbolType.VARIABLE,
+      node.toString().contains("=") ? AstType.DEFINITION : AstType.DECLARATION,
+      hashCode
+    );
+
+    // Set JavaEntity fields
+    javaVariable.setAstNodeId(javaAstNodeId);
+    javaVariable.setEntityHash(hashCode);
+    javaVariable.setName(node.getName().toString());
+    javaVariable.setQualifiedName(qualifiedName);
+
+    persistRow(javaVariable);
+  }
+
   private void visitMethodDeclaration(MethodDeclaration node) {
     JavaMethod javaMethod = new JavaMethod();
-    ITypeBinding declaringClass = node.resolveBinding().getDeclaringClass();
-    String declaringClassName = declaringClass.getQualifiedName();
-    String qualifiedType = "";
+    ITypeBinding classBinding = node.resolveBinding().getDeclaringClass();
+    IMethodBinding methodBinding = node.resolveBinding().getMethodDeclaration();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr = methodBinding.toString();
+    String qualifiedType =
+      node.getReturnType2().resolveBinding().getQualifiedName();
     AstType astType =
-      declaringClass.isInterface() ? AstType.DECLARATION : AstType.DEFINITION;
-    int hashCode =
-      (declaringClassName + " " +
-        node.resolveBinding().getMethodDeclaration().toString()).hashCode();
-
-
-    try {
-      qualifiedType = node.getReturnType2().resolveBinding().getQualifiedName();
-    } catch (NullPointerException ignored) {
-    }
+      classBinding.isInterface() ? AstType.DECLARATION : AstType.DEFINITION;
+    String hashCodeStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    int hashCode = hashCodeStr.hashCode();
 
     javaMethod.setTypeHash(qualifiedType.hashCode());
     javaMethod.setQualifiedType(qualifiedType);
@@ -652,7 +712,7 @@ public class AstVisitor extends ASTVisitor {
     // persist method's parameters
     for (Object varDeclObj : node.parameters()) {
       visitMethodParameter(
-        javaMethod, (SingleVariableDeclaration) varDeclObj);
+        javaMethod, (SingleVariableDeclaration) varDeclObj, hashCodeStr);
     }
 
     long javaAstNodeId = persistJavaAstNodeRow(
@@ -669,13 +729,13 @@ public class AstVisitor extends ASTVisitor {
 
   private void visitConstructorDeclaration(MethodDeclaration node) {
     JavaConstructor javaConstructor = new JavaConstructor();
-    ITypeBinding declaringClass = node.resolveBinding().getDeclaringClass();
-    String declaringClassName = declaringClass.getQualifiedName();
-
-    int hashCode = (
-      declaringClassName + " " +
-        node.resolveBinding().getMethodDeclaration().toString()
-    ).hashCode();
+    ITypeBinding classBinding = node.resolveBinding().getDeclaringClass();
+    IMethodBinding methodBinding = node.resolveBinding().getMethodDeclaration();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr =  methodBinding.toString();
+    String hashCodeStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    int hashCode = hashCodeStr.hashCode();
 
     // Persist constructor's parameters
     for (Object varDeclObj : node.parameters()) {
@@ -696,50 +756,82 @@ public class AstVisitor extends ASTVisitor {
   }
 
   private void visitMethodParameter(
-    JavaMethod javaMethod, SingleVariableDeclaration node)
+    JavaMethod javaMethod, SingleVariableDeclaration node,
+    String hashCodeStrPrefix)
   {
     JavaVariable javaVariable = new JavaVariable();
-    int svdHashCode = node.hashCode();
+    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
+    String qualifiedName = node.getName().getFullyQualifiedName();
+    String hashCodeStr = String.join(
+      " ", hashCodeStrPrefix, qualifiedType, qualifiedName);
+    int hashCode = hashCodeStr.hashCode();
 
-    javaVariable.setQualifiedType(
-      node.getType().resolveBinding().getQualifiedName()
-    );
+    javaVariable.setTypeHash(qualifiedType.hashCode());
+    javaVariable.setQualifiedType(qualifiedType);
 
     javaMethod.addJavaMetVarParam(javaVariable);
 
     long javaAstNodeId = persistJavaAstNodeRow(
-      node, SymbolType.VARIABLE, AstType.DECLARATION, svdHashCode);
+      node, SymbolType.VARIABLE, AstType.DECLARATION, hashCode);
 
-    //Set JavaEntity fields
+    // Set JavaEntity fields
     javaVariable.setAstNodeId(javaAstNodeId);
-    javaVariable.setEntityHash(svdHashCode);
+    javaVariable.setEntityHash(hashCode);
     javaVariable.setName(node.getName().toString());
-    javaVariable.setQualifiedName(
-      node.getName().getFullyQualifiedName());
+    javaVariable.setQualifiedName(qualifiedName);
   }
 
   private void visitConstructorParameter(
     JavaConstructor javaConstructor, SingleVariableDeclaration node)
   {
     JavaVariable javaVariable = new JavaVariable();
-    int svdHashCode = node.hashCode();
+    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
+    int hashCode = node.hashCode();
 
-    javaVariable.setQualifiedType(
-      node.getType().resolveBinding().getQualifiedName()
-    );
+    javaVariable.setTypeHash(qualifiedType.hashCode());
+    javaVariable.setQualifiedType(qualifiedType);
 
     javaConstructor.addJavaConVarParam(javaVariable);
 
     long javaAstNodeId = persistJavaAstNodeRow(
       node, SymbolType.VARIABLE,
-      AstType.DECLARATION, svdHashCode);
+      AstType.DECLARATION, hashCode);
 
     // Set JavaEntity fields
     javaVariable.setAstNodeId(javaAstNodeId);
-    javaVariable.setEntityHash(svdHashCode);
+    javaVariable.setEntityHash(hashCode);
     javaVariable.setName(node.getName().toString());
     javaVariable.setQualifiedName(
       node.getName().getFullyQualifiedName());
+  }
+
+  private List<JavaAstNode> queryJavaAstNodeDefinitionsByEntityHash(
+    int entityHash)
+  {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    cr
+      .select(root)
+      .where(
+        cb.and(
+          cb.equal(root.get("entityHash"), entityHash),
+          cb.equal(root.get("astType"), AstType.DEFINITION))
+      );
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  private <E extends JavaEntity> E queryJavaEntityByAstNodeId(
+    CriteriaQuery<E> cr,
+    Root<E> root,
+    long astNodeId)
+  {
+    cr
+      .select(root)
+      .where(cb.equal(root.get("astNodeId"), astNodeId));
+
+    return em.createQuery(cr).getSingleResult();
   }
 
   private <T extends ASTNode> long persistJavaAstNodeRow(

@@ -17,29 +17,42 @@ public class PositionInfo {
     this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
-    this.endLine = cu.getLineNumber(end);
-    this.endColumn = cu.getColumnNumber(end);
+
+    int endLine = cu.getLineNumber(end);
+    int endColumn = cu.getColumnNumber(end);
+
+    // End position checking, and trying with a two less value.
+    // This will wok in most cases, if the current element is a class
+    // declaration and the newline character is missing from it's end.
+    this.endLine =
+      cu.getLineNumber(end) == -1 ?
+        cu.getLineNumber(end - 2) :
+        endLine;
+    this.endColumn =
+      cu.getColumnNumber(end) == -1 ?
+        cu.getColumnNumber(end - 2) :
+        endColumn;
   }
 
   public PositionInfo(CompilationUnit cu, ASTNode node, Javadoc javadoc) {
-    this.start = javadoc.getStartPosition() + javadoc.getLength();
-    this.end = node.getStartPosition() + node.getLength();
+    this.start = javadoc.getStartPosition() + javadoc.getLength() + 1;
+    this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
 
     int endLine = cu.getLineNumber(end);
     int endColumn = cu.getColumnNumber(end);
 
-    // End position checking, and trying with a one less value.
+    // End position checking, and trying with a two less value.
     // This will wok in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
       cu.getLineNumber(end) == -1 ?
-        cu.getLineNumber(end - 1) :
+        cu.getLineNumber(end - 2) :
         endLine;
     this.endColumn =
       cu.getColumnNumber(end) == -1 ?
-        cu.getColumnNumber(end - 1) :
+        cu.getColumnNumber(end - 2) :
         endColumn;
   }
 

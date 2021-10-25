@@ -288,24 +288,65 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       }
       case PARAMETER: {
-        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
-        Root<JavaMethod> root = cr.from(JavaMethod.class);
+        CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
+        Root<JavaEntity> root = cr.from(JavaEntity.class);
+        int paramCount = 0;
 
         cr
-          .select(cb.count(root.get("javaMetVarParams")))
-          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
+          .select(root)
+          .where(
+            cb.equal(root.get("astNodeId"), javaAstNode.getId())
+          );
 
-        return em.createQuery(cr).getSingleResult().intValue();
+        try {
+          JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
+
+          if (javaEntity instanceof JavaConstructor) {
+            paramCount =
+              ((JavaConstructor) javaEntity).getJavaConVarParams().size();
+          } else if (javaEntity instanceof JavaMethod) {
+            paramCount =
+              ((JavaMethod) javaEntity).getJavaMetVarParams().size();
+          }
+        } catch (NoResultException ex) {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+
+        return paramCount;
       }
       case LOCAL_VAR: {
-        CriteriaQuery<Long> cr = cb.createQuery(Long.class);
-        Root<JavaMethod> root = cr.from(JavaMethod.class);
+        CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
+        Root<JavaEntity> root = cr.from(JavaEntity.class);
+        int localCount = 0;
 
         cr
-          .select(cb.count(root.get("javaMetVarLocals")))
-          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
+          .select(root)
+          .where(
+            cb.equal(root.get("astNodeId"), javaAstNode.getId())
+          );
 
-        return em.createQuery(cr).getSingleResult().intValue();
+        try {
+          JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
+
+          if (javaEntity instanceof JavaConstructor) {
+            localCount =
+              ((JavaConstructor) javaEntity).getJavaConVarLocals().size();
+          } else if (javaEntity instanceof JavaMethod) {
+            localCount =
+              ((JavaMethod) javaEntity).getJavaMetVarLocals().size();
+          }
+        } catch (NoResultException ex) {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
+        return localCount;
       }
       case RETURN_TYPE: {
         break;
@@ -462,21 +503,21 @@ class JavaQueryHandler implements JavaService.Iface {
         Root<JavaEntity> root = cr.from(JavaEntity.class);
         cr
           .select(root)
-          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
 
         try {
           JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
 
-          if (javaEntity instanceof JavaMethod) {
+          if (javaEntity instanceof JavaConstructor) {
+            javaAstNodeInfos =
+              createAstNodeInfos(
+                ((JavaConstructor) javaEntity).getJavaConVarParams());
+          } else if (javaEntity instanceof JavaMethod) {
             javaAstNodeInfos =
               createAstNodeInfos(
                 ((JavaMethod) javaEntity).getJavaMetVarParams());
-          } else if (javaEntity instanceof JavaConstructor) {
-            javaAstNodeInfos =
-              createAstNodeInfos(
-                ((JavaConstructor) javaEntity).getJavaConVarLocals());
           }
-        } catch (NoResultException e) {
+        } catch (NoResultException ex) {
           LOGGER.log(
             Level.WARNING,
             "Database query result was not expected to be empty. " +
@@ -486,6 +527,31 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       }
       case LOCAL_VAR: {
+        CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
+        Root<JavaEntity> root = cr.from(JavaEntity.class);
+        cr
+          .select(root)
+          .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
+
+        try {
+          JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
+
+          if (javaEntity instanceof JavaConstructor) {
+            javaAstNodeInfos =
+              createAstNodeInfos(
+                ((JavaConstructor) javaEntity).getJavaConVarLocals());
+          } else if (javaEntity instanceof JavaMethod) {
+            javaAstNodeInfos =
+              createAstNodeInfos(
+                ((JavaMethod) javaEntity).getJavaMetVarLocals());
+          }
+        } catch (NoResultException ex) {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
         break;
       }
       case RETURN_TYPE: {
