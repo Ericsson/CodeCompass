@@ -107,13 +107,13 @@ class JavaQueryHandler implements JavaService.Iface {
           properties.put("Type", javaVariable.getQualifiedType());
 
           return properties;
-        } else {
-          LOGGER.log(
-            Level.WARNING,
-            "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
-          );
         }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        break;
       }
       case CONSTRUCTOR: {
         CriteriaQuery<JavaConstructor> cr =
@@ -134,24 +134,16 @@ class JavaQueryHandler implements JavaService.Iface {
           properties.put("Qualified name", javaConstructor.getQualifiedName());
 
           return properties;
-        } else {
-          LOGGER.log(
-            Level.WARNING,
-            "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
-          );
         }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        break;
       }
       case METHOD: {
-        CriteriaQuery<JavaMethod> cr = cb.createQuery(JavaMethod.class);
-        Root<JavaMethod> root = cr.from(JavaMethod.class);
-
-        cr
-          .select(root)
-          .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
-
-
-        List<JavaMethod> javaMethods = em.createQuery(cr).getResultList();
+        List<JavaMethod> javaMethods = queryJavaMethods(javaAstNode);
 
         if (!javaMethods.isEmpty()) {
           JavaMethod javaMethod = javaMethods.get(0);
@@ -161,13 +153,13 @@ class JavaQueryHandler implements JavaService.Iface {
           properties.put("Type", javaMethod.getQualifiedType());
 
           return properties;
-        } else {
-          LOGGER.log(
-            Level.WARNING,
-            "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
-          );
         }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        break;
       }
       case TYPE: {
         CriteriaQuery<JavaRecord> cr = cb.createQuery(JavaRecord.class);
@@ -190,13 +182,13 @@ class JavaQueryHandler implements JavaService.Iface {
           properties.put("Qualified name", javaRecord.getQualifiedName());
 
           return properties;
-        } else {
-          LOGGER.log(
-            Level.WARNING,
-            "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
-          );
         }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        break;
       }
       case ENUM_CONSTANT: {
         CriteriaQuery<JavaEnumConstant> cr =
@@ -219,13 +211,13 @@ class JavaQueryHandler implements JavaService.Iface {
           properties.put("Value", javaEnumConstant.getValue());
 
           return properties;
-        } else {
-          LOGGER.log(
-            Level.WARNING,
-            "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
-          );
         }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        break;
       }
     }
 
@@ -290,7 +282,6 @@ class JavaQueryHandler implements JavaService.Iface {
       case PARAMETER: {
         CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
         Root<JavaEntity> root = cr.from(JavaEntity.class);
-        int paramCount = 0;
 
         cr
           .select(root)
@@ -302,26 +293,22 @@ class JavaQueryHandler implements JavaService.Iface {
           JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
 
           if (javaEntity instanceof JavaConstructor) {
-            paramCount =
-              ((JavaConstructor) javaEntity).getJavaConVarParams().size();
+            return ((JavaConstructor) javaEntity).getJavaConVarParams().size();
           } else if (javaEntity instanceof JavaMethod) {
-            paramCount =
-              ((JavaMethod) javaEntity).getJavaMetVarParams().size();
+            return ((JavaMethod) javaEntity).getJavaMetVarParams().size();
           }
         } catch (NoResultException ex) {
           LOGGER.log(
             Level.WARNING,
             "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
+            getCurrentPath() + ", line #" + getCurrentLineNumber()
           );
         }
-
-        return paramCount;
+        return 0;
       }
       case LOCAL_VAR: {
         CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
         Root<JavaEntity> root = cr.from(JavaEntity.class);
-        int localCount = 0;
 
         cr
           .select(root)
@@ -333,23 +320,40 @@ class JavaQueryHandler implements JavaService.Iface {
           JavaEntity javaEntity = em.createQuery(cr).getSingleResult();
 
           if (javaEntity instanceof JavaConstructor) {
-            localCount =
-              ((JavaConstructor) javaEntity).getJavaConVarLocals().size();
+            return ((JavaConstructor) javaEntity).getJavaConVarLocals().size();
           } else if (javaEntity instanceof JavaMethod) {
-            localCount =
-              ((JavaMethod) javaEntity).getJavaMetVarLocals().size();
+            return ((JavaMethod) javaEntity).getJavaMetVarLocals().size();
           }
         } catch (NoResultException ex) {
           LOGGER.log(
             Level.WARNING,
             "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
+            getCurrentPath() + ", line #" + getCurrentLineNumber()
           );
         }
-        return localCount;
+        return 0;
       }
       case RETURN_TYPE: {
-        break;
+        List<JavaMethod> javaMethods = queryJavaMethods(javaAstNode);
+
+        if (!javaMethods.isEmpty()) {
+          JavaMethod javaMethod = javaMethods.get(0);
+          List<JavaRecord> javaRecords = queryJavaRecords(javaMethod);
+
+          if (!javaRecords.isEmpty()) {
+            JavaRecord javaRecord = javaRecords.get(0);
+
+            return queryDefinitions(javaRecord.getAstNodeId()).size();
+          }
+
+          return 0;
+        }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        return 0;
       }
       case OVERRIDE: {
         break;
@@ -364,7 +368,26 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       }
       case TYPE: {
-        break;
+        List<JavaVariable> javaVariables = queryJavaVariables(javaAstNode);
+
+        if (!javaVariables.isEmpty()) {
+          JavaVariable javaVariable = javaVariables.get(0);
+          List<JavaRecord> javaRecords = queryJavaRecords(javaVariable);
+
+          if (!javaRecords.isEmpty()) {
+            JavaRecord javaRecord = javaRecords.get(0);
+
+            return queryDefinitions(javaRecord.getAstNodeId()).size();
+          }
+
+          return 0;
+        }
+        LOGGER.log(
+          Level.WARNING,
+          "Database query result was not expected to be empty. " +
+            getCurrentPath() + ", line #" + getCurrentLineNumber()
+        );
+        return 0;
       }
       case INHERIT_FROM: {
         break;
@@ -521,7 +544,7 @@ class JavaQueryHandler implements JavaService.Iface {
           LOGGER.log(
             Level.WARNING,
             "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
+            getCurrentPath() + ", line #" + getCurrentLineNumber()
           );
         }
         break;
@@ -529,6 +552,7 @@ class JavaQueryHandler implements JavaService.Iface {
       case LOCAL_VAR: {
         CriteriaQuery<JavaEntity> cr = cb.createQuery(JavaEntity.class);
         Root<JavaEntity> root = cr.from(JavaEntity.class);
+
         cr
           .select(root)
           .where(cb.equal(root.get("astNodeId"), javaAstNode.getId()));
@@ -549,12 +573,37 @@ class JavaQueryHandler implements JavaService.Iface {
           LOGGER.log(
             Level.WARNING,
             "Database query result was not expected to be empty. " +
-              getCurrentPath() + ", line #" + getCurrentLineNumber()
+            getCurrentPath() + ", line #" + getCurrentLineNumber()
           );
         }
         break;
       }
       case RETURN_TYPE: {
+        List<JavaMethod> javaMethods = queryJavaMethods(javaAstNode);
+        boolean isListEmpty = javaMethods.isEmpty();
+
+        if (!isListEmpty) {
+          JavaMethod javaMethod = javaMethods.get(0);
+          List<JavaRecord> javaRecords = queryJavaRecords(javaMethod);
+
+          isListEmpty = javaRecords.isEmpty();
+          if (!isListEmpty) {
+            JavaRecord javaRecord = javaRecords.get(0);
+
+            List<JavaAstNode> definitions =
+              queryDefinitions(javaRecord.getAstNodeId());
+
+            javaAstNodeInfos = createAstNodeInfos(definitions);
+          }
+        }
+
+        if (isListEmpty) {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
         break;
       }
       case OVERRIDE: {
@@ -570,6 +619,31 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       }
       case TYPE: {
+        List<JavaVariable> javaMethods = queryJavaVariables(javaAstNode);
+        boolean isListEmpty = javaMethods.isEmpty();
+
+        if (!isListEmpty) {
+          JavaVariable javaVariable = javaMethods.get(0);
+          List<JavaRecord> javaRecords = queryJavaRecords(javaVariable);
+
+          isListEmpty = javaRecords.isEmpty();
+          if (!isListEmpty) {
+            JavaRecord javaRecord = javaRecords.get(0);
+
+            List<JavaAstNode> definitions =
+              queryDefinitions(javaRecord.getAstNodeId());
+
+            javaAstNodeInfos = createAstNodeInfos(definitions);
+          }
+        }
+
+        if (isListEmpty) {
+          LOGGER.log(
+            Level.WARNING,
+            "Database query result was not expected to be empty. " +
+              getCurrentPath() + ", line #" + getCurrentLineNumber()
+          );
+        }
         break;
       }
       case INHERIT_FROM: {
@@ -668,6 +742,25 @@ class JavaQueryHandler implements JavaService.Iface {
     return queryJavaAstNodes(javaAstNode, cr, root, predicate);
   }
 
+  private List<JavaAstNode> queryDefinitions(long javaAstNodeId) {
+    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeId);
+
+    return queryDefinitions(javaAstNode);
+  }
+
+  private List<JavaRecord> queryJavaRecords(
+    JavaTypedEntity javaTypedEntity)
+  {
+    CriteriaQuery<JavaRecord> cr = cb.createQuery(JavaRecord.class);
+    Root<JavaRecord> root = cr.from(JavaRecord.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaTypedEntity.getTypeHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
   private JavaAstNode queryJavaAstNode(long javaAstNodeId) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
@@ -726,6 +819,54 @@ class JavaQueryHandler implements JavaService.Iface {
       .where(cb.and(entityHashPredicate, customPredicate));
 
     return em.createQuery(cr).getSingleResult().intValue();
+  }
+
+  private List<JavaMethod> queryJavaMethods(JavaAstNode javaAstNode) {
+    CriteriaQuery<JavaMethod> cr = cb.createQuery(JavaMethod.class);
+    Root<JavaMethod> root = cr.from(JavaMethod.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  private List<JavaMethod> queryJavaMethods(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaMethod> cr,
+    Root<JavaMethod> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  private List<JavaVariable> queryJavaVariables(JavaAstNode javaAstNode) {
+    CriteriaQuery<JavaVariable> cr = cb.createQuery(JavaVariable.class);
+    Root<JavaVariable> root = cr.from(JavaVariable.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  private List<JavaVariable> queryJavaVariables(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaVariable> cr,
+    Root<JavaVariable> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
   }
 
   private static String getCurrentPath() {

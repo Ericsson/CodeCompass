@@ -79,8 +79,8 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(Assignment node) {
     // System.out.println("ASSIGNMENT");
-    // System.out.println(node.ge);
-    // System.out.println(node.getLeftHandSide());
+    // System.out.println(node);
+    // System.out.println(node.getLeftHandSide().resolveTypeBinding());
     return super.visit(node);
   }
 
@@ -181,13 +181,14 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ExpressionMethodReference node) {
-    // System.out.println(node);
+    // System.out.println("))))))))))))))))))))))))))))))))))))))))))))))))))))))");
+    // System.out.println(node.getExpression().resolveTypeBinding().getDeclaringMethod());
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ExpressionStatement node) {
-    // System.out.println(node);
+    // System.out.println(node.getExpression().resolveBoxing());
     return super.visit(node);
   }
 
@@ -292,6 +293,8 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(LambdaExpression node) {
+    // System.out.println("AAAAAAAAAAAAAAAAAAAAAAA");
+    // System.out.println(node.resolveMethodBinding().getMethodDeclaration());
     // System.out.println(node);
     return super.visit(node);
   }
@@ -304,7 +307,36 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MemberRef node) {
+    // System.out.println("====================================");
+    // System.out.println(node.resolveBinding().getJavaElement());
+    /*
+    JavaMethod javaMethod = new JavaMethod();
+    ITypeBinding classBinding =
+      node.getDeclaringClass();
+    IMethodBinding methodBinding =
+      node.resolveMethodBinding().getMethodDeclaration();
+    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr = methodBinding.toString();
+    String hashCodeStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    int hashCode = hashCodeStr.hashCode();
+
+    javaMethod.setTypeHash(qualifiedType.hashCode());
+    javaMethod.setQualifiedType(qualifiedType);
+
+    long javaAstNodeId = persistJavaAstNodeRow(
+      node, SymbolType.METHOD, AstType.USAGE, hashCode);
+
+    // Set JavaEntity fields
+    javaMethod.setAstNodeId(javaAstNodeId);
+    javaMethod.setEntityHash(hashCode);
+    javaMethod.setName(node.getName().toString());
+    javaMethod.setQualifiedName(node.getName().getFullyQualifiedName());
+
+    persistRow(javaMethod);
     // System.out.println(node);
+     */
     return super.visit(node);
   }
 
@@ -361,13 +393,16 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodRef node) {
+    System.out.println("''''''''''''''''''''''''''''''''''''");
+    System.out.println(node.resolveBinding().getJavaElement());
     // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(MethodRefParameter node) {
-    // System.out.println(node);
+    System.out.println("==============================");
+    System.out.println(node);
     return super.visit(node);
   }
 
@@ -447,6 +482,8 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(SimpleName node) {
     // System.out.println(node);
+    // System.out.println(node.resolveBinding().getName());
+    // System.out.println("==================================");
     return super.visit(node);
   }
 
@@ -587,6 +624,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(VariableDeclarationExpression node) {
+    // Például forciklus ciklusváltozó
     // System.out.println("EXPRESSION");
     // System.out.println(node);
     return super.visit(node);

@@ -4,7 +4,9 @@ public enum AstType {
     STATEMENT("Statement"),
     DECLARATION("Declaration"),
     DEFINITION("Definition"),
-    USAGE("Usage");
+    USAGE("Usage"),
+    READ("Read"),
+    WRITE("Write");
 
     private final String name;
 
