@@ -13,7 +13,7 @@ public class PositionInfo {
   private final int endColumn;
 
   public PositionInfo(CompilationUnit cu, ASTNode node) {
-    this.start = node.getStartPosition();
+    this.start = node.getStartPosition() + 1;
     this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
