@@ -4,8 +4,9 @@ set(CMAKE_JAVA_INCLUDE_PATH
 
 add_jar(javaservicejava
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/ReferenceType.java
-  ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryServer.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryFactory.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryHandler.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryServer.java
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
   OUTPUT_NAME javaservice
   INCLUDE_JARS javalogger javamodel corethriftjava javaservicethriftjava)
