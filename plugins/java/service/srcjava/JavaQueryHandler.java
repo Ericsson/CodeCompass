@@ -38,7 +38,9 @@ class JavaQueryHandler implements JavaService.Iface {
       }
     }
 
-    return createAstNodeInfo(minJavaAstNode);
+    return createAstNodeInfo(
+      minJavaAstNode, getTags(Collections.singletonList(minJavaAstNode))
+    );
   }
 
   @Override
@@ -115,7 +117,9 @@ class JavaQueryHandler implements JavaService.Iface {
 
           properties.put("Name", javaEnumConstant.getName());
           properties.put("Qualified name", javaEnumConstant.getQualifiedName());
-          properties.put("Value", javaEnumConstant.getValue());
+          properties.put(
+            "Value", Integer.toString(javaEnumConstant.getValue())
+          );
 
           return properties;
         }
@@ -191,9 +195,12 @@ class JavaQueryHandler implements JavaService.Iface {
       case INHERIT_BY:
         break;
       case DATA_MEMBER:
-        return queryJavaMemberFields(javaAstNode).size();
+        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
+      case CONSTRUCTOR:
+        return queryJavaMemberTypes(
+          javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
       case METHOD:
-        return queryJavaMemberMethods(javaAstNode).size();
+        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
       case ENUM_CONSTANTS:
         break;
     }
@@ -256,6 +263,8 @@ class JavaQueryHandler implements JavaService.Iface {
           "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
         referenceTypes.put(
           "Inherits by", ReferenceType.INHERIT_BY.ordinal());
+        referenceTypes.put(
+          "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
         referenceTypes.put(
           "Data member", ReferenceType.DATA_MEMBER.ordinal());
         referenceTypes.put(
@@ -327,11 +336,21 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       case DATA_MEMBER:
         javaAstNodes =
-          getJavaAstNodesFromMemberTypes(queryJavaMemberFields(javaAstNode));
+          getJavaAstNodesFromMemberTypes(
+            queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD)
+          );
+        break;
+      case CONSTRUCTOR:
+        javaAstNodes =
+          getJavaAstNodesFromMemberTypes(
+            queryJavaMemberTypes(javaAstNode, MemberTypeKind.CONSTRUCTOR)
+          );
         break;
       case METHOD:
         javaAstNodes =
-          getJavaAstNodesFromMemberTypes(queryJavaMemberMethods(javaAstNode));
+          getJavaAstNodesFromMemberTypes(
+            queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD)
+          );
         break;
       case ENUM_CONSTANTS:
         break;
@@ -411,12 +430,16 @@ class JavaQueryHandler implements JavaService.Iface {
         definitions.isEmpty() ? node : definitions.get(0);
 
       switch (node.getSymbolType()) {
-        case METHOD: {
-          putTags(node, definition, MemberTypeKind.METHOD, tags);
-          break;
-        }
         case VARIABLE: {
           putTags(node, definition, MemberTypeKind.FIELD, tags);
+          break;
+        }
+        case CONSTRUCTOR: {
+          putTags(node, definition, MemberTypeKind.CONSTRUCTOR, tags);
+          break;
+        }
+        case METHOD: {
+          putTags(node, definition, MemberTypeKind.METHOD, tags);
           break;
         }
       }

@@ -46,6 +46,8 @@ public enum ReferenceType {
 
   INHERIT_BY, /*!< Types by which the queried type is inherited. */
 
+  CONSTRUCTOR, /*!< Constructors of a class. */
+
   DATA_MEMBER, /*!< Data members of a class. */
 
   METHOD, /*!< Members of a class. */

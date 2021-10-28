@@ -1,6 +1,7 @@
 package model.enums;
 
 public enum MemberTypeKind {
+  CONSTRUCTOR("Constructor"),
   FIELD("Field"),
   METHOD("Method");
 
