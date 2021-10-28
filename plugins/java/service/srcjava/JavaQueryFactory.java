@@ -3,6 +3,7 @@ package service.srcjava;
 import cc.service.core.FilePosition;
 import model.*;
 import model.enums.AstType;
+import model.enums.MemberTypeKind;
 import model.enums.SymbolType;
 
 import javax.persistence.EntityManager;
@@ -74,6 +75,56 @@ public abstract class JavaQueryFactory {
     return queryDefinitions(javaAstNode);
   }
 
+  public static List<JavaMemberType> queryJavaMemberTypes(
+    JavaAstNode recordJavaAstNode)
+  {
+    CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
+    Root<JavaMemberType> root = cr.from(JavaMemberType.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), recordJavaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaMemberType> queryJavaMemberTypes(
+    JavaAstNode recordJavaAstNode, CriteriaQuery<JavaMemberType> cr,
+    Root<JavaMemberType> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("typeHash"), recordJavaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaMemberType> queryJavaMemberTypes(
+    JavaAstNode javaAstNode, JavaAstNode definition,
+    MemberTypeKind memberTypeKind)
+  {
+    CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
+    Root<JavaMemberType> root = cr.from(JavaMemberType.class);
+
+    Path<Long> memberAstNodeId = root.get("memberAstNode").get("id");
+    Path<Integer> kind = root.get("kind");
+
+    Predicate idEqualNodeOrDefId =
+      cb.or(
+        cb.equal(memberAstNodeId, definition.getId()),
+        cb.equal(memberAstNodeId, javaAstNode.getId())
+      );
+    Predicate kindEqualParameter = cb.equal(kind, memberTypeKind);
+
+    cr
+      .select(root)
+      .where(cb.and(idEqualNodeOrDefId, kindEqualParameter));
+
+    return em.createQuery(cr).getResultList();
+  }
+
   public static List<JavaAstNode> queryVisibleDeclarations(
     JavaAstNode javaAstNode)
   {
@@ -97,21 +148,19 @@ public abstract class JavaQueryFactory {
   }
 
   public static List<JavaAstNode> queryCallees(JavaAstNode javaAstNode) {
-    Set<JavaAstNode> callees = new HashSet<>();
     List<JavaAstNode> calls = queryCalls(javaAstNode);
 
-    calls.forEach(c -> callees.addAll(queryDefinitions(c)));
-
-    return new ArrayList<>(callees);
+    return calls.stream()
+      .flatMap(c -> queryDefinitions(c).stream())
+      .collect(Collectors.toList());
   }
 
   public static List<JavaAstNode> queryCallers(JavaAstNode javaAstNode) {
-    List<JavaAstNode> callers = new ArrayList<>();
     List<JavaAstNode> usages = queryUsages(javaAstNode);
 
-    usages.forEach(u -> callers.addAll(queryCaller(u)));
-
-    return callers;
+    return usages.stream()
+      .flatMap(u -> queryCaller(u).stream())
+      .collect(Collectors.toList());
   }
 
   public static List<JavaAstNode> queryCaller(JavaAstNode usage) {
@@ -302,12 +351,6 @@ public abstract class JavaQueryFactory {
 
         return queryDefinitions(javaRecord.getAstNodeId());
       }
-    } else {
-      LOGGER.log(
-        Level.WARNING,
-        "Database query result was not expected to be empty. " +
-          getCurrentPath() + ", line #" + getCurrentLineNumber()
-      );
     }
 
     return new ArrayList<>();
@@ -325,12 +368,6 @@ public abstract class JavaQueryFactory {
 
         return queryDefinitions(javaRecord.getAstNodeId());
       }
-    } else {
-      LOGGER.log(
-        Level.WARNING,
-        "Database query result was not expected to be empty. " +
-          getCurrentPath() + ", line #" + getCurrentLineNumber()
-      );
     }
 
     return new ArrayList<>();
@@ -436,31 +473,6 @@ public abstract class JavaQueryFactory {
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
 
     return em.createQuery(cr).getResultList();
-  }
-
-  public static int queryJavaAstNodeCount(JavaAstNode javaAstNode) {
-    CriteriaQuery<Long> cr = cb.createQuery(Long.class);
-    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
-    Predicate entityHashPredicate =
-      cb.equal(root.get("entityHash"), javaAstNode.getEntityHash());
-
-    cr.select(cb.count(root)).where(entityHashPredicate);
-
-    return em.createQuery(cr).getSingleResult().intValue();
-  }
-
-  public static int queryJavaAstNodeCount(
-    JavaAstNode javaAstNode, CriteriaQuery<Long> cr,
-    Root<JavaAstNode> root, Predicate customPredicate)
-  {
-    Predicate entityHashPredicate =
-      cb.equal(root.get("entityHash"), javaAstNode.getEntityHash());
-
-    cr
-      .select(cb.count(root))
-      .where(cb.and(entityHashPredicate, customPredicate));
-
-    return em.createQuery(cr).getSingleResult().intValue();
   }
 
   public static List<JavaMethod> queryJavaMethods(JavaAstNode javaAstNode) {
@@ -604,6 +616,50 @@ public abstract class JavaQueryFactory {
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
 
     return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaMemberType> queryJavaMemberMethods(
+    JavaAstNode recordJavaAstNode)
+  {
+    CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
+    Root<JavaMemberType> root = cr.from(JavaMemberType.class);
+    Predicate predicate =
+      cb.equal(root.get("kind"), MemberTypeKind.METHOD);
+
+    return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
+  }
+
+  public static List<JavaMemberType> queryJavaMemberFields(
+    JavaAstNode recordJavaAstNode)
+  {
+    CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
+    Root<JavaMemberType> root = cr.from(JavaMemberType.class);
+    Predicate predicate =
+      cb.equal(root.get("kind"), MemberTypeKind.FIELD);
+
+    return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
+  }
+
+  public static List<JavaDocComment> queryJavaDocComments(
+    JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaDocComment> cr =
+      cb.createQuery(JavaDocComment.class);
+    Root<JavaDocComment> root = cr.from(JavaDocComment.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> getJavaAstNodesFromMemberTypes(
+    List<JavaMemberType> javaMemberTypes)
+  {
+    return javaMemberTypes.stream()
+      .map(JavaMemberType::getMemberAstNode)
+      .collect(Collectors.toList());
   }
 
   private static String getCurrentPath() {

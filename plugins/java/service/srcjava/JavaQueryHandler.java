@@ -4,24 +4,16 @@ import cc.service.core.*;
 import cc.service.java.JavaService;
 import cc.service.language.AstNodeInfo;
 import model.*;
+import model.enums.MemberTypeKind;
 import org.apache.thrift.TException;
 import service.srcjava.enums.ReferenceType;
 
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.*;
-
 import java.util.*;
-import java.util.logging.Level;
+import java.util.stream.Collectors;
 
-import static logger.Logger.LOGGER;
-import static model.EMFactory.createEntityManager;
 import static service.srcjava.JavaQueryFactory.*;
 
 class JavaQueryHandler implements JavaService.Iface {
-  private static final EntityManager em =
-    createEntityManager(System.getProperty("rawDbContext"));
-  private static final CriteriaBuilder cb = em.getCriteriaBuilder();
-
   @Override
   public AstNodeInfo getAstNodeInfoByPosition(FilePosition fpos)
     throws TException
@@ -136,7 +128,26 @@ class JavaQueryHandler implements JavaService.Iface {
 
   @Override
   public String getDocumentation(String javaAstNodeId) {
-    return "";
+    StringBuilder stringBuilder = new StringBuilder();
+
+    long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
+    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
+
+    List<JavaDocComment> javaDocComments = queryJavaDocComments(javaAstNode);
+
+    if (!javaDocComments.isEmpty()) {
+      stringBuilder
+        .append("<div class=\"main-doc\">")
+        .append(javaDocComments.get(0).getContent().replace("\n", "<br/>"))
+        .append("</div>");
+    }
+
+    switch (javaAstNode.getSymbolType()) {
+      case TYPE:
+        break;
+    }
+
+    return stringBuilder.toString();
   }
 
   @Override
@@ -180,9 +191,9 @@ class JavaQueryHandler implements JavaService.Iface {
       case INHERIT_BY:
         break;
       case DATA_MEMBER:
-        break;
+        return queryJavaMemberFields(javaAstNode).size();
       case METHOD:
-        break;
+        return queryJavaMemberMethods(javaAstNode).size();
       case ENUM_CONSTANTS:
         break;
     }
@@ -213,7 +224,6 @@ class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Local variables", ReferenceType.LOCAL_VAR.ordinal());
         break;
-
       case METHOD:
         referenceTypes.put(
           "This calls", ReferenceType.THIS_CALLS.ordinal());
@@ -232,7 +242,6 @@ class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Return type", ReferenceType.RETURN_TYPE.ordinal());
         break;
-
       case VARIABLE:
         referenceTypes.put(
           "Reads", ReferenceType.READ.ordinal());
@@ -242,6 +251,16 @@ class JavaQueryHandler implements JavaService.Iface {
           "Type", ReferenceType.TYPE.ordinal());
         break;
 
+      case TYPE:
+        referenceTypes.put(
+          "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
+        referenceTypes.put(
+          "Inherits by", ReferenceType.INHERIT_BY.ordinal());
+        referenceTypes.put(
+          "Data member", ReferenceType.DATA_MEMBER.ordinal());
+        referenceTypes.put(
+          "Method", ReferenceType.METHOD.ordinal());
+        break;
       case ENUM:
         referenceTypes.put(
           "Enum constants", ReferenceType.ENUM_CONSTANTS.ordinal());
@@ -307,8 +326,12 @@ class JavaQueryHandler implements JavaService.Iface {
       case INHERIT_BY:
         break;
       case DATA_MEMBER:
+        javaAstNodes =
+          getJavaAstNodesFromMemberTypes(queryJavaMemberFields(javaAstNode));
         break;
       case METHOD:
+        javaAstNodes =
+          getJavaAstNodesFromMemberTypes(queryJavaMemberMethods(javaAstNode));
         break;
       case ENUM_CONSTANTS:
         break;
@@ -320,25 +343,24 @@ class JavaQueryHandler implements JavaService.Iface {
   }
 
   private List<AstNodeInfo> createAstNodeInfos(List<JavaAstNode> javaAstNodes) {
-    List<AstNodeInfo> javaAstNodeInfos = new ArrayList<>();
+    Map<Long, List<String>> tags = getTags(javaAstNodes);
 
-    javaAstNodes.forEach(p -> javaAstNodeInfos.add(createAstNodeInfo(p)));
+    return javaAstNodes.stream()
+      .map(p -> createAstNodeInfo(p, tags))
+      .sorted((n1, n2) -> {
+        Integer line1 = n1.range.range.endpos.line;
+        Integer line2 = n2.range.range.endpos.line;
+        int lineComp = line1.compareTo(line2);
 
-    javaAstNodeInfos.sort((n1, n2) -> {
-      Integer line1 = n1.range.range.endpos.line;
-      Integer line2 = n2.range.range.endpos.line;
-      int lineComp = line1.compareTo(line2);
+        if (lineComp != 0) {
+          return lineComp;
+        }
 
-      if (lineComp != 0) {
-        return lineComp;
-      }
-
-      Integer col1 = n1.range.range.endpos.column;
-      Integer col2 = n2.range.range.endpos.column;
-      return col1.compareTo(col2);
-    });
-
-    return javaAstNodeInfos;
+        Integer col1 = n1.range.range.endpos.column;
+        Integer col2 = n2.range.range.endpos.column;
+        return col1.compareTo(col2);
+      })
+      .collect(Collectors.toList());
   }
 
   private AstNodeInfo createAstNodeInfo(JavaAstNode javaAstNode) {
@@ -368,5 +390,60 @@ class JavaQueryHandler implements JavaService.Iface {
     astNodeInfo.range = fileRange;
 
     return astNodeInfo;
+  }
+
+  private AstNodeInfo createAstNodeInfo(
+    JavaAstNode javaAstNode, Map<Long, List<String>> tags)
+  {
+    AstNodeInfo astNodeInfo = createAstNodeInfo(javaAstNode);
+
+    astNodeInfo.tags = tags.get(javaAstNode.getId());
+
+    return astNodeInfo;
+  }
+
+  private Map<Long, List<String>> getTags(List<JavaAstNode> javaAstNodes) {
+    Map<Long, List<String>> tags = new HashMap<>();
+
+    javaAstNodes.forEach(node -> {
+      List<JavaAstNode> definitions = queryDefinitions(node);
+      JavaAstNode definition =
+        definitions.isEmpty() ? node : definitions.get(0);
+
+      switch (node.getSymbolType()) {
+        case METHOD: {
+          putTags(node, definition, MemberTypeKind.METHOD, tags);
+          break;
+        }
+        case VARIABLE: {
+          putTags(node, definition, MemberTypeKind.FIELD, tags);
+          break;
+        }
+      }
+    });
+
+    return tags;
+  }
+
+  private void putTags(
+    JavaAstNode javaAstNode, JavaAstNode definition,
+    MemberTypeKind memberTypeKind, Map<Long, List<String>> tags)
+  {
+    List<JavaMemberType> javaMemberTypes =
+      queryJavaMemberTypes(javaAstNode, definition, memberTypeKind);
+
+    javaMemberTypes.forEach(m -> {
+      long nodeId = javaAstNode.getId();
+      if (!tags.containsKey(nodeId)) {
+        tags.put(
+          nodeId,
+          new ArrayList<>(
+            Collections.singleton(m.getVisibility().getName())
+          )
+        );
+      } else {
+        tags.get(nodeId).add(m.getVisibility().getName());
+      }
+    });
   }
 }
