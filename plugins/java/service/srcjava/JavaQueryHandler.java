@@ -194,11 +194,13 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       case INHERIT_BY:
         break;
-      case DATA_MEMBER:
-        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
       case CONSTRUCTOR:
+        System.out.println(queryJavaMemberTypes(
+          javaAstNode, MemberTypeKind.CONSTRUCTOR));
         return queryJavaMemberTypes(
           javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
+      case DATA_MEMBER:
+        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
       case METHOD:
         return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
       case ENUM_CONSTANTS:
@@ -334,16 +336,16 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       case INHERIT_BY:
         break;
-      case DATA_MEMBER:
-        javaAstNodes =
-          getJavaAstNodesFromMemberTypes(
-            queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD)
-          );
-        break;
       case CONSTRUCTOR:
         javaAstNodes =
           getJavaAstNodesFromMemberTypes(
             queryJavaMemberTypes(javaAstNode, MemberTypeKind.CONSTRUCTOR)
+          );
+        break;
+      case DATA_MEMBER:
+        javaAstNodes =
+          getJavaAstNodesFromMemberTypes(
+            queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD)
           );
         break;
       case METHOD:
@@ -430,12 +432,12 @@ class JavaQueryHandler implements JavaService.Iface {
         definitions.isEmpty() ? node : definitions.get(0);
 
       switch (node.getSymbolType()) {
-        case VARIABLE: {
-          putTags(node, definition, MemberTypeKind.FIELD, tags);
-          break;
-        }
         case CONSTRUCTOR: {
           putTags(node, definition, MemberTypeKind.CONSTRUCTOR, tags);
+          break;
+        }
+        case VARIABLE: {
+          putTags(node, definition, MemberTypeKind.FIELD, tags);
           break;
         }
         case METHOD: {
