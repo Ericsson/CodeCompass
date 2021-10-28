@@ -137,41 +137,26 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(EnumDeclaration node) {
-    JavaEnum _enum = new JavaEnum();
+    JavaEnum javaEnum = new JavaEnum();
     int entityHash = node.hashCode();
 
     // Persist Enum constants
-    for (Object ecnObj : node.enumConstants()) {
-      EnumConstantDeclaration enumConstantNode =
-        ((EnumConstantDeclaration) ecnObj);
-      JavaEnumConstant enumConstant = new JavaEnumConstant();
-      int ecnEntityHash = enumConstantNode.hashCode();
-
-      enumConstant.setValue(enumConstantNode.getName().toString());
-      _enum.addJavaEnumConstant(enumConstant);
-
-      JavaAstNode javaAstNode = persistJavaAstNodeRow(
-        enumConstantNode, SymbolType.ENUM_CONSTANT,
-        AstType.DECLARATION, ecnEntityHash);
-
-      // Set JavaEntity fields
-      enumConstant.setAstNodeId(javaAstNode.getId());
-      enumConstant.setEntityHash(ecnEntityHash);
-      enumConstant.setName(enumConstantNode.getName().toString());
-      enumConstant.setQualifiedName(
-        enumConstantNode.getName().getFullyQualifiedName());
+    System.out.println(node.enumConstants());
+    List<?> enumConstants = node.enumConstants();
+    for (int i = 0; i < enumConstants.size(); i++) {
+      visitEnumConstantDeclaration(javaEnum, (EnumConstantDeclaration) enumConstants.get(i), i);
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.ENUM, AstType.DECLARATION, entityHash);
 
     // Set JavaEntity fields
-    _enum.setAstNodeId(javaAstNode.getId());
-    _enum.setEntityHash(entityHash);
-    _enum.setName(node.getName().toString());
-    _enum.setQualifiedName(node.resolveBinding().getQualifiedName());
+    javaEnum.setAstNodeId(javaAstNode.getId());
+    javaEnum.setEntityHash(entityHash);
+    javaEnum.setName(node.getName().toString());
+    javaEnum.setQualifiedName(node.resolveBinding().getQualifiedName());
 
-    persistRow(_enum);
+    persistRow(javaEnum);
 
     return super.visit(node);
   }
@@ -635,6 +620,27 @@ public class AstVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
+  private void visitEnumConstantDeclaration(
+    JavaEnum javaEnum, EnumConstantDeclaration node, int index)
+  {
+    JavaEnumConstant enumConstant = new JavaEnumConstant();
+    int ecnEntityHash = node.hashCode();
+
+    enumConstant.setValue(index);
+    javaEnum.addJavaEnumConstant(enumConstant);
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.ENUM_CONSTANT,
+      AstType.DECLARATION, ecnEntityHash);
+
+    // Set JavaEntity fields
+    enumConstant.setAstNodeId(javaAstNode.getId());
+    enumConstant.setEntityHash(ecnEntityHash);
+    enumConstant.setName(node.getName().toString());
+    enumConstant.setQualifiedName(
+      node.getName().getFullyQualifiedName());
+  }
+
   private void visitFieldDeclarationFragment(
     VariableDeclarationFragment node,
     String declaringClassName, String qualifiedType, List<?> modifiers)
@@ -661,6 +667,7 @@ public class AstVisitor extends ASTVisitor {
     javaMemberType.setVisibility(getVisibility(modifiers));
     javaMemberType.setMemberAstNode(javaAstNode);
 
+    // Set JavaEntity fields
     javaVariable.setAstNodeId(javaAstNode.getId());
     javaVariable.setEntityHash(entityHash);
     javaVariable.setName(node.getName().toString());
@@ -731,6 +738,7 @@ public class AstVisitor extends ASTVisitor {
 
   private void visitConstructorDeclaration(MethodDeclaration node) {
     JavaConstructor javaConstructor = new JavaConstructor();
+    JavaMemberType javaMemberType = new JavaMemberType();
     ITypeBinding classBinding = node.resolveBinding().getDeclaringClass();
     IMethodBinding methodBinding = node.resolveBinding().getMethodDeclaration();
     String declaringClassName = classBinding.getQualifiedName();
@@ -738,6 +746,7 @@ public class AstVisitor extends ASTVisitor {
     String entityHashStr = String.join(
       " ", declaringClassName, methodBindingStr);
     int entityHash = entityHashStr.hashCode();
+    int classHash = declaringClassName.hashCode();
 
     // Persist constructor's parameters
     for (Object varDeclObj : node.parameters()) {
@@ -748,12 +757,20 @@ public class AstVisitor extends ASTVisitor {
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.CONSTRUCTOR, AstType.DEFINITION, entityHash);
 
+    // Set JavaMemberType fields
+    javaMemberType.setTypeHash(classHash);
+    javaMemberType.setMemberTypeHash(classHash);
+    javaMemberType.setKind(MemberTypeKind.CONSTRUCTOR);
+    javaMemberType.setVisibility(getVisibility(node.modifiers()));
+    javaMemberType.setMemberAstNode(javaAstNode);
+
     // Set JavaEntity fields
     javaConstructor.setAstNodeId(javaAstNode.getId());
     javaConstructor.setEntityHash(entityHash);
     javaConstructor.setName(node.getName().toString());
     javaConstructor.setQualifiedName(declaringClassName);
 
+    persistRow(javaMemberType);
     persistRow(javaConstructor);
   }
 

@@ -76,12 +76,14 @@ function (model, viewHandler, util) {
     return tags.indexOf('public')    > -1 ? 'icon-visibility icon-public'  :
            tags.indexOf('private')   > -1 ? 'icon-visibility icon-private' :
            tags.indexOf('protected') > -1 ? 'icon-visibility icon-protected' :
+           tags.indexOf('package-private') > -1 ?
+               'icon-visibility icon-package-private' :
            null;
   }
 
   function groupReferencesByVisibilities(references, parentNode, nodeInfo) {
     var res = [];
-    var visibilities = ['public', 'private', 'protected'];
+    var visibilities = ['public', 'private', 'protected', 'package-private'];
 
     visibilities.forEach(function (visibility) {
       var nodes = references.filter(function (reference) {
@@ -127,7 +129,8 @@ function (model, viewHandler, util) {
       nodeInfo.id,
       parentNode.refType);
 
-    if (parentNode.refType === refTypes['Method'] ||
+    if (parentNode.refType === refTypes['Constructor'] ||
+        parentNode.refType === refTypes['Method'] ||
         parentNode.refType === refTypes['Data member'])
       return groupReferencesByVisibilities(references, parentNode, nodeInfo);
 

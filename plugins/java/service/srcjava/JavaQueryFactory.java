@@ -618,24 +618,13 @@ public abstract class JavaQueryFactory {
     return em.createQuery(cr).getResultList();
   }
 
-  public static List<JavaMemberType> queryJavaMemberMethods(
-    JavaAstNode recordJavaAstNode)
+  public static List<JavaMemberType> queryJavaMemberTypes(
+    JavaAstNode recordJavaAstNode, MemberTypeKind memberTypeKind)
   {
     CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
     Root<JavaMemberType> root = cr.from(JavaMemberType.class);
     Predicate predicate =
-      cb.equal(root.get("kind"), MemberTypeKind.METHOD);
-
-    return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
-  }
-
-  public static List<JavaMemberType> queryJavaMemberFields(
-    JavaAstNode recordJavaAstNode)
-  {
-    CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
-    Root<JavaMemberType> root = cr.from(JavaMemberType.class);
-    Predicate predicate =
-      cb.equal(root.get("kind"), MemberTypeKind.FIELD);
+      cb.equal(root.get("kind"), memberTypeKind);
 
     return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
   }
