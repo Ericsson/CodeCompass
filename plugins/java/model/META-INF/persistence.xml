@@ -18,6 +18,7 @@
         <class>model.JavaMethod</class>
         <class>model.JavaImport</class>
         <class>model.JavaInheritance</class>
+        <class>model.JavaMemberType</class>
         <class>model.JavaRecord</class>
         <class>model.JavaTypedEntity</class>
         <class>model.JavaVariable</class>
