@@ -8,7 +8,7 @@ import java.util.Set;
 @Table(name = "\"JavaEnumConstant\"")
 public class JavaEnumConstant extends JavaEntity {
   @Column(name = "value")
-  private String value;
+  private int value;
 
   @ManyToMany(mappedBy = "javaEnumConstants")
   Set<JavaEnum> javaEnums = new HashSet<>();
@@ -16,11 +16,11 @@ public class JavaEnumConstant extends JavaEntity {
 
   // Getters and setters
 
-  public String getValue() {
+  public int getValue() {
     return value;
   }
 
-  public void setValue(String value) {
+  public void setValue(int value) {
     this.value = value;
   }
 
