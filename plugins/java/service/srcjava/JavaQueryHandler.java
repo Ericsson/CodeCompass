@@ -161,25 +161,25 @@ class JavaQueryHandler implements JavaService.Iface {
 
     switch (ReferenceType.values()[referenceId]) {
       case DEFINITION:
-        return queryDefinitions(javaAstNode).size();
+        return queryDefinitionNodes(javaAstNode).size();
       case DECLARATION:
-        return queryVisibleDeclarations(javaAstNode).size();
+        return queryVisibleDeclarationNodes(javaAstNode).size();
       case USAGE:
-        return queryUsages(javaAstNode).size();
+        return queryUsageNodes(javaAstNode).size();
       case THIS_CALLS:
-        return queryCalls(javaAstNode).size();
+        return queryCallNodes(javaAstNode).size();
       case CALLS_OF_THIS:
-        return queryUsages(javaAstNode).size();
+        return queryUsageNodes(javaAstNode).size();
       case CALLEE:
-        return queryCallees(javaAstNode).size();
+        return queryCalleeNodes(javaAstNode).size();
       case CALLER:
-        return queryCallers(javaAstNode).size();
+        return queryCallerNodes(javaAstNode).size();
       case PARAMETER:
-        return queryParameters(javaAstNode).size();
+        return queryParameterNodes(javaAstNode).size();
       case LOCAL_VAR:
-        return queryLocalVars(javaAstNode).size();
+        return queryLocalVarNodes(javaAstNode).size();
       case RETURN_TYPE:
-        return queryReturnType(javaAstNode).size();
+        return queryReturnTypeNodes(javaAstNode).size();
       case OVERRIDE:
         break;
       case OVERRIDDEN_BY:
@@ -189,14 +189,12 @@ class JavaQueryHandler implements JavaService.Iface {
       case WRITE:
         break;
       case TYPE:
-        return queryType(javaAstNode).size();
+        return queryTypeNodes(javaAstNode).size();
       case INHERIT_FROM:
         break;
       case INHERIT_BY:
         break;
       case CONSTRUCTOR:
-        System.out.println(queryJavaMemberTypes(
-          javaAstNode, MemberTypeKind.CONSTRUCTOR));
         return queryJavaMemberTypes(
           javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
       case DATA_MEMBER:
@@ -204,7 +202,7 @@ class JavaQueryHandler implements JavaService.Iface {
       case METHOD:
         return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
       case ENUM_CONSTANTS:
-        break;
+        return queryJavaEnumConstantNodes(javaAstNode).size();
     }
 
     return 0;
@@ -275,6 +273,12 @@ class JavaQueryHandler implements JavaService.Iface {
       case ENUM:
         referenceTypes.put(
           "Enum constants", ReferenceType.ENUM_CONSTANTS.ordinal());
+        referenceTypes.put(
+          "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
+        referenceTypes.put(
+          "Data member", ReferenceType.DATA_MEMBER.ordinal());
+        referenceTypes.put(
+          "Method", ReferenceType.METHOD.ordinal());
         break;
     }
 
@@ -292,34 +296,34 @@ class JavaQueryHandler implements JavaService.Iface {
 
     switch (ReferenceType.values()[referenceId]) {
       case DEFINITION:
-        javaAstNodes = queryDefinitions(javaAstNode);
+        javaAstNodes = queryDefinitionNodes(javaAstNode);
         break;
       case DECLARATION:
-        javaAstNodes = queryVisibleDeclarations(javaAstNode);
+        javaAstNodes = queryVisibleDeclarationNodes(javaAstNode);
         break;
       case USAGE:
-        javaAstNodes = queryUsages(javaAstNode);
+        javaAstNodes = queryUsageNodes(javaAstNode);
         break;
       case THIS_CALLS:
-        javaAstNodes = queryCalls(javaAstNode);
+        javaAstNodes = queryCallNodes(javaAstNode);
         break;
       case CALLS_OF_THIS:
-        javaAstNodes = queryUsages(javaAstNode);
+        javaAstNodes = queryUsageNodes(javaAstNode);
         break;
       case CALLEE:
-        javaAstNodes = queryCallees(javaAstNode);
+        javaAstNodes = queryCalleeNodes(javaAstNode);
         break;
       case CALLER:
-        javaAstNodes = queryCallers(javaAstNode);
+        javaAstNodes = queryCallerNodes(javaAstNode);
         break;
       case PARAMETER:
-        javaAstNodes = queryParameters(javaAstNode);
+        javaAstNodes = queryParameterNodes(javaAstNode);
         break;
       case LOCAL_VAR:
-        javaAstNodes = queryLocalVars(javaAstNode);
+        javaAstNodes = queryLocalVarNodes(javaAstNode);
         break;
       case RETURN_TYPE:
-        javaAstNodes = queryReturnType(javaAstNode);
+        javaAstNodes = queryReturnTypeNodes(javaAstNode);
         break;
       case OVERRIDE:
         break;
@@ -330,7 +334,7 @@ class JavaQueryHandler implements JavaService.Iface {
       case WRITE:
         break;
       case TYPE:
-        javaAstNodes = queryType(javaAstNode);
+        javaAstNodes = queryTypeNodes(javaAstNode);
         break;
       case INHERIT_FROM:
         break;
@@ -338,23 +342,21 @@ class JavaQueryHandler implements JavaService.Iface {
         break;
       case CONSTRUCTOR:
         javaAstNodes =
-          getJavaAstNodesFromMemberTypes(
-            queryJavaMemberTypes(javaAstNode, MemberTypeKind.CONSTRUCTOR)
-          );
+          queryJavaMemberTypeNodes(
+            javaAstNode, MemberTypeKind.CONSTRUCTOR);
         break;
       case DATA_MEMBER:
         javaAstNodes =
-          getJavaAstNodesFromMemberTypes(
-            queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD)
-          );
+          queryJavaMemberTypeNodes(
+            javaAstNode, MemberTypeKind.FIELD);
         break;
       case METHOD:
         javaAstNodes =
-          getJavaAstNodesFromMemberTypes(
-            queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD)
-          );
+          queryJavaMemberTypeNodes(
+            javaAstNode, MemberTypeKind.METHOD);
         break;
       case ENUM_CONSTANTS:
+        javaAstNodes = queryJavaEnumConstantNodes(javaAstNode);
         break;
     }
 
@@ -427,7 +429,7 @@ class JavaQueryHandler implements JavaService.Iface {
     Map<Long, List<String>> tags = new HashMap<>();
 
     javaAstNodes.forEach(node -> {
-      List<JavaAstNode> definitions = queryDefinitions(node);
+      List<JavaAstNode> definitions = queryDefinitionNodes(node);
       JavaAstNode definition =
         definitions.isEmpty() ? node : definitions.get(0);
 
