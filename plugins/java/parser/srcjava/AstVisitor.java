@@ -138,13 +138,14 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(EnumDeclaration node) {
     JavaEnum javaEnum = new JavaEnum();
-    int entityHash = node.hashCode();
+    String declaringClassName = node.resolveBinding().getQualifiedName();
+    int entityHash = declaringClassName.hashCode();
 
     // Persist Enum constants
-    System.out.println(node.enumConstants());
     List<?> enumConstants = node.enumConstants();
     for (int i = 0; i < enumConstants.size(); i++) {
-      visitEnumConstantDeclaration(javaEnum, (EnumConstantDeclaration) enumConstants.get(i), i);
+      visitEnumConstantDeclaration(
+        javaEnum, (EnumConstantDeclaration) enumConstants.get(i), i);
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
@@ -461,14 +462,18 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(SimpleType node) {
     JavaRecord javaRecord = new JavaRecord();
-    String qualifiedName = node.resolveBinding().getQualifiedName();
+    ITypeBinding typeBinding = node.resolveBinding();
+    String qualifiedName = typeBinding.getQualifiedName();
+    boolean isEnum = typeBinding.isEnum();
     int entityHash = qualifiedName.hashCode();
 
     javaRecord.setIsAbstract(Flags.isAbstract(node.getFlags()));
 
     JavaAstNode javaAstNode =
       persistJavaAstNodeRow(
-        node, SymbolType.TYPE, AstType.USAGE, entityHash);
+        node, isEnum ? SymbolType.ENUM : SymbolType.TYPE,
+        AstType.USAGE, entityHash
+      );
 
     // Set JavaEntity fields
     javaRecord.setAstNodeId(javaAstNode.getId());
