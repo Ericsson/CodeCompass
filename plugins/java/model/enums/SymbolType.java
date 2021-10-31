@@ -6,7 +6,8 @@ public enum SymbolType {
     METHOD("Method"),
     ENUM("Enum"),
     ENUM_CONSTANT("Enum constant"),
-    TYPE("Type");
+    TYPE("Type"),
+    FILE("file");
 
     private final String name;
 

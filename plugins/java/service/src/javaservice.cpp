@@ -44,8 +44,6 @@ void JavaServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
   return_.push_back("JAVA");
   return_.push_back("Dir");
-
-  LOG(info) << "getFileTypes";
 }
 
 void JavaServiceHandler::getAstNodeInfo(
@@ -60,7 +58,6 @@ void JavaServiceHandler::getAstNodeInfoByPosition(
   const core::FilePosition& fpos_)
 {
   javaQueryHandler.getAstNodeInfoByPosition(return_, fpos_);
-  LOG(info) << "getAstNodeInfoByPosition";
 }
 
 void JavaServiceHandler::getSourceText(
@@ -74,7 +71,6 @@ void JavaServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getProperties";
   javaQueryHandler.getProperties(return_, astNodeId_);
 }
 
@@ -82,7 +78,6 @@ void JavaServiceHandler::getDocumentation(
   std::string& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getDocumentation";
   javaQueryHandler.getDocumentation(return_, astNodeId_);
 }
 
@@ -135,7 +130,13 @@ void JavaServiceHandler::getReferenceTypes(
   const core::AstNodeId& astNodeId_)
 {
   javaQueryHandler.getReferenceTypes(return_, astNodeId_);
-  LOG(info) << "getReferenceTypes";
+}
+
+std::int32_t JavaServiceHandler::getReferenceCount(
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_)
+{
+  return javaQueryHandler.getReferenceCount(astNodeId_, referenceId_);
 }
 
 void JavaServiceHandler::getReferences(
@@ -144,17 +145,7 @@ void JavaServiceHandler::getReferences(
   const std::int32_t referenceId_,
   const std::vector<std::string>& tags_)
 {
-  LOG(info) << "getReferences";
   javaQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
-}
-
-std::int32_t JavaServiceHandler::getReferenceCount(
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_)
-{
-  return javaQueryHandler.getReferenceCount(astNodeId_, referenceId_);
-  LOG(info) << "getReferenceCount";
-  return 1;
 }
 
 void JavaServiceHandler::getReferencesInFile(
@@ -164,7 +155,7 @@ void JavaServiceHandler::getReferencesInFile(
   const core::FileId& fileId_,
   const std::vector<std::string>& tags_)
 {
-  LOG(info) << "getReferencesInFile";
+  // TODO
 }
 
 void JavaServiceHandler::getReferencesPage(
@@ -174,14 +165,23 @@ void JavaServiceHandler::getReferencesPage(
   const std::int32_t pageSize_,
   const std::int32_t pageNo_)
 {
-  LOG(info) << "getReferencesPage";
+  // TODO
 }
 
 void JavaServiceHandler::getFileReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
-  const core::FileId& fileId_)
+  const core::FileId& /* fileId_*/)
 {
+  javaQueryHandler.getFileReferenceTypes(return_);
   LOG(info) << "getFileReferenceTypes";
+}
+
+std::int32_t JavaServiceHandler::getFileReferenceCount(
+  const core::FileId& fileId_,
+  const std::int32_t referenceId_)
+{
+  LOG(info) << "getFileReferenceCount";
+  return javaQueryHandler.getFileReferenceCount(fileId_, referenceId_);
 }
 
 void JavaServiceHandler::getFileReferences(
@@ -190,13 +190,7 @@ void JavaServiceHandler::getFileReferences(
   const std::int32_t referenceId_)
 {
   LOG(info) << "getFileReferences";
-}
-
-std::int32_t JavaServiceHandler::getFileReferenceCount(
-  const core::FileId& fileId_,
-  const std::int32_t referenceId_)
-{
-  LOG(info) << "getFileReferenceCount";
+  javaQueryHandler.getFileReferences(return_, fileId_, referenceId_);
 }
 
 void JavaServiceHandler::getSyntaxHighlight(

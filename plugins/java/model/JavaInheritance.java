@@ -10,18 +10,11 @@ public class JavaInheritance {
     @Column(name = "id")
     private long id;
 
-    @Column(name = "derived")
-    private long derived;
-
     @Column(name = "base")
     private long base;
 
-    @Column(name = "\"isAbstract\"")
-    private boolean isAbstract;
-
-    @Column(name = "visibility")
-    private int visibility;
-
+    @Column(name = "derived")
+    private long derived;
 
     // Getters and setters
 
@@ -47,21 +40,5 @@ public class JavaInheritance {
 
     public void setBase(long base) {
         this.base = base;
-    }
-
-    public boolean isAbstract() {
-        return isAbstract;
-    }
-
-    public void setAbstract(boolean anAbstract) {
-        isAbstract = anAbstract;
-    }
-
-    public int getVisibility() {
-        return visibility;
-    }
-
-    public void setVisibility(int visibility) {
-        this.visibility = visibility;
     }
 }

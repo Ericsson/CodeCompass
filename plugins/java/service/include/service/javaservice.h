@@ -32,8 +32,6 @@ namespace service
 namespace java
 {
 
-// std::stringstream javaservice_thrift_stream;
-
 namespace language = cc::service::language;
 namespace core = cc::service::core;
 using TransportException = apache::thrift::transport::TTransportException;
@@ -118,13 +116,6 @@ public:
     _service -> getDocumentation(return_, astNodeId_);
   }
 
-  std::int32_t getReferenceCount(
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_) override
-  {
-    return _service -> getReferenceCount(astNodeId_, referenceId_);
-  }
-
   void getReferenceTypes(
     std::map<std::string, std::int32_t>& return_,
     const core::AstNodeId& astNodeId_) override
@@ -132,13 +123,41 @@ public:
     _service -> getReferenceTypes(return_, astNodeId_);
   }
 
+  std::int32_t getReferenceCount(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_) override
+  {
+    return _service -> getReferenceCount(astNodeId_, referenceId_);
+  }
+
   void getReferences(
     std::vector<language::AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
     const std::int32_t referenceId_,
-    const std::vector<std::string>& tags_)
+    const std::vector<std::string>& tags_) override
   {
     _service -> getReferences(return_, astNodeId_, referenceId_, tags_);
+  }
+
+  void getFileReferenceTypes(
+    std::map<std::string, std::int32_t>& return_) override
+  {
+    _service -> getFileReferenceTypes(return_);
+  }
+
+  std::int32_t getFileReferenceCount(
+    const core::FileId& fileId_,
+    const std::int32_t referenceId_) override
+  {
+    return _service -> getFileReferenceCount(fileId_, referenceId_);
+  }
+
+  void getFileReferences(
+    std::vector<language::AstNodeInfo>& return_,
+    const core::FileId& fileId_,
+    const std::int32_t referenceId_) override
+  {
+    _service -> getFileReferences(return_, fileId_, referenceId_);
   }
 
 private:
@@ -226,15 +245,15 @@ public:
     std::map<std::string, std::int32_t>& return_,
     const core::AstNodeId& astNodeId) override;
 
+  std::int32_t getReferenceCount(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_) override;
+
   void getReferences(
     std::vector<AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
     const std::int32_t referenceId_,
     const std::vector<std::string>& tags_) override;
-
-  std::int32_t getReferenceCount(
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_) override;
 
   void getReferencesInFile(
     std::vector<AstNodeInfo>& return_,
@@ -254,12 +273,12 @@ public:
     std::map<std::string, std::int32_t>& return_,
     const core::FileId& fileId_) override;
 
-  void getFileReferences(
-    std::vector<AstNodeInfo>& return_,
+  std::int32_t getFileReferenceCount(
     const core::FileId& fileId_,
     const std::int32_t referenceId_) override;
 
-  std::int32_t getFileReferenceCount(
+  void getFileReferences(
+    std::vector<AstNodeInfo>& return_,
     const core::FileId& fileId_,
     const std::int32_t referenceId_) override;
 

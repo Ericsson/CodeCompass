@@ -6,6 +6,7 @@ import cc.service.language.AstNodeInfo;
 import model.*;
 import model.enums.MemberTypeKind;
 import org.apache.thrift.TException;
+import service.srcjava.enums.FileReferenceType;
 import service.srcjava.enums.ReferenceType;
 
 import java.util.*;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 import static service.srcjava.JavaQueryFactory.*;
 
-class JavaQueryHandler implements JavaService.Iface {
+public class JavaQueryHandler implements JavaService.Iface {
   @Override
   public AstNodeInfo getAstNodeInfoByPosition(FilePosition fpos)
     throws TException
@@ -155,60 +156,6 @@ class JavaQueryHandler implements JavaService.Iface {
   }
 
   @Override
-  public int getReferenceCount(String javaAstNodeId, int referenceId) {
-    long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
-    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
-
-    switch (ReferenceType.values()[referenceId]) {
-      case DEFINITION:
-        return queryDefinitionNodes(javaAstNode).size();
-      case DECLARATION:
-        return queryVisibleDeclarationNodes(javaAstNode).size();
-      case USAGE:
-        return queryUsageNodes(javaAstNode).size();
-      case THIS_CALLS:
-        return queryCallNodes(javaAstNode).size();
-      case CALLS_OF_THIS:
-        return queryUsageNodes(javaAstNode).size();
-      case CALLEE:
-        return queryCalleeNodes(javaAstNode).size();
-      case CALLER:
-        return queryCallerNodes(javaAstNode).size();
-      case PARAMETER:
-        return queryParameterNodes(javaAstNode).size();
-      case LOCAL_VAR:
-        return queryLocalVarNodes(javaAstNode).size();
-      case RETURN_TYPE:
-        return queryReturnTypeNodes(javaAstNode).size();
-      case OVERRIDE:
-        break;
-      case OVERRIDDEN_BY:
-        break;
-      case READ:
-        break;
-      case WRITE:
-        break;
-      case TYPE:
-        return queryTypeNodes(javaAstNode).size();
-      case INHERIT_FROM:
-        break;
-      case INHERIT_BY:
-        break;
-      case CONSTRUCTOR:
-        return queryJavaMemberTypes(
-          javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
-      case DATA_MEMBER:
-        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
-      case METHOD:
-        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
-      case ENUM_CONSTANTS:
-        return queryJavaEnumConstantNodes(javaAstNode).size();
-    }
-
-    return 0;
-  }
-
-  @Override
   public Map<String, Integer> getReferenceTypes(String javaAstNodeId) {
     long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
     HashMap<String, Integer> referenceTypes = new HashMap<>();
@@ -286,6 +233,58 @@ class JavaQueryHandler implements JavaService.Iface {
   }
 
   @Override
+  public int getReferenceCount(String javaAstNodeId, int referenceId) {
+    long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
+    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
+
+    switch (ReferenceType.values()[referenceId]) {
+      case DEFINITION:
+        return queryDefinitionNodes(javaAstNode).size();
+      case DECLARATION:
+        return queryVisibleDeclarationNodes(javaAstNode).size();
+      case USAGE:
+        return queryUsageNodes(javaAstNode).size();
+      case THIS_CALLS:
+        return queryCallNodes(javaAstNode).size();
+      case CALLEE:
+        return queryCalleeNodes(javaAstNode).size();
+      case CALLER:
+        return queryCallerNodes(javaAstNode).size();
+      case PARAMETER:
+        return queryParameterNodes(javaAstNode).size();
+      case LOCAL_VAR:
+        return queryLocalVarNodes(javaAstNode).size();
+      case RETURN_TYPE:
+        return queryReturnTypeNodes(javaAstNode).size();
+      case OVERRIDE:
+        break;
+      case OVERRIDDEN_BY:
+        break;
+      case READ:
+        return queryReadNodes(javaAstNode).size();
+      case WRITE:
+        return queryWriteNodes(javaAstNode).size();
+      case TYPE:
+        return queryTypeNodes(javaAstNode).size();
+      case INHERIT_FROM:
+        break;
+      case INHERIT_BY:
+        break;
+      case CONSTRUCTOR:
+        return queryJavaMemberTypes(
+          javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
+      case DATA_MEMBER:
+        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
+      case METHOD:
+        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
+      case ENUM_CONSTANTS:
+        return queryJavaEnumConstantNodes(javaAstNode).size();
+    }
+
+    return 0;
+  }
+
+  @Override
   public List<AstNodeInfo> getReferences(
     String javaAstNodeId, int referenceId, List<String> tags)
   {
@@ -307,9 +306,6 @@ class JavaQueryHandler implements JavaService.Iface {
       case THIS_CALLS:
         javaAstNodes = queryCallNodes(javaAstNode);
         break;
-      case CALLS_OF_THIS:
-        javaAstNodes = queryUsageNodes(javaAstNode);
-        break;
       case CALLEE:
         javaAstNodes = queryCalleeNodes(javaAstNode);
         break;
@@ -330,8 +326,10 @@ class JavaQueryHandler implements JavaService.Iface {
       case OVERRIDDEN_BY:
         break;
       case READ:
+        javaAstNodes = queryReadNodes(javaAstNode);
         break;
       case WRITE:
+        javaAstNodes = queryWriteNodes(javaAstNode);
         break;
       case TYPE:
         javaAstNodes = queryTypeNodes(javaAstNode);
@@ -365,22 +363,79 @@ class JavaQueryHandler implements JavaService.Iface {
     return javaAstNodeInfos;
   }
 
+  @Override
+  public Map<String, Integer> getFileReferenceTypes() {
+    Map<String, Integer> fileReferenceTypes = new HashMap<>();
+
+    fileReferenceTypes.put("Import", FileReferenceType.IMPORTS.ordinal());
+    fileReferenceTypes.put("Type", FileReferenceType.TYPES.ordinal());
+    fileReferenceTypes.put("Constructor",
+      FileReferenceType.CONSTRUCTORS.ordinal());
+    fileReferenceTypes.put("Method", FileReferenceType.METHODS.ordinal());
+
+    return fileReferenceTypes;
+  }
+
+  @Override
+  public int getFileReferenceCount(String fileId, int referenceId) {
+    long fileIdLong = Long.parseUnsignedLong(fileId);
+
+    switch (FileReferenceType.values()[referenceId]) {
+      case IMPORTS:
+        return queryJavaImportNodesInFile(fileIdLong).size();
+      case TYPES:
+        return queryJavaTypeNodesInFile(fileIdLong).size();
+      case CONSTRUCTORS:
+        return queryJavaConstructorNodesInFile(fileIdLong).size();
+      case METHODS:
+        return queryJavaMethodNodesInFile(fileIdLong).size();
+    }
+
+    return 0;
+  }
+
+  @Override
+  public List<AstNodeInfo> getFileReferences(String fileId, int referenceId) {
+    long fileIdLong = Long.parseUnsignedLong(fileId);
+    List<JavaAstNode> javaAstNodes = new ArrayList<>();
+    List<AstNodeInfo> javaAstNodeInfos;
+
+    switch (FileReferenceType.values()[referenceId]) {
+      case IMPORTS:
+        javaAstNodes = queryJavaImportNodesInFile(fileIdLong);
+        break;
+      case TYPES:
+        javaAstNodes = queryJavaTypeNodesInFile(fileIdLong);
+        break;
+      case CONSTRUCTORS:
+        javaAstNodes = queryJavaConstructorNodesInFile(fileIdLong);
+        break;
+      case METHODS:
+        javaAstNodes = queryJavaMethodNodesInFile(fileIdLong);
+        break;
+    }
+
+    javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
+
+    return javaAstNodeInfos;
+  }
+
   private List<AstNodeInfo> createAstNodeInfos(List<JavaAstNode> javaAstNodes) {
     Map<Long, List<String>> tags = getTags(javaAstNodes);
 
     return javaAstNodes.stream()
       .map(p -> createAstNodeInfo(p, tags))
       .sorted((n1, n2) -> {
-        Integer line1 = n1.range.range.endpos.line;
-        Integer line2 = n2.range.range.endpos.line;
+        Integer line1 = n1.range.range.startpos.line;
+        Integer line2 = n2.range.range.startpos.line;
         int lineComp = line1.compareTo(line2);
 
         if (lineComp != 0) {
           return lineComp;
         }
 
-        Integer col1 = n1.range.range.endpos.column;
-        Integer col2 = n2.range.range.endpos.column;
+        Integer col1 = n1.range.range.startpos.column;
+        Integer col2 = n2.range.range.startpos.column;
         return col1.compareTo(col2);
       })
       .collect(Collectors.toList());

@@ -30,4 +30,16 @@ service JavaService
     2:i32 referenceId
     3:list<string> tags)
       throws (1:common.InvalidId ex)
+
+  map<string, i32> getFileReferenceTypes()
+    throws (1:common.InvalidId ex)
+
+  i32 getFileReferenceCount(
+    1:common.FileId fileId,
+    2:i32 referenceId)
+
+  list<language.AstNodeInfo> getFileReferences(
+    1:common.FileId fileId,
+    2:i32 referenceId)
+      throws (1:common.InvalidId ex)
 }

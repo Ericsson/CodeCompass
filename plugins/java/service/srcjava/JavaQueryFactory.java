@@ -83,9 +83,7 @@ public abstract class JavaQueryFactory {
   }
 
   public static <T extends Collection<? extends JavaEntity>>
-  List<JavaAstNode> queryJavaAstNodes(
-    T javaEntities)
-  {
+  List<JavaAstNode> queryJavaAstNodes(T javaEntities) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
 
@@ -113,6 +111,81 @@ public abstract class JavaQueryFactory {
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
 
     return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> queryJavaAstNodesInFile(long fileId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("location_file"), fileId));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> queryJavaAstNodesInFile(
+    long fileId, CriteriaQuery<JavaAstNode> cr,
+    Root<JavaAstNode> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("location_file"), fileId
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> queryJavaImportNodesInFile(long fileId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    Predicate predicate = cb.equal(root.get("symbolType"), SymbolType.FILE);
+
+    return queryJavaAstNodesInFile(fileId, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryJavaTypeNodesInFile(long fileId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    Predicate predicate =
+      cb.and(
+        cb.equal(root.get("symbolType"), SymbolType.TYPE),
+        cb.equal(root.get("astType"), AstType.DEFINITION)
+      );
+
+    return queryJavaAstNodesInFile(fileId, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryJavaConstructorNodesInFile(long fileId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    Predicate predicate =
+      cb.and(
+        cb.equal(root.get("symbolType"), SymbolType.CONSTRUCTOR),
+        cb.equal(root.get("astType"), AstType.DEFINITION)
+      );
+
+    return queryJavaAstNodesInFile(fileId, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryJavaMethodNodesInFile(long fileId) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    Predicate predicate =
+      cb.and(
+        cb.equal(root.get("symbolType"), SymbolType.METHOD),
+        cb.or(
+          cb.equal(root.get("astType"), AstType.DEFINITION),
+          cb.equal(root.get("astType"), AstType.DECLARATION)
+        )
+      );
+
+    return queryJavaAstNodesInFile(fileId, cr, root, predicate);
   }
 
   public static List<JavaAstNode> queryJavaMemberTypeNodes(
@@ -211,7 +284,28 @@ public abstract class JavaQueryFactory {
   public static List<JavaAstNode> queryUsageNodes(JavaAstNode javaAstNode) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
-    Predicate predicate = cb.equal(root.get("astType"), AstType.USAGE);
+    Predicate predicate =
+      cb.or(
+        cb.equal(root.get("astType"), AstType.USAGE),
+        cb.equal(root.get("astType"), AstType.READ),
+        cb.equal(root.get("astType"), AstType.WRITE)
+      );
+
+    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryReadNodes(JavaAstNode javaAstNode) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate = cb.equal(root.get("astType"), AstType.READ);
+
+    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryWriteNodes(JavaAstNode javaAstNode) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate = cb.equal(root.get("astType"), AstType.WRITE);
 
     return queryJavaAstNodes(javaAstNode, cr, root, predicate);
   }
