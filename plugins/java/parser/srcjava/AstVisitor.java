@@ -431,7 +431,14 @@ public class AstVisitor extends ASTVisitor {
     if (nodeBinding != null && nodeBinding.getKind() == IBinding.VARIABLE &&
         !isDeclaration)
     {
-      visitVariableUsage(parent, node);
+      IVariableBinding variableBinding =
+        (IVariableBinding) node.resolveBinding();
+
+      if (variableBinding.isEnumConstant()) {
+        visitEnumConstantUsage(variableBinding, node);
+      } else {
+        visitVariableUsage(parent, variableBinding, node);
+      }
     }
 
     return super.visit(node);
@@ -599,7 +606,7 @@ public class AstVisitor extends ASTVisitor {
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.ENUM_CONSTANT,
-      AstType.DECLARATION, ecnEntityHash);
+      AstType.DEFINITION, ecnEntityHash);
 
     // Set JavaEntity fields
     enumConstant.setAstNodeId(javaAstNode.getId());
@@ -854,17 +861,43 @@ public class AstVisitor extends ASTVisitor {
     javaVariable.setQualifiedName(qualifiedName);
   }
 
-  private void visitVariableUsage(ASTNode parent, SimpleName node) {
+  private void visitEnumConstantUsage(
+    IVariableBinding variableBinding, SimpleName node)
+  {
+    JavaEnumConstant javaEnumConstant = new JavaEnumConstant();
+    String qualifiedType = variableBinding.getType().getQualifiedName();
+    String name = node.toString();
+    String qualifiedName = node.getFullyQualifiedName();
+    String entityHashStr = String.join(
+      " ", qualifiedType, name);
+    int entityHash = entityHashStr.hashCode();
+
+    javaEnumConstant.setValue(variableBinding.getVariableId());
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.ENUM_CONSTANT, AstType.USAGE, entityHash
+    );
+
+    // Set JavaEntity fields
+    javaEnumConstant.setAstNodeId(javaAstNode.getId());
+    javaEnumConstant.setEntityHash(entityHash);
+    javaEnumConstant.setName(name);
+    javaEnumConstant.setQualifiedName(qualifiedName);
+
+    persistRow(javaEnumConstant);
+  }
+
+  private void visitVariableUsage(
+    ASTNode parent, IVariableBinding variableBinding, SimpleName node)
+  {
     JavaVariable javaVariable = new JavaVariable();
-    IVariableBinding variableBinding =
-      (IVariableBinding) node.resolveBinding();
     String qualifiedType = variableBinding.getType().getQualifiedName();
     String name = node.toString();
     String qualifiedName = node.getFullyQualifiedName();
     String entityHashStr = "";
-    AstType astType = AstType.USAGE;
+    AstType astType;
 
-    if (variableBinding.isEnumConstant() || variableBinding.isField()) {
+    if (variableBinding.isField()) {
       ITypeBinding classBinding = variableBinding.getDeclaringClass();
       String declaringClassName = classBinding.getQualifiedName();
       entityHashStr = String.join(
