@@ -10,13 +10,24 @@ public class JavaRecord extends JavaEntity {
   @Column(name = "\"isAbstract\"")
   private boolean isAbstract;
 
+  @Column(name = "\"isFinal\"")
+  private boolean isFinal;
+
   // Getters and setters
 
-  public boolean getIsAbstract() {
+  public boolean isAbstract() {
     return isAbstract;
   }
 
-  public void setIsAbstract(boolean isAbstract) {
-    this.isAbstract = isAbstract;
+  public void setAbstract(boolean anAbstract) {
+    isAbstract = anAbstract;
+  }
+
+  public boolean isFinal() {
+    return isFinal;
+  }
+
+  public void setFinal(boolean aFinal) {
+    isFinal = aFinal;
   }
 }

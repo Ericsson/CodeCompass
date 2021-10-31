@@ -57,6 +57,10 @@ public class JavaQueryHandler implements JavaService.Iface {
         if (!javaVariables.isEmpty()) {
           JavaVariable javaVariable = javaVariables.get(0);
 
+          properties.put("Final variable",
+            Boolean.toString(javaVariable.isFinal()));
+          properties.put("Static variable",
+            Boolean.toString(javaVariable.isStatic()));
           properties.put("Name", javaVariable.getName());
           properties.put("Qualified name", javaVariable.getQualifiedName());
           properties.put("Type", javaVariable.getQualifiedType());
@@ -85,6 +89,10 @@ public class JavaQueryHandler implements JavaService.Iface {
         if (!javaMethods.isEmpty()) {
           JavaMethod javaMethod = javaMethods.get(0);
 
+          properties.put("Final method",
+            Boolean.toString(javaMethod.isFinal()));
+          properties.put("Static method",
+            Boolean.toString(javaMethod.isStatic()));
           properties.put("Name", javaMethod.getName());
           properties.put("Qualified name", javaMethod.getQualifiedName());
           properties.put("Type", javaMethod.getQualifiedType());
@@ -101,7 +109,10 @@ public class JavaQueryHandler implements JavaService.Iface {
 
           properties.put(
             "Abstract type",
-            Boolean.toString(javaRecord.getIsAbstract()));
+            Boolean.toString(javaRecord.isAbstract()));
+          properties.put(
+            "Final type",
+            Boolean.toString(javaRecord.isFinal()));
           properties.put("Name", javaRecord.getName());
           properties.put("Qualified name", javaRecord.getQualifiedName());
 

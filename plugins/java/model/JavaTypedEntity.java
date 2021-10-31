@@ -8,6 +8,12 @@ import static javax.persistence.InheritanceType.JOINED;
 @Table(name = "\"JavaTypedEntity\"")
 @Inheritance(strategy = JOINED)
 public abstract class JavaTypedEntity extends JavaEntity {
+  @Column(name = "\"isFinal\"")
+  private boolean isFinal;
+
+  @Column(name = "\"isStatic\"")
+  private boolean isStatic;
+
   @Column(name = "\"typeHash\"")
   private long typeHash;
 
@@ -16,6 +22,22 @@ public abstract class JavaTypedEntity extends JavaEntity {
 
 
   // Getters and setters
+
+  public boolean isFinal() {
+    return isFinal;
+  }
+
+  public void setFinal(boolean aFinal) {
+    isFinal = aFinal;
+  }
+
+  public boolean isStatic() {
+    return isStatic;
+  }
+
+  public void setStatic(boolean aStatic) {
+    isStatic = aStatic;
+  }
 
   public long getTypeHash() {
     return typeHash;
