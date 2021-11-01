@@ -7,11 +7,10 @@ import model.enums.SymbolType;
 import model.enums.Visibility;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.Expression;
 
 import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -100,6 +99,15 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
+  public boolean visit(CatchClause node) {
+    SingleVariableDeclaration variableDeclaration = node.getException();
+
+    visitLocalVarDeclaration(variableDeclaration);
+
+    return super.visit(node);
+  }
+
+  @Override
   public boolean visit(ClassInstanceCreation node) {
     JavaConstructor javaConstructor = new JavaConstructor();
     IMethodBinding methodDeclBinding =
@@ -137,6 +145,15 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(EmptyStatement node) {
     // System.out.println(node);
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(EnhancedForStatement node) {
+    SingleVariableDeclaration variableDeclaration = node.getParameter();
+
+    visitLocalVarDeclaration(variableDeclaration);
+
     return super.visit(node);
   }
 
@@ -249,9 +266,38 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(LambdaExpression node) {
-    // System.out.println("AAAAAAAAAAAAAAAAAAAAAAA");
-    // System.out.println(node.resolveMethodBinding().getMethodDeclaration());
-    // System.out.println(node);
+    JavaMethod javaMethod = new JavaMethod();
+    IMethodBinding methodBinding = node.resolveMethodBinding();
+    ITypeBinding classBinding = methodBinding.getDeclaringClass();
+    String declaringClassName = classBinding.getQualifiedName();
+    String methodBindingStr = methodBinding.toString();
+    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
+    String entityHashStr = String.join(
+      " ", declaringClassName, methodBindingStr);
+    int modifiers = methodBinding.getModifiers();
+    int entityHash = entityHashStr.hashCode();
+    int classHash = declaringClassName.hashCode();
+    int typeHash = qualifiedType.hashCode();
+
+    setJavaTypedEntityFields(javaMethod, modifiers, typeHash, qualifiedType);
+
+    // persist method's parameters
+    for (Object varDeclObj : node.parameters()) {
+      visitParameterDeclaration(
+        (VariableDeclarationFragment) varDeclObj,
+        entityHashStr, javaMethod::addJavaMetVarParam
+      );
+    }
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.METHOD, AstType.DEFINITION, entityHash);
+
+    persistJavaMemberType(
+      classHash, typeHash, MemberTypeKind.METHOD, modifiers, javaAstNode);
+
+    setJavaEntityFields(javaMethod, javaAstNode.getId(), entityHash, "", "");
+
+    persistRow(javaMethod);
     return super.visit(node);
   }
 
@@ -560,19 +606,19 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(VariableDeclarationFragment node) {
-    // System.out.println(node);
+    IVariableBinding nodeBinding = node.resolveBinding();
+    ASTNode parent = node.getParent();
+
+    if (!nodeBinding.isField() && !(parent instanceof LambdaExpression)) {
+      visitLocalVarDeclaration(node);
+    }
+
     return super.visit(node);
   }
 
   @Override
   public boolean visit(VariableDeclarationStatement node) {
-    // Method local variables
-    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
-
-    for (Object varDeclFragObj : node.fragments()) {
-      visitVariableDeclarationFragment(
-        (VariableDeclarationFragment) varDeclFragObj, qualifiedType);
-    }
+    // System.out.println(node);
     return super.visit(node);
   }
 
@@ -672,18 +718,46 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaVariable);
   }
 
-  private void visitVariableDeclarationFragment(
-    VariableDeclarationFragment node, String qualifiedType)
+  private void visitParameterDeclaration(
+    VariableDeclaration node, String entityHashStrPrefix,
+    Consumer<JavaVariable> connectParent)
   {
     JavaVariable javaVariable = new JavaVariable();
     IVariableBinding nodeBinding = node.resolveBinding();
     SimpleName simpleName = node.getName();
+    String qualifiedType = nodeBinding.getType().getQualifiedName();
     String qualifiedName = simpleName.getFullyQualifiedName();
-    IMethodBinding declaringMethodBinding =
-      node.resolveBinding().getDeclaringMethod();
-    ITypeBinding classBinding = declaringMethodBinding.getDeclaringClass();
+    String entityHashStr = String.join(
+      " ", entityHashStrPrefix, qualifiedType, qualifiedName);
+    int modifiers = nodeBinding.getModifiers();
+    int entityHash = entityHashStr.hashCode();
+    int typeHash = qualifiedType.hashCode();
+
+    setJavaTypedEntityFields(javaVariable, modifiers, typeHash, qualifiedType);
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.VARIABLE, AstType.DECLARATION, entityHash);
+
+    setJavaEntityFields(
+      javaVariable, javaAstNode.getId(),
+      entityHash, simpleName.toString(), qualifiedName
+    );
+
+    connectParent.accept(javaVariable);
+  }
+
+  private void visitLocalVarDeclaration(
+    VariableDeclaration node)
+  {
+    JavaVariable javaVariable = new JavaVariable();
+    IVariableBinding nodeBinding = node.resolveBinding();
+    SimpleName simpleName = node.getName();
+    IMethodBinding methodDeclBinding = nodeBinding.getDeclaringMethod();
+    ITypeBinding classBinding = methodDeclBinding.getDeclaringClass();
+    String qualifiedName = simpleName.getFullyQualifiedName();
+    String qualifiedType = nodeBinding.getType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = declaringMethodBinding.toString();
+    String methodBindingStr = methodDeclBinding.toString();
     String methodEntityHashStr = String.join(
       " ", declaringClassName, methodBindingStr);
     String entityHashStr = String.join(
@@ -693,13 +767,19 @@ public class AstVisitor extends ASTVisitor {
     int methodEntityHash = methodEntityHashStr.hashCode();
     int entityHash = entityHashStr.hashCode();
     int typeHash = qualifiedType.hashCode();
-    List<JavaAstNode> javaAstNodeDefs =
-      queryJavaAstNodeDefinitionsByEntityHash(methodEntityHash);
-    JavaAstNode javaAstNodeDef = javaAstNodeDefs.get(0);
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.VARIABLE,
+      node.getInitializer() == null ? AstType.DECLARATION : AstType.DEFINITION,
+      entityHash
+    );
+
+    JavaAstNode javaAstNodeDef =
+      queryParentAstNode(javaAstNode, methodEntityHash);
 
     setJavaTypedEntityFields(javaVariable, modifiers, typeHash, qualifiedType);
 
-    if (declaringMethodBinding.isConstructor()) {
+    if (methodDeclBinding.isConstructor()) {
       CriteriaQuery<JavaConstructor> cr = cb.createQuery(JavaConstructor.class);
       Root<JavaConstructor> root = cr.from(JavaConstructor.class);
 
@@ -716,12 +796,6 @@ public class AstVisitor extends ASTVisitor {
 
       javaMethod.addJavaMetVarLocal(javaVariable);
     }
-
-    JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.VARIABLE,
-      node.getInitializer() == null ? AstType.DECLARATION : AstType.DEFINITION,
-      entityHash
-    );
 
     setJavaEntityFields(
       javaVariable, javaAstNode.getId(), entityHash,
@@ -747,7 +821,7 @@ public class AstVisitor extends ASTVisitor {
 
     // Persist constructor's parameters
     for (Object varDeclObj : node.parameters()) {
-      visitParameter(
+      visitParameterDeclaration(
         (SingleVariableDeclaration) varDeclObj,
         entityHashStr, javaConstructor::addJavaConVarParam
       );
@@ -791,7 +865,7 @@ public class AstVisitor extends ASTVisitor {
 
     // persist method's parameters
     for (Object varDeclObj : node.parameters()) {
-      visitParameter(
+      visitParameterDeclaration(
         (SingleVariableDeclaration) varDeclObj,
         entityHashStr, javaMethod::addJavaMetVarParam
       );
@@ -809,33 +883,6 @@ public class AstVisitor extends ASTVisitor {
     );
 
     persistRow(javaMethod);
-  }
-
-  private void visitParameter(
-    SingleVariableDeclaration node,
-    String entityHashStrPrefix, Consumer<JavaVariable> connectParent)
-  {
-    JavaVariable javaVariable = new JavaVariable();
-    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
-    SimpleName simpleName = node.getName();
-    String qualifiedName = simpleName.getFullyQualifiedName();
-    String entityHashStr = String.join(
-      " ", entityHashStrPrefix, qualifiedType, qualifiedName);
-    int modifiers = node.getModifiers();
-    int entityHash = entityHashStr.hashCode();
-    int typeHash = qualifiedType.hashCode();
-
-    setJavaTypedEntityFields(javaVariable, modifiers, typeHash, qualifiedType);
-
-    connectParent.accept(javaVariable);
-
-    JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.VARIABLE, AstType.DECLARATION, entityHash);
-
-    setJavaEntityFields(
-      javaVariable, javaAstNode.getId(),
-      entityHash, simpleName.toString(), qualifiedName
-    );
   }
 
   private void visitEnumConstantUsage(
@@ -948,21 +995,60 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaDocComment);
   }
 
-  private List<JavaAstNode> queryJavaAstNodeDefinitionsByEntityHash(
-    int entityHash)
+  private JavaAstNode queryParentAstNode(
+    JavaAstNode child, int methodEntityHash)
   {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    long childLocationFile = child.getLocation_file();
+    long childStartLine = child.getLocation_range_start_line();
+    long childStartColumn = child.getLocation_range_start_column();
+    Path<Long> locationFile =
+      root.get("location_file");
+    Path<Long> entityHash =
+      root.get("entityHash");
+    Path<Long> astType =
+      root.get("astType");
+    Path<Integer> startLine =
+      root.get("location_range_start_line");
+    Path<Integer> endLine =
+      root.get("location_range_end_line");
+    Path<Integer> startColumn =
+      root.get("location_range_start_column");
+    Path<Integer> endColumn =
+      root.get("location_range_end_column");
+
+    Predicate sameFile = cb.equal(locationFile, childLocationFile);
+    Predicate sameEntityHash = cb.equal(entityHash, methodEntityHash);
+    Predicate definition = cb.equal(astType, AstType.DEFINITION);
+    Predicate startPosLessEqualPos =
+      cb.or(
+        cb.and(
+          cb.equal(startLine, childStartLine),
+          cb.le(startColumn, childStartColumn)
+        ),
+        cb.lt(startLine, childStartLine)
+      );
+    Predicate posLessThanEndPos =
+      cb.or(
+        cb.and(
+          cb.equal(endLine, childStartLine),
+          cb.gt(endColumn, childStartColumn)
+        ),
+        cb.gt(endLine, childStartLine)
+      );
 
     cr
       .select(root)
       .where(
         cb.and(
-          cb.equal(root.get("entityHash"), entityHash),
-          cb.equal(root.get("astType"), AstType.DEFINITION))
+          sameFile, sameEntityHash, definition,
+          startPosLessEqualPos, posLessThanEndPos
+        )
       );
 
-    return em.createQuery(cr).getResultList();
+    return em.createQuery(cr).getSingleResult();
   }
 
   private <E extends JavaEntity> E queryJavaEntityByAstNodeId(
