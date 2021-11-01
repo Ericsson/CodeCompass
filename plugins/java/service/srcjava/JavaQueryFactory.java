@@ -188,7 +188,7 @@ public abstract class JavaQueryFactory {
     return queryJavaAstNodesInFile(fileId, cr, root, predicate);
   }
 
-  public static List<JavaAstNode> queryJavaMemberTypeNodes(
+  public static List<JavaAstNode> queryJavaMemberTypeDefinitionNodes(
     JavaAstNode javaAstNode, MemberTypeKind memberTypeKind)
   {
     List<JavaMemberType> javaMemberTypes =
@@ -196,6 +196,10 @@ public abstract class JavaQueryFactory {
 
     return javaMemberTypes.stream()
       .map(JavaMemberType::getMemberAstNode)
+      .filter(
+        m ->
+          m.getAstType() == AstType.DECLARATION ||
+          m.getAstType() == AstType.DEFINITION)
       .collect(Collectors.toList());
   }
 
@@ -234,9 +238,8 @@ public abstract class JavaQueryFactory {
     JavaAstNode recordJavaAstNode, CriteriaQuery<JavaMemberType> cr,
     Root<JavaMemberType> root, Predicate customPredicate)
   {
-    Predicate entityHashPredicate = cb.equal(
-      root.get("typeHash"), recordJavaAstNode.getEntityHash()
-    );
+    Predicate entityHashPredicate =
+      cb.equal(root.get("typeHash"), recordJavaAstNode.getEntityHash());
 
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
 

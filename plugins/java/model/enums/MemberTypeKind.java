@@ -1,9 +1,12 @@
 package model.enums;
 
 public enum MemberTypeKind {
+  TYPE("Type"),
   CONSTRUCTOR("Constructor"),
   FIELD("Field"),
-  METHOD("Method");
+  METHOD("Method"),
+  ENUM("Enum"),
+  ENUM_CONSTANT("Enum constant");
 
   private final String name;
 

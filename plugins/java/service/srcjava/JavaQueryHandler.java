@@ -120,6 +120,16 @@ public class JavaQueryHandler implements JavaService.Iface {
         }
         break;
       }
+      case ENUM: {
+        List<JavaEnum> javaEnums = queryJavaEnums(javaAstNode);
+
+        if (!javaEnums.isEmpty()) {
+          JavaEnum javaEnum = javaEnums.get(0);
+
+          properties.put("Name", javaEnum.getName());
+          properties.put("Qualified name", javaEnum.getQualifiedName());
+        }
+      }
       case ENUM_CONSTANT: {
         List<JavaEnumConstant> javaEnumConstants =
           queryJavaEnumConstants(javaAstNode);
@@ -282,12 +292,14 @@ public class JavaQueryHandler implements JavaService.Iface {
       case INHERIT_BY:
         break;
       case CONSTRUCTOR:
-        return queryJavaMemberTypes(
+        return queryJavaMemberTypeDefinitionNodes(
           javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
       case DATA_MEMBER:
-        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.FIELD).size();
+        return queryJavaMemberTypeDefinitionNodes(
+          javaAstNode, MemberTypeKind.FIELD).size();
       case METHOD:
-        return queryJavaMemberTypes(javaAstNode, MemberTypeKind.METHOD).size();
+        return queryJavaMemberTypeDefinitionNodes(
+          javaAstNode, MemberTypeKind.METHOD).size();
       case ENUM_CONSTANTS:
         return queryJavaEnumConstantNodes(javaAstNode).size();
     }
@@ -351,17 +363,17 @@ public class JavaQueryHandler implements JavaService.Iface {
         break;
       case CONSTRUCTOR:
         javaAstNodes =
-          queryJavaMemberTypeNodes(
+          queryJavaMemberTypeDefinitionNodes(
             javaAstNode, MemberTypeKind.CONSTRUCTOR);
         break;
       case DATA_MEMBER:
         javaAstNodes =
-          queryJavaMemberTypeNodes(
+          queryJavaMemberTypeDefinitionNodes(
             javaAstNode, MemberTypeKind.FIELD);
         break;
       case METHOD:
         javaAstNodes =
-          queryJavaMemberTypeNodes(
+          queryJavaMemberTypeDefinitionNodes(
             javaAstNode, MemberTypeKind.METHOD);
         break;
       case ENUM_CONSTANTS:
@@ -500,18 +512,24 @@ public class JavaQueryHandler implements JavaService.Iface {
         definitions.isEmpty() ? node : definitions.get(0);
 
       switch (node.getSymbolType()) {
-        case CONSTRUCTOR: {
+        case TYPE:
+          putTags(node, definition, MemberTypeKind.TYPE, tags);
+          break;
+        case CONSTRUCTOR:
           putTags(node, definition, MemberTypeKind.CONSTRUCTOR, tags);
           break;
-        }
-        case VARIABLE: {
+        case VARIABLE:
           putTags(node, definition, MemberTypeKind.FIELD, tags);
           break;
-        }
-        case METHOD: {
+        case METHOD:
           putTags(node, definition, MemberTypeKind.METHOD, tags);
           break;
-        }
+        case ENUM:
+          putTags(node, definition, MemberTypeKind.ENUM, tags);
+          break;
+        case ENUM_CONSTANT:
+          putTags(node, definition, MemberTypeKind.ENUM_CONSTANT, tags);
+          break;
       }
     });
 
