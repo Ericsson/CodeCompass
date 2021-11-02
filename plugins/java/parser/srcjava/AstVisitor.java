@@ -183,6 +183,8 @@ public class AstVisitor extends ASTVisitor {
       simpleName.toString(), declaringClassName
     );
 
+    persistInterfaceImplementations(node.superInterfaceTypes(), entityHash);
+
     persistRow(javaEnum);
 
     return super.visit(node);
@@ -566,6 +568,9 @@ public class AstVisitor extends ASTVisitor {
       javaRecord, javaAstNode.getId(), entityHash,
       simpleName.toString(), qualifiedName
     );
+
+    persistClassExtensions(node.getSuperclassType(), entityHash);
+    persistInterfaceImplementations(node.superInterfaceTypes(), entityHash);
 
     persistRow(javaRecord);
 
@@ -1063,6 +1068,18 @@ public class AstVisitor extends ASTVisitor {
     return em.createQuery(cr).getSingleResult();
   }
 
+  private Visibility getVisibility(int modifiers) {
+    if (Flags.isPublic(modifiers)) {
+      return Visibility.PUBLIC;
+    } else if (Flags.isProtected(modifiers)) {
+      return Visibility.PROTECTED;
+    } else if (Flags.isPrivate(modifiers)) {
+      return Visibility.PRIVATE;
+    }
+
+    return Visibility.PACKAGE_PRIVATE;
+  }
+
   private void setJavaDocCommentFields(
     JavaDocComment javaDocComment, String commentString, long entityHash)
   {
@@ -1093,6 +1110,44 @@ public class AstVisitor extends ASTVisitor {
     javaEntity.setEntityHash(entityHash);
     javaEntity.setName(name);
     javaEntity.setQualifiedName(qualifiedName);
+  }
+
+  private void persistClassExtensions(
+    Type superclassType, int entityHash)
+  {
+    if (superclassType != null) {
+      String qualifiedSuperClassName =
+        superclassType.resolveBinding().getQualifiedName();
+      int superClassHash = qualifiedSuperClassName.hashCode();
+
+      persistJavaInheritance(superClassHash, entityHash);
+    }
+  }
+
+  private void persistInterfaceImplementations(
+    List<?> superInterfaceTypes, int entityHash)
+  {
+    superInterfaceTypes.forEach(i -> {
+      Type aInterface = (Type) i;
+      String qualifiedSuperInterfaceName =
+        aInterface.resolveBinding().getQualifiedName();
+      int superInterfaceHash = qualifiedSuperInterfaceName.hashCode();
+
+      persistJavaInheritance(superInterfaceHash, entityHash);
+    });
+  }
+
+  private JavaInheritance persistJavaInheritance(
+    int baseEntityHash, int derivedEntityHash)
+  {
+    JavaInheritance javaInheritance = new JavaInheritance();
+
+    javaInheritance.setBase(baseEntityHash);
+    javaInheritance.setDerived(derivedEntityHash);
+
+    persistRow(javaInheritance);
+
+    return javaInheritance;
   }
 
   private JavaMemberType persistJavaMemberType(
@@ -1159,18 +1214,6 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaAstNode);
 
     return javaAstNode;
-  }
-
-  private Visibility getVisibility(int modifiers) {
-    if (Flags.isPublic(modifiers)) {
-      return Visibility.PUBLIC;
-    } else if (Flags.isProtected(modifiers)) {
-      return Visibility.PROTECTED;
-    } else if (Flags.isPrivate(modifiers)) {
-      return Visibility.PRIVATE;
-    }
-
-    return Visibility.PACKAGE_PRIVATE;
   }
 
   private void persistRow(Object jpaObject) {

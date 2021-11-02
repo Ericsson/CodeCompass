@@ -230,7 +230,7 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
         referenceTypes.put(
-          "Inherits by", ReferenceType.INHERIT_BY.ordinal());
+          "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
           "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
         referenceTypes.put(
@@ -239,6 +239,10 @@ public class JavaQueryHandler implements JavaService.Iface {
           "Method", ReferenceType.METHOD.ordinal());
         break;
       case ENUM:
+        referenceTypes.put(
+          "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
+        referenceTypes.put(
+          "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
           "Enum constants", ReferenceType.ENUM_CONSTANTS.ordinal());
         referenceTypes.put(
@@ -288,9 +292,9 @@ public class JavaQueryHandler implements JavaService.Iface {
       case TYPE:
         return queryTypeNodes(javaAstNode).size();
       case INHERIT_FROM:
-        break;
+        return queryInheritFromNodes(javaAstNode).size();
       case INHERIT_BY:
-        break;
+        return queryInheritedByNodes(javaAstNode).size();
       case CONSTRUCTOR:
         return queryJavaMemberTypeDefinitionNodes(
           javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
@@ -358,8 +362,10 @@ public class JavaQueryHandler implements JavaService.Iface {
         javaAstNodes = queryTypeNodes(javaAstNode);
         break;
       case INHERIT_FROM:
+        javaAstNodes = queryInheritFromNodes(javaAstNode);
         break;
       case INHERIT_BY:
+        javaAstNodes = queryInheritedByNodes(javaAstNode);
         break;
       case CONSTRUCTOR:
         javaAstNodes =

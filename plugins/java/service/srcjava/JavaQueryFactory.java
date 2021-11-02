@@ -82,6 +82,17 @@ public abstract class JavaQueryFactory {
     return em.createQuery(cr).getResultList();
   }
 
+  public static List<JavaAstNode> queryJavaAstNodes(long entityHash) {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), entityHash));
+
+    return em.createQuery(cr).getResultList();
+  }
+
   public static <T extends Collection<? extends JavaEntity>>
   List<JavaAstNode> queryJavaAstNodes(T javaEntities) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
@@ -106,6 +117,19 @@ public abstract class JavaQueryFactory {
   {
     Predicate entityHashPredicate = cb.equal(
       root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> queryJavaAstNodes(
+    long entityHash, CriteriaQuery<JavaAstNode> cr,
+    Root<JavaAstNode> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("entityHash"), entityHash
     );
 
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
@@ -213,10 +237,14 @@ public abstract class JavaQueryFactory {
     return queryJavaAstNodes(javaAstNode, cr, root, predicate);
   }
 
-  public static List<JavaAstNode> queryDefinitionNodes(long javaAstNodeId) {
-    JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeId);
+  public static List<JavaAstNode> queryDefinitionNodes(long entityHash)
+  {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate =
+      cb.equal(root.get("astType"), AstType.DEFINITION);
 
-    return queryDefinitionNodes(javaAstNode);
+    return queryJavaAstNodes(entityHash, cr, root, predicate);
   }
 
   public static List<JavaMemberType> queryJavaMemberTypes(
@@ -540,6 +568,28 @@ public abstract class JavaQueryFactory {
     return new ArrayList<>();
   }
 
+  public static List<JavaAstNode> queryInheritFromNodes(
+    JavaAstNode javaAstNode)
+  {
+    List<JavaInheritance> javaInheritances =
+      queryInheritancesDerived(javaAstNode);
+
+    return javaInheritances.stream()
+      .flatMap(i -> queryDefinitionNodes(i.getBase()).stream())
+      .collect(Collectors.toList());
+  }
+
+  public static List<JavaAstNode> queryInheritedByNodes(
+    JavaAstNode javaAstNode)
+  {
+    List<JavaInheritance> javaInheritances =
+      queryInheritancesBase(javaAstNode);
+
+    return javaInheritances.stream()
+      .flatMap(i -> queryDefinitionNodes(i.getDerived()).stream())
+      .collect(Collectors.toList());
+  }
+
   public static List<JavaAstNode> queryJavaEnumConstantNodes(
     JavaAstNode javaAstNode)
   {
@@ -556,6 +606,58 @@ public abstract class JavaQueryFactory {
     }
 
     return new ArrayList<>();
+  }
+
+  public static List<JavaInheritance> queryInheritancesDerived(
+    JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaInheritance> cr = cb.createQuery(JavaInheritance.class);
+    Root<JavaInheritance> root = cr.from(JavaInheritance.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("derived"), javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaInheritance> queryInheritancesDerived(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaInheritance> cr,
+    Root<JavaInheritance> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("derived"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaInheritance> queryInheritancesBase(
+    JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaInheritance> cr = cb.createQuery(JavaInheritance.class);
+    Root<JavaInheritance> root = cr.from(JavaInheritance.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("base"), javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaInheritance> queryInheritancesBase(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaInheritance> cr,
+    Root<JavaInheritance> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("base"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
   }
 
   public static List<JavaRecord> queryJavaRecords(
