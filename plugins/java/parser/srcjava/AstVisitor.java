@@ -109,29 +109,9 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ClassInstanceCreation node) {
-    JavaConstructor javaConstructor = new JavaConstructor();
-    IMethodBinding methodDeclBinding =
-      node.resolveConstructorBinding().getMethodDeclaration();
-    Type type = node.getType();
-    String qualifiedName = type.resolveBinding().getQualifiedName();
-    String entityHashStr = String.join(
-      " ", qualifiedName, methodDeclBinding.toString());
-    int modifiers = methodDeclBinding.getModifiers();
-    int classHash = qualifiedName.hashCode();
-    int entityHash = entityHashStr.hashCode();
+    IMethodBinding constructorBinding = node.resolveConstructorBinding();
 
-    JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.CONSTRUCTOR, AstType.USAGE, entityHash);
-
-    persistJavaMemberType(
-      classHash, classHash, MemberTypeKind.CONSTRUCTOR, modifiers, javaAstNode);
-
-    setJavaEntityFields(
-      javaConstructor, javaAstNode.getId(),
-      entityHash, type.toString(), qualifiedName
-    );
-
-    persistRow(javaConstructor);
+    visitConstructorUsage(node, constructorBinding);
 
     return super.visit(node);
   }
@@ -516,7 +496,10 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SuperConstructorInvocation node) {
-    // System.out.println(node);
+    IMethodBinding constructorBinding = node.resolveConstructorBinding();
+
+    visitConstructorUsage(node, constructorBinding);
+
     return super.visit(node);
   }
 
@@ -625,6 +608,36 @@ public class AstVisitor extends ASTVisitor {
   public boolean visit(VariableDeclarationStatement node) {
     // System.out.println(node);
     return super.visit(node);
+  }
+
+  private void visitConstructorUsage(
+    ASTNode node, IMethodBinding constructorBinding)
+  {
+    JavaConstructor javaConstructor = new JavaConstructor();
+    IMethodBinding methodDeclBinding =
+      constructorBinding.getMethodDeclaration();
+    ITypeBinding typeBinding =
+      constructorBinding.getDeclaringClass().getTypeDeclaration();
+    String name = typeBinding.getName();
+    String qualifiedName = typeBinding.getQualifiedName();
+    String entityHashStr = String.join(
+      " ", qualifiedName, methodDeclBinding.toString());
+    int modifiers = methodDeclBinding.getModifiers();
+    int classHash = qualifiedName.hashCode();
+    int entityHash = entityHashStr.hashCode();
+
+    JavaAstNode javaAstNode = persistJavaAstNodeRow(
+      node, SymbolType.CONSTRUCTOR, AstType.USAGE, entityHash);
+
+    persistJavaMemberType(
+      classHash, classHash, MemberTypeKind.CONSTRUCTOR, modifiers, javaAstNode);
+
+    setJavaEntityFields(
+      javaConstructor, javaAstNode.getId(),
+      entityHash, name, qualifiedName
+    );
+
+    persistRow(javaConstructor);
   }
 
   private void visitTypeUsage(
