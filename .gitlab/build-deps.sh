@@ -50,12 +50,12 @@ export PATH=$DEPS_INSTALL_BUILD_DIR/cmake-install/bin:$PATH
 ######
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.gz
-tar -xf m4-1.4.18.tar.gz
-cd m4-1.4.18
+wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.gz
+tar -xf m4-1.4.19.tar.gz
+cd m4-1.4.19
 ./configure --quiet --prefix=$DEPS_INSTALL_BUILD_DIR/m4-install
 make install --quiet --jobs $(nproc)
-rm -rf $PACKAGES_DIR/m4-1.4.18.tar.gz
+rm -rf $PACKAGES_DIR/m4-1.4.19.tar.gz
 
 ###########
 # libtool #
@@ -137,8 +137,8 @@ if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/odb-install/bin/odb ]; then
   if [[ $ODB_VERSION == "2.5.0" ]]; then
     # build2
     cd $PACKAGES_DIR
-    wget --no-verbose --no-clobber https://download.build2.org/0.13.0/build2-install-0.13.0.sh
-    sh build2-install-0.13.0.sh --yes --trust yes --jobs $(nproc) $PACKAGES_DIR/build2-install
+    wget --no-verbose --no-clobber https://download.build2.org/0.14.0/build2-install-0.14.0.sh
+    sh build2-install-0.14.0.sh --yes --trust yes --jobs $(nproc) $PACKAGES_DIR/build2-install
     export PATH=$PACKAGES_DIR/build2-install/bin:$PATH
 
     # odb, libodb
@@ -160,7 +160,7 @@ if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/odb-install/bin/odb ]; then
     bpkg build libodb-pgsql --yes --quiet --jobs $(nproc)
     bpkg install --all --recursive --quiet --jobs $(nproc)
 
-    rm -f $PACKAGES_DIR/build2-toolchain-0.13.0.tar.xz
+    rm -f $PACKAGES_DIR/build2-toolchain-0.14.0.tar.xz
   elif [[ $ODB_VERSION == "2.4.0" ]]; then
     # odb
     cd $PACKAGES_DIR
@@ -385,6 +385,22 @@ rm -f node-v14.15.0-linux-x64.tar.xz
 cd $DEPS_INSTALL_RUNTIME_DIR
 mv node-v14.15.0-linux-x64 node-install
 export PATH=$DEPS_INSTALL_RUNTIME_DIR/node-install/bin:$PATH
+
+############
+# OpenLDAP #
+############
+
+cd $PACKAGES_DIR
+wget --no-verbose --no-clobber http://mirror.eu.oneandone.net/software/openldap/openldap-release/openldap-2.5.6.tgz
+tar -xf openldap-2.5.6.tgz
+
+cd openldap-2.5.6
+./configure --quiet --prefix=$DEPS_INSTALL_RUNTIME_DIR/openldap-install
+make depend
+make
+make install
+
+rm -f $PACKAGES_DIR/openldap-2.5.6.tgz
 
 #######
 # pip #
