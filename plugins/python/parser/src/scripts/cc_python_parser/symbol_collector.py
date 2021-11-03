@@ -827,7 +827,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
                     get_qualified_name_from_current_scope(node.id, r.start_position.line)
                 self.scope_manager.append_variable_to_current_scope(
                     VariableDeclaration(node.id, qualified_name, FilePosition(self.current_file, r)))
-                assert False, 'Assignment target, was not handled at ' + str(r)
+                assert False, f'Assignment target, was not handled at {str(r)} in {self.current_file}'
         elif isinstance(node.ctx, (ast.Load, ast.Del)):
             self.append_variable_usage(node.id, node)
         else:
