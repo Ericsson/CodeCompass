@@ -491,10 +491,14 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         return;
 
       var service = model.getLanguageService(fileInfo.type);
-      var refTypes = service.getReferenceTypes(astNodeInfo.id);
-      var usages = service.getReferences(
-        astNodeInfo.id,
-        refTypes['Usage']);
+      if(service){
+        var refTypes = service.getReferenceTypes(astNodeInfo.id);
+        var usages = service.getReferences(
+          astNodeInfo.id,
+          refTypes['Usage']);
+      } else {
+        var usages = [];
+      }
 
       this.clearSelection();
 
