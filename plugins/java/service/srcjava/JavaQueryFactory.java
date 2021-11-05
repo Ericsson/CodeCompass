@@ -4,6 +4,7 @@ import cc.service.core.FilePosition;
 import model.*;
 import model.enums.AstType;
 import model.enums.MemberTypeKind;
+import model.enums.RelationKind;
 import model.enums.SymbolType;
 
 import javax.persistence.EntityManager;
@@ -243,6 +244,32 @@ public abstract class JavaQueryFactory {
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
     Predicate predicate =
       cb.equal(root.get("astType"), AstType.DEFINITION);
+
+    return queryJavaAstNodes(entityHash, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryDeclOrDefNodes(JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate =
+      cb.or(
+        cb.equal(root.get("astType"), AstType.DECLARATION),
+        cb.equal(root.get("astType"), AstType.DEFINITION)
+      );
+
+    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
+  }
+
+  public static List<JavaAstNode> queryDeclOrDefNodes(long entityHash)
+  {
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+    Predicate predicate =
+      cb.or(
+        cb.equal(root.get("astType"), AstType.DECLARATION),
+        cb.equal(root.get("astType"), AstType.DEFINITION)
+      );
 
     return queryJavaAstNodes(entityHash, cr, root, predicate);
   }
@@ -551,6 +578,25 @@ public abstract class JavaQueryFactory {
     return new ArrayList<>();
   }
 
+  public static List<JavaAstNode> queryOverrideNodes(
+    JavaAstNode javaAstNode, boolean reverse)
+  {
+    CriteriaQuery<JavaRelation> cr = cb.createQuery(JavaRelation.class);
+    Root<JavaRelation> root = cr.from(JavaRelation.class);
+    Predicate overrideKindPredicate = cb.equal(
+      root.get("kind"), RelationKind.OVERRIDE
+    );
+
+    List<JavaRelation> javaRelations =
+      queryJavaRelations(javaAstNode, reverse, cr, root, overrideKindPredicate);
+
+    return javaRelations.stream()
+      .flatMap(
+        r ->  queryDeclOrDefNodes(reverse ? r.getRhs() : r.getLhs()).stream())
+      .collect(Collectors.toList()
+      );
+  }
+
   public static List<JavaAstNode> queryTypeNodes(JavaAstNode javaAstNode) {
     List<JavaVariable> javaVariables = queryJavaVariables(javaAstNode);
 
@@ -734,6 +780,37 @@ public abstract class JavaQueryFactory {
   {
     Predicate entityHashPredicate = cb.equal(
       root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaRelation> queryJavaRelations(
+    JavaAstNode javaAstNode, boolean reverse)
+  {
+    CriteriaQuery<JavaRelation> cr = cb.createQuery(JavaRelation.class);
+    Root<JavaRelation> root = cr.from(JavaRelation.class);
+
+    Path<Long> entityHash = reverse ? root.get("lhs") : root.get("rhs");
+
+    cr
+      .select(root)
+      .where(cb.equal(entityHash, javaAstNode.getEntityHash()));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaRelation> queryJavaRelations(
+    JavaAstNode javaAstNode, boolean reverse,
+    CriteriaQuery<JavaRelation> cr,
+    Root<JavaRelation> root, Predicate customPredicate)
+  {
+    Path<Long> entityHash = reverse ? root.get("lhs") : root.get("rhs");
+
+    Predicate entityHashPredicate = cb.equal(
+      entityHash, javaAstNode.getEntityHash()
     );
 
     cr.select(root).where(cb.and(entityHashPredicate, customPredicate));

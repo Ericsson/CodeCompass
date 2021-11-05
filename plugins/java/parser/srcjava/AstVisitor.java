@@ -1,10 +1,7 @@
 package parser.srcjava;
 
 import model.*;
-import model.enums.AstType;
-import model.enums.MemberTypeKind;
-import model.enums.SymbolType;
-import model.enums.Visibility;
+import model.enums.*;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.Expression;
@@ -56,7 +53,8 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ArrayCreation node) {
-    // System.out.println(node);
+    // visitConstructorUsage(node, node.resolveTypeBinding().getDeclaringMethod());
+
     return super.visit(node);
   }
 
@@ -73,32 +71,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(AssertStatement node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(Assignment node) {
-    // System.out.println("ASSIGNMENT");
-    // System.out.println(node);
-    // System.out.println(node.getLeftHandSide().resolveTypeBinding());
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(Block node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(CastExpression node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(CatchClause node) {
     SingleVariableDeclaration variableDeclaration = node.getException();
 
@@ -109,22 +81,8 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ClassInstanceCreation node) {
-    IMethodBinding constructorBinding = node.resolveConstructorBinding();
+    visitConstructorUsage(node, node.resolveConstructorBinding());
 
-    visitConstructorUsage(node, constructorBinding);
-
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(ConstructorInvocation node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(EmptyStatement node) {
-    // System.out.println(node);
     return super.visit(node);
   }
 
@@ -140,13 +98,14 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(EnumDeclaration node) {
     JavaEnum javaEnum = new JavaEnum();
+    List<?> superInterfaceTypes = node.superInterfaceTypes();
+    List<?> enumConstants = node.enumConstants();
     SimpleName simpleName = node.getName();
     String declaringClassName = node.resolveBinding().getQualifiedName();
     int modifiers = node.getModifiers();
     int entityHash = declaringClassName.hashCode();
 
     // Persist Enum constants
-    List<?> enumConstants = node.enumConstants();
     for (int i = 0; i < enumConstants.size(); i++) {
       visitEnumConstantDeclaration(
         javaEnum, (EnumConstantDeclaration) enumConstants.get(i), i);
@@ -163,7 +122,7 @@ public class AstVisitor extends ASTVisitor {
       simpleName.toString(), declaringClassName
     );
 
-    persistInterfaceImplementations(node.superInterfaceTypes(), entityHash);
+    persistInterfaceImplementations(superInterfaceTypes, entityHash);
 
     persistRow(javaEnum);
 
@@ -171,24 +130,16 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(ExportsDirective node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(ExpressionMethodReference node) {
-    IMethodBinding methodBinding = node.resolveMethodBinding();
-    SimpleName simpleName = node.getName();
-
-    visitMethodUsage(node, methodBinding, simpleName);
+    visitMethodUsage(node, node.resolveMethodBinding(), node.getName());
 
     return super.visit(node);
   }
 
   @Override
-  public boolean visit(ExpressionStatement node) {
-    // System.out.println(node.getExpression().resolveBoxing());
+  public boolean visit(FieldAccess node) {
+    visitVariableUsage(node, node.resolveFieldBinding());
+
     return super.visit(node);
   }
 
@@ -217,34 +168,7 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(ImportDeclaration node) {
-    // System.out.println(node);
     // mindkét mező egy fileid (vagy nem)
-
-    /*
-    JavaImport _import = new JavaImport();
-    _import.setImporter(...);
-    _import.setImported(...);
-
-    persistRow(_import);
-    */
-
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(InstanceofExpression node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(IntersectionType node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(LabeledStatement node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -255,10 +179,15 @@ public class AstVisitor extends ASTVisitor {
     IMethodBinding methodBinding = node.resolveMethodBinding();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = methodBinding.toString();
+    String qualifiedName = methodBinding.getName();
     String qualifiedType = methodBinding.getReturnType().getQualifiedName();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(methodBinding.getParameterTypes()));
     String entityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
+      " ", declaringClassName, qualifiedType,
+      qualifiedName, parametersStr
+    );
     int modifiers = methodBinding.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -293,49 +222,6 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(MemberRef node) {
-    // System.out.println("====================================");
-    // System.out.println(node.resolveBinding().getJavaElement());
-    /*
-    JavaMethod javaMethod = new JavaMethod();
-    ITypeBinding classBinding =
-      node.getDeclaringClass();
-    IMethodBinding methodDeclBinding =
-      node.resolveMethodBinding().getMethodDeclaration();
-    SimpleName simpleName = node.getName();
-    String qualifiedName = simpleName.getFullyQualifiedName();
-    String qualifiedType = methodDeclBinding.getReturnType().getQualifiedName();
-    String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = methodDeclBinding.toString();
-    String entityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
-    int entityHash = entityHashStr.hashCode();
-    int typeHash = qualifiedType.hashCode();
-
-    javaMethod.setTypeHash(typeHash);
-    javaMethod.setQualifiedType(qualifiedType);
-
-    JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.METHOD, AstType.USAGE, entityHash);
-
-    setJavaEntityFields(
-      javaMethod, JavaAstNode.getId(), entityHash,
-      simpleName.toString(), qualifiedName
-    );
-
-    persistRow(javaMethod);
-    // System.out.println(node);
-     */
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(MemberValuePair node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(MethodDeclaration node) {
     if (node.isConstructor()) {
       visitConstructorDeclaration(node);
@@ -348,49 +234,13 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(MethodInvocation node) {
-    IMethodBinding methodBinding = node.resolveMethodBinding();
-    SimpleName simpleName = node.getName();
+    visitMethodUsage(node, node.resolveMethodBinding(), node.getName());
 
-    visitMethodUsage(node, methodBinding, simpleName);
-
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(MethodRef node) {
-    // System.out.println("''''''''''''''''''''''''''''''''''''");
-    // System.out.println(node.resolveBinding().getJavaElement());
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(MethodRefParameter node) {
-    // System.out.println("==============================");
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(Modifier node) {
-    // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ModuleDeclaration node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(ModuleModifier node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(NameQualifiedType node) {
     // System.out.println(node);
     return super.visit(node);
   }
@@ -402,33 +252,36 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
-  public boolean visit(OpensDirective node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
   public boolean visit(PackageDeclaration node) {
     // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
-  public boolean visit(ParameterizedType node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
+  public boolean visit(QualifiedName node) {
+    IBinding nodeBinding = node.resolveBinding();
+    ASTNode parent = node.getParent();
+    boolean isDeclaration =
+      parent instanceof EnumConstantDeclaration ||
+        parent instanceof SingleVariableDeclaration ||
+        parent instanceof VariableDeclarationFragment;
+    boolean isFieldAccess =
+      parent instanceof FieldAccess ||
+        parent instanceof SuperFieldAccess;
 
-  @Override
-  public boolean visit(ProvidesDirective node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
+    if (nodeBinding != null && nodeBinding.getKind() == IBinding.VARIABLE &&
+      !isDeclaration && !isFieldAccess)
+    {
+      IVariableBinding variableBinding =
+        (IVariableBinding) node.resolveBinding();
 
-  @Override
-  public boolean visit(QualifiedType node) {
-    // talán ez is kell
-    // System.out.println(node);
+      if (variableBinding.isEnumConstant()) {
+        visitEnumConstantUsage(node, variableBinding);
+      } else {
+        visitVariableUsage(node, variableBinding);
+      }
+    }
+
     return super.visit(node);
   }
 
@@ -438,19 +291,24 @@ public class AstVisitor extends ASTVisitor {
     ASTNode parent = node.getParent();
     boolean isDeclaration =
       parent instanceof EnumConstantDeclaration ||
-        parent instanceof SingleVariableDeclaration ||
-        parent instanceof VariableDeclarationFragment;
+      parent instanceof SingleVariableDeclaration ||
+      parent instanceof VariableDeclarationFragment;
+    boolean isFieldAccess =
+      parent instanceof FieldAccess ||
+      parent instanceof SuperFieldAccess;
+    boolean isPartOfQualifiedName =
+      parent instanceof QualifiedName;
 
     if (nodeBinding != null && nodeBinding.getKind() == IBinding.VARIABLE &&
-      !isDeclaration)
+      !isDeclaration && !isFieldAccess && !isPartOfQualifiedName)
     {
       IVariableBinding variableBinding =
         (IVariableBinding) node.resolveBinding();
 
       if (variableBinding.isEnumConstant()) {
-        visitEnumConstantUsage(variableBinding, node);
+        visitEnumConstantUsage(node, variableBinding);
       } else {
-        visitVariableUsage(parent, variableBinding, node);
+        visitVariableUsage(node, variableBinding);
       }
     }
 
@@ -459,7 +317,34 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SimpleType node) {
-    visitTypeUsage(node, node.resolveBinding(), node.getName().toString());
+    JavaRecord javaRecord = new JavaRecord();
+    ITypeBinding typeBinding = node.resolveBinding();
+    Name name = node.getName();
+    String qualifiedName = typeBinding.getQualifiedName();
+    boolean isEnum = typeBinding.isEnum();
+    int modifiers = typeBinding.getModifiers();
+    int entityHash = qualifiedName.hashCode();
+
+    setJavaRecordFields(javaRecord, modifiers);
+
+    JavaAstNode javaAstNode =
+      persistJavaAstNodeRow(
+        node, isEnum ? SymbolType.ENUM : SymbolType.TYPE,
+        AstType.USAGE, entityHash
+      );
+
+    persistJavaMemberType(
+      entityHash, entityHash,
+      isEnum ? MemberTypeKind.ENUM : MemberTypeKind.TYPE,
+      modifiers, javaAstNode
+    );
+
+    setJavaEntityFields(
+      javaRecord, javaAstNode.getId(),
+      entityHash, name.toString(), qualifiedName
+    );
+
+    persistRow(javaRecord);
 
     return super.visit(node);
   }
@@ -472,43 +357,43 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(SuperConstructorInvocation node) {
-    IMethodBinding constructorBinding = node.resolveConstructorBinding();
-
-    visitConstructorUsage(node, constructorBinding);
+    visitConstructorUsage(node, node.resolveConstructorBinding());
 
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SuperFieldAccess node) {
-    // System.out.println(node);
+    visitVariableUsage(node, node.resolveFieldBinding());
+
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SuperMethodInvocation node) {
-    // System.out.println(node);
+    visitMethodUsage(node, node.resolveMethodBinding(), node.getName());
+
     return super.visit(node);
   }
 
   @Override
   public boolean visit(SuperMethodReference node) {
-    // System.out.println(node);
+    visitMethodUsage(node, node.resolveMethodBinding(), node.getName());
+
     return super.visit(node);
   }
 
   @Override
   public boolean visit(ThisExpression node) {
-    ITypeBinding typeBinding = node.resolveTypeBinding();
-
-    visitTypeUsage(node, typeBinding, typeBinding.getName());
-
+    // System.out.println(node);
     return super.visit(node);
   }
 
   @Override
   public boolean visit(TypeDeclaration node) {
     JavaRecord javaRecord = new JavaRecord();
+    Type superclassType = node.getSuperclassType();
+    List<?> superInterfaceTypes = node.superInterfaceTypes();
     SimpleName simpleName = node.getName();
     String qualifiedName = node.resolveBinding().getQualifiedName();
     int modifiers = node.getModifiers();
@@ -528,8 +413,8 @@ public class AstVisitor extends ASTVisitor {
       simpleName.toString(), qualifiedName
     );
 
-    persistClassExtensions(node.getSuperclassType(), entityHash);
-    persistInterfaceImplementations(node.superInterfaceTypes(), entityHash);
+    persistClassExtensions(superclassType, entityHash);
+    persistInterfaceImplementations(superInterfaceTypes, entityHash);
 
     persistRow(javaRecord);
 
@@ -538,20 +423,6 @@ public class AstVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(TypeMethodReference node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(TypeParameter node) {
-    // System.out.println(node);
-    return super.visit(node);
-  }
-
-  @Override
-  public boolean visit(VariableDeclarationExpression node) {
-    // Például forciklus ciklusváltozó
-    // System.out.println("EXPRESSION");
     // System.out.println(node);
     return super.visit(node);
   }
@@ -578,15 +449,17 @@ public class AstVisitor extends ASTVisitor {
     ASTNode node, IMethodBinding constructorBinding)
   {
     JavaConstructor javaConstructor = new JavaConstructor();
-    IMethodBinding methodDeclBinding =
-      constructorBinding.getMethodDeclaration();
-    ITypeBinding typeBinding =
-      constructorBinding.getDeclaringClass().getTypeDeclaration();
-    String name = typeBinding.getName();
-    String qualifiedName = typeBinding.getQualifiedName();
+    ITypeBinding classBinding = constructorBinding.getDeclaringClass();
+    String name = constructorBinding.getName();
+    String qualifiedName = classBinding.getQualifiedName();
+    String methodQualifiedType =
+      constructorBinding.getReturnType().getQualifiedName();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(constructorBinding.getParameterTypes()));
     String entityHashStr = String.join(
-      " ", qualifiedName, methodDeclBinding.toString());
-    int modifiers = methodDeclBinding.getModifiers();
+      " ", qualifiedName, methodQualifiedType, name, parametersStr);
+    int modifiers = constructorBinding.getModifiers();
     int classHash = qualifiedName.hashCode();
     int entityHash = entityHashStr.hashCode();
 
@@ -609,13 +482,16 @@ public class AstVisitor extends ASTVisitor {
   {
     JavaMethod javaMethod = new JavaMethod();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
-    IMethodBinding methodDeclBinding = methodBinding.getMethodDeclaration();
     String qualifiedName = simpleName.getFullyQualifiedName();
-    String qualifiedType = methodDeclBinding.getReturnType().getQualifiedName();
+    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = methodDeclBinding.toString();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(methodBinding.getParameterTypes()));
     String entityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
+      " ", declaringClassName, qualifiedType,
+      qualifiedName, parametersStr
+    );
     int modifiers = methodBinding.getModifiers();
     int classHash = declaringClassName.hashCode();
     int entityHash = entityHashStr.hashCode();
@@ -636,35 +512,6 @@ public class AstVisitor extends ASTVisitor {
     );
 
     persistRow(javaMethod);
-  }
-
-  private void visitTypeUsage(
-    ASTNode node, ITypeBinding typeBinding, String name)
-  {
-    JavaRecord javaRecord = new JavaRecord();
-    String qualifiedName = typeBinding.getQualifiedName();
-    boolean isEnum = typeBinding.isEnum();
-    int modifiers = typeBinding.getModifiers();
-    int entityHash = qualifiedName.hashCode();
-
-    setJavaRecordFields(javaRecord, modifiers);
-
-    JavaAstNode javaAstNode =
-      persistJavaAstNodeRow(
-        node, isEnum ? SymbolType.ENUM : SymbolType.TYPE,
-        AstType.USAGE, entityHash
-      );
-
-    persistJavaMemberType(
-      entityHash, entityHash,
-      isEnum ? MemberTypeKind.ENUM : MemberTypeKind.TYPE,
-      modifiers, javaAstNode
-    );
-
-    setJavaEntityFields(
-      javaRecord, javaAstNode.getId(), entityHash, name, qualifiedName);
-
-    persistRow(javaRecord);
   }
 
   private void visitEnumConstantDeclaration(
@@ -770,15 +617,20 @@ public class AstVisitor extends ASTVisitor {
     SimpleName simpleName = node.getName();
     IMethodBinding methodDeclBinding = nodeBinding.getDeclaringMethod();
     ITypeBinding classBinding = methodDeclBinding.getDeclaringClass();
+    String methodName = methodDeclBinding.getName();
+    String methodType = methodDeclBinding.getReturnType().getQualifiedName();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(methodDeclBinding.getParameterTypes()));
     String qualifiedName = simpleName.getFullyQualifiedName();
     String qualifiedType = nodeBinding.getType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = methodDeclBinding.toString();
     String methodEntityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
+      " ", declaringClassName, methodType, methodName, parametersStr
+    );
     String entityHashStr = String.join(
-      " ",declaringClassName, methodBindingStr,
-      qualifiedType, qualifiedName);
+      " ", methodEntityHashStr, qualifiedType, qualifiedName
+    );
     int modifiers = nodeBinding.getModifiers();
     int methodEntityHash = methodEntityHashStr.hashCode();
     int entityHash = entityHashStr.hashCode();
@@ -823,14 +675,18 @@ public class AstVisitor extends ASTVisitor {
 
   private void visitConstructorDeclaration(MethodDeclaration node) {
     JavaConstructor javaConstructor = new JavaConstructor();
-    IMethodBinding nodeBinding = node.resolveBinding();
-    ITypeBinding classBinding = nodeBinding.getDeclaringClass();
-    IMethodBinding methodDeclBinding = nodeBinding.getMethodDeclaration();
-    SimpleName simpleName = node.getName();
+    IMethodBinding methodBinding = node.resolveBinding();
+    ITypeBinding classBinding = methodBinding.getDeclaringClass();
+    String name = node.getName().toString();
+    String methodQualifiedType =
+      methodBinding.getReturnType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr =  methodDeclBinding.toString();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(methodBinding.getParameterTypes()));
     String entityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
+      " ", declaringClassName, methodQualifiedType, name, parametersStr
+    );
     int modifiers = node.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -851,7 +707,7 @@ public class AstVisitor extends ASTVisitor {
 
     setJavaEntityFields(
       javaConstructor, javaAstNode.getId(), entityHash,
-      simpleName.toString(), declaringClassName
+      name, declaringClassName
     );
 
     persistRow(javaConstructor);
@@ -859,19 +715,23 @@ public class AstVisitor extends ASTVisitor {
 
   private void visitMethodDeclaration(MethodDeclaration node) {
     JavaMethod javaMethod = new JavaMethod();
-    IMethodBinding nodeBinding = node.resolveBinding();
-    ITypeBinding classBinding = nodeBinding.getDeclaringClass();
-    IMethodBinding methodDeclBinding = nodeBinding.getMethodDeclaration();
+    IMethodBinding methodBinding = node.resolveBinding();
+    ITypeBinding classBinding = methodBinding.getDeclaringClass();
     String declaringClassName = classBinding.getQualifiedName();
-    String methodBindingStr = methodDeclBinding.toString();
+    String parametersStr =
+      Arrays.toString(
+        getParameterTypeNames(methodBinding.getParameterTypes()));
     SimpleName simpleName = node.getName();
+    String name = simpleName.toString();
     String qualifiedName = simpleName.getFullyQualifiedName();
     String qualifiedType =
       node.getReturnType2().resolveBinding().getQualifiedName();
     AstType astType =
-      classBinding.isInterface() ? AstType.DECLARATION : AstType.DEFINITION;
+      node.getBody() == null ? AstType.DECLARATION : AstType.DEFINITION;
     String entityHashStr = String.join(
-      " ", declaringClassName, methodBindingStr);
+      " ", declaringClassName, qualifiedType,
+      qualifiedName, parametersStr
+    );
     int modifiers = node.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -890,24 +750,26 @@ public class AstVisitor extends ASTVisitor {
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.METHOD, astType, entityHash);
 
-    persistJavaMemberType(
+    JavaMemberType javaMemberType = persistJavaMemberType(
       classHash, typeHash, MemberTypeKind.METHOD, modifiers, javaAstNode);
 
-    setJavaEntityFields(
-      javaMethod, javaAstNode.getId(), entityHash,
-      simpleName.toString(), qualifiedName
+    persistMethodRelation(
+      classBinding.getSuperclass(), classBinding.getInterfaces(),
+      methodBinding, name, javaMemberType.getVisibility(), entityHash
     );
+
+    setJavaEntityFields(
+      javaMethod, javaAstNode.getId(), entityHash, name, qualifiedName);
 
     persistRow(javaMethod);
   }
 
   private void visitEnumConstantUsage(
-    IVariableBinding variableBinding, SimpleName node)
+    Name node, IVariableBinding variableBinding)
   {
     JavaEnumConstant javaEnumConstant = new JavaEnumConstant();
     String qualifiedType = variableBinding.getType().getQualifiedName();
-    String name = node.toString();
-    String qualifiedName = node.getFullyQualifiedName();
+    String name = variableBinding.getName();
     String entityHashStr = String.join(
       " ", qualifiedType, name);
     int modifiers = variableBinding.getModifiers();
@@ -926,18 +788,18 @@ public class AstVisitor extends ASTVisitor {
     );
 
     setJavaEntityFields(
-      javaEnumConstant, javaAstNode.getId(), entityHash, name, qualifiedName);
+      javaEnumConstant, javaAstNode.getId(), entityHash, name, name);
 
     persistRow(javaEnumConstant);
   }
 
   private void visitVariableUsage(
-    ASTNode parent, IVariableBinding variableBinding, SimpleName node)
+    ASTNode node, IVariableBinding variableBinding)
   {
     JavaVariable javaVariable = new JavaVariable();
+    ASTNode parent = node.getParent();
     String qualifiedType = variableBinding.getType().getQualifiedName();
-    String name = node.toString();
-    String qualifiedName = node.getFullyQualifiedName();
+    String name = variableBinding.getName();
     String entityHashStr = "";
     String declaringClassName;
     AstType astType;
@@ -947,15 +809,22 @@ public class AstVisitor extends ASTVisitor {
       declaringClassName = classBinding.getQualifiedName();
       entityHashStr = String.join(
         " ", declaringClassName, qualifiedType, name);
+
     } else {
       IMethodBinding declaringMethodBinding =
         variableBinding.getVariableDeclaration().getDeclaringMethod();
       ITypeBinding classBinding = declaringMethodBinding.getDeclaringClass();
-      String methodBindingStr = declaringMethodBinding.toString();
+      String methodName = declaringMethodBinding.getName();
+      String methodQualifiedType =
+        declaringMethodBinding.getReturnType().getQualifiedName();
+      String parametersStr =
+        Arrays.toString(
+          getParameterTypeNames(declaringMethodBinding.getParameterTypes()));
       declaringClassName = classBinding.getQualifiedName();
       entityHashStr = String.join(
-        " ", declaringClassName,
-        methodBindingStr, qualifiedType, name);
+        " ", declaringClassName, methodQualifiedType,
+        methodName, parametersStr, qualifiedType, name
+      );
     }
 
     int modifiers = variableBinding.getModifiers();
@@ -981,7 +850,7 @@ public class AstVisitor extends ASTVisitor {
           AstType.READ;
     } else if (
       parent instanceof PrefixExpression ||
-        parent instanceof PostfixExpression)
+      parent instanceof PostfixExpression)
     {
       astType = AstType.WRITE;
     } else {
@@ -997,7 +866,7 @@ public class AstVisitor extends ASTVisitor {
     }
 
     setJavaEntityFields(
-      javaVariable, javaAstNode.getId(), entityHash, name, qualifiedName);
+      javaVariable, javaAstNode.getId(), entityHash, name, name);
 
     persistRow(javaVariable);
   }
@@ -1091,6 +960,16 @@ public class AstVisitor extends ASTVisitor {
     return Visibility.PACKAGE_PRIVATE;
   }
 
+  private String[] getParameterTypeNames(ITypeBinding[] parameters) {
+    String[] parameterTypeNames = new String[parameters.length];
+
+    for (int i = 0; i < parameters.length; i++) {
+      parameterTypeNames[i] = parameters[i].getQualifiedName();
+    }
+
+    return parameterTypeNames;
+  }
+
   private void setJavaDocCommentFields(
     JavaDocComment javaDocComment, String commentString, long entityHash)
   {
@@ -1121,6 +1000,21 @@ public class AstVisitor extends ASTVisitor {
     javaEntity.setEntityHash(entityHash);
     javaEntity.setName(name);
     javaEntity.setQualifiedName(qualifiedName);
+  }
+
+  private boolean isOverriddenMethod(
+    IMethodBinding superMethodBinding, IMethodBinding methodBinding,
+    String methodName, Visibility methodVisibility)
+  {
+    Visibility mVisibility = getVisibility(superMethodBinding.getModifiers());
+    String mName = superMethodBinding.getName();
+
+    return mName.equals(methodName) &&
+      mVisibility.getValue() <=
+        methodVisibility.getValue() &&
+      Arrays.equals(
+        superMethodBinding.getParameterTypes(), methodBinding.getParameterTypes()
+      );
   }
 
   private void persistClassExtensions(
@@ -1159,6 +1053,98 @@ public class AstVisitor extends ASTVisitor {
     persistRow(javaInheritance);
 
     return javaInheritance;
+  }
+
+  private JavaRelation persistMethodRelation(
+    ITypeBinding superclassBinding, ITypeBinding[] superInterfaceBindings,
+    IMethodBinding methodBinding, String methodName,
+    Visibility methodVisibility, int methodEntityHash)
+  {
+    JavaRelation javaRelation;
+
+    javaRelation = getMethodExtension(
+      superclassBinding, methodBinding,
+      methodName, methodVisibility, methodEntityHash
+    );
+
+    if (javaRelation == null) {
+      javaRelation = getMethodImplementation(
+        superInterfaceBindings, methodBinding,
+        methodName, methodVisibility, methodEntityHash
+      );
+    }
+
+    if (javaRelation != null) {
+      persistRow(javaRelation);
+    }
+
+    return javaRelation;
+  }
+
+  private JavaRelation getMethodExtension(
+    ITypeBinding superclassBinding, IMethodBinding methodBinding,
+    String methodName, Visibility methodVisibility, int methodEntityHash)
+  {
+    if (superclassBinding == null) {
+      return null;
+    }
+
+    IMethodBinding[] declaredMethods = superclassBinding.getDeclaredMethods();
+    Optional<IMethodBinding> superMethodBinding =
+      Arrays.stream(declaredMethods)
+        .filter(m ->
+          isOverriddenMethod(m, methodBinding, methodName, methodVisibility))
+        .findFirst();
+
+    if (superMethodBinding.isPresent()) {
+      JavaRelation javaRelation = new JavaRelation();
+      String superclassQualifiedName = superclassBinding.getQualifiedName();
+      String methodQualifiedType =
+        methodBinding.getReturnType().getQualifiedName();
+      String parametersStr =
+        Arrays.toString(
+          getParameterTypeNames(methodBinding.getParameterTypes()));
+      String superMethodEntityHashStr = String.join(
+        " ", superclassQualifiedName,
+        methodQualifiedType, methodName, parametersStr
+      );
+      int superMethodEntityHash = superMethodEntityHashStr.hashCode();
+
+      setJavaRelationFields(
+        javaRelation, superMethodEntityHash,
+        methodEntityHash, RelationKind.OVERRIDE
+      );
+
+      return javaRelation;
+    }
+
+    return getMethodExtension(
+      superclassBinding.getSuperclass(), methodBinding,
+      methodName, methodVisibility, methodEntityHash
+    );
+  }
+
+  private JavaRelation getMethodImplementation(
+    ITypeBinding[] superInterfaceBindings, IMethodBinding methodBinding,
+    String methodName, Visibility methodVisibility, int methodEntityHash)
+  {
+    return Arrays.stream(superInterfaceBindings)
+      .map(
+        i ->
+          getMethodExtension(
+            i, methodBinding, methodName, methodVisibility, methodEntityHash
+          )
+      )
+      .filter(Objects::nonNull).findFirst().orElse(null);
+  }
+
+  private void setJavaRelationFields(
+    JavaRelation javaRelation, int leftEntityHash,
+    int rightEntityHash, RelationKind kind)
+  {
+    javaRelation.setLhs(leftEntityHash);
+    javaRelation.setRhs(rightEntityHash);
+    javaRelation.setKind(kind);
   }
 
   private JavaMemberType persistJavaMemberType(

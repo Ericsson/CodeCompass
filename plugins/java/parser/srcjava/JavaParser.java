@@ -74,6 +74,7 @@ public class JavaParser implements JavaParserService.Iface {
       ex.message = e.getMessage();
       throw ex;
     } catch (Exception e) {
+      e.printStackTrace();
       LOGGER.log(
         Level.WARNING,
         "(" + fileIndex + "/" + size + ") " +

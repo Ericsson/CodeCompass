@@ -282,9 +282,9 @@ public class JavaQueryHandler implements JavaService.Iface {
       case RETURN_TYPE:
         return queryReturnTypeNodes(javaAstNode).size();
       case OVERRIDE:
-        break;
+        return queryOverrideNodes(javaAstNode, false).size();
       case OVERRIDDEN_BY:
-        break;
+        return queryOverrideNodes(javaAstNode, true).size();
       case READ:
         return queryReadNodes(javaAstNode).size();
       case WRITE:
@@ -349,8 +349,10 @@ public class JavaQueryHandler implements JavaService.Iface {
         javaAstNodes = queryReturnTypeNodes(javaAstNode);
         break;
       case OVERRIDE:
+        javaAstNodes = queryOverrideNodes(javaAstNode, false);
         break;
       case OVERRIDDEN_BY:
+        javaAstNodes = queryOverrideNodes(javaAstNode, true);
         break;
       case READ:
         javaAstNodes = queryReadNodes(javaAstNode);
