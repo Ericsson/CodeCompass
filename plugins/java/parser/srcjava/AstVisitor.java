@@ -2,7 +2,6 @@ package parser.srcjava;
 
 import model.*;
 import model.enums.*;
-import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.Expression;
 
@@ -12,6 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static parser.srcjava.Utils.*;
 
 public class AstVisitor extends ASTVisitor {
 
@@ -182,8 +183,7 @@ public class AstVisitor extends ASTVisitor {
     String qualifiedName = methodBinding.getName();
     String qualifiedType = methodBinding.getReturnType().getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(methodBinding.getParameterTypes()));
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
     String entityHashStr = String.join(
       " ", declaringClassName, qualifiedType,
       qualifiedName, parametersStr
@@ -455,8 +455,7 @@ public class AstVisitor extends ASTVisitor {
     String methodQualifiedType =
       constructorBinding.getReturnType().getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(constructorBinding.getParameterTypes()));
+      getParameterTypeNamesStr(constructorBinding.getParameterTypes());
     String entityHashStr = String.join(
       " ", qualifiedName, methodQualifiedType, name, parametersStr);
     int modifiers = constructorBinding.getModifiers();
@@ -486,8 +485,7 @@ public class AstVisitor extends ASTVisitor {
     String qualifiedType = methodBinding.getReturnType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(methodBinding.getParameterTypes()));
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
     String entityHashStr = String.join(
       " ", declaringClassName, qualifiedType,
       qualifiedName, parametersStr
@@ -620,8 +618,7 @@ public class AstVisitor extends ASTVisitor {
     String methodName = methodDeclBinding.getName();
     String methodType = methodDeclBinding.getReturnType().getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(methodDeclBinding.getParameterTypes()));
+      getParameterTypeNamesStr(methodDeclBinding.getParameterTypes());
     String qualifiedName = simpleName.getFullyQualifiedName();
     String qualifiedType = nodeBinding.getType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
@@ -682,8 +679,7 @@ public class AstVisitor extends ASTVisitor {
       methodBinding.getReturnType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(methodBinding.getParameterTypes()));
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
     String entityHashStr = String.join(
       " ", declaringClassName, methodQualifiedType, name, parametersStr
     );
@@ -719,8 +715,7 @@ public class AstVisitor extends ASTVisitor {
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
     String declaringClassName = classBinding.getQualifiedName();
     String parametersStr =
-      Arrays.toString(
-        getParameterTypeNames(methodBinding.getParameterTypes()));
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
     SimpleName simpleName = node.getName();
     String name = simpleName.toString();
     String qualifiedName = simpleName.getFullyQualifiedName();
@@ -753,7 +748,7 @@ public class AstVisitor extends ASTVisitor {
     JavaMemberType javaMemberType = persistJavaMemberType(
       classHash, typeHash, MemberTypeKind.METHOD, modifiers, javaAstNode);
 
-    persistMethodRelation(
+    persistMethodRelations(
       classBinding.getSuperclass(), classBinding.getInterfaces(),
       methodBinding, name, javaMemberType.getVisibility(), entityHash
     );
@@ -818,8 +813,7 @@ public class AstVisitor extends ASTVisitor {
       String methodQualifiedType =
         declaringMethodBinding.getReturnType().getQualifiedName();
       String parametersStr =
-        Arrays.toString(
-          getParameterTypeNames(declaringMethodBinding.getParameterTypes()));
+        getParameterTypeNamesStr(declaringMethodBinding.getParameterTypes());
       declaringClassName = classBinding.getQualifiedName();
       entityHashStr = String.join(
         " ", declaringClassName, methodQualifiedType,
@@ -948,75 +942,6 @@ public class AstVisitor extends ASTVisitor {
     return em.createQuery(cr).getSingleResult();
   }
 
-  private Visibility getVisibility(int modifiers) {
-    if (Flags.isPublic(modifiers)) {
-      return Visibility.PUBLIC;
-    } else if (Flags.isProtected(modifiers)) {
-      return Visibility.PROTECTED;
-    } else if (Flags.isPrivate(modifiers)) {
-      return Visibility.PRIVATE;
-    }
-
-    return Visibility.PACKAGE_PRIVATE;
-  }
-
-  private String[] getParameterTypeNames(ITypeBinding[] parameters) {
-    String[] parameterTypeNames = new String[parameters.length];
-
-    for (int i = 0; i < parameters.length; i++) {
-      parameterTypeNames[i] = parameters[i].getQualifiedName();
-    }
-
-    return parameterTypeNames;
-  }
-
-  private void setJavaDocCommentFields(
-    JavaDocComment javaDocComment, String commentString, long entityHash)
-  {
-    javaDocComment.setContent(commentString);
-    javaDocComment.setContentHash(commentString.hashCode());
-    javaDocComment.setEntityHash(entityHash);
-  }
-
-  private void setJavaRecordFields(JavaRecord javaRecord, int modifiers) {
-    javaRecord.setAbstract(Flags.isAbstract(modifiers));
-    javaRecord.setFinal(Flags.isFinal(modifiers));
-  }
-
-  private <T extends JavaTypedEntity> void setJavaTypedEntityFields(
-    T javaTypedEntity, int modifiers, long typeHash, String qualifiedType)
-  {
-    javaTypedEntity.setFinal(Flags.isFinal(modifiers));
-    javaTypedEntity.setStatic(Flags.isStatic(modifiers));
-    javaTypedEntity.setTypeHash(typeHash);
-    javaTypedEntity.setQualifiedType(qualifiedType);
-  }
-
-  private <T extends JavaEntity> void setJavaEntityFields(
-    T javaEntity, long astNodeId,
-    long entityHash,String name, String qualifiedName)
-  {
-    javaEntity.setAstNodeId(astNodeId);
-    javaEntity.setEntityHash(entityHash);
-    javaEntity.setName(name);
-    javaEntity.setQualifiedName(qualifiedName);
-  }
-
-  private boolean isOverriddenMethod(
-    IMethodBinding superMethodBinding, IMethodBinding methodBinding,
-    String methodName, Visibility methodVisibility)
-  {
-    Visibility mVisibility = getVisibility(superMethodBinding.getModifiers());
-    String mName = superMethodBinding.getName();
-
-    return mName.equals(methodName) &&
-      mVisibility.getValue() <=
-        methodVisibility.getValue() &&
-      Arrays.equals(
-        superMethodBinding.getParameterTypes(), methodBinding.getParameterTypes()
-      );
-  }
-
   private void persistClassExtensions(
     Type superclassType, int entityHash)
   {
@@ -1055,96 +980,21 @@ public class AstVisitor extends ASTVisitor {
     return javaInheritance;
   }
 
-  private JavaRelation persistMethodRelation(
+  private void persistMethodRelations(
     ITypeBinding superclassBinding, ITypeBinding[] superInterfaceBindings,
     IMethodBinding methodBinding, String methodName,
     Visibility methodVisibility, int methodEntityHash)
   {
-    JavaRelation javaRelation;
-
-    javaRelation = getMethodExtension(
-      superclassBinding, methodBinding,
-      methodName, methodVisibility, methodEntityHash
-    );
-
-    if (javaRelation == null) {
-      javaRelation = getMethodImplementation(
-        superInterfaceBindings, methodBinding,
-        methodName, methodVisibility, methodEntityHash
+    RelationCollector relationCollector =
+      new RelationCollector(
+        methodBinding, methodName,
+        methodVisibility, methodEntityHash
       );
-    }
+    List<JavaRelation> javaRelations =
+      relationCollector.collectBaseMethods(
+        superclassBinding, superInterfaceBindings);
 
-    if (javaRelation != null) {
-      persistRow(javaRelation);
-    }
-
-    return javaRelation;
-  }
-
-  private JavaRelation getMethodExtension(
-    ITypeBinding superclassBinding, IMethodBinding methodBinding,
-    String methodName, Visibility methodVisibility, int methodEntityHash)
-  {
-    if (superclassBinding == null) {
-      return null;
-    }
-
-    IMethodBinding[] declaredMethods = superclassBinding.getDeclaredMethods();
-    Optional<IMethodBinding> superMethodBinding =
-      Arrays.stream(declaredMethods)
-        .filter(m ->
-          isOverriddenMethod(m, methodBinding, methodName, methodVisibility))
-        .findFirst();
-
-    if (superMethodBinding.isPresent()) {
-      JavaRelation javaRelation = new JavaRelation();
-      String superclassQualifiedName = superclassBinding.getQualifiedName();
-      String methodQualifiedType =
-        methodBinding.getReturnType().getQualifiedName();
-      String parametersStr =
-        Arrays.toString(
-          getParameterTypeNames(methodBinding.getParameterTypes()));
-      String superMethodEntityHashStr = String.join(
-        " ", superclassQualifiedName,
-        methodQualifiedType, methodName, parametersStr
-      );
-      int superMethodEntityHash = superMethodEntityHashStr.hashCode();
-
-      setJavaRelationFields(
-        javaRelation, superMethodEntityHash,
-        methodEntityHash, RelationKind.OVERRIDE
-      );
-
-      return javaRelation;
-    }
-
-    return getMethodExtension(
-      superclassBinding.getSuperclass(), methodBinding,
-      methodName, methodVisibility, methodEntityHash
-    );
-  }
-
-  private JavaRelation getMethodImplementation(
-    ITypeBinding[] superInterfaceBindings, IMethodBinding methodBinding,
-    String methodName, Visibility methodVisibility, int methodEntityHash)
-  {
-    return Arrays.stream(superInterfaceBindings)
-      .map(
-        i ->
-          getMethodExtension(
-            i, methodBinding, methodName, methodVisibility, methodEntityHash
-          )
-      )
-      .filter(Objects::nonNull).findFirst().orElse(null);
-  }
-
-  private void setJavaRelationFields(
-    JavaRelation javaRelation, int leftEntityHash,
-    int rightEntityHash, RelationKind kind)
-  {
-    javaRelation.setLhs(leftEntityHash);
-    javaRelation.setRhs(rightEntityHash);
-    javaRelation.setKind(kind);
+    javaRelations.forEach(this::persistRow);
   }
 
   private JavaMemberType persistJavaMemberType(

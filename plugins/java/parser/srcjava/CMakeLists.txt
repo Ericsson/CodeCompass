@@ -10,6 +10,8 @@ add_jar(javaparserjava
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaParser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaParserServer.java
   ${CMAKE_CURRENT_SOURCE_DIR}/PositionInfo.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/RelationCollector.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/Utils.java
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
   INCLUDE_JARS javalogger javamodel javaparserthriftjava
   OUTPUT_NAME javaparser)
