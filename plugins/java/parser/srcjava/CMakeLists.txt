@@ -9,6 +9,8 @@ add_jar(javaparserjava
   ${CMAKE_CURRENT_SOURCE_DIR}/AstVisitor.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaParser.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaParserServer.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/QueryManager.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/PersistManager.java
   ${CMAKE_CURRENT_SOURCE_DIR}/PositionInfo.java
   ${CMAKE_CURRENT_SOURCE_DIR}/RelationCollector.java
   ${CMAKE_CURRENT_SOURCE_DIR}/Utils.java

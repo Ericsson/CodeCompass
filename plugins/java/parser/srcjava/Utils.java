@@ -1,10 +1,10 @@
 package parser.srcjava;
 
 import model.*;
-import model.enums.RelationKind;
-import model.enums.Visibility;
+import model.enums.*;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import parser.srcjava.PositionInfo;
 
 import java.util.Arrays;
 
@@ -74,5 +74,64 @@ public abstract class Utils {
     javaEntity.setEntityHash(entityHash);
     javaEntity.setName(name);
     javaEntity.setQualifiedName(qualifiedName);
+  }
+
+  public static void setJavaInheritanceFields(
+    JavaInheritance javaInheritance, int baseEntityHash, int derivedEntityHash)
+  {
+    javaInheritance.setBase(baseEntityHash);
+    javaInheritance.setDerived(derivedEntityHash);
+  }
+
+  public static void setJavaMemberTypeFields(
+    JavaMemberType javaMemberType, int typeHash, int memberTypeHash,
+    MemberTypeKind memberTypeKind, int modifiers, JavaAstNode javaAstNode)
+  {
+    javaMemberType.setTypeHash(typeHash);
+    javaMemberType.setMemberTypeHash(memberTypeHash);
+    javaMemberType.setKind(memberTypeKind);
+    javaMemberType.setVisibility(getVisibility(modifiers));
+    javaMemberType.setMemberAstNode(javaAstNode);
+  }
+
+  public static void setJavaAstNodeFields(
+    JavaAstNode javaAstNode, String astValue, PositionInfo positionInfo,
+    long fileId, int entityHash, SymbolType symbolType,
+    AstType astType, boolean visibleInSourceCode)
+  {
+    javaAstNode.setAstValue(astValue);
+    javaAstNode.setLocation_range_start_line(positionInfo.getStartLine());
+    javaAstNode.setLocation_range_start_column(positionInfo.getStartColumn());
+    javaAstNode.setLocation_range_end_line(positionInfo.getEndLine());
+    javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
+    javaAstNode.setLocation_file(fileId);
+    javaAstNode.setEntityHash(entityHash);
+    javaAstNode.setSymbolType(symbolType);
+    javaAstNode.setAstType(astType);
+    javaAstNode.setVisibleInSourceCode(visibleInSourceCode);
+  }
+
+  public static String getMethodHashStr(
+    String className, String type, String name, String parameters)
+  {
+    return String.join(className, type, name, parameters);
+  }
+
+  public static String getEnumConstantHashStr(
+    String enumName, String name)
+  {
+    return String.join(enumName, name);
+  }
+
+  public static String getFieldHashStr(
+    String className, String type, String name)
+  {
+    return String.join(className, type, name);
+  }
+
+  public static String getVariableHashStr(
+    String methodHashStr, String type, String name)
+  {
+    return String.join(methodHashStr, type, name);
   }
 }
