@@ -307,9 +307,13 @@ function (model, viewHandler, util) {
 
         for (var propName in props) {
           var propId = propName.replace(/ /g, '-');
+          var labelName = propName.replace('<','&lt;').replace('>','&gt;');
+          var labelValue =
+            props[propName].replace('<','&lt;').replace('>','&gt;');
+
           var label
-            = '<span class="label">' + propName + '</span>: '
-            + '<span class="value">' + props[propName] + '</span>';
+            = '<span class="label">' + labelName + '</span>: '
+            + '<span class="value">' + labelValue + '</span>';
 
           ret.push({
             name        : label,
@@ -325,7 +329,8 @@ function (model, viewHandler, util) {
         var refTypes = model.javaservice.getReferenceTypes(elementInfo.id);
         for (var refType in refTypes) {
           var refCount =
-            model.javaservice.getReferenceCount(elementInfo.id, refTypes[refType]);
+            model.javaservice.getReferenceCount(
+              elementInfo.id, refTypes[refType]);
 
           if (refCount)
             ret.push({
