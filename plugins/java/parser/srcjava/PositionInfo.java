@@ -12,9 +12,9 @@ public class PositionInfo {
   private final int endLine;
   private final int endColumn;
 
-  public PositionInfo(CompilationUnit cu, ASTNode node) {
-    this.start = node.getStartPosition() + 1;
-    this.end = node.getStartPosition() + node.getLength() + 1;
+  public PositionInfo(CompilationUnit cu, int startPosition, int endPosition) {
+    this.start = startPosition + 1;
+    this.end = endPosition + 2;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
 
@@ -25,12 +25,35 @@ public class PositionInfo {
     // This will wok in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
-      cu.getLineNumber(end) == -1 ?
-        cu.getLineNumber(end - 2) :
+      cu.getLineNumber(this.end) == -1 ?
+        cu.getLineNumber(this.end - 2) :
         endLine;
     this.endColumn =
-      cu.getColumnNumber(end) == -1 ?
-        cu.getColumnNumber(end - 2) :
+      cu.getColumnNumber(this.end) == -1 ?
+        cu.getColumnNumber(this.end - 2) :
+        endColumn;
+  }
+
+  public PositionInfo(CompilationUnit cu, ASTNode node) {
+    int startPosition = node.getStartPosition();
+    this.start = startPosition + 1;
+    this.end = startPosition + node.getLength() + 1;
+    this.startLine = cu.getLineNumber(start);
+    this.startColumn = cu.getColumnNumber(start);
+
+    int endLine = cu.getLineNumber(end);
+    int endColumn = cu.getColumnNumber(end);
+
+    // End position checking, and trying with a two less value.
+    // This will wok in most cases, if the current element is a class
+    // declaration and the newline character is missing from it's end.
+    this.endLine =
+      cu.getLineNumber(this.end) == -1 ?
+        cu.getLineNumber(this.end - 2) :
+        endLine;
+    this.endColumn =
+      cu.getColumnNumber(this.end) == -1 ?
+        cu.getColumnNumber(this.end - 2) :
         endColumn;
   }
 
@@ -47,12 +70,12 @@ public class PositionInfo {
     // This will wok in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
-      cu.getLineNumber(end) == -1 ?
-        cu.getLineNumber(end - 2) :
+      cu.getLineNumber(this.end) == -1 ?
+        cu.getLineNumber(this.end - 2) :
         endLine;
     this.endColumn =
-      cu.getColumnNumber(end) == -1 ?
-        cu.getColumnNumber(end - 2) :
+      cu.getColumnNumber(this.end) == -1 ?
+        cu.getColumnNumber(this.end - 2) :
         endColumn;
   }
 

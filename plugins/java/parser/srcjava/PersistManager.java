@@ -524,7 +524,7 @@ public class PersistManager {
   public void persistTypeUsage(SimpleType node) {
     JavaRecord javaRecord = new JavaRecord();
     ITypeBinding typeBinding = node.resolveBinding();
-    Name name = node.getName();
+    String name = typeBinding.getName();
     String qualifiedName = typeBinding.getQualifiedName();
     boolean isEnum = typeBinding.isEnum();
     int modifiers = typeBinding.getModifiers();
@@ -545,9 +545,7 @@ public class PersistManager {
     );
 
     setJavaEntityFields(
-      javaRecord, javaAstNode.getId(),
-      entityHash, name.toString(), qualifiedName
-    );
+      javaRecord, javaAstNode.getId(), entityHash, name, qualifiedName);
 
     persistRow(javaRecord);
   }

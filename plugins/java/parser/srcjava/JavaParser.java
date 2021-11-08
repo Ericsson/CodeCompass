@@ -1,6 +1,7 @@
 package parser.srcjava;
 
 import cc.parser.java.*;
+import cc.service.core.BuildLog;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
 import org.eclipse.jdt.core.JavaCore;
@@ -13,9 +14,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static logger.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
+import static parser.srcjava.Utils.generateBuildLog;
 
 public class JavaParser implements JavaParserService.Iface {
   private static final int size;
@@ -33,12 +36,13 @@ public class JavaParser implements JavaParserService.Iface {
   }
 
   @Override
-  public void parseFile(long fileId, int fileIndex) throws TException {
+  public List<BuildLog> parseFile(long fileId, int fileIndex) throws TException {
     String filePath = argParser.getFilepath();
+    String fileCounterStr = "(" + fileIndex + "/" + size + ")";
     LOGGER.log(
       Level.INFO,
-      "(" + fileIndex + "/" + size + ") " +
-      "Parsing " + filePath);
+      String.join(" ", fileCounterStr, "Parsing", filePath)
+    );
 
     try {
       File file = new File(filePath);
@@ -65,11 +69,19 @@ public class JavaParser implements JavaParserService.Iface {
 
       AstVisitor visitor = new AstVisitor(cu, em, fileId);
       cu.accept(visitor);
+
+      return Arrays.stream(
+        cu.getProblems())
+        .map(p -> generateBuildLog(cu, p, fileCounterStr))
+        .collect(Collectors.toList());
+
     } catch (IOException e) {
       LOGGER.log(
         Level.WARNING,
-        "(" + fileIndex + "/" + size + ") " +
-          "Parsing " + filePath + " has been failed before the start");
+        String.join(
+          " ", fileCounterStr,
+          "Parsing", filePath, "has been failed before the start")
+      );
       JavaBeforeParseException ex = new JavaBeforeParseException();
       ex.message = e.getMessage();
       throw ex;
@@ -77,8 +89,10 @@ public class JavaParser implements JavaParserService.Iface {
       e.printStackTrace();
       LOGGER.log(
         Level.WARNING,
-        "(" + fileIndex + "/" + size + ") " +
-          "Parsing " + filePath + " has been failed");
+        String.join(
+          " ", fileCounterStr,
+          "Parsing", filePath, "has been failed")
+      );
       JavaParseException ex = new JavaParseException();
       ex.message = e.getMessage();
       throw ex;

@@ -4,6 +4,8 @@
 #include <model/buildaction-odb.hxx>
 #include <model/buildsourcetarget.h>
 #include <model/buildsourcetarget-odb.hxx>
+#include <model/buildlog.h>
+#include <model/buildlog-odb.hxx>
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
@@ -20,22 +22,23 @@ namespace cc
 {
 namespace parser
 {
-namespace java {
+namespace java
+{
 
 // Initialize static member
 std::stringstream JavaParserServiceHandler::thrift_ss;
 
-JavaParser::JavaParser(ParserContext &ctx_) : AbstractParser(ctx_) {
+JavaParser::JavaParser(ParserContext& ctx_) : AbstractParser(ctx_) {
   _java_path = pr::search_path("java");
 }
 
-bool JavaParser::accept(const std::string &path_) {
+bool JavaParser::accept(const std::string& path_) {
   std::string ext = fs::extension(path_);
   return ext == ".json";
 }
 
 CompileCommand JavaParser::getCompileCommand(
-  const pt::ptree::value_type &command_tree_) {
+  const pt::ptree::value_type& command_tree_) {
   CompileCommand compile_command;
 
   compile_command.directory =
@@ -49,7 +52,8 @@ CompileCommand JavaParser::getCompileCommand(
 }
 
 model::BuildActionPtr JavaParser::addBuildAction(
-  const CompileCommand &compile_command_) {
+  const CompileCommand& compile_command_)
+{
   util::OdbTransaction transaction(_ctx.db);
 
   model::BuildActionPtr buildAction(new model::BuildAction);
@@ -68,31 +72,20 @@ model::BuildActionPtr JavaParser::addBuildAction(
 }
 
 void JavaParser::addCompileCommand(
-  const CmdArgs &cmd_args_,
+  const CmdArgs& cmd_args_,
   model::BuildActionPtr buildAction_,
-  short parse_state_) {
+  model::File::ParseStatus parseStatus_)
+{
   util::OdbTransaction transaction(_ctx.db);
-
   std::vector<model::BuildTarget> targets;
 
   model::BuildSource buildSource;
   buildSource.file = _ctx.srcMgr.getFile(cmd_args_.filepath);
-
-  switch (parse_state_) {
-    case 0:
-      buildSource.file->parseStatus = model::File::PSNone;
-      break;
-    case 1:
-      buildSource.file->parseStatus = model::File::PSPartiallyParsed;
-      break;
-    case 2:
-      buildSource.file->parseStatus = model::File::PSFullyParsed;
-      break;
-  }
-  _ctx.srcMgr.updateFile(*buildSource.file);
+  buildSource.file->parseStatus = parseStatus_;
+    _ctx.srcMgr.updateFile(*buildSource.file);
   buildSource.action = buildAction_;
 
-  for (std::string target : cmd_args_.bytecodesPaths) {
+  for (const std::string& target : cmd_args_.bytecodesPaths) {
     model::BuildTarget buildTarget;
     buildTarget.file = _ctx.srcMgr.getFile(target);
     buildTarget.action = buildAction_;
@@ -113,8 +106,61 @@ void JavaParser::addCompileCommand(
   });
 }
 
+model::File::ParseStatus JavaParser::addBuildLogs(
+  const std::vector<core::BuildLog>& buildLogs_, std::string& file_)
+{
+  util::OdbTransaction transaction(_ctx.db);
+  std::vector<model::BuildLog> logs;
+  model::File::ParseStatus parseStatus =
+    model::File::ParseStatus::PSFullyParsed;
+
+  for (const core::BuildLog& log : buildLogs_) {
+    model::BuildLog buildLog;
+
+
+    buildLog.location.file = _ctx.srcMgr.getFile(file_);
+    buildLog.log.message = log.message;
+    buildLog.location.range.start.line = log.range.startpos.line;
+    buildLog.location.range.start.column = log.range.startpos.column;
+    buildLog.location.range.end.line = log.range.startpos.line;
+    buildLog.location.range.end.column = log.range.endpos.column;
+
+    switch (log.messageType) {
+      case core::MessageType::FatalError:
+        buildLog.log.type = model::BuildLogMessage::FatalError;
+
+        if (parseStatus > model::File::ParseStatus::PSNone) {
+          parseStatus = model::File::ParseStatus::PSNone;
+        }
+        break;
+      case core::MessageType::Error:
+        buildLog.log.type = model::BuildLogMessage::Error;
+
+        if (parseStatus > model::File::ParseStatus::PSPartiallyParsed) {
+          parseStatus = model::File::ParseStatus::PSPartiallyParsed;
+        }
+        break;
+      case core::MessageType::Warning:
+        buildLog.log.type = model::BuildLogMessage::Warning;
+        break;
+      case core::MessageType::Note:
+        buildLog.log.type = model::BuildLogMessage::Note;
+        break;
+    }
+
+    logs.push_back(std::move(buildLog));
+  }
+
+  transaction([&, this] {
+    for (model::BuildLog buildLog : logs)
+      _ctx.db->persist(buildLog);
+  });
+
+  return parseStatus;
+}
+
 bool JavaParser::parse() {
-  for (const std::string &path
+  for (const std::string& path
     : _ctx.options["input"].as<std::vector<std::string>>()) {
     if (accept(path)) {
       JavaParserServiceHandler serviceHandler;
@@ -129,7 +175,7 @@ bool JavaParser::parse() {
         _pt.begin(),
         _pt.end(),
         std::back_inserter(_pt_filtered),
-        [](pt::ptree::value_type &command_tree_)
+        [](pt::ptree::value_type& command_tree_)
         {
             auto ext = fs::extension(
               command_tree_.second.get<std::string>("file"));
@@ -153,13 +199,14 @@ bool JavaParser::parse() {
       }
 
       // Process Java files
-      for (pt::ptree::value_type &command_tree_ : _pt_filtered) {
+      for (pt::ptree::value_type& command_tree_ : _pt_filtered) {
         CompileCommand compile_command =
           getCompileCommand(command_tree_);
         model::FilePtr filePtr = _ctx.srcMgr.getFile(compile_command.file);
         filePtr -> type = "JAVA";
         model::BuildActionPtr buildAction = addBuildAction(compile_command);
-        short parse_state = 2;
+        model::File::ParseStatus parseStatus = model::File::PSFullyParsed;
+        std::vector<core::BuildLog> buildLogs;
 
         // Thrift functions
 
@@ -167,20 +214,21 @@ bool JavaParser::parse() {
         serviceHandler.setArgs(compile_command);
         // Run Java parser
         try {
-          serviceHandler.parseFile(filePtr->id, file_index);
+          serviceHandler.parseFile(buildLogs, filePtr->id, file_index);
+          parseStatus = addBuildLogs(buildLogs, compile_command.file);
         }  catch (JavaBeforeParseException& ex) {
           LOG(warning) << ex.message;
-          parse_state = 0;
+          parseStatus = model::File::PSNone;
         } catch (JavaParseException& ex) {
           LOG(warning) << ex.message;
-          parse_state = 1;
+          parseStatus = model::File::PSPartiallyParsed;
         }
 
         // Get arguments for the current file
         CmdArgs cmdArgs;
         serviceHandler.getArgs(cmdArgs);
 
-        addCompileCommand(cmdArgs, buildAction, parse_state);
+        addCompileCommand(cmdArgs, buildAction, parseStatus);
 
         ++file_index;
       }
@@ -206,7 +254,7 @@ boost::program_options::options_description getOptions() {
   return description;
 }
 
-std::shared_ptr<JavaParser> make(ParserContext &ctx_) {
+std::shared_ptr<JavaParser> make(ParserContext& ctx_) {
   return std::make_shared<JavaParser>(ctx_);
 }
 }

@@ -16,6 +16,7 @@
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
 
+#include <ProjectService.h>
 #include <JavaParserService.h>
 
 #include <iostream>
@@ -27,6 +28,7 @@ namespace parser
 {
 namespace java {
 
+namespace core = cc::service::core;
 namespace fs = boost::filesystem;
 namespace pr = boost::process;
 namespace pt = boost::property_tree;
@@ -37,19 +39,20 @@ public:
   JavaParserServiceHandler() {
   }
 
-  void parseFile(long fileId, int fileIndex) override
+  void parseFile(
+    std::vector<core::BuildLog>& return_, long fileId_, int fileIndex_) override
   {
-    _service -> parseFile(fileId, fileIndex);
+    _service -> parseFile(return_, fileId_, fileIndex_);
   }
 
-  void setArgs(const CompileCommand& compileCommand) override
+  void setArgs(const CompileCommand& compileCommand_) override
   {
-    _service -> setArgs(compileCommand);
+    _service -> setArgs(compileCommand_);
   }
 
-  void getArgs(CmdArgs& _return) override
+  void getArgs(CmdArgs& return_) override
   {
-    _service -> getArgs(_return);
+    _service -> getArgs(return_);
   }
 
   /**
@@ -119,7 +122,7 @@ private:
 
 class JavaParser : public AbstractParser {
 public:
-  JavaParser(ParserContext &ctx_);
+  JavaParser(ParserContext& ctx_);
 
   virtual ~JavaParser();
 
@@ -128,18 +131,22 @@ public:
 private:
   fs::path _java_path;
 
-  bool accept(const std::string &path_);
+  bool accept(const std::string& path_);
 
   CompileCommand getCompileCommand(
-    const pt::ptree::value_type &command_tree_);
+    const pt::ptree::value_type& command_tree_);
 
   model::BuildActionPtr addBuildAction(
-    const CompileCommand &compile_command_);
+    const CompileCommand& compile_command_);
 
   void addCompileCommand(
-    const CmdArgs &cmd_args_,
+    const CmdArgs& cmd_args_,
     model::BuildActionPtr buildAction_,
-    short parse_state_);
+    model::File::ParseStatus parseStatus_);
+
+  model::File::ParseStatus addBuildLogs(
+    const std::vector<core::BuildLog>& buildLogs_,
+    std::string& file_);
 };
 
 } // java

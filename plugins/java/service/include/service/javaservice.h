@@ -45,7 +45,7 @@ public:
   /**
    * Creates the client interface.
    */
-  void getClientInterface(int timeout_in_ms)
+  void getClientInterface(int timeoutInMs_)
   {
     using Transport = apache::thrift::transport::TTransport;
     using BufferedTransport = apache::thrift::transport::TBufferedTransport;
@@ -77,7 +77,7 @@ public:
         float elapsed_time =
           chrono::duration_cast<chrono::milliseconds>(current - begin).count();
 
-        if (elapsed_time > timeout_in_ms) {
+        if (elapsed_time > timeoutInMs_) {
           LOG(debug) << "Connection timeout, could not reach Java server on"
                      << host << ":" << port;
           apache::thrift::GlobalOutput.setOutputFunction(

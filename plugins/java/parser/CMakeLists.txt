@@ -1,7 +1,8 @@
 set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_SOURCE_DIR}/lib/java/*
   ${PLUGIN_DIR}/lib/java/*
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-java/
+  ${PROJECT_BINARY_DIR}/service/project/gen-java)
 
 include_directories(
   include
@@ -9,7 +10,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
-  ${CMAKE_BINARY_DIR}/model/include)
+  ${CMAKE_BINARY_DIR}/model/include
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp)
 
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
@@ -58,6 +60,8 @@ add_library(javaparser SHARED
 target_link_libraries(javaparser
   model
   javaparserthrift
+  commonthrift
+  projectthrift
   ${THRIFT_LIBTHRIFT_LIBRARIES})
 
 target_compile_options(javaparser PUBLIC -Wno-unknown-pragmas)

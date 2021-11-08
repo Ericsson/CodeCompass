@@ -1,3 +1,5 @@
+include "../../../service/project/project.thrift"
+
 namespace cpp cc.parser.java
 namespace java cc.parser.java
 
@@ -21,17 +23,17 @@ struct CmdArgs
 
 exception JavaBeforeParseException
 {
-    1: string message
+  1: string message
 }
 
 exception JavaParseException
 {
-    1: string message
+  1: string message
 }
 
 service JavaParserService
 {
-  void parseFile(1: i64 fileId, 2: i32 fileIndex)
+  list<project.BuildLog> parseFile(1: i64 fileId, 2: i32 fileIndex)
     throws (1: JavaBeforeParseException jbe, 2: JavaParseException jpe),
   void setArgs(1: CompileCommand compileCommand),
   CmdArgs getArgs()

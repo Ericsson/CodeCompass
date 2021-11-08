@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
-Class-Path: commons-io-2.8.0.jar
+Class-Path: corethrift.java
+            commons-io-2.8.0.jar
             javax.persistence-api-2.2.jar
             json-simple-1.1.1.jar
             libthrift-0.13.0.jar

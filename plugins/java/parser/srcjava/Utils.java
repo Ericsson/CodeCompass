@@ -1,14 +1,76 @@
 package parser.srcjava;
 
+import cc.service.core.BuildLog;
+import cc.service.core.MessageType;
+import cc.service.core.Position;
+import cc.service.core.Range;
 import model.*;
 import model.enums.*;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import parser.srcjava.PositionInfo;
 
 import java.util.Arrays;
+import java.util.logging.Level;
+
+import static logger.Logger.LOGGER;
 
 public abstract class Utils {
+  public static BuildLog generateBuildLog(
+    CompilationUnit cu, IProblem problem, String fileCounterStr)
+  {
+    MessageType messageType;
+    PositionInfo positionInfo =
+      new PositionInfo(cu, problem.getSourceStart(), problem.getSourceEnd());
+    Position startPos =
+      new Position(
+        positionInfo.getStartLine(), positionInfo.getStartColumn());
+    Position endPos =
+      new Position(
+        positionInfo.getEndLine(), positionInfo.getEndColumn());
+    String message = problem.getMessage();
+
+    if (problem.isError()) {
+      messageType = MessageType.Error;
+
+      LOGGER.log(
+        Level.SEVERE, String.join(
+          " ", fileCounterStr,
+          positionInfo.getStartLine() + ":" + positionInfo.getStartColumn(),
+          message
+        )
+      );
+    } else if (problem.isWarning()) {
+      messageType = MessageType.Warning;
+
+      LOGGER.log(
+        Level.WARNING, String.join(
+          " ", fileCounterStr,
+          positionInfo.getStartLine() + ":" + positionInfo.getStartColumn(),
+          message
+        )
+      );
+    } else {
+      messageType = MessageType.Note;
+
+      LOGGER.log(
+        Level.INFO, String.join(
+          " ", fileCounterStr,
+          positionInfo.getStartLine() + ":" + positionInfo.getStartColumn(),
+          message
+        )
+      );
+    }
+
+    BuildLog buildLog = new BuildLog();
+    buildLog.message = message;
+    buildLog.messageType = messageType;
+    buildLog.range = new Range(startPos, endPos);
+
+    return buildLog;
+  }
+
   public static Visibility getVisibility(int modifiers) {
     if (Flags.isPublic(modifiers)) {
       return Visibility.PUBLIC;

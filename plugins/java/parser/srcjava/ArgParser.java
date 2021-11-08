@@ -164,4 +164,22 @@ public class ArgParser {
   public List<String> getBytecodesPaths() {
     return bytecodesPaths;
   }
+
+  public String[] getCommandLineArguments() {
+    ArrayList<String> commandLineArgs = new ArrayList<>();
+
+    if (!classpath.isEmpty()) {
+      commandLineArgs.add("--classpath");
+      commandLineArgs.addAll(classpath);
+    }
+
+    if (!sourcepath.isEmpty()) {
+      commandLineArgs.add("--sourcepath");
+      commandLineArgs.addAll(sourcepath);
+    }
+
+    commandLineArgs.add(filepath);
+
+    return (String[]) commandLineArgs.toArray();
+  }
 }
