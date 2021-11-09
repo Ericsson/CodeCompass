@@ -6,14 +6,20 @@ namespace java cc.service.java
 
 service JavaService
 {
+  common.FileRange getFileRange(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
+
+  language.AstNodeInfo getAstNodeInfo(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
+
   language.AstNodeInfo getAstNodeInfoByPosition(1:common.FilePosition fpos)
     throws (1:common.InvalidPos ex)
 
   map<string, string> getProperties(1:common.AstNodeId astNodeIds)
     throws (1:common.InvalidId ex)
 
-   string getDocumentation(1:common.AstNodeId astNodeId)
-     throws (1:common.InvalidId ex)
+  string getDocumentation(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
 
   // map<string, i32> getFileDiagramTypes(1:common.FileId fileId)
   //   throws (1:common.InvalidId ex)

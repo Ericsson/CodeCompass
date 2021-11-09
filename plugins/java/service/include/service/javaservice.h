@@ -34,6 +34,7 @@ namespace java
 
 namespace language = cc::service::language;
 namespace core = cc::service::core;
+
 using TransportException = apache::thrift::transport::TTransportException;
 
 class JavaQueryHandler : public JavaServiceIf
@@ -95,11 +96,25 @@ public:
     _service.reset(new JavaServiceClient(protocol));
   }
 
+  void getAstNodeInfo(
+    language::AstNodeInfo& return_,
+    const core::AstNodeId& astNodeId_) override
+  {
+    _service -> getAstNodeInfo(return_, astNodeId_);
+  }
+
   void getAstNodeInfoByPosition(
     language::AstNodeInfo& return_,
     const core::FilePosition& fpos_) override
   {
     _service -> getAstNodeInfoByPosition(return_, fpos_);
+  }
+
+  void getFileRange(
+    core::FileRange& return_,
+    const core::AstNodeId& astNodeId_) override
+  {
+    _service -> getFileRange(return_, astNodeId_);
   }
 
   void getProperties(
@@ -288,6 +303,7 @@ public:
 
 private:
   std::shared_ptr<odb::database> _db;
+  util::OdbTransaction _transaction;
 
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;

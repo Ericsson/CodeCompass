@@ -33,13 +33,13 @@ public abstract class JavaQueryFactory {
     int column = fpos.pos.column;
     Path<Long> locationFile =
       root.get("location_file");
-    Path<Integer> startLine =
+    Path<Long> startLine =
       root.get("location_range_start_line");
-    Path<Integer> endLine =
+    Path<Long> endLine =
       root.get("location_range_end_line");
-    Path<Integer> startColumn =
+    Path<Long> startColumn =
       root.get("location_range_start_column");
-    Path<Integer> endColumn =
+    Path<Long> endColumn =
       root.get("location_range_end_column");
 
     Predicate sameFile = cb.equal(locationFile, fileId);
@@ -309,7 +309,7 @@ public abstract class JavaQueryFactory {
     Root<JavaMemberType> root = cr.from(JavaMemberType.class);
 
     Path<Long> memberAstNodeId = root.get("memberAstNode").get("id");
-    Path<Integer> kind = root.get("kind");
+    Path<MemberTypeKind> kind = root.get("kind");
 
     Predicate idEqualNodeOrDefId =
       cb.or(
@@ -392,13 +392,13 @@ public abstract class JavaQueryFactory {
     Path<SymbolType> symbolType = root.get("symbolType");
     Path<Long> locationFile =
       root.get("location_file");
-    Path<Integer> startLine =
+    Path<Long> startLine =
       root.get("location_range_start_line");
-    Path<Integer> endLine =
+    Path<Long> endLine =
       root.get("location_range_end_line");
-    Path<Integer> startColumn =
+    Path<Long> startColumn =
       root.get("location_range_start_column");
-    Path<Integer> endColumn =
+    Path<Long> endColumn =
       root.get("location_range_end_column");
 
     long uStartLine = usage.getLocation_range_start_line();
@@ -440,13 +440,19 @@ public abstract class JavaQueryFactory {
   }
 
   public static List<JavaAstNode> queryCallNodes(JavaAstNode javaAstNode) {
-    List<JavaAstNode> definitions = queryDefinitionNodes(javaAstNode);
+    JavaAstNode definition;
 
-    if (definitions.isEmpty()) {
-      return definitions;
+    if (javaAstNode.getAstType() == AstType.DEFINITION) {
+      definition = javaAstNode;
+    } else {
+      List<JavaAstNode> definitions = queryDefinitionNodes(javaAstNode);
+
+      if (definitions.isEmpty()) {
+        return definitions;
+      }
+
+      definition = definitions.get(0);
     }
-
-    JavaAstNode definition = definitions.get(0);
 
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
@@ -455,19 +461,20 @@ public abstract class JavaQueryFactory {
     Path<SymbolType> symbolType = root.get("symbolType");
     Path<Long> locationFile =
       root.get("location_file");
-    Path<Integer> startLine =
+    Path<Long> startLine =
       root.get("location_range_start_line");
-    Path<Integer> endLine =
+    Path<Long> endLine =
       root.get("location_range_end_line");
-    Path<Integer> startColumn =
+    Path<Long> startColumn =
       root.get("location_range_start_column");
-    Path<Integer> endColumn =
+    Path<Long> endColumn =
       root.get("location_range_end_column");
 
-    long uStartLine = definition.getLocation_range_start_line();
-    long uEndLine = definition.getLocation_range_end_line();
-    long uStartColumn = definition.getLocation_range_start_line();
-    long uEndColumn = definition.getLocation_range_start_line();
+    long dFile = definition.getLocation_file();
+    long dStartLine = definition.getLocation_range_start_line();
+    long dEndLine = definition.getLocation_range_end_line();
+    long dStartColumn = definition.getLocation_range_start_column();
+    long dEndColumn = definition.getLocation_range_end_column();
 
     Predicate usage = cb.equal(astType, AstType.USAGE);
     Predicate methodOrConstructor =
@@ -475,19 +482,22 @@ public abstract class JavaQueryFactory {
         cb.equal(symbolType, SymbolType.METHOD),
         cb.equal(symbolType, SymbolType.CONSTRUCTOR)
       );
-    Predicate sameFile = cb.equal(locationFile, definition.getLocation_file());
+    Predicate sameFile = cb.equal(locationFile, dFile);
     Predicate startPosGreaterEqualPos =
       cb.or(
         cb.and(
-          cb.equal(startLine, uStartLine),
-          cb.ge(startColumn, uStartColumn)
+          cb.equal(startLine, dStartLine),
+          cb.ge(startColumn, dStartColumn)
         ),
-        cb.gt(startLine, definition.getLocation_range_start_line())
+        cb.gt(startLine, dStartLine)
       );
-    Predicate posGreaterThanEndPos =
+    Predicate posGreaterEqualEndPos =
       cb.or(
-        cb.and(cb.equal(endLine, uEndLine), cb.lt(endColumn, uEndColumn)),
-        cb.lt(endLine, uEndLine)
+        cb.and(
+          cb.equal(endLine, dEndLine),
+          cb.le(endColumn, dEndColumn)
+        ),
+        cb.lt(endLine, dEndLine)
       );
 
     cr
@@ -495,7 +505,7 @@ public abstract class JavaQueryFactory {
       .where(
         cb.and(
           usage, methodOrConstructor, sameFile,
-          startPosGreaterEqualPos, posGreaterThanEndPos
+          startPosGreaterEqualPos, posGreaterEqualEndPos
         )
       );
 

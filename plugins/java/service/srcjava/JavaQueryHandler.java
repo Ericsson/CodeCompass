@@ -16,6 +16,18 @@ import static service.srcjava.JavaQueryFactory.*;
 
 public class JavaQueryHandler implements JavaService.Iface {
   @Override
+  public FileRange getFileRange(String javaAstNodeId) {
+    JavaAstNode javaAstNode = queryJavaAstNode(Long.parseLong(javaAstNodeId));
+
+    return getFileRange(javaAstNode);
+  }
+
+  @Override
+  public AstNodeInfo getAstNodeInfo(String javaAstNodeId) {
+    return createAstNodeInfo(queryJavaAstNode(Long.parseLong(javaAstNodeId)));
+  }
+
+  @Override
   public AstNodeInfo getAstNodeInfoByPosition(FilePosition fpos)
     throws TException
   {
@@ -474,22 +486,7 @@ public class JavaQueryHandler implements JavaService.Iface {
 
   private AstNodeInfo createAstNodeInfo(JavaAstNode javaAstNode) {
     AstNodeInfo astNodeInfo = new AstNodeInfo();
-    FileRange fileRange = new FileRange();
-    Range range = new Range();
-    Position startPosition = new Position(
-      (int) javaAstNode.getLocation_range_start_line(),
-      (int) javaAstNode.getLocation_range_start_column()
-    );
-    Position endPosition = new Position(
-      (int) javaAstNode.getLocation_range_end_line(),
-      (int) javaAstNode.getLocation_range_end_column()
-    );
-
-    range.startpos = startPosition;
-    range.endpos = endPosition;
-
-    fileRange.file = String.valueOf(javaAstNode.getLocation_file());
-    fileRange.range = range;
+    FileRange fileRange = getFileRange(javaAstNode);
 
     astNodeInfo.id = String.valueOf(javaAstNode.getId());
     astNodeInfo.entityHash = javaAstNode.getEntityHash();
@@ -564,5 +561,26 @@ public class JavaQueryHandler implements JavaService.Iface {
         tags.get(nodeId).add(m.getVisibility().getName());
       }
     });
+  }
+
+  private FileRange getFileRange(JavaAstNode javaAstNode) {
+    FileRange fileRange = new FileRange();
+    Range range = new Range();
+    Position startPosition = new Position(
+      (int) javaAstNode.getLocation_range_start_line(),
+      (int) javaAstNode.getLocation_range_start_column()
+    );
+    Position endPosition = new Position(
+      (int) javaAstNode.getLocation_range_end_line(),
+      (int) javaAstNode.getLocation_range_end_column()
+    );
+
+    range.startpos = startPosition;
+    range.endpos = endPosition;
+
+    fileRange.file = String.valueOf(javaAstNode.getLocation_file());
+    fileRange.range = range;
+
+    return fileRange;
   }
 }

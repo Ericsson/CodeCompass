@@ -1,5 +1,20 @@
-#include <service/javaservice.h>
+#include <util/util.h>
 #include <util/dbutil.h>
+
+#include <model/file.h>
+#include <model/file-odb.hxx>
+
+#include <service/javaservice.h>
+
+namespace
+{
+
+namespace model = cc::model;
+
+typedef odb::query<model::File> FileQuery;
+typedef odb::result<model::File> FileResult;
+
+}
 
 namespace cc
 {
@@ -13,6 +28,7 @@ JavaServiceHandler::JavaServiceHandler(
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
   : _db(db_),
+    _transaction(db_),
     _datadir(datadir_),
     _context(context_)
 {
@@ -50,7 +66,7 @@ void JavaServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getAstNodeInfo";
+  javaQueryHandler.getAstNodeInfo(return_, astNodeId_);
 }
 
 void JavaServiceHandler::getAstNodeInfoByPosition(
@@ -64,7 +80,27 @@ void JavaServiceHandler::getSourceText(
   std::string& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getSourceText";
+  core::FileRange fileRange;
+
+  javaQueryHandler.getFileRange(fileRange, astNodeId_);
+
+  return_ = _transaction([&, this](){
+    FileResult files = _db->query<model::File>(
+      FileQuery::id == std::stoull(fileRange.file));
+
+    if (!files.empty()) {
+      model::File file = *files.begin();
+
+      return cc::util::textRange(
+        file.content.load()->content,
+        fileRange.range.startpos.line,
+        fileRange.range.startpos.column,
+        fileRange.range.endpos.line,
+        fileRange.range.endpos.column);
+    }
+
+    return std::string();
+  });
 }
 
 void JavaServiceHandler::getProperties(
@@ -149,21 +185,21 @@ void JavaServiceHandler::getReferences(
 }
 
 void JavaServiceHandler::getReferencesInFile(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const core::FileId& fileId_,
-  const std::vector<std::string>& tags_)
+  std::vector<AstNodeInfo>& /* return_ */,
+  const core::AstNodeId& /* astNodeId_ */,
+  const std::int32_t /* referenceId_ */,
+  const core::FileId& /* fileId_ */,
+  const std::vector<std::string>& /* tags_ */)
 {
   // TODO
 }
 
 void JavaServiceHandler::getReferencesPage(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const std::int32_t pageSize_,
-  const std::int32_t pageNo_)
+  std::vector<AstNodeInfo>& /* return_ */,
+  const core::AstNodeId& /* astNodeId_ */,
+  const std::int32_t /* referenceId_ */,
+  const std::int32_t /* pageSize_ */,
+  const std::int32_t /* pageNo_ */)
 {
   // TODO
 }
@@ -173,14 +209,12 @@ void JavaServiceHandler::getFileReferenceTypes(
   const core::FileId& /* fileId_*/)
 {
   javaQueryHandler.getFileReferenceTypes(return_);
-  LOG(info) << "getFileReferenceTypes";
 }
 
 std::int32_t JavaServiceHandler::getFileReferenceCount(
   const core::FileId& fileId_,
   const std::int32_t referenceId_)
 {
-  LOG(info) << "getFileReferenceCount";
   return javaQueryHandler.getFileReferenceCount(fileId_, referenceId_);
 }
 
@@ -189,7 +223,6 @@ void JavaServiceHandler::getFileReferences(
   const core::FileId& fileId_,
   const std::int32_t referenceId_)
 {
-  LOG(info) << "getFileReferences";
   javaQueryHandler.getFileReferences(return_, fileId_, referenceId_);
 }
 

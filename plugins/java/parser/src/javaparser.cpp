@@ -146,6 +146,8 @@ model::File::ParseStatus JavaParser::addBuildLogs(
       case core::MessageType::Note:
         buildLog.log.type = model::BuildLogMessage::Note;
         break;
+      default: // Just to suppress warning of uncovered enum constants
+        break;
     }
 
     logs.push_back(std::move(buildLog));
