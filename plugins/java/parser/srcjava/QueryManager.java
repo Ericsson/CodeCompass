@@ -19,7 +19,7 @@ public class QueryManager {
   }
 
   public JavaAstNode queryParentAstNode(
-    JavaAstNode child, int methodEntityHash)
+    JavaAstNode child, int childEntityHash)
   {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
@@ -43,7 +43,7 @@ public class QueryManager {
       root.get("location_range_end_column");
 
     Predicate sameFile = cb.equal(locationFile, childLocationFile);
-    Predicate sameEntityHash = cb.equal(entityHash, methodEntityHash);
+    Predicate sameEntityHash = cb.equal(entityHash, childEntityHash);
     Predicate definition = cb.equal(astType, AstType.DEFINITION);
     Predicate startPosLessEqualPos =
       cb.or(

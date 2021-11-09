@@ -158,11 +158,11 @@ public class AstVisitor extends ASTVisitor {
     ASTNode parent = node.getParent();
     boolean isDeclaration =
       parent instanceof EnumConstantDeclaration ||
-        parent instanceof SingleVariableDeclaration ||
-        parent instanceof VariableDeclarationFragment;
+      parent instanceof SingleVariableDeclaration ||
+      parent instanceof VariableDeclarationFragment;
     boolean isFieldAccess =
       parent instanceof FieldAccess ||
-        parent instanceof SuperFieldAccess;
+      parent instanceof SuperFieldAccess;
 
     if (nodeBinding != null && nodeBinding.getKind() == IBinding.VARIABLE &&
       !isDeclaration && !isFieldAccess)

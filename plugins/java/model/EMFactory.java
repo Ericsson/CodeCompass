@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 import static org.eclipse.persistence.config.PersistenceUnitProperties.*;
 
-public class EMFactory {
+public abstract class EMFactory {
   public static EntityManager createEntityManager(String rawDbContext) {
     EntityManagerFactory emf =
       Persistence.createEntityManagerFactory(
