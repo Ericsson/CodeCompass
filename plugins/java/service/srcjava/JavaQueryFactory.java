@@ -618,7 +618,7 @@ public abstract class JavaQueryFactory {
       if (!javaRecords.isEmpty()) {
         JavaRecord javaRecord = javaRecords.get(0);
 
-        return queryDefinitionNodes(javaRecord.getAstNodeId());
+        return queryDefinitionNodes(javaRecord.getEntityHash());
       }
     }
 
@@ -654,7 +654,7 @@ public abstract class JavaQueryFactory {
       if (!javaRecords.isEmpty()) {
         JavaRecord javaRecord = javaRecords.get(0);
 
-        return queryDefinitionNodes(javaRecord.getAstNodeId());
+        return queryDefinitionNodes(javaRecord.getEntityHash());
       }
     }
 

@@ -245,7 +245,6 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Type", ReferenceType.TYPE.ordinal());
         break;
-
       case TYPE:
         referenceTypes.put(
           "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
