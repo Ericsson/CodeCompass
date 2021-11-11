@@ -21,9 +21,6 @@ service JavaService
   string getDocumentation(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
-  // map<string, i32> getFileDiagramTypes(1:common.FileId fileId)
-  //   throws (1:common.InvalidId ex)
-
   map<string, i32> getReferenceTypes(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
@@ -48,4 +45,14 @@ service JavaService
     1:common.FileId fileId,
     2:i32 referenceId)
       throws (1:common.InvalidId ex)
+
+  map<string, i32> getDiagramTypes(1:common.AstNodeId astNodeId)
+    throws (1:common.InvalidId ex)
+
+  string getDiagram(1:common.AstNodeId astNodeId, 2:i32 diagramId)
+    throws (1:common.InvalidId exId, 2:common.Timeout exLong)
+
+  list<language.SyntaxHighlight> getSyntaxHighlight(
+   1:common.FileRange range,
+   2:list<string> content)
 }

@@ -21,6 +21,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, vi
           if (!nodeInfo || !fileInfo)
             return;
 
+          var languageService = model.getLanguageService(fileInfo.type);
           astHelper.jumpToDef(nodeInfo.id, model.javaservice);
         }
       });

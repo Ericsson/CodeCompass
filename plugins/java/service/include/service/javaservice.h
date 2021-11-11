@@ -175,6 +175,30 @@ public:
     _service -> getFileReferences(return_, fileId_, referenceId_);
   }
 
+  void getDiagramTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::AstNodeId& astNodeId_
+    ) override
+  {
+    _service -> getDiagramTypes(return_, astNodeId_);
+  }
+
+  void getDiagram(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t diagramId_) override
+  {
+    _service -> getDiagram(return_, astNodeId_, diagramId_);
+  }
+
+  void getSyntaxHighlight(
+  std::vector<language::SyntaxHighlight>& return_,
+  const core::FileRange& range_,
+  const std::vector<std::string>& content_) override
+  {
+    _service -> getSyntaxHighlight(return_, range_, content_);
+  }
+
 private:
   /**
    * Service interface for IPC communication.

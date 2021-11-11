@@ -3,6 +3,7 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PLUGIN_DIR}/lib/java/*)
 
 add_jar(javaservicejava
+  ${CMAKE_CURRENT_SOURCE_DIR}/enums/DiagramType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/FileReferenceType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/ReferenceType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaQueryFactory.java

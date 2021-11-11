@@ -3,15 +3,22 @@ package service.srcjava;
 import cc.service.core.*;
 import cc.service.java.JavaService;
 import cc.service.language.AstNodeInfo;
+import cc.service.language.SyntaxHighlight;
 import model.*;
 import model.enums.MemberTypeKind;
 import org.apache.thrift.TException;
+import service.srcjava.enums.DiagramType;
 import service.srcjava.enums.FileReferenceType;
 import service.srcjava.enums.ReferenceType;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static logger.Logger.LOGGER;
 import static service.srcjava.JavaQueryFactory.*;
 
 public class JavaQueryHandler implements JavaService.Iface {
@@ -141,6 +148,7 @@ public class JavaQueryHandler implements JavaService.Iface {
           properties.put("Name", javaEnum.getName());
           properties.put("Qualified name", javaEnum.getQualifiedName());
         }
+        break;
       }
       case ENUM_CONSTANT: {
         List<JavaEnumConstant> javaEnumConstants =
@@ -461,6 +469,103 @@ public class JavaQueryHandler implements JavaService.Iface {
     javaAstNodeInfos = createAstNodeInfos(javaAstNodes);
 
     return javaAstNodeInfos;
+  }
+
+  @Override
+  public Map<String, Integer> getDiagramTypes(String javaAstNodeId) {
+    JavaAstNode javaAstNode = queryJavaAstNode(Long.parseLong(javaAstNodeId));
+    HashMap<String, Integer> diagramTypes = new HashMap<>();
+
+    switch (javaAstNode.getSymbolType())
+    {
+      case METHOD:
+        diagramTypes.put(
+          "Method call diagram", DiagramType.METHOD_CALL.ordinal());
+        break;
+      case TYPE:
+        diagramTypes.put(
+          "Detailed class diagram", DiagramType.DETAILED_CLASS.ordinal()
+        );
+        diagramTypes.put(
+          "Class collaboration diagram",
+          DiagramType.CLASS_COLLABORATION.ordinal()
+        );
+        break;
+    }
+
+    return diagramTypes;
+  }
+
+  @Override
+  public String getDiagram(String javaAstNodeId, int diagramId) {
+    JavaAstNode javaAstNode = queryJavaAstNode(Long.parseLong(javaAstNodeId));
+
+    switch (DiagramType.values()[diagramId])
+    {
+      case METHOD_CALL:
+        break;
+
+      case DETAILED_CLASS:
+        break;
+
+      case CLASS_COLLABORATION:
+        break;
+    }
+
+    return "";
+  }
+
+  @Override
+  public List<SyntaxHighlight> getSyntaxHighlight(
+    FileRange fileRange, List<String> content)
+  {
+    List<SyntaxHighlight> syntaxHighlights = new ArrayList<>();
+    /*
+    Pattern specialChars = Pattern.compile("[-\\[\\]{}()*+?.,\\^$|#\\s]");
+    List<JavaAstNode> javaAstNodes = queryJavaAstNodesByFileRange(fileRange);
+
+    javaAstNodes.stream()
+      .filter(n -> !n.getAstValue().isEmpty())
+      .forEach(n -> {
+        Matcher matcher = specialChars.matcher(n.getAstValue());
+        String sanitizedAstValue =
+          matcher.replaceAll(matchResult -> "\\\\" + matchResult.group());
+        String reg = "\\b" + sanitizedAstValue + "\\b";
+        int startLine = (int) n.getLocation_range_start_line();
+        int endLine = (int) n.getLocation_range_end_line();
+
+        for (int i = startLine - 1; i < endLine && i < content.size(); ++i) {
+          Pattern wordPattern = Pattern.compile(reg);
+          Matcher wordMatcher = wordPattern.matcher(content.get(i));
+
+          while (wordMatcher.find()) {
+            MatchResult matchResult = wordMatcher.toMatchResult();
+            SyntaxHighlight syntax = new SyntaxHighlight();
+            Range range = new Range();
+            Position startPosition = new Position();
+            Position endPosition = new Position();
+
+            startPosition.line = i + 1;
+            startPosition.column = matchResult.start() + 1;
+            endPosition.line = i + 1;
+            endPosition.column = matchResult.end() + 1;
+
+            range.startpos = startPosition;
+            range.endpos = endPosition;
+
+            syntax.range = range;
+
+            String symbolClass = "cm-" + n.getSymbolType().getValue();
+
+            syntax.className = symbolClass + " " +
+              symbolClass + "-" + n.getAstType().getValue();
+
+            syntaxHighlights.add(syntax);
+          }
+        }
+      });
+    */
+    return syntaxHighlights;
   }
 
   private List<AstNodeInfo> createAstNodeInfos(List<JavaAstNode> javaAstNodes) {

@@ -1,6 +1,7 @@
 package service.srcjava;
 
 import cc.service.core.FilePosition;
+import cc.service.core.FileRange;
 import model.*;
 import model.enums.AstType;
 import model.enums.MemberTypeKind;
@@ -57,6 +58,42 @@ public abstract class JavaQueryFactory {
     cr
       .select(root)
       .where(cb.and(sameFile, startPosLessEqualPos, posLessThanEndPos));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaAstNode> queryJavaAstNodesByFileRange(
+    FileRange fileRange)
+  {
+    long fileId = Long.parseUnsignedLong(fileRange.file);
+    CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
+    Root<JavaAstNode> root = cr.from(JavaAstNode.class);
+
+    long rStartLine = fileRange.range.startpos.line;
+    long rEndLine = fileRange.range.endpos.line;
+
+    Path<Long> locationFile =
+      root.get("location_file");
+    Path<Long> startLine =
+      root.get("location_range_start_line");
+    Path<Long> endLine =
+      root.get("location_range_end_line");
+    Path<Boolean> visibility = root.get("visibleInSourceCode");
+
+    Predicate sameFile = cb.equal(locationFile, fileId);
+    Predicate startLineGreaterEqualLine = cb.ge(startLine, rStartLine);
+    Predicate endLineLessThanLine = cb.lt(endLine, rEndLine);
+    Predicate endLineNotEqualInitial = cb.notEqual(endLine, (long) -1);
+    Predicate visibleInSourceCode = cb.isTrue(visibility);
+
+    cr
+      .select(root)
+      .where(
+        cb.and(
+          sameFile, startLineGreaterEqualLine, endLineLessThanLine,
+          endLineNotEqualInitial, visibleInSourceCode
+        )
+      );
 
     return em.createQuery(cr).getResultList();
   }

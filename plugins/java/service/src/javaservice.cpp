@@ -12,7 +12,6 @@ namespace
 namespace model = cc::model;
 
 typedef odb::query<model::File> FileQuery;
-typedef odb::result<model::File> FileResult;
 
 }
 
@@ -66,6 +65,7 @@ void JavaServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
+  LOG(info) << "GETASTNODEINFO";
   javaQueryHandler.getAstNodeInfo(return_, astNodeId_);
 }
 
@@ -80,26 +80,30 @@ void JavaServiceHandler::getSourceText(
   std::string& return_,
   const core::AstNodeId& astNodeId_)
 {
+  LOG(info) << "GEETSOURCETEXT";
   core::FileRange fileRange;
 
   javaQueryHandler.getFileRange(fileRange, astNodeId_);
 
   return_ = _transaction([&, this](){
-    FileResult files = _db->query<model::File>(
+    model::FilePtr file = _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileRange.file));
 
-    if (!files.empty()) {
-      model::File file = *files.begin();
-
-      return cc::util::textRange(
-        file.content.load()->content,
-        fileRange.range.startpos.line,
-        fileRange.range.startpos.column,
-        fileRange.range.endpos.line,
-        fileRange.range.endpos.column);
+    if (!file) {
+      return std::string();
     }
 
-    return std::string();
+    LOG(info) << fileRange.range.startpos.line;
+    LOG(info) << fileRange.range.startpos.column;
+    LOG(info) << fileRange.range.endpos.line;
+    LOG(info) << fileRange.range.endpos.column;
+
+    return cc::util::textRange(
+      file->content.load()->content,
+      fileRange.range.startpos.line,
+      fileRange.range.startpos.column,
+      fileRange.range.endpos.line,
+      fileRange.range.endpos.column);
   });
 }
 
@@ -121,7 +125,7 @@ void JavaServiceHandler::getDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getDiagramTypes";
+  javaQueryHandler.getDiagramTypes(return_, astNodeId_);
 }
 
 void JavaServiceHandler::getDiagram(
@@ -129,7 +133,7 @@ void JavaServiceHandler::getDiagram(
   const core::AstNodeId& astNodeId_,
   const std::int32_t diagramId_)
 {
-  LOG(info) << "getDiagram";
+  javaQueryHandler.getDiagram(return_, astNodeId_, diagramId_);
 }
 
 void JavaServiceHandler::getDiagramLegend(
@@ -230,7 +234,27 @@ void JavaServiceHandler::getSyntaxHighlight(
   std::vector<SyntaxHighlight>& return_,
   const core::FileRange& range_)
 {
-  LOG(info) << "getSyntaxHighlight";
+  /*
+  std::vector<std::string> content;
+
+  _transaction([&, this]() {
+
+      //--- Load the file content and break it into lines ---//
+
+      model::FilePtr file = _db->query_one<model::File>(
+        FileQuery::id == std::stoull(range_.file));
+
+      if (!file || !file->content.load())
+        return;
+
+      std::istringstream s(file->content->content);
+      std::string line;
+      while (std::getline(s, line))
+        content.push_back(line);
+  });
+
+  javaQueryHandler.getSyntaxHighlight(return_, range_, content);
+  */
 }
 
 } // language
