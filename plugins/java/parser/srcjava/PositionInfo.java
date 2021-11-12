@@ -22,7 +22,7 @@ public class PositionInfo {
     int endColumn = cu.getColumnNumber(end);
 
     // End position checking, and trying with a two less value.
-    // This will wok in most cases, if the current element is a class
+    // This will work in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
@@ -45,7 +45,7 @@ public class PositionInfo {
     int endColumn = cu.getColumnNumber(end);
 
     // End position checking, and trying with a two less value.
-    // This will wok in most cases, if the current element is a class
+    // This will work in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
@@ -58,7 +58,7 @@ public class PositionInfo {
   }
 
   public PositionInfo(CompilationUnit cu, ASTNode node, Javadoc javadoc) {
-    this.start = javadoc.getStartPosition() + javadoc.getLength() + 1;
+    this.start = javadoc.getStartPosition() + javadoc.getLength() + 2;
     this.end = node.getStartPosition() + node.getLength() + 1;
     this.startLine = cu.getLineNumber(start);
     this.startColumn = cu.getColumnNumber(start);
@@ -67,7 +67,7 @@ public class PositionInfo {
     int endColumn = cu.getColumnNumber(end);
 
     // End position checking, and trying with a two less value.
-    // This will wok in most cases, if the current element is a class
+    // This will work in most cases, if the current element is a class
     // declaration and the newline character is missing from it's end.
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
