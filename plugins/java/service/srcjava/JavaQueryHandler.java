@@ -6,19 +6,15 @@ import cc.service.language.AstNodeInfo;
 import cc.service.language.SyntaxHighlight;
 import model.*;
 import model.enums.MemberTypeKind;
+import model.enums.RelationKind;
 import org.apache.thrift.TException;
 import service.srcjava.enums.DiagramType;
 import service.srcjava.enums.FileReferenceType;
 import service.srcjava.enums.ReferenceType;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static logger.Logger.LOGGER;
 import static service.srcjava.JavaQueryFactory.*;
 
 public class JavaQueryHandler implements JavaService.Iface {
@@ -235,6 +231,10 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Overridden by", ReferenceType.OVERRIDDEN_BY.ordinal());
         referenceTypes.put(
+          "Implements", ReferenceType.IMPLEMENT.ordinal());
+        referenceTypes.put(
+          "Implemented by", ReferenceType.IMPLEMENTED_BY.ordinal());
+        referenceTypes.put(
           "Return type", ReferenceType.RETURN_TYPE.ordinal());
         break;
       case VARIABLE:
@@ -301,9 +301,17 @@ public class JavaQueryHandler implements JavaService.Iface {
       case RETURN_TYPE:
         return queryReturnTypeNodes(javaAstNode).size();
       case OVERRIDE:
-        return queryOverrideNodes(javaAstNode, false).size();
+        return queryRelationNodes(
+          javaAstNode, RelationKind.OVERRIDE, false).size();
       case OVERRIDDEN_BY:
-        return queryOverrideNodes(javaAstNode, true).size();
+        return queryRelationNodes(
+          javaAstNode, RelationKind.OVERRIDE, true).size();
+      case IMPLEMENT:
+        return queryRelationNodes(
+          javaAstNode, RelationKind.IMPLEMENT, false).size();
+      case IMPLEMENTED_BY:
+        return queryRelationNodes(
+          javaAstNode, RelationKind.IMPLEMENT, true).size();
       case READ:
         return queryReadNodes(javaAstNode).size();
       case WRITE:
@@ -368,10 +376,20 @@ public class JavaQueryHandler implements JavaService.Iface {
         javaAstNodes = queryReturnTypeNodes(javaAstNode);
         break;
       case OVERRIDE:
-        javaAstNodes = queryOverrideNodes(javaAstNode, false);
+        javaAstNodes = queryRelationNodes(
+          javaAstNode, RelationKind.OVERRIDE, false);
         break;
       case OVERRIDDEN_BY:
-        javaAstNodes = queryOverrideNodes(javaAstNode, true);
+        javaAstNodes = queryRelationNodes(
+          javaAstNode, RelationKind.OVERRIDE, true);
+        break;
+      case IMPLEMENT:
+        javaAstNodes = queryRelationNodes(
+          javaAstNode, RelationKind.IMPLEMENT, false);
+        break;
+      case IMPLEMENTED_BY:
+        javaAstNodes = queryRelationNodes(
+          javaAstNode, RelationKind.IMPLEMENT, true);
         break;
       case READ:
         javaAstNodes = queryReadNodes(javaAstNode);

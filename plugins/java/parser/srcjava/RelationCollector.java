@@ -53,7 +53,8 @@ public class RelationCollector {
       return null;
     }
 
-    JavaRelation javaRelation = getRelation(superclassBinding);
+    JavaRelation javaRelation =
+      getRelation(superclassBinding, RelationKind.OVERRIDE);
 
     if (javaRelation != null) {
       return javaRelation;
@@ -66,7 +67,8 @@ public class RelationCollector {
     ITypeBinding[] superInterfaceBindings)
   {
     for (ITypeBinding superInterfaceBinding : superInterfaceBindings) {
-      JavaRelation javaRelation = getRelation(superInterfaceBinding);
+      JavaRelation javaRelation =
+        getRelation(superInterfaceBinding, RelationKind.IMPLEMENT);
 
       if (javaRelation != null) {
         return javaRelation;
@@ -79,7 +81,7 @@ public class RelationCollector {
   }
 
   private JavaRelation getRelation(
-    ITypeBinding superclassBinding)
+    ITypeBinding superclassBinding, RelationKind relationKind)
   {
     IMethodBinding[] declaredMethods = superclassBinding.getDeclaredMethods();
     Optional<IMethodBinding> superMethodBinding =
@@ -101,7 +103,7 @@ public class RelationCollector {
 
       setJavaRelationFields(
         javaRelation, superMethodEntityHash,
-        entityHash, RelationKind.OVERRIDE
+        entityHash, relationKind
       );
 
       return javaRelation;

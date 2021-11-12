@@ -36,6 +36,11 @@ public enum ReferenceType {
 
   OVERRIDDEN_BY, /*!< This option returns the overrides of a function. */
 
+  IMPLEMENT, /*!< This option returns the functions which the given function
+    implements. */
+
+  IMPLEMENTED_BY, /*!< This option returns the implementations of a function. */
+
   READ, /*!< This option returns the places where a variable is read. */
 
   WRITE, /*!< This option returns the places where a variable is written. */

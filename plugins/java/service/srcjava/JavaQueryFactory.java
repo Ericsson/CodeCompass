@@ -625,17 +625,17 @@ public abstract class JavaQueryFactory {
     return new ArrayList<>();
   }
 
-  public static List<JavaAstNode> queryOverrideNodes(
-    JavaAstNode javaAstNode, boolean reverse)
+  public static List<JavaAstNode> queryRelationNodes(
+    JavaAstNode javaAstNode, RelationKind relationKind, boolean reverse)
   {
     CriteriaQuery<JavaRelation> cr = cb.createQuery(JavaRelation.class);
     Root<JavaRelation> root = cr.from(JavaRelation.class);
-    Predicate overrideKindPredicate = cb.equal(
-      root.get("kind"), RelationKind.OVERRIDE
+    Predicate relationKindPredicate = cb.equal(
+      root.get("kind"), relationKind
     );
 
     List<JavaRelation> javaRelations =
-      queryJavaRelations(javaAstNode, reverse, cr, root, overrideKindPredicate);
+      queryJavaRelations(javaAstNode, reverse, cr, root, relationKindPredicate);
 
     return javaRelations.stream()
       .flatMap(
