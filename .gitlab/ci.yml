@@ -64,7 +64,7 @@ tarball suse-15:
     cache:
         key: "leap"
     variables:
-        GCC_VERSION: 7.5.0
+        GCC_VERSION: 9.3.0
         ODB_VERSION: 2.5.0
     before_script:
         - zypper refresh
@@ -101,6 +101,9 @@ tarball suse-42.1:
         - zypper install -y groff
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
+        # disable SSL certificate check (distribution's cacert is outdated)
+        - echo "check_certificate = off" >> /etc/wgetrc
+        - echo insecure >> ~/.curlrc
         # show GLIBC verison
         - *show-glibc-version
 
