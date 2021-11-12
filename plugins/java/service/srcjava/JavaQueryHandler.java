@@ -27,7 +27,9 @@ public class JavaQueryHandler implements JavaService.Iface {
 
   @Override
   public AstNodeInfo getAstNodeInfo(String javaAstNodeId) {
-    return createAstNodeInfo(queryJavaAstNode(Long.parseLong(javaAstNodeId)));
+    JavaAstNode javaAstNode = queryJavaAstNode(Long.parseLong(javaAstNodeId));
+
+    return createAstNodeInfo(javaAstNode);
   }
 
   @Override
@@ -700,7 +702,7 @@ public class JavaQueryHandler implements JavaService.Iface {
     range.startpos = startPosition;
     range.endpos = endPosition;
 
-    fileRange.file = String.valueOf(javaAstNode.getLocation_file());
+    fileRange.file = Long.toUnsignedString(javaAstNode.getLocation_file());
     fileRange.range = range;
 
     return fileRange;

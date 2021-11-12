@@ -65,7 +65,6 @@ void JavaServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "GETASTNODEINFO";
   javaQueryHandler.getAstNodeInfo(return_, astNodeId_);
 }
 
@@ -80,7 +79,6 @@ void JavaServiceHandler::getSourceText(
   std::string& return_,
   const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "GEETSOURCETEXT";
   core::FileRange fileRange;
 
   javaQueryHandler.getFileRange(fileRange, astNodeId_);
@@ -92,11 +90,6 @@ void JavaServiceHandler::getSourceText(
     if (!file) {
       return std::string();
     }
-
-    LOG(info) << fileRange.range.startpos.line;
-    LOG(info) << fileRange.range.startpos.column;
-    LOG(info) << fileRange.range.endpos.line;
-    LOG(info) << fileRange.range.endpos.column;
 
     return cc::util::textRange(
       file->content.load()->content,
