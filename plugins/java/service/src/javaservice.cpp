@@ -72,6 +72,8 @@ void JavaServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_)
 {
+  LOG(info) << fpos_.pos.line;
+  LOG(info) << fpos_.pos.column;
   javaQueryHandler.getAstNodeInfoByPosition(return_, fpos_);
 }
 
