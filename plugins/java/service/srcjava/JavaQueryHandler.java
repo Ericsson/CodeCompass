@@ -172,7 +172,7 @@ public class JavaQueryHandler implements JavaService.Iface {
 
   @Override
   public String getDocumentation(String javaAstNodeId) {
-    StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
 
     long javaAstNodeIdLong = Long.parseLong(javaAstNodeId);
     JavaAstNode javaAstNode = queryJavaAstNode(javaAstNodeIdLong);
@@ -180,18 +180,84 @@ public class JavaQueryHandler implements JavaService.Iface {
     List<JavaDocComment> javaDocComments = queryJavaDocComments(javaAstNode);
 
     if (!javaDocComments.isEmpty()) {
-      stringBuilder
+      sb
         .append("<div class=\"main-doc\">")
-        .append(javaDocComments.get(0).getContent().replace("\n", "<br/>"))
+        .append(javaDocComments.get(0).getContent()
+          .replace("\n", "<br/>"))
         .append("</div>");
     }
 
     switch (javaAstNode.getSymbolType()) {
       case TYPE:
+      case ENUM:
+        //--- Data members ---//
+
+        List<AstNodeInfo> constructors =
+          getReferences(
+            javaAstNodeId, ReferenceType.METHOD.ordinal(), new ArrayList<>()
+          );
+        List<AstNodeInfo> methods =
+          getReferences(
+            javaAstNodeId, ReferenceType.CONSTRUCTOR.ordinal(),
+            new ArrayList<>()
+          );
+
+        getDocumentationForAstNodeInfos(sb, methods);
+        getDocumentationForAstNodeInfos(sb, constructors);
         break;
     }
 
-    return stringBuilder.toString();
+    return sb.toString();
+  }
+
+  private void getDocumentationForAstNodeInfos(
+    StringBuilder sb, List<AstNodeInfo> astNodeInfos)
+  {
+    astNodeInfos.forEach(nodeInfo -> {
+      sb
+        .append("<div class=\"group\"><div class=\"signature\">");
+
+      //--- Add tags ---/
+
+      nodeInfo.tags.forEach(tag -> {
+        if (tag.equals("public") ||
+          tag.equals("private") ||
+          tag.equals("protected"))
+        {
+          sb
+            .append("<span class=\"icon-visibility icon-")
+            .append(tag)
+            .append("\"></span>");
+        } else {
+          sb
+            .append("<span class=\"tag tag-")
+            .append(tag).append("\" title=\"")
+            .append(tag).append("\">")
+            .append(Character.toUpperCase(tag.charAt(0)))
+            .append("</span>");
+        }
+      });
+
+      sb
+        .append(
+          nodeInfo.astNodeValue
+            .replace("\n", "<br/>"))
+        .append("</div>");
+
+      //--- Query documentation of members ---//
+
+      List<JavaDocComment> memberDocComments =
+        queryJavaDocComments(nodeInfo.entityHash);
+
+      if (!memberDocComments.isEmpty())
+        sb
+          .append(
+            memberDocComments.get(0).getContent()
+              .replace("\n", "<br/>")
+          );
+
+      sb.append("</div>");
+    });
   }
 
   @Override
@@ -497,11 +563,13 @@ public class JavaQueryHandler implements JavaService.Iface {
 
     switch (javaAstNode.getSymbolType())
     {
+      case CONSTRUCTOR:
       case METHOD:
         diagramTypes.put(
           "Method call diagram", DiagramType.METHOD_CALL.ordinal());
         break;
       case TYPE:
+      case ENUM:
         diagramTypes.put(
           "Detailed class diagram", DiagramType.DETAILED_CLASS.ordinal()
         );

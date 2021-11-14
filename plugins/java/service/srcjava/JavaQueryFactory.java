@@ -1033,6 +1033,20 @@ public abstract class JavaQueryFactory {
     return em.createQuery(cr).getResultList();
   }
 
+  public static List<JavaDocComment> queryJavaDocComments(
+    long entityHash)
+  {
+    CriteriaQuery<JavaDocComment> cr =
+      cb.createQuery(JavaDocComment.class);
+    Root<JavaDocComment> root = cr.from(JavaDocComment.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), entityHash));
+
+    return em.createQuery(cr).getResultList();
+  }
+
   private static String getCurrentPath() {
     return new Throwable().getStackTrace()[1].getFileName();
   }
