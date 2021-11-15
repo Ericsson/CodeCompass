@@ -194,16 +194,17 @@ public class JavaQueryHandler implements JavaService.Iface {
 
         List<AstNodeInfo> constructors =
           getReferences(
-            javaAstNodeId, ReferenceType.METHOD.ordinal(), new ArrayList<>()
-          );
-        List<AstNodeInfo> methods =
-          getReferences(
             javaAstNodeId, ReferenceType.CONSTRUCTOR.ordinal(),
             new ArrayList<>()
           );
+        List<AstNodeInfo> methods =
+          getReferences(
+            javaAstNodeId, ReferenceType.METHOD.ordinal(), new ArrayList<>()
+          );
 
-        getDocumentationForAstNodeInfos(sb, methods);
+
         getDocumentationForAstNodeInfos(sb, constructors);
+        getDocumentationForAstNodeInfos(sb, methods);
         break;
     }
 
