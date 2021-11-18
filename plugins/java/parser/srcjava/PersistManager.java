@@ -387,7 +387,7 @@ public class PersistManager {
 
     setJavaTypedEntityFields(javaMethod, modifiers, typeHash, qualifiedType);
 
-    // persist method's parameters
+    // Persist method's parameters
     for (Object varDeclObj : node.parameters()) {
       persistParameterDeclaration(
         (VariableDeclarationFragment) varDeclObj,
@@ -467,7 +467,7 @@ public class PersistManager {
 
     setJavaTypedEntityFields(javaMethod, modifiers, typeHash, qualifiedType);
 
-    // persist method's parameters
+    // Persist method's parameters
     for (Object varDeclObj : node.parameters()) {
       persistParameterDeclaration(
         (SingleVariableDeclaration) varDeclObj,
@@ -666,8 +666,6 @@ public class PersistManager {
     PositionInfo positionInfo;
     String astValue;
 
-    // visibleinsourcecode: akkor lesz false, ha az adott függvényt, vagy akármit
-    // nem közvetlenül hívjuk a forráskódból, hanem hívunk valamit egy libraryből, ami meghívja aztán ezt
     try {
       Method getJavadocMethod =
         node.getClass().getMethod("getJavadoc", (Class<?>[]) null);
@@ -699,8 +697,14 @@ public class PersistManager {
   }
 
   public void persistRow(Object jpaObject) {
-    em.getTransaction().begin();
-    em.persist(jpaObject);
-    em.getTransaction().commit();
+    try {
+      em.getTransaction().begin();
+      em.persist(jpaObject);
+      em.getTransaction().commit();
+    } catch (Exception ex) {
+      em.getTransaction().rollback();
+      throw ex;
+    }
+
   }
 }
