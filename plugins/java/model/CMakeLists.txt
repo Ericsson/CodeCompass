@@ -27,6 +27,7 @@ add_jar(javamodel
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaVariable.java
   META-INF/persistence.xml
   MANIFEST ${CMAKE_CURRENT_SOURCE_DIR}/META-INF/MANIFEST.MF
+  INCLUDE_JARS javalogger
   OUTPUT_NAME javamodel)
 
 install_jar(javamodel "${INSTALL_JAVA_LIB_DIR}")

@@ -30,7 +30,7 @@ public class JavaParser implements JavaParserService.Iface {
   static {
     size = Integer.parseInt(System.getProperty("size"));
     javaVersion = getJavaVersion();
-    em = createEntityManager(System.getProperty("rawDbContext"));
+    em = createEntityManager(System.getProperty("rawDbContext"), true);
     parser = ASTParser.newParser(AST.JLS_Latest);
     parser.setKind(ASTParser.K_COMPILATION_UNIT);
   }

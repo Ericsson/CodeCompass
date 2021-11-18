@@ -6,19 +6,36 @@ import javax.persistence.Persistence;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.logging.Level;
 
+import static logger.Logger.LOGGER;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.*;
 
 public abstract class EMFactory {
-  public static EntityManager createEntityManager(String rawDbContext) {
+  public static EntityManager createEntityManager(
+    String rawDbContext, boolean dropAndCreateTables)
+  {
     EntityManagerFactory emf =
       Persistence.createEntityManagerFactory(
-        "ParserPU", initProperties(rawDbContext)
+        "ParserPU",
+        initProperties(rawDbContext, dropAndCreateTables)
       );
+
+    if (dropAndCreateTables) {
+      emf.getMetamodel().getEntities().forEach(
+        e ->
+          LOGGER.log(
+            Level.INFO,
+            String.join(" ", "Dropping table", e.getName())
+          )
+      );
+    }
     return emf.createEntityManager();
   }
 
-  private static HashMap<String, Object> initProperties(String rawDbContext) {
+  private static HashMap<String, Object> initProperties(
+    String rawDbContext, boolean dropAndCreateTables)
+  {
     HashMap<String, Object> properties = new HashMap<>();
     String[] splitByColon = rawDbContext.split(":");
     String dbType = splitByColon[0];
@@ -28,6 +45,13 @@ public abstract class EMFactory {
       isSqlite ? "org.sqlite.JDBC" : "org.postgresql.Driver";
     String[] contextList = contextString.split(";");
     HashMap<String, String> contextMap = new HashMap<>();
+
+    if (dropAndCreateTables) {
+      properties.put("eclipselink.ddl-generation", "drop-and-create-tables");
+    } else {
+      properties.put("eclipselink.ddl-generation", "create-tables");
+    }
+
 
     properties.put(
       TRANSACTION_TYPE,

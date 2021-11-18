@@ -85,6 +85,7 @@ public:
     while (!transport->isOpen()) {
       try {
         transport->open();
+        LOG(info) << "[javaparser] Java server started!";
       } catch (TransportException& ex) {
         chrono::steady_clock::time_point current = chrono::steady_clock::now();
         float elapsed_time =
@@ -102,8 +103,6 @@ public:
 
     apache::thrift::GlobalOutput.setOutputFunction(
       apache::thrift::TOutput::errorTimeWrapper);
-
-    LOG(info) << "[javaparser] Java server started!";
 
     _service.reset(new JavaParserServiceClient(protocol));
   }

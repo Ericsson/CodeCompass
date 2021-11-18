@@ -4,3 +4,4 @@ Class-Path: .
             jakarta.persistence-api-2.2.3.jar
             postgresql-42.2.22.jar
             sqlite-jdbc-3.34.0.jar
+            javalogger.jar

@@ -20,7 +20,7 @@ import static model.EMFactory.createEntityManager;
 
 public abstract class JavaQueryFactory {
   private static final EntityManager em =
-    createEntityManager(System.getProperty("rawDbContext"));
+    createEntityManager(System.getProperty("rawDbContext"), false);
   private static final CriteriaBuilder cb = em.getCriteriaBuilder();
 
   public static List<JavaAstNode> queryJavaAstNodeByPosition(
