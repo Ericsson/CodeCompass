@@ -1,6 +1,8 @@
 #ifndef CC_PARSER_METRICS_PARSER_H
 #define CC_PARSER_METRICS_PARSER_H
 
+#include <atomic>
+
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
 
@@ -50,6 +52,7 @@ private:
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
+  std::atomic<int> _visitedFileCount;
 };
 
 } // namespace parser
