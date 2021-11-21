@@ -62,7 +62,7 @@ tarball suse-15:
     extends: .tarball
     image: opensuse/leap:15
     cache:
-        key: "leap"
+        key: "leap-$CI_COMMIT_REF_SLUG"
     variables:
         GCC_VERSION: 9.3.0
         ODB_VERSION: 2.5.0
@@ -85,7 +85,7 @@ tarball suse-42.1:
     extends: .tarball
     image: opensuse/archive:42.1
     cache:
-        key: "malachite"
+        key: "malachite-$CI_COMMIT_REF_SLUG"
     variables:
         GCC_VERSION: 5.5.0
         ODB_VERSION: 2.4.0
@@ -111,7 +111,7 @@ tarball ubuntu-16.04:
     extends: .tarball
     image: ubuntu:16.04
     cache:
-        key: "xenial"
+        key: "xenial-$CI_COMMIT_REF_SLUG"
     variables:
         GCC_VERSION: 5.5.0
         ODB_VERSION: 2.4.0
