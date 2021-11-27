@@ -8,8 +8,7 @@ import model.*;
 import model.enums.*;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.*;
 
 import java.util.Arrays;
 import java.util.logging.Level;
@@ -179,6 +178,23 @@ public abstract class Utils {
     return String.join(className, type, name, parameters);
   }
 
+  public static String getMethodHashStr(
+    ASTNode node, String className, String type, String name, String parameters)
+  {
+    ASTNode declaringNode = findDeclaringNode(node);
+
+    if (declaringNode instanceof LambdaExpression) {
+      ASTNode parent = declaringNode.getParent();
+
+      return String.join(
+        String.valueOf(parent.getStartPosition()),
+        className, type, name, parameters
+      );
+    }
+
+    return String.join(className, type, name, parameters);
+  }
+
   public static String getEnumConstantHashStr(
     String enumName, String name)
   {
@@ -195,5 +211,23 @@ public abstract class Utils {
     String methodHashStr, String type, String name)
   {
     return String.join(methodHashStr, type, name);
+  }
+
+  public static ASTNode findDeclaringNode(ASTNode node) {
+    while (node != null) {
+      if (node instanceof LambdaExpression) {
+        return node;
+      }
+      else if (
+        node instanceof MethodDeclaration ||
+        node instanceof TypeDeclaration)
+      {
+        return node;
+      }
+
+      node = node.getParent();
+    }
+
+    return null;
   }
 }

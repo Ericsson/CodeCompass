@@ -44,7 +44,7 @@ public class PersistManager {
     String qualifiedType = nodeBinding.getType().getQualifiedName();
     String declaringClassName = classBinding.getQualifiedName();
     String methodEntityHashStr = getMethodHashStr(
-      declaringClassName, methodType, methodName, parametersStr);
+      node, declaringClassName, methodType, methodName, parametersStr);
     String entityHashStr = getVariableHashStr(
       methodEntityHashStr, qualifiedType, qualifiedName);
     int modifiers = nodeBinding.getModifiers();
@@ -212,7 +212,7 @@ public class PersistManager {
   }
 
   public void persistVariableUsage(
-    ASTNode node, IVariableBinding variableBinding)
+    Expression node, IVariableBinding variableBinding)
   {
     JavaVariable javaVariable = new JavaVariable();
     ASTNode parent = node.getParent();
@@ -238,7 +238,8 @@ public class PersistManager {
         getParameterTypeNamesStr(declaringMethodBinding.getParameterTypes());
       declaringClassName = classBinding.getQualifiedName();
       String methodHashStr = getMethodHashStr(
-        declaringClassName, methodQualifiedType, methodName, parametersStr);
+        node, declaringClassName, methodQualifiedType, methodName, parametersStr
+      );
       entityHashStr = getVariableHashStr(methodHashStr, qualifiedType, name);
     }
 
@@ -378,8 +379,9 @@ public class PersistManager {
     String qualifiedType = methodBinding.getReturnType().getQualifiedName();
     String parametersStr =
       getParameterTypeNamesStr(methodBinding.getParameterTypes());
+
     String entityHashStr = getMethodHashStr(
-      declaringClassName, qualifiedType, qualifiedName, parametersStr);
+      node, declaringClassName, qualifiedType, qualifiedName, parametersStr);
     int modifiers = methodBinding.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
