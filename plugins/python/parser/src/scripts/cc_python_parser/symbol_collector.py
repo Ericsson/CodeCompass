@@ -66,8 +66,11 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
             if not module.is_module_import():
                 continue
             # scope.imports.append((module, self.import_finder.get_global_scope_by_location(module.location)))
+            r = create_range_from_ast_node(node)
+            qualified_name = self.scope_manager.get_qualified_name_from_current_scope(module.module.name,
+                                                                                      r.start_position.line)
             self.scope_manager.append_module_variable_to_current_scope(
-                ModuleVariableDeclaration(module.path[-1], module.location,
+                ModuleVariableDeclaration(qualified_name, module.path[-1], module.location,
                                           FilePosition(self.current_file, module.range),
                                           self.import_finder.get_global_scope_by_location(module.location)))
         self.scope_manager.append_import(node)
@@ -77,8 +80,11 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
         metrics.add_import_count()
         modules = ImportTable.convert_ast_import_from_to_import(node)
         for module in modules:
+            r = create_range_from_ast_node(node)
+            qualified_name = self.scope_manager.get_qualified_name_from_current_scope(module.module.name,
+                                                                                      r.start_position.line)
             self.scope_manager.append_module_variable_to_current_scope(
-                ModuleVariableDeclaration(module.path[-1], module.location,
+                ModuleVariableDeclaration(qualified_name, module.path[-1], module.location,
                                           FilePosition(self.current_file, module.range),
                                           self.import_finder.get_global_scope_by_location(module.location)))
             if not module.is_module_import():
@@ -92,18 +98,20 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
                 for imported in module.imported:
                     if imported.is_all_imported():
                         for declaration in scope_manager.get_global_scope().declarations:
+                            qualified_name = self.scope_manager.get_qualified_name_from_current_scope(declaration.name,
+                                                                                                      r.start_position.line)
                             if isinstance(declaration, VariableDeclaration):
-                                var = ImportedVariableDeclaration(
+                                var = ImportedVariableDeclaration(qualified_name,
                                     declaration.name, file_position, declaration, module)
                                 self.scope_manager.append_variable_to_current_scope(var)
                                 self.imported_declaration_scope_map[var] = scope_manager
                             elif isinstance(declaration, FunctionDeclaration):
-                                func = ImportedFunctionDeclaration(
+                                func = ImportedFunctionDeclaration(qualified_name,
                                     declaration.name, file_position, declaration, module)
                                 self.scope_manager.append_function_to_current_scope(func)
                                 self.imported_declaration_scope_map[func] = scope_manager
                             elif isinstance(declaration, ClassDeclaration):
-                                c = ImportedClassDeclaration(
+                                c = ImportedClassDeclaration(qualified_name,
                                     declaration.name, file_position, declaration, module)
                                 self.scope_manager.append_class_to_current_scope(c)
                                 self.imported_declaration_scope_map[c] = scope_manager
@@ -112,22 +120,24 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
                     else:
                         # TODO: redefinition?
                         declaration = scope_manager.get_declaration(imported.name)
+                        qualified_name = self.scope_manager.get_qualified_name_from_current_scope(imported.name,
+                                                                                                  r.start_position.line)
                         if isinstance(declaration, PlaceholderType):
                             continue
                         elif isinstance(declaration, VariableDeclaration):
-                            var = ImportedVariableDeclaration(
+                            var = ImportedVariableDeclaration(qualified_name,
                                 imported.name if imported.alias is None else imported.alias,
                                 file_position, declaration, module)
                             self.scope_manager.append_variable_to_current_scope(var)
                             self.imported_declaration_scope_map[var] = scope_manager
                         elif isinstance(declaration, FunctionDeclaration):
-                            func = ImportedFunctionDeclaration(
+                            func = ImportedFunctionDeclaration(qualified_name,
                                 imported.name if imported.alias is None else imported.alias,
                                 file_position, declaration, module)
                             self.scope_manager.append_function_to_current_scope(func)
                             self.imported_declaration_scope_map[func] = scope_manager
                         elif isinstance(declaration, ClassDeclaration):
-                            c = ImportedClassDeclaration(
+                            c = ImportedClassDeclaration(qualified_name,
                                 imported.name if imported.alias is None else imported.alias,
                                 file_position, declaration, module)
                             self.scope_manager.append_class_to_current_scope(c)

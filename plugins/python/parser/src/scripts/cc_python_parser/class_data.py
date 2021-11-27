@@ -55,7 +55,7 @@ class ClassDeclaration(TypeDeclaration, DocumentedType):
 
 
 class ImportedClassDeclaration(ClassDeclaration, ImportedDeclaration[ClassDeclaration]):
-    def __init__(self, name: str, pos: FilePosition, class_declaration: ClassDeclaration, module):
+    def __init__(self, qualified_name: str, name: str, pos: FilePosition, class_declaration: ClassDeclaration, module):
         ClassDeclaration.__init__(self, name, "", pos, class_declaration.base_classes, "")
-        ImportedDeclaration.__init__(self, class_declaration, module, pos)
+        ImportedDeclaration.__init__(self, qualified_name, class_declaration, module, pos)
         self.type = {class_declaration}

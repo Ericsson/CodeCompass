@@ -64,9 +64,16 @@ class ModelPersistence:
     def persist_import(self, imports: ImportDTO) -> None:
         if self.c_persistence is not None:
             self.c_persistence.print("Persist import")
+            for i in imports.imported_modules:
+                self.c_persistence.print(f"Persist imported module: {i.qualified_name}")
+            for i in imports.imported_symbols:
+                self.c_persistence.print(f"Persist imported symbol: {i.qualified_name}")
             self.c_persistence.persist_import(imports)
         else:
-            self.log.write("Persist import\n")
+            for i in imports.imported_modules:
+                self.log.write(f"Persist imported module: {i.qualified_name}\n")
+            for i in imports.imported_symbols:
+                self.log.write(f"Persist imported symbol: {i.qualified_name}\n")
 
 
 model_persistence = ModelPersistence(None)

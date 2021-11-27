@@ -63,16 +63,16 @@ class GlobalVariableDeclaration(ReferenceVariableDeclaration):
 # TODO: short/long name? (in case of import)
 class ModuleVariableDeclaration(VariableDeclaration):
     # module: Union[GlobalScope, PreprocessedFile] - circular import
-    def __init__(self, name: str, location: PurePath, pos: FilePosition, module):
-        super().__init__(name, "", pos, {Module()})  # TODO: need qualified name?
+    def __init__(self, qualified_name: str, name: str, location: PurePath, pos: FilePosition, module):
+        super().__init__(name, qualified_name, pos, {Module()})
         self.imported_module = module
         self.imported_module_location: PurePath = location
 
 
 class ImportedVariableDeclaration(VariableDeclaration, ImportedDeclaration[VariableDeclaration]):
-    def __init__(self, name: str, pos: FilePosition, var_declaration: VariableDeclaration, module):
+    def __init__(self, qualified_name: str, name: str, pos: FilePosition, var_declaration: VariableDeclaration, module):
         VariableDeclaration.__init__(self, name, "", pos, var_declaration.type)
-        ImportedDeclaration.__init__(self, var_declaration, module, pos)
+        ImportedDeclaration.__init__(self, qualified_name, var_declaration, module, pos)
 
 
 class TypeVariableDeclaration(ReferenceVariableDeclaration):

@@ -47,6 +47,6 @@ class StaticFunctionDeclaration(FunctionDeclaration):
 
 
 class ImportedFunctionDeclaration(FunctionDeclaration, data.ImportedDeclaration[FunctionDeclaration]):
-    def __init__(self, name: str, pos: FilePosition, func_declaration: FunctionDeclaration, module):
+    def __init__(self, qualified_name: str, name: str, pos: FilePosition, func_declaration: FunctionDeclaration, module):
         FunctionDeclaration.__init__(self, name, "", pos, func_declaration.parameters, "", func_declaration.type)
-        data.ImportedDeclaration.__init__(self, func_declaration, module, pos)
+        data.ImportedDeclaration.__init__(self, qualified_name, func_declaration, module, pos)

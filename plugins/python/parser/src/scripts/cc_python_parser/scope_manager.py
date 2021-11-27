@@ -449,23 +449,23 @@ class ScopeManager:
 
         for var in self.scopes[-1].variable_declarations:
             if isinstance(var, ImportedDeclaration):
-                import_dto.add_symbol_import(var.module.location, var.position,
+                import_dto.add_symbol_import(var.qualified_name, var.module.location, var.position,
                                              var.imported_declaration.qualified_name)
             elif isinstance(var, ModuleVariableDeclaration):
-                import_dto.add_module_import(var.imported_module_location, var.file_position)
+                import_dto.add_module_import(var.qualified_name, var.imported_module_location, var.file_position)
             else:
                 self.persistence.persist_variable(var.create_dto())
 
         for func in self.scopes[-1].function_declarations:
             if isinstance(func, ImportedDeclaration):
-                import_dto.add_symbol_import(func.module.location, func.position,
+                import_dto.add_symbol_import(func.qualified_name, func.module.location, func.position,
                                              func.imported_declaration.qualified_name)
             else:
                 self.persistence.persist_function(func.create_dto())
 
         for cl in self.scopes[-1].class_declarations:
             if isinstance(cl, ImportedDeclaration):
-                import_dto.add_symbol_import(cl.module.location, cl.position,
+                import_dto.add_symbol_import(cl.qualified_name, cl.module.location, cl.position,
                                              cl.imported_declaration.qualified_name)
             else:
                 self.persistence.persist_class(cl.create_dto())
