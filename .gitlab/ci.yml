@@ -1,3 +1,11 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - when: never
+
 stages:
     - prepare
     - package
@@ -14,7 +22,6 @@ variables:
 
 .tarball:
     stage: package
-    when: manual
     allow_failure: false
     timeout: 12h
     tags: ["long-running"]
@@ -55,9 +62,9 @@ tarball suse-15:
     extends: .tarball
     image: opensuse/leap:15
     cache:
-        key: "leap"
+        key: "leap-$CI_COMMIT_REF_SLUG"
     variables:
-        GCC_VERSION: 7.5.0
+        GCC_VERSION: 9.3.0
         ODB_VERSION: 2.5.0
     before_script:
         - zypper refresh
@@ -67,6 +74,8 @@ tarball suse-15:
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
+        # build tools for OpenLDAP
+        - zypper install -y groff
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
         # show GLIBC verison
@@ -76,7 +85,7 @@ tarball suse-42.1:
     extends: .tarball
     image: opensuse/archive:42.1
     cache:
-        key: "malachite"
+        key: "malachite-$CI_COMMIT_REF_SLUG"
     variables:
         GCC_VERSION: 5.5.0
         ODB_VERSION: 2.4.0
@@ -88,8 +97,13 @@ tarball suse-42.1:
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
+        # build tools for OpenLDAP
+        - zypper install -y groff
         # build tools for ccdb-tools
         - zypper install -y libffi-devel
+        # disable SSL certificate check (distribution's cacert is outdated)
+        - echo "check_certificate = off" >> /etc/wgetrc
+        - echo insecure >> ~/.curlrc
         # show GLIBC verison
         - *show-glibc-version
 
@@ -97,7 +111,7 @@ tarball ubuntu-16.04:
     extends: .tarball
     image: ubuntu:16.04
     cache:
-        key: "xenial"
+        key: "xenial-$CI_COMMIT_REF_SLUG"
     variables:
         GCC_VERSION: 5.5.0
         ODB_VERSION: 2.4.0
@@ -109,6 +123,8 @@ tarball ubuntu-16.04:
         - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
         # build tools for ctags
         - apt-get install -yqq dh-autoreconf pkg-config
+        # build tools for OpenLDAP
+        - apt install -yqq groff-base
         # build tools for ccdb-tools
         - apt-get install -yqq libffi-dev
         # show GLIBC verison
@@ -117,7 +133,6 @@ tarball ubuntu-16.04:
 .upload:
     stage: deploy
     image: ubuntu:20.04
-    when: manual
     allow_failure: false
     variables:
         FILENAME: codecompass-$CI_COMMIT_BRANCH.tar.gz

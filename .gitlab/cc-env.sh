@@ -19,6 +19,7 @@ export LD_LIBRARY_PATH=$DEPS_INSTALL_DIR/libgit2-install/lib64\
 :$DEPS_INSTALL_DIR/libtool-install/lib\
 :$DEPS_INSTALL_DIR/postgresql-install/lib\
 :$DEPS_INSTALL_DIR/python-install/lib\
+:$DEPS_INSTALL_DIR/openldap-install/lib\
 :$LD_LIBRARY_PATH
 # Note: libgit2-install/lib required on Ubuntu; libgit2-install/lib64 on SUSE
 

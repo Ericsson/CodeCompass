@@ -101,7 +101,7 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
    * @return The function returns an array of objects which have the following
    * properties: text, commitId, color.
    */
-  function caclulateAnnotations(repoId, commitId, path, maybeModifiedFileId) {
+  function calculateAnnotations(repoId, commitId, path, maybeModifiedFileId) {
 
     var blameInfo = model.gitservice.getBlameInfo(
       repoId, commitId, path, maybeModifiedFileId);
@@ -136,6 +136,13 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
       for (var i = 0; i < blame.linesInHunk; ++i)
         blameForLines.push(blameForLine);
     });
+
+    if (gtag) {
+      gtag ('event', 'git_blame', {
+        'event_category' : urlHandler.getState('wsid'),
+        'event_label' : urlHandler.getFileInfo().name
+      });
+    }
 
     return blameForLines;
   }
@@ -203,7 +210,7 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
       if (!res.isInRepository)
         return;
 
-      var annotations = caclulateAnnotations(
+      var annotations = calculateAnnotations(
         res.repoId, res.commitId, res.repoPath, fileId);
 
       for (var i = 0; i < this._codeMirror.lineCount(); ++i) {
