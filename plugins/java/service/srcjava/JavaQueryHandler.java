@@ -37,7 +37,6 @@ public class JavaQueryHandler implements JavaService.Iface {
     throws TException
   {
     List<JavaAstNode> javaAstNodes = queryJavaAstNodeByPosition(fpos);
-    JavaAstNode minJavaAstNode;
 
     if (javaAstNodes.isEmpty()) {
       InvalidPos ex = new InvalidPos();
@@ -47,7 +46,7 @@ public class JavaQueryHandler implements JavaService.Iface {
       throw ex;
     }
 
-    minJavaAstNode = javaAstNodes.get(0);
+    JavaAstNode minJavaAstNode = javaAstNodes.get(0);
 
     for (JavaAstNode javaAstNode : javaAstNodes) {
       if (javaAstNode.isVisibleInSourceCode() &&

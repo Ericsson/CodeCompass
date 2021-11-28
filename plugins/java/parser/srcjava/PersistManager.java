@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.dom.*;
 import javax.persistence.EntityManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -36,15 +37,11 @@ public class PersistManager {
     SimpleName simpleName = node.getName();
     IMethodBinding methodDeclBinding = nodeBinding.getDeclaringMethod();
     ITypeBinding classBinding = methodDeclBinding.getDeclaringClass();
-    String methodName = methodDeclBinding.getName();
-    String methodType = methodDeclBinding.getReturnType().getQualifiedName();
-    String parametersStr =
       getParameterTypeNamesStr(methodDeclBinding.getParameterTypes());
     String qualifiedName = simpleName.getFullyQualifiedName();
-    String qualifiedType = nodeBinding.getType().getQualifiedName();
-    String declaringClassName = classBinding.getQualifiedName();
+    String qualifiedType = getQualifiedClassName(nodeBinding.getType());
     String methodEntityHashStr = getMethodHashStr(
-      node, declaringClassName, methodType, methodName, parametersStr);
+      node, classBinding, methodDeclBinding);
     String entityHashStr = getVariableHashStr(
       methodEntityHashStr, qualifiedType, qualifiedName);
     int modifiers = nodeBinding.getModifiers();
@@ -88,13 +85,8 @@ public class PersistManager {
     JavaConstructor javaConstructor = new JavaConstructor();
     ITypeBinding classBinding = constructorBinding.getDeclaringClass();
     String name = constructorBinding.getName();
-    String qualifiedName = classBinding.getQualifiedName();
-    String methodQualifiedType =
-      constructorBinding.getReturnType().getQualifiedName();
-    String parametersStr =
-      getParameterTypeNamesStr(constructorBinding.getParameterTypes());
-    String entityHashStr = getMethodHashStr(
-      qualifiedName, methodQualifiedType, name, parametersStr);
+    String qualifiedName = getQualifiedClassName(classBinding);
+    String entityHashStr = getMethodHashStr(classBinding, constructorBinding);
     int modifiers = constructorBinding.getModifiers();
     int classHash = qualifiedName.hashCode();
     int entityHash = entityHashStr.hashCode();
@@ -118,7 +110,7 @@ public class PersistManager {
     List<?> superInterfaceTypes = node.superInterfaceTypes();
     List<?> enumConstants = node.enumConstants();
     SimpleName simpleName = node.getName();
-    String declaringClassName = node.resolveBinding().getQualifiedName();
+    String declaringClassName = getQualifiedClassName(node.resolveBinding());
     int modifiers = node.getModifiers();
     int entityHash = declaringClassName.hashCode();
 
@@ -152,7 +144,7 @@ public class PersistManager {
       node.resolveConstructorBinding().getDeclaringClass();
     SimpleName simpleName = node.getName();
     String qualifiedName = simpleName.getFullyQualifiedName();
-    String declaringClassName = declaringClass.getQualifiedName();
+    String declaringClassName = getQualifiedClassName(declaringClass);
     String entityHashStr = getEnumConstantHashStr(
       declaringClassName, qualifiedName);
     int modifiers = declaringClass.getModifiers();
@@ -183,12 +175,9 @@ public class PersistManager {
     JavaMethod javaMethod = new JavaMethod();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
     String qualifiedName = simpleName.getFullyQualifiedName();
-    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
-    String declaringClassName = classBinding.getQualifiedName();
-    String parametersStr =
-      getParameterTypeNamesStr(methodBinding.getParameterTypes());
-    String entityHashStr = getMethodHashStr(
-      declaringClassName, qualifiedType, qualifiedName, parametersStr);
+    String qualifiedType = getQualifiedClassName(methodBinding.getReturnType());
+    String declaringClassName = getQualifiedClassName(classBinding);
+    String entityHashStr = getMethodHashStr(classBinding, methodBinding);
     int modifiers = methodBinding.getModifiers();
     int classHash = declaringClassName.hashCode();
     int entityHash = entityHashStr.hashCode();
@@ -216,7 +205,7 @@ public class PersistManager {
   {
     JavaVariable javaVariable = new JavaVariable();
     ASTNode parent = node.getParent();
-    String qualifiedType = variableBinding.getType().getQualifiedName();
+    String qualifiedType = getQualifiedClassName(variableBinding.getType());
     String name = variableBinding.getName();
     String entityHashStr = "";
     String declaringClassName;
@@ -224,22 +213,16 @@ public class PersistManager {
 
     if (variableBinding.isField()) {
       ITypeBinding classBinding = variableBinding.getDeclaringClass();
-      declaringClassName = classBinding.getQualifiedName();
+      declaringClassName = getQualifiedClassName(classBinding);
       entityHashStr = getFieldHashStr(declaringClassName, qualifiedType, name);
 
     } else {
       IMethodBinding declaringMethodBinding =
         variableBinding.getVariableDeclaration().getDeclaringMethod();
       ITypeBinding classBinding = declaringMethodBinding.getDeclaringClass();
-      String methodName = declaringMethodBinding.getName();
-      String methodQualifiedType =
-        declaringMethodBinding.getReturnType().getQualifiedName();
-      String parametersStr =
-        getParameterTypeNamesStr(declaringMethodBinding.getParameterTypes());
-      declaringClassName = classBinding.getQualifiedName();
+      declaringClassName = getQualifiedClassName(classBinding);
       String methodHashStr = getMethodHashStr(
-        node, declaringClassName, methodQualifiedType, methodName, parametersStr
-      );
+        node, classBinding, declaringMethodBinding);
       entityHashStr = getVariableHashStr(methodHashStr, qualifiedType, name);
     }
 
@@ -291,7 +274,7 @@ public class PersistManager {
     Name node, IVariableBinding variableBinding)
   {
     JavaEnumConstant javaEnumConstant = new JavaEnumConstant();
-    String qualifiedType = variableBinding.getType().getQualifiedName();
+    String qualifiedType = getQualifiedClassName(variableBinding.getType());
     String name = variableBinding.getName();
     String entityHashStr = getEnumConstantHashStr(qualifiedType, name);
     int modifiers = variableBinding.getModifiers();
@@ -321,13 +304,14 @@ public class PersistManager {
 
     if (parent instanceof TypeDeclaration) {
       declaringClassName =
-        ((TypeDeclaration) parent).resolveBinding().getQualifiedName();
+        getQualifiedClassName(((TypeDeclaration) parent).resolveBinding());
     } else if (parent instanceof EnumDeclaration) {
       declaringClassName =
-        ((EnumDeclaration) parent).resolveBinding().getQualifiedName();
+        getQualifiedClassName(((EnumDeclaration) parent).resolveBinding());
     }
 
-    String qualifiedType = node.getType().resolveBinding().getQualifiedName();
+    String qualifiedType =
+      getQualifiedClassName(node.getType().resolveBinding());
 
     for (Object varDeclFragObj : node.fragments()) {
       persistFieldDeclarationFragment(
@@ -374,14 +358,9 @@ public class PersistManager {
     JavaMethod javaMethod = new JavaMethod();
     IMethodBinding methodBinding = node.resolveMethodBinding();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
-    String declaringClassName = classBinding.getQualifiedName();
-    String qualifiedName = methodBinding.getName();
-    String qualifiedType = methodBinding.getReturnType().getQualifiedName();
-    String parametersStr =
-      getParameterTypeNamesStr(methodBinding.getParameterTypes());
-
-    String entityHashStr = getMethodHashStr(
-      node, declaringClassName, qualifiedType, qualifiedName, parametersStr);
+    String declaringClassName = getQualifiedClassName(classBinding);
+    String qualifiedType = getQualifiedClassName(methodBinding.getReturnType());
+    String entityHashStr = getMethodHashStr(node, classBinding, methodBinding);
     int modifiers = methodBinding.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -413,13 +392,8 @@ public class PersistManager {
     IMethodBinding methodBinding = node.resolveBinding();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
     String name = node.getName().toString();
-    String methodQualifiedType =
-      methodBinding.getReturnType().getQualifiedName();
-    String declaringClassName = classBinding.getQualifiedName();
-    String parametersStr =
-      getParameterTypeNamesStr(methodBinding.getParameterTypes());
-    String entityHashStr = getMethodHashStr(
-      declaringClassName, methodQualifiedType, name, parametersStr);
+    String declaringClassName = getQualifiedClassName(classBinding);
+    String entityHashStr = getMethodHashStr(classBinding, methodBinding);
     int modifiers = node.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -450,18 +424,15 @@ public class PersistManager {
     JavaMethod javaMethod = new JavaMethod();
     IMethodBinding methodBinding = node.resolveBinding();
     ITypeBinding classBinding = methodBinding.getDeclaringClass();
-    String declaringClassName = classBinding.getQualifiedName();
-    String parametersStr =
-      getParameterTypeNamesStr(methodBinding.getParameterTypes());
+    String declaringClassName = getQualifiedClassName(classBinding);
     SimpleName simpleName = node.getName();
     String name = simpleName.toString();
     String qualifiedName = simpleName.getFullyQualifiedName();
     String qualifiedType =
-      node.getReturnType2().resolveBinding().getQualifiedName();
+      getQualifiedClassName(node.getReturnType2().resolveBinding());
     AstType astType =
       node.getBody() == null ? AstType.DECLARATION : AstType.DEFINITION;
-    String entityHashStr = getMethodHashStr(
-      declaringClassName, qualifiedType, qualifiedName, parametersStr);
+    String entityHashStr = getMethodHashStr(classBinding, methodBinding);
     int modifiers = node.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int classHash = declaringClassName.hashCode();
@@ -499,7 +470,7 @@ public class PersistManager {
     Type superclassType = node.getSuperclassType();
     List<?> superInterfaceTypes = node.superInterfaceTypes();
     SimpleName simpleName = node.getName();
-    String qualifiedName = node.resolveBinding().getQualifiedName();
+    String qualifiedName = getQualifiedClassName(node.resolveBinding());
     int modifiers = node.getModifiers();
     int entityHash = qualifiedName.hashCode();
 
@@ -527,7 +498,7 @@ public class PersistManager {
     JavaRecord javaRecord = new JavaRecord();
     ITypeBinding typeBinding = node.resolveBinding();
     String name = typeBinding.getName();
-    String qualifiedName = typeBinding.getQualifiedName();
+    String qualifiedName = getQualifiedClassName(typeBinding);
     boolean isEnum = typeBinding.isEnum();
     int modifiers = typeBinding.getModifiers();
     int entityHash = qualifiedName.hashCode();
@@ -553,16 +524,16 @@ public class PersistManager {
   }
 
   public void persistParameterDeclaration(
-    VariableDeclaration node, String entityHashStrPrefix,
+    VariableDeclaration node, String methodHashStr,
     Consumer<JavaVariable> connectParent)
   {
     JavaVariable javaVariable = new JavaVariable();
     IVariableBinding nodeBinding = node.resolveBinding();
     SimpleName simpleName = node.getName();
-    String qualifiedType = nodeBinding.getType().getQualifiedName();
+    String qualifiedType = getQualifiedClassName(nodeBinding.getType());
     String qualifiedName = simpleName.getFullyQualifiedName();
     String entityHashStr = getVariableHashStr(
-      entityHashStrPrefix, qualifiedType, qualifiedName);
+      methodHashStr, qualifiedType, qualifiedName);
     int modifiers = nodeBinding.getModifiers();
     int entityHash = entityHashStr.hashCode();
     int typeHash = qualifiedType.hashCode();
@@ -585,7 +556,7 @@ public class PersistManager {
   {
     if (superclassType != null) {
       String qualifiedSuperClassName =
-        superclassType.resolveBinding().getQualifiedName();
+        getQualifiedClassName(superclassType.resolveBinding());
       int superClassHash = qualifiedSuperClassName.hashCode();
 
       persistJavaInheritance(superClassHash, entityHash);
@@ -598,7 +569,7 @@ public class PersistManager {
     superInterfaceTypes.forEach(i -> {
       Type aInterface = (Type) i;
       String qualifiedSuperInterfaceName =
-        aInterface.resolveBinding().getQualifiedName();
+        getQualifiedClassName(aInterface.resolveBinding());
       int superInterfaceHash = qualifiedSuperInterfaceName.hashCode();
 
       persistJavaInheritance(superInterfaceHash, entityHash);

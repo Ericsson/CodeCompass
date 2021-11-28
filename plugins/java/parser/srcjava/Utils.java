@@ -173,44 +173,80 @@ public abstract class Utils {
   }
 
   public static String getMethodHashStr(
-    String className, String type, String name, String parameters)
+    ITypeBinding classBinding, IMethodBinding methodBinding)
   {
-    return String.join(className, type, name, parameters);
+    String className = getQualifiedClassName(classBinding);
+    String type = methodBinding.getReturnType().getQualifiedName();
+    String name = methodBinding.getName();
+    String parameters =
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
+
+    return String.join(" ", className, type, name, parameters);
   }
 
   public static String getMethodHashStr(
-    ASTNode node, String className, String type, String name, String parameters)
+    ASTNode node, ITypeBinding classBinding, IMethodBinding methodBinding)
   {
     ASTNode declaringNode = findDeclaringNode(node);
+    String className = getQualifiedClassName(classBinding);
+    String type = methodBinding.getReturnType().getQualifiedName();
+    String name = methodBinding.getName();
+    String parameters =
+      getParameterTypeNamesStr(methodBinding.getParameterTypes());
 
     if (declaringNode instanceof LambdaExpression) {
-      ASTNode parent = declaringNode.getParent();
-
       return String.join(
-        String.valueOf(parent.getStartPosition()),
+        " ", String.valueOf(declaringNode.getStartPosition()),
         className, type, name, parameters
       );
     }
 
-    return String.join(className, type, name, parameters);
+    return String.join(" ", className, type, name, parameters);
   }
 
   public static String getEnumConstantHashStr(
     String enumName, String name)
   {
-    return String.join(enumName, name);
+    return String.join(" ", enumName, name);
   }
 
   public static String getFieldHashStr(
     String className, String type, String name)
   {
-    return String.join(className, type, name);
+    return String.join(" ", className, type, name);
   }
 
   public static String getVariableHashStr(
     String methodHashStr, String type, String name)
   {
-    return String.join(methodHashStr, type, name);
+    return String.join(" ", methodHashStr, type, name);
+  }
+
+  public static String typeParametersArrayToString(
+    ITypeBinding[] typeParametersArray)
+  {
+    if (typeParametersArray.length == 0) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder("<");
+
+    for (int i =0; i < typeParametersArray.length; ++i) {
+      sb.append(typeParametersArray[i].getQualifiedName());
+
+      if (!(i == typeParametersArray.length - 1)) {
+        sb.append(",");
+      }
+    }
+
+    sb.append(">");
+
+    return sb.toString();
+  }
+
+  public static String getQualifiedClassName(ITypeBinding classBinding) {
+    return classBinding.getQualifiedName() +
+      typeParametersArrayToString(classBinding.getTypeParameters());
   }
 
   public static ASTNode findDeclaringNode(ASTNode node) {

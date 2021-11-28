@@ -91,14 +91,8 @@ public class RelationCollector {
 
     if (superMethodBinding.isPresent()) {
       JavaRelation javaRelation = new JavaRelation();
-      String superclassQualifiedName = superclassBinding.getQualifiedName();
-      String methodQualifiedType =
-        methodBinding.getReturnType().getQualifiedName();
-      String parametersStr =
-        getParameterTypeNamesStr(methodBinding.getParameterTypes());
       String superMethodEntityHashStr =
-        getMethodHashStr(
-          superclassQualifiedName, methodQualifiedType, name, parametersStr);
+        getMethodHashStr(superclassBinding, methodBinding);
       int superMethodEntityHash = superMethodEntityHashStr.hashCode();
 
       setJavaRelationFields(

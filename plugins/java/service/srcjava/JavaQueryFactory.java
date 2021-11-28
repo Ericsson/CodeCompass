@@ -417,11 +417,11 @@ public abstract class JavaQueryFactory {
     List<JavaAstNode> usages = queryUsageNodes(javaAstNode);
 
     return usages.stream()
-      .flatMap(u -> queryCallerNode(u).stream())
+      .map(JavaQueryFactory::queryCallerNode)
       .collect(Collectors.toList());
   }
 
-  public static List<JavaAstNode> queryCallerNode(JavaAstNode usage) {
+  public static JavaAstNode queryCallerNode(JavaAstNode usage) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
 
@@ -473,7 +473,28 @@ public abstract class JavaQueryFactory {
         )
       );
 
-    return em.createQuery(cr).getResultList();
+    List<JavaAstNode> javaAstNodes =  em.createQuery(cr).getResultList();
+
+    if (javaAstNodes.isEmpty()) {
+      LOGGER.log(
+        Level.WARNING,
+        "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+      );
+
+      return null;
+    }
+
+    JavaAstNode minJavaAstNode = javaAstNodes.get(0);
+
+    for (JavaAstNode javaAstNode : javaAstNodes) {
+      if (javaAstNode.isVisibleInSourceCode() &&
+        javaAstNode.isRangeSmaller(minJavaAstNode)) {
+        minJavaAstNode = javaAstNode;
+      }
+    }
+
+    return minJavaAstNode;
   }
 
   public static List<JavaAstNode> queryCallNodes(JavaAstNode javaAstNode) {
