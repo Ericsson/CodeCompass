@@ -11,6 +11,7 @@
 
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
+#include <util/threadpool.h>
 
 #include <parser/sourcemanager.h>
 #include <javaparser/javaparser.h>
@@ -25,16 +26,59 @@ namespace parser
 namespace java
 {
 
-// Initialize static member
+// Initialize static members
 std::stringstream JavaParserServiceHandler::thrift_ss;
+bool JavaParserServiceHandler::server_started = false;
 
 JavaParser::JavaParser(ParserContext& ctx_) : AbstractParser(ctx_) {
   _java_path = pr::search_path("java");
+
+  for (int i = 0; i < threadNum; ++i) {
+    javaServiceHandlers.push_back(
+      std::make_shared<JavaParserServiceHandler>(JavaParserServiceHandler())
+    );
+  }
 }
 
 bool JavaParser::accept(const std::string& path_) {
   std::string ext = fs::extension(path_);
-  return ext == ".json";
+  return ext == ".json" || ext == ".jar";
+}
+
+void JavaParser::initializeWorkers() {
+  int worker_num = 0;
+  for (auto &handler : javaServiceHandlers) {
+    try {
+      handler->getClientInterface(25000, ++worker_num);
+    } catch (TransportException& ex) {
+      LOG(error) <<
+                 "[javaparser] Failed to start worker (" << worker_num << ")!";
+      throw ex;
+    }
+  }
+}
+
+std::shared_ptr<JavaParserServiceHandler>&
+  JavaParser::findFreeWorker(int timeout_in_ms)
+{
+  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+  chrono::steady_clock::time_point current = begin;
+  float elapsed_time = 0;
+
+  while (elapsed_time < timeout_in_ms) {
+    for (auto &handler: javaServiceHandlers) {
+      if (handler->is_free) {
+        handler->is_free = false;
+        return handler;
+      }
+    }
+
+    current = chrono::steady_clock::now();
+    elapsed_time =
+      chrono::duration_cast<chrono::milliseconds>(current - begin).count();
+  }
+
+  throw TimeoutException("Could not find free Java Worker");
 }
 
 CompileCommand JavaParser::getCompileCommand(
@@ -107,7 +151,7 @@ void JavaParser::addCompileCommand(
 }
 
 model::File::ParseStatus JavaParser::addBuildLogs(
-  const std::vector<core::BuildLog>& buildLogs_, std::string& file_)
+  const std::vector<core::BuildLog>& buildLogs_, const std::string& file_)
 {
   util::OdbTransaction transaction(_ctx.db);
   std::vector<model::BuildLog> logs;
@@ -116,7 +160,6 @@ model::File::ParseStatus JavaParser::addBuildLogs(
 
   for (const core::BuildLog& log : buildLogs_) {
     model::BuildLog buildLog;
-
 
     buildLog.location.file = _ctx.srcMgr.getFile(file_);
     buildLog.log.message = log.message;
@@ -165,12 +208,11 @@ bool JavaParser::parse() {
   for (const std::string& path
     : _ctx.options["input"].as<std::vector<std::string>>()) {
     if (accept(path)) {
-      JavaParserServiceHandler serviceHandler;
-      int file_index = 1;
       pt::ptree _pt;
       pt::read_json(path, _pt);
       pt::ptree _pt_filtered;
       pr::ipstream is;
+      std::size_t file_index = 0;
 
       // Filter compile commands tree to contain only Java-related files
       std::copy_if (
@@ -181,60 +223,101 @@ bool JavaParser::parse() {
         {
             auto ext = fs::extension(
               command_tree_.second.get<std::string>("file"));
-            return ext == ".java" || ext == ".class";
+            return ext == ".java";
         });
+
+      const int numCompileCommands = _pt_filtered.size();
 
       std::vector<std::string> _java_args{
         "-DrawDbContext=" + _ctx.options["database"].as<std::string>(),
-        "-Dsize=" + std::to_string(_pt_filtered.size()),
+        "-DthreadNum=" + std::to_string(threadNum),
         "-jar",
         "../lib/java/javaparser.jar"
       };
 
-      pr::child c(_java_path, _java_args, pr::std_out > stdout);
+      c = pr::child(_java_path, _java_args, pr::std_out > stdout);
 
-      try {
-        serviceHandler.getClientInterface(25000);
-      } catch (TransportException& ex) {
-        LOG(error) << "[javaparser] Failed to parse!";
-        return false;
-      }
+      initializeWorkers();
 
-      // Process Java files
-      for (pt::ptree::value_type& command_tree_ : _pt_filtered) {
-        CompileCommand compile_command =
-          getCompileCommand(command_tree_);
-        model::FilePtr filePtr = _ctx.srcMgr.getFile(compile_command.file);
-        filePtr -> type = "JAVA";
-        model::BuildActionPtr buildAction = addBuildAction(compile_command);
-        model::File::ParseStatus parseStatus = model::File::PSFullyParsed;
-        std::vector<core::BuildLog> buildLogs;
+      //--- Create a thread pool for the current commands ---//
 
-        // Thrift functions
+      std::unique_ptr<
+      util::JobQueueThreadPool<ParseJob>> pool =
+        util::make_thread_pool<ParseJob>(
+          threadNum,
+          [this, &numCompileCommands](ParseJob& job_)
+          {
+            CompileCommand command =
+              getCompileCommand(job_.command_tree);
+            std::shared_ptr<JavaParserServiceHandler> serviceHandler;
 
-        // Set arguments of the current command (prepare for parsing)
-        serviceHandler.setArgs(compile_command);
-        // Run Java parser
-        try {
-          serviceHandler.parseFile(buildLogs, filePtr->id, file_index);
-          parseStatus = addBuildLogs(buildLogs, compile_command.file);
-        }  catch (JavaBeforeParseException& ex) {
-          LOG(warning) << ex.message;
-          parseStatus = model::File::PSNone;
-        } catch (JavaParseException& ex) {
-          LOG(warning) << ex.message;
-          parseStatus = model::File::PSPartiallyParsed;
-        }
+            try {
+              serviceHandler = findFreeWorker(15000);
+            } catch (TimeoutException& ex) {
+              LOG(error) <<
+                "Operation timeout, could not find free "
+                "Java worker to process " << command.file << "!";
+              return;
+            }
 
-        // Get arguments for the current file
-        CmdArgs cmdArgs;
-        serviceHandler.getArgs(cmdArgs);
+            std::string file_counter_str =
+              "(" + std::to_string(job_.index) + "/" +
+              std::to_string(numCompileCommands) + ")";
 
-        addCompileCommand(cmdArgs, buildAction, parseStatus);
+            LOG(info) <<
+              file_counter_str << " " << "Parsing " << command.file;
 
-        ++file_index;
-      }
+            model::FilePtr filePtr = _ctx.srcMgr.getFile(command.file);
+            filePtr -> type = "JAVA";
+            model::BuildActionPtr buildAction = addBuildAction(command);
+            model::File::ParseStatus parseStatus =
+              model::File::PSFullyParsed;
+              ParseResult parseResult;
+
+            //--- Run Java parser ---//
+
+            try {
+              serviceHandler->parseFile(
+                parseResult, command, filePtr->id, file_counter_str);
+              parseStatus =
+                addBuildLogs(parseResult.buildLogs, command.file);
+            }  catch (JavaBeforeParseException& ex) {
+              LOG(warning) <<
+                file_counter_str << " " << "Parsing " <<
+                command.file << " has been failed before the start";
+
+              LOG(warning) << ex.message;
+              parseStatus = model::File::PSNone;
+            } catch (JavaParseException& ex) {
+              LOG(warning) <<
+                file_counter_str << " " << "Parsing " <<
+                command.file << " has been failed during parsing";
+
+              LOG(warning) << ex.message;
+                parseStatus = model::File::PSPartiallyParsed;
+            }
+
+
+            addCompileCommand(
+              parseResult.cmdArgs, buildAction, parseStatus);
+
+            serviceHandler->is_free = true;
+          });
+
+      //--- Process Java files ---//
+
       LOG(info) << "JavaParser parse path: " << path;
+
+      for (pt::ptree::value_type &command_tree_: _pt_filtered) {
+        ParseJob job(command_tree_, ++file_index);
+
+        //--- Push the job ---//
+
+        pool->enqueue(job);
+      }
+
+      // Block execution until every job is finished.
+      pool->wait();
     }
   }
   return true;

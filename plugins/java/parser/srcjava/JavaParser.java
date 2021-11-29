@@ -1,7 +1,6 @@
 package parser.srcjava;
 
 import cc.parser.java.*;
-import cc.service.core.BuildLog;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
 import org.eclipse.jdt.core.JavaCore;
@@ -13,36 +12,33 @@ import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 
-import static logger.Logger.LOGGER;
 import static model.EMFactory.createEntityManager;
-import static parser.srcjava.Utils.generateBuildLog;
+import static parser.srcjava.Utils.*;
 
 public class JavaParser implements JavaParserService.Iface {
-  private static final int size;
   private static final String javaVersion;
-  private static final EntityManager em;
+  private static final ThreadLocal<EntityManager> em;
   private static final ASTParser parser;
-  private ArgParser argParser;
 
   static {
-    size = Integer.parseInt(System.getProperty("size"));
     javaVersion = getJavaVersion();
-    em = createEntityManager(System.getProperty("rawDbContext"), true);
+    em = ThreadLocal.withInitial(() ->
+      createEntityManager(
+        System.getProperty("rawDbContext"), true
+      )
+    );
     parser = ASTParser.newParser(AST.JLS_Latest);
     parser.setKind(ASTParser.K_COMPILATION_UNIT);
   }
 
   @Override
-  public List<BuildLog> parseFile(long fileId, int fileIndex) throws TException {
+  public synchronized ParseResult parseFile(
+    CompileCommand compileCOmmand, long fileId,
+    String fileCounterStr) throws TException
+  {
+    ArgParser argParser = new ArgParser(compileCOmmand);
     String filePath = argParser.getFilepath();
-    String fileCounterStr = "(" + fileIndex + "/" + size + ")";
-    LOGGER.log(
-      Level.INFO,
-      String.join(" ", fileCounterStr, "Parsing", filePath)
-    );
 
     try {
       File file = new File(filePath);
@@ -67,55 +63,20 @@ public class JavaParser implements JavaParserService.Iface {
 
       CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
-      AstVisitor visitor = new AstVisitor(cu, em, fileId);
+      AstVisitor visitor = new AstVisitor(cu, em.get(), fileId);
       cu.accept(visitor);
 
-      return Arrays.stream(
-        cu.getProblems())
-        .map(p -> generateBuildLog(cu, p, fileCounterStr))
-        .collect(Collectors.toList());
+      return getParseResult(cu, argParser, fileCounterStr);
 
     } catch (IOException e) {
-      LOGGER.log(
-        Level.WARNING,
-        String.join(
-          " ", fileCounterStr,
-          "Parsing", filePath, "has been failed before the start")
-      );
       JavaBeforeParseException ex = new JavaBeforeParseException();
       ex.message = e.getMessage();
       throw ex;
     } catch (Exception e) {
-      e.printStackTrace();
-      LOGGER.log(
-        Level.WARNING,
-        String.join(
-          " ", fileCounterStr,
-          "Parsing", filePath, "has been failed")
-      );
       JavaParseException ex = new JavaParseException();
       ex.message = e.getMessage();
       throw ex;
     }
-  }
-
-  @Override
-  public void setArgs(CompileCommand compileCommand) {
-    argParser = new ArgParser(compileCommand);
-  }
-
-  @Override
-  public CmdArgs getArgs() {
-    CmdArgs cmdArgs = new CmdArgs();
-    cmdArgs.directory = argParser.getDirectory();
-    cmdArgs.classpath = argParser.getClasspath();
-    cmdArgs.sourcepath = argParser.getSourcepath();
-    cmdArgs.filepath = argParser.getFilepath();
-    cmdArgs.filename = argParser.getFilename();
-    cmdArgs.bytecodeDir = argParser.getBytecodePath();
-    cmdArgs.bytecodesPaths = argParser.getBytecodesPaths();
-
-    return cmdArgs;
   }
 
   private static String getJavaVersion() {

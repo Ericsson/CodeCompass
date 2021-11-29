@@ -1,9 +1,7 @@
 package parser.srcjava;
 
 import org.apache.log4j.BasicConfigurator;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TServer.Args;
-import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 
@@ -23,22 +21,29 @@ public class JavaParserServer {
       javaParser = new JavaParser();
       processor = new JavaParserService.Processor<>(javaParser);
 
-      Runnable simple = () -> simple(processor);
-      new Thread(simple).start();
+      Runnable threadPool = () -> threadPool(processor);
+      new Thread(threadPool).start();
     } catch (Exception e) {
       LOGGER.log(
         Level.SEVERE, "[javaparser] Java server starting failed!");
     }
   }
 
-  public static void simple(JavaParserService.Processor<?> processor) {
+  public static void threadPool(JavaParserService.Processor<?> processor) {
     try {
       TServerTransport serverTransport = new TServerSocket(9090);
-      TServer server =
-        new TSimpleServer(new Args(serverTransport).processor(processor));
+      TThreadPoolServer.Args a =
+        new TThreadPoolServer.Args(serverTransport).processor(processor);
+      int threadNum = Integer.parseInt(System.getProperty("threadNum"));
+
+      a.minWorkerThreads(1);
+      a.maxWorkerThreads(threadNum);
+
+      TThreadPoolServer server = new TThreadPoolServer(a);
 
       server.serve();
     } catch (Exception e) {
+      e.printStackTrace();
       LOGGER.log(
         Level.SEVERE, "[javaparser] Java server starting failed!");
     }

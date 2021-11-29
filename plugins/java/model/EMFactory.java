@@ -21,15 +21,16 @@ public abstract class EMFactory {
         initProperties(rawDbContext, dropAndCreateTables)
       );
 
-    if (dropAndCreateTables) {
-      emf.getMetamodel().getEntities().forEach(
-        e ->
-          LOGGER.log(
-            Level.INFO,
-            String.join(" ", "Dropping table", e.getName())
-          )
-      );
-    }
+    // if (dropAndCreateTables) {
+    //   emf.getMetamodel().getEntities().forEach(
+    //     e ->
+    //       LOGGER.log(
+    //         Level.INFO,
+    //         String.join(" ", "Dropping table", e.getName())
+    //       )
+    //   );
+    // }
+
     return emf.createEntityManager();
   }
 
