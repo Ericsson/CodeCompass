@@ -26,13 +26,20 @@ namespace cc
 {
 namespace parser
 {
-namespace java {
+namespace java
+{
 
 namespace core = cc::service::core;
 namespace fs = boost::filesystem;
 namespace pr = boost::process;
 namespace pt = boost::property_tree;
+namespace chrono = std::chrono;
 using TransportException = apache::thrift::transport::TTransportException;
+
+class TimeoutException : public std::runtime_error {
+public:
+  using std::runtime_error::runtime_error;
+};
 
 class JavaParserServiceHandler : public JavaParserServiceIf {
 public:
@@ -40,31 +47,22 @@ public:
   }
 
   void parseFile(
-    std::vector<core::BuildLog>& return_, long fileId_, int fileIndex_) override
+    ParseResult& return_,
+    const CompileCommand& compileCommand_, long fileId_,
+    const std::string& fileCounterStr_) override
   {
-    _service -> parseFile(return_, fileId_, fileIndex_);
-  }
-
-  void setArgs(const CompileCommand& compileCommand_) override
-  {
-    _service -> setArgs(compileCommand_);
-  }
-
-  void getArgs(CmdArgs& return_) override
-  {
-    _service -> getArgs(return_);
+    _service -> parseFile(return_, compileCommand_, fileId_, fileCounterStr_);
   }
 
   /**
    * Creates the client interface.
    */
-  void getClientInterface(int timeout_in_ms)
+  void getClientInterface(int timeout_in_ms, int worker_num)
   {
     using Transport = apache::thrift::transport::TTransport;
     using BufferedTransport = apache::thrift::transport::TBufferedTransport;
     using Socket = apache::thrift::transport::TSocket;
     using Protocol = apache::thrift::protocol::TBinaryProtocol;
-    namespace chrono = std::chrono;
 
     std::string host = "localhost";
     int port = 9090;
@@ -85,14 +83,21 @@ public:
     while (!transport->isOpen()) {
       try {
         transport->open();
-        LOG(info) << "[javaparser] Java server started!";
+
+        if (!server_started) {
+          LOG(info) << "[javaparser] Java server started!";
+          server_started = true;
+        }
+
+        LOG(info) << "[javaparser] Java worker (" <<
+          worker_num << ") connected!";
       } catch (TransportException& ex) {
         chrono::steady_clock::time_point current = chrono::steady_clock::now();
         float elapsed_time =
           chrono::duration_cast<chrono::milliseconds>(current - begin).count();
 
         if (elapsed_time > timeout_in_ms) {
-          LOG(debug) << "Connection timeout, could not reach Java server on"
+          LOG(error) << "Connection timeout, could not reach Java server on"
             << host << ":" << port;
           apache::thrift::GlobalOutput.setOutputFunction(
             apache::thrift::TOutput::errorTimeWrapper);
@@ -107,11 +112,22 @@ public:
     _service.reset(new JavaParserServiceClient(protocol));
   }
 
+public:
+  /**
+ * Handler's state
+ */
+  bool is_free = true;
+
 private:
   /**
    * Service interface for IPC communication.
    */
   std::unique_ptr<JavaParserServiceIf> _service;
+
+  /**
+   * Server's state.
+   */
+  static bool server_started;
 
   /**
    * Object to store Thrift messages during connecting to the Java server
@@ -128,9 +144,39 @@ public:
   virtual bool parse() override;
 
 private:
+  /**
+   * A single build command's cc::util::JobQueueThreadPool job.
+   */
+  struct ParseJob
+  {
+    /**
+     * The build command itself. This is given to CppParser::worker.
+     */
+    std::reference_wrapper<const pt::ptree::value_type> command_tree;
+
+    /**
+     * The # of the build command in the compilation command database.
+     */
+    std::size_t index;
+
+    ParseJob(const pt::ptree::value_type& command_tree, std::size_t index)
+      : command_tree(command_tree), index(index)
+    {}
+
+    ParseJob(const ParseJob&) = default;
+  };
+
+  pr::child c;
+  const int threadNum = _ctx.options["jobs"].as<int>();
+  std::vector<std::shared_ptr<JavaParserServiceHandler>>
+    javaServiceHandlers;
   fs::path _java_path;
 
   bool accept(const std::string& path_);
+
+  void initializeWorkers();
+
+  std::shared_ptr<JavaParserServiceHandler>& findFreeWorker(int timeout_in_ms);
 
   CompileCommand getCompileCommand(
     const pt::ptree::value_type& command_tree_);
@@ -145,7 +191,7 @@ private:
 
   model::File::ParseStatus addBuildLogs(
     const std::vector<core::BuildLog>& buildLogs_,
-    std::string& file_);
+    const std::string& file_);
 };
 
 } // java

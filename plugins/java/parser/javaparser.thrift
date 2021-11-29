@@ -21,6 +21,12 @@ struct CmdArgs
   7: list<string> bytecodesPaths
 }
 
+struct ParseResult
+{
+  1: CmdArgs cmdArgs,
+  2: list<project.BuildLog> buildLogs
+}
+
 exception JavaBeforeParseException
 {
   1: string message
@@ -33,8 +39,7 @@ exception JavaParseException
 
 service JavaParserService
 {
-  list<project.BuildLog> parseFile(1: i64 fileId, 2: i32 fileIndex)
+  ParseResult parseFile(
+    1: CompileCommand compileCommand, 2: i64 fileId, 3: string fileCounterStr)
     throws (1: JavaBeforeParseException jbe, 2: JavaParseException jpe),
-  void setArgs(1: CompileCommand compileCommand),
-  CmdArgs getArgs()
 }

@@ -1,5 +1,7 @@
 package parser.srcjava;
 
+import cc.parser.java.CmdArgs;
+import cc.parser.java.ParseResult;
 import cc.service.core.BuildLog;
 import cc.service.core.MessageType;
 import cc.service.core.Position;
@@ -11,12 +13,43 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static logger.Logger.LOGGER;
 
 public abstract class Utils {
-  public static BuildLog generateBuildLog(
+  public static ParseResult getParseResult(
+    CompilationUnit cu, ArgParser argParser, String fileCounterStr)
+  {
+    ParseResult parseResult = new ParseResult();
+    CmdArgs cmdArgs = getCmdArgs(argParser);
+    List<BuildLog> buildLogs =  Arrays.stream(
+      cu.getProblems())
+      .map(p -> getBuildLog(cu, p, fileCounterStr))
+      .collect(Collectors.toList());
+
+    parseResult.cmdArgs = cmdArgs;
+    parseResult.buildLogs = buildLogs;
+
+    return parseResult;
+  }
+
+  public static CmdArgs getCmdArgs(ArgParser argParser) {
+    CmdArgs cmdArgs = new CmdArgs();
+    cmdArgs.directory = argParser.getDirectory();
+    cmdArgs.classpath = argParser.getClasspath();
+    cmdArgs.sourcepath = argParser.getSourcepath();
+    cmdArgs.filepath = argParser.getFilepath();
+    cmdArgs.filename = argParser.getFilename();
+    cmdArgs.bytecodeDir = argParser.getBytecodePath();
+    cmdArgs.bytecodesPaths = argParser.getBytecodesPaths();
+
+    return cmdArgs;
+  }
+
+  public static BuildLog getBuildLog(
     CompilationUnit cu, IProblem problem, String fileCounterStr)
   {
     MessageType messageType;
