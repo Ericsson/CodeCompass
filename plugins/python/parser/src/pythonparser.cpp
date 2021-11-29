@@ -67,6 +67,8 @@ private:
     model::PythonEntityPtr getPythonEntity(const std::string& qualifiedName);
     model::PythonClassPtr getPythonClass(const std::string& qualifiedName);
     model::PythonVariablePtr getPythonVariable(const std::string& qualifiedName);
+    bool isAstNodePersisted(const model::PythonAstNodePtr& node) const;
+    bool isAstNodePersisted(const std::vector<model::PythonAstNodePtr>& nodes, const model::PythonAstNodePtr& node) const;
 
     std::vector<model::PythonAstNodePtr> _astNodes;
     std::vector<model::PythonVariablePtr> _variables;
@@ -205,7 +207,7 @@ void Persistence::persistVariable(boost::python::object pyVariable)
 
         varAstNode->id = model::createIdentifier(*varAstNode);
 
-        if(std::find(_astNodes.begin(), _astNodes.end(), varAstNode) == _astNodes.end()){
+        if(isAstNodePersisted(varAstNode)){
             return;
         }
 
@@ -245,6 +247,10 @@ void Persistence::persistVariable(boost::python::object pyVariable)
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
+
+            if(isAstNodePersisted(_variableUsages[variable->id], usageAstNode)) {
+                continue;
+            }
 
             _variableUsages[variable->id].push_back(usageAstNode);
         }
@@ -292,7 +298,7 @@ void Persistence::persistFunction(boost::python::object pyFunction)
 
         funcAstNode->id = model::createIdentifier(*funcAstNode);
 
-        if(std::find(_astNodes.begin(), _astNodes.end(), funcAstNode) == _astNodes.end()){
+        if(isAstNodePersisted(funcAstNode)){
             return;
         }
 
@@ -358,6 +364,10 @@ void Persistence::persistFunction(boost::python::object pyFunction)
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
 
+            if(isAstNodePersisted(_functionUsages[function->id], usageAstNode)) {
+                continue;
+            }
+
             _functionUsages[function->id].push_back(usageAstNode);
         }
     } catch(std::exception e){
@@ -386,7 +396,7 @@ void Persistence::persistPreprocessedClass(boost::python::object pyClass)
 
         classAstNode->id = model::createIdentifier(*classAstNode);
 
-        if(std::find(_astNodes.begin(), _astNodes.end(), classAstNode) == _astNodes.end()){
+        if(isAstNodePersisted(classAstNode)){
             return;
         }
 
@@ -429,6 +439,7 @@ void Persistence::persistClass(boost::python::object pyClass)
 
         if (cl == nullptr){
             std::cout << "cl is none" << std::endl;
+            return;
         }
 
         model::PythonDocumentationPtr documentation(new model::PythonDocumentation);
@@ -452,6 +463,10 @@ void Persistence::persistClass(boost::python::object pyClass)
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
+
+            if(isAstNodePersisted(_classUsages[cl->id], usageAstNode)) {
+                continue;
+            }
 
             _classUsages[cl->id].push_back(usageAstNode);
         }
@@ -483,6 +498,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             model::PythonEntityPtr method = getPythonEntity(qualifiedName);
             if(method == nullptr){
                 std::cout << "method is none" << std::endl;
+                continue;
             }
             classMember->astNodeId = method->astNodeId;
             classMember->memberId = method->id;
@@ -510,6 +526,10 @@ void Persistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
+                if(isAstNodePersisted(_funcUsages, usageAstNode)) {
+                    continue;
+                }
+
                 _funcUsages.push_back(usageAstNode);
             }
         }
@@ -520,6 +540,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             model::PythonEntityPtr method = getPythonEntity(qualifiedName);
             if(method == nullptr){
                 std::cout << "static method is none" << std::endl;
+                continue;
             }
             classMember->astNodeId = method->astNodeId;
             classMember->memberId = method->id;
@@ -547,6 +568,10 @@ void Persistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
+                if(isAstNodePersisted(_funcUsages, usageAstNode)) {
+                    continue;
+                }
+
                 _funcUsages.push_back(usageAstNode);
             }
         }
@@ -560,6 +585,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             model::PythonEntityPtr attr = getPythonEntity(qualifiedName);
             if(attr == nullptr){
                 std::cout << "attr is none" << std::endl;
+                continue;
             }
             classMember->astNodeId = attr->astNodeId;
             classMember->memberId = attr->id;
@@ -587,6 +613,10 @@ void Persistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
+                if(isAstNodePersisted(_varUsages, usageAstNode)) {
+                    continue;
+                }
+
                 _varUsages.push_back(usageAstNode);
             }
         }
@@ -597,6 +627,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             model::PythonEntityPtr attr = getPythonEntity(qualifiedName);
             if(attr == nullptr){
                 std::cout << "static attr is none" << std::endl;
+                continue;
             }
             classMember->astNodeId = attr->astNodeId;
             classMember->memberId = attr->id;
@@ -624,6 +655,10 @@ void Persistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
+                if(isAstNodePersisted(_varUsages, usageAstNode)) {
+                    continue;
+                }
+
                 _varUsages.push_back(usageAstNode);
             }
         }
@@ -634,6 +669,7 @@ void Persistence::persistClass(boost::python::object pyClass)
             model::PythonEntityPtr inner = getPythonEntity(qualifiedName);
             if(inner == nullptr){
                 std::cout << "inner class is none" << std::endl;
+                continue;
             }
             classMember->astNodeId = inner->astNodeId;
             classMember->memberId = inner->id;
@@ -642,27 +678,6 @@ void Persistence::persistClass(boost::python::object pyClass)
             classMember->staticMember = false;
 
             _members.push_back(classMember);
-
-            boost::python::list _usages = boost::python::extract<boost::python::list>(classes[i].attr("usages"));
-            std::vector<model::PythonAstNodePtr>& _clUsages = _classUsages[cl->id];
-            for(int j = 0; j<boost::python::len(_usages); ++j){
-                boost::optional<model::FileLoc> _fl = createFileLocFromPythonFilePosition(_usages[j].attr("file_position"));
-                if(_fl == boost::none ||
-                   std::find_if(_clUsages.begin(), _clUsages.end(), [&](const auto& p){
-                       return p->location.file == _fl.get().file && p->location.range == _fl.get().range; }) != _clUsages.end())
-                {
-                    continue;
-                }
-                model::PythonAstNodePtr usageAstNode(new model::PythonAstNode);
-                usageAstNode->location = _fl.get();
-                usageAstNode->qualifiedName = qualifiedName;
-                usageAstNode->symbolType = model::PythonAstNode::SymbolType::Class;
-                usageAstNode->astType = model::PythonAstNode::AstType::Usage;
-
-                usageAstNode->id = model::createIdentifier(*usageAstNode);
-
-                _clUsages.push_back(usageAstNode);
-            }
         }
     } catch(std::exception e){
         std::cout << "Class exception:" << e.what() << std::endl;
@@ -703,7 +718,7 @@ void Persistence::persistImport(boost::python::object pyImport)
 
             moduleAstNode->id = model::createIdentifier(*moduleAstNode);
 
-            if(std::find(_astNodes.begin(), _astNodes.end(), moduleAstNode) == _astNodes.end()){
+            if(isAstNodePersisted(moduleAstNode)){
                 continue;
             }
 
@@ -738,7 +753,7 @@ void Persistence::persistImport(boost::python::object pyImport)
 
             moduleAstNode->id = model::createIdentifier(*moduleAstNode);
 
-            if(std::find(_astNodes.begin(), _astNodes.end(), moduleAstNode) == _astNodes.end()){
+            if(isAstNodePersisted(moduleAstNode)){
                 continue;
             }
 
@@ -748,6 +763,9 @@ void Persistence::persistImport(boost::python::object pyImport)
                 moduleImport->importer = file;
                 moduleImport->imported = moduleFile;
                 auto symb = getPythonEntity(boost::python::extract<std::string>(import[1][j]));
+                if(symb == nullptr){
+                    continue;
+                }
                 moduleImport->importedSymbol = symb->id;
 
                 _imports.push_back(moduleImport);
@@ -840,6 +858,28 @@ model::PythonClassPtr Persistence::getPythonClass(const std::string& qualifiedNa
     }
 
     return nullptr;
+}
+
+bool Persistence::isAstNodePersisted(const model::PythonAstNodePtr& node) const
+{
+    for(auto it : _astNodes){
+        if(*it == *node){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Persistence::isAstNodePersisted(const std::vector<model::PythonAstNodePtr>& nodes, const model::PythonAstNodePtr& node) const
+{
+    for(auto it : nodes){
+        if(*it == *node){
+            return true;
+        }
+    }
+
+    return false;
 }
 
 typedef boost::shared_ptr<Persistence> PersistencePtr;

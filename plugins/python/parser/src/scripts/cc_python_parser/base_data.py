@@ -59,6 +59,7 @@ T = TypeVar('T', bound=Declaration)
 class ImportedDeclaration(Generic[T]):
     def __init__(self, qualified_name: str, declaration: T, module, pos: FilePosition):
         self.qualified_name = qualified_name
+        self.imported_declaration = declaration
         self.module = module
         self.position = pos
 
