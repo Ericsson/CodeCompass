@@ -110,6 +110,13 @@ public class AstVisitor extends ASTVisitor {
   }
 
   @Override
+  public boolean visit(Initializer node) {
+    pm.persistInitializer(node);
+
+    return super.visit(node);
+  }
+
+  @Override
   public boolean visit(LambdaExpression node) {
     pm.persistLambdaExpression(node);
 

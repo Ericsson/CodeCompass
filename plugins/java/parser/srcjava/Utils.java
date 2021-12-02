@@ -9,10 +9,12 @@ import cc.service.core.Range;
 import model.*;
 import model.enums.*;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.*;
 
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -20,6 +22,25 @@ import java.util.stream.Collectors;
 import static logger.Logger.LOGGER;
 
 public abstract class Utils {
+  public static String getJavaVersion() {
+    String javaCoreVersion = System.getProperty("java.version");
+    int dot1 = javaCoreVersion.indexOf(".");
+
+    if (javaCoreVersion.startsWith("1.")) {
+      int dot2 = javaCoreVersion.indexOf(".", dot1 + 1);
+      return javaCoreVersion.substring(0, dot2);
+    }
+
+    return javaCoreVersion.substring(0, dot1);
+  }
+
+  public static Hashtable<String, String> getJavaCoreOptions() {
+    Hashtable<String, String> options = JavaCore.getOptions();
+    JavaCore.setComplianceOptions(getJavaVersion(), options);
+
+    return options;
+  }
+
   public static ParseResult getParseResult(
     CompilationUnit cu, ArgParser argParser, String fileCounterStr)
   {
@@ -161,8 +182,15 @@ public abstract class Utils {
   }
 
   public static <T extends JavaEntity> void setJavaEntityFields(
+    T javaEntity, long astNodeId, long entityHash)
+  {
+    javaEntity.setAstNodeId(astNodeId);
+    javaEntity.setEntityHash(entityHash);
+  }
+
+  public static <T extends JavaEntity> void setJavaEntityFields(
     T javaEntity, long astNodeId,
-    long entityHash,String name, String qualifiedName)
+    long entityHash, String name, String qualifiedName)
   {
     javaEntity.setAstNodeId(astNodeId);
     javaEntity.setEntityHash(entityHash);
@@ -175,6 +203,17 @@ public abstract class Utils {
   {
     javaInheritance.setBase(baseEntityHash);
     javaInheritance.setDerived(derivedEntityHash);
+  }
+
+  public static void setJavaInitializerFields(
+    JavaInitializer javaInitializer, int modifiers, int typeHash)
+  {
+    javaInitializer.setKind(
+      Flags.isStatic(modifiers) ?
+        InitializerKind.STATIC :
+        InitializerKind.INSTANCE
+    );
+    javaInitializer.setTypeHash(typeHash);
   }
 
   public static void setJavaMemberTypeFields(
@@ -205,10 +244,16 @@ public abstract class Utils {
     javaAstNode.setVisibleInSourceCode(visibleInSourceCode);
   }
 
-  public static String getMethodHashStr(
-    ITypeBinding classBinding, IMethodBinding methodBinding)
+  public static String getInitializerHashStr(
+    String className, int startPosition)
   {
-    String className = getQualifiedClassName(classBinding);
+    return String.join(" ", className, String.valueOf(startPosition));
+  }
+
+  public static String getMethodHashStr(
+    ITypeBinding declaringTypeBinding, IMethodBinding methodBinding)
+  {
+    String className = getQualifiedTypeName(declaringTypeBinding);
     String type = methodBinding.getReturnType().getQualifiedName();
     String name = methodBinding.getName();
     String parameters =
@@ -218,10 +263,11 @@ public abstract class Utils {
   }
 
   public static String getMethodHashStr(
-    ASTNode node, ITypeBinding classBinding, IMethodBinding methodBinding)
+    ASTNode node, ITypeBinding declaringTypeBinding,
+    IMethodBinding methodBinding)
   {
     ASTNode declaringNode = findDeclaringNode(node);
-    String className = getQualifiedClassName(classBinding);
+    String className = getQualifiedTypeName(declaringTypeBinding);
     String type = methodBinding.getReturnType().getQualifiedName();
     String name = methodBinding.getName();
     String parameters =
@@ -277,19 +323,18 @@ public abstract class Utils {
     return sb.toString();
   }
 
-  public static String getQualifiedClassName(ITypeBinding classBinding) {
-    return classBinding.getQualifiedName() +
-      typeParametersArrayToString(classBinding.getTypeParameters());
+  public static String getQualifiedTypeName(ITypeBinding typeBinding) {
+    return typeBinding.getQualifiedName() +
+      typeParametersArrayToString(typeBinding.getTypeParameters());
   }
 
   public static ASTNode findDeclaringNode(ASTNode node) {
     while (node != null) {
-      if (node instanceof LambdaExpression) {
-        return node;
-      }
-      else if (
+      if (
+        node instanceof LambdaExpression ||
         node instanceof MethodDeclaration ||
-        node instanceof TypeDeclaration)
+        node instanceof AbstractTypeDeclaration ||
+        node instanceof Initializer)
       {
         return node;
       }

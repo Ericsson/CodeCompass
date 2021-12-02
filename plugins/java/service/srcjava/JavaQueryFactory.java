@@ -616,6 +616,9 @@ public abstract class JavaQueryFactory {
       } else if (javaEntity instanceof JavaMethod) {
         return queryJavaAstNodes(
           ((JavaMethod) javaEntity).getJavaMetVarLocals());
+      } else if (javaEntity instanceof JavaInitializer) {
+        return queryJavaAstNodes(
+          ((JavaInitializer) javaEntity).getJavaInitVarLocals());
       }
     } catch (NoResultException ex) {
       LOGGER.log(
@@ -701,6 +704,25 @@ public abstract class JavaQueryFactory {
 
     return javaInheritances.stream()
       .flatMap(i -> queryDefinitionNodes(i.getDerived()).stream())
+      .collect(Collectors.toList());
+  }
+
+  public static List<JavaAstNode> queryJavaInitializerNodes(
+    JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaInitializer> cr = cb.createQuery(JavaInitializer.class);
+    Root<JavaInitializer> root = cr.from(JavaInitializer.class);
+
+    cr
+      .select(root)
+      .where(
+        cb.equal(root.get("typeHash"), javaAstNode.getEntityHash())
+      );
+
+    List<JavaInitializer> javaInitializers = em.createQuery(cr).getResultList();
+
+    return javaInitializers.stream()
+      .flatMap(i -> queryDefinitionNodes(i.getEntityHash()).stream())
       .collect(Collectors.toList());
   }
 
@@ -1013,12 +1035,50 @@ public abstract class JavaQueryFactory {
       );
     }
 
-    return  javaEnumConstants;
+    return javaEnumConstants;
   }
 
   public static List<JavaEnumConstant> queryJavaEnumConstants(
     JavaAstNode javaAstNode, CriteriaQuery<JavaEnumConstant> cr,
     Root<JavaEnumConstant> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("entityHash"), javaAstNode.getEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
+  public static List<JavaInitializer> queryJavaInitializers(
+    JavaAstNode javaAstNode)
+  {
+    CriteriaQuery<JavaInitializer> cr =
+      cb.createQuery(JavaInitializer.class);
+    Root<JavaInitializer> root = cr.from(JavaInitializer.class);
+
+    cr
+      .select(root)
+      .where(cb.equal(root.get("entityHash"), javaAstNode.getEntityHash()));
+
+    List<JavaInitializer> javaInitializers =
+      em.createQuery(cr).getResultList();
+
+    if (javaInitializers.isEmpty()) {
+      LOGGER.log(
+        Level.WARNING,
+        "Database query result was not expected to be empty. " +
+          getCurrentPath() + ", line #" + getCurrentLineNumber()
+      );
+    }
+
+    return javaInitializers;
+  }
+
+  public static List<JavaInitializer> queryJavaInitializers(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaInitializer> cr,
+    Root<JavaInitializer> root, Predicate customPredicate)
   {
     Predicate entityHashPredicate = cb.equal(
       root.get("entityHash"), javaAstNode.getEntityHash()

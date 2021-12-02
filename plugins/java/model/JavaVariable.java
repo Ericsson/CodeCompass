@@ -21,6 +21,9 @@ public class JavaVariable extends JavaTypedEntity {
   @ManyToMany(mappedBy = "javaConVarLocals")
   Set<JavaConstructor> javaConstructorLocals = new HashSet<>();
 
+  @ManyToMany(mappedBy = "javaInitVarLocals")
+  Set<JavaInitializer> javaInitializerLocals = new HashSet<>();
+
 
   // Getters and setters
 
@@ -45,8 +48,8 @@ public class JavaVariable extends JavaTypedEntity {
   }
 
   public void setJavaConstructorParams(
-          Set<JavaConstructor> javaConstructorParams
-  ) {
+    Set<JavaConstructor> javaConstructorParams)
+  {
     this.javaConstructorParams = javaConstructorParams;
   }
 
@@ -55,8 +58,18 @@ public class JavaVariable extends JavaTypedEntity {
   }
 
   public void setJavaConstructorLocals(
-          Set<JavaConstructor> javaConstructorLocals
-  ) {
+    Set<JavaConstructor> javaConstructorLocals)
+  {
     this.javaConstructorLocals = javaConstructorLocals;
+  }
+
+  public Set<JavaInitializer> getJavaInitializerLocals() {
+    return javaInitializerLocals;
+  }
+
+  public void setJavaInitializerLocals(
+    Set<JavaInitializer> javaInitializerLocals)
+  {
+    this.javaInitializerLocals = javaInitializerLocals;
   }
 }

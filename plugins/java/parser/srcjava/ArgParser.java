@@ -86,6 +86,8 @@ public class ArgParser {
           } else {
             throw new IllegalArgumentException("Command has invalid syntax");
           }
+        } else {
+          argIt.next();
         }
       } else if (nextArg.equals(filepath)) {
         filePathCounter += 1;

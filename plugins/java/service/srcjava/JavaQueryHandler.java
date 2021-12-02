@@ -164,6 +164,17 @@ public class JavaQueryHandler implements JavaService.Iface {
         }
         break;
       }
+      case INITIALIZER: {
+        List<JavaInitializer> javaInitializers =
+          queryJavaInitializers(javaAstNode);
+
+        if (!javaInitializers.isEmpty()) {
+          JavaInitializer javaInitializer = javaInitializers.get(0);
+
+          properties.put("Kind", javaInitializer.getKind().getName());
+        }
+        break;
+      }
     }
 
     return properties;
@@ -319,6 +330,8 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
+          "Initializer", ReferenceType.INITIALIZER.ordinal());
+        referenceTypes.put(
           "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
         referenceTypes.put(
           "Data member", ReferenceType.DATA_MEMBER.ordinal());
@@ -339,6 +352,9 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Method", ReferenceType.METHOD.ordinal());
         break;
+      case INITIALIZER:
+        referenceTypes.put(
+          "Local variables", ReferenceType.LOCAL_VAR.ordinal());
     }
 
     return referenceTypes;
@@ -390,6 +406,8 @@ public class JavaQueryHandler implements JavaService.Iface {
         return queryInheritFromNodes(javaAstNode).size();
       case INHERIT_BY:
         return queryInheritedByNodes(javaAstNode).size();
+      case INITIALIZER:
+        return queryJavaInitializerNodes(javaAstNode).size();
       case CONSTRUCTOR:
         return queryJavaMemberTypeDefinitionNodes(
           javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
@@ -473,6 +491,9 @@ public class JavaQueryHandler implements JavaService.Iface {
         break;
       case INHERIT_BY:
         javaAstNodes = queryInheritedByNodes(javaAstNode);
+        break;
+      case INITIALIZER:
+        javaAstNodes = queryJavaInitializerNodes(javaAstNode);
         break;
       case CONSTRUCTOR:
         javaAstNodes =

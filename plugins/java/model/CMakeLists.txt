@@ -5,6 +5,7 @@ set(CMAKE_JAVA_INCLUDE_PATH
 add_jar(javamodel
   SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/AstType.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/enums/InitializerKind.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/MemberTypeKind.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/RelationKind.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/SymbolType.java
@@ -20,6 +21,7 @@ add_jar(javamodel
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaMethod.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaImport.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaInheritance.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/JavaInitializer.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaMemberType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaRecord.java
   ${CMAKE_CURRENT_SOURCE_DIR}/JavaRelation.java

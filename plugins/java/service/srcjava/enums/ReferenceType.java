@@ -53,6 +53,8 @@ public enum ReferenceType {
 
   DATA_MEMBER, /*!< Data members of a class. */
 
+  INITIALIZER, /*!< Initializers of a class. */
+
   CONSTRUCTOR, /*!< Constructors of a class. */
 
   METHOD, /*!< Members of a class. */

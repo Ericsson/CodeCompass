@@ -7,6 +7,7 @@ public enum SymbolType {
   ENUM("Enum", "enum"),
   ENUM_CONSTANT("Enum constant", "enum-constant"),
   TYPE("Type", "type"),
+  INITIALIZER("Initializer", "initializer"),
   FILE("File", "file");
 
   private final String name;

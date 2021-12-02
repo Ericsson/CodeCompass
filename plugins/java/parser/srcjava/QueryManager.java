@@ -1,9 +1,6 @@
 package parser.srcjava;
 
-import model.JavaAstNode;
-import model.JavaConstructor;
-import model.JavaEntity;
-import model.JavaMethod;
+import model.*;
 import model.enums.AstType;
 
 import javax.persistence.EntityManager;
@@ -84,6 +81,13 @@ public class QueryManager {
       .where(cb.equal(root.get("astNodeId"), astNodeId));
 
     return em.createQuery(cr).getSingleResult();
+  }
+
+  public JavaInitializer queryJavaInitializer(long javaAstNodeId) {
+    CriteriaQuery<JavaInitializer> cr = cb.createQuery(JavaInitializer.class);
+    Root<JavaInitializer> root = cr.from(JavaInitializer.class);
+
+    return queryJavaEntityByAstNodeId(cr, root, javaAstNodeId);
   }
 
   public JavaConstructor queryJavaConstructor(long javaAstNodeId) {
