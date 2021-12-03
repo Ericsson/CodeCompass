@@ -123,12 +123,12 @@ public class JavaQueryHandler implements JavaService.Iface {
         if (!javaRecords.isEmpty()) {
           JavaRecord javaRecord = javaRecords.get(0);
 
-          properties.put(
-            "Abstract type",
+          properties.put("Abstract type",
             Boolean.toString(javaRecord.isAbstract()));
-          properties.put(
-            "Final type",
+          properties.put("Final type",
             Boolean.toString(javaRecord.isFinal()));
+          properties.put("Static type",
+            Boolean.toString(javaRecord.isStatic()));
           properties.put("Name", javaRecord.getName());
           properties.put("Qualified name", javaRecord.getQualifiedName());
 
@@ -330,6 +330,8 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
+          "Inner class", ReferenceType.INNER_CLASS.ordinal());
+        referenceTypes.put(
           "Initializer", ReferenceType.INITIALIZER.ordinal());
         referenceTypes.put(
           "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
@@ -406,6 +408,9 @@ public class JavaQueryHandler implements JavaService.Iface {
         return queryInheritFromNodes(javaAstNode).size();
       case INHERIT_BY:
         return queryInheritedByNodes(javaAstNode).size();
+      case INNER_CLASS:
+        return queryJavaMemberTypeDefinitionNodes(
+          javaAstNode, MemberTypeKind.TYPE).size();
       case INITIALIZER:
         return queryJavaInitializerNodes(javaAstNode).size();
       case CONSTRUCTOR:
@@ -491,6 +496,11 @@ public class JavaQueryHandler implements JavaService.Iface {
         break;
       case INHERIT_BY:
         javaAstNodes = queryInheritedByNodes(javaAstNode);
+        break;
+      case INNER_CLASS:
+        javaAstNodes =
+          queryJavaMemberTypeDefinitionNodes(
+            javaAstNode, MemberTypeKind.TYPE);
         break;
       case INITIALIZER:
         javaAstNodes = queryJavaInitializerNodes(javaAstNode);

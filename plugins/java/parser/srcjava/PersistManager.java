@@ -521,6 +521,24 @@ public class PersistManager {
     String qualifiedName = getQualifiedTypeName(node.resolveBinding());
     int modifiers = node.getModifiers();
     int entityHash = qualifiedName.hashCode();
+    int mainTypeHash;
+
+    if (node.isMemberTypeDeclaration()) {
+      ASTNode mainType = node.getParent();
+
+      if (mainType instanceof AbstractTypeDeclaration) {
+        String mainTypeQualifiedName =
+          getQualifiedTypeName(
+            ((AbstractTypeDeclaration) mainType).resolveBinding()
+          );
+        mainTypeHash = mainTypeQualifiedName.hashCode();
+      } else {
+        // TODO: Anonymous class declarations
+        mainTypeHash = 0;
+      }
+    } else {
+      mainTypeHash = entityHash;
+    }
 
     setJavaRecordFields(javaRecord, modifiers);
 
@@ -529,7 +547,7 @@ public class PersistManager {
         node, SymbolType.TYPE, AstType.DEFINITION, entityHash);
 
     persistJavaMemberType(
-      entityHash, entityHash, MemberTypeKind.TYPE, modifiers, javaAstNode);
+      mainTypeHash, entityHash, MemberTypeKind.TYPE, modifiers, javaAstNode);
 
     setJavaEntityFields(
       javaRecord, javaAstNode.getId(), entityHash,

@@ -170,6 +170,7 @@ public abstract class Utils {
   public static void setJavaRecordFields(JavaRecord javaRecord, int modifiers) {
     javaRecord.setAbstract(Flags.isAbstract(modifiers));
     javaRecord.setFinal(Flags.isFinal(modifiers));
+    javaRecord.setStatic(Flags.isStatic(modifiers));
   }
 
   public static <T extends JavaTypedEntity> void setJavaTypedEntityFields(

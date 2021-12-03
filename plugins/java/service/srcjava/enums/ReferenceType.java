@@ -18,8 +18,6 @@ public enum ReferenceType {
     definition of the AST node is not unique then it returns the callees of
     one of them. */
 
-  CALLS_OF_THIS, /*!< Get calls of a function. */
-
   CALLEE, /*!< Get called functions definitions. WARNING: If the definition of
     the AST node is not unique then it returns the callees of one of them. */
 
@@ -52,6 +50,8 @@ public enum ReferenceType {
   INHERIT_BY, /*!< Types by which the queried type is inherited. */
 
   DATA_MEMBER, /*!< Data members of a class. */
+
+  INNER_CLASS, /*!< Inner classes of a class. */
 
   INITIALIZER, /*!< Initializers of a class. */
 

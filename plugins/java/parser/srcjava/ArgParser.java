@@ -24,6 +24,7 @@ public class ArgParser {
   private final ArrayList<String> sourcepath;
   private final String filepath;
   private final String filename;
+  private String encoding;
   private String bytecodePath;
   private List<String> bytecodesPaths;
 
@@ -33,6 +34,7 @@ public class ArgParser {
     this.sourcepath = new ArrayList<>();
     this.filepath = compileCommand.getFile();
     this.filename = Paths.get(this.filepath).getFileName().toString();
+    this.encoding = "utf8";
     this.bytecodePath =
       this.filepath.substring(0, this.filepath.lastIndexOf('/'));
 
@@ -86,6 +88,8 @@ public class ArgParser {
           } else {
             throw new IllegalArgumentException("Command has invalid syntax");
           }
+        } else if (flagName.equals("encoding")) {
+          encoding = argIt.next();
         } else {
           argIt.next();
         }
@@ -157,6 +161,10 @@ public class ArgParser {
 
   public String getFilename() {
     return filename;
+  }
+
+  public String getEncoding() {
+    return encoding;
   }
 
   public String getBytecodePath() {

@@ -13,6 +13,9 @@ public class JavaRecord extends JavaEntity {
   @Column(name = "\"isFinal\"")
   private boolean isFinal;
 
+  @Column(name = "\"isStatic\"")
+  private boolean isStatic;
+
   // Getters and setters
 
   public boolean isAbstract() {
@@ -29,5 +32,13 @@ public class JavaRecord extends JavaEntity {
 
   public void setFinal(boolean aFinal) {
     isFinal = aFinal;
+  }
+
+  public boolean isStatic() {
+    return isStatic;
+  }
+
+  public void setStatic(boolean aStatic) {
+    isStatic = aStatic;
   }
 }

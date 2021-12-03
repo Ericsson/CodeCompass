@@ -1095,7 +1095,10 @@ public abstract class JavaQueryFactory {
     CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
     Root<JavaMemberType> root = cr.from(JavaMemberType.class);
     Predicate predicate =
-      cb.equal(root.get("kind"), memberTypeKind);
+      cb.and(
+        cb.equal(root.get("kind"), memberTypeKind),
+        cb.notEqual(root.get("memberTypeHash"), root.get("typeHash"))
+      );
 
     return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
   }
