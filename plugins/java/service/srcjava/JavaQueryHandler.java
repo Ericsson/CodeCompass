@@ -410,18 +410,18 @@ public class JavaQueryHandler implements JavaService.Iface {
         return queryInheritedByNodes(javaAstNode).size();
       case INNER_CLASS:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.TYPE).size();
+          javaAstNode, MemberTypeKind.TYPE, true).size();
       case INITIALIZER:
         return queryJavaInitializerNodes(javaAstNode).size();
       case CONSTRUCTOR:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.CONSTRUCTOR).size();
+          javaAstNode, MemberTypeKind.CONSTRUCTOR, false).size();
       case DATA_MEMBER:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.FIELD).size();
+          javaAstNode, MemberTypeKind.FIELD, false).size();
       case METHOD:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.METHOD).size();
+          javaAstNode, MemberTypeKind.METHOD, false).size();
       case ENUM_CONSTANTS:
         return queryJavaEnumConstantNodes(javaAstNode).size();
     }
@@ -500,7 +500,7 @@ public class JavaQueryHandler implements JavaService.Iface {
       case INNER_CLASS:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.TYPE);
+            javaAstNode, MemberTypeKind.TYPE, true);
         break;
       case INITIALIZER:
         javaAstNodes = queryJavaInitializerNodes(javaAstNode);
@@ -508,17 +508,17 @@ public class JavaQueryHandler implements JavaService.Iface {
       case CONSTRUCTOR:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.CONSTRUCTOR);
+            javaAstNode, MemberTypeKind.CONSTRUCTOR, false);
         break;
       case DATA_MEMBER:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.FIELD);
+            javaAstNode, MemberTypeKind.FIELD, false);
         break;
       case METHOD:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.METHOD);
+            javaAstNode, MemberTypeKind.METHOD, false);
         break;
       case ENUM_CONSTANTS:
         javaAstNodes = queryJavaEnumConstantNodes(javaAstNode);

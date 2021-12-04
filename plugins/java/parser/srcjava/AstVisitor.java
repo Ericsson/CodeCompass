@@ -179,7 +179,7 @@ public class AstVisitor extends ASTVisitor {
 
       if (variableBinding.isEnumConstant()) {
         pm.persistEnumConstantUsage(node, variableBinding);
-      } else {
+      } else if (variableBinding.getDeclaringClass() != null){
         pm.persistVariableUsage(node, variableBinding);
       }
     }

@@ -2,6 +2,10 @@ set(CMAKE_JAVA_INCLUDE_PATH
   ${PROJECT_SOURCE_DIR}/lib/java/*
   ${PLUGIN_DIR}/lib/java/*)
 
+set(CMAKE_JAVA_COMPILE_FLAGS
+  ${CMAKE_JAVA_COMPILE_FLAGS}
+    -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}:${PLUGIN_DIR})
+
 add_jar(javaservicejava
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/DiagramType.java
   ${CMAKE_CURRENT_SOURCE_DIR}/enums/FileReferenceType.java
