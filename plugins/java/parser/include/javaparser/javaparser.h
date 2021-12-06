@@ -1,6 +1,7 @@
 #ifndef CC_PARSER_JAVAPARSER_H
 #define CC_PARSER_JAVAPARSER_H
 
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -30,6 +31,7 @@ namespace java
 {
 
 namespace core = cc::service::core;
+namespace ba = boost::algorithm;
 namespace fs = boost::filesystem;
 namespace pr = boost::process;
 namespace pt = boost::property_tree;
@@ -52,6 +54,11 @@ public:
     const std::string& fileCounterStr_) override
   {
     _service -> parseFile(return_, compileCommand_, fileId_, fileCounterStr_);
+  }
+
+  void decompileClass(
+    std::string& return_, const std::string& path_) override {
+    _service -> decompileClass(return_, path_);
   }
 
   /**
@@ -89,8 +96,8 @@ public:
           server_started = true;
         }
 
-        LOG(info) << "[javaparser] Java worker (" <<
-          worker_num << ") connected!";
+        LOG(info) << "[javaparser] Worker (" <<
+          worker_num << ") connected to the Java server!";
       } catch (TransportException& ex) {
         chrono::steady_clock::time_point current = chrono::steady_clock::now();
         float elapsed_time =
@@ -112,17 +119,29 @@ public:
     _service.reset(new JavaParserServiceClient(protocol));
   }
 
-public:
-  /**
- * Handler's state
- */
-  bool is_free = true;
+  void reserve() {
+    reserved = true;
+  }
+
+  void setFree() {
+    reserved = false;
+  }
+
+  bool isFree() {
+    return !reserved;
+  }
+
 
 private:
   /**
    * Service interface for IPC communication.
    */
   std::unique_ptr<JavaParserServiceIf> _service;
+
+  /**
+    * Handler's state
+    */
+  bool reserved = false;
 
   /**
    * Server's state.
@@ -150,39 +169,72 @@ private:
   struct ParseJob
   {
     /**
-     * The build command itself. This is given to CppParser::worker.
+     * The build command itself.
+     * This is given to a free worker in JavaParser::_javaServiceHandlers.
      */
-    std::reference_wrapper<const pt::ptree::value_type> command_tree;
+    const CompileCommand command;
 
     /**
      * The # of the build command in the compilation command database.
      */
     std::size_t index;
 
-    ParseJob(const pt::ptree::value_type& command_tree, std::size_t index)
-      : command_tree(command_tree), index(index)
+    ParseJob(const CompileCommand command, std::size_t index)
+      : command(command), index(index)
     {}
 
     ParseJob(const ParseJob&) = default;
   };
 
-  pr::child c;
-  const int threadNum = _ctx.options["jobs"].as<int>();
-  std::vector<std::shared_ptr<JavaParserServiceHandler>>
-    javaServiceHandlers;
-  fs::path _java_path;
+  /**
+ * A single Java class file's cc::util::JobQueueThreadPool job.
+ */
+  struct DecompileJob
+  {
+    /**
+     * The path to the Java class file.
+     * This is given to a free worker in JavaParser::_javaServiceHandlers.
+     */
+    const std::string path;
 
-  bool accept(const std::string& path_);
+    DecompileJob(const std::string& path) : path(path)
+    {}
+
+    DecompileJob(const DecompileJob&) = default;
+  };
+
+  fs::path _java_path;
+  fs::path _unzip_path;
+  pr::child _c;
+  std::unique_ptr<util::JobQueueThreadPool<ParseJob>> _parsePool;
+  int _numCompileCommands;
+  int _threadNum;
+  std::vector<std::shared_ptr<JavaParserServiceHandler>> _javaServiceHandlers;
+
+  bool acceptCompileCommands(const std::string& path_);
+
+  bool acceptJar(const std::string& path_);
+
+  bool acceptClass(const std::string& path_);
+
+  bool rejectInnerClass(const std::string& path_);
+
+  void startAndConnectToJavaProcess();
 
   void initializeWorkers();
 
-  std::shared_ptr<JavaParserServiceHandler>& findFreeWorker(int timeout_in_ms);
+  std::shared_ptr<JavaParserServiceHandler>& findFreeWorker(int timeout_in_ms_);
 
-  CompileCommand getCompileCommand(
+  CompileCommand getCompileCommandFromJson(
     const pt::ptree::value_type& command_tree_);
 
-  model::BuildActionPtr addBuildAction(
-    const CompileCommand& compile_command_);
+  CompileCommand getCompileCommandForDecompiledFile(
+    const std::string& filePath_, const std::string& classpath_,
+    const std::string& sourcepath_);
+
+  std::string getClasspathFromMetaInf(const fs::path& root);
+
+  model::BuildActionPtr addBuildAction(const CompileCommand& compile_command_);
 
   void addCompileCommand(
     const CmdArgs& cmd_args_,
@@ -192,6 +244,12 @@ private:
   model::File::ParseStatus addBuildLogs(
     const std::vector<core::BuildLog>& buildLogs_,
     const std::string& file_);
+
+  bool parseCompileCommands(const std::string& path_);
+
+  bool parseJar(const std::string& path_);
+
+  std::vector<CompileCommand> decompileJar(const std::string& path_);
 };
 
 } // java

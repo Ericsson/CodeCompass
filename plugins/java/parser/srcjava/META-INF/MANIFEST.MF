@@ -12,6 +12,8 @@ Class-Path: corethrift.java
             org.eclipse.equinox.preferences_3.7.500.v20190815-1535.jar
             org.eclipse.jdt.core_3.24.0.v20201123-0742.jar
             org.eclipse.osgi_3.15.0.v20190830-1434.jar
+            procyon-compilertools-0.5.36.jar
+            procyon-core-0.5.36.jar
             javalogger.jar
             javamodel.jar
             javaparserthrift.jar

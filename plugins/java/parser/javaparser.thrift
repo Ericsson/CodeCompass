@@ -37,9 +37,15 @@ exception JavaParseException
   1: string message
 }
 
+exception ClassDecompileException
+{
+  1: string message
+}
+
 service JavaParserService
 {
   ParseResult parseFile(
     1: CompileCommand compileCommand, 2: i64 fileId, 3: string fileCounterStr)
     throws (1: JavaBeforeParseException jbe, 2: JavaParseException jpe),
+  string decompileClass(1: string path) throws (1: ClassDecompileException cde)
 }

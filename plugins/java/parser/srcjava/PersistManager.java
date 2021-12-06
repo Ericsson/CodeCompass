@@ -2,7 +2,6 @@ package parser.srcjava;
 
 import model.*;
 import model.enums.*;
-import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.persistence.EntityManager;

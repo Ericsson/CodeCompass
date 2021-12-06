@@ -1,28 +1,29 @@
 package parser.srcjava;
 
 import cc.parser.java.*;
+import com.strobel.decompiler.Decompiler;
+import com.strobel.decompiler.DecompilerSettings;
+import com.strobel.decompiler.PlainTextOutput;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import static model.EMFactory.createEntityManager;
 import static parser.srcjava.Utils.*;
 
 public class JavaParser implements JavaParserService.Iface {
-  private static final String javaVersion;
+  private static final Hashtable<String, String> javaCoreOptions;
   private static final ThreadLocal<EntityManager> em;
   private static final ASTParser parser;
 
   static {
-    javaVersion = getJavaVersion();
+    javaCoreOptions = getJavaCoreOptions();
     em = ThreadLocal.withInitial(() ->
       createEntityManager(
         System.getProperty("rawDbContext"), true
@@ -49,11 +50,11 @@ public class JavaParser implements JavaParserService.Iface {
       String[] sourcepathEntries =
         argParser.getSourcepath().toArray(new String[0]);
       String[] encodings = new String[sourcepathEntries.length];
-      Arrays.fill(encodings, "UTF-8");
+      Arrays.fill(encodings, argParser.getEncoding());
 
       parser.setResolveBindings(true);
       parser.setBindingsRecovery(true);
-      parser.setCompilerOptions(getJavaCoreOptions());
+      parser.setCompilerOptions(javaCoreOptions);
       parser.setUnitName(argParser.getFilename());
       parser.setEnvironment(
         classpathEntries, sourcepathEntries,
@@ -69,32 +70,43 @@ public class JavaParser implements JavaParserService.Iface {
       return getParseResult(cu, argParser, fileCounterStr);
 
     } catch (IOException e) {
+      e.printStackTrace();
       JavaBeforeParseException ex = new JavaBeforeParseException();
       ex.message = e.getMessage();
       throw ex;
     } catch (Exception e) {
+      e.printStackTrace();
       JavaParseException ex = new JavaParseException();
       ex.message = e.getMessage();
       throw ex;
     }
   }
 
-  private static String getJavaVersion() {
-    String javaCoreVersion = System.getProperty("java.version");
-    int dot1 = javaCoreVersion.indexOf(".");
+  @Override
+  public synchronized String decompileClass(String path) throws TException {
+    String javaFilePath =
+      String.join(
+        ".", path.substring(0, path.lastIndexOf('.')),
+        "java"
+      );
 
-    if (javaCoreVersion.startsWith("1.")) {
-      int dot2 = javaCoreVersion.indexOf(".", dot1 + 1);
-      return javaCoreVersion.substring(0, dot2);
+    try (
+      FileOutputStream stream =
+        new FileOutputStream(javaFilePath);
+      OutputStreamWriter writer = new OutputStreamWriter(stream))
+    {
+      DecompilerSettings settings = new DecompilerSettings();
+
+      settings.setForceExplicitImports(true);
+
+      Decompiler.decompile(path, new PlainTextOutput(writer), settings);
+    }
+    catch (Exception e) {
+      ClassDecompileException ex = new ClassDecompileException();
+      ex.message = e.getMessage();
+      throw ex;
     }
 
-    return javaCoreVersion.substring(0, dot1);
-  }
-
-  private Hashtable<String, String> getJavaCoreOptions() {
-    Hashtable<String, String> options = JavaCore.getOptions();
-    JavaCore.setComplianceOptions(javaVersion, options);
-
-    return options;
+    return javaFilePath;
   }
 }
