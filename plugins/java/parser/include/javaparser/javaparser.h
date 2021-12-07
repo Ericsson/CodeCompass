@@ -2,6 +2,7 @@
 #define CC_PARSER_JAVAPARSER_H
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -232,14 +233,15 @@ private:
     const std::string& filePath_, const std::string& classpath_,
     const std::string& sourcepath_);
 
-  std::string getClasspathFromMetaInf(const fs::path& root);
+  std::string getClasspathFromMetaInf(
+    const fs::path& root_, const fs::path& originalDir_);
 
   model::BuildActionPtr addBuildAction(const CompileCommand& compile_command_);
 
   void addCompileCommand(
     const CmdArgs& cmd_args_,
     model::BuildActionPtr buildAction_,
-    model::File::ParseStatus parseStatus_);
+    model::File::ParseStatus& parseStatus_);
 
   model::File::ParseStatus addBuildLogs(
     const std::vector<core::BuildLog>& buildLogs_,

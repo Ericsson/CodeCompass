@@ -74,25 +74,26 @@ JavaParser::JavaParser(ParserContext& ctx_) : AbstractParser(ctx_) {
             parseResult, command, filePtr->id, file_counter_str);
           parseStatus =
             addBuildLogs(parseResult.buildLogs, command.file);
-        }  catch (JavaBeforeParseException& ex) {
+
+          if (parseResult.errorDueParsing) {
+            LOG(warning) <<
+              file_counter_str << " " << "Parsing " <<
+              command.file << " had one or more errors during parsing";
+
+            if (parseStatus == model::File::ParseStatus::PSFullyParsed) {
+              parseStatus = model::File::ParseStatus::PSPartiallyParsed;
+            }
+          }
+
+          addCompileCommand(
+            parseResult.cmdArgs, buildAction, parseStatus);
+
+        } catch (JavaBeforeParseException& ex) {
           LOG(warning) <<
             file_counter_str << " " << "Parsing " <<
             command.file << " has been failed before the start";
           LOG(warning) << ex.message;
-
-          parseStatus = model::File::PSNone;
-        } catch (JavaParseException& ex) {
-          LOG(warning) <<
-            file_counter_str << " " << "Parsing " <<
-            command.file << " has been failed during parsing";
-          LOG(warning) << ex.message;
-
-          parseStatus = model::File::PSPartiallyParsed;
         }
-
-
-        addCompileCommand(
-          parseResult.cmdArgs, buildAction, parseStatus);
 
         serviceHandler->setFree();
       });
@@ -204,37 +205,51 @@ CompileCommand JavaParser::getCompileCommandForDecompiledFile(
   return compile_command;
 }
 
-std::string JavaParser::getClasspathFromMetaInf(const fs::path& root) {
+std::string JavaParser::getClasspathFromMetaInf(
+  const fs::path& root_, const fs::path& originalDir_)
+{
+  std::ostringstream rawClasspath;
   std::ostringstream classpath;
+  std::vector<std::string> classpathVec;
+  fs::path manifestPath = root_ / "META-INF" / "MANIFEST.MF";
 
-//   fs::path manifestPath = root / "META-INF" / "MANIFEST.MF";
-//   fs::ifstream fileHandler(manifestPath);
-//   std::vector<std::string> rawClasspaths;
-//   std::string rawClasspath;
-//   std::string line;
-//   bool cpFound = false;
-//
-//   while (getline(fileHandler, line)) {
-//     if (!cpFound && ba::starts_with(line, "Class-Path:")) {
-//       ba::replace_first(line, "Class-Path:", "");
-//       ba::replace_all(line, "\n", "");
-//       rawClasspath =
-//       LOG(info) << line;
-//       cpFound = true;
-//     } else if (cpFound) {
-//       if (!ba::contains(line, ":")) {
-//         LOG(info) << line;
-//         ba::replace_last(line, "\n", "");
-//         rawClasspath << line;
-//       } else {
-//         break;
-//       }
-//     }
-//   }
-//
-//   LOG(info) << "===========================";
-//   LOG(info) << rawClasspath;
-//   LOG(info) << "===========================";
+  classpath << root_.string();
+
+  if (!fs::exists(manifestPath)) {
+    return classpath.str();
+  }
+
+  fs::ifstream fileHandler(manifestPath);
+  std::string line;
+  bool cpFound = false;
+
+  while (
+    getline(fileHandler, line) &&
+    !(cpFound && ba::contains(line, ":")))
+  {
+    if (
+      (!cpFound && ba::starts_with(line, "Class-Path:")) ||
+      (cpFound && !ba::contains(line, ":")))
+    {
+      line = line.substr(0, line.size() -1);
+      if (!cpFound) {
+        ba::replace_first(line, "Class-Path:", "");
+        rawClasspath << line;
+        cpFound = true;
+      }
+
+      rawClasspath << line.substr(1);
+    }
+  }
+
+  ba::split_regex(
+    classpathVec, rawClasspath.str(), boost::regex("([ ]+)"));
+
+  for (std::string& cp : classpathVec) {
+    if (!cp.empty()) {
+      classpath << ":" << (originalDir_ / cp).string();
+    }
+  }
 
   return classpath.str();
 }
@@ -243,9 +258,7 @@ model::BuildActionPtr JavaParser::addBuildAction(
   const CompileCommand& compile_command_)
 {
   util::OdbTransaction transaction(_ctx.db);
-
   model::BuildActionPtr buildAction(new model::BuildAction);
-
   std::string extension = fs::extension(compile_command_.file);
 
   buildAction -> command = compile_command_.command;
@@ -262,7 +275,7 @@ model::BuildActionPtr JavaParser::addBuildAction(
 void JavaParser::addCompileCommand(
   const CmdArgs& cmd_args_,
   model::BuildActionPtr buildAction_,
-  model::File::ParseStatus parseStatus_)
+  model::File::ParseStatus& parseStatus_)
 {
   util::OdbTransaction transaction(_ctx.db);
   std::vector<model::BuildTarget> targets;
@@ -270,7 +283,7 @@ void JavaParser::addCompileCommand(
   model::BuildSource buildSource;
   buildSource.file = _ctx.srcMgr.getFile(cmd_args_.filepath);
   buildSource.file->parseStatus = parseStatus_;
-    _ctx.srcMgr.updateFile(*buildSource.file);
+  _ctx.srcMgr.updateFile(*buildSource.file);
   buildSource.action = buildAction_;
 
   for (const std::string& target : cmd_args_.bytecodesPaths) {
@@ -440,19 +453,23 @@ bool JavaParser::parseJar(const std::string& path_) {
 }
 
 std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
+  fs::path jarPath(path_);
   fs::path workspace(_ctx.options["workspace"].as<std::string>());
   fs::path project(_ctx.options["name"].as<std::string>());
-  std::string decompiled = fs::basename(path_);
+  std::string decompiled = fs::basename(jarPath);
   fs::path decompiled_root = workspace / project / decompiled;
   std::vector<CompileCommand> commands;
 
   pr::system(
-    _unzip_path, "-o", path_, "-d", decompiled_root
+    _unzip_path, "-o", jarPath, "-d", decompiled_root
   );
 
-  std::string classpath = getClasspathFromMetaInf(decompiled_root);
+  std::string classpath =
+    getClasspathFromMetaInf(
+      decompiled_root, jarPath.parent_path()
+    );
 
-  //--- Create a thread pool for the current Java class file ---//
+  //--- Create a thread pool to decompile bytecodes ---//
 
   std::unique_ptr<
     util::JobQueueThreadPool<DecompileJob>> decompilePool =
@@ -491,7 +508,7 @@ std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
         serviceHandler->setFree();
       });
 
-  //-- Decompile class files --//
+  //-- Decompile bytecodes --//
 
   for (
     fs::directory_entry& entry :

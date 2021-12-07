@@ -38,7 +38,7 @@ public class JavaParser implements JavaParserService.Iface {
     CompileCommand compileCOmmand, long fileId,
     String fileCounterStr) throws TException
   {
-    ArgParser argParser = new ArgParser(compileCOmmand);
+    ArgParser argParser = new ArgParser(compileCOmmand, fileCounterStr);
     String filePath = argParser.getFilepath();
 
     try {
@@ -64,19 +64,14 @@ public class JavaParser implements JavaParserService.Iface {
 
       CompilationUnit cu = (CompilationUnit) parser.createAST(null);
 
-      AstVisitor visitor = new AstVisitor(cu, em.get(), fileId);
+      AstVisitor visitor = new AstVisitor(cu, em.get(), fileId, fileCounterStr);
       cu.accept(visitor);
 
-      return getParseResult(cu, argParser, fileCounterStr);
+      return getParseResult(
+        cu, argParser, fileCounterStr, visitor.isErrorDueParsing());
 
     } catch (IOException e) {
-      e.printStackTrace();
       JavaBeforeParseException ex = new JavaBeforeParseException();
-      ex.message = e.getMessage();
-      throw ex;
-    } catch (Exception e) {
-      e.printStackTrace();
-      JavaParseException ex = new JavaParseException();
       ex.message = e.getMessage();
       throw ex;
     }
@@ -97,6 +92,8 @@ public class JavaParser implements JavaParserService.Iface {
     {
       DecompilerSettings settings = new DecompilerSettings();
 
+      settings.setIncludeLineNumbersInBytecode(false);
+      settings.setIncludeErrorDiagnostics(false);
       settings.setForceExplicitImports(true);
 
       Decompiler.decompile(path, new PlainTextOutput(writer), settings);

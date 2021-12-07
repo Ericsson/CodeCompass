@@ -24,15 +24,11 @@ struct CmdArgs
 struct ParseResult
 {
   1: CmdArgs cmdArgs,
-  2: list<project.BuildLog> buildLogs
+  2: list<project.BuildLog> buildLogs,
+  3: bool errorDueParsing
 }
 
 exception JavaBeforeParseException
-{
-  1: string message
-}
-
-exception JavaParseException
 {
   1: string message
 }
@@ -46,6 +42,6 @@ service JavaParserService
 {
   ParseResult parseFile(
     1: CompileCommand compileCommand, 2: i64 fileId, 3: string fileCounterStr)
-    throws (1: JavaBeforeParseException jbe, 2: JavaParseException jpe),
+    throws (1: JavaBeforeParseException jbe),
   string decompileClass(1: string path) throws (1: ClassDecompileException cde)
 }

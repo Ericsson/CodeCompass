@@ -1,8 +1,5 @@
 Manifest-Version: 1.0
-Class-Path: corethrift.java
-            commons-io-2.8.0.jar
-            javax.persistence-api-2.2.jar
-            json-simple-1.1.1.jar
+Class-Path: commons-io-2.8.0.jar
             libthrift-0.13.0.jar
             org.eclipse.core.contenttype_3.7.600.v20200124-1609.jar
             org.eclipse.core.jobs_3.10.600.v20191122-2104.jar

@@ -19,6 +19,7 @@ import static logger.Logger.LOGGER;
 
 public class ArgParser {
   private static final String JREPathStr = System.getProperty("java.home");
+  private final String fileCounterStr;
   private final String directory;
   private final ArrayList<String> classpath;
   private final ArrayList<String> sourcepath;
@@ -28,7 +29,8 @@ public class ArgParser {
   private String bytecodePath;
   private List<String> bytecodesPaths;
 
-  public ArgParser(CompileCommand compileCommand) {
+  public ArgParser(CompileCommand compileCommand, String fileCounterStr) {
+    this.fileCounterStr = fileCounterStr;
     this.directory = compileCommand.getDirectory();
     this.classpath = new ArrayList<>();
     this.sourcepath = new ArrayList<>();
@@ -125,7 +127,11 @@ public class ArgParser {
         .collect(Collectors.toList());
     } catch (IOException e) {
       LOGGER.log(
-        Level.SEVERE, "Cannot find path into the generated .class files");
+        Level.SEVERE,
+        fileCounterStr +
+          " Class files could not be found where they should be" +
+          " according to the compile command"
+      );
     }
   }
 

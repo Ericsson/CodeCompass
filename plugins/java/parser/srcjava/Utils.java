@@ -42,7 +42,8 @@ public abstract class Utils {
   }
 
   public static ParseResult getParseResult(
-    CompilationUnit cu, ArgParser argParser, String fileCounterStr)
+    CompilationUnit cu, ArgParser argParser,
+    String fileCounterStr, boolean errorDueParsing)
   {
     ParseResult parseResult = new ParseResult();
     CmdArgs cmdArgs = getCmdArgs(argParser);
@@ -53,6 +54,7 @@ public abstract class Utils {
 
     parseResult.cmdArgs = cmdArgs;
     parseResult.buildLogs = buildLogs;
+    parseResult.errorDueParsing = errorDueParsing;
 
     return parseResult;
   }
