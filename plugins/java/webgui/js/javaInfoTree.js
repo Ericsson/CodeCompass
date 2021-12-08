@@ -131,7 +131,8 @@ function (model, viewHandler, util) {
 
     if (parentNode.refType === refTypes['Constructor'] ||
         parentNode.refType === refTypes['Method'] ||
-        parentNode.refType === refTypes['Data member'])
+        parentNode.refType === refTypes['Data member'] ||
+        parentNode.refType === refTypes['Inner type'])
       return groupReferencesByVisibilities(references, parentNode, nodeInfo);
 
     references.forEach(function (reference) {
