@@ -304,6 +304,22 @@ public abstract class Utils {
     return String.join(" ", methodHashStr, type, name);
   }
 
+  public static int getMainTypeHashForInnerType(ASTNode node) {
+    ASTNode mainType = node.getParent();
+
+    if (!(mainType instanceof AbstractTypeDeclaration)) {
+      // TODO: Anonymous class declarations
+      return 0;
+    }
+
+    String mainTypeQualifiedName =
+      getQualifiedTypeName(
+        ((AbstractTypeDeclaration) mainType).resolveBinding()
+      );
+
+    return mainTypeQualifiedName.hashCode();
+  }
+
   public static String typeParametersArrayToString(
     ITypeBinding[] typeParametersArray)
   {

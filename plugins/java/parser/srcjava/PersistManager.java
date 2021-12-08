@@ -139,6 +139,7 @@ public class PersistManager {
     String declaringClassName = getQualifiedTypeName(node.resolveBinding());
     int modifiers = node.getModifiers();
     int entityHash = declaringClassName.hashCode();
+    int mainTypeHash;
 
     // Persist Enum constants
     for (int i = 0; i < enumConstants.size(); i++) {
@@ -146,11 +147,17 @@ public class PersistManager {
         javaEnum, (EnumConstantDeclaration) enumConstants.get(i), i);
     }
 
+    if (node.isMemberTypeDeclaration()) {
+      mainTypeHash = getMainTypeHashForInnerType(node);
+    } else {
+      mainTypeHash = entityHash;
+    }
+
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.ENUM, AstType.DEFINITION, entityHash);
 
     persistJavaMemberType(
-      entityHash, entityHash, MemberTypeKind.ENUM, modifiers, javaAstNode);
+      mainTypeHash, entityHash, MemberTypeKind.ENUM, modifiers, javaAstNode);
 
     setJavaEntityFields(
       javaEnum, javaAstNode.getId(), entityHash,
@@ -523,18 +530,7 @@ public class PersistManager {
     int mainTypeHash;
 
     if (node.isMemberTypeDeclaration()) {
-      ASTNode mainType = node.getParent();
-
-      if (mainType instanceof AbstractTypeDeclaration) {
-        String mainTypeQualifiedName =
-          getQualifiedTypeName(
-            ((AbstractTypeDeclaration) mainType).resolveBinding()
-          );
-        mainTypeHash = mainTypeQualifiedName.hashCode();
-      } else {
-        // TODO: Anonymous class declarations
-        mainTypeHash = 0;
-      }
+      mainTypeHash = getMainTypeHashForInnerType(node);
     } else {
       mainTypeHash = entityHash;
     }

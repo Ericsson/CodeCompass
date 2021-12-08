@@ -51,7 +51,7 @@ public enum ReferenceType {
 
   DATA_MEMBER, /*!< Data members of a class. */
 
-  INNER_CLASS, /*!< Inner classes of a class. */
+  INNER_TYPE, /*!< Inner classes of a class. */
 
   INITIALIZER, /*!< Initializers of a class. */
 

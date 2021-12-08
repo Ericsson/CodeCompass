@@ -330,7 +330,7 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
-          "Inner class", ReferenceType.INNER_CLASS.ordinal());
+          "Inner type", ReferenceType.INNER_TYPE.ordinal());
         referenceTypes.put(
           "Initializer", ReferenceType.INITIALIZER.ordinal());
         referenceTypes.put(
@@ -345,6 +345,10 @@ public class JavaQueryHandler implements JavaService.Iface {
           "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
         referenceTypes.put(
           "Inherited by", ReferenceType.INHERIT_BY.ordinal());
+        referenceTypes.put(
+          "Inner type", ReferenceType.INNER_TYPE.ordinal());
+        referenceTypes.put(
+          "Initializer", ReferenceType.INITIALIZER.ordinal());
         referenceTypes.put(
           "Enum constants", ReferenceType.ENUM_CONSTANTS.ordinal());
         referenceTypes.put(
@@ -408,20 +412,22 @@ public class JavaQueryHandler implements JavaService.Iface {
         return queryInheritFromNodes(javaAstNode).size();
       case INHERIT_BY:
         return queryInheritedByNodes(javaAstNode).size();
-      case INNER_CLASS:
+      case INNER_TYPE:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.TYPE, true).size();
+          javaAstNode, true,
+          MemberTypeKind.TYPE, MemberTypeKind.ENUM
+        ).size();
       case INITIALIZER:
         return queryJavaInitializerNodes(javaAstNode).size();
       case CONSTRUCTOR:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.CONSTRUCTOR, false).size();
+          javaAstNode, false, MemberTypeKind.CONSTRUCTOR).size();
       case DATA_MEMBER:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.FIELD, false).size();
+          javaAstNode, false, MemberTypeKind.FIELD).size();
       case METHOD:
         return queryJavaMemberTypeDefinitionNodes(
-          javaAstNode, MemberTypeKind.METHOD, false).size();
+          javaAstNode, false, MemberTypeKind.METHOD).size();
       case ENUM_CONSTANTS:
         return queryJavaEnumConstantNodes(javaAstNode).size();
     }
@@ -497,10 +503,12 @@ public class JavaQueryHandler implements JavaService.Iface {
       case INHERIT_BY:
         javaAstNodes = queryInheritedByNodes(javaAstNode);
         break;
-      case INNER_CLASS:
+      case INNER_TYPE:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.TYPE, true);
+            javaAstNode, true,
+            MemberTypeKind.TYPE, MemberTypeKind.ENUM
+          );
         break;
       case INITIALIZER:
         javaAstNodes = queryJavaInitializerNodes(javaAstNode);
@@ -508,17 +516,17 @@ public class JavaQueryHandler implements JavaService.Iface {
       case CONSTRUCTOR:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.CONSTRUCTOR, false);
+            javaAstNode, false, MemberTypeKind.CONSTRUCTOR);
         break;
       case DATA_MEMBER:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.FIELD, false);
+            javaAstNode, false, MemberTypeKind.FIELD);
         break;
       case METHOD:
         javaAstNodes =
           queryJavaMemberTypeDefinitionNodes(
-            javaAstNode, MemberTypeKind.METHOD, false);
+            javaAstNode, false, MemberTypeKind.METHOD);
         break;
       case ENUM_CONSTANTS:
         javaAstNodes = queryJavaEnumConstantNodes(javaAstNode);

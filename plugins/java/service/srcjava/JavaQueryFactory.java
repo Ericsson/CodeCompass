@@ -251,11 +251,11 @@ public abstract class JavaQueryFactory {
   }
 
   public static List<JavaAstNode> queryJavaMemberTypeDefinitionNodes(
-    JavaAstNode javaAstNode, MemberTypeKind memberTypeKind,
-    boolean ignoreSameHashes)
+    JavaAstNode javaAstNode, boolean ignoreSameHashes,
+    MemberTypeKind... memberTypeKind)
   {
     List<JavaMemberType> javaMemberTypes =
-      queryJavaMemberTypes(javaAstNode, memberTypeKind, ignoreSameHashes);
+      queryJavaMemberTypes(javaAstNode, ignoreSameHashes, memberTypeKind);
 
     return javaMemberTypes.stream()
       .map(JavaMemberType::getMemberAstNode)
@@ -1091,8 +1091,8 @@ public abstract class JavaQueryFactory {
   }
 
   public static List<JavaMemberType> queryJavaMemberTypes(
-    JavaAstNode recordJavaAstNode, MemberTypeKind memberTypeKind,
-    boolean ignoreSameHash)
+    JavaAstNode recordJavaAstNode, boolean ignoreSameHash,
+    MemberTypeKind... memberTypeKinds)
   {
     CriteriaQuery<JavaMemberType> cr = cb.createQuery(JavaMemberType.class);
     Root<JavaMemberType> root = cr.from(JavaMemberType.class);
@@ -1101,11 +1101,11 @@ public abstract class JavaQueryFactory {
     if (ignoreSameHash) {
       predicate =
         cb.and(
-          cb.equal(root.get("kind"), memberTypeKind),
+          root.get("kind").in((Object[]) memberTypeKinds),
           cb.notEqual(root.get("memberTypeHash"), root.get("typeHash"))
         );
     } else {
-      predicate = cb.equal(root.get("kind"), memberTypeKind);
+      predicate = root.get("kind").in((Object[]) memberTypeKinds);
     }
 
     return queryJavaMemberTypes(recordJavaAstNode, cr, root, predicate);
