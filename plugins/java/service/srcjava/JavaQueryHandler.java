@@ -330,9 +330,9 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherited by", ReferenceType.INHERIT_BY.ordinal());
         referenceTypes.put(
-          "Inner type", ReferenceType.INNER_TYPE.ordinal());
-        referenceTypes.put(
           "Initializer", ReferenceType.INITIALIZER.ordinal());
+        referenceTypes.put(
+          "Inner type", ReferenceType.INNER_TYPE.ordinal());
         referenceTypes.put(
           "Constructor", ReferenceType.CONSTRUCTOR.ordinal());
         referenceTypes.put(
@@ -344,11 +344,9 @@ public class JavaQueryHandler implements JavaService.Iface {
         referenceTypes.put(
           "Inherits from", ReferenceType.INHERIT_FROM.ordinal());
         referenceTypes.put(
-          "Inherited by", ReferenceType.INHERIT_BY.ordinal());
+          "Initializer", ReferenceType.INITIALIZER.ordinal());
         referenceTypes.put(
           "Inner type", ReferenceType.INNER_TYPE.ordinal());
-        referenceTypes.put(
-          "Initializer", ReferenceType.INITIALIZER.ordinal());
         referenceTypes.put(
           "Enum constants", ReferenceType.ENUM_CONSTANTS.ordinal());
         referenceTypes.put(
