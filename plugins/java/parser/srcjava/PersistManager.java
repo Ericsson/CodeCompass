@@ -245,7 +245,7 @@ public class PersistManager {
     AstType astType;
 
     if (variableBinding.isField()) {
-      ITypeBinding classBinding = variableBinding.getDeclaringClass();
+      ITypeBinding classBinding = variableBinding.getType();
       declaringClassName = getQualifiedTypeName(classBinding);
       entityHashStr = getFieldHashStr(declaringClassName, qualifiedType, name);
 
