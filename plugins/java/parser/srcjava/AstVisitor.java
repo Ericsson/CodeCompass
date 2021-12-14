@@ -86,7 +86,11 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(FieldAccess node) {
     try {
-      pm.persistVariableUsage(node, node.resolveFieldBinding());
+      IVariableBinding fieldBinding = node.resolveFieldBinding();
+
+      if (fieldBinding.getDeclaringClass() != null) {
+        pm.persistVariableUsage(node, fieldBinding);
+      }
     } catch (Exception ex) {
       printErrorDuringParsing(node);
       errorDueParsing = true;
@@ -215,7 +219,7 @@ public class AstVisitor extends ASTVisitor {
 
         if (variableBinding.isEnumConstant()) {
           pm.persistEnumConstantUsage(node, variableBinding);
-        } else {
+        } else if (variableBinding.getDeclaringClass() != null){
           pm.persistVariableUsage(node, variableBinding);
         }
       }
@@ -254,7 +258,11 @@ public class AstVisitor extends ASTVisitor {
   @Override
   public boolean visit(SuperFieldAccess node) {
     try {
-      pm.persistVariableUsage(node, node.resolveFieldBinding());
+      IVariableBinding fieldBinding = node.resolveFieldBinding();
+
+      if (fieldBinding.getDeclaringClass() != null) {
+        pm.persistVariableUsage(node, fieldBinding);
+      }
     } catch (Exception ex) {
       printErrorDuringParsing(node);
       errorDueParsing = true;
