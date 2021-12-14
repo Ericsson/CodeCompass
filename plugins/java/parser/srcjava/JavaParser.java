@@ -32,10 +32,10 @@ public class JavaParser implements JavaParserService.Iface {
 
   @Override
   public ParseResult parseFile(
-    CompileCommand compileCOmmand, long fileId,
+    CompileCommand compileCommand, long fileId,
     String fileCounterStr) throws TException
   {
-    ArgParser argParser = new ArgParser(compileCOmmand, fileCounterStr);
+    ArgParser argParser = new ArgParser(compileCommand, fileCounterStr);
     String filePath = argParser.getFilepath();
 
     try {

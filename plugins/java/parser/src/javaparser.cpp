@@ -232,7 +232,6 @@ std::string JavaParser::getClasspathFromMetaInf(
       line = line.substr(0, line.size() -1);
       if (!cpFound) {
         ba::replace_first(line, "Class-Path:", "");
-        rawClasspath << line;
         cpFound = true;
       }
 
