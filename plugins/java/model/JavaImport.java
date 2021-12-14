@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name = "\"JavaImport\"")
 public class JavaImport {
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id")
   private int id;
 

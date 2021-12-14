@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name = "\"JavaDocComment\"")
 public class JavaDocComment {
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id")
   private int id;
 

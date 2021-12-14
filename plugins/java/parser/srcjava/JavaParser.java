@@ -4,6 +4,7 @@ import cc.parser.java.*;
 import com.strobel.decompiler.Decompiler;
 import com.strobel.decompiler.DecompilerSettings;
 import com.strobel.decompiler.PlainTextOutput;
+import model.EMFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
 import org.eclipse.jdt.core.dom.AST;
@@ -14,21 +15,17 @@ import javax.persistence.EntityManager;
 import java.io.*;
 import java.util.*;
 
-import static model.EMFactory.createEntityManager;
 import static parser.srcjava.Utils.*;
 
 public class JavaParser implements JavaParserService.Iface {
-  private static final Hashtable<String, String> javaCoreOptions;
-  private static final ThreadLocal<EntityManager> em;
-  private static final ThreadLocal<ASTParser> parser;
+  private final Hashtable<String, String> javaCoreOptions;
+  private final ThreadLocal<EntityManager> em;
+  private final ThreadLocal<ASTParser> parser;
 
-  static {
+  {
     javaCoreOptions = getJavaCoreOptions();
-    em = ThreadLocal.withInitial(() ->
-      createEntityManager(
-        System.getProperty("rawDbContext"), true
-      )
-    );
+    EMFactory emf = new EMFactory(System.getProperty("rawDbContext"), true);
+    em = ThreadLocal.withInitial(emf::createEntityManager);
     parser = ThreadLocal.withInitial(() -> ASTParser.newParser(AST.JLS_Latest));
     parser.get().setKind(ASTParser.K_COMPILATION_UNIT);
   }
@@ -96,7 +93,9 @@ public class JavaParser implements JavaParserService.Iface {
       settings.setIncludeErrorDiagnostics(false);
       settings.setForceExplicitImports(true);
 
-      Decompiler.decompile(path, new PlainTextOutput(writer), settings);
+      synchronized (this) {
+        Decompiler.decompile(path, new PlainTextOutput(writer), settings);
+      }
     }
     catch (Exception e) {
       ClassDecompileException ex = new ClassDecompileException();

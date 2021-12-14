@@ -21,9 +21,11 @@ public class PositionInfo {
     int endLine = cu.getLineNumber(end);
     int endColumn = cu.getColumnNumber(end);
 
-    // End position checking, and trying with a two less value.
-    // This will work in most cases, if the current element is a class
-    // declaration and the newline character is missing from it's end.
+    /*
+      End position checking, and trying with a two less value.
+      This will work in most cases, if the current element is a class
+      declaration and the newline character is missing from it's end.
+    */
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
         cu.getLineNumber(this.end - 2) :
@@ -44,9 +46,11 @@ public class PositionInfo {
     int endLine = cu.getLineNumber(end);
     int endColumn = cu.getColumnNumber(end);
 
-    // End position checking, and trying with a two less value.
-    // This will work in most cases, if the current element is a class
-    // declaration and the newline character is missing from it's end.
+    /*
+      End position checking, and trying with a two less value.
+      This will work in most cases, if the current element is a class
+      declaration and the newline character is missing from it's end.
+    */
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
         cu.getLineNumber(this.end - 2) :
@@ -66,9 +70,11 @@ public class PositionInfo {
     int endLine = cu.getLineNumber(end);
     int endColumn = cu.getColumnNumber(end);
 
-    // End position checking, and trying with a two less value.
-    // This will work in most cases, if the current element is a class
-    // declaration and the newline character is missing from it's end.
+    /*
+      End position checking, and trying with a two less value.
+      This will work in most cases, if the current element is a class
+      declaration and the newline character is missing from it's end.
+    */
     this.endLine =
       cu.getLineNumber(this.end) == -1 ?
         cu.getLineNumber(this.end - 2) :

@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Table(name = "\"JavaMemberType\"")
 public class JavaMemberType {
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "id")
   private int id;
 
@@ -17,7 +17,7 @@ public class JavaMemberType {
   private long typeHash;
 
   @OneToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-  @JoinColumn(name = "memberAstNode")
+  @JoinColumn(name = "\"memberAstNode\"")
   private JavaAstNode memberAstNode;
 
   @Column(name = "\"memberTypeHash\"")

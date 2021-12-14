@@ -1,4 +1,6 @@
 Manifest-Version: 1.0
-Class-Path: log4j-1.2.17.jar
+Class-Path: log4j-1.2-api-2.15.0.jar
+            log4j-api-2.15.0.jar
+            log4j-core-2.15.0.jar
             slf4j-api-1.7.25.jar
-            slf4j-log4j12-1.7.25.jar
+            log4j-slf4j-impl-2.15.0.jar

@@ -207,7 +207,7 @@ private:
   fs::path _java_path;
   fs::path _unzip_path;
   pr::child _c;
-  std::unique_ptr<util::JobQueueThreadPool<ParseJob>> _parsePool;
+  std::function<void(ParseJob&)> make_parse_pool;
   int _numCompileCommands;
   int _threadNum;
   std::vector<std::shared_ptr<JavaParserServiceHandler>> _javaServiceHandlers;

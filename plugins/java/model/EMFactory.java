@@ -11,30 +11,34 @@ import java.util.logging.Level;
 import static logger.Logger.LOGGER;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.*;
 
-public abstract class EMFactory {
-  public static EntityManager createEntityManager(
-    String rawDbContext, boolean dropAndCreateTables)
-  {
-    EntityManagerFactory emf =
+public class EMFactory {
+  private final EntityManagerFactory emf;
+
+  public EMFactory(String rawDbContext, boolean dropAndCreateTables) {
+    this.emf =
       Persistence.createEntityManagerFactory(
         "ParserPU",
         initProperties(rawDbContext, dropAndCreateTables)
       );
 
-    // if (dropAndCreateTables) {
-    //   emf.getMetamodel().getEntities().forEach(
-    //     e ->
-    //       LOGGER.log(
-    //         Level.INFO,
-    //         String.join(" ", "Dropping table", e.getName())
-    //       )
-    //   );
-    // }
 
+    if (dropAndCreateTables) {
+      emf.getMetamodel().getEntities().forEach(
+        e ->
+          LOGGER.log(
+            Level.INFO,
+            String.join(" ", "Dropping table", e.getName())
+          )
+      );
+    }
+  }
+
+  public EntityManager createEntityManager()
+  {
     return emf.createEntityManager();
   }
 
-  private static HashMap<String, Object> initProperties(
+  private HashMap<String, Object> initProperties(
     String rawDbContext, boolean dropAndCreateTables)
   {
     HashMap<String, Object> properties = new HashMap<>();
@@ -84,5 +88,9 @@ public abstract class EMFactory {
     }
 
     return properties;
+  }
+
+  public EntityManagerFactory getEmf() {
+    return emf;
   }
 }

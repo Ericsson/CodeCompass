@@ -16,12 +16,16 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static logger.Logger.LOGGER;
-import static model.EMFactory.createEntityManager;
 
 public abstract class JavaQueryFactory {
-  private static final EntityManager em =
-    createEntityManager(System.getProperty("rawDbContext"), false);
-  private static final CriteriaBuilder cb = em.getCriteriaBuilder();
+  private static final EntityManager em;
+  private static final CriteriaBuilder cb;
+
+  static {
+    EMFactory emf = new EMFactory(System.getProperty("rawDbContext"), false);
+    em = emf.createEntityManager();
+    cb = em.getCriteriaBuilder();
+  }
 
   public static List<JavaAstNode> queryJavaAstNodeByPosition(
     FilePosition fpos)

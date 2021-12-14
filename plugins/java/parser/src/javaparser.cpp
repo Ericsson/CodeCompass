@@ -37,66 +37,64 @@ JavaParser::JavaParser(ParserContext& ctx_) : AbstractParser(ctx_) {
 
   //--- Create a thread pool to process commands ---//
 
-  _parsePool =
-    util::make_thread_pool<ParseJob>(
-      _threadNum,[this](ParseJob& job_)
-      {
-        const CompileCommand command = job_.command;
-        std::shared_ptr<JavaParserServiceHandler> serviceHandler;
+  make_parse_pool =[this](ParseJob& job_)
+    {
+      const CompileCommand command = job_.command;
+      std::shared_ptr<JavaParserServiceHandler> serviceHandler;
 
-        try {
-          serviceHandler = findFreeWorker(15000);
-        } catch (TimeoutException& ex) {
-          LOG(error) <<
-            "Operation timeout, could not find free "
-            "Java worker to process " << command.file << "!";
-          return;
-        }
+      try {
+        serviceHandler = findFreeWorker(15000);
+      } catch (TimeoutException& ex) {
+        LOG(error) <<
+          "Operation timeout, could not find free "
+          "Java worker to process " << command.file << "!";
+        return;
+      }
 
-        std::string file_counter_str =
-          "(" + std::to_string(job_.index) + "/" +
-          std::to_string(_numCompileCommands) + ")";
+      std::string file_counter_str =
+        "(" + std::to_string(job_.index) + "/" +
+        std::to_string(_numCompileCommands) + ")";
 
-        LOG(info) <<
-          file_counter_str << " " << "Parsing " << command.file;
+      LOG(info) <<
+        file_counter_str << " " << "Parsing " << command.file;
 
-        model::FilePtr filePtr = _ctx.srcMgr.getFile(command.file);
-        filePtr -> type = "JAVA";
-        model::BuildActionPtr buildAction = addBuildAction(command);
-        model::File::ParseStatus parseStatus =
-          model::File::PSFullyParsed;
-        ParseResult parseResult;
+      model::FilePtr filePtr = _ctx.srcMgr.getFile(command.file);
+      filePtr -> type = "JAVA";
+      model::BuildActionPtr buildAction = addBuildAction(command);
+      model::File::ParseStatus parseStatus =
+        model::File::PSFullyParsed;
+      ParseResult parseResult;
 
-        //--- Run Java parser ---//
+      //--- Run Java parser ---//
 
-        try {
-          serviceHandler->parseFile(
-            parseResult, command, filePtr->id, file_counter_str);
-          parseStatus =
-            addBuildLogs(parseResult.buildLogs, command.file);
+      try {
+        serviceHandler->parseFile(
+          parseResult, command, filePtr->id, file_counter_str);
+        parseStatus =
+          addBuildLogs(parseResult.buildLogs, command.file);
 
-          if (parseResult.errorDueParsing) {
-            LOG(warning) <<
-              file_counter_str << " " << "Parsing " <<
-              command.file << " had one or more errors during parsing";
-
-            if (parseStatus == model::File::ParseStatus::PSFullyParsed) {
-              parseStatus = model::File::ParseStatus::PSPartiallyParsed;
-            }
-          }
-
-          addCompileCommand(
-            parseResult.cmdArgs, buildAction, parseStatus);
-
-        } catch (JavaBeforeParseException& ex) {
+        if (parseResult.errorDueParsing) {
           LOG(warning) <<
             file_counter_str << " " << "Parsing " <<
-            command.file << " has been failed before the start";
-          LOG(warning) << ex.message;
+            command.file << " had one or more errors during parsing";
+
+          if (parseStatus == model::File::ParseStatus::PSFullyParsed) {
+            parseStatus = model::File::ParseStatus::PSPartiallyParsed;
+          }
         }
 
-        serviceHandler->setFree();
-      });
+        addCompileCommand(
+          parseResult.cmdArgs, buildAction, parseStatus);
+
+      } catch (JavaBeforeParseException& ex) {
+        LOG(warning) <<
+          file_counter_str << " " << "Parsing " <<
+          command.file << " has been failed before the start";
+        LOG(warning) << ex.message;
+      }
+
+      serviceHandler->setFree();
+    };
 
   for (int i = 0; i < _threadNum; ++i) {
     _javaServiceHandlers.push_back(
@@ -362,6 +360,7 @@ model::File::ParseStatus JavaParser::addBuildLogs(
 }
 
 bool JavaParser::parse() {
+  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
   bool success = true;
 
   for (const std::string& path
@@ -380,6 +379,8 @@ bool JavaParser::parse() {
       }
     }
   }
+
+  LOG(error) << chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - begin).count();
   return success;
 }
 
@@ -406,11 +407,21 @@ bool JavaParser::parseCompileCommands(const std::string& path_) {
 
   //--- Start Java Thrift server and connect to is via workers ---//
 
-  startAndConnectToJavaProcess();
-
   //--- Process Java files ---//
 
   LOG(info) << "JavaParser parse path: " << path_;
+
+  if (_numCompileCommands == 0) {
+    LOG(info) << "Java-related compile commands not found in " << path_;
+    return true;
+  }
+
+  if (!_c.running()) {
+    startAndConnectToJavaProcess();
+  }
+
+  std::unique_ptr<util::JobQueueThreadPool<ParseJob>> parsePool =
+    util::make_thread_pool<ParseJob>(_threadNum, make_parse_pool);
 
   for (pt::ptree::value_type &command_tree_: _pt_filtered) {
     CompileCommand command =
@@ -420,11 +431,11 @@ bool JavaParser::parseCompileCommands(const std::string& path_) {
 
     //--- Push the job ---//
 
-    _parsePool->enqueue(job);
+    parsePool->enqueue(job);
   }
 
   // Block execution until every job is finished.
-  _parsePool->wait();
+  parsePool->wait();
 
   return true;
 }
@@ -432,27 +443,33 @@ bool JavaParser::parseCompileCommands(const std::string& path_) {
 bool JavaParser::parseJar(const std::string& path_) {
   //--- Start Java Thrift server and connect to is via workers ---//
 
-  startAndConnectToJavaProcess();
+  if (!_c.running()) {
+    startAndConnectToJavaProcess();
+  }
 
   std::vector<CompileCommand> commands = decompileJar(path_);
   _numCompileCommands = commands.size();
   std::size_t file_index = 0;
+
+  std::unique_ptr<util::JobQueueThreadPool<ParseJob>> parsePool =
+    util::make_thread_pool<ParseJob>(_threadNum, make_parse_pool);
 
   for (const CompileCommand& command : commands) {
     ParseJob job(command, ++file_index);
 
     //--- Push the job ---//
 
-    _parsePool->enqueue(job);
+    parsePool->enqueue(job);
   }
 
   // Block execution until every job is finished.
-  _parsePool->wait();
+  parsePool->wait();
 
   return true;
 }
 
 std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
+  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
   fs::path jarPath(path_);
   fs::path workspace(_ctx.options["workspace"].as<std::string>());
   fs::path project(_ctx.options["name"].as<std::string>());
@@ -528,6 +545,8 @@ std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
   // Block execution until every job is finished.
   decompilePool->wait();
 
+  LOG(error) << chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - begin).count();
+
   return commands;
 }
 
@@ -540,9 +559,11 @@ extern "C"
 boost::program_options::options_description getOptions() {
   boost::program_options::options_description description("Java Plugin");
 
-  // description.add_options()
-  //   ("java-arg", po::value<std::string>()->default_value("Java arg"),
-  //    "This argument will be used by the Java parser.");
+  /*
+  description.add_options()
+    ("java-arg", po::value<std::string>()->default_value("Java arg"),
+     "This argument will be used by the Java parser.");
+  */
 
   return description;
 }
