@@ -359,7 +359,6 @@ model::File::ParseStatus JavaParser::addBuildLogs(
 }
 
 bool JavaParser::parse() {
-  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
   bool success = true;
 
   for (const std::string& path
@@ -379,7 +378,6 @@ bool JavaParser::parse() {
     }
   }
 
-  LOG(error) << chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - begin).count();
   return success;
 }
 
@@ -468,7 +466,6 @@ bool JavaParser::parseJar(const std::string& path_) {
 }
 
 std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
-  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
   fs::path jarPath(path_);
   fs::path workspace(_ctx.options["workspace"].as<std::string>());
   fs::path project(_ctx.options["name"].as<std::string>());
@@ -543,8 +540,6 @@ std::vector<CompileCommand> JavaParser::decompileJar(const std::string& path_) {
 
   // Block execution until every job is finished.
   decompilePool->wait();
-
-  LOG(error) << chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - begin).count();
 
   return commands;
 }
