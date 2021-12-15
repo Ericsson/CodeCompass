@@ -208,6 +208,10 @@ void GitServiceHandler::getRepositoryByProjectPath(
 
   std::vector<GitRepository> repositories;
   getRepositoryList(repositories);
+  
+  std::sort(repositories.begin(), repositories.end(),
+    [](const GitRepository& repo1, const GitRepository& repo2)
+    { return repo1.path.size() > repo2.path.size();});
 
   for (const GitRepository& repo : repositories)
   {
