@@ -48,6 +48,10 @@ jobs:
           llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev libgraphviz-dev
           libmagic-dev libgit2-dev ctags libgtest-dev npm libldap2-dev
 
+      - name: Remove default Postgresql Ubuntu 18
+        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
+        run: sudo apt-get remove libpq5
+
       - name: Install Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
         run: sudo apt-get install postgresql-server-dev-10
@@ -257,6 +261,10 @@ jobs:
           libboost-filesystem-dev libboost-log-dev libboost-program-options-dev
           llvm-10-dev clang-10 libclang-10-dev default-jre libssl1.0-dev libmagic-dev
           libgit2-dev ctags libgtest-dev libldap-2.4-2
+
+      - name: Remove default Postgresql Ubuntu 18
+        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
+        run: sudo apt-get remove libpq5
 
       - name: Install Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
