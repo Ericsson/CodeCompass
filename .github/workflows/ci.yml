@@ -22,16 +22,17 @@ jobs:
         uses: bhowell2/github-substring-action@v1.0.0
         id: branch_substring_test
         with:
-          value: ${{ env.GITHUB_REPOSITORY_SLUG }}"
+          value: ${{ env.GITHUB_REF_SLUG }}
           index_of_str: "release"
           fail_if_not_found: false
           default_return_value: ""
 
       - name: Build images for current master
-        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         id: docker_build_test
         run: |
-          export BRANCH=steps.branch_substring.outputs.substring
+          echo ${{ steps.branch_substring_test.outputs.substring }}
+          export BRANCH=${{ steps.branch_substring_test.outputs.substring }}
           echo $BRANCH
           docker build -t codecompass:dev$BRANCH     -t modelcpp/codecompass:dev$BRANCH            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
@@ -448,7 +449,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v4
 
       - name: Branch name substring
-        uses: bhowell2/github-substring-action
+        uses: bhowell2/github-substring-action@v1.0.0
         id: branch_substring
         with:
           value: ${{ env.GITHUB_REPOSITORY_SLUG }}"
@@ -457,10 +458,13 @@ jobs:
           default_return_value: ""
 
       - name: Build images for current master
-        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         id: docker_build
         run: |
-          export BRANCH=steps.branch_substring.outputs.substring
+          echo steps.branch_substring.outputs.substring
+          echo $(echo steps.branch_substring.outputs.substring)
+          echo ${echo steps.branch_substring.outputs.substring}
+          export BRANCH=$(steps.branch_substring.outputs.substring)
           echo $BRANCH
           docker build -t codecompass:dev$BRANCH     -t modelcpp/codecompass:dev$BRANCH            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
