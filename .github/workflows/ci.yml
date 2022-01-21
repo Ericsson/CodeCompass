@@ -8,49 +8,37 @@ env:
 jobs:
   dockertest:
     #needs: parse
-    if: ${{ github.repository == 'mcserep/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Branch name slug
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Branch name substring
+        uses: bhowell2/github-substring-action
+        id: branch_substring_test
+        with:
+          value: ${{ env.GITHUB_REPOSITORY_SLUG }}"
+          index_of_str: "release"
+          fail_if_not_found: false
+          default_return_value: ""
+
       - name: Build images for current master
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
         id: docker_build_test
         run: |
-          docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
+          export BRANCH=steps.branch_substring.outputs.substring
+          echo $BRANCH
+          docker build -t codecompass:dev$BRANCH     -t modelcpp/codecompass:dev$BRANCH            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
           docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
           docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
           docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
-
-      - name: Build images for Flash
-        if: ${{ github.ref == 'refs/heads/release/Flash' }}
-        id: docker_build_flash_test
-        run: |
-          docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
-          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
-          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-sqlite-flash     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-pgsql-flash  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-pgsql-flash      --file docker/web/Dockerfile --no-cache .
-          docker tag modelcpp/codecompass:runtime-pgsql-flash modelcpp/codecompass:flash
-
-  tarballtest:
-    #needs: parse
-    if: ${{ github.repository == 'mcserep/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Update apt-get
-        run: sudo apt-get update
-
-      - name: Install curl
-        run: sudo apt-get install curl
-
-      - name: Trigget GitLab CI
-        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=master https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
 
 
 
@@ -456,27 +444,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Branch name slug
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Branch name substring
+        uses: bhowell2/github-substring-action
+        id: branch_substring
+        with:
+          value: ${{ env.GITHUB_REPOSITORY_SLUG }}"
+          index_of_str: "release"
+          fail_if_not_found: false
+          default_return_value: ""
+
       - name: Build images for current master
-        if: ${{ github.ref == 'refs/heads/master' }}
-        id: docker_build_master
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
+        id: docker_build
         run: |
-          docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
+          export BRANCH=steps.branch_substring.outputs.substring
+          echo $BRANCH
+          docker build -t codecompass:dev$BRANCH     -t modelcpp/codecompass:dev$BRANCH            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
           docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
           docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
           docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
-
-      - name: Build images for Flash
-        if: ${{ github.ref == 'refs/heads/release/Flash' }}
-        id: docker_build_flash
-        run: |
-          docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
-          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
-          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-sqlite-flash     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-pgsql-flash  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-pgsql-flash      --file docker/web/Dockerfile --no-cache .
-          docker tag modelcpp/codecompass:runtime-pgsql-flash modelcpp/codecompass:flash
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -516,5 +507,5 @@ jobs:
       - name: Install curl
         run: sudo apt-get install curl
 
-      - name: Trigget GitLab CI
+      - name: Trigger GitLab CI
         run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=master https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
