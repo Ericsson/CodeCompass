@@ -8,7 +8,7 @@ env:
 jobs:
   dockertest:
     #needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
+    if: ${{ github.repository == 'mcserep/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
@@ -19,7 +19,7 @@ jobs:
         uses: rlespinasse/github-slug-action@v4
 
       - name: Branch name substring
-        uses: bhowell2/github-substring-action
+        uses: bhowell2/github-substring-action@v1.0.0
         id: branch_substring_test
         with:
           value: ${{ env.GITHUB_REPOSITORY_SLUG }}"
