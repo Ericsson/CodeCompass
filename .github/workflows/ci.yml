@@ -6,6 +6,54 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
+  dockertest:
+    #needs: parse
+    if: ${{ github.repository == 'mcserep/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build images for current master
+        if: ${{ github.ref == 'refs/heads/master' }}
+        id: docker_build
+        run: |
+          docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
+          docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+          docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
+          docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
+
+      - name: Build images for Flash
+        if: ${{ github.ref == 'refs/heads/release/Flash' }}
+        id: docker_build
+        run: |
+          docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
+          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-sqlite-flash     --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-pgsql-flash  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-pgsql-flash      --file docker/web/Dockerfile --no-cache .
+          docker tag modelcpp/codecompass:runtime-pgsql-flash modelcpp/codecompass:flash
+
+  tarballtest:
+    #needs: parse
+    if: ${{ github.repository == 'mcserep/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Update apt-get
+        run: sudo apt-get update
+
+      - name: Install curl
+        run: sudo apt-get install curl
+
+      - name: Trigget GitLab CI
+        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=master https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
+
+
+
   build:
     strategy:
       matrix:
@@ -401,14 +449,15 @@ jobs:
 
   docker:
     needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build images
+      - name: Build images for current master
+        if: ${{ github.ref == 'refs/heads/master' }}
         id: docker_build
         run: |
           docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
@@ -418,6 +467,17 @@ jobs:
           docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
           docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
 
+      - name: Build images for Flash
+        if: ${{ github.ref == 'refs/heads/release/Flash' }}
+        id: docker_build
+        run: |
+          docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
+          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-sqlite-flash     --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-pgsql-flash  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass:web-flash     -t modelcpp/codecompass:web-pgsql-flash      --file docker/web/Dockerfile --no-cache .
+          docker tag modelcpp/codecompass:runtime-pgsql-flash modelcpp/codecompass:flash
+
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -425,6 +485,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push images
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           docker push modelcpp/codecompass:dev
           docker push modelcpp/codecompass:runtime-sqlite
@@ -433,9 +494,19 @@ jobs:
           docker push modelcpp/codecompass:web-pgsql
           docker push modelcpp/codecompass:latest
 
+      - name: Push images
+        if: ${{ github.ref == 'refs/heads/release/Flash' }}
+        run: |
+          docker push modelcpp/codecompass:dev-flash
+          docker push modelcpp/codecompass:runtime-sqlite-flash
+          docker push modelcpp/codecompass:runtime-pgsql-flash
+          docker push modelcpp/codecompass:web-sqlite-flash
+          docker push modelcpp/codecompass:web-pgsql-flash
+          docker push modelcpp/codecompass:flash
+
   tarball:
     needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
