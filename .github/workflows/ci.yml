@@ -17,7 +17,7 @@ jobs:
 
       - name: Build images for current master
         if: ${{ github.ref == 'refs/heads/master' }}
-        id: docker_build
+        id: docker_build_test
         run: |
           docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
@@ -28,7 +28,7 @@ jobs:
 
       - name: Build images for Flash
         if: ${{ github.ref == 'refs/heads/release/Flash' }}
-        id: docker_build
+        id: docker_build_flash_test
         run: |
           docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
@@ -458,7 +458,7 @@ jobs:
 
       - name: Build images for current master
         if: ${{ github.ref == 'refs/heads/master' }}
-        id: docker_build
+        id: docker_build_master
         run: |
           docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
@@ -469,7 +469,7 @@ jobs:
 
       - name: Build images for Flash
         if: ${{ github.ref == 'refs/heads/release/Flash' }}
-        id: docker_build
+        id: docker_build_flash
         run: |
           docker build -t codecompass:dev-flash     -t modelcpp/codecompass:dev-flash            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime-flash -t modelcpp/codecompass:runtime-sqlite-flash --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
