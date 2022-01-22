@@ -420,7 +420,7 @@ jobs:
           fail_if_not_found: false
           default_return_value: ""
 
-      - name: Build images for current master
+      - name: Build images
         if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         run: |
           export BRANCH=${{ steps.branch_substring.outputs.substring }}
