@@ -401,22 +401,35 @@ jobs:
 
   docker:
     needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Branch name slug
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Branch name substring
+        uses: bhowell2/github-substring-action@v1.0.0
+        id: branch_substring
+        with:
+          value: ${{ env.GITHUB_REF_SLUG }}
+          index_of_str: "release"
+          fail_if_not_found: false
+          default_return_value: ""
+
       - name: Build images
-        id: docker_build
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         run: |
-          docker build -t codecompass:dev     -t modelcpp/codecompass:dev            --file docker/dev/Dockerfile .
-          docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
-          docker build -t codecompass:web     -t modelcpp/codecompass:web-sqlite     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass:runtime -t modelcpp/codecompass:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass:web     -t modelcpp/codecompass:web-pgsql      --file docker/web/Dockerfile --no-cache .
-          docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
+          export BRANCH=${{ steps.branch_substring.outputs.substring }}
+          docker build -t codecompass$BRANCH:dev     -t modelcpp/codecompass$BRANCH:dev            --file docker/dev/Dockerfile .
+          docker build -t codecompass$BRANCH:runtime -t modelcpp/codecompass$BRANCH:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+          docker build -t codecompass$BRANCH:web     -t modelcpp/codecompass$BRANCH:web-sqlite     --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass$BRANCH:runtime -t modelcpp/codecompass$BRANCH:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass$BRANCH:web     -t modelcpp/codecompass$BRANCH:web-pgsql      --file docker/web/Dockerfile --no-cache .
+          docker tag modelcpp/codecompass$BRANCH:runtime-pgsql modelcpp/codecompass$BRANCH:latest
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -425,17 +438,19 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push images
+        if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         run: |
-          docker push modelcpp/codecompass:dev
-          docker push modelcpp/codecompass:runtime-sqlite
-          docker push modelcpp/codecompass:runtime-pgsql
-          docker push modelcpp/codecompass:web-sqlite
-          docker push modelcpp/codecompass:web-pgsql
-          docker push modelcpp/codecompass:latest
+          export BRANCH=${{ steps.branch_substring.outputs.substring }}
+          docker push modelcpp/codecompass$BRANCH:dev
+          docker push modelcpp/codecompass$BRANCH:runtime-sqlite
+          docker push modelcpp/codecompass$BRANCH:runtime-pgsql
+          docker push modelcpp/codecompass$BRANCH:web-sqlite
+          docker push modelcpp/codecompass$BRANCH:web-pgsql
+          docker push modelcpp/codecompass$BRANCH:latest
 
   tarball:
     needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref_name == 'master' }}
     runs-on: ubuntu-20.04
 
     steps:
@@ -445,5 +460,5 @@ jobs:
       - name: Install curl
         run: sudo apt-get install curl
 
-      - name: Trigget GitLab CI
-        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=master https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
+      - name: Trigger GitLab CI
+        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=${{ github.ref_name }} https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
