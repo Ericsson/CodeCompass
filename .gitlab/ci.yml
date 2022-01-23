@@ -143,11 +143,11 @@ tarball ubuntu-16.04:
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
     script:
         - ssh-add <(echo "$CD_PRIVATE_KEY")
-        - BRANCH_SUFFIX=${CI_COMMIT_REF_SLUG#"release-"}
-        - BRANCH_SUFFIX=${BRANCH_SUFFIX#"feature-"}
-        - echo "Branch suffix: $BRANCH_SUFFIX"
+        - 'BRANCH_SUFFIX=${CI_COMMIT_REF_SLUG#"release-"}'
+        - 'BRANCH_SUFFIX=${BRANCH_SUFFIX#"feature-"}'
+        - "echo Branch suffix: $BRANCH_SUFFIX"
         - FILENAME=codecompass-$BRANCH_SUFFIX-$ARCH_SUFFIX.tar.gz
-        - echo "Filename: $FILENAME"
+        - "echo Filename: $FILENAME"
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
