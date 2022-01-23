@@ -424,11 +424,11 @@ jobs:
         if: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true }}
         run: |
           export BRANCH=${{ steps.branch_substring.outputs.substring }}
-          docker build -t codecompass$BRANCH:dev     -t modelcpp/codecompass$BRANCH:dev            --file docker/dev/Dockerfile .
-          docker build -t codecompass$BRANCH:runtime -t modelcpp/codecompass$BRANCH:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
-          docker build -t codecompass$BRANCH:web     -t modelcpp/codecompass$BRANCH:web-sqlite     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass$BRANCH:runtime -t modelcpp/codecompass$BRANCH:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass$BRANCH:web     -t modelcpp/codecompass$BRANCH:web-pgsql      --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass:dev     -t modelcpp/codecompass$BRANCH:dev            --file docker/dev/Dockerfile .
+          docker build -t codecompass:runtime -t modelcpp/codecompass$BRANCH:runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
+          docker build -t codecompass:web     -t modelcpp/codecompass$BRANCH:web-sqlite     --file docker/web/Dockerfile --no-cache .
+          docker build -t codecompass:runtime -t modelcpp/codecompass$BRANCH:runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass:web     -t modelcpp/codecompass$BRANCH:web-pgsql      --file docker/web/Dockerfile --no-cache .
           docker tag modelcpp/codecompass$BRANCH:runtime-pgsql modelcpp/codecompass$BRANCH:latest
 
       - name: Login to DockerHub
