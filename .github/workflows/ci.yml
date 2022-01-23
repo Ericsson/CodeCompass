@@ -450,7 +450,7 @@ jobs:
 
   tarball:
     needs: parse
-    if: ${{ github.repository == 'Ericsson/CodeCompass' && github.ref_name == 'master' }}
+    if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release') == true) }}
     runs-on: ubuntu-20.04
 
     steps:
