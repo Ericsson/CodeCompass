@@ -5,3 +5,8 @@ nbproject/
 *.swp
 build/
 build_*/
+
+# Csharp
+*.bak
+plugins/csharp/parser/obj/
+plugins/csharp/parser/bin/
