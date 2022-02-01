@@ -8,5 +8,5 @@ build_*/
 
 # Csharp
 *.bak
-plugins/csharp/parser/obj/
-plugins/csharp/parser/bin/
+plugins/csharp/parser/src_csharp/obj/
+plugins/csharp/parser/src_csharp/bin/
