@@ -11,6 +11,7 @@ RUN set -x && apt-get update -qq \
   cmake make \
   default-jdk \
   ctags \
+  unzip \
   gcc-9 gcc-9-plugin-dev g++-9 \
   libboost-filesystem-dev \
   libboost-log-dev \
