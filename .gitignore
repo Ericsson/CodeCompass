@@ -10,3 +10,4 @@ build_*/
 *.bak
 plugins/csharp/parser/src_csharp/obj/
 plugins/csharp/parser/src_csharp/bin/
+.vscode/

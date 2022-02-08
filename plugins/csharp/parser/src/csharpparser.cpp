@@ -58,6 +58,7 @@ bool CsharpParser::parseCompileCommands(const std::string& path_) {
 
   _numCompileCommands = _pt_filtered.size();
 
+
   //--- Process files ---//
 
   if (_numCompileCommands == 0) {
@@ -65,31 +66,9 @@ bool CsharpParser::parseCompileCommands(const std::string& path_) {
     return true;
   }
 
-  //--- Create a thread pool for the current commands ---//
-  std::unique_ptr<
-    util::JobQueueThreadPool<ParseJob>> pool =
-    util::make_thread_pool<ParseJob>(
-      threadNum_, [this](ParseJob& job_)
-      {
-        const clang::tooling::CompileCommand& command = job_.command;
-
-        LOG(info)
-          << '(' << job_.index << '/' << _numCompileCommands << ')'
-          << " Parsing " << command.Filename;
-
-        int error = this->parseWorker(command);
-
-        if (error)
-          LOG(warning)
-            << '(' << job_.index << '/' << _numCompileCommands << ')'
-            << " Parsing " << command.Filename << " has been failed.";
-      });
-}
-
-int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
-{
   
 }
+
 
 CsharpParser::~CsharpParser()
 {

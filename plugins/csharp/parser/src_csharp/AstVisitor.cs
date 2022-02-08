@@ -40,13 +40,13 @@ namespace StandAloneCSharpParser
         {
             //base.VisitUsingDirective(node);
             //Adatbázisban nem kell feltétlenül tárolni, inkább csak azt kell biztosítani hogy amiket meghívunk vele azok is be legyenek járva
-            WriteLine($" UsingDirective name: {node.Name}");
+            //WriteLine($" UsingDirective name: {node.Name}");
         }
 
         public override void VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
             CsharpAstNode astNode = AstNode(node);
-            WriteLine($"\n NamespaceDeclaration visited: {node.Name}");
+            //WriteLine($"\n NamespaceDeclaration visited: {node.Name}");
             string qName = "";
             try
             {
@@ -75,7 +75,7 @@ namespace StandAloneCSharpParser
         {
             CsharpAstNode astNode = AstNode(node);
             base.VisitInterfaceDeclaration(node);
-            WriteLine($"\n InterfaceDeclaration visited: {node.Identifier.Text}");
+            //WriteLine($"\n InterfaceDeclaration visited: {node.Identifier.Text}");
             string qName = "";
             try
             {
@@ -126,7 +126,7 @@ namespace StandAloneCSharpParser
         {
             CsharpAstNode astNode = AstNode(node);
             base.VisitStructDeclaration(node);
-            WriteLine($"\n StructDeclaration visited: {node.Identifier.Text}");
+            //WriteLine($"\n StructDeclaration visited: {node.Identifier.Text}");
             string qName = "";
             try
             {
@@ -221,7 +221,7 @@ namespace StandAloneCSharpParser
         {
             CsharpAstNode astNode = AstNode(node);
             base.VisitClassDeclaration(node);
-            WriteLine($"\n ClassDeclaration visited: {node.Identifier.Text}");
+            //WriteLine($"\n ClassDeclaration visited: {node.Identifier.Text}");
             string qName = "";
             try
             {
@@ -251,7 +251,7 @@ namespace StandAloneCSharpParser
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
-                WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
+                //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
                 csharpClass.AddVariables(VisitVariableDecl(variableDeclaration));
             }
 
@@ -347,7 +347,7 @@ namespace StandAloneCSharpParser
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
-                WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
+                //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
                 csharpRecord.AddVariables(VisitVariableDecl(variableDeclaration));
             }
 
@@ -752,7 +752,7 @@ namespace StandAloneCSharpParser
 
         public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
-            WriteLine($"\n EnumDeclaration visited: {node.Identifier.Text}");
+            //WriteLine($"\n EnumDeclaration visited: {node.Identifier.Text}");
             CsharpAstNode astNode = AstNode(node);
             string qName = "";
             try
