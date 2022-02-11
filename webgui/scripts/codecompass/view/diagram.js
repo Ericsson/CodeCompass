@@ -300,7 +300,7 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
     onClick : function () {
       var element = document.createElement('a');
       element.setAttribute('href',
-                      'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(diagram._svg));
+          'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(diagram._svg));
       element.setAttribute('download', 'diagram.svg');
       document.body.appendChild(element);
       element.click();
