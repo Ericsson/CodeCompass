@@ -17,7 +17,7 @@ namespace parser
 {
 
 namespace fs = boost::filesystem;
-namespace pr = boost::process;
+namespace bp = boost::process;
 namespace pt = boost::property_tree;
 
 class CsharpParser : public AbstractParser
@@ -29,8 +29,8 @@ public:
 private:
   int _numCompileCommands;
   int _threadNum;
-  bool acceptCompileCommands(const std::string& path_);
-  bool parseCompileCommands(const std::string& path_);
+  bool acceptCompileCommands_dir(const std::string& path_);
+  bool parseCompileCommands_dir(const std::string& path_);
 };
   
 } // parser

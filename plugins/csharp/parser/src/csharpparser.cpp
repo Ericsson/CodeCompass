@@ -16,10 +16,9 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
   _threadNum = _ctx.options["jobs"].as<int>();
 }
 
-bool CsharpParser::acceptCompileCommands(const std::string& path_)
+bool CsharpParser::acceptCompileCommands_dir(const std::string& path_)
 {
-  std::string ext = boost::filesystem::extension(path_);
-  return ext == ".json";
+  return fs::is_directory(path_);
 }
 
 bool CsharpParser::parse()
@@ -28,45 +27,25 @@ bool CsharpParser::parse()
 
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
-    if(acceptCompileCommands(path))
+    if(acceptCompileCommands_dir(path))
     {
       LOG(info) << "CsharpParser parse path: " << path;
-      succes = succes && parseCompileCommands(path);
+      succes = succes && parseCompileCommands_dir(path);
     }
   }
   return true;
 }
 
-bool CsharpParser::parseCompileCommands(const std::string& path_) {
-  pt::ptree _pt;
-  pt::read_json(path_, _pt);
-  pt::ptree _pt_filtered;
-  pr::ipstream is;
-  std::size_t file_index = 0;
+bool CsharpParser::parseCompileCommands_dir(const std::string& path_) {
+  fs::path csharp_path = fs::system_complete("../src_csharp");
 
-  // Filter compile commands tree to contain only Csharp-related files
-  std::copy_if (
-    _pt.begin(),
-    _pt.end(),
-    std::back_inserter(_pt_filtered),
-    [](pt::ptree::value_type& command_tree_)
-    {
-      auto ext =
-        fs::extension(command_tree_.second.get<std::string>("file"));
-      return ext == ".cs";
-    });
+  std::future<std::string> log;
 
-  _numCompileCommands = _pt_filtered.size();
+  std::string command("dotnet run --no-build ");
+  command.append(path_);
 
+  int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
-  //--- Process files ---//
-
-  if (_numCompileCommands == 0) {
-    LOG(info) << "Csharp-related compile commands not found in " << path_;
-    return true;
-  }
-
-  
 }
 
 

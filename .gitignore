@@ -11,3 +11,4 @@ build_*/
 plugins/csharp/parser/src_csharp/obj/
 plugins/csharp/parser/src_csharp/bin/
 .vscode/
+*.out
