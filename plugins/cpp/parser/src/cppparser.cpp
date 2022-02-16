@@ -748,20 +748,16 @@ bool CppParser::parseByJson(
 
   //--- Read the compilation commands compile database ---//
 
-  std::vector<clang::tooling::CompileCommand> tempCompileCommands =
+  std::vector<clang::tooling::CompileCommand> compileCommands =
     compDb->getAllCompileCommands();
-  std::vector<clang::tooling::CompileCommand> compileCommands;
 
-  const std::vector<std::string> cppExts{
-    ".c", ".cc", ".cpp", ".cxx", ".o", ".so", ".a"};
-
-  std::copy_if(tempCompileCommands.begin(), tempCompileCommands.end(),
-    std::back_inserter(compileCommands), [&](clang::tooling::CompileCommand c)
-    {
-      auto iter = std::find(cppExts.begin(), cppExts.end(),
-                  fs::extension(c.Filename));
-      return iter != cppExts.end();
-    });
+  compileCommands.erase(
+    std::remove_if(compileCommands.begin(), compileCommands.end(),
+      [&](const clang::tooling::CompileCommand& c)
+      {
+        return !isSourceFile(c.Filename);
+      }),
+    compileCommands.end());
 
   std::size_t numCompileCommands = compileCommands.size();
 
