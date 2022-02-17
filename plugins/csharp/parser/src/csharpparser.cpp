@@ -46,6 +46,7 @@ bool CsharpParser::parseCompileCommands_dir(const std::string& path_) {
 
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
+  return result == 0;
 }
 
 
