@@ -5,9 +5,9 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include)
 
-add_library(dummyparser SHARED
-  src/dummyparser.cpp)
+add_library(csharpparser SHARED
+  src/csharpparser.cpp)
 
-target_compile_options(dummyparser PUBLIC -Wno-unknown-pragmas)
+target_compile_options(csharpparser PUBLIC -Wno-unknown-pragmas)
 
-install(TARGETS dummyparser DESTINATION ${INSTALL_PARSER_DIR})
+install(TARGETS csharpparser DESTINATION ${INSTALL_PARSER_DIR})

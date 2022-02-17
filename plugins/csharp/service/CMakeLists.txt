@@ -25,23 +25,23 @@ add_custom_command(
   COMMENT
     "Generating Thrift for dummy.thrift")
 
-add_library(dummythrift STATIC
+add_library(csharpthrift STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp)
 
-target_compile_options(dummythrift PUBLIC -fPIC)
+target_compile_options(csharpthrift PUBLIC -fPIC)
 
-add_library(dummyservice SHARED
+add_library(csharpservice SHARED
   src/dummyservice.cpp
   src/plugin.cpp)
 
-target_compile_options(dummyservice PUBLIC -Wno-unknown-pragmas)
+target_compile_options(csharpservice PUBLIC -Wno-unknown-pragmas)
 
-target_link_libraries(dummyservice
+target_link_libraries(csharpservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   ${ODB_LIBRARIES}
-  dummythrift)
+  csharpthrift)
 
-install(TARGETS dummyservice DESTINATION ${INSTALL_SERVICE_DIR})
+install(TARGETS csharpservice DESTINATION ${INSTALL_SERVICE_DIR})
