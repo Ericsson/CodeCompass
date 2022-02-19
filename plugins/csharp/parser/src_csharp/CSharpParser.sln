@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandAloneCSharpParser", "StandAloneCSharpParser.csproj", "{73683DDF-45B3-4D1D-9CAE-CEE218880464}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpParser", "CSharpParser.csproj", "{73683DDF-45B3-4D1D-9CAE-CEE218880464}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

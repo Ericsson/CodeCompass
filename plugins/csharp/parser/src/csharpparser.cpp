@@ -37,14 +37,16 @@ bool CsharpParser::parse()
 }
 
 bool CsharpParser::parseCompileCommands_dir(const std::string& path_) {
-  fs::path csharp_path = fs::system_complete("../src_csharp");
+  fs::path csharp_path = fs::system_complete("../lib/csharp");
 
   std::future<std::string> log;
 
-  std::string command("dotnet run --no-build ");
+  std::string command("./CSharpParser ");
   command.append(path_);
 
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
+
+  LOG(info) << log.get();
 
   return result == 0;
 }
