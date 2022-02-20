@@ -13,39 +13,47 @@ namespace StandAloneCSharpParser
 {
     class Program
     {
+        
         static int Main(string[] args)
         {
             string rootDir = "";
+            string connenctionString = "";
             int threadNum = 1;
-            if (args.Length == 0){
-                WriteLine("Missing sourcepath in Csharp parser command-line arguments!");
+            if (args.Length < 2){
+                WriteLine("Missing command-line arguments in CSharpParser!");                
                 return 1;
-            } else if (args.Length > 0){
-                rootDir = args[0];
-            } else if (args.Length > 1){
-                bool succes = int.TryParse(args[1], out threadNum);
+            } else if (args.Length == 2){
+                connenctionString = args[0];
+                rootDir = args[1];
+            } else if (args.Length == 3){
+                connenctionString = args[0];
+                rootDir = args[1];
+                bool succes = int.TryParse(args[2], out threadNum);
                 if (!succes){
                     WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
                 }
+            } else if (args.Length > 3){
+                WriteLine("Too many command-line arguments in CSharpParser!");
+                return 1;
             }
 
+            //Converting the connectionstring into entiy framwork style connectionstring
+            connenctionString = connenctionString.Substring(connenctionString.IndexOf(':')+1);
+            connenctionString = connenctionString.Substring(0,1).ToUpper() + connenctionString.Substring(1);  
+            connenctionString = connenctionString.Replace("user", "username");
+            char[] connStr = connenctionString.ToCharArray();          
+            for(int i = 0; i < connenctionString.Length; ++i){
+                if (i > 0 && connStr[i]== ';' && i + 1 < connStr.Length){
+                    connStr[i+1] = char.ToUpper(connStr[i+1]);
+                }
+            }
+            connenctionString = new string(connStr);
+            //WriteLine($"Converted connectionstring:\n{connenctionString}");
+
+            CsharpDbContext dbContext = new CsharpDbContext(connenctionString);
+            dbContext.Database.EnsureCreated();
+
             IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir);
-            /*
-            string programPath = @"/home/borisz/Desktop/Labor/Standalone/files2parse/CentroidBasedClustering.cs"; //dummy for test
-            string programText = File.ReadAllText(programPath);
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(programText);
-            CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
-            CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
-                .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
-                .AddSyntaxTrees(tree);
-
-            SemanticModel model = compilation.GetSemanticModel(tree);
-            CsharpDbContext dbContext = new CsharpDbContext();
-            dbContext.Database.EnsureCreated();
-            */
-
-            CsharpDbContext dbContext = new CsharpDbContext();
-            dbContext.Database.EnsureCreated();
 
             IEnumerable<SyntaxTree> trees = new SyntaxTree[]{};
             foreach (string file in allFiles)
@@ -56,7 +64,8 @@ namespace StandAloneCSharpParser
             }
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
-                .AddSyntaxTrees(trees);
+                .AddSyntaxTrees(trees)
+                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithUsings(new []{"Microsoft.EntityFrameworkCore"}));
 
             foreach (SyntaxTree tree in trees)
             {
@@ -66,8 +75,6 @@ namespace StandAloneCSharpParser
                 WriteLine(tree.FilePath);
             }           
 
-            //var visitor = new AstVisitor(dbContext, model, tree);
-            //visitor.Visit(root);
             dbContext.SaveChanges();
             return 0;
         }
@@ -76,7 +83,6 @@ namespace StandAloneCSharpParser
         {
             IEnumerable<string> allFiles = new string[]{};
             // Data structure to hold names of subfolders. 
-            //Stack<string> dirs = new Stack<string>(100); //does not work if there are more than x subfolders 
             ArrayList dirs = new ArrayList();
 
             if (!System.IO.Directory.Exists(root))
@@ -140,9 +146,6 @@ namespace StandAloneCSharpParser
                         continue;
                     }
                 }
-
-                //allFiles = allFiles.Concat(files);
-
             }
 
             return allFiles;

@@ -5,6 +5,12 @@ namespace StandAloneCSharpParser.model
 {
     class CsharpDbContext : DbContext
     {
+
+        string ConnenctionString;
+        public CsharpDbContext(string connectionString){
+            ConnenctionString = connectionString;
+        }
+        
         public DbSet<CsharpAstNode> CsharpAstNodes { get; set; }
         public DbSet<CsharpNamespace> CsharpNamespaces { get; set; }
         public DbSet<CsharpClass> CsharpClasses { get; set; }
@@ -12,7 +18,8 @@ namespace StandAloneCSharpParser.model
         public DbSet<CsharpEnum> CsharpEnums { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql("Host=localhost;Database=postgres;Username=compass;Password=1234");
+            => optionsBuilder.UseNpgsql(ConnenctionString);
+           // => optionsBuilder.UseNpgsql("Host=localhost;Database=postgres;Username=compass;Password=1234");
 
     }
 

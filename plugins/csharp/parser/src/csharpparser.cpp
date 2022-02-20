@@ -42,7 +42,10 @@ bool CsharpParser::parseCompileCommands_dir(const std::string& path_) {
   std::future<std::string> log;
 
   std::string command("./CSharpParser ");
+  command.append(_ctx.options["database"].as<std::string>());
+  command.append(" ");
   command.append(path_);
+  LOG(info) << command;
 
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
