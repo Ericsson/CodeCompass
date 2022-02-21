@@ -750,6 +750,15 @@ bool CppParser::parseByJson(
 
   std::vector<clang::tooling::CompileCommand> compileCommands =
     compDb->getAllCompileCommands();
+
+  compileCommands.erase(
+    std::remove_if(compileCommands.begin(), compileCommands.end(),
+      [&](const clang::tooling::CompileCommand& c)
+      {
+        return !isSourceFile(c.Filename);
+      }),
+    compileCommands.end());
+
   std::size_t numCompileCommands = compileCommands.size();
 
   //--- Create a thread pool for the current commands ---//
