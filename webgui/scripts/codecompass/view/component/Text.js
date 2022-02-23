@@ -453,6 +453,22 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         elementInfo : astNodeInfo
       });
 
+      //--- Update URL ---//
+
+      if (astNodeInfo)
+      {
+        var range = astNodeInfo.range.range;
+        var selection = [
+          range.startpos.line,
+          range.startpos.column,
+          range.endpos.line,
+          range.endpos.column];
+
+        urlHandler.setStateValue({
+          select : selection.join('|')
+        });
+      }
+
       //--- Highlighting the same occurrence of the selected entity ---//
 
       this._markUsages(pos, this._fileInfo);

@@ -39,9 +39,12 @@ MetricsParser::MetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
       if (file)
       {
         if (_fileIdCache.find(file->id) == _fileIdCache.end())
+        {
           this->persistLoc(getLocFromFile(file), file->id);
+          ++this->_visitedFileCount;
+        }
         else
-          LOG(info) << "Metrics already counted for file: " << file->path;
+          LOG(debug) << "Metrics already counted for file: " << file->path;
       }
     });
 }
@@ -82,6 +85,8 @@ bool MetricsParser::cleanupDatabase()
 
 bool MetricsParser::parse()
 {
+  this->_visitedFileCount = 0;
+
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
     LOG(info) << "Metrics parse path: " << path;
@@ -111,6 +116,7 @@ bool MetricsParser::parse()
   }
 
   _pool->wait();
+  LOG(info) << "Processed files: " << this->_visitedFileCount;
 
   return true;
 }
@@ -132,7 +138,7 @@ MetricsParser::Loc MetricsParser::getLocFromFile(model::FilePtr file_) const
 {
   Loc result;
 
-  LOG(info) << "Count metrics for " << file_->path;
+  LOG(debug) << "Count metrics for " << file_->path;
 
   //--- Get source code ---//
 

@@ -135,7 +135,7 @@ tarball ubuntu-16.04:
     image: ubuntu:20.04
     allow_failure: false
     variables:
-        FILENAME: codecompass-$CI_COMMIT_BRANCH.tar.gz
+        ARCH_SUFFIX: generic
     before_script:
         - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
         - mkdir -p ~/.ssh
@@ -143,23 +143,28 @@ tarball ubuntu-16.04:
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
     script:
         - ssh-add <(echo "$CD_PRIVATE_KEY")
+        - 'BRANCH_SUFFIX=${CI_COMMIT_REF_SLUG#"release-"}'
+        - 'BRANCH_SUFFIX=${BRANCH_SUFFIX#"feature-"}'
+        - "echo Branch suffix: $BRANCH_SUFFIX"
+        - FILENAME=codecompass-$BRANCH_SUFFIX-$ARCH_SUFFIX.tar.gz
+        - "echo Filename: $FILENAME"
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
 upload suse-15:
     extends: .upload
     variables:
-        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-15.tar.gz
+        ARCH_SUFFIX: suse-15
     needs: ["tarball suse-15"]
 
 upload suse-42.1:
     extends: .upload
     variables:
-        FILENAME: codecompass-$CI_COMMIT_BRANCH-suse-42.1.tar.gz
+        ARCH_SUFFIX: suse-42.1
     needs: ["tarball suse-42.1"]
 
 upload ubuntu-16.04:
     extends: .upload
     variables:
-        FILENAME: codecompass-$CI_COMMIT_BRANCH-ubuntu-16.04.tar.gz
+        ARCH_SUFFIX: ubuntu-16.04
     needs: ["tarball ubuntu-16.04"]
