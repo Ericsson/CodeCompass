@@ -67,8 +67,8 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, vi
             elementInfo : nodeInfo
           });
 
-          if (gtag) {
-            gtag ('event', 'documentation', {
+          if (window.gtag) {
+            window.gtag ('event', 'documentation', {
               'event_category' : urlHandler.getState('wsid'),
               'event_label' : urlHandler.getFileInfo().name
                             + ': '

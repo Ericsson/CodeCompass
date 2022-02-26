@@ -259,9 +259,9 @@ function (ObjectStoreModel, BorderContainer, declare, Memory, Observable, topic,
       params.range = range;
       params.filter = filter;
 
-      if (gtag) {
+      if (window.gtag) {
         var type = this._searchTypes.find(t => t.id === data.searchType);
-        gtag('event', 'search: ' + type.name, {
+        window.gtag('event', 'search: ' + type.name, {
           'event_category': urlHandler.getState('wsid'),
           'event_label': params.query
         });

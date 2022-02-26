@@ -1,4 +1,4 @@
-var gtag = null;
+window.gtag = null;
 $(document).ready(function() {
     $.ajax({
         url: 'ga.txt',
@@ -10,12 +10,12 @@ $(document).ready(function() {
                 
                 window.dataLayer = window.dataLayer || [];
 
-                gtag = function() {
+                window.gtag = function() {
                     dataLayer.push(arguments);
                 }
 
-                gtag('js', new Date());
-                gtag('config', gaId);
+                window.gtag('js', new Date());
+                window.gtag('config', gaId);
             })
             .fail(function (jqxhr, settings, exception) {
                 console.log('Failed to connect to Google Tag Manager. Google ' +
