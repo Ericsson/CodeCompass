@@ -17,22 +17,25 @@ namespace StandAloneCSharpParser
         static int Main(string[] args)
         {
             string rootDir = "";
+            string buildDir = "";
             string connenctionString = "";
             int threadNum = 1;
-            if (args.Length < 2){
-                WriteLine("Missing command-line arguments in CSharpParser!");                
+            if (args.Length < 3){
+                WriteLine("Missing command-line arguments in CSharpParser!");                              
                 return 1;
-            } else if (args.Length == 2){
-                connenctionString = args[0];
-                rootDir = args[1];
             } else if (args.Length == 3){
                 connenctionString = args[0];
                 rootDir = args[1];
-                bool succes = int.TryParse(args[2], out threadNum);
+                buildDir = args[2];
+            } else if (args.Length == 4){
+                connenctionString = args[0];
+                rootDir = args[1];
+                buildDir = args[2];
+                bool succes = int.TryParse(args[3], out threadNum);
                 if (!succes){
                     WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
                 }
-            } else if (args.Length > 3){
+            } else if (args.Length > 4){
                 WriteLine("Too many command-line arguments in CSharpParser!");
                 return 1;
             }
@@ -53,7 +56,8 @@ namespace StandAloneCSharpParser
             CsharpDbContext dbContext = new CsharpDbContext(connenctionString);
             dbContext.Database.EnsureCreated();
 
-            IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir);
+            IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir, ".cs");
+            IEnumerable<string> assemblies = GetSourceFilesFromDir(buildDir, ".dll");
 
             IEnumerable<SyntaxTree> trees = new SyntaxTree[]{};
             foreach (string file in allFiles)
@@ -64,9 +68,13 @@ namespace StandAloneCSharpParser
             }
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
-                .AddSyntaxTrees(trees)
-                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithUsings(new []{"Microsoft.EntityFrameworkCore"}));
-
+                .AddSyntaxTrees(trees);
+            
+            foreach (string file in assemblies)
+            {
+                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
+            }
+                
             foreach (SyntaxTree tree in trees)
             {
                 SemanticModel model = compilation.GetSemanticModel(tree);
@@ -79,7 +87,7 @@ namespace StandAloneCSharpParser
             return 0;
         }
 
-        public static IEnumerable<string> GetSourceFilesFromDir(string root)
+        public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)
         {
             IEnumerable<string> allFiles = new string[]{};
             // Data structure to hold names of subfolders. 
@@ -135,7 +143,7 @@ namespace StandAloneCSharpParser
                     try
                     {
                         System.IO.FileInfo fi = new System.IO.FileInfo(file);
-                        if (fi.Extension == ".cs") {
+                        if (fi.Extension == extension) {
                             allFiles = allFiles.Append(file);
                         }
                     }

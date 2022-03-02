@@ -649,11 +649,17 @@ namespace StandAloneCSharpParser
                 string varQType = "";
                 try
                 {
-                    varQType = Model.GetSymbolInfo(node.Type).Symbol.ToString();
+                    if (node.Type.ToString() == "var"){
+                        //varQType = ((ILocalSymbol)Model.GetDeclaredSymbol(variable)).Type.ToString();
+                        varQType = Model.GetOperation(variable.Initializer.Value).Type.ToString();
+                        //WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
+                    } else {
+                        varQType = Model.GetSymbolInfo(node.Type).Symbol.ToString();
+                    }
                 }
                 catch (Exception)
                 {
-                    WriteLine($"Can not get QualifiedType of this Type: {node.Type}");
+                    WriteLine($"Can not get QualifiedType of this Type: {node.Type} at this node: '{node}'");
                 }
                 CsharpVariable csharpVariable = new CsharpVariable
                 {
