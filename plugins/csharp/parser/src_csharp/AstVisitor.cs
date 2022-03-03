@@ -647,6 +647,7 @@ namespace StandAloneCSharpParser
             {
                 CsharpAstNode astNode = AstNode(variable);
                 string varQType = "";
+                bool isLINQvar = node.DescendantNodes().OfType<QueryExpressionSyntax>().Any();
                 try
                 {
                     if (node.Type.ToString() == "var"){
@@ -661,6 +662,14 @@ namespace StandAloneCSharpParser
                 {
                     WriteLine($"Can not get QualifiedType of this Type: {node.Type} at this node: '{node}'");
                 }
+
+                foreach (var member in node.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+                {
+                    isLINQvar = isLINQvar || member.DescendantNodes().OfType<IdentifierNameSyntax>()
+                        .Where(memb => new string[]{"Where", "OfType", "Select", "SelectMany"}
+                        .Contains(memb.Identifier.ValueText)).Any();              
+                }
+
                 CsharpVariable csharpVariable = new CsharpVariable
                 {
                     AstNode = astNode,
@@ -668,7 +677,8 @@ namespace StandAloneCSharpParser
                     QualifiedType = varQType,
                     TypeHash = varQType.GetHashCode(),
                     DocumentationCommentXML = Model.GetDeclaredSymbol(variable).GetDocumentationCommentXml(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    isLINQ = isLINQvar
                 };
                 variables.Add(csharpVariable);
             }
@@ -825,6 +835,10 @@ namespace StandAloneCSharpParser
                 }
             }
             return csharpEnumMember;
+        }
+
+        private void VisitQueryExp(QueryExpressionSyntax node){
+            CsharpAstNode astNode = AstNode(node);
         }
     }
 }
