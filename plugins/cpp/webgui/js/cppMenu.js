@@ -23,6 +23,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, vi
 
           var languageService = model.getLanguageService(fileInfo.type);
           astHelper.jumpToDef(nodeInfo.id, model.cppservice);
+
+          if (window.gtag) {
+            window.gtag ('event', 'jump_to_def', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                  + ': '
+                  + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }
@@ -46,6 +55,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, vi
             fileType : fileInfo.type,
             elementInfo : nodeInfo
           });
+
+          if (window.gtag) {
+              window.gtag ('event', 'info_tree', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                  + ': '
+                  + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }
@@ -68,7 +86,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, vi
           });
 
           if (window.gtag) {
-            window.gtag ('event', 'documentation', {
+              window.gtag ('event', 'documentation', {
               'event_category' : urlHandler.getState('wsid'),
               'event_label' : urlHandler.getFileInfo().name
                             + ': '
