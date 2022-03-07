@@ -16,7 +16,7 @@ creating and using the database file.
 ### Using *PostgreSQL* from package manager
 
 PostgreSQL can be installed from the package manager, using
-`sudo apt-get install postgresql-<version>` (e.g. `postgresql-9.5`). This will
+`sudo apt install postgresql-<version>` (e.g. `postgresql-9.5`). This will
 set up an automatically starting local server on the default port `5432`.
 
 This server, by default, is only accessible for an automatically created system
