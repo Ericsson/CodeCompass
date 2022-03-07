@@ -343,8 +343,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       this._getSyntaxHighlight(this._fileInfo);
 
-      if (gtag) {
-        gtag('event', 'page_view', {
+      if (window.gtag) {
+        window.gtag('event', 'page_view', {
           page_location: window.location.href,
           page_path: window.location.pathname + window.location.hash,
           page_title: urlFileInfo.path
@@ -485,8 +485,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
 
-      if (gtag) {
-        gtag('event', 'click_on_word', {
+      if (window.gtag) {
+        window.gtag('event', 'click_on_word', {
           'event_category' : urlHandler.getState('wsid'),
           'event_label' : urlHandler.getFileInfo().name
                         + ': '

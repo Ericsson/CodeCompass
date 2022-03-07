@@ -61,8 +61,8 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
         }
       );
 
-      if (gtag) {
-        gtag ('event', 'cpp_reparse_file', {
+      if (window.gtag) {
+        window.gtag ('event', 'cpp_reparse_file', {
           'event_category' : urlHandler.getState('wsid'),
           'event_label' : urlHandler.getFileInfo().name
         });
@@ -80,8 +80,8 @@ function (on, topic, declare, Color, Deferred, dom, ContentPane, Tooltip,
         }
       );
 
-      if (gtag) {
-        gtag ('event', 'cpp_reparse_node', {
+      if (window.gtag) {
+        window.gtag ('event', 'cpp_reparse_node', {
           'event_category' : urlHandler.getState('wsid'),
           'event_label' : urlHandler.getFileInfo().name
               + ': '
