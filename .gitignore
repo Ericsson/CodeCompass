@@ -2,6 +2,7 @@
 
 nbproject/
 .idea/
+.vscode/
 *.swp
 build/
 build_*/
