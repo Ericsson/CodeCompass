@@ -1615,13 +1615,14 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
 
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
           FuncQuery::entityHash == defNode.entityHash);
-        if(!funcNodes.empty())
+        if (!funcNodes.empty())
         {
           const model::CppFunction& funcNode = *funcNodes.begin();
 
           for (const model::Tag& tag : funcNode.tags)
             tags[node.id].push_back(model::tagToString(tag));
-        } else
+        }
+        else
           LOG(warning) << "Database query result was not expected to be empty. "
                        << __FILE__ << ", line #" << __LINE__;
 
