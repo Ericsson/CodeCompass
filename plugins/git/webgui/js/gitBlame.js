@@ -268,7 +268,8 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
 
         urlHandler.setStateValue({
           center : that.id,
-          select : selection.join('|')
+          select : selection.join('|'),
+          fid    : fileInfo.id
         });
       });
     }
