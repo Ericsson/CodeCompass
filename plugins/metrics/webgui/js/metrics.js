@@ -536,8 +536,8 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
       });
       });
 
-      if (gtag) {
-        gtag ('event', 'metrics', {
+      if (window.gtag) {
+        window.gtag ('event', 'metrics', {
           'event_category' : urlHandler.getState('wsid'),
           'event_label' : urlHandler.getFileInfo().name
         });

@@ -137,8 +137,8 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
         blameForLines.push(blameForLine);
     });
 
-    if (gtag) {
-      gtag ('event', 'git_blame', {
+    if (window.gtag) {
+      window.gtag ('event', 'git_blame', {
         'event_category' : urlHandler.getState('wsid'),
         'event_label' : urlHandler.getFileInfo().name
       });

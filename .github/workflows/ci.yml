@@ -196,26 +196,25 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: make test ARGS=-V
 
-      - name: Archive CodeCompass binaries
+      - name: Archive CodeCompass artifacts
+        run: |
+          mkdir ${{github.workspace}}/artifacts
+          cd ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+          zip -rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip .
+          cd ${{github.workspace}}/build
+          zip -Rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip *.c *.h *.cpp *.hpp *.cxx *.hxx *.ixx *.js compile_commands.json
+
+      - name: Upload CodeCompass binaries
         uses: actions/upload-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
-          path: ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+          path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
 
-      - name: Archive CodeCompass compile-time source files
+      - name: Upload CodeCompass compile-time source files
         uses: actions/upload-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
-          path: |
-            ${{github.workspace}}/build/**/*.c
-            ${{github.workspace}}/build/**/*.h
-            ${{github.workspace}}/build/**/*.cpp
-            ${{github.workspace}}/build/**/*.hpp
-            ${{github.workspace}}/build/**/*.cxx
-            ${{github.workspace}}/build/**/*.hxx
-            ${{github.workspace}}/build/**/*.ixx
-            ${{github.workspace}}/build/**/*.js
-            ${{github.workspace}}/build/**/compile_commands.json
+          path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
 
   parse:
     needs: build
@@ -319,13 +318,20 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
-          path: ${{github.workspace}}/install
+          path: ${{github.workspace}}/artifacts
 
       - name: Download CodeCompass compile-time source files
         uses: actions/download-artifact@v2
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
-          path: ${{github.workspace}}/build
+          path: ${{github.workspace}}/artifacts
+
+      - name: Unpack CodeCompass artifacts
+        run: |
+          mkdir ${{github.workspace}}/install && cd ${{github.workspace}}/install
+          unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
+          mkdir ${{github.workspace}}/build && cd ${{github.workspace}}/build
+          unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
 
       - name: Add execute right to parser and move source files
         run: |
