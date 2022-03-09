@@ -185,7 +185,9 @@ function (model, viewHandler, util) {
                         refType     : parentNode.refType,
                         cssClass    : parentNode.cssClass,
                         hasChildren : true,
-                        getChildren : parentNode.getChildren
+                        getChildren : function () {
+                          return loadReferenceNodes(this, reference, refTypes);
+                        }
                       });
 
                     //--- Call ---//
