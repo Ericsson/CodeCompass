@@ -119,9 +119,11 @@ function (model, viewHandler, util) {
     return res;
   }
 
-  function loadReferenceNodes(parentNode, nodeInfo, refTypes) {
+  function loadReferenceNodes(parentNode, nodeInfo, refTypes, scratch) {
     var res = [];
     var fileGroupsId = [];
+
+    scratch = scratch || {};
 
     var references = model.cppservice.getReferences(
       nodeInfo.id,
@@ -148,6 +150,12 @@ function (model, viewHandler, util) {
         });
 
         var fileInfo = model.project.getFileInfo(fileId);
+
+        if (parentNode.refType === refTypes['Caller']) {
+          scratch.visitedNodeIDs =
+            (scratch.visitedNodeIDs || []).concat(nodeInfo.id);
+        }
+
         res.push({
           id          : fileGroupsId[fileId],
           name        : createReferenceCountLabel(
@@ -161,14 +169,17 @@ function (model, viewHandler, util) {
 
             referenceInFile.forEach(function (reference) {
               if (parentNode.refType === refTypes['Caller']) {
+                var showChildren =
+                  scratch.visitedNodeIDs.indexOf(reference.id) == -1;
                 res.push({
                   id          : reference.id,
                   name        : createLabel(reference),
                   nodeInfo    : reference,
                   refType     : parentNode.refType,
                   cssClass    : 'icon icon-Method',
-                  hasChildren : true,
-                  getChildren : function () {
+                  hasChildren : showChildren,
+                  getChildren : showChildren
+                  ? function () {
                     var res = [];
 
                     //--- Recursive Node ---//
@@ -186,7 +197,7 @@ function (model, viewHandler, util) {
                         cssClass    : parentNode.cssClass,
                         hasChildren : true,
                         getChildren : function () {
-                          return loadReferenceNodes(this, reference, refTypes);
+                          return loadReferenceNodes(this, reference, refTypes, scratch);
                         }
                       });
 
@@ -208,6 +219,7 @@ function (model, viewHandler, util) {
                     });
                     return res;
                   }
+                  : undefined
                 });
               } else if (parentNode.refType === refTypes['Usage']) {
                 res.push({
