@@ -31,7 +31,11 @@ function (model, viewHandler, util) {
   }
 
   function createReferenceCountLabel(label, count) {
-    return label + '<span class="reference-count">(' + count + ')</span>';
+    var parsedLabel = $('<div>').append($.parseHTML(label));
+    parsedLabel.children('span.reference-count').remove();
+    parsedLabel.append('<span class="reference-count">(' + count + ')</span>');
+
+    return parsedLabel.html();
   }
 
   function createLabel(astNodeInfo) {
