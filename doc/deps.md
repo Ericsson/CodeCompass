@@ -81,7 +81,7 @@ package manager.
 sudo apt install libsqlite3-dev
 
 # For PostgreSQL database systems:
-sudo apt install postgresql postgresql-server-dev-<version>
+sudo apt install postgresql-server-dev-<version>
 ```
 
 ##### Ubuntu 20.04 ("Focal Fossa") LTS
@@ -91,7 +91,7 @@ sudo apt install postgresql postgresql-server-dev-<version>
 sudo apt install libodb-sqlite-dev libsqlite3-dev
 
 # For PostgreSQL database systems:
-sudo apt install postgresql libodb-pgsql-dev postgresql-server-dev-<version>
+sudo apt install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
 
