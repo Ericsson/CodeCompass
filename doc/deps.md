@@ -88,10 +88,10 @@ sudo apt install postgresql-server-dev-<version>
 
 ```bash
 # For SQLite database systems:
-sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+sudo apt install libodb-sqlite-dev libsqlite3-dev
 
 # For PostgreSQL database systems:
-sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
+sudo apt install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
 
