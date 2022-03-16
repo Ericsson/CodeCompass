@@ -17,7 +17,7 @@ using Thrift.Transport;
 using Thrift.Transport.Server;
 using Thrift.Processor;
 using System.Diagnostics;
-using cc.service.language;
+using language;
 
 namespace Server
 {
@@ -44,8 +44,6 @@ namespace Server
 
         public static void Main(string[] args)
         {
-            args ??= Array.Empty<string>();
-
             using (var source = new CancellationTokenSource())
             {
                 RunAsync(source.Token).GetAwaiter().GetResult();
@@ -57,9 +55,7 @@ namespace Server
             }
 
             Logger.LogInformation("Server stopped");
-        }
-
-        
+        }        
 
         private static async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -100,7 +96,9 @@ namespace Server
             /// the file types with the service
             /// @return File types
             /// </summary>
-            Task<List<string>> getFileTypesAsync(CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<List<string>> getFileTypesAsync(CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<string>());
+            }
 
             /// <summary>
             /// Returns an AstNodeInfo object for the given AST node ID.
@@ -110,7 +108,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeId"></param>
-            Task<AstNodeInfo> getAstNodeInfoAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<AstNodeInfo> getAstNodeInfoAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new AstNodeInfo());
+            }
 
             /// <summary>
             /// Returns an AstNodeInfo object for the given source code position.
@@ -122,7 +122,9 @@ namespace Server
             /// at the given position.
             /// </summary>
             /// <param name="fpos"></param>
-            Task<AstNodeInfo> getAstNodeInfoByPositionAsync(FilePosition fpos, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<AstNodeInfo> getAstNodeInfoByPositionAsync(FilePosition fpos, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new AstNodeInfo());
+            }
 
             /// <summary>
             /// Returns the source code text that corresponds to the given AST node.
@@ -132,7 +134,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeId"></param>
-            Task<string> getSourceTextAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getSourceTextAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns the documentation which belongs to the given AST node if any
@@ -143,7 +147,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeId"></param>
-            Task<string> getDocumentationAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getDocumentationAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns a set of properties which can be known about the given AST node.
@@ -153,7 +159,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeIds"></param>
-            Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new Dictionary<string, string>());
+            }
 
             /// <summary>
             /// Returns the diagram types which can be passed to getDiagram() function for
@@ -163,7 +171,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeId"></param>
-            Task<Dictionary<string, int>> getDiagramTypesAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<Dictionary<string, int>> getDiagramTypesAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new Dictionary<string, int>());
+            }
 
             /// <summary>
             /// Returns the SVG represenation of a diagram about the AST node identified by
@@ -180,7 +190,9 @@ namespace Server
             /// </summary>
             /// <param name="astNodeId"></param>
             /// <param name="diagramId"></param>
-            Task<string> getDiagramAsync(string astNodeId, int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getDiagramAsync(string astNodeId, int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns the SVG represenation of the diagram legend used by getDiagram().
@@ -190,7 +202,9 @@ namespace Server
             /// legend can't be generated.
             /// </summary>
             /// <param name="diagramId"></param>
-            Task<string> getDiagramLegendAsync(int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getDiagramLegendAsync(int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns a list of diagram types that can be drawn for the specified file.
@@ -200,7 +214,9 @@ namespace Server
             /// given ID.
             /// </summary>
             /// <param name="fileId"></param>
-            Task<Dictionary<string, int>> getFileDiagramTypesAsync(string fileId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<Dictionary<string, int>> getFileDiagramTypesAsync(string fileId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new Dictionary<string, int>());
+            }
 
             /// <summary>
             /// Returns an SVG representation of the required diagram graph.
@@ -215,7 +231,9 @@ namespace Server
             /// </summary>
             /// <param name="fileId"></param>
             /// <param name="diagramId"></param>
-            Task<string> getFileDiagramAsync(string fileId, int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getFileDiagramAsync(string fileId, int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns the SVG represenation of the diagram legend used by
@@ -226,7 +244,9 @@ namespace Server
             /// legend can't be generated.
             /// </summary>
             /// <param name="diagramId"></param>
-            Task<string> getFileDiagramLegendAsync(int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<string> getFileDiagramLegendAsync(int diagramId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult("");
+            }
 
             /// <summary>
             /// Returns the reference types which can be passed to getReferences().
@@ -235,7 +255,9 @@ namespace Server
             /// the given ID.
             /// </summary>
             /// <param name="astNodeId"></param>
-            Task<Dictionary<string, int>> getReferenceTypesAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<Dictionary<string, int>> getReferenceTypesAsync(string astNodeId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new Dictionary<string, int>());
+            }
 
             /// <summary>
             /// Returns reference count to the AST node identified by astNodeId.
@@ -246,7 +268,9 @@ namespace Server
             /// </summary>
             /// <param name="astNodeId"></param>
             /// <param name="referenceId"></param>
-            Task<int> getReferenceCountAsync(string astNodeId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<int> getReferenceCountAsync(string astNodeId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(0);
+            }
 
             /// <summary>
             /// Returns references to the AST node identified by astNodeId.
@@ -262,7 +286,9 @@ namespace Server
             /// <param name="astNodeId"></param>
             /// <param name="referenceId"></param>
             /// <param name="tags"></param>
-            Task<List<AstNodeInfo>> getReferencesAsync(string astNodeId, int referenceId, List<string> tags, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<List<AstNodeInfo>> getReferencesAsync(string astNodeId, int referenceId, List<string> tags, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<AstNodeInfo>());
+            }
 
             /// <summary>
             /// Returns references to the AST node identified by astNodeId restricted to a
@@ -282,7 +308,9 @@ namespace Server
             /// <param name="referenceId"></param>
             /// <param name="fileId"></param>
             /// <param name="tags"></param>
-            Task<List<AstNodeInfo>> getReferencesInFileAsync(string astNodeId, int referenceId, string fileId, List<string> tags, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<List<AstNodeInfo>> getReferencesInFileAsync(string astNodeId, int referenceId, string fileId, List<string> tags, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<AstNodeInfo>());
+            }
 
             /// <summary>
             /// Same as getReferences() but only a few results are returned based on the
@@ -300,7 +328,9 @@ namespace Server
             /// <param name="referenceId"></param>
             /// <param name="pageSize"></param>
             /// <param name="pageNo"></param>
-            Task<List<AstNodeInfo>> getReferencesPageAsync(string astNodeId, int referenceId, int pageSize, int pageNo, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<List<AstNodeInfo>> getReferencesPageAsync(string astNodeId, int referenceId, int pageSize, int pageNo, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<AstNodeInfo>());
+            }
 
             /// <summary>
             /// Returns a list of reference types that can be listed for the requested file
@@ -311,7 +341,9 @@ namespace Server
             /// given ID.
             /// </summary>
             /// <param name="fileId"></param>
-            Task<Dictionary<string, int>> getFileReferenceTypesAsync(string fileId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<Dictionary<string, int>> getFileReferenceTypesAsync(string fileId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new Dictionary<string, int>());
+            }
 
             /// <summary>
             /// Returns references as an answer to the requested search.
@@ -324,7 +356,9 @@ namespace Server
             /// </summary>
             /// <param name="fileId"></param>
             /// <param name="referenceId"></param>
-            Task<List<AstNodeInfo>> getFileReferencesAsync(string fileId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<List<AstNodeInfo>> getFileReferencesAsync(string fileId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<AstNodeInfo>());
+            }
 
             /// <summary>
             /// Returns reference count to the File node identified by fileId.
@@ -335,7 +369,9 @@ namespace Server
             /// </summary>
             /// <param name="fileId"></param>
             /// <param name="referenceId"></param>
-            Task<int> getFileReferenceCountAsync(string fileId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {}
+            public async Task<int> getFileReferenceCountAsync(string fileId, int referenceId, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(0);
+            }
 
             /// <summary>
             /// Returns the syntax highlight elements for a whole file.
@@ -345,9 +381,10 @@ namespace Server
             /// given ID.
             /// </summary>
             /// <param name="range"></param>
-            Task<List<SyntaxHighlight>> getSyntaxHighlightAsync(FileRange range, CancellationToken cancellationToken = default(CancellationToken)) {}
-
-           
+            public async Task<List<SyntaxHighlight>> getSyntaxHighlightAsync(FileRange range, CancellationToken cancellationToken = default(CancellationToken)) {
+                return await Task.FromResult(new List<SyntaxHighlight>());
+            }
+     
         }
     }
 }
