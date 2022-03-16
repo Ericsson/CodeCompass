@@ -11,5 +11,13 @@ build_*/
 *.bak
 plugins/csharp/parser/src_csharp/obj/
 plugins/csharp/parser/src_csharp/bin/
+lib/csharp/thrift_netstd/Thrift/bin/
+lib/csharp/thrift_netstd/Thrift/obj/
+plugins/csharp/service/src_csharp/obj/
+plugins/csharp/service/src_csharp/bin/
 .vscode/
 *.out
+service/language/gen-netstd/
+
+
+
