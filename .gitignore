@@ -18,6 +18,5 @@ plugins/csharp/service/src_csharp/bin/
 .vscode/
 *.out
 service/language/gen-netstd/
-
-
+service/language/gen-cpp/
 
