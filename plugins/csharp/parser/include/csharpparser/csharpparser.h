@@ -31,6 +31,7 @@ private:
   int _threadNum;
   bool acceptCompileCommands_dir(const std::vector<std::string>& path_);
   bool parseCompileCommands_dir(const std::vector<std::string>& path_);
+  void addSource(const std::string& filepath_, bool error_);
 };
   
 } // parser

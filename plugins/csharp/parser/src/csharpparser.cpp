@@ -2,7 +2,19 @@
 
 #include <boost/filesystem.hpp>
 
+#include <model/buildaction.h>
+#include <model/buildaction-odb.hxx>
+#include <model/buildsourcetarget.h>
+#include <model/buildsourcetarget-odb.hxx>
+#include <model/file.h>
+#include <model/file-odb.hxx>
+
+#include <parser/sourcemanager.h>
+
+#include <util/hash.h>
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
+#include <util/threadpool.h>
 
 #include <memory>
 
@@ -54,9 +66,49 @@ bool CsharpParser::parseCompileCommands_dir(const std::vector<std::string>& path
 
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
-  LOG(info) << log.get();
+  //LOG(info) << log.get();
+
+  std::string line;
+  bool error = false;
+
+  std::stringstream log_str(log.get());
+  
+  while(std::getline(log_str, line, '\n')){
+    if (line[0] != '/') {
+      error = true;
+    } else {
+      addSource(line, error);
+      LOG(info) << line << (error ? " with errors" : "");
+      error = false;
+    }
+  }
 
   return result == 0;
+}
+
+void CsharpParser::addSource(const std::string& filepath_, bool error_){
+  ///*
+  util::OdbTransaction transaction(_ctx.db);
+
+  model::BuildActionPtr buildAction(new model::BuildAction);
+  buildAction->command = " ";
+  buildAction->type = model::BuildAction::Compile;
+
+  model::BuildSource buildSource;
+  buildSource.file = _ctx.srcMgr.getFile(filepath_);
+  buildSource.file->parseStatus = error_
+    ? model::File::PSPartiallyParsed
+    : model::File::PSFullyParsed;
+  buildSource.action = buildAction;
+
+  _ctx.srcMgr.updateFile(*buildSource.file);
+  _ctx.srcMgr.persistFiles();
+
+  transaction([&, this] { 
+    _ctx.db->persist(buildAction);
+    _ctx.db->persist(buildSource);
+  });
+  //*/
 }
 
 

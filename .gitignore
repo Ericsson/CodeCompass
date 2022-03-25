@@ -20,3 +20,4 @@ plugins/csharp/service/src_csharp/bin/
 service/language/gen-netstd/
 service/language/gen-cpp/
 
+plugins/csharp/service/src_csharp/gen-netstd/
