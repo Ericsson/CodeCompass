@@ -8,6 +8,9 @@ include_directories(
 
 add_library(csharpparser SHARED
   src/csharpparser.cpp)
+  
+target_link_libraries(csharpparser
+  model)
 
 target_compile_options(csharpparser PUBLIC -Wno-unknown-pragmas)
 
