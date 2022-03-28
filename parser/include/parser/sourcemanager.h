@@ -51,8 +51,8 @@ public:
    * based on the given path_. The object is read from a cache. If the file is
    * not in the cache yet then a model::File entry is created, persisted in the
    * database and placed in the cache. If the file doesn't exist then it returns
-   * nullptr.
-   * @param path_ The file path to look up.
+   * a file with no contents.
+   * @param path_ The absolute file path to look up.
    */
   model::FilePtr getFile(const std::string& path_);
 

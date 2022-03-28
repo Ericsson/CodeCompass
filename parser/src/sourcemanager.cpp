@@ -166,7 +166,7 @@ model::FilePtr SourceManager::getFile(const std::string& path_)
   boost::filesystem::path canonicalPath
     = boost::filesystem::canonical(path_, ec);
 
-  //--- If the file can't be found on disk then return nullptr ---//
+  //--- If the file can't be found on disk then return a blank file ---//
 
   bool fileExists = true;
   if (ec)
