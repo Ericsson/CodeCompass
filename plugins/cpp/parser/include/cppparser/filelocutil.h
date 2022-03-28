@@ -79,23 +79,31 @@ public:
   }
 
   /**
-   * This function returns the file path in which loc_ location takes place. The
-   * location is meant to be the expanded location (in case of macro expansion).
-   * If the file can't be determined then empty string returns.
+   * This function returns the absolute path of the file in which loc_ location
+   * takes place. The location is meant to be the expanded location (in case of
+   * macro expansion).
+   * If the file can't be determined then an empty string is returned.
    */
   std::string getFilePath(const clang::SourceLocation& loc_)
   {
-    clang::SourceLocation expLoc = _clangSrcMan.getExpansionLoc(loc_);
-    clang::FileID fid = _clangSrcMan.getFileID(expLoc);
+    return getFilePath(
+      _clangSrcMan.getFileID(_clangSrcMan.getExpansionLoc(loc_)));
+  }
 
-    if (fid.isInvalid())
+  /**
+   * This function returns the absolute path of the file identified by fid_.
+   * If the file can't be determined then an empty string is returned.
+   */
+  std::string getFilePath(const clang::FileID& fid_)
+  {
+    if (fid_.isInvalid())
       return std::string();
 
-    const clang::FileEntry* fileEntry = _clangSrcMan.getFileEntryForID(fid);
+    const clang::FileEntry* fileEntry = _clangSrcMan.getFileEntryForID(fid_);
     if (!fileEntry)
       return std::string();
 
-    return fileEntry->getName();
+    return fileEntry->tryGetRealPathName();
   }
 
 private:

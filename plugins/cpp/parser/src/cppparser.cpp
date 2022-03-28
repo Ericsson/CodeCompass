@@ -308,7 +308,8 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
     clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
       argc,
       commandLine.data(),
-      compilationDbLoadError));
+      compilationDbLoadError,
+      command_.Directory));
 
   if (!compilationDb)
   {
@@ -329,7 +330,12 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
     sourceFullPath = fs::path(command_.Directory) / command_.Filename;
 
   VisitorActionFactory factory(_ctx);
-  clang::tooling::ClangTool tool(*compilationDb, sourceFullPath.string());
+
+  // Use a PhysicalFileSystem as it's thread-safe
+
+  clang::tooling::ClangTool tool(*compilationDb, sourceFullPath.string(),
+    std::make_shared<clang::PCHContainerOperations>(),
+    llvm::vfs::createPhysicalFileSystem().release());
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts
     = new clang::DiagnosticOptions();

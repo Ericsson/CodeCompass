@@ -58,10 +58,10 @@ model::CppAstNodePtr PPIncludeCallback::createFileAstNode(
 void PPIncludeCallback::InclusionDirective(
   clang::SourceLocation hashLoc_,
   const clang::Token&,
-  clang::StringRef fileName_,
+  clang::StringRef,
   bool,
   clang::CharSourceRange filenameRange_,
-  const clang::FileEntry*,
+  const clang::FileEntry* file_,
   clang::StringRef searchPath_,
   clang::StringRef,
   const clang::Module*,
@@ -75,8 +75,8 @@ void PPIncludeCallback::InclusionDirective(
 
   //--- Included file ---//
 
-  std::string includedPath = searchPath_.str() + '/' + fileName_.str();
-  model::FilePtr included = _ctx.srcMgr.getFile(includedPath);
+  model::FilePtr included = _ctx.srcMgr.getFile(
+    file_->tryGetRealPathName().str());
   included->parseStatus = model::File::PSFullyParsed;
   if (included->type != model::File::DIRECTORY_TYPE &&
       included->type != _cppSourceType)
@@ -87,8 +87,8 @@ void PPIncludeCallback::InclusionDirective(
 
   //--- Includer file ---//
 
-  std::string includerPath = presLoc.getFilename();
-  model::FilePtr includer = _ctx.srcMgr.getFile(includerPath);
+  model::FilePtr includer = _ctx.srcMgr.getFile(
+    _fileLocUtil.getFilePath(presLoc.getFileID()));
   includer->parseStatus = model::File::PSFullyParsed;
   if (includer->type != model::File::DIRECTORY_TYPE &&
       includer->type != _cppSourceType)
