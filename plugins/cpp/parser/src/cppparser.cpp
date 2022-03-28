@@ -325,15 +325,11 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   //--- Start the tool ---//
 
-  fs::path sourceFullPath(command_.Filename);
-  if (!sourceFullPath.is_absolute())
-    sourceFullPath = fs::path(command_.Directory) / command_.Filename;
-
   VisitorActionFactory factory(_ctx);
 
   // Use a PhysicalFileSystem as it's thread-safe
 
-  clang::tooling::ClangTool tool(*compilationDb, sourceFullPath.string(),
+  clang::tooling::ClangTool tool(*compilationDb, command_.Filename,
     std::make_shared<clang::PCHContainerOperations>(),
     llvm::vfs::createPhysicalFileSystem().release());
 
