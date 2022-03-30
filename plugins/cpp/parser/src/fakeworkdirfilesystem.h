@@ -1,5 +1,5 @@
-#ifndef CC_PARSER_PREFIXINGFILESYSTEM_H
-#define CC_PARSER_PREFIXINGFILESYSTEM_H
+#ifndef CC_PARSER_FAKEWORKDIRFILESYSTEM_H
+#define CC_PARSER_FAKEWORKDIRFILESYSTEM_H
 
 #include <llvm/Support/VirtualFileSystem.h>
 
@@ -13,10 +13,10 @@ namespace parser
  * It proxies calls to another file system, modifying path arguments to be
  * absolute based on the working directory of this one.
  */
-class PrefixingFileSystem : public llvm::vfs::FileSystem
+class FakeWorkDirFileSystem : public llvm::vfs::FileSystem
 {
 public:
-  explicit PrefixingFileSystem(llvm::IntrusiveRefCntPtr<FileSystem> FS_)
+  explicit FakeWorkDirFileSystem(llvm::IntrusiveRefCntPtr<FileSystem> FS_)
     : _FS(std::move(FS_))
   {}
 
@@ -78,4 +78,4 @@ private:
 } // parser
 } // cc
 
-#endif // CC_PARSER_PREFIXINGFILESYSTEM_H
+#endif // CC_PARSER_FAKEWORKDIRFILESYSTEM_H
