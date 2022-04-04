@@ -36,7 +36,6 @@
 #include "ppmacrocallback.h"
 #include "doccommentcollector.h"
 #include "diagnosticmessagehandler.h"
-#include "fakeworkdirfilesystem.h"
 
 namespace cc
 {
@@ -328,12 +327,11 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   VisitorActionFactory factory(_ctx);
 
-  clang::tooling::ClangTool tool(
-    *compilationDb,
-    command_.Filename,
+  // Use a PhysicalFileSystem as it's thread-safe
+
+  clang::tooling::ClangTool tool(*compilationDb, command_.Filename,
     std::make_shared<clang::PCHContainerOperations>(),
-    llvm::IntrusiveRefCntPtr<FakeWorkDirFileSystem>(
-      new FakeWorkDirFileSystem(llvm::vfs::getRealFileSystem())));
+    llvm::vfs::createPhysicalFileSystem().release());
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts
     = new clang::DiagnosticOptions();
