@@ -1,4 +1,5 @@
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 #include <clang/Frontend/ASTUnit.h>
 #include <clang/Tooling/CompilationDatabase.h>
@@ -106,6 +107,13 @@ CppReparser::getCompilationCommandForFile(
       buildDir = "/";
     }
   });
+
+  if (!boost::filesystem::is_directory(buildDir))
+  {
+    LOG(debug) << "Compilation directory " << buildDir
+               << " is missing, using '/' instead.";
+    buildDir = "/";
+  }
 
   //--- Assemble compiler command line ---//
 

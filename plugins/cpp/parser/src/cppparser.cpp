@@ -310,13 +310,21 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   int argc = commandLine.size();
 
+  std::string buildDir = command_.Directory;
+  if (!fs::is_directory(buildDir))
+  {
+    LOG(debug) << "Compilation directory " << buildDir
+               << " is missing, using '/' instead.";
+    buildDir = "/";
+  }
+
   std::string compilationDbLoadError;
   std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
     clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
       argc,
       commandLine.data(),
       compilationDbLoadError,
-      command_.Directory));
+      buildDir));
 
   if (!compilationDb)
   {
