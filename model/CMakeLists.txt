@@ -1,5 +1,6 @@
 set(ODB_SOURCES
   include/model/buildaction.h
+  include/model/builddirectory.h
   include/model/buildlog.h
   include/model/buildsourcetarget.h
   include/model/filecontent.h

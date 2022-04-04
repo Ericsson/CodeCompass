@@ -17,6 +17,8 @@
 
 #include <model/buildaction.h>
 #include <model/buildaction-odb.hxx>
+#include <model/builddirectory.h>
+#include <model/builddirectory-odb.hxx>
 #include <model/buildsourcetarget.h>
 #include <model/buildsourcetarget-odb.hxx>
 #include <model/file.h>
@@ -254,6 +256,7 @@ void CppParser::addCompileCommand(
 
   std::vector<model::BuildSource> sources;
   std::vector<model::BuildTarget> targets;
+  model::BuildDirectory buildDir;
 
   for (const auto& srcTarget : extractInputOutputs(command_))
   {
@@ -277,6 +280,9 @@ void CppParser::addCompileCommand(
 
     targets.push_back(std::move(buildTarget));
   }
+  
+  buildDir.directory = command_.Directory;
+  buildDir.action = buildAction_;
 
   _ctx.srcMgr.persistFiles();
 
@@ -285,6 +291,7 @@ void CppParser::addCompileCommand(
       _ctx.db->persist(buildSource);
     for (model::BuildTarget buildTarget : targets)
       _ctx.db->persist(buildTarget);
+    _ctx.db->persist(buildDir);
   });
 }
 
