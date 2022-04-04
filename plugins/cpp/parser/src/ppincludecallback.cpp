@@ -70,6 +70,9 @@ void PPIncludeCallback::InclusionDirective(
   if (searchPath_.empty())
     return;
 
+  if (!file_)
+    return;
+
   clang::SourceLocation expLoc = _clangSrcMgr.getExpansionLoc(hashLoc_);
   clang::PresumedLoc presLoc = _clangSrcMgr.getPresumedLoc(expLoc);
 

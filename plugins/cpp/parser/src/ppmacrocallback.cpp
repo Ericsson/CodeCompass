@@ -253,7 +253,7 @@ std::string PPMacroCallback::getUSR(const clang::MacroInfo* mi_)
   std::string locStr
      = std::to_string(presLoc.getLine())   + ":" +
        std::to_string(presLoc.getColumn()) + ":";
-       
+
   std::string filePath = _fileLocUtil.getFilePath(presLoc.getFileID());
 
   return locStr
