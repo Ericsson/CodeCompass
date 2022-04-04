@@ -361,9 +361,10 @@ TEST_F(CppParserTest, Record)
     {
       EXPECT_EQ(n.symbolType, model::CppAstNode::SymbolType::Type);
 
+      using LineType = decltype(n.location.range.start.line);
       switch (n.location.range.start.line)
       {
-        case -1: 
+        case static_cast<LineType>(-1):
           EXPECT_TRUE(
             // TODO: investigate the type of this. It is possibly the parameter
             // of a compiler generated copy constructor or assignment operator.
@@ -653,10 +654,13 @@ TEST_F(CppParserTest, Variable)
     astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == memberVariable.entityHash);
 
+    using LineType =
+        decltype(std::declval<model::CppAstNode>().location.range.start.line);
     for (const model::CppAstNode& n : astNodes)
       switch (n.location.range.start.line)
       {
-        case -1: // Access by compiler generated constructors.
+        case static_cast<LineType>(-1):
+          // Access by compiler generated constructors.
         case 44: // Simple access for read.
           EXPECT_EQ(n.astType, model::CppAstNode::AstType::Read);
           break;
