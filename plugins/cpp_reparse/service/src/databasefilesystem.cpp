@@ -201,7 +201,7 @@ DatabaseFileSystem::DatabaseFileSystem(std::shared_ptr<odb::database> db_)
 
 ErrorOr<Status> DatabaseFileSystem::status(const Twine& path_)
 {
-  model::FilePtr file = getFile(*_db, path_.str());
+  model::FilePtr file = getFile(*_db, toCanonicalOrSame(path_));
   if (!file)
     return std::error_code(ENOENT, std::generic_category());
 
@@ -211,7 +211,7 @@ ErrorOr<Status> DatabaseFileSystem::status(const Twine& path_)
 ErrorOr<std::unique_ptr<File>>
 DatabaseFileSystem::openFileForRead(const Twine& path_)
 {
-  model::FilePtr file = getFile(*_db, path_.str());
+  model::FilePtr file = getFile(*_db, toCanonicalOrSame(path_));
   if (!file)
     return std::error_code(ENOENT, std::generic_category());
   if (file->type == model::File::DIRECTORY_TYPE)
@@ -231,7 +231,7 @@ DatabaseFileSystem::openFileForRead(const Twine& path_)
 directory_iterator
 DatabaseFileSystem::dir_begin(const Twine& dir_, std::error_code& ec_)
 {
-  model::FilePtr dirFile = getFile(*_db, dir_.str());
+  model::FilePtr dirFile = getFile(*_db, toCanonicalOrSame(dir_));
   if (dirFile &&  dirFile->type == model::File::DIRECTORY_TYPE)
     return directory_iterator(std::make_shared<DatabaseDirectoryIterator>(
       *_db, dirFile, ec_));
@@ -248,16 +248,36 @@ ErrorOr<std::string> DatabaseFileSystem::getCurrentWorkingDirectory() const
 std::error_code
 DatabaseFileSystem::setCurrentWorkingDirectory(const Twine& path_)
 {
-  SmallString<128> fullPath;
-  sys::fs::make_absolute(_currentWorkingDirectory, fullPath);
-  sys::path::append(fullPath, path_);
-  std::error_code error = sys::fs::make_absolute(fullPath);
+  llvm::ErrorOr<std::string> newWorkDir = toCanonical(path_);
+  if (!newWorkDir.getError())
+    _currentWorkingDirectory = *newWorkDir;
 
-  if (!error)
-    _currentWorkingDirectory = fullPath.str().str();
+  return newWorkDir.getError();
+}
 
-  getCurrentWorkingDirectory();
-  return error;
+llvm::ErrorOr<std::string>
+DatabaseFileSystem::toCanonical(const llvm::Twine& relPath_) const
+{
+  llvm::SmallString<128> absPath, canonicalPath;
+
+  relPath_.toVector(absPath);
+
+  llvm::sys::fs::make_absolute(_currentWorkingDirectory, absPath);
+
+  if (std::error_code ec = llvm::sys::fs::real_path(absPath, canonicalPath))
+    return ec;
+
+  return canonicalPath.str();
+}
+
+std::string
+DatabaseFileSystem::toCanonicalOrSame(const llvm::Twine& relPath_) const
+{
+  auto canonical = toCanonical(relPath_);
+  if (canonical.getError())
+    return relPath_.str();
+  else
+    return *canonical;
 }
 
 } // namespace reparse
