@@ -326,8 +326,7 @@ fi
 ##########
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://github.com/apache/thrift/archive/refs/tags/v0.13.0.tar.gz \
-  -O thrift-0.13.0.tar.gz
+wget --no-verbose --no-clobber http://archive.apache.org/dist/thrift/0.13.0/thrift-0.13.0.tar.gz
 tar -xf thrift-0.13.0.tar.gz
 cd thrift-0.13.0
 
