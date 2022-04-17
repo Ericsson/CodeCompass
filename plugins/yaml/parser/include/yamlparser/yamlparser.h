@@ -8,11 +8,12 @@
 
 #include <util/parserutil.h>
 
+
+
 namespace cc
 {
 namespace parser
 {
-
 class YamlParser : public AbstractParser
 {
 public:
@@ -23,18 +24,24 @@ public:
 private:
   util::DirIterCallback getParserCallback();
 
-  struct Loc
-  {
-    Loc() : originalLines(0), nonblankLines(0), codeLines(0) {}
+  struct keyData {
+    ryml::csubstr key;
+    ryml::csubstr parent;
+    ryml::csubstr data;
+    keyData() {}
+    keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d) : key(k), parent(p), data(d) {}
 
-    unsigned originalLines;
-    unsigned nonblankLines;
-    unsigned codeLines;
+    friend std::ostream& operator<<(std::ostream &os, const keyData &kd)
+    {
+      os << kd.key << " " << kd.parent << " " << kd.data << std::endl;
+      return os;
+    }
   };
 
-  Loc getLocFromFile(model::FilePtr file_) const;
+  std::vector<keyData> getDataFromFile(model::FilePtr file_) const;
+  bool accept(const std::string& path_) const;
 
-  void persistLoc(const Loc& loc_, model::FileId file_);
+  void persistData(const std::vector<keyData>& data_, model::FileId file_);
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;

@@ -15,7 +15,7 @@ namespace model
 {
 
 #pragma db object
-struct YAML
+struct Yaml
 {
   enum Type
   {
@@ -37,4 +37,4 @@ struct YAML
 } //model
 } //cc
 
-#endif // CC_MODEL_METRICS_H
+#endif // CC_MODEL_YAML_H

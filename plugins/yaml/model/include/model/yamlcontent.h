@@ -22,17 +22,17 @@ struct YamlContent
   std::string key;
 
 
-  #pragma db not_null
-  FileId file;
+  // #pragma db not_null
+  // FileId file;
 
   #pragma db not_null
   std::string data;
 
-  #pragma db id not_null
-  std::uint64_t id;
+  // #pragma db id not_null
+  // std::uint64_t id;
 
-  #pragma db null
-  std::uint64_t parent_Id;
+  // #pragma db null
+  // std::uint64_t parent_Id;
   
 };
 
@@ -40,4 +40,4 @@ struct YamlContent
 } //model
 } //cc
 
-#endif // CC_MODEL_METRICS_H
+#endif // CC_MODEL_YAMLCONTENT_H
