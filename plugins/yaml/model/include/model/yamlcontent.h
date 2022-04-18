@@ -25,6 +25,7 @@ struct YamlContent
 
   #pragma db id auto
   std::uint64_t id;
+  
 };
 
 
