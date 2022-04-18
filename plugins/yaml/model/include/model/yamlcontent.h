@@ -17,23 +17,14 @@ namespace model
 #pragma db object
 struct YamlContent
 {
-
   #pragma db not_null
   std::string key;
-
-
-  // #pragma db not_null
-  // FileId file;
 
   #pragma db not_null
   std::string data;
 
-  // #pragma db id not_null
-  // std::uint64_t id;
-
-  // #pragma db null
-  // std::uint64_t parent_Id;
-  
+  #pragma db id auto
+  std::uint64_t id;
 };
 
 
