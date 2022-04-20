@@ -23,6 +23,39 @@ namespace StandAloneCSharpParser
             this.Tree = tree;
         }
 
+        private ulong createIdentifier(CsharpAstNode astNode){
+            string[] properties = 
+            {
+                astNode.AstValue,":",
+                astNode.EntityHash.ToString(),":",
+                astNode.RawKind.ToString(),":",
+                astNode.Path,":",
+                astNode.Location_range_start_line.ToString(),":",
+                astNode.Location_range_start_column.ToString(),":",
+                astNode.Location_range_end_line.ToString(),":",
+                astNode.Location_range_end_column.ToString(),
+            };
+
+            string res = string.Concat(properties);
+            
+            //WriteLine(res);
+            return fnvHash(res);
+        }
+
+        private ulong fnvHash(string data_)
+        {
+            ulong hash = 14695981039346656037;
+
+            int len = data_.Length;
+            for (int i = 0; i < len; ++i)
+            {
+                hash ^= data_[i];
+                hash *= 1099511628211;
+            }
+
+            return hash;
+        }
+
         private CsharpAstNode AstNode(SyntaxNode node)
         {
             CsharpAstNode astNode = new CsharpAstNode
@@ -32,6 +65,7 @@ namespace StandAloneCSharpParser
                 EntityHash = node.GetHashCode()
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
+            astNode.Id = createIdentifier(astNode);
             DbContext.CsharpAstNodes.Add(astNode);
             return astNode;
         }

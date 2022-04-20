@@ -3,10 +3,9 @@ using Microsoft.CodeAnalysis;
 
 namespace StandAloneCSharpParser.model
 {
-    //[Table("csharp_ast_nodes")]
     class CsharpAstNode
     {
-        public long Id { get; set; }
+        public ulong Id { get; set; }
         public string AstValue { get; set; }
         public long Location_range_start_line { get; set; }
         public long Location_range_start_column { get; set; }
