@@ -23,9 +23,11 @@ struct YamlContent
   #pragma db not_null
   std::string data;
 
+  #pragma db not_null
+  FileId file;
+
   #pragma db id auto
   std::uint64_t id;
-  
 };
 
 

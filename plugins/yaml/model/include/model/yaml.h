@@ -19,10 +19,12 @@ struct Yaml
 {
   enum Type
   {
+    KUBERNETES_CONFIG,
+    DOCKERFILE,
     HELM_CHART,
+    CI,
     OTHER
   };
-
 
   #pragma db id auto
   std::uint64_t id;

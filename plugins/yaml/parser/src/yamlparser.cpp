@@ -72,6 +72,15 @@ void file_put_contents(const char *filename, const char *buf, size_t sz, const c
 }
 
 
+// std::vector<YamlParser::keyData> YamlParser::duplicate(std::vector<YamlParser::keyData> kdata)
+// {
+//   for (keyData kd : kdata)
+//   {
+//     LOG(info) <<"In DUPLICATE: " << kd.key << " " << " " << kd.data << std::endl;
+//   }
+//   return kdata;
+// }
+
 
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
@@ -97,7 +106,7 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
     }
   });
 
-  int threadNum = _ctx.options["jobs"].as<int>();///Not needed probably
+  int threadNum = 1;//_ctx.options["jobs"].as<int>();///Not needed probably
   _pool = util::make_thread_pool<std::string>(
     threadNum, [this](const std::string& path_)
     {
@@ -106,10 +115,27 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
       {
         if (_fileIdCache.find(file->id) == _fileIdCache.end())
         {
-          std::vector<keyData> kd = getDataFromFile(file);
-          // LOG(info) << "DEBUG: In Ctr path is: " << path_ << std::endl;
-          this->persistData(kd, file->id);
-          ++this->_visitedFileCount;
+          if (accept(file->path)) 
+          {
+            // Type type;
+            // std::vector<keyData> ked = getDataFromFile(file, type);
+
+            // LOG(info) << "In Ctr, size is: " << ked.size() << std::endl;
+   
+            // for (keyData kd : ked)
+            // {
+            //   LOG(info) <<"In CTR: " << kd.key << " " << " " << kd.data << std::endl;
+            // }
+            // std::vector<keyData> final = duplicate(ked);
+            // for (keyData kd : final)
+            // {
+            //   LOG(info) <<"In CTR FINAL: " << kd.key << " " << " " << kd.data << std::endl;
+            // }
+            // LOG(info) << "DEBUG: In Ctr path is: " << path_ << std::endl;
+            this->persistData(file, file->id);
+            ++this->_visitedFileCount;
+          }
+          
         }
         else
           LOG(debug) << "YamlParser already parsed this file: " << file->path;
@@ -252,56 +278,43 @@ util::DirIterCallback YamlParser::getParserCallback()
 bool YamlParser::accept(const std::string& path_) const
 {
   std::string ext = boost::filesystem::extension(path_);
-  return ext == ".yaml";
+  std::string cmd = "file " + path_ + " >test.txt";
+  int status = std::system(cmd.c_str()); // execute the UNIX command "ls -l >test.txt"
+  std::string tmp, ascii, text;
+  std::ifstream("test.txt") >> tmp >> ascii >> text;
+  std::system("rm -rf test.txt");
+  std::string fileType = ascii + " " + text;
+  return ext == ".yaml" && fileType == "ASCII text";// && result == "ASCII text";
 }
 /**
 * Here I think we can use our yamlparsering libraries and grab the useful content
 * from the files and then tranform them to put them into db
 */
-std::vector<YamlParser::keyData> YamlParser::getDataFromFile(model::FilePtr file_) const
+std::vector<YamlParser::keyData> YamlParser::getDataFromFile(model::FilePtr file_, Type &type) const
 {
-  // Loc result;
-
-  // LOG(debug) << "Count metrics for " << file_->path;
-
-  // //--- Get source code ---//
-
-  // std::string content
-  //   = file_->content ? file_->content.load()->content : std::string();
-
-  // if (content.empty())
-  //   return result;
-
-  // //--- Original lines ---//
-
-  // result.originalLines = std::count(content.begin(), content.end(), '\n') + 1;
-
-  // //--- Non blank lines ---//
-
-  // eraseBlankLines(content);
-
-  // result.nonblankLines = std::count(content.begin(), content.end(), '\n') + 1;
-
-  // //--- Code lines ---//
-
-  // std::string singleComment, multiCommentStart, multiCommentEnd;
-
-  // setCommentTypes(
-  //   file_->type, singleComment, multiCommentStart, multiCommentEnd);
-  // eraseComments(
-  //   content, singleComment, multiCommentStart, multiCommentEnd);
-
-  // result.codeLines = std::count(content.begin(), content.end(), '\n') + 1;
-
-  // return result;
   std::vector<keyData> keysDataPairs;
   if (accept(file_->path))
   {
     std::string contents =  file_get_contents<std::string>(file_->path.c_str());///file_->content ? file_->content.load()->content : std::string("nothing here");
     // LOG(info) << "DEBUG: In getDataFromFile, contents are: " << contents << std::endl;
     ryml::Tree yamlTree = ryml::parse_in_arena(ryml::to_csubstr(contents));
-    std::stringstream ss;
-    ss << yamlTree;
+    if (yamlTree["apiVersion"].has_key())
+    {
+      if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
+      {
+        type = Type::HELM_CHART;
+      }
+      else if (yamlTree["kind"].has_key())
+      {
+        type = Type::KUBERNETES_CONFIG;
+      }
+    }
+    else 
+    {
+      type = Type::OTHER;
+    }
+    // std::stringstream ss;
+    // ss << yamlTree;
     // LOG(info) << "DEBUG: In getDataFromFile, tree is: " << ss.str() << std::endl;
     ryml::NodeRef root = yamlTree.rootref();
     
@@ -309,13 +322,13 @@ std::vector<YamlParser::keyData> YamlParser::getDataFromFile(model::FilePtr file
     for (ryml::NodeRef n : root.children())
     {
       // LOG(info) << "DEBUG: In getDataFromFile, loopworks: " <<std::endl;
-      keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
+      keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
     }
 
-    // LOG(info) << "DEBUG: In getDataFromFile, size is: " << keysDataPairs.size() << std::endl;
+    LOG(info) << "DEBUG: In getDataFromFile, size is: " << keysDataPairs.size() << std::endl;
     for (keyData kd : keysDataPairs)
     {
-      std::cout <<"DEBUG: In getDataFromFile " << kd;
+      LOG(info) <<" In getDataFromFile " << kd;
     }
   }
   return keysDataPairs;
@@ -327,29 +340,47 @@ std::vector<YamlParser::keyData> YamlParser::getDataFromFile(model::FilePtr file
 * Getting Loc(useful data) and putting it into the db, it is actually populating the
 * db object we created in model/yaml.h. It is using transaction
 */
-void YamlParser::persistData(const std::vector<keyData>& data_, model::FileId file_)
+// void YamlParser::persistData(const std::vector<keyData>& data_, model::FileId file_, Type type)
+void YamlParser::persistData(model::FilePtr file_, model::FileId fileId_)
 {
-  // util::OdbTransaction trans(_ctx.db);
-  // trans([&, this]{
-  //   model::Yaml yaml;
-  //   yaml.file = file_;
-
-  //   yaml.type = model::Yaml::OTHER;
-  //   LOG(info) << "Yaml is: " << yaml.file << " " << yaml.type << std::endl;
-  //   _ctx.db->persist(yaml);
-  // });
-  int i = 0;
-  for (keyData kd : data_)
+  Type type;
+  std::vector<keyData> keysDataPairs;
+  std::string contents =  file_get_contents<std::string>(file_->path.c_str());///file_->content ? file_->content.load()->content : std::string("nothing here");
+  ryml::Tree yamlTree = ryml::parse_in_arena(ryml::to_csubstr(contents));
+  if (yamlTree["apiVersion"].has_key()) 
   {
-    i++;
-    if (i==1) continue;
-    util::OdbTransaction trans(_ctx.db);
-    trans([&, this]{
-      // LOG(info) << "YamlContent is: " << data_.size() << std::endl;
-      
-      // std::cout <<"DEBUG: In persistdata " << kd;
+    if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
+    {
+      type = Type::HELM_CHART;
+    }
+    else if (yamlTree["kind"].has_key())
+    {
+      type = Type::KUBERNETES_CONFIG;
+    }
+  }
+  else if (isCI(file_->path, "ci.yaml") || isCI(file_->path, "ci.yml") )
+  {
+    type = Type::CI;
+  }
+  else 
+  {
+    type = Type::OTHER;
+  }
+  ryml::NodeRef root = yamlTree.rootref();
+  
+  
+  for (ryml::NodeRef n : root.children())
+  {
+    keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
+  }
+  util::OdbTransaction trans(_ctx.db);
+  trans([&, this]{
+    for (keyData kd : keysDataPairs)
+    {
+      LOG(info) << "In PersistData: YamlKeydata is: " << kd;
+   
       model::YamlContent yamlContent;
-      // yamlContent.file = file_;
+      yamlContent.file = fileId_;
       std::stringstream ss;
       ss << kd.key;
       yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
@@ -358,34 +389,12 @@ void YamlParser::persistData(const std::vector<keyData>& data_, model::FileId fi
       yamlContent.data = ss.str(); ///ryml::emitrs<std::string>(kd.data);//ryml::to_csubstr(kd.data);
       LOG(info) << "YamlContent is: " << yamlContent.key << " " << yamlContent.data << std::endl;
       _ctx.db->persist(yamlContent);
-    });
-  }
-  // util::OdbTransaction trans(_ctx.db);
-  // trans([&, this]{
-  //   model::Metrics metrics;
-  //   metrics.file = file_;
-
-  //   if (loc_.codeLines != 0)
-  //   {
-  //     metrics.type   = model::Metrics::CODE_LOC;
-  //     metrics.metric = loc_.codeLines;
-  //     _ctx.db->persist(metrics);
-  //   }
-
-  //   if (loc_.nonblankLines != 0)
-  //   {
-  //     metrics.type   = model::Metrics::NONBLANK_LOC;
-  //     metrics.metric = loc_.nonblankLines;
-  //     _ctx.db->persist(metrics);
-  //   }
-
-  //   if (loc_.originalLines != 0)
-  //   {
-  //     metrics.type   = model::Metrics::ORIGINAL_LOC;
-  //     metrics.metric = loc_.originalLines;
-  //     _ctx.db->persist(metrics);
-  //   }
-  //});
+    }
+    model::Yaml yaml;
+    yaml.file = fileId_;
+    yaml.type = model::Yaml::Type(type);
+    _ctx.db->persist(yaml);
+  });
 }
 
 #pragma clang diagnostic push
