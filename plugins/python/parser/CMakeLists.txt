@@ -10,7 +10,8 @@ include_directories(
         ${Python3_INCLUDE_DIRS})
 
 add_library(pythonparser SHARED
-        src/pythonparser.cpp)
+        src/pythonparser.cpp
+        src/pythonpersistence.cpp)
 
 target_link_libraries(pythonparser
         util
@@ -26,4 +27,6 @@ install(TARGETS pythonparser DESTINATION ${INSTALL_PARSER_DIR})
 install(
         DIRECTORY ${PLUGIN_DIR}/parser/src/scripts/
         DESTINATION ${INSTALL_PARSER_DIR}/scripts/python
-        FILES_MATCHING PATTERN "*.py")
+        FILES_MATCHING
+            PATTERN "*.py"
+            PATTERN "skip.json")

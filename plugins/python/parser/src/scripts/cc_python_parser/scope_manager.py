@@ -476,13 +476,9 @@ class ScopeManager:
     def get_qualified_scope_name_from_current_scope(self, scopes: Optional[List[Scope]] = None) -> str:
         qualified_name_parts = []
         if scopes is None:
-            for scope in reversed(self.scopes):
-                if isinstance(scope, LifetimeScope) and not isinstance(scope, GlobalScope):  # TODO: ExceptionScope
-                    qualified_name_parts.append(scope.name)
+            qualified_name_parts.extend(self.get_qualified_scope_name_from_scopes(self.scopes))
         else:
-            for scope in reversed(scopes):
-                if isinstance(scope, LifetimeScope) and not isinstance(scope, GlobalScope):  # TODO: ExceptionScope
-                    qualified_name_parts.append(scope.name)
+            qualified_name_parts.extend(self.get_qualified_scope_name_from_scopes(scopes))
         file_name = self.current_file.name
         assert file_name[-3:] == '.py'
         qualified_name_parts.append(file_name[:-3])
@@ -496,6 +492,13 @@ class ScopeManager:
                 qualified_name_parts.append(str(hash(directory)))
                 break
         return '.'.join(reversed(qualified_name_parts))
+
+    def get_qualified_scope_name_from_scopes(self, scopes: List[Scope]):
+        qualified_name_parts = []
+        for scope in reversed(scopes):
+            if isinstance(scope, LifetimeScope) and not isinstance(scope, GlobalScope):  # TODO: ExceptionScope
+                qualified_name_parts.append(scope.name)
+        return qualified_name_parts
 
     def get_qualified_name_from_current_scope(self, declaration_name: str, line_num: int) -> str:
         return self.get_qualified_scope_name_from_current_scope() + '.' + declaration_name + ':' + str(line_num)

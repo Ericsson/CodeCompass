@@ -2,6 +2,8 @@ import ast
 import sys
 from typing import Optional, List, Any, Union
 
+from cc_python_parser.persistence.persistence import ModelPersistence
+
 
 class MemberAccessCollector(ast.NodeVisitor):
     class MemberData:
@@ -64,10 +66,11 @@ class MemberAccessCollector(ast.NodeVisitor):
             super().__init__('')
             self.container = node
 
-    def __init__(self, member: Union[ast.Call, ast.Attribute]):
+    def __init__(self, member: Union[ast.Call, ast.Attribute], persistence: ModelPersistence):
         self.call_list: List[MemberAccessCollector.MemberData] = []
         self.arguments = []
         self.last = False
+        self.persistence: ModelPersistence = persistence
         self.visit(member)
 
     def generic_visit(self, node: ast.AST):
@@ -75,7 +78,7 @@ class MemberAccessCollector(ast.NodeVisitor):
             return
         # await and starred must be skipped, and process the callable
         if not isinstance(node, (ast.Await, ast.Starred)):
-            print('Unhandled node type: ' + str(type(node)))
+            self.persistence.log_warning(f'Unhandled node type: {str(type(node))}')
         ast.NodeVisitor.generic_visit(self, node)
 
     def visit_Call(self, node: ast.Call) -> Any:

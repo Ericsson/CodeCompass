@@ -7,6 +7,7 @@ from cc_python_parser.persistence.file_content_dto import FileContentDTO
 from cc_python_parser.persistence.file_dto import FileDTO
 from cc_python_parser.preprocessed_file import PreprocessedFile
 from cc_python_parser.symbol_collector import SymbolCollector
+from cc_python_parser.persistence.persistence import ModelPersistence
 
 
 @unique
@@ -18,11 +19,12 @@ class ProcessStatus(Enum):
 
 # TODO: expr_1; import; expr_2; - correct script -> not a problem
 class FileInfo:
-    def __init__(self, path: PurePath):
+    def __init__(self, path: PurePath, persistence: ModelPersistence):
         self.path: PurePath = path
         self.symbol_collector: Optional[SymbolCollector] = None
         self.preprocessed_file: PreprocessedFile = PreprocessedFile(path)
         self.status: ProcessStatus = ProcessStatus.WAITING
+        self.persistence: ModelPersistence = persistence
 
     def get_file(self):
         return self.path.name
@@ -49,15 +51,14 @@ class FileInfo:
         file_dto.documentation = self.preprocessed_file.documentation
         return file_dto
 
-    @staticmethod
-    def get_content(file: PurePath) -> str:
+    def get_content(self, file: PurePath) -> str:
         content = ""
 
         def handle_file_content(c, _):
             nonlocal content
             content = c
 
-        process_file_content(file, handle_file_content)
+        process_file_content(file, handle_file_content, self.persistence)
         return content
 
     @staticmethod

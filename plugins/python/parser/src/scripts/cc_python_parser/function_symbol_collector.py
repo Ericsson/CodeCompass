@@ -2,7 +2,6 @@ import ast
 from typing import Union, Any, List, Optional, Set, Tuple
 
 from cc_python_parser.common.file_position import FilePosition
-from cc_python_parser.common.parser_tree import ParserTree
 from cc_python_parser.common.utils import create_range_from_ast_node
 from cc_python_parser.function_data import FunctionDeclaration
 from cc_python_parser.scope import FunctionScope
@@ -18,9 +17,9 @@ class TemporaryScope(FunctionScope):
 
 
 class FunctionSymbolCollector(SymbolCollector, IFunctionSymbolCollector):
-    def __init__(self, symbol_collector: SymbolCollector, tree: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+    def __init__(self, symbol_collector: SymbolCollector, root: Union[ast.FunctionDef, ast.AsyncFunctionDef],
                  arguments: List[Tuple[DeclarationType, Optional[str]]]):
-        SymbolCollector.__init__(self, ParserTree(tree), symbol_collector.current_file,
+        SymbolCollector.__init__(self, root, symbol_collector.current_file,
                                  symbol_collector.preprocessed_file,
                                  symbol_collector.import_finder,
                                  symbol_collector.scope_manager.persistence,
@@ -28,7 +27,8 @@ class FunctionSymbolCollector(SymbolCollector, IFunctionSymbolCollector):
         IFunctionSymbolCollector.__init__(self)
         self.scope_manager = symbol_collector.scope_manager
         self.type_deduction = TypeDeduction(self, self.scope_manager, self.preprocessed_file,
-                                            self.function_symbol_collector_factory)
+                                            self.function_symbol_collector_factory,
+                                            symbol_collector.scope_manager.persistence)
         self.imported_declaration_scope_map = symbol_collector.imported_declaration_scope_map
 
         self.arguments = arguments

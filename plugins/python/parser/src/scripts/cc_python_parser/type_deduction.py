@@ -10,6 +10,7 @@ from cc_python_parser.built_in_operators import get_built_in_operator
 from cc_python_parser.built_in_types import Boolean, Dictionary, Set, Tuple, String, Integer, Float, Bytes, \
     EllipsisType, NoneType, Complex, RangeType, BuiltIn, Type, GenericBuiltInType, NotImplementedType, \
     get_built_in_type, GenericType, Generator
+from cc_python_parser.persistence.persistence import ModelPersistence
 from cc_python_parser.class_data import ClassDeclaration
 from cc_python_parser.common.file_position import FilePosition
 from cc_python_parser.common.hashable_list import OrderedHashableList
@@ -31,13 +32,15 @@ from cc_python_parser.variable_data import VariableDeclaration, FunctionVariable
 class TypeDeduction:
     def __init__(self, symbol_collector: SymbolCollectorBase, scope_manager: ScopeManager,
                  preprocessed_file: PreprocessedFile,
-                 function_symbol_collector_factory: FunctionSymbolCollectorFactory):
+                 function_symbol_collector_factory: FunctionSymbolCollectorFactory,
+                 persistence: ModelPersistence):
         self.scope_manager: ScopeManager = scope_manager
         self.preprocessed_file: PreprocessedFile = preprocessed_file
         self.symbol_collector: SymbolCollectorBase = symbol_collector
         self.function_symbol_collector_factory: FunctionSymbolCollectorFactory = function_symbol_collector_factory
         self.container_recursion_counter: int = 0
         self.container_max_recursion: int = 5
+        self.persistence: ModelPersistence = persistence
 
     def deduct_type(self, node: ast.AST) -> typing.Set:
         types = self.get_type(node)
@@ -211,7 +214,7 @@ class TypeDeduction:
                 return built_in_function
             elif node.func.id == 'TypeVar':
                 return Type()
-        return self.get_member_access_type(MemberAccessCollector(node),
+        return self.get_member_access_type(MemberAccessCollector(node, self.persistence),
                                            FilePosition(self.scope_manager.current_file,
                                                         create_range_from_ast_node(node)))
 
@@ -246,7 +249,7 @@ class TypeDeduction:
 
     @get_type.register
     def _(self, node: ast.Attribute):
-        return self.get_member_access_type(MemberAccessCollector(node),
+        return self.get_member_access_type(MemberAccessCollector(node, self.persistence),
                                            FilePosition(self.scope_manager.current_file,
                                                         create_range_from_ast_node(node)))
 

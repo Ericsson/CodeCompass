@@ -145,27 +145,11 @@ private:
 
         CALLER, /*!< Get caller functions. */
 
-//        VIRTUAL_CALL, /*!< A function may be used virtually on a base type object.
-//      The exact type of the object is based on dynamic information, which can't
-//      be determined statically. Weak usage returns these possible calls. */
-
-//        FUNC_PTR_CALL, /*!< Functions can be assigned to function pointers which
-//      can be invoked later. This option returns these invocations. */
-
         PARAMETER, /*!< This option returns the parameters of a function. */
 
         LOCAL_VAR, /*!< This option returns the local variables of a function. */
 
         RETURN_TYPE, /*!< This option returns the return type of a function. */
-
-//        OVERRIDE, /*!< This option returns the functions which the given function
-//      overrides. */
-//
-//        OVERRIDDEN_BY, /*!< This option returns the overrides of a function. */
-//
-//        READ, /*!< This option returns the places where a variable is read. */
-//
-//        WRITE, /*!< This option returns the places where a variable is written. */
 
         TYPE, /*!< This option returns the type of a variable. */
 

@@ -1,18 +1,6 @@
-from collections import Counter
 from typing import List, TypeVar, Generic
 
 T = TypeVar('T')
-
-
-class HashableList(Generic[T], List[T]):
-    def __hash__(self):
-        return hash(e for e in self)
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and Counter(self) == Counter(other)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 class OrderedHashableList(Generic[T], List[T]):

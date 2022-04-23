@@ -101,7 +101,7 @@ class ImportTable:
         for module in node.names:
             module_parts = module.name.split('.')
             module_name = module_parts[-1]
-            module_parts.remove(module_name)
+            del module_parts[-1]
             r = create_range_from_ast_node(node)
             imports.append(ImportTable.create_import(module_parts, module_name, module.asname, [], r, is_local))
         return imports
@@ -112,8 +112,7 @@ class ImportTable:
         is_module = True
         try:
             if node.level > 0 and node.module is None:
-                a = util.find_spec(node.names[0].name)
-                if a is None:
+                if util.find_spec(node.names[0].name) is None:
                     pass    # print()
             elif (node.level == 0 or node.module is not None) and \
                     util.find_spec(node.module + '.' + node.names[0].name) is None:

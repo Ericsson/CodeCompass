@@ -3,12 +3,13 @@ from pathlib import PurePath, Path
 from typing import Final, List, Callable
 
 from cc_python_parser.common.position import Range, Position
+from cc_python_parser.persistence.persistence import ModelPersistence
 
 
 ENCODINGS: Final[List[str]] = ['utf-8', 'iso-8859-1']
 
 
-def process_file_content(path: PurePath, func: Callable[[str, int], None]) -> None:
+def process_file_content(path: PurePath, func: Callable[[str, int], None], persistence: ModelPersistence) -> None:
     if not Path(path).exists():
         return
     for encoding in ENCODINGS:
@@ -20,11 +21,11 @@ def process_file_content(path: PurePath, func: Callable[[str, int], None]) -> No
         except UnicodeDecodeError:
             continue
         except FileNotFoundError:
-            print(f"File not found: {path}")
+            persistence.log_error(f"File not found: {path}")
             continue
         else:
             return
-    print(f"Unhandled encoding in {str(path)}")
+    persistence.log_error(f"Unhandled encoding in {str(path)}")
 
 
 def has_attr(obj, attrs) -> bool:

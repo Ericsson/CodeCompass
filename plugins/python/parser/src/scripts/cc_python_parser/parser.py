@@ -4,7 +4,6 @@ import sys
 from pathlib import PurePath, Path
 from typing import List, Optional, Union, Set, Tuple
 
-from cc_python_parser.common.parser_tree import ParserTree
 from cc_python_parser.common.utils import process_file_content
 from cc_python_parser.file_info import FileInfo, ProcessStatus
 from cc_python_parser.function_symbol_collector import FunctionSymbolCollector
@@ -37,8 +36,6 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             exceptions = DefaultParseException()
         self.exceptions: ParseException = exceptions
         self.files: List[FileInfo] = []
-        self.other_module_files: List[FileInfo] = []
-        self.parsing_started_files = []
         self.scope_managers = []
         self.collect_files()
 
@@ -59,7 +56,7 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
                         continue
                     file_path = file_path.resolve()
                 if file_path.suffix == '.py':
-                    self.files.append(FileInfo(file_path))
+                    self.files.append(FileInfo(file_path, self.persistence))
 
     def parse(self) -> None:
         metrics.start_parsing()
@@ -80,22 +77,22 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
         if file_info.path is None:
             return
 
-        tree = None
+        root = None
 
         def handle_file_content(c, line_num):
-            nonlocal tree
+            nonlocal root
             try:
-                tree = ast.parse(c)
+                root = ast.parse(c)
                 metrics.add_line_count(line_num)
                 metrics.add_file_count()
             except SyntaxError as e:
-                print(f"Syntax error in file {e.filename} at (line - {e.lineno}, column - {e.offset}): {e.text}")
+                self.persistence.log_error(f"Syntax error in file {e.filename} at (line - {e.lineno}, column - {e.offset}): {e.text}")
 
-        process_file_content(file_info.path, handle_file_content)
+        process_file_content(file_info.path, handle_file_content, self.persistence)
 
-        if tree is None:
+        if root is None:
             return
-        file_info.preprocess_file(tree)
+        file_info.preprocess_file(root)
         self.handle_modules_outside_of_project(file_info)
         for dependency in file_info.preprocessed_file.import_table.get_dependencies():
             dependency_file_info = [x for x in self.files if x.path == dependency.location]
@@ -110,7 +107,7 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
                         debug(f"\nFILE: {file_info.get_file_name()}\n=========================================")
             else:
                 assert False, 'Multiple file occurrence: ' + dependency.get_file()
-        sc = SymbolCollector(ParserTree(tree), file_info.path, file_info.preprocessed_file,
+        sc = SymbolCollector(root, file_info.path, file_info.preprocessed_file,
                              self, self.persistence, self)
         # print(current_file)
         sc.collect_symbols()
@@ -127,8 +124,7 @@ class Parser(ast.NodeVisitor, ImportFinder, FunctionSymbolCollectorFactory):
             if not any(PurePath(mm) in m.parents for mm in self.directories) and \
                     m not in self.other_modules:
                 self.other_modules.add(m)
-                new_file_info = FileInfo(m)
-                self.other_module_files.append(new_file_info)
+                new_file_info = FileInfo(m, self.persistence)
                 self.parse_file(new_file_info)
 
     def get_file_by_location(self, location: PurePath) -> Optional[FileInfo]:

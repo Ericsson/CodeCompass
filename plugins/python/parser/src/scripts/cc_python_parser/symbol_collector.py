@@ -13,7 +13,6 @@ from cc_python_parser.symbol_collector_interface import SymbolCollectorBase
 from cc_python_parser.base_data import Declaration, Usage, ImportedDeclaration
 from cc_python_parser.class_data import ClassDeclaration, ImportedClassDeclaration
 from cc_python_parser.class_preprocessor import PreprocessedClass
-from cc_python_parser.common.parser_tree import ParserTree
 from cc_python_parser.import_finder import ImportFinder
 from cc_python_parser.import_preprocessor import ImportTable
 from cc_python_parser.logger import logger
@@ -37,21 +36,22 @@ from cc_python_parser.common.metrics import metrics
 
 
 class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
-    def __init__(self, tree: ParserTree, current_file: PurePath, preprocessed_file: PreprocessedFile,
+    def __init__(self, root, current_file: PurePath, preprocessed_file: PreprocessedFile,
                  import_finder: ImportFinder, persistence: ModelPersistence,
                  function_symbol_collector_factory: FunctionSymbolCollectorFactory):
         SymbolCollectorBase.__init__(self, preprocessed_file, import_finder)
-        self.tree = tree
+        self.root = root
         self.current_file = current_file
         self.scope_manager: ScopeManager = ScopeManager(current_file, import_finder, persistence)
+        self.persistence: ModelPersistence = persistence
         self.current_function_declaration: List[FunctionDeclaration] = []
         self.current_class_declaration: List[ClassDeclaration] = []
         self.function_symbol_collector_factory = function_symbol_collector_factory
         self.type_deduction = TypeDeduction(self, self.scope_manager,
-                                            preprocessed_file, self.function_symbol_collector_factory)
+                                            preprocessed_file, self.function_symbol_collector_factory, self.persistence)
 
     def collect_symbols(self):
-        self.visit(self.tree.root.node)
+        self.visit(self.root)
         self.post_process()
 
     def generic_visit(self, node: ast.AST) -> Any:
@@ -437,7 +437,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
     def handle_single_assignment(self, target: ast.AST, value: ast.AST):
         mac = None
         if isinstance(target, (ast.Attribute, ast.Subscript, ast.Starred)):
-            mac = MemberAccessCollector(target)
+            mac = MemberAccessCollector(target, self.persistence)
             name = mac.call_list[0].name
         elif isinstance(target, ast.Name):
             name = target.id
@@ -882,7 +882,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
 
     def append_function_usage(self, node: ast.Call) -> None:
         usage = self.create_function_usage(node)
-        mac = self.member_access_collector_type(node)
+        mac = self.member_access_collector_type(node, self.persistence)
         is_method_call = (len(mac.call_list) == 2 and
                           isinstance(mac.call_list[1], MemberAccessCollector.AttributeData) and
                           mac.call_list[1].name == 'self')
@@ -922,7 +922,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
             else:
                 return {declaration}
 
-        mac = MemberAccessCollector(node)
+        mac = MemberAccessCollector(node, self.persistence)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(mac.call_list) == 1:
             declaration = self.scope_manager.get_declaration(node.func.id)
             if declaration is None or isinstance(declaration, PlaceholderType):
@@ -936,7 +936,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
         elif isinstance(node, ast.Call) and len(mac.call_list) == 1 and not isinstance(node.func, ast.Subscript):
             pass    # print("NEED FIX: () operator called on lambda, operator or await")
 
-        mac = MemberAccessCollector(node)
+        mac = MemberAccessCollector(node, self.persistence)
         last = mac.call_list.pop(0)
         types = self.type_deduction.get_member_access_type(mac)
         declarations = set()
@@ -1106,7 +1106,7 @@ class SymbolCollector(ast.NodeVisitor, SymbolFinder, SymbolCollectorBase):
 
         # asdf = '.'.join(n)
 
-        mac = MemberAccessCollector(func)
+        mac = MemberAccessCollector(func, self.persistence)
 
         if hasattr(func.func, 'id'):
             name = func.func.id
