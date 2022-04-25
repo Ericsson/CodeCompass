@@ -1,8 +1,8 @@
 include "../../../service/language/language.thrift"
 include "../../../service/project/common.thrift"
 
-namespace cpp cc.service.language
-namespace netstd language
+namespace cpp cc.service.csharp
+namespace netstd csharp
 
 service CSharpService
 {

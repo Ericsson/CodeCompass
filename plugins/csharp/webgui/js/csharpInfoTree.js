@@ -291,6 +291,7 @@ function (model, viewHandler, util) {
   }
 
   var csharpInfoTree = {
+    id : 'csharp-infotree',
     render : function (elementInfo) {
       var ret = [];
 
