@@ -59,7 +59,7 @@ namespace Server
 
         private static async Task RunAsync(CancellationToken cancellationToken)
         {
-            TServerTransport serverTransport = new TServerSocketTransport(9090, Configuration);
+            TServerTransport serverTransport = new TServerSocketTransport(9091, Configuration);
             TTransportFactory transportFactory = new TBufferedTransport.Factory();
             TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
 
@@ -77,7 +77,7 @@ namespace Server
                     outputProtocolFactory: protocolFactory,
                     logger: LoggingHelper.CreateLogger<TSimpleAsyncServer >());
 
-                Logger.LogInformation("Starting the server...");
+                System.Console.WriteLine("[INFO] Starting csharpservice...");
 
                 await server.ServeAsync(cancellationToken);
             }

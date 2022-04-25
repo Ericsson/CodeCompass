@@ -8,6 +8,9 @@ namespace service
 namespace language
 {
 
+namespace fs = boost::filesystem;
+namespace bp = boost::process;
+
 CsharpServiceHandler::CsharpServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
@@ -17,6 +20,10 @@ CsharpServiceHandler::CsharpServiceHandler(
       _datadir(datadir_),
       _context(context_)
 {
+  fs::path csharp_path =
+   fs::system_complete("../lib/serviceplugin/csharpservice/");
+
+  bp::child c(bp::start_dir(csharp_path), "./csharpservice");
   try
   {
     csharpQueryHandler.getClientInterface(25000);
