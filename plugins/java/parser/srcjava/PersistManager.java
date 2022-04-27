@@ -71,7 +71,7 @@ public class PersistManager {
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.VARIABLE,
       node.getInitializer() == null ? AstType.DECLARATION : AstType.DEFINITION,
-      entityHash
+      entityHash, entityHash
     );
 
     JavaAstNode javaAstNodeDef =
@@ -118,7 +118,7 @@ public class PersistManager {
     int entityHash = entityHashStr.hashCode();
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.CONSTRUCTOR, AstType.USAGE, entityHash);
+      node, SymbolType.CONSTRUCTOR, AstType.USAGE, entityHash, entityHash);
 
     persistJavaMemberType(
       classHash, classHash, MemberTypeKind.CONSTRUCTOR, modifiers, javaAstNode);
@@ -133,12 +133,13 @@ public class PersistManager {
 
   public void persistEnumDeclaration(EnumDeclaration node) {
     JavaEnum javaEnum = new JavaEnum();
+    ITypeBinding enumBinding = node.resolveBinding();
     List<?> superInterfaceTypes = node.superInterfaceTypes();
     List<?> enumConstants = node.enumConstants();
     SimpleName simpleName = node.getName();
-    String declaringClassName = getQualifiedTypeName(node.resolveBinding());
+    String declaringClassNameTypeParams = getQualifiedTypeName(enumBinding);
     int modifiers = node.getModifiers();
-    int entityHash = declaringClassName.hashCode();
+    int entityHash = enumBinding.getQualifiedName().hashCode();
     int mainTypeHash;
 
     // Persist Enum constants
@@ -154,14 +155,14 @@ public class PersistManager {
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.ENUM, AstType.DEFINITION, entityHash);
+      node, SymbolType.ENUM, AstType.DEFINITION, entityHash, entityHash);
 
     persistJavaMemberType(
       mainTypeHash, entityHash, MemberTypeKind.ENUM, modifiers, javaAstNode);
 
     setJavaEntityFields(
       javaEnum, javaAstNode.getId(), entityHash,
-      simpleName.toString(), declaringClassName
+      simpleName.toString(), declaringClassNameTypeParams
     );
 
     persistInterfaceImplementations(superInterfaceTypes, entityHash);
@@ -188,7 +189,7 @@ public class PersistManager {
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.ENUM_CONSTANT,
-      AstType.DEFINITION, entityHash);
+      AstType.DEFINITION, entityHash, entityHash);
 
     // Set JavaMemberType fields
     persistJavaMemberType(
@@ -219,7 +220,7 @@ public class PersistManager {
     setJavaTypedEntityFields(javaMethod, modifiers, typeHash, qualifiedType);
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.METHOD, AstType.USAGE, entityHash);
+      node, SymbolType.METHOD, AstType.USAGE, entityHash, entityHash);
 
     // Set JavaMemberType fields
     persistJavaMemberType(
@@ -314,7 +315,7 @@ public class PersistManager {
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.VARIABLE, astType, entityHash);
+      node, SymbolType.VARIABLE, astType, entityHash, entityHash);
 
     if (variableBinding.isField()) {
       persistJavaMemberType(
@@ -341,7 +342,7 @@ public class PersistManager {
     javaEnumConstant.setValue(variableBinding.getVariableId());
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.ENUM_CONSTANT, AstType.USAGE, entityHash
+      node, SymbolType.ENUM_CONSTANT, AstType.USAGE, entityHash, entityHash
     );
 
     persistJavaMemberType(
@@ -396,7 +397,7 @@ public class PersistManager {
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
       node, SymbolType.VARIABLE,
       node.getInitializer() == null ? AstType.DECLARATION : AstType.DEFINITION,
-      entityHash
+      entityHash, entityHash
     );
 
     persistJavaMemberType(
@@ -433,7 +434,7 @@ public class PersistManager {
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.METHOD, AstType.DEFINITION, entityHash);
+      node, SymbolType.METHOD, AstType.DEFINITION, entityHash, entityHash);
 
     persistJavaMemberType(
       classHash, typeHash, MemberTypeKind.METHOD, modifiers, javaAstNode);
@@ -463,7 +464,7 @@ public class PersistManager {
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.CONSTRUCTOR, AstType.DEFINITION, entityHash);
+      node, SymbolType.CONSTRUCTOR, AstType.DEFINITION, entityHash, entityHash);
 
     persistJavaMemberType(
       classHash, classHash, MemberTypeKind.CONSTRUCTOR, modifiers, javaAstNode);
@@ -505,7 +506,7 @@ public class PersistManager {
     }
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.METHOD, astType, entityHash);
+      node, SymbolType.METHOD, astType, entityHash, entityHash);
 
     JavaMemberType javaMemberType = persistJavaMemberType(
       classHash, typeHash, MemberTypeKind.METHOD, modifiers, javaAstNode);
@@ -523,12 +524,13 @@ public class PersistManager {
 
   public void persistTypeDeclaration(TypeDeclaration node) {
     JavaRecord javaRecord = new JavaRecord();
+    ITypeBinding typeBinding = node.resolveBinding();
     Type superclassType = node.getSuperclassType();
     List<?> superInterfaceTypes = node.superInterfaceTypes();
     SimpleName simpleName = node.getName();
-    String qualifiedName = getQualifiedTypeName(node.resolveBinding());
+    String qualifiedNameTypeParams = getQualifiedTypeName(typeBinding);
     int modifiers = node.getModifiers();
-    int entityHash = qualifiedName.hashCode();
+    int entityHash = typeBinding.getQualifiedName().hashCode();
     int mainTypeHash;
 
     if (node.isMemberTypeDeclaration()) {
@@ -541,14 +543,14 @@ public class PersistManager {
 
     JavaAstNode javaAstNode =
       persistJavaAstNodeRow(
-        node, SymbolType.TYPE, AstType.DEFINITION, entityHash);
+        node, SymbolType.TYPE, AstType.DEFINITION, entityHash, entityHash);
 
     persistJavaMemberType(
       mainTypeHash, entityHash, MemberTypeKind.TYPE, modifiers, javaAstNode);
 
     setJavaEntityFields(
       javaRecord, javaAstNode.getId(), entityHash,
-      simpleName.toString(), qualifiedName
+      simpleName.toString(), qualifiedNameTypeParams
     );
 
     persistClassExtensions(superclassType, entityHash);
@@ -561,17 +563,19 @@ public class PersistManager {
     JavaRecord javaRecord = new JavaRecord();
     ITypeBinding typeBinding = node.resolveBinding();
     String name = typeBinding.getName();
-    String qualifiedName = getQualifiedTypeName(typeBinding);
+    String qualifiedNameTypeParams = getQualifiedTypeName(typeBinding);
     boolean isEnum = typeBinding.isEnum();
     int modifiers = typeBinding.getModifiers();
-    int entityHash = qualifiedName.hashCode();
+    int entityHash = qualifiedNameTypeParams.hashCode();
+    int defEntityHash =
+      typeBinding.getQualifiedName().split("<", 2)[0].hashCode();
 
     setJavaRecordFields(javaRecord, modifiers);
 
     JavaAstNode javaAstNode =
       persistJavaAstNodeRow(
         node, isEnum ? SymbolType.ENUM : SymbolType.TYPE,
-        AstType.USAGE, entityHash
+        AstType.USAGE, entityHash, defEntityHash
       );
 
     persistJavaMemberType(
@@ -581,7 +585,7 @@ public class PersistManager {
     );
 
     setJavaEntityFields(
-      javaRecord, javaAstNode.getId(), entityHash, name, qualifiedName);
+      javaRecord, javaAstNode.getId(), entityHash, name, qualifiedNameTypeParams);
 
     persistRow(javaRecord);
   }
@@ -606,7 +610,7 @@ public class PersistManager {
       javaInitializer, node.getModifiers(), declaringClassName.hashCode());
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.INITIALIZER, AstType.DEFINITION, entityHash);
+      node, SymbolType.INITIALIZER, AstType.DEFINITION, entityHash, entityHash);
 
     setJavaEntityFields(javaInitializer, javaAstNode.getId(), entityHash);
 
@@ -631,7 +635,7 @@ public class PersistManager {
     setJavaTypedEntityFields(javaVariable, modifiers, typeHash, qualifiedType);
 
     JavaAstNode javaAstNode = persistJavaAstNodeRow(
-      node, SymbolType.VARIABLE, AstType.DECLARATION, entityHash);
+      node, SymbolType.VARIABLE, AstType.DECLARATION, entityHash, entityHash);
 
     setJavaEntityFields(
       javaVariable, javaAstNode.getId(),
@@ -723,7 +727,8 @@ public class PersistManager {
   }
 
   public <T extends ASTNode> JavaAstNode persistJavaAstNodeRow(
-    T node, SymbolType symbolType, AstType astType, int entityHash)
+    T node, SymbolType symbolType, AstType astType,
+    int entityHash, int defEntityHash)
   {
     JavaAstNode javaAstNode = new JavaAstNode();
     PositionInfo positionInfo;
@@ -751,7 +756,7 @@ public class PersistManager {
 
     setJavaAstNodeFields(
       javaAstNode, astValue, positionInfo, fileId,
-      entityHash, symbolType, astType, true
+      entityHash, defEntityHash, symbolType, astType, true
     );
 
     persistRow(javaAstNode);

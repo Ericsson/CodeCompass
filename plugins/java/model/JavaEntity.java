@@ -52,8 +52,8 @@ public abstract class JavaEntity {
     return entityHash;
   }
 
-  public void setEntityHash(long mangledNameHash) {
-    this.entityHash = mangledNameHash;
+  public void setEntityHash(long entityHash) {
+    this.entityHash = entityHash;
   }
 
   public String getName() {

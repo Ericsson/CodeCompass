@@ -35,6 +35,9 @@ public class JavaAstNode {
   @Column(name = "\"entityHash\"")
   private long entityHash;
 
+  @Column(name = "\"defEntityHash\"")
+  private long defEntityHash;
+
   @Column(name = "\"symbolType\"")
   @Enumerated(EnumType.ORDINAL)
   private SymbolType symbolType;
@@ -111,6 +114,14 @@ public class JavaAstNode {
 
   public void setEntityHash(long mangledNameHash) {
     this.entityHash = mangledNameHash;
+  }
+
+  public long getDefEntityHash() {
+    return defEntityHash;
+  }
+
+  public void setDefEntityHash(long defEntityHash) {
+    this.defEntityHash = defEntityHash;
   }
 
   public SymbolType getSymbolType() {

@@ -232,7 +232,7 @@ public abstract class Utils {
 
   public static void setJavaAstNodeFields(
     JavaAstNode javaAstNode, String astValue, PositionInfo positionInfo,
-    long fileId, int entityHash, SymbolType symbolType,
+    long fileId, int entityHash, int defEntityHash, SymbolType symbolType,
     AstType astType, boolean visibleInSourceCode)
   {
     javaAstNode.setAstValue(astValue);
@@ -242,6 +242,7 @@ public abstract class Utils {
     javaAstNode.setLocation_range_end_column(positionInfo.getEndColumn());
     javaAstNode.setLocation_file(fileId);
     javaAstNode.setEntityHash(entityHash);
+    javaAstNode.setDefEntityHash(defEntityHash);
     javaAstNode.setSymbolType(symbolType);
     javaAstNode.setAstType(astType);
     javaAstNode.setVisibleInSourceCode(visibleInSourceCode);
@@ -313,9 +314,8 @@ public abstract class Utils {
     }
 
     String mainTypeQualifiedName =
-      getQualifiedTypeName(
         ((AbstractTypeDeclaration) mainType).resolveBinding()
-      );
+          .getQualifiedName().split("<", 2)[0];
 
     return mainTypeQualifiedName.hashCode();
   }

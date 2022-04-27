@@ -179,6 +179,19 @@ public abstract class JavaQueryFactory {
     return em.createQuery(cr).getResultList();
   }
 
+  public static List<JavaAstNode> queryJavaAstNodesFromDef(
+    JavaAstNode javaAstNode, CriteriaQuery<JavaAstNode> cr,
+    Root<JavaAstNode> root, Predicate customPredicate)
+  {
+    Predicate entityHashPredicate = cb.equal(
+      root.get("defEntityHash"), javaAstNode.getDefEntityHash()
+    );
+
+    cr.select(root).where(cb.and(entityHashPredicate, customPredicate));
+
+    return em.createQuery(cr).getResultList();
+  }
+
   public static List<JavaAstNode> queryJavaAstNodesInFile(long fileId) {
     CriteriaQuery<JavaAstNode> cr = cb.createQuery(JavaAstNode.class);
     Root<JavaAstNode> root = cr.from(JavaAstNode.class);
@@ -277,7 +290,8 @@ public abstract class JavaQueryFactory {
     Predicate predicate =
       cb.equal(root.get("astType"), AstType.DEFINITION);
 
-    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
+    return queryJavaAstNodes(
+      javaAstNode.getDefEntityHash(), cr, root, predicate);
   }
 
   public static List<JavaAstNode> queryDefinitionNodes(long entityHash)
@@ -378,7 +392,8 @@ public abstract class JavaQueryFactory {
         cb.isTrue(root.get("visibleInSourceCode"))
       );
 
-    return queryJavaAstNodes(javaAstNode, cr, root, predicate);
+    return queryJavaAstNodes(
+      javaAstNode.getDefEntityHash(), cr, root, predicate);
   }
 
   public static List<JavaAstNode> queryUsageNodes(JavaAstNode javaAstNode) {
@@ -390,6 +405,12 @@ public abstract class JavaQueryFactory {
         cb.equal(root.get("astType"), AstType.READ),
         cb.equal(root.get("astType"), AstType.WRITE)
       );
+
+    if (javaAstNode.getAstType() == AstType.DEFINITION ||
+      javaAstNode.getAstType() == AstType.DECLARATION)
+    {
+      return queryJavaAstNodesFromDef(javaAstNode, cr, root, predicate);
+    }
 
     return queryJavaAstNodes(javaAstNode, cr, root, predicate);
   }
