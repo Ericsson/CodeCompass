@@ -29,8 +29,8 @@ public:
 private:
   int _numCompileCommands;
   int _threadNum;
-  bool acceptCompileCommands_dir(const std::vector<std::string>& path_);
-  bool parseCompileCommands_dir(const std::vector<std::string>& path_);
+  bool acceptProjectBuildPath(const std::vector<std::string>& path_);
+  bool parseProjectBuildPath(const std::vector<std::string>& path_);
   void addSource(const std::string& filepath_, bool error_);
 };
   

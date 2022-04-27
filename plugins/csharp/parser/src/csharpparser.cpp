@@ -28,9 +28,9 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
   _threadNum = _ctx.options["jobs"].as<int>();
 }
 
-bool CsharpParser::acceptCompileCommands_dir(const std::vector<std::string>& path_)
+bool CsharpParser::acceptProjectBuildPath(const std::vector<std::string>& path_)
 {
-  return path_.size()==2 && fs::is_directory(path_[0]) && fs::is_directory(path_[0]);
+  return path_.size()==2 && fs::is_directory(path_[0]) && fs::is_directory(path_[1]);
 }
 
 bool CsharpParser::parse()
@@ -39,17 +39,20 @@ bool CsharpParser::parse()
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
   
-    if(acceptCompileCommands_dir(paths))
+    if(acceptProjectBuildPath(paths))
     {
       LOG(info) << "CsharpParser parse path: " << paths[0];
       LOG(info) << "Parsed csharp project build path: " << paths[1];
-      succes = succes && parseCompileCommands_dir(paths);
+      succes = succes && parseProjectBuildPath(paths);
+    } else {
+      LOG(info) << "Bulid path must be a directory!";
+      succes = false;
     }
   
-  return true;
+  return succes;
 }
 
-bool CsharpParser::parseCompileCommands_dir(const std::vector<std::string>& paths_) {
+bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_) {
   fs::path csharp_path = fs::system_complete("../lib/csharp/");
 
   std::future<std::string> log;
