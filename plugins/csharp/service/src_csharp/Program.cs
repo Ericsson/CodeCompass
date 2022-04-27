@@ -65,7 +65,7 @@ namespace Server
             TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
 
             var handler = new ServiceAsyncHandler();
-            ITAsyncProcessor processor = new CSharpService.AsyncProcessor(handler);
+            ITAsyncProcessor processor = new CsharpService.AsyncProcessor(handler);
 
             try
             {
@@ -78,7 +78,7 @@ namespace Server
                     outputProtocolFactory: protocolFactory,
                     logger: LoggingHelper.CreateLogger<TSimpleAsyncServer >());
 
-                System.Console.WriteLine("[INFO] Starting csharpservice...");
+                //System.Console.WriteLine("[INFO] Starting csharpservice...");
 
                 await server.ServeAsync(cancellationToken);
             }
@@ -88,30 +88,34 @@ namespace Server
             }
         }
 
-        public class ServiceAsyncHandler : CSharpService.IAsync
+        public class ServiceAsyncHandler : CsharpService.IAsync
         {        
             public ServiceAsyncHandler() {}
             public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
                 CancellationToken cancellationToken = default(CancellationToken))
             {
+                System.Console.WriteLine("[CSharpService] getAstNodeInfoAsync");
                 return await Task.FromResult(new language.AstNodeInfo());
             }
 
             public async Task<language.AstNodeInfo> getAstNodeInfoByPositionAsync(FilePosition fpos,
                 CancellationToken cancellationToken = default(CancellationToken))
             {
+                System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync");
                 return await Task.FromResult(new language.AstNodeInfo());
             }
 
             public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, 
                 CancellationToken cancellationToken = default(CancellationToken))
             {
+                System.Console.WriteLine("[CSharpService] getPropertiesAsync");
                 return await Task.FromResult(new Dictionary<string, string>());
             }
 
             public async Task<string> getDocumentationAsync(string astNodeId, 
                 CancellationToken cancellationToken = default(CancellationToken))
             {
+                System.Console.WriteLine("[CSharpService] getDocumentationAsync");
                 return await Task.FromResult("Documentation");
             }
      

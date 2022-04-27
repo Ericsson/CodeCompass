@@ -4,7 +4,7 @@ include "../../../service/project/common.thrift"
 namespace cpp cc.service.csharp
 namespace netstd csharp
 
-service CSharpService
+service CsharpService
 {
   language.AstNodeInfo getAstNodeInfo(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)

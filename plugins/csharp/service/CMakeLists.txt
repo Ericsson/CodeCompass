@@ -14,7 +14,7 @@ include_directories(SYSTEM
 # Generate thrift files
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CSharpService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CsharpService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-csharp
   COMMAND
@@ -29,7 +29,7 @@ add_custom_command(
 
 # Create cpp static library from thrift files
 add_library(csharpservicethrift STATIC
-        ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CSharpService.cpp)
+        ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CsharpService.cpp)
 
 target_compile_options(csharpservicethrift PUBLIC -fPIC)
 

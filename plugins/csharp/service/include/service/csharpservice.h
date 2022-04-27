@@ -23,7 +23,7 @@
 #include <webserver/servercontext.h>
 
 #include <LanguageService.h>
-#include <CSharpService.h>
+#include <CsharpService.h>
 
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
@@ -39,7 +39,7 @@ namespace language = cc::service::language;
 
 using TransportException = apache::thrift::transport::TTransportException;
 
-class CSharpQueryHandler : public CSharpServiceIf
+class CSharpQueryHandler : public CsharpServiceIf
 {
 public:
   CSharpQueryHandler() {}
@@ -89,9 +89,9 @@ public:
     apache::thrift::GlobalOutput.setOutputFunction(
             apache::thrift::TOutput::errorTimeWrapper);
 
-    LOG(info) << "[csharpparser] C# server started!";
+    LOG(info) << "C# server started!";
 
-    //_service.reset(new CSharpServiceClient(protocol));
+    _service.reset(new CsharpServiceClient(protocol));
 
   }
 
@@ -99,6 +99,7 @@ public:
             language::AstNodeInfo& return_,
             const core::AstNodeId& astNodeId_) override
     {
+      LOG(info) << "_service -> getAstNodeInfo";
       _service -> getAstNodeInfo(return_, astNodeId_);
     }
 
@@ -106,6 +107,7 @@ public:
             language::AstNodeInfo& return_,
             const core::FilePosition& fpos_) override
     {
+      LOG(info) << "_service -> getAstNodeInfoByPosition";
       _service -> getAstNodeInfoByPosition(return_, fpos_);
     }
 
@@ -120,6 +122,7 @@ public:
             std::map<std::string, std::string>& return_,
             const core::AstNodeId& astNodeId_) override
     {
+      LOG(info) << "_service -> getProperties";
       _service -> getProperties(return_, astNodeId_);
     }
 
@@ -127,6 +130,7 @@ public:
             std::string& return_,
             const core::AstNodeId& astNodeId_) override
     {
+      LOG(info) << "_service -> getDocumentation";
       _service -> getDocumentation(return_, astNodeId_);
     }
 
@@ -198,7 +202,7 @@ public:
     }*/
 
 private:
-    std::unique_ptr<CSharpServiceIf> _service;
+    std::unique_ptr<CsharpServiceIf> _service;
 
     static std::stringstream thrift_ss;
 };
