@@ -102,6 +102,7 @@ void CsharpParser::addSource(const std::string& filepath_, bool error_){
   buildSource.file->parseStatus = error_
     ? model::File::PSPartiallyParsed
     : model::File::PSFullyParsed;
+  buildSource.file->type = "CS";
   buildSource.action = buildAction;
 
   _ctx.srcMgr.updateFile(*buildSource.file);

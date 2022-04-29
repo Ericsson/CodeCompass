@@ -41,7 +41,7 @@ namespace Server
     public class Program
     {
         private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
-        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
+        private static readonly TConfiguration Configuration = new TConfiguration();
 
         public static void Main(string[] args)
         {
@@ -56,7 +56,7 @@ namespace Server
             }
 
             Logger.LogInformation("Server stopped");
-        }        
+        }     
 
         private static async Task RunAsync(CancellationToken cancellationToken)
         {
@@ -90,7 +90,9 @@ namespace Server
 
         public class ServiceAsyncHandler : CsharpService.IAsync
         {        
-            public ServiceAsyncHandler() {}
+            public ServiceAsyncHandler() {
+                //System.Console.WriteLine("[CSharpService] ServiceAsyncHandler started");
+            }
             public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
                 CancellationToken cancellationToken = default(CancellationToken))
             {
@@ -102,7 +104,11 @@ namespace Server
                 CancellationToken cancellationToken = default(CancellationToken))
             {
                 System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync");
-                return await Task.FromResult(new language.AstNodeInfo());
+                language.AstNodeInfo ret = new language.AstNodeInfo();
+                ret.AstNodeValue = "value";
+                ret.AstNodeType = "type";
+                ret.Id = "id";
+                return await Task.FromResult(ret);
             }
 
             public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, 

@@ -37,8 +37,6 @@ CsharpServiceHandler::CsharpServiceHandler(
 void CsharpServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
   LOG(info) << "CsharpServiceHandler getFileTypes";
-  return_.push_back("CSharp");
-  return_.push_back("Csharp");
   return_.push_back("CS");
   return_.push_back("Dir");
 }
