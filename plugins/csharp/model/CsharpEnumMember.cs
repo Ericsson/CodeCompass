@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace StandAloneCSharpParser.model
+namespace CSharpParser.model
 {
     //[Table("csharp_enum_members")]
     class CsharpEnumMember : CsharpEntity

@@ -62,6 +62,8 @@ public:
     std::shared_ptr<Protocol>
     protocol(new Protocol(transport));
 
+    _service.reset(new CsharpServiceClient(protocol));
+
     // Redirect Thrift output into std::stringstream
     apache::thrift::GlobalOutput.setOutputFunction(
     [](const char* x) {thrift_ss << x;});
@@ -91,9 +93,12 @@ public:
 
     LOG(info) << "C# server started!";
 
-    _service.reset(new CsharpServiceClient(protocol));
-
+    std::string str = "1";
+    std::string nodeid = "1";
+    _service -> getDocumentation(str, nodeid);
+    LOG(info) << "C# server getDocumentation test: " << str;
   }
+
 
     void getAstNodeInfo(
             language::AstNodeInfo& return_,
@@ -105,10 +110,11 @@ public:
 
     void getAstNodeInfoByPosition(
             language::AstNodeInfo& return_,
-            const core::FilePosition& fpos_) override
+            const std::string& path_,
+            const core::Position& fpos_) override
     {
-      LOG(info) << "_service -> getAstNodeInfoByPosition";
-      _service -> getAstNodeInfoByPosition(return_, fpos_);
+      LOG(info) << "_service -> getAstNodeInfoByPosition";      
+      _service -> getAstNodeInfoByPosition(return_, path_, fpos_);
     }
 
     /*void getFileRange(
@@ -223,6 +229,8 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);  
 
+  std::string getDbString();
+  
   void getFileTypes(std::vector<std::string>& return_) override;
 
   void getAstNodeInfo(
@@ -322,6 +330,7 @@ private:
 
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;
+  boost::process::child c;
 
   cc::service::csharp::CSharpQueryHandler csharpQueryHandler;
 };

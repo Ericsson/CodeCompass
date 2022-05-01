@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Microsoft.EntityFrameworkCore;
 
-namespace StandAloneCSharpParser.model
+namespace CSharpParser.model
 {
     class CsharpDbContext : DbContext
     {

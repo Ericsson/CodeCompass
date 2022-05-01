@@ -6,9 +6,9 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
-using StandAloneCSharpParser.model;
+using CSharpParser.model;
 
-namespace StandAloneCSharpParser
+namespace CSharpParser
 {
     class Program
     {

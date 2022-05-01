@@ -9,7 +9,7 @@ service CsharpService
   language.AstNodeInfo getAstNodeInfo(1:common.AstNodeId astNodeId)
     throws (1:common.InvalidId ex)
 
-  language.AstNodeInfo getAstNodeInfoByPosition(1:common.FilePosition fpos)
+  language.AstNodeInfo getAstNodeInfoByPosition(1:string path, 2:common.Position fpos)
     throws (1:common.InvalidInput ex)
 
   map<string, string> getProperties(1:common.AstNodeId astNodeIds)

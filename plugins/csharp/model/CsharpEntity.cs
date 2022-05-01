@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace StandAloneCSharpParser.model
+namespace CSharpParser.model
 {
     class CsharpEntity
     {
