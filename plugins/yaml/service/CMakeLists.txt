@@ -39,13 +39,15 @@ target_compile_options(yamlthrift PUBLIC -fPIC)
 add_dependencies(yamlthrift projectthrift)
 
 add_library(yamlservice SHARED
-  src/yamlservice.cpp)
+  src/yamlservice.cpp
+  src/plugin.cpp)
 
 target_link_libraries(yamlservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   model
   yamlmodel
+  gvc
   projectthrift
   projectservice
   commonthrift
