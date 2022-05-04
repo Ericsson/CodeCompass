@@ -14,7 +14,6 @@ namespace CSharpParser
         private readonly CsharpDbContext DbContext;
         private readonly SemanticModel Model;
         private readonly SyntaxTree Tree;
-        private readonly List<CsharpNamespace> CsharpNamespaces = new List<CsharpNamespace>();
 
         public AstVisitor(CsharpDbContext context, SemanticModel model, SyntaxTree tree)
         {
@@ -56,13 +55,14 @@ namespace CSharpParser
             return hash;
         }
 
-        private CsharpAstNode AstNode(SyntaxNode node)
+        private CsharpAstNode AstNode(SyntaxNode node, AstTypeEnum type)
         {
             CsharpAstNode astNode = new CsharpAstNode
             {
                 AstValue = node.ToString(),
-                RawKind = node.RawKind,
-                EntityHash = node.GetHashCode()
+                RawKind = node.Kind(),
+                EntityHash = node.GetHashCode(),
+                AstType = type
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
             astNode.Id = createIdentifier(astNode);
@@ -79,7 +79,7 @@ namespace CSharpParser
 
         public override void VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Namespace);
             //WriteLine($"\n NamespaceDeclaration visited: {node.Name}");
             string qName = "";
             try
@@ -100,14 +100,13 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
-            CsharpNamespaces.Add(csharpNamespace);
             DbContext.CsharpNamespaces.Add(csharpNamespace);
             base.VisitNamespaceDeclaration(node);
         }
 
         public override void VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
             base.VisitInterfaceDeclaration(node);
             //WriteLine($"\n InterfaceDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -120,7 +119,7 @@ namespace CSharpParser
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
-            var nameSpaces = CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
             if (nameSpaces.Count == 1)
             {
@@ -129,7 +128,7 @@ namespace CSharpParser
 
             CsharpClass csharpClass = new CsharpClass
             {
-                IsInterface = true,
+                ClassType = ClassTypeEnum.Interface,
                 CsharpNamespace = csharpNamespace,
                 AstNode = astNode,
                 Name = node.Identifier.Text,
@@ -140,17 +139,17 @@ namespace CSharpParser
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
             {
-                csharpClass.AddVariable(VisitPropertyDecl(propertyDeclaration));
+                VisitPropertyDecl(propertyDeclaration, astNode);
             }
 
             foreach (MethodDeclarationSyntax methodDeclaration in node.Members.OfType<MethodDeclarationSyntax>())
             {
-                csharpClass.AddMethod(VisitMethodDecl(methodDeclaration));
+                VisitMethodDecl(methodDeclaration, astNode);
             }
 
             foreach (OperatorDeclarationSyntax operatorDeclaration in node.Members.OfType<OperatorDeclarationSyntax>())
             {
-                csharpClass.AddMethod(VisitOperatorDecl(operatorDeclaration));
+                VisitOperatorDecl(operatorDeclaration, astNode);
             }            
 
             DbContext.CsharpClasses.Add(csharpClass);
@@ -158,7 +157,7 @@ namespace CSharpParser
 
         public override void VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Struct);
             base.VisitStructDeclaration(node);
             //WriteLine($"\n StructDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -171,7 +170,7 @@ namespace CSharpParser
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
-            var nameSpaces = CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
             if (nameSpaces.Count == 1)
             {
@@ -191,43 +190,43 @@ namespace CSharpParser
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
                 WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
-                csharpStruct.AddVariables(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
             {
-                csharpStruct.AddVariable(VisitPropertyDecl(propertyDeclaration));
-                csharpStruct.AddMethods(VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text));
+                VisitPropertyDecl(propertyDeclaration, astNode);
+                VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text, astNode);
             }
 
             foreach (MethodDeclarationSyntax methodDeclaration in node.Members.OfType<MethodDeclarationSyntax>())
             {
-                csharpStruct.AddMethod(VisitMethodDecl(methodDeclaration));
+                VisitMethodDecl(methodDeclaration, astNode);
             }
 
             foreach (OperatorDeclarationSyntax operatorDeclaration in node.Members.OfType<OperatorDeclarationSyntax>())
             {
-                csharpStruct.AddMethod(VisitOperatorDecl(operatorDeclaration));
+                VisitOperatorDecl(operatorDeclaration, astNode);
             }
 
             foreach (DelegateDeclarationSyntax delegateDeclaration in node.Members.OfType<DelegateDeclarationSyntax>())
             {
-                csharpStruct.AddMethod(VisitDelegateDecl(delegateDeclaration));
+                VisitDelegateDecl(delegateDeclaration, astNode);
             }
 
             foreach (ConstructorDeclarationSyntax constructorDeclaration in node.Members.OfType<ConstructorDeclarationSyntax>())
             {
-                csharpStruct.AddConstructor(VisitConstructorDecl(constructorDeclaration));
+                VisitConstructorDecl(constructorDeclaration, astNode);
             }
 
             foreach (DestructorDeclarationSyntax destructorDeclaration in node.Members.OfType<DestructorDeclarationSyntax>())
             {
-                csharpStruct.AddDestructor(VisitDestructorDecl(destructorDeclaration));
+                VisitDestructorDecl(destructorDeclaration, astNode);
             }
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -243,9 +242,10 @@ namespace CSharpParser
                     Name = eventDeclaration.Identifier.Text,
                     QualifiedName = qName,
                     DocumentationCommentXML = Model.GetDeclaredSymbol(eventDeclaration).GetDocumentationCommentXml(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = astNode
                 };
-                csharpStruct.AddEvent(csharpEntity);
+                DbContext.CsharpEtcEntitys.Add(csharpEntity);
             }
 
             DbContext.CsharpStructs.Add(csharpStruct);
@@ -253,7 +253,7 @@ namespace CSharpParser
 
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
             base.VisitClassDeclaration(node);
             //WriteLine($"\n ClassDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -266,7 +266,7 @@ namespace CSharpParser
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
-            var nameSpaces = CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
             if (nameSpaces.Count == 1)
             {
@@ -286,43 +286,43 @@ namespace CSharpParser
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
                 //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
-                csharpClass.AddVariables(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
             {
-                csharpClass.AddVariable(VisitPropertyDecl(propertyDeclaration));
-                csharpClass.AddMethods(VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text));
+                VisitPropertyDecl(propertyDeclaration, astNode);
+                VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text, astNode);
             }
 
             foreach (MethodDeclarationSyntax methodDeclaration in node.Members.OfType<MethodDeclarationSyntax>())
             {
-                csharpClass.AddMethod(VisitMethodDecl(methodDeclaration));
+                VisitMethodDecl(methodDeclaration, astNode);
             }
 
             foreach (OperatorDeclarationSyntax operatorDeclaration in node.Members.OfType<OperatorDeclarationSyntax>())
             {
-                csharpClass.AddMethod(VisitOperatorDecl(operatorDeclaration));
+                VisitOperatorDecl(operatorDeclaration, astNode);
             }
 
             foreach (DelegateDeclarationSyntax delegateDeclaration in node.Members.OfType<DelegateDeclarationSyntax>())
             {
-                csharpClass.AddMethod(VisitDelegateDecl(delegateDeclaration));
+                VisitDelegateDecl(delegateDeclaration, astNode);
             }
 
             foreach (ConstructorDeclarationSyntax constructorDeclaration in node.Members.OfType<ConstructorDeclarationSyntax>())
             {
-                csharpClass.AddConstructor(VisitConstructorDecl(constructorDeclaration));
+                VisitConstructorDecl(constructorDeclaration, astNode);
             }
 
             foreach (DestructorDeclarationSyntax destructorDeclaration in node.Members.OfType<DestructorDeclarationSyntax>())
             {
-                csharpClass.AddDestructor(VisitDestructorDecl(destructorDeclaration));
+                VisitDestructorDecl(destructorDeclaration,astNode);
             }
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration,AstTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -335,20 +335,21 @@ namespace CSharpParser
                 CsharpEtcEntity csharpEntity = new CsharpEtcEntity
                 {
                     AstNode = astNode2,
-                    IsEvent = true,
+                    EtcEntityType = EtcEntityTypeEnum.Event,
                     Name = eventDeclaration.Identifier.Text,
                     QualifiedName = qName,
                     DocumentationCommentXML = Model.GetDeclaredSymbol(eventDeclaration).GetDocumentationCommentXml(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = astNode
                 };
-                csharpClass.AddEvent(csharpEntity);
+                DbContext.CsharpEtcEntitys.Add(csharpEntity);
             }
 
             DbContext.CsharpClasses.Add(csharpClass);
         }
 
         public override void VisitRecordDeclaration(RecordDeclarationSyntax node) {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
             //WriteLine($"\n RecordDeclaration visited: {node.Identifier}");
             base.VisitRecordDeclaration(node);
             string qName = "";
@@ -361,7 +362,7 @@ namespace CSharpParser
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
-            var nameSpaces = CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
             if (nameSpaces.Count == 1)
             {
@@ -370,7 +371,7 @@ namespace CSharpParser
 
             CsharpClass csharpRecord = new CsharpClass
             {
-                IsRecord = true,
+                ClassType = ClassTypeEnum.Record,
                 CsharpNamespace = csharpNamespace,
                 AstNode = astNode,
                 Name = node.Identifier.Text,
@@ -382,43 +383,43 @@ namespace CSharpParser
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
                 //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
-                csharpRecord.AddVariables(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
             {
-                csharpRecord.AddVariable(VisitPropertyDecl(propertyDeclaration));
-                csharpRecord.AddMethods(VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text));
+                VisitPropertyDecl(propertyDeclaration, astNode);
+                VisitAccessors(propertyDeclaration.AccessorList, propertyDeclaration.Identifier.Text, astNode);
             }
 
             foreach (MethodDeclarationSyntax methodDeclaration in node.Members.OfType<MethodDeclarationSyntax>())
             {
-                csharpRecord.AddMethod(VisitMethodDecl(methodDeclaration));
+                VisitMethodDecl(methodDeclaration, astNode);
             }
 
             foreach (OperatorDeclarationSyntax operatorDeclaration in node.Members.OfType<OperatorDeclarationSyntax>())
             {
-                csharpRecord.AddMethod(VisitOperatorDecl(operatorDeclaration));
+                VisitOperatorDecl(operatorDeclaration, astNode);
             }
 
             foreach (DelegateDeclarationSyntax delegateDeclaration in node.Members.OfType<DelegateDeclarationSyntax>())
             {
-                csharpRecord.AddMethod(VisitDelegateDecl(delegateDeclaration));
+                VisitDelegateDecl(delegateDeclaration, astNode);
             }
 
             foreach (ConstructorDeclarationSyntax constructorDeclaration in node.Members.OfType<ConstructorDeclarationSyntax>())
             {
-                csharpRecord.AddConstructor(VisitConstructorDecl(constructorDeclaration));
+                VisitConstructorDecl(constructorDeclaration, astNode);
             }
 
             foreach (DestructorDeclarationSyntax destructorDeclaration in node.Members.OfType<DestructorDeclarationSyntax>())
             {
-                csharpRecord.AddDestructor(VisitDestructorDecl(destructorDeclaration));
+                VisitDestructorDecl(destructorDeclaration, astNode);
             }
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -431,21 +432,22 @@ namespace CSharpParser
                 CsharpEtcEntity csharpEntity = new CsharpEtcEntity
                 {
                     AstNode = astNode2,
-                    IsEvent = true,
+                    EtcEntityType = EtcEntityTypeEnum.Event,
                     Name = eventDeclaration.Identifier.Text,
                     QualifiedName = qName,
                     DocumentationCommentXML = Model.GetDeclaredSymbol(eventDeclaration).GetDocumentationCommentXml(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = astNode
                 };
-                csharpRecord.AddEvent(csharpEntity);
+                DbContext.CsharpEtcEntitys.Add(csharpEntity);
             }
 
             DbContext.CsharpClasses.Add(csharpRecord);
         }
 
-        private CsharpMethod VisitDelegateDecl(DelegateDeclarationSyntax node)
+        private void VisitDelegateDecl(DelegateDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node,AstTypeEnum.Method);
             //WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -459,25 +461,26 @@ namespace CSharpParser
 
             CsharpMethod method = new CsharpMethod
             {
-                IsDelegate = true,
                 AstNode = astNode,
                 Name = node.Identifier.Text,
                 QualifiedName = qName,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent,
+                MethodType = MethodTypeEnum.Delegate
             };
 
             if (node.ParameterList.Parameters.Count > 0)
             {
-                method.AddParams(VisitMethodParameters(node.ParameterList.Parameters));
+                VisitMethodParameters(node.ParameterList.Parameters, astNode);
             }           
 
-            return method;
+            DbContext.CsharpMethods.Add(method);
         }
 
-        private CsharpMethod VisitDestructorDecl(DestructorDeclarationSyntax node)
+        private void VisitDestructorDecl(DestructorDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
             // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -495,25 +498,27 @@ namespace CSharpParser
                 Name = node.Identifier.Text,
                 QualifiedName = qName,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent,
+                MethodType = MethodTypeEnum.Destuctor
             };
 
             if (node.ParameterList.Parameters.Count > 0)
             {
-                method.AddParams(VisitMethodParameters(node.ParameterList.Parameters));
+                VisitMethodParameters(node.ParameterList.Parameters,astNode);
             }
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.DescendantNodes().OfType<VariableDeclarationSyntax>())
             {
-                method.AddLocals(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
-            return method;
+            DbContext.CsharpMethods.Add(method);
         }
 
-        private CsharpMethod VisitConstructorDecl(ConstructorDeclarationSyntax node)
+        private void VisitConstructorDecl(ConstructorDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
             // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -531,25 +536,27 @@ namespace CSharpParser
                 Name = node.Identifier.Text,
                 QualifiedName = qName,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent,
+                MethodType = MethodTypeEnum.Constructor
             };
 
             if (node.ParameterList.Parameters.Count > 0)
             {
-                method.AddParams(VisitMethodParameters(node.ParameterList.Parameters));
+                VisitMethodParameters(node.ParameterList.Parameters,astNode);
             }
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.DescendantNodes().OfType<VariableDeclarationSyntax>())
             {
-                method.AddLocals(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
-            return method;
+            DbContext.CsharpMethods.Add(method);
         }
 
-        private CsharpMethod VisitMethodDecl(MethodDeclarationSyntax node)
+        private void VisitMethodDecl(MethodDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
            // WriteLine($"\n MethodDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -579,26 +586,28 @@ namespace CSharpParser
                 QualifiedType = qType,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
                 TypeHash = qType.GetHashCode(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent,
+                MethodType = MethodTypeEnum.Method
             };
 
             if (node.ParameterList.Parameters.Count > 0)
             {
-                method.AddParams(VisitMethodParameters(node.ParameterList.Parameters));
+                VisitMethodParameters(node.ParameterList.Parameters,astNode);
             }
             
             foreach (VariableDeclarationSyntax variableDeclaration in node.DescendantNodes().OfType<VariableDeclarationSyntax>())
             {
-                method.AddLocals(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }         
 
-            return method;
+            DbContext.CsharpMethods.Add(method);
         }
 
-        private CsharpMethod VisitOperatorDecl(OperatorDeclarationSyntax node)
+        private void VisitOperatorDecl(OperatorDeclarationSyntax node, CsharpAstNode parent)
         {
             //WriteLine($"\n OperatorDeclaration visited: {node}");
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
             string qName = "";
             string Name = "";
             try
@@ -628,29 +637,30 @@ namespace CSharpParser
                 QualifiedType = qType,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
                 TypeHash = qType.GetHashCode(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent,
+                MethodType = MethodTypeEnum.Operator
             };
 
             if (node.ParameterList.Parameters.Count > 0)
             {
-                csharpOperator.AddParams(VisitMethodParameters(node.ParameterList.Parameters));
+                VisitMethodParameters(node.ParameterList.Parameters,astNode);
             }
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.DescendantNodes().OfType<VariableDeclarationSyntax>())
             {
-                csharpOperator.AddLocals(VisitVariableDecl(variableDeclaration));
+                VisitVariableDecl(variableDeclaration, astNode);
             }
 
-            return csharpOperator;
+            DbContext.CsharpMethods.Add(csharpOperator);
         }
 
-        private HashSet<CsharpVariable> VisitMethodParameters(SeparatedSyntaxList<ParameterSyntax> parameters)
+        private void VisitMethodParameters(SeparatedSyntaxList<ParameterSyntax> parameters, CsharpAstNode parent)
         {
-            HashSet<CsharpVariable> ret = new HashSet<CsharpVariable>();
             foreach (var param in parameters)
             {
                 // WriteLine($"\t\t{param.Identifier} : {param.Type}");
-                CsharpAstNode astNode = AstNode(param);
+                CsharpAstNode astNode = AstNode(param, AstTypeEnum.Variable);
                 string paramQType = "";
                 try
                 {
@@ -666,20 +676,19 @@ namespace CSharpParser
                     Name = param.Identifier.Text,
                     QualifiedType = paramQType,
                     TypeHash = paramQType.GetHashCode(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = parent,
+                    VariableType = VariableTypeEnum.Parameter
                 };
-                ret.Add(varibale);
+                DbContext.CsharpVariables.Add(varibale);
             }
-            return ret;
         }
 
-        private HashSet<CsharpVariable> VisitVariableDecl(VariableDeclarationSyntax node)
+        private void VisitVariableDecl(VariableDeclarationSyntax node, CsharpAstNode parent)
         {
-            HashSet<CsharpVariable> variables = new HashSet<CsharpVariable>();
-
             foreach (var variable in node.Variables)
             {
-                CsharpAstNode astNode = AstNode(variable);
+                CsharpAstNode astNode = AstNode(variable, AstTypeEnum.Variable);
                 string varQType = "";
                 bool isLINQvar = node.DescendantNodes().OfType<QueryExpressionSyntax>().Any();
                 try
@@ -712,16 +721,16 @@ namespace CSharpParser
                     TypeHash = varQType.GetHashCode(),
                     DocumentationCommentXML = Model.GetDeclaredSymbol(variable).GetDocumentationCommentXml(),
                     EntityHash = astNode.EntityHash,
-                    isLINQ = isLINQvar
+                    VariableType = isLINQvar ? VariableTypeEnum.LINQ : VariableTypeEnum.Variable,
+                    ParentNode = parent
                 };
-                variables.Add(csharpVariable);
+                DbContext.CsharpVariables.Add(csharpVariable);
             }
-            return variables;
         }
 
-        private CsharpVariable VisitPropertyDecl(PropertyDeclarationSyntax node)
+        private void VisitPropertyDecl(PropertyDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Variable);
             string varQType = "";
             try
             {
@@ -737,22 +746,23 @@ namespace CSharpParser
                 Name = node.Identifier.Text,
                 QualifiedType = varQType,
                 TypeHash = varQType.GetHashCode(),
-                IsProperty = true,
+                VariableType = VariableTypeEnum.Property,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent
             };
-            return variable;
+            DbContext.CsharpVariables.Add(variable);
         }
 
-        private HashSet<CsharpMethod> VisitAccessors(AccessorListSyntax node, String propertyName)
+        private void VisitAccessors(AccessorListSyntax node, String propertyName, CsharpAstNode parent)
         {
             HashSet<CsharpMethod> methods = new HashSet<CsharpMethod>();
 
-            if (node == null) return methods;
+            if (node == null) return;
 
             foreach (AccessorDeclarationSyntax accessor in node.Accessors)
             {
-                CsharpAstNode astNode = AstNode(accessor);
+                CsharpAstNode astNode = AstNode(accessor, AstTypeEnum.Method);
 
                 String name = "";
                 switch (accessor.Kind())
@@ -783,27 +793,26 @@ namespace CSharpParser
                 CsharpMethod method = new CsharpMethod
                 {
                     AstNode = astNode,
-                    IsAccessor = true,
                     Name = propertyName+name+"Accessor",
                     DocumentationCommentXML = Model.GetDeclaredSymbol(accessor).GetDocumentationCommentXml(),
-                    EntityHash = astNode.EntityHash
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = parent,
+                    MethodType = MethodTypeEnum.Accessor
                 };
 
                 foreach (VariableDeclarationSyntax variableDeclaration in accessor.DescendantNodes().OfType<VariableDeclarationSyntax>())
                 {
-                    method.AddLocals(VisitVariableDecl(variableDeclaration));
+                    VisitVariableDecl(variableDeclaration, astNode);
                 }
 
-                methods.Add(method);
-            }            
-
-            return methods;
+                DbContext.CsharpMethods.Add(method);
+            } 
         }
 
         public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
             //WriteLine($"\n EnumDeclaration visited: {node.Identifier.Text}");
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Enum);
             string qName = "";
             try
             {
@@ -814,7 +823,7 @@ namespace CSharpParser
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
-            var nameSpaces = CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
             if (nameSpaces.Count == 1)
             {
@@ -833,14 +842,14 @@ namespace CSharpParser
 
             foreach (EnumMemberDeclarationSyntax enumMemberDeclarationSyntax in node.Members)
             {
-                csharpEnum.AddMember(VisitEnumMemberDecl(enumMemberDeclarationSyntax));
+                csharpEnum.AddMember(VisitEnumMemberDecl(enumMemberDeclarationSyntax, astNode));
             }
             DbContext.CsharpEnums.Add(csharpEnum);
         }
 
-        private CsharpEnumMember VisitEnumMemberDecl(EnumMemberDeclarationSyntax node)
+        private CsharpEnumMember VisitEnumMemberDecl(EnumMemberDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node);
+            CsharpAstNode astNode = AstNode(node, AstTypeEnum.EnumMember);
             string qName = "";
             try
             {
@@ -855,7 +864,8 @@ namespace CSharpParser
                 AstNode = astNode,
                 Name = node.Identifier.Text,
                 QualifiedName = qName,
-                EntityHash = astNode.EntityHash
+                EntityHash = astNode.EntityHash,
+                ParentNode = parent
             };
             if (node.EqualsValue != null)
             {
@@ -868,11 +878,8 @@ namespace CSharpParser
                     WriteLine($"Unable to parse '{node.EqualsValue.Value}'");
                 }
             }
+            DbContext.CsharpEnumMembers.Add(csharpEnumMember);
             return csharpEnumMember;
-        }
-
-        private void VisitQueryExp(QueryExpressionSyntax node){
-            CsharpAstNode astNode = AstNode(node);
         }
     }
 }

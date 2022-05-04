@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CSharpParser.model
 {
@@ -7,20 +6,25 @@ namespace CSharpParser.model
     {
         public long Id { get; set; }
         public CsharpAstNode AstNode { get; set; }
+        public CsharpAstNode ParentNode{  get; set; }
         public long EntityHash { get; set; }
-        public String Name { get; set; }
-        public String QualifiedName { get; set; }
-        public string DocumentationCommentXML { get; set; }
+        public String Name { get; set; } = " ";
+        public String QualifiedName { get; set; } = " ";
+        public string DocumentationCommentXML { get; set; } = " ";
     }
 
     class CsharpTypedEntity : CsharpEntity
     {
         public long TypeHash { get; set; }
-        public String QualifiedType { get; set; }
+        public String QualifiedType { get; set; } = " ";
     }
-    //[Table("csharp_entities")]
+
+    enum EtcEntityTypeEnum
+    {
+        Event
+    }
     class CsharpEtcEntity : CsharpTypedEntity
     {
-        public bool IsEvent { get; set; }
+        public EtcEntityTypeEnum EtcEntityType { get; set; }
     }
 }

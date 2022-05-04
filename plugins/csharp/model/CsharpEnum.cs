@@ -13,9 +13,5 @@ namespace CSharpParser.model
         {
             CsharpEnumMembers.Add(member);
         }
-        public void AddMembers(HashSet<CsharpEnumMember> members)
-        {
-            CsharpEnumMembers.UnionWith(members);
-        }
     }
 }

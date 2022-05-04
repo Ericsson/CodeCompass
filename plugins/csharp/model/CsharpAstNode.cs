@@ -1,19 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace CSharpParser.model
 {
+    enum AstTypeEnum
+    {
+        Variable,
+        Method, 
+        Class,
+        Struct,
+        Namespace,
+        Enum,
+        EnumMember,
+        EtcEntity
+
+    }
     class CsharpAstNode
     {
         public ulong Id { get; set; }
         public string AstValue { get; set; }
+        public AstTypeEnum AstType { get; set; }
         public long Location_range_start_line { get; set; }
         public long Location_range_start_column { get; set; }
         public long Location_range_end_line { get; set; }
         public long Location_range_end_column { get; set; }
         public string Path { get; set; }
         public long EntityHash { get; set; }
-        public int RawKind { get; set; } //SyntaxKind Enum
+        public SyntaxKind RawKind { get; set; } //SyntaxKind Enum
         public void SetLocation(FileLinePositionSpan f)
         {
             Location_range_start_line = f.StartLinePosition.Line;

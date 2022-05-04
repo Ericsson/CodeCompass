@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -73,6 +75,19 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return fileRange;
     }
 
+    private CsharpAstNode queryCsharpAstNode(string astNodeId){
+        CsharpAstNode ret;
+        try{
+            ret = dbContext.CsharpAstNodes
+                .Where(a => a.Id.ToString()==astNodeId)
+                .First();
+        } catch(InvalidOperationException e){
+            System.Console.WriteLine($"[CSharpService error] There are no AstNode with this ID:{astNodeId}");
+            ret = new CsharpAstNode();
+        }
+        return ret;
+    }
+
     public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -84,7 +99,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         Position pos_,
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync");
+        //System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync");
         
         var nodes = dbContext.CsharpAstNodes
             .Where(a => 
@@ -113,8 +128,90 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        System.Console.WriteLine("[CSharpService] getPropertiesAsync");
-        return await Task.FromResult(new Dictionary<string, string>());
+        //System.Console.WriteLine("[CSharpService] getPropertiesAsync");
+        Dictionary<string, string> ret = new Dictionary<string, string>();
+        CsharpAstNode node = queryCsharpAstNode(astNodeIds);    
+        ret.Add("AstNode Type", node.RawKind.ToString());    
+        switch(node.AstType){
+            case AstTypeEnum.Variable:
+                var variable = dbContext.CsharpVariables
+                    .Where(v => v.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", variable.Name+" ");
+                ret.Add("Qualified Name", variable.QualifiedName+" ");
+                ret.Add("Documentation Comment", variable.DocumentationCommentXML+" ");
+                ret.Add("Qualified Type", variable.QualifiedType+" ");
+                ret.Add("Variable Type", variable.VariableType.ToString());
+                break;
+            case AstTypeEnum.Method:
+                var method = dbContext.CsharpMethods
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", method.Name+" ");
+                ret.Add("Qualified Name", method.QualifiedName+" ");
+                ret.Add("Documentation Comment", method.DocumentationCommentXML+" ");
+                ret.Add("Qualified Type", method.QualifiedType+" ");
+                ret.Add("Method Type", method.MethodType.ToString());
+                break;
+            case AstTypeEnum.Class:
+                var Class = dbContext.CsharpClasses
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", Class.Name+" ");
+                ret.Add("Qualified Name", Class.QualifiedName+" ");
+                ret.Add("Documentation Comment", Class.DocumentationCommentXML+" ");
+                ret.Add("Namespace", Class.CsharpNamespace.Name+" ");
+                ret.Add("Class Type", Class.ClassType.ToString());
+                break;
+            case AstTypeEnum.Struct:
+                var Struct = dbContext.CsharpClasses
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", Struct.Name+" ");
+                ret.Add("Qualified Name", Struct.QualifiedName+" ");
+                ret.Add("Documentation Comment", Struct.DocumentationCommentXML+" ");
+                ret.Add("Namespace", Struct.CsharpNamespace.Name+" ");
+                break;
+            case AstTypeEnum.Namespace:
+                var Namespace = dbContext.CsharpNamespaces
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", Namespace.Name+" ");
+                ret.Add("Qualified Name", Namespace.QualifiedName+" ");
+                ret.Add("Documentation Comment", Namespace.DocumentationCommentXML+" ");
+                break;
+            case AstTypeEnum.Enum:
+                var Enum = dbContext.CsharpEnums
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", Enum.Name+" ");
+                ret.Add("Qualified Name", Enum.QualifiedName+" ");
+                ret.Add("Documentation Comment", Enum.DocumentationCommentXML+" ");
+                ret.Add("Namespace", Enum.CsharpNamespace.Name+" ");
+                break;
+            case AstTypeEnum.EnumMember:
+                var EnumMember = dbContext.CsharpEnumMembers
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", EnumMember.Name+" ");
+                ret.Add("Qualified Name", EnumMember.QualifiedName+" ");
+                ret.Add("Documentation Comment", EnumMember.DocumentationCommentXML+" ");                
+                ret.Add("Value", EnumMember.EqualsValue.ToString());
+                break;
+            case AstTypeEnum.EtcEntity:
+                var EtcEntity = dbContext.CsharpEtcEntitys
+                    .Where(m => m.AstNode == node)
+                    .FirstOrDefault();
+                ret.Add("Name", EtcEntity.Name+" ");
+                ret.Add("Qualified Name", EtcEntity.QualifiedName+" ");
+                ret.Add("Documentation Comment", EtcEntity.DocumentationCommentXML+" ");                
+                ret.Add("Etc Entity Type", EtcEntity.EtcEntityType.ToString());                
+                break;
+            default:
+                System.Console.WriteLine($"[CSharpService] {node.AstType} kind is unhandled");
+                break;
+        }        
+        return await Task.FromResult(ret);
     }
 
     public async Task<string> getDocumentationAsync(string astNodeId, 

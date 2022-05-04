@@ -3,10 +3,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSharpParser.model
 {
-    //[Table("csharp_variables")]
+    enum VariableTypeEnum
+    {
+        Property,
+        LINQ,
+        Parameter,
+        Variable
+    }
     class CsharpVariable : CsharpTypedEntity
     {
-        public bool IsProperty { get; set; } = false;
-        public bool isLINQ { get; set; } = false;
+        public VariableTypeEnum VariableType { get; set; }
     }
 }
