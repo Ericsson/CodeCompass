@@ -1,6 +1,7 @@
 #include <iterator>
 #include <fstream>
 #include <memory>
+#include <functional>
 
 #include <boost/filesystem.hpp>
 
@@ -10,6 +11,9 @@
 #include <util/threadpool.h>
 
 #include <parser/sourcemanager.h>
+
+#include <model/file.h>
+#include <model/file-odb.hxx>
 
 #include <model/yaml.h>
 #include <model/yaml-odb.hxx>
@@ -26,7 +30,6 @@ namespace cc
 {
 namespace parser
 {
-
 
 template<class CharContainer>
 size_t file_get_contents(const char *filename, CharContainer *v)
@@ -134,6 +137,8 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
             // LOG(info) << "DEBUG: In Ctr path is: " << path_ << std::endl;
             this->persistData(file, file->id);
             ++this->_visitedFileCount;
+            file->parseStatus = model::File::PSFullyParsed;
+            _ctx.srcMgr.updateFile(*file);
           }
           
         }
@@ -335,7 +340,6 @@ std::vector<YamlParser::keyData> YamlParser::getDataFromFile(model::FilePtr file
 
 }
 
-
 /**
 * Getting Loc(useful data) and putting it into the db, it is actually populating the
 * db object we created in model/yaml.h. It is using transaction
@@ -345,8 +349,10 @@ void YamlParser::persistData(model::FilePtr file_, model::FileId fileId_)
 {
   Type type;
   std::vector<keyData> keysDataPairs;
-  std::string contents =  file_get_contents<std::string>(file_->path.c_str());///file_->content ? file_->content.load()->content : std::string("nothing here");
-  ryml::Tree yamlTree = ryml::parse_in_arena(ryml::to_csubstr(contents));
+  //std::string contents =  file_get_contents<std::string>(file_->path.c_str());///file_->content ? file_->content.load()->content : std::string("nothing here");
+  //ryml::Tree yamlTree = ryml::parse_in_arena(ryml::to_csubstr(contents));
+  std::vector<char> content = file_get_contents<std::vector<char>>(file_->path.c_str());
+  ryml::Tree yamlTree = ryml::parse_in_place(ryml::to_substr(content));
   if (yamlTree["apiVersion"].has_key()) 
   {
     if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
@@ -381,13 +387,50 @@ void YamlParser::persistData(model::FilePtr file_, model::FileId fileId_)
    
       model::YamlContent yamlContent;
       yamlContent.file = fileId_;
-      std::stringstream ss;
-      ss << kd.key;
-      yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
-      ss.str("");
-      ss << kd.data;
-      yamlContent.data = ss.str(); ///ryml::emitrs<std::string>(kd.data);//ryml::to_csubstr(kd.data);
-      LOG(info) << "YamlContent is: " << yamlContent.key << " " << yamlContent.data << std::endl;
+      if (yamlTree[kd.key].is_keyval())
+      {
+        std::stringstream ss;
+        ss << kd.key;
+        yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
+        ss.str("");
+        ss << kd.data;
+        yamlContent.data = ss.str();
+      }
+      else if (yamlTree[kd.key].is_seq())
+      {
+        /*for (auto it = yamlTree[kd.key].begin(); it != yamlTree[kd.key].end(); ++it)
+        {
+          LOG(warning) << *it;
+        }*/
+        std::function<bool(const ryml::NodeRef*, size_t)> print;
+        print = [&, this](const ryml::NodeRef* node, size_t ind) -> bool
+        {
+          if (node->has_children())
+            for (const auto c : node->children())
+            {
+              LOG(warning) << c;
+              print(&c, ind);
+            }
+          else
+          {
+            //LOG(warning) << node->val();
+          }
+           return true;
+        };
+        for (auto c : yamlTree[kd.key].children())
+        {
+          c.visit(print, 3);
+        }
+        for (const auto& v : yamlTree[kd.key])
+        {
+          std::stringstream ss;
+          ss << kd.key;
+          yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
+          ss.str("");
+          ss << v;
+          yamlContent.data = ss.str();
+        }
+      }
       _ctx.db->persist(yamlContent);
     }
     model::Yaml yaml;
