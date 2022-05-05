@@ -30,10 +30,10 @@ namespace CSharpParser.model
         public SyntaxKind RawKind { get; set; } //SyntaxKind Enum
         public void SetLocation(FileLinePositionSpan f)
         {
-            Location_range_start_line = f.StartLinePosition.Line;
-            Location_range_start_column = f.StartLinePosition.Character;
-            Location_range_end_line = f.EndLinePosition.Line;
-            Location_range_end_column = f.EndLinePosition.Character;
+            Location_range_start_line = f.StartLinePosition.Line+1;
+            Location_range_start_column = f.StartLinePosition.Character+1;
+            Location_range_end_line = f.EndLinePosition.Line+1;
+            Location_range_end_column = f.EndLinePosition.Character+1;
             Path = f.Path;
         }
         public bool isRangeSmaller(CsharpAstNode other){

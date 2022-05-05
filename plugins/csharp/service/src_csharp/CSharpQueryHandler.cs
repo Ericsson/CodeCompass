@@ -99,7 +99,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         Position pos_,
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        //System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync");
+        //System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync"+
+        //$" pos = {pos_.Line}:{pos_.Column}");
         
         var nodes = dbContext.CsharpAstNodes
             .Where(a => 
@@ -118,6 +119,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         var minNode = nodes.FirstOrDefault();
         foreach (var node in nodes.ToList())
         {
+            //System.Console.WriteLine($"\tnode range: {node.Location_range_start_line}:{node.Location_range_start_column} - "+
+            //$"{node.Location_range_end_line}:{node.Location_range_end_column}");
             if (node.isRangeSmaller(minNode))
                 minNode = node;            
         }
