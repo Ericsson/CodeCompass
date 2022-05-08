@@ -37,12 +37,14 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
 
   var yamlMenu = {
     id     : 'yamlMenu',
-    render : function (fileId) {
+    render : function (fileInfo) {
       return new MenuItem({
         label    : 'Yaml',
         onClick  : function () {
-          topic.publish('codecompass/yaml', {
-            fileId : fileId
+          topic.publish('codecompass/openDiagram', {
+            handler : 'yaml-file-diagram-handler',
+            diagramType : 1,
+            node : fileInfo.id
           })
         }
       });
