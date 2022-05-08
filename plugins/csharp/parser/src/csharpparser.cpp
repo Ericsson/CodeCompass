@@ -53,6 +53,7 @@ bool CsharpParser::parse()
 }
 
 bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_) {
+  namespace chrono = std::chrono;
   fs::path csharp_path = fs::system_complete("../lib/csharp/");
 
   std::future<std::string> log;
@@ -64,12 +65,18 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   command.append(paths_[0]);
   command.append("' '");
   command.append(paths_[1]);
-  command.append("'");
+  command.append("' ");
+  command.append(std::to_string(_ctx.options["jobs"].as<int>()));
   LOG(info) << "CSharpParser command: " << command;
 
+  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+  
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
-  //LOG(info) << log.get();
+  chrono::steady_clock::time_point current = chrono::steady_clock::now();
+  float elapsed_time =
+    chrono::duration_cast<chrono::milliseconds>(current - begin).count();
+  LOG(info) << "CSharp Parse time: " << elapsed_time << " ms";
 
   std::string line;
   bool error = false;
@@ -81,10 +88,14 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
       error = true;
     } else {
       addSource(line, error);
-      LOG(info) << line << (error ? " with errors" : "");
+      //LOG(info) << line << (error ? " with errors" : "");
       error = false;
     }
   }
+  chrono::steady_clock::time_point after = chrono::steady_clock::now();
+  elapsed_time =
+    chrono::duration_cast<chrono::milliseconds>(after - current).count();
+  LOG(info) << "CSharp source manage time: " << elapsed_time << " ms";
 
   return result == 0;
 }

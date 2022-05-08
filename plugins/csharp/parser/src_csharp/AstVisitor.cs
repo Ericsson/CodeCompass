@@ -15,6 +15,8 @@ namespace CSharpParser
         private readonly SemanticModel Model;
         private readonly SyntaxTree Tree;
 
+        public bool FullyParsed = true;
+
         public AstVisitor(CsharpDbContext context, SemanticModel model, SyntaxTree tree)
         {
             this.DbContext = context;
@@ -88,6 +90,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Name}");
             }
 
@@ -100,7 +103,12 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
-            DbContext.CsharpNamespaces.Add(csharpNamespace);
+            var nameSpaces = DbContext.CsharpNamespaces.Where(n => n.Name == csharpNamespace.Name).ToList();
+            if (nameSpaces.Count == 0)
+            {
+                DbContext.CsharpNamespaces.Add(csharpNamespace);
+            }
+
             base.VisitNamespaceDeclaration(node);
         }
 
@@ -116,12 +124,13 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
-            if (nameSpaces.Count == 1)
+            if (nameSpaces.Count != 0)
             {
                 csharpNamespace = nameSpaces.First();
             }
@@ -167,12 +176,13 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
-            if (nameSpaces.Count == 1)
+            if (nameSpaces.Count != 0)
             {
                 csharpNamespace = nameSpaces.First();
             }
@@ -189,7 +199,7 @@ namespace CSharpParser
 
             foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
             {
-                WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
+                //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
                 VisitVariableDecl(variableDeclaration, astNode);
             }
 
@@ -263,12 +273,13 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
             CsharpNamespace csharpNamespace = null;
-            if (nameSpaces.Count == 1)
+            if (nameSpaces.Count != 0)
             {
                 csharpNamespace = nameSpaces.First();
             }
@@ -359,6 +370,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -456,6 +468,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -489,6 +502,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -527,6 +541,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -565,6 +580,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -575,6 +591,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
             }
 
@@ -617,6 +634,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node}");
             }
             string qType = "";
@@ -626,6 +644,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
             }
 
@@ -738,6 +757,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedType of this Type: {node.Type}");
             }
             CsharpVariable variable = new CsharpVariable
@@ -820,6 +840,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
@@ -857,6 +878,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
+                FullyParsed = false;
                 WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
             CsharpEnumMember csharpEnumMember = new CsharpEnumMember

@@ -22,7 +22,10 @@ namespace CSharpParser.model
         public DbSet<CsharpEtcEntity> CsharpEtcEntitys { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-            => optionsBuilder.UseNpgsql(ConnenctionString);
+        {
+            optionsBuilder.UseNpgsql(ConnenctionString);
+            optionsBuilder.EnableSensitiveDataLogging();
+        }
            // => optionsBuilder.UseNpgsql("Host=localhost;Database=postgres;Username=compass;Password=1234");
 
     }

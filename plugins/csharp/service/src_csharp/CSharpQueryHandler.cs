@@ -163,7 +163,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Name", Class.Name+" ");
                 ret.Add("Qualified Name", Class.QualifiedName+" ");
                 ret.Add("Documentation Comment", Class.DocumentationCommentXML+" ");
-                ret.Add("Namespace", Class.CsharpNamespace.Name+" ");
+                if (Class.CsharpNamespace != null) ret.Add("Namespace", Class.CsharpNamespace.Name+" ");
                 ret.Add("Class Type", Class.ClassType.ToString());
                 break;
             case AstTypeEnum.Struct:
@@ -173,7 +173,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Name", Struct.Name+" ");
                 ret.Add("Qualified Name", Struct.QualifiedName+" ");
                 ret.Add("Documentation Comment", Struct.DocumentationCommentXML+" ");
-                ret.Add("Namespace", Struct.CsharpNamespace.Name+" ");
+                if (Struct.CsharpNamespace != null) ret.Add("Namespace", Struct.CsharpNamespace.Name+" ");
                 break;
             case AstTypeEnum.Namespace:
                 var Namespace = dbContext.CsharpNamespaces

@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using CSharpParser.model;
 
 namespace CSharpParser
@@ -18,7 +19,7 @@ namespace CSharpParser
             string rootDir = "";
             string buildDir = "";
             string connenctionString = "";
-            int threadNum = 1;
+            int threadNum = 4;
             if (args.Length < 3){
                 WriteLine("Missing command-line arguments in CSharpParser!");                              
                 return 1;
@@ -58,18 +59,19 @@ namespace CSharpParser
             //WriteLine($"Converted connectionstring:\n{csharpConnenctionString}");
 
             CsharpDbContext dbContext = new CsharpDbContext(csharpConnenctionString);
+            dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
 
 
             IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir, ".cs");
             IEnumerable<string> assemblies = GetSourceFilesFromDir(buildDir, ".dll");
 
-            IEnumerable<SyntaxTree> trees = new SyntaxTree[]{};
+            List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
             {
                 string programText = File.ReadAllText(file);
                 SyntaxTree tree = CSharpSyntaxTree.ParseText(programText, null, file);
-                trees = trees.Append(tree);
+                trees.Add(tree);
             }
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
@@ -79,7 +81,7 @@ namespace CSharpParser
             {
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
-                
+            /*
             foreach (SyntaxTree tree in trees)
             {
                 SemanticModel model = compilation.GetSemanticModel(tree);
@@ -89,7 +91,70 @@ namespace CSharpParser
             }           
 
             dbContext.SaveChanges();
+            */
+
+            var runtask = ParalellRun(csharpConnenctionString, threadNum, trees, compilation);
+            int ret = runtask.Result;
+            return ret;
+        }
+
+        private static async Task<int> ParalellRun(string csharpConnenctionString, int threadNum,
+            List<SyntaxTree> trees, CSharpCompilation compilation)
+        {
+            CsharpDbContext dbContext = new CsharpDbContext(csharpConnenctionString);
+            dbContext.Database.EnsureDeleted();
+            dbContext.Database.EnsureCreated();
+            var contextList = new List<CsharpDbContext>();
+            contextList.Add(dbContext);
+            for (int i = 1; i < threadNum; i++)
+            {
+                CsharpDbContext dbContextInstance = new CsharpDbContext(csharpConnenctionString);
+                contextList.Add(dbContextInstance);
+            }
+
+            var ParsingTasks = new List<Task<int>>();
+
+            int maxThread = threadNum < trees.Count() ? threadNum : trees.Count();
+
+            for (int i = 0; i < maxThread; i++)
+            {                
+                ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i));
+            }
+
+            int nextTreeIndex = maxThread;
+            while (ParsingTasks.Count > 0){
+                var finshedTask = await Task.WhenAny<int>(ParsingTasks);
+                int nextContextIndex = await finshedTask;
+
+                ParsingTasks.Remove(finshedTask);
+                if (nextTreeIndex < trees.Count)
+                {
+                    ParsingTasks.Add(ParseTree(contextList[nextContextIndex],
+                        trees[nextTreeIndex],compilation,nextContextIndex));
+                    ++nextTreeIndex;
+                }
+            }
+
+            foreach (var ctx in contextList)
+            {
+                ctx.SaveChanges();
+            }
+
             return 0;
+        }
+
+        private static async Task<int> ParseTree(CsharpDbContext context, 
+            SyntaxTree tree, CSharpCompilation compilation, int index)
+        {
+            var ParingTask = Task.Run(() =>
+            {
+                SemanticModel model = compilation.GetSemanticModel(tree);
+                var visitor = new AstVisitor(context, model, tree);
+                visitor.Visit(tree.GetCompilationUnitRoot());                
+                WriteLine(tree.FilePath);
+                return index;
+            });
+            return await ParingTask;
         }
 
         public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)
