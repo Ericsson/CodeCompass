@@ -87,15 +87,16 @@ namespace CSharpParser
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(dbContext, model, tree);
                 visitor.Visit(tree.GetCompilationUnitRoot());                
-                WriteLine(tree.FilePath);
+                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
             }           
 
             dbContext.SaveChanges();
             */
-
+            
             var runtask = ParalellRun(csharpConnenctionString, threadNum, trees, compilation);
             int ret = runtask.Result;
-            return ret;
+            
+            return 0;
         }
 
         private static async Task<int> ParalellRun(string csharpConnenctionString, int threadNum,
@@ -151,7 +152,7 @@ namespace CSharpParser
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(context, model, tree);
                 visitor.Visit(tree.GetCompilationUnitRoot());                
-                WriteLine(tree.FilePath);
+                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
                 return index;
             });
             return await ParingTask;

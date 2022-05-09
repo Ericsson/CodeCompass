@@ -92,11 +92,6 @@ public:
             apache::thrift::TOutput::errorTimeWrapper);
 
     LOG(info) << "C# server started!";
-
-    std::string str = "1";
-    std::string nodeid = "1";
-    _service -> getDocumentation(str, nodeid);
-    LOG(info) << "C# server getDocumentation test: " << str;
   }
 
 

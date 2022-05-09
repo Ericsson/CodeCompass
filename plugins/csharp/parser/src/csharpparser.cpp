@@ -79,23 +79,27 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   LOG(info) << "CSharp Parse time: " << elapsed_time << " ms";
 
   std::string line;
-  bool error = false;
 
   std::stringstream log_str(log.get());
+
+  int countFull = 0, countPart = 0;
   
   while(std::getline(log_str, line, '\n')){
-    if (line[0] != '/') {
-      error = true;
-    } else {
-      addSource(line, error);
-      //LOG(info) << line << (error ? " with errors" : "");
-      error = false;
+    if (line[0] == '+' || line[0] == '-') {
+      addSource(line.substr(1), line[0] == '+');
+      if (line[0] == '+'){
+        countFull++;
+      } else {
+        countPart++;
+      }
     }
   }
   chrono::steady_clock::time_point after = chrono::steady_clock::now();
   elapsed_time =
     chrono::duration_cast<chrono::milliseconds>(after - current).count();
   LOG(info) << "CSharp source manage time: " << elapsed_time << " ms";
+  LOG(info) << "Number of files fully parsed: " << countFull << 
+    ", partially parsed: " << countPart << ", total: " <<  countFull+countPart;
 
   return result == 0;
 }
