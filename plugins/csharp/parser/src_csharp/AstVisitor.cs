@@ -22,7 +22,7 @@ namespace CSharpParser
             this.DbContext = context;
             this.Model = model;
             this.Tree = tree;
-        }
+        }    
 
         private ulong createIdentifier(CsharpAstNode astNode){
             string[] properties = 
@@ -55,33 +55,54 @@ namespace CSharpParser
             }
 
             return hash;
-        }
+        }     
 
-        private CsharpAstNode AstNode(SyntaxNode node, AstTypeEnum type)
+        private ulong getAstNodeId(SyntaxNode node){
+            CsharpAstNode astNode = new CsharpAstNode
+            {
+                AstValue = node.ToString(),
+                RawKind = node.Kind(),
+                EntityHash = node.GetHashCode()
+            };
+            astNode.SetLocation(Tree.GetLineSpan(node.Span));
+            return createIdentifier(astNode);
+        }  
+
+        private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type, AstTypeEnum astType)
         {
             CsharpAstNode astNode = new CsharpAstNode
             {
                 AstValue = node.ToString(),
                 RawKind = node.Kind(),
                 EntityHash = node.GetHashCode(),
-                AstType = type
+                AstSymbolType = type,
+                AstType = astType
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
-            astNode.Id = createIdentifier(astNode);
-            DbContext.CsharpAstNodes.Add(astNode);
+            astNode.Id = createIdentifier(astNode);          
+
+            if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
+            {
+                DbContext.CsharpAstNodes.Add(astNode);
+            }
             return astNode;
+        }
+
+        private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type)
+        {            
+            return AstNode(node, type, AstTypeEnum.Declaration);
         }
 
         public override void VisitUsingDirective(UsingDirectiveSyntax node)
         {
-            //base.VisitUsingDirective(node);
+            base.VisitUsingDirective(node);
             //Adatbázisban nem kell feltétlenül tárolni, inkább csak azt kell biztosítani hogy amiket meghívunk vele azok is be legyenek járva
             //WriteLine($" UsingDirective name: {node.Name}");
         }
 
         public override void VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Namespace);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Namespace);
             //WriteLine($"\n NamespaceDeclaration visited: {node.Name}");
             string qName = "";
             try
@@ -114,7 +135,7 @@ namespace CSharpParser
 
         public override void VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Class);
             base.VisitInterfaceDeclaration(node);
             //WriteLine($"\n InterfaceDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -166,7 +187,7 @@ namespace CSharpParser
 
         public override void VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Struct);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Struct);
             base.VisitStructDeclaration(node);
             //WriteLine($"\n StructDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -236,7 +257,7 @@ namespace CSharpParser
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstTypeEnum.EtcEntity);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstSymbolTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -253,7 +274,8 @@ namespace CSharpParser
                     QualifiedName = qName,
                     DocumentationCommentXML = Model.GetDeclaredSymbol(eventDeclaration).GetDocumentationCommentXml(),
                     EntityHash = astNode.EntityHash,
-                    ParentNode = astNode
+                    ParentNode = astNode,
+                    EtcEntityType = EtcEntityTypeEnum.Event
                 };
                 DbContext.CsharpEtcEntitys.Add(csharpEntity);
             }
@@ -263,7 +285,7 @@ namespace CSharpParser
 
         public override void VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Class);
             base.VisitClassDeclaration(node);
             //WriteLine($"\n ClassDeclaration visited: {node.Identifier.Text}");
             string qName = "";
@@ -333,7 +355,7 @@ namespace CSharpParser
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration,AstTypeEnum.EtcEntity);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration,AstSymbolTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -360,7 +382,7 @@ namespace CSharpParser
         }
 
         public override void VisitRecordDeclaration(RecordDeclarationSyntax node) {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Class);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Class);
             //WriteLine($"\n RecordDeclaration visited: {node.Identifier}");
             base.VisitRecordDeclaration(node);
             string qName = "";
@@ -431,7 +453,7 @@ namespace CSharpParser
 
             foreach (EventDeclarationSyntax eventDeclaration in node.Members.OfType<EventDeclarationSyntax>())
             {
-                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstTypeEnum.EtcEntity);
+                CsharpAstNode astNode2 = AstNode(eventDeclaration, AstSymbolTypeEnum.EtcEntity);
                 string qName2 = "";
                 try
                 {
@@ -459,7 +481,7 @@ namespace CSharpParser
 
         private void VisitDelegateDecl(DelegateDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node,AstTypeEnum.Method);
+            CsharpAstNode astNode = AstNode(node,AstSymbolTypeEnum.Method);
             //WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -493,7 +515,7 @@ namespace CSharpParser
 
         private void VisitDestructorDecl(DestructorDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
             // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -532,7 +554,7 @@ namespace CSharpParser
 
         private void VisitConstructorDecl(ConstructorDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
             // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -571,7 +593,7 @@ namespace CSharpParser
 
         private void VisitMethodDecl(MethodDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
            // WriteLine($"\n MethodDeclaration visited: {node.Identifier}");
             string qName = "";
             try
@@ -624,7 +646,7 @@ namespace CSharpParser
         private void VisitOperatorDecl(OperatorDeclarationSyntax node, CsharpAstNode parent)
         {
             //WriteLine($"\n OperatorDeclaration visited: {node}");
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Method);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
             string qName = "";
             string Name = "";
             try
@@ -679,14 +701,15 @@ namespace CSharpParser
             foreach (var param in parameters)
             {
                 // WriteLine($"\t\t{param.Identifier} : {param.Type}");
-                CsharpAstNode astNode = AstNode(param, AstTypeEnum.Variable);
+                CsharpAstNode astNode = AstNode(param, AstSymbolTypeEnum.Variable);
                 string paramQType = "";
                 try
                 {
                     paramQType = Model.GetSymbolInfo(param.Type).Symbol.ToString();
                 }
                 catch (Exception)
-                {
+                {                    
+                    FullyParsed = false;
                     WriteLine($"Can not get QualifiedType of this Type: {param.Type}");
                 }
                 CsharpVariable varibale = new CsharpVariable
@@ -707,30 +730,36 @@ namespace CSharpParser
         {
             foreach (var variable in node.Variables)
             {
-                CsharpAstNode astNode = AstNode(variable, AstTypeEnum.Variable);
+                CsharpAstNode astNode = AstNode(variable, AstSymbolTypeEnum.Variable);
                 string varQType = "";
                 bool isLINQvar = node.DescendantNodes().OfType<QueryExpressionSyntax>().Any();
                 try
-                {
+                {                      
                     if (node.Type.ToString() == "var"){
-                        //varQType = ((ILocalSymbol)Model.GetDeclaredSymbol(variable)).Type.ToString();
-                        varQType = Model.GetOperation(variable.Initializer.Value).Type.ToString();
-                        //WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
+                        varQType = Model.GetOperation(variable.Initializer.Value).Type.ToString();                        
                     } else {
                         varQType = Model.GetSymbolInfo(node.Type).Symbol.ToString();
-                    }
+                    }                                
                 }
                 catch (Exception)
                 {
+                    FullyParsed = false;
                     WriteLine($"Can not get QualifiedType of this Type: {node.Type} at this node: '{node}'");
                 }
-
+                
                 foreach (var member in node.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
                 {
                     isLINQvar = isLINQvar || member.DescendantNodes().OfType<IdentifierNameSyntax>()
                         .Where(memb => new string[]{"Where", "OfType", "Select", "SelectMany"}
                         .Contains(memb.Identifier.ValueText)).Any();              
                 }
+                
+                isLINQvar = isLINQvar && (varQType.Contains("IEnumerable") 
+                    || varQType.Contains("IOrderedEnumerable")  
+                    || varQType.Contains("IQueryable")); 
+
+                if (isLINQvar) WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
+                if (varQType == "?") WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
 
                 CsharpVariable csharpVariable = new CsharpVariable
                 {
@@ -749,7 +778,7 @@ namespace CSharpParser
 
         private void VisitPropertyDecl(PropertyDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Variable);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Variable);
             string varQType = "";
             try
             {
@@ -782,7 +811,7 @@ namespace CSharpParser
 
             foreach (AccessorDeclarationSyntax accessor in node.Accessors)
             {
-                CsharpAstNode astNode = AstNode(accessor, AstTypeEnum.Method);
+                CsharpAstNode astNode = AstNode(accessor, AstSymbolTypeEnum.Method);
 
                 String name = "";
                 switch (accessor.Kind())
@@ -832,7 +861,7 @@ namespace CSharpParser
         public override void VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
             //WriteLine($"\n EnumDeclaration visited: {node.Identifier.Text}");
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.Enum);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Enum);
             string qName = "";
             try
             {
@@ -870,7 +899,7 @@ namespace CSharpParser
 
         private CsharpEnumMember VisitEnumMemberDecl(EnumMemberDeclarationSyntax node, CsharpAstNode parent)
         {
-            CsharpAstNode astNode = AstNode(node, AstTypeEnum.EnumMember);
+            CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.EnumMember);
             string qName = "";
             try
             {
@@ -902,6 +931,45 @@ namespace CSharpParser
             }
             DbContext.CsharpEnumMembers.Add(csharpEnumMember);
             return csharpEnumMember;
+        }
+
+        public override void VisitInvocationExpression(InvocationExpressionSyntax node)
+        {
+            if (node.Expression.GetFirstToken().GetNextToken().ToString() == ".") //object 
+            {
+                var symbol = Model.GetSymbolInfo(node.Expression.GetFirstToken().Parent).Symbol;
+                if (symbol != null)
+                {
+                    foreach (var declaration in symbol.DeclaringSyntaxReferences)
+                    {
+                        if (declaration.GetSyntax().Kind() == SyntaxKind.VariableDeclarator)
+                        {
+                            WriteLine($">>>Declarator node: {declaration.GetSyntax()}");                        
+                            var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
+                            var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
+                            CsharpEtcEntity invoc = new CsharpEtcEntity
+                            {
+                                AstNode = astNode,
+                                DocumentationCommentXML = Model
+                                    .GetDeclaredSymbol(declaration.GetSyntax())
+                                    .GetDocumentationCommentXml(),
+                                EntityHash = astNode.EntityHash,
+                                //ParentNode = DbContext.CsharpAstNodes.Find(astNode.Id),
+                                EtcEntityType = EtcEntityTypeEnum.Invocation,
+                                DeclaratorNodeId = declaratorNodeId,
+                                Name = node.Expression.GetFirstToken().ToString()
+                            };
+                            DbContext.CsharpEtcEntitys.Add(invoc);
+                        }
+                    }
+                }                
+            }
+            else if (node.Expression.GetFirstToken().GetNextToken().ToString() == "(") //function 
+            {
+                Model.GetSymbolInfo(node.Expression.GetFirstToken().Parent);
+            }
+
+            base.VisitInvocationExpression(node);
         }
     }
 }

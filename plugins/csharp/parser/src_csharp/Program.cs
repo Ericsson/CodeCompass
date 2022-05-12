@@ -18,6 +18,7 @@ namespace CSharpParser
         {
             string rootDir = "";
             string buildDir = "";
+            string buildDir_base = "";
             string connenctionString = "";
             int threadNum = 4;
             if (args.Length < 3){
@@ -35,7 +36,16 @@ namespace CSharpParser
                 if (!succes){
                     WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
                 }
-            } else if (args.Length > 4){
+            } else if (args.Length == 5){
+                connenctionString = args[0].Replace("'", "");
+                rootDir = args[1].Replace("'", "");
+                buildDir = args[2].Replace("'", "");
+                buildDir_base = args[3].Replace("'", "");
+                bool succes = int.TryParse(args[4], out threadNum);
+                if (!succes){
+                    WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
+                }            
+            } else if (args.Length > 5){
                 WriteLine("Too many command-line arguments in CSharpParser!");
                 return 1;
             }
@@ -65,6 +75,8 @@ namespace CSharpParser
 
             IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir, ".cs");
             IEnumerable<string> assemblies = GetSourceFilesFromDir(buildDir, ".dll");
+            IEnumerable<string> assemblies_base = assemblies;
+            if(args.Length == 5) assemblies_base = GetSourceFilesFromDir(buildDir_base, ".dll");
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -77,10 +89,15 @@ namespace CSharpParser
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
                 .AddSyntaxTrees(trees);
             
+            foreach (string file in assemblies_base)
+            {
+                compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
+            }
             foreach (string file in assemblies)
             {
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
+            
             /*
             foreach (SyntaxTree tree in trees)
             {

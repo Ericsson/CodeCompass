@@ -112,12 +112,12 @@ public:
       _service -> getAstNodeInfoByPosition(return_, path_, fpos_);
     }
 
-    /*void getFileRange(
+    void getFileRange(
             core::FileRange& return_,
             const core::AstNodeId& astNodeId_) override
     {
       _service -> getFileRange(return_, astNodeId_);
-    }*/
+    }
 
     void getProperties(
             std::map<std::string, std::string>& return_,
@@ -135,7 +135,7 @@ public:
       _service -> getDocumentation(return_, astNodeId_);
     }
 
-    /*void getReferenceTypes(
+    void getReferenceTypes(
             std::map<std::string, std::int32_t>& return_,
             const core::AstNodeId& astNodeId_) override
     {
@@ -200,7 +200,7 @@ public:
             const std::vector<std::string>& content_) override
     {
       _service -> getSyntaxHighlight(return_, range_, content_);
-    }*/
+    }
 
 private:
     std::unique_ptr<CsharpServiceIf> _service;

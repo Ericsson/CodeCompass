@@ -21,10 +21,12 @@ namespace CSharpParser.model
 
     enum EtcEntityTypeEnum
     {
-        Event
+        Event,
+        Invocation
     }
     class CsharpEtcEntity : CsharpTypedEntity
     {
         public EtcEntityTypeEnum EtcEntityType { get; set; }
+        public ulong DeclaratorNodeId { get; set; }
     }
 }

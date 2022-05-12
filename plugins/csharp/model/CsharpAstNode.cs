@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace CSharpParser.model
 {
-    enum AstTypeEnum
+    enum AstSymbolTypeEnum
     {
         Variable,
         Method, 
@@ -16,10 +16,21 @@ namespace CSharpParser.model
         EtcEntity
 
     }
+
+    enum AstTypeEnum
+    {
+        Declaration,
+        Definition,
+        Usage,
+        Read,
+        Write
+    }
+
     class CsharpAstNode
     {
         public ulong Id { get; set; }
         public string AstValue { get; set; }
+        public AstSymbolTypeEnum AstSymbolType { get; set; }
         public AstTypeEnum AstType { get; set; }
         public long Location_range_start_line { get; set; }
         public long Location_range_start_column { get; set; }

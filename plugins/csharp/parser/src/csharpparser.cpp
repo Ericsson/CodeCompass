@@ -65,6 +65,8 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   command.append(paths_[0]);
   command.append("' '");
   command.append(paths_[1]);
+  command.append("' '");
+  command.append(csharp_path.string());
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
   LOG(info) << "CSharpParser command: " << command;
@@ -86,7 +88,7 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   
   while(std::getline(log_str, line, '\n')){
     if (line[0] == '+' || line[0] == '-') {
-      addSource(line.substr(1), line[0] == '+');
+      addSource(line.substr(1), line[0] == '-');
       if (line[0] == '+'){
         countFull++;
       } else {
