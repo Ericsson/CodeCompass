@@ -49,6 +49,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         ret.Id = node.Id.ToString();
         ret.AstNodeValue = node.AstValue;
         ret.AstNodeType = node.RawKind.ToString();
+        ret.SymbolType = node.AstSymbolType.ToString();
         ret.Range = getFileRange(node);
 
         return ret;
@@ -130,7 +131,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 on invoc.DeclaratorNodeId equals variable.AstNode.Id
             where invoc.DeclaratorNodeId == astNode.Id
                 && variable.VariableType == VariableTypeEnum.LINQ
-                && invoc.QualifiedType != "IEnumerable"
+                && (invoc.QualifiedType != "IEnumerable"
+                    || invoc.EtcEntityType == EtcEntityTypeEnum.ForeachExpr)
             select invoc.AstNode;
         return ret.ToList();
     }

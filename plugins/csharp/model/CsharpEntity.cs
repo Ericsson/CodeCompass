@@ -22,7 +22,8 @@ namespace CSharpParser.model
     enum EtcEntityTypeEnum
     {
         Event,
-        Invocation
+        Invocation,
+        ForeachExpr
     }
     class CsharpEtcEntity : CsharpTypedEntity
     {
