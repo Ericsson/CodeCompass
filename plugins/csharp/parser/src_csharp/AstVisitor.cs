@@ -758,8 +758,8 @@ namespace CSharpParser
                     || varQType.Contains("IOrderedEnumerable")  
                     || varQType.Contains("IQueryable")); 
 
-                if (isLINQvar) WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
-                if (varQType == "?") WriteLine($"node: '{node}' QualifiedType: '{varQType}'");
+                if (isLINQvar) WriteLine($"LINQvar node: '{node}' QualifiedType: '{varQType}'");
+                if (varQType == "?") WriteLine($"LINQvar ? node: '{node}' QualifiedType: '{varQType}'");
 
                 CsharpVariable csharpVariable = new CsharpVariable
                 {
@@ -944,7 +944,9 @@ namespace CSharpParser
                     {
                         if (declaration.GetSyntax().Kind() == SyntaxKind.VariableDeclarator)
                         {
-                            WriteLine($">>>Declarator node: {declaration.GetSyntax()}");                        
+                            WriteLine($">>>Used Variable: {node.Expression.GetFirstToken()}");    
+                            var info = Model.GetTypeInfo(node).ConvertedType;
+                            WriteLine($">>>Expression type: {info.Name}");  
                             var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
                             var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
                             CsharpEtcEntity invoc = new CsharpEtcEntity
@@ -957,7 +959,8 @@ namespace CSharpParser
                                 //ParentNode = DbContext.CsharpAstNodes.Find(astNode.Id),
                                 EtcEntityType = EtcEntityTypeEnum.Invocation,
                                 DeclaratorNodeId = declaratorNodeId,
-                                Name = node.Expression.GetFirstToken().ToString()
+                                Name = node.Expression.GetFirstToken().ToString(),
+                                QualifiedType = info.Name
                             };
                             DbContext.CsharpEtcEntitys.Add(invoc);
                         }

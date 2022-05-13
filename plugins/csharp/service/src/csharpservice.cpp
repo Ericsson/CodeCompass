@@ -186,7 +186,7 @@ void CsharpServiceHandler::getReferences(
         const std::int32_t referenceId_,
         const std::vector<std::string>& tags_)
 {
-  LOG(info) << "getReferences";
+  //LOG(info) << "getReferences";
   csharpQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
 }
 

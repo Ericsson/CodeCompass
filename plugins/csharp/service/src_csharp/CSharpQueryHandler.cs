@@ -123,6 +123,18 @@ public class CSharpQueryHandler : CsharpService.IAsync
         }
     }
 
+    private List<CsharpAstNode> queryEvals(CsharpAstNode astNode){
+        var ret = 
+            from invoc in dbContext.CsharpEtcEntitys
+            join variable in dbContext.CsharpVariables 
+                on invoc.DeclaratorNodeId equals variable.AstNode.Id
+            where invoc.DeclaratorNodeId == astNode.Id
+                && variable.VariableType == VariableTypeEnum.LINQ
+                && invoc.QualifiedType != "IEnumerable"
+            select invoc.AstNode;
+        return ret.ToList();
+    }
+
     public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -349,6 +361,9 @@ public class CSharpQueryHandler : CsharpService.IAsync
             case ReferenceType.DECLARATION:
                 ret = queryDeclarators(node).Count();
                 break;
+            case ReferenceType.EVALUATION:
+                ret = queryEvals(node).Count();
+                break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 
                     " ReferenceType is unhandled");
@@ -370,6 +385,9 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 break;
             case ReferenceType.DECLARATION:
                 ret = createAstNodeInfoList(queryDeclarators(node));
+                break;
+            case ReferenceType.EVALUATION:
+                ret = createAstNodeInfoList(queryEvals(node));
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 

@@ -123,7 +123,7 @@ public:
             std::map<std::string, std::string>& return_,
             const core::AstNodeId& astNodeId_) override
     {
-      LOG(info) << "_service -> getProperties";
+      //LOG(info) << "_service -> getProperties";
       _service -> getProperties(return_, astNodeId_);
     }
 
@@ -131,7 +131,7 @@ public:
             std::string& return_,
             const core::AstNodeId& astNodeId_) override
     {
-      LOG(info) << "_service -> getDocumentation";
+      //LOG(info) << "_service -> getDocumentation";
       _service -> getDocumentation(return_, astNodeId_);
     }
 
