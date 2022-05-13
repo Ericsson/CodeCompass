@@ -99,7 +99,7 @@ public:
             language::AstNodeInfo& return_,
             const core::AstNodeId& astNodeId_) override
     {
-      LOG(info) << "_service -> getAstNodeInfo";
+      //LOG(info) << "_service -> getAstNodeInfo";
       _service -> getAstNodeInfo(return_, astNodeId_);
     }
 
@@ -108,7 +108,7 @@ public:
             const std::string& path_,
             const core::Position& fpos_) override
     {
-      LOG(info) << "_service -> getAstNodeInfoByPosition";      
+      //LOG(info) << "_service -> getAstNodeInfoByPosition";      
       _service -> getAstNodeInfoByPosition(return_, path_, fpos_);
     }
 

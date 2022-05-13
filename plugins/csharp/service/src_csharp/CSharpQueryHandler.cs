@@ -54,6 +54,17 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
+    private List<language.AstNodeInfo> createAstNodeInfoList(List<CsharpAstNode> nodeList){
+        var ret = new List<language.AstNodeInfo>();
+        foreach(var node in nodeList){
+            var astNodeInfo = createAstNodeInfo(node);
+            ret.Add(astNodeInfo);
+            //System.Console.WriteLine($"[CSharpService] createAstNodeInfoList got this: {astNodeInfo.AstNodeValue}");
+        }
+
+        return ret;
+    }
+
     private FileRange getFileRange(CsharpAstNode node) {
         FileRange fileRange = new FileRange();
         Position startPosition = new Position{
@@ -94,7 +105,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
             .Where(e => e.DeclaratorNodeId == astNode.Id)
             .Select(e => e.AstNode)
             .ToList();
-        if (ret.Count > 0) System.Console.WriteLine($"[CSharpService] queryInvocations got this:{ret.First().AstValue}");
         return ret;
     }
 
@@ -333,7 +343,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         int ret = 0;
         switch ((ReferenceType)referenceId)
         {
-            case ReferenceType.USAGE:
+            case ReferenceType.READ:
                 ret = queryInvocations(node).Count();
                 break;
             case ReferenceType.DECLARATION:
@@ -355,15 +365,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
         var ret = new List<language.AstNodeInfo>();
         switch ((ReferenceType)referenceId)
         {
-            case ReferenceType.USAGE:
-                ret = queryInvocations(node)
-                    .Select(n => createAstNodeInfo(n))
-                    .ToList();
+            case ReferenceType.READ:
+                ret = createAstNodeInfoList(queryInvocations(node)) ;
                 break;
             case ReferenceType.DECLARATION:
-                ret = queryDeclarators(node)
-                    .Select(n => createAstNodeInfo(n))
-                    .ToList();
+                ret = createAstNodeInfoList(queryDeclarators(node));
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 

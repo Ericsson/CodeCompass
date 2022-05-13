@@ -114,7 +114,7 @@ void CsharpServiceHandler::getDocumentation(
         std::string& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "getDocumentation";
+  LOG(info) << "getDocumentation";
   csharpQueryHandler.getDocumentation(return_, astNodeId_);
 }
 
@@ -122,7 +122,7 @@ void CsharpServiceHandler::getDiagramTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "getDiagramTypes";
+  LOG(info) << "getDiagramTypes";
   //csharpQueryHandler.getDiagramTypes(return_, astNodeId_);
 }
 
@@ -131,7 +131,7 @@ void CsharpServiceHandler::getDiagram(
         const core::AstNodeId& astNodeId_,
         const std::int32_t diagramId_)
 {
-  //LOG(info) << "getDiagram";
+  LOG(info) << "getDiagram";
   //csharpQueryHandler.getDiagram(return_, astNodeId_, diagramId_);
 }
 
@@ -139,14 +139,14 @@ void CsharpServiceHandler::getDiagramLegend(
         std::string& return_,
         const std::int32_t diagramId_)
 {
-  //LOG(info) << "getDiagramLegend";
+  LOG(info) << "getDiagramLegend";
 }
 
 void CsharpServiceHandler::getFileDiagramTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::FileId& fileId_)
 {
-  //LOG(info) << "getFileDiagramTypes";
+  LOG(info) << "getFileDiagramTypes";
 }
 
 void CsharpServiceHandler::getFileDiagram(
@@ -154,7 +154,7 @@ void CsharpServiceHandler::getFileDiagram(
         const core::FileId& fileId_,
         const int32_t diagramId_)
 {
-  //LOG(info) << "getFileDiagram";
+  LOG(info) << "getFileDiagram";
 }
 
 void CsharpServiceHandler::getFileDiagramLegend(
@@ -168,7 +168,7 @@ void CsharpServiceHandler::getReferenceTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getReferenceTypes";
+  //LOG(info) << "getReferenceTypes";
   csharpQueryHandler.getReferenceTypes(return_, astNodeId_);
 }
 
@@ -176,7 +176,7 @@ std::int32_t CsharpServiceHandler::getReferenceCount(
         const core::AstNodeId& astNodeId_,
         const std::int32_t referenceId_)
 {
-  LOG(info) << "getReferenceCount";
+  //LOG(info) << "getReferenceCount";
   return csharpQueryHandler.getReferenceCount(astNodeId_, referenceId_);
 }
 
@@ -197,7 +197,7 @@ void CsharpServiceHandler::getReferencesInFile(
         const core::FileId& /* fileId_ */,
         const std::vector<std::string>& /* tags_ */)
 {
-  //LOG(info) << "getReferencesInFile";
+  LOG(info) << "getReferencesInFile";
   // TODO
 }
 
@@ -208,7 +208,7 @@ void CsharpServiceHandler::getReferencesPage(
         const std::int32_t /* pageSize_ */,
         const std::int32_t /* pageNo_ */)
 {
-  //LOG(info) << "getReferencesPage";
+  LOG(info) << "getReferencesPage";
   // TODO
 }
 
@@ -249,7 +249,7 @@ void CsharpServiceHandler::getSyntaxHighlight(
         std::vector<SyntaxHighlight>& return_,
         const core::FileRange& range_)
 {
-  //LOG(info) << "getSyntaxHighlight";
+  LOG(info) << "getSyntaxHighlight";
   /*
   std::vector<std::string> content;
   _transaction([&, this]() {
