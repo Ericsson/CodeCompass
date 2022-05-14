@@ -21,20 +21,21 @@ namespace CSharpParser
         {
             this.DbContext = context;
             this.Model = model;
-            this.Tree = tree;
+            this.Tree = tree;            
         }    
 
         private ulong createIdentifier(CsharpAstNode astNode){
             string[] properties = 
             {
                 astNode.AstValue,":",
+                astNode.AstType.ToString(),":",
                 astNode.EntityHash.ToString(),":",
                 astNode.RawKind.ToString(),":",
                 astNode.Path,":",
                 astNode.Location_range_start_line.ToString(),":",
                 astNode.Location_range_start_column.ToString(),":",
                 astNode.Location_range_end_line.ToString(),":",
-                astNode.Location_range_end_column.ToString(),
+                astNode.Location_range_end_column.ToString()
             };
 
             string res = string.Concat(properties);
@@ -62,10 +63,12 @@ namespace CSharpParser
             {
                 AstValue = node.ToString(),
                 RawKind = node.Kind(),
-                EntityHash = node.GetHashCode()
+                EntityHash = node.GetHashCode(),
+                AstType = AstTypeEnum.Declaration
             };
-            astNode.SetLocation(Tree.GetLineSpan(node.Span));
-            return createIdentifier(astNode);
+            astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
+            var ret = createIdentifier(astNode);
+            return ret;
         }  
 
         private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type, AstTypeEnum astType)
@@ -78,7 +81,7 @@ namespace CSharpParser
                 AstSymbolType = type,
                 AstType = astType
             };
-            astNode.SetLocation(Tree.GetLineSpan(node.Span));
+            astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
             astNode.Id = createIdentifier(astNode);          
 
             if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
@@ -316,10 +319,10 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
-            foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
+            foreach (var variableDeclaration in node.Members.OfType<FieldDeclarationSyntax>())
             {
                 //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
-                VisitVariableDecl(variableDeclaration, astNode);
+                VisitVariableDecl(variableDeclaration.Declaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
@@ -414,10 +417,10 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
-            foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
+            foreach (var variableDeclaration in node.Members.OfType<FieldDeclarationSyntax>())
             {
                 //WriteLine($"Variable name: {variableDeclaration.Variables.First().Identifier}");
-                VisitVariableDecl(variableDeclaration, astNode);
+                VisitVariableDecl(variableDeclaration.Declaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
@@ -966,59 +969,63 @@ namespace CSharpParser
                         }
                     }
                 }                
-            }
-            else if (node.Expression.GetFirstToken().GetNextToken().ToString() == "(") //function 
+            }            
+
+            base.VisitInvocationExpression(node);
+        } 
+
+        public override void VisitIdentifierName(IdentifierNameSyntax node)
+        {
+                       
+            var symbol = Model.GetSymbolInfo(node).Symbol;
+            if (symbol != null && symbol.DeclaringSyntaxReferences.Count() == 1)
             {
-                var symbol = Model.GetSymbolInfo(node.Expression.GetFirstToken().Parent).Symbol;
-                if (symbol != null)
-                {
-                    foreach (var declaration in symbol.DeclaringSyntaxReferences)
+                var declaration = symbol.DeclaringSyntaxReferences.First();
+                
+                if (declaration.GetSyntax().Kind() != SyntaxKind.CompilationUnit )
+                {                        
+                    var doc = "";
+                    var type = "";                       
+
+                    try
                     {
-                        if (declaration.GetSyntax().Kind() == SyntaxKind.VariableDeclarator)
-                        {
-                            WriteLine($">>>Expression kind: {declaration.GetSyntax().Kind()} in node: '{declaration.GetSyntax()}'");                            
-                        }
+                        var info = Model.GetTypeInfo(node).ConvertedType;
+                        if (info != null) type = info.Name;                            
                     }
+                    catch (Exception)
+                    {
+                        FullyParsed = false;
+                        WriteLine($"Can not get TypeInfo of this kind of node: {node.Kind()}");                            
+                    }
+                    //WriteLine($"IdentifierNameSyntax node: '{node}' decl node: '{declaration.GetSyntax().Kind()}'");
+                    var kind = declaration.GetSyntax().Kind() == SyntaxKind.ForEachStatement ?
+                        EtcEntityTypeEnum.ForeachExpr : EtcEntityTypeEnum.Invocation;
+                    if (node.Parent.Parent.Kind() != SyntaxKind.InvocationExpression)
+                    {
+                        //WriteLine($">>>Used Variable: {node.Expression.GetFirstToken()}");    
+                        //WriteLine($">>>Expression type: {info.Name}");  
+                        var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
+                        var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
+                        CsharpEtcEntity expr = new CsharpEtcEntity
+                        {
+                            AstNode = astNode,
+                            DocumentationCommentXML = doc,
+                            EntityHash = astNode.EntityHash,
+                            //ParentNode = DbContext.CsharpAstNodes.Find(astNode.Id),
+                            EtcEntityType = kind,
+                            DeclaratorNodeId = declaratorNodeId,
+                            Name = node.ToString(),
+                            QualifiedType = type                              
+                        };                            
+                        DbContext.CsharpEtcEntitys.Add(expr);
+                    }        
+                                                        
                 }
                 
             }
 
-            base.VisitInvocationExpression(node);
-        }
-
-        public override void VisitForEachStatement(ForEachStatementSyntax node)
-        {
-            var symbol = Model.GetSymbolInfo(node.Expression.GetFirstToken().Parent).Symbol;
-                if (symbol != null)
-                {
-                    foreach (var declaration in symbol.DeclaringSyntaxReferences)
-                    {
-                        if (declaration.GetSyntax().Kind() == SyntaxKind.VariableDeclarator)
-                        {
-                            WriteLine($">>>Used Variable: {node.Expression.GetFirstToken()}");    
-                            var info = Model.GetTypeInfo(node.Expression.GetFirstToken().Parent).ConvertedType;
-                            WriteLine($">>>Expression type: {info.Name}");  
-                            var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
-                            var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
-                            CsharpEtcEntity invoc = new CsharpEtcEntity
-                            {
-                                AstNode = astNode,
-                                DocumentationCommentXML = Model
-                                    .GetDeclaredSymbol(declaration.GetSyntax())
-                                    .GetDocumentationCommentXml(),
-                                EntityHash = astNode.EntityHash,
-                                //ParentNode = DbContext.CsharpAstNodes.Find(astNode.Id),
-                                EtcEntityType = EtcEntityTypeEnum.ForeachExpr,
-                                DeclaratorNodeId = declaratorNodeId,
-                                Name = node.Expression.GetFirstToken().ToString(),
-                                QualifiedType = info.Name
-                            };
-                            DbContext.CsharpEtcEntitys.Add(invoc);
-                        }
-                    }
-                }       
-
-            base.VisitForEachStatement(node);
+            base.VisitIdentifierName(node); 
+            
         }
     }
 }

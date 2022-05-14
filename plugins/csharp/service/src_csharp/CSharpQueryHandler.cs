@@ -319,7 +319,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Inherited by", (int)ReferenceType.INHERIT_BY);
                 ret.Add("Data member", (int)ReferenceType.DATA_MEMBER);
                 ret.Add("Method", (int)ReferenceType.METHOD);
-                ret.Add("Usage", (int)ReferenceType.USAGE);
                 break;
             case AstSymbolTypeEnum.Struct:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
@@ -327,7 +326,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Inherited by", (int)ReferenceType.INHERIT_BY);
                 ret.Add("Data member", (int)ReferenceType.DATA_MEMBER);
                 ret.Add("Method", (int)ReferenceType.METHOD);
-                ret.Add("Usage", (int)ReferenceType.USAGE);
                 break;
             case AstSymbolTypeEnum.Namespace:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);

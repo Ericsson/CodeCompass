@@ -23,7 +23,8 @@ namespace CSharpParser.model
         Definition,
         Usage,
         Read,
-        Write
+        Write,
+        Expression
     }
 
     class CsharpAstNode
