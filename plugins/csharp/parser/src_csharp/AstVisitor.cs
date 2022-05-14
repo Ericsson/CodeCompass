@@ -81,7 +81,7 @@ namespace CSharpParser
                 AstSymbolType = type,
                 AstType = astType
             };
-            astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
+            astNode.SetLocation(Tree.GetLineSpan(node.Span));
             astNode.Id = createIdentifier(astNode);          
 
             if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
@@ -947,6 +947,17 @@ namespace CSharpParser
                     {
                         if (declaration.GetSyntax().Kind() == SyntaxKind.VariableDeclarator)
                         {
+                            var doc = "";
+                            try
+                            {
+                                doc = Model.GetDeclaredSymbol(declaration.GetSyntax())
+                                    .GetDocumentationCommentXml();                              
+                            }
+                            catch (Exception)
+                            {
+                                FullyParsed = false;
+                                WriteLine($"Can not get GetDeclaredSymbol of this kind of node: {declaration.GetSyntax().Kind()}");                            
+                            }
                             //WriteLine($">>>Used Variable: {node.Expression.GetFirstToken()}");    
                             var info = Model.GetTypeInfo(node).ConvertedType;
                             //WriteLine($">>>Expression type: {info.Name}");  
@@ -955,9 +966,7 @@ namespace CSharpParser
                             CsharpEtcEntity invoc = new CsharpEtcEntity
                             {
                                 AstNode = astNode,
-                                DocumentationCommentXML = Model
-                                    .GetDeclaredSymbol(declaration.GetSyntax())
-                                    .GetDocumentationCommentXml(),
+                                DocumentationCommentXML = doc,
                                 EntityHash = astNode.EntityHash,
                                 //ParentNode = DbContext.CsharpAstNodes.Find(astNode.Id),
                                 EtcEntityType = EtcEntityTypeEnum.Invocation,
