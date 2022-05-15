@@ -43,6 +43,22 @@ namespace parser {
 
 class PythonPersistence {
 private:
+    struct AstNodeEquality {
+    public:
+        bool operator()(const model::PythonAstNodePtr& first, const model::PythonAstNodePtr& second) const {
+            return first->id == second->id;
+        }
+    };
+
+    struct AstNodeHash {
+    public:
+        size_t operator()(const model::PythonAstNodePtr& node) const {
+            return node->id;
+        }
+    };
+
+    using AstNodeSet = std::unordered_set<model::PythonAstNodePtr, AstNodeHash, AstNodeEquality>;
+
     ParserContext &ctx;
 
 public:
@@ -83,18 +99,18 @@ private:
     bool isAstNodePersisted(const std::vector <model::PythonAstNodePtr> &nodes,
                             const model::PythonAstNodePtr &node) const;
 
-    std::vector <model::PythonAstNodePtr> _astNodes;
-    std::vector <model::PythonVariablePtr> _variables;
-    std::map <model::PythonEntityId, std::vector<model::PythonAstNodePtr>> _variableUsages;
-    std::vector <model::PythonFunctionPtr> _functions;
-    std::map <model::PythonEntityId, std::vector<model::PythonAstNodePtr>> _functionUsages;
-    std::vector <model::PythonClassPtr> _classes;
-    std::map <model::PythonEntityId, std::vector<model::PythonAstNodePtr>> _classUsages;
-    std::vector <model::PythonClassMemberPtr> _members;
-    std::vector <model::PythonInheritancePtr> _inheritance;
-    std::vector <model::PythonImportPtr> _imports;
-    std::vector <model::PythonDocumentationPtr> _documentations;
-    std::vector <model::PythonTypePtr> _types;
+    AstNodeSet _astNodes;
+    std::vector<model::PythonVariablePtr> _variables;
+    std::map<model::PythonEntityId, AstNodeSet> _variableUsages;
+    std::vector<model::PythonFunctionPtr> _functions;
+    std::map<model::PythonEntityId, AstNodeSet> _functionUsages;
+    std::vector<model::PythonClassPtr> _classes;
+    std::map<model::PythonEntityId, AstNodeSet> _classUsages;
+    std::vector<model::PythonClassMemberPtr> _members;
+    std::vector<model::PythonInheritancePtr> _inheritance;
+    std::vector<model::PythonImportPtr> _imports;
+    std::vector<model::PythonDocumentationPtr> _documentations;
+    std::vector<model::PythonTypePtr> _types;
 };
 
 typedef boost::shared_ptr <PythonPersistence> PythonPersistencePtr;

@@ -1,13 +1,18 @@
 #include <pythonparser/pythonpersistence.h>
 
-#include <iostream>
-
-
 namespace cc
 {
 namespace parser
 {
 
+using boost::python::object;
+using boost::python::len;
+using boost::python::tuple;
+using boost::python::list;
+using boost::python::dict;
+
+template <typename T>
+using extract = boost::python::extract<T>;
 
 void print(const std::string& s)
 {
@@ -30,18 +35,22 @@ PythonPersistence::~PythonPersistence()
     ctx.srcMgr.persistFiles();
 
     (util::OdbTransaction(ctx.db))([this]{
-        util::persistAll(_astNodes, ctx.db);
+        std::vector<model::PythonAstNodePtr> v = std::vector<model::PythonAstNodePtr>(_astNodes.begin(), _astNodes.end());
+        util::persistAll(v, ctx.db);
         for(auto& ast : _variableUsages)
         {
-            util::persistAll(ast.second, ctx.db);
+            std::vector<model::PythonAstNodePtr> u = std::vector<model::PythonAstNodePtr>(ast.second.begin(), ast.second.end());
+            util::persistAll(u, ctx.db);
         }
         for(auto& ast : _functionUsages)
         {
-            util::persistAll(ast.second, ctx.db);
+            std::vector<model::PythonAstNodePtr> u = std::vector<model::PythonAstNodePtr>(ast.second.begin(), ast.second.end());
+            util::persistAll(u, ctx.db);
         }
         for(auto& ast : _classUsages)
         {
-            util::persistAll(ast.second, ctx.db);
+            std::vector<model::PythonAstNodePtr> u = std::vector<model::PythonAstNodePtr>(ast.second.begin(), ast.second.end());
+            util::persistAll(u, ctx.db);
         }
         util::persistAll(_variables, ctx.db);
         util::persistAll(_functions, ctx.db);
@@ -54,44 +63,44 @@ PythonPersistence::~PythonPersistence()
     });
 }
 
-void PythonPersistence::cppprint(boost::python::object o)
+void PythonPersistence::cppprint(object o)
 {
-    std::string s = boost::python::extract<std::string>(o);
+    std::string s = extract<std::string>(o);
     LOG(info) << s;
 }
 
-void PythonPersistence::logInfo(boost::python::object o)
+void PythonPersistence::logInfo(object o)
 {
-    std::string s = boost::python::extract<std::string>(o);
+    std::string s = extract<std::string>(o);
     LOG(info) << s;
 }
 
-void PythonPersistence::logWarning(boost::python::object o)
+void PythonPersistence::logWarning(object o)
 {
-    std::string s = boost::python::extract<std::string>(o);
+    std::string s = extract<std::string>(o);
     LOG(warning) << s;
 }
 
-void PythonPersistence::logError(boost::python::object o)
+void PythonPersistence::logError(object o)
 {
-    std::string s = boost::python::extract<std::string>(o);
+    std::string s = extract<std::string>(o);
     LOG(error) << s;
 }
 
-void PythonPersistence::logDebug(boost::python::object o)
+void PythonPersistence::logDebug(object o)
 {
-    std::string s = boost::python::extract<std::string>(o);
+    std::string s = extract<std::string>(o);
     LOG(debug) << s;
 }
 
-void PythonPersistence::persistFile(boost::python::object pyFile)
+void PythonPersistence::persistFile(object pyFile)
 {
     try{
         model::FilePtr file = nullptr;
         model::BuildSource buildSource;
 
-        boost::python::object path = pyFile.attr("path");
-        boost::python::object status = pyFile.attr("parse_status");
+        object path = pyFile.attr("path");
+        object status = pyFile.attr("parse_status");
 
         if(status.is_none())
         {
@@ -100,10 +109,10 @@ void PythonPersistence::persistFile(boost::python::object pyFile)
         {
             LOG(error) << "Persist file: path is None...";
         } else {
-            file = ctx.srcMgr.getFile(boost::python::extract<std::string>(path));
+            file = ctx.srcMgr.getFile(extract<std::string>(path));
             file->type = "PY";
             buildSource.file = file;
-            switch(boost::python::extract<int>(status))
+            switch(extract<int>(status))
             {
                 case 0:
                     buildSource.file->parseStatus = model::File::PSNone;
@@ -115,12 +124,12 @@ void PythonPersistence::persistFile(boost::python::object pyFile)
                     buildSource.file->parseStatus = model::File::PSFullyParsed;
                     break;
                 default:
-                    LOG(error) << "Persist file unknown status: " << boost::python::extract<int>(status);
+                    LOG(error) << "Persist file unknown status: " << extract<int>(status);
             }
 
             model::BuildActionPtr buildAction(new model::BuildAction);
             buildAction->command = "";
-            buildAction->type = model::BuildAction::Other;
+            buildAction->type = model::BuildAction::Interpret;
             try{
                 util::OdbTransaction transaction{ctx.db};
 
@@ -146,21 +155,21 @@ void PythonPersistence::persistFile(boost::python::object pyFile)
     }
 }
 
-void PythonPersistence::persistVariable(boost::python::object pyVariable)
+void PythonPersistence::persistVariable(object pyVariable)
 {
     try{
-        boost::python::object name = pyVariable.attr("name");
-        boost::python::object qualifiedName = pyVariable.attr("qualified_name");
-        boost::python::object visibility = pyVariable.attr("visibility");
+        object name = pyVariable.attr("name");
+        object qualifiedName = pyVariable.attr("qualified_name");
+        object visibility = pyVariable.attr("visibility");
 
         boost::optional<model::FileLoc> fileLoc =
                 createFileLoc(pyVariable.attr("file_position"));
 
-        boost::python::list types =
-                boost::python::extract<boost::python::list>(pyVariable.attr("type"));
+        list types =
+                extract<list>(pyVariable.attr("type"));
 
-        boost::python::list usages =
-                boost::python::extract<boost::python::list>(pyVariable.attr("usages"));
+        list usages =
+                extract<list>(pyVariable.attr("usages"));
 
         if(name.is_none() || qualifiedName.is_none() || fileLoc == boost::none ||
            types.is_none() || usages.is_none())
@@ -170,33 +179,32 @@ void PythonPersistence::persistVariable(boost::python::object pyVariable)
 
         model::PythonAstNodePtr varAstNode(new model::PythonAstNode);
         varAstNode->location = fileLoc.get();
-        varAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        varAstNode->qualifiedName = extract<std::string>(qualifiedName);
         varAstNode->symbolType = model::PythonAstNode::SymbolType::Variable;
         varAstNode->astType = model::PythonAstNode::AstType::Declaration;
 
         varAstNode->id = model::createIdentifier(*varAstNode);
 
-        if(isAstNodePersisted(varAstNode))
+        if(!_astNodes.insert(varAstNode).second)
         {
             return;
         }
 
-        _astNodes.push_back(varAstNode);
         model::PythonVariablePtr variable(new model::PythonVariable);
         variable->astNodeId = varAstNode->id;
-        variable->name = boost::python::extract<std::string>(name);
-        variable->qualifiedName = boost::python::extract<std::string>(qualifiedName);
-        variable->visibility = boost::python::extract<std::string>(visibility);
+        variable->name = extract<std::string>(name);
+        variable->qualifiedName = extract<std::string>(qualifiedName);
+        variable->visibility = extract<std::string>(visibility);
 
         variable->id = model::createIdentifier(*variable);
         _variables.push_back(variable);
 
-        for(int i = 0; i<boost::python::len(types); ++i)
+        for(int i = 0; i<len(types); ++i)
         {
             model::PythonTypePtr type(new model::PythonType);
-            std::string s = boost::python::extract<std::string>(types[i]);
+            std::string s = extract<std::string>(types[i]);
             model::PythonEntityPtr t =
-                    getPythonEntity(boost::python::extract<std::string>(types[i]));
+                    getPythonEntity(extract<std::string>(types[i]));
             if(!t)
             {
                 continue;
@@ -207,7 +215,7 @@ void PythonPersistence::persistVariable(boost::python::object pyVariable)
         }
 
         _variableUsages[variable->id] = {};
-        for(int i = 0; i<boost::python::len(usages); ++i)
+        for(int i = 0; i<len(usages); ++i)
         {
             boost::optional<model::FileLoc> usageFileLoc =
                     createFileLoc(usages[i].attr("file_position"));
@@ -217,18 +225,13 @@ void PythonPersistence::persistVariable(boost::python::object pyVariable)
             }
             model::PythonAstNodePtr usageAstNode(new model::PythonAstNode);
             usageAstNode->location = usageFileLoc.get();
-            usageAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+            usageAstNode->qualifiedName = extract<std::string>(qualifiedName);
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Variable;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-            if(isAstNodePersisted(_variableUsages[variable->id], usageAstNode))
-            {
-                continue;
-            }
-
-            _variableUsages[variable->id].push_back(usageAstNode);
+            _variableUsages[variable->id].insert(usageAstNode);
         }
 
     } catch (const odb::object_already_persistent& ex)
@@ -243,29 +246,29 @@ void PythonPersistence::persistVariable(boost::python::object pyVariable)
     }
 }
 
-void PythonPersistence::persistFunction(boost::python::object pyFunction)
+void PythonPersistence::persistFunction(object pyFunction)
 {
     try{
-        boost::python::object name = pyFunction.attr("name");
-        boost::python::object qualifiedName = pyFunction.attr("qualified_name");
-        boost::python::object visibility = pyFunction.attr("visibility");
+        object name = pyFunction.attr("name");
+        object qualifiedName = pyFunction.attr("qualified_name");
+        object visibility = pyFunction.attr("visibility");
 
         boost::optional<model::FileLoc> fileLoc =
                 createFileLoc(pyFunction.attr("file_position"));
 
-        boost::python::list types =
-                boost::python::extract<boost::python::list>(pyFunction.attr("type"));
+        list types =
+                extract<list>(pyFunction.attr("type"));
 
-        boost::python::list usages =
-                boost::python::extract<boost::python::list>(pyFunction.attr("usages"));
+        list usages =
+                extract<list>(pyFunction.attr("usages"));
 
-        boost::python::object pyDocumentation = pyFunction.attr("documentation");
+        object pyDocumentation = pyFunction.attr("documentation");
 
-        boost::python::list params =
-                boost::python::extract<boost::python::list>(pyFunction.attr("parameters"));
+        list params =
+                extract<list>(pyFunction.attr("parameters"));
 
-        boost::python::list locals =
-                boost::python::extract<boost::python::list>(pyFunction.attr("locals"));
+        list locals =
+                extract<list>(pyFunction.attr("locals"));
 
         if(name.is_none() || qualifiedName.is_none() || fileLoc == boost::none || types.is_none() ||
            usages.is_none() || pyDocumentation.is_none() || params.is_none() || locals.is_none())
@@ -275,31 +278,29 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
 
         model::PythonAstNodePtr funcAstNode(new model::PythonAstNode);
         funcAstNode->location = fileLoc.get();
-        funcAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        funcAstNode->qualifiedName = extract<std::string>(qualifiedName);
         funcAstNode->symbolType = model::PythonAstNode::SymbolType::Function;
         funcAstNode->astType = model::PythonAstNode::AstType::Declaration;
 
         funcAstNode->id = model::createIdentifier(*funcAstNode);
 
-        if(isAstNodePersisted(funcAstNode))
+        if(!_astNodes.insert(funcAstNode).second)
         {
             return;
         }
 
-        _astNodes.push_back(funcAstNode);
-
         model::PythonFunctionPtr function(new model::PythonFunction);
         function->astNodeId = funcAstNode->id;
-        function->name = boost::python::extract<std::string>(name);
-        function->qualifiedName = boost::python::extract<std::string>(qualifiedName);
-        function->visibility = boost::python::extract<std::string>(visibility);
+        function->name = extract<std::string>(name);
+        function->qualifiedName = extract<std::string>(qualifiedName);
+        function->visibility = extract<std::string>(visibility);
 
         function->id = model::createIdentifier(*function);
 
-        for(int i = 0; i<boost::python::len(params); ++i)
+        for(int i = 0; i<len(params); ++i)
         {
             model::PythonVariablePtr param =
-                    getPythonVariable(boost::python::extract<std::string>(params[i]));
+                    getPythonVariable(extract<std::string>(params[i]));
             if(!param)
             {
                 continue;
@@ -307,10 +308,10 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
             function->parameters.push_back(param);
         }
 
-        for(int i = 0; i<boost::python::len(locals); ++i)
+        for(int i = 0; i<len(locals); ++i)
         {
             model::PythonVariablePtr local =
-                    getPythonVariable(boost::python::extract<std::string>(locals[i]));
+                    getPythonVariable(extract<std::string>(locals[i]));
             if(!local)
             {
                 continue;
@@ -321,17 +322,17 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
         _functions.push_back(function);
 
         model::PythonDocumentationPtr documentation(new model::PythonDocumentation);
-        documentation->documentation = boost::python::extract<std::string>(pyDocumentation);
+        documentation->documentation = extract<std::string>(pyDocumentation);
         documentation->documented = function->id;
         documentation->documentationKind = model::PythonDocumentation::Function;
 
         _documentations.push_back(documentation);
 
-        for(int i = 0; i<boost::python::len(types); ++i)
+        for(int i = 0; i<len(types); ++i)
         {
             model::PythonTypePtr type(new model::PythonType);
             model::PythonEntityPtr t =
-                    getPythonEntity(boost::python::extract<std::string>(types[i]));
+                    getPythonEntity(extract<std::string>(types[i]));
             if(!t)
             {
                 continue;
@@ -343,7 +344,7 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
         }
 
         _functionUsages[function->id] = {};
-        for(int i = 0; i<boost::python::len(usages); ++i)
+        for(int i = 0; i<len(usages); ++i)
         {
             boost::optional<model::FileLoc> usageFileLoc =
                     createFileLoc(usages[i].attr("file_position"));
@@ -353,18 +354,13 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
             }
             model::PythonAstNodePtr usageAstNode(new model::PythonAstNode);
             usageAstNode->location = usageFileLoc.get();
-            usageAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+            usageAstNode->qualifiedName = extract<std::string>(qualifiedName);
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Function;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-            if(isAstNodePersisted(_functionUsages[function->id], usageAstNode))
-            {
-                continue;
-            }
-
-            _functionUsages[function->id].push_back(usageAstNode);
+            _functionUsages[function->id].insert(usageAstNode);
         }
     } catch(std::exception e)
     {
@@ -372,12 +368,12 @@ void PythonPersistence::persistFunction(boost::python::object pyFunction)
     }
 }
 
-void PythonPersistence::persistPreprocessedClass(boost::python::object pyClass)
+void PythonPersistence::persistPreprocessedClass(object pyClass)
 {
     try{
-        boost::python::object name = pyClass.attr("name");
-        boost::python::object qualifiedName = pyClass.attr("qualified_name");
-        boost::python::object visibility = pyClass.attr("visibility");
+        object name = pyClass.attr("name");
+        object qualifiedName = pyClass.attr("qualified_name");
+        object visibility = pyClass.attr("visibility");
 
         boost::optional<model::FileLoc> fileLoc =
                 createFileLoc(pyClass.attr("file_position"));
@@ -389,24 +385,22 @@ void PythonPersistence::persistPreprocessedClass(boost::python::object pyClass)
 
         model::PythonAstNodePtr classAstNode(new model::PythonAstNode);
         classAstNode->location = fileLoc.get();
-        classAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+        classAstNode->qualifiedName = extract<std::string>(qualifiedName);
         classAstNode->symbolType = model::PythonAstNode::SymbolType::Class;
         classAstNode->astType = model::PythonAstNode::AstType::Declaration;
 
         classAstNode->id = model::createIdentifier(*classAstNode);
 
-        if(isAstNodePersisted(classAstNode))
+        if(!_astNodes.insert(classAstNode).second)
         {
             return;
         }
 
-        _astNodes.push_back(classAstNode);
-
         model::PythonClassPtr cl(new model::PythonClass);
         cl->astNodeId = classAstNode->id;
-        cl->name = boost::python::extract<std::string>(name);
-        cl->qualifiedName = boost::python::extract<std::string>(qualifiedName);
-        cl->visibility = boost::python::extract<std::string>(visibility);
+        cl->name = extract<std::string>(name);
+        cl->qualifiedName = extract<std::string>(qualifiedName);
+        cl->visibility = extract<std::string>(visibility);
 
         cl->id = model::createIdentifier(*cl);
 
@@ -418,20 +412,20 @@ void PythonPersistence::persistPreprocessedClass(boost::python::object pyClass)
     }
 }
 
-void PythonPersistence::persistClass(boost::python::object pyClass)
+void PythonPersistence::persistClass(object pyClass)
 {
     try{
-        boost::python::object qualifiedName = pyClass.attr("qualified_name");
+        object qualifiedName = pyClass.attr("qualified_name");
 
-        boost::python::list usages =
-                boost::python::extract<boost::python::list>(pyClass.attr("usages"));
+        list usages =
+                extract<list>(pyClass.attr("usages"));
 
-        boost::python::object pyDocumentation = pyClass.attr("documentation");
+        object pyDocumentation = pyClass.attr("documentation");
 
-        boost::python::list baseClasses =
-                boost::python::extract<boost::python::list>(pyClass.attr("base_classes"));
+        list baseClasses =
+                extract<list>(pyClass.attr("base_classes"));
 
-        boost::python::object members = pyClass.attr("members");
+        object members = pyClass.attr("members");
 
         if(qualifiedName.is_none() || usages.is_none() || pyDocumentation.is_none() ||
            baseClasses.is_none() || members.is_none())
@@ -440,7 +434,7 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
         }
 
         model::PythonClassPtr cl =
-                getPythonClass(boost::python::extract<std::string>(qualifiedName));
+                getPythonClass(extract<std::string>(qualifiedName));
 
         if (!cl)
         {
@@ -449,14 +443,14 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
         }
 
         model::PythonDocumentationPtr documentation(new model::PythonDocumentation);
-        documentation->documentation = boost::python::extract<std::string>(pyDocumentation);
+        documentation->documentation = extract<std::string>(pyDocumentation);
         documentation->documented = cl->id;
         documentation->documentationKind = model::PythonDocumentation::Class;
 
         _documentations.push_back(documentation);
 
         _classUsages[cl->id] = {};
-        for(int i = 0; i<boost::python::len(usages); ++i)
+        for(int i = 0; i<len(usages); ++i)
         {
             boost::optional<model::FileLoc> usageFileLoc =
                     createFileLoc(usages[i].attr("file_position"));
@@ -466,41 +460,36 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
             }
             model::PythonAstNodePtr usageAstNode(new model::PythonAstNode);
             usageAstNode->location = usageFileLoc.get();
-            usageAstNode->qualifiedName = boost::python::extract<std::string>(qualifiedName);
+            usageAstNode->qualifiedName = extract<std::string>(qualifiedName);
             usageAstNode->symbolType = model::PythonAstNode::SymbolType::Class;
             usageAstNode->astType = model::PythonAstNode::AstType::Usage;
 
             usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-            if(isAstNodePersisted(_classUsages[cl->id], usageAstNode))
-            {
-                continue;
-            }
-
-            _classUsages[cl->id].push_back(usageAstNode);
+            _classUsages[cl->id].insert(usageAstNode);
         }
 
-        for(int i = 0; i<boost::python::len(baseClasses); ++i)
+        for(int i = 0; i<len(baseClasses); ++i)
         {
             model::PythonInheritancePtr inheritance(new model::PythonInheritance);
             inheritance->derived = cl->id;
-            std::string baseClassQualifiedName = boost::python::extract<std::string>(baseClasses[i]);
+            std::string baseClassQualifiedName = extract<std::string>(baseClasses[i]);
 
             inheritance->base = getPythonEntity(baseClassQualifiedName)->id;
 
             _inheritance.push_back(inheritance);
         }
 
-        boost::python::list methods =
-                boost::python::extract<boost::python::list>(members.attr("methods"));
-        boost::python::list staticMethods =
-                boost::python::extract<boost::python::list>(members.attr("static_methods"));
-        boost::python::list attributes =
-                boost::python::extract<boost::python::list>(members.attr("attributes"));
-        boost::python::list staticAttributes =
-                boost::python::extract<boost::python::list>(members.attr("static_attributes"));
-        boost::python::list classes =
-                boost::python::extract<boost::python::list>(members.attr("classes"));
+        list methods =
+                extract<list>(members.attr("methods"));
+        list staticMethods =
+                extract<list>(members.attr("static_methods"));
+        list attributes =
+                extract<list>(members.attr("attributes"));
+        list staticAttributes =
+                extract<list>(members.attr("static_attributes"));
+        list classes =
+                extract<list>(members.attr("classes"));
 
         if(methods.is_none() || staticMethods.is_none() || attributes.is_none() ||
            staticAttributes.is_none() || classes.is_none())
@@ -508,10 +497,10 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
             return;
         }
 
-        for(int i = 0; i<boost::python::len(methods); ++i)
+        for(int i = 0; i<len(methods); ++i)
         {
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
-            std::string qualifiedName = boost::python::extract<std::string>(methods[i].attr("qualified_name"));
+            std::string qualifiedName = extract<std::string>(methods[i].attr("qualified_name"));
             model::PythonEntityPtr method = getPythonEntity(qualifiedName);
             if(!method)
             {
@@ -526,10 +515,10 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
             _members.push_back(classMember);
 
-            boost::python::list _usages =
-                    boost::python::extract<boost::python::list>(methods[i].attr("usages"));
-            std::vector<model::PythonAstNodePtr>& _funcUsages = _functionUsages[method->id];
-            for(int j = 0; j<boost::python::len(_usages); ++j)
+            list _usages =
+                    extract<list>(methods[i].attr("usages"));
+            AstNodeSet& _funcUsages = _functionUsages[method->id];
+            for(int j = 0; j<len(_usages); ++j)
             {
                 boost::optional<model::FileLoc> _fl = createFileLoc(_usages[j].attr("file_position"));
                 if(_fl == boost::none ||
@@ -548,20 +537,15 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-                if(isAstNodePersisted(_funcUsages, usageAstNode))
-                {
-                    continue;
-                }
-
-                _funcUsages.push_back(usageAstNode);
+                _funcUsages.insert(usageAstNode);
             }
         }
 
-        for(int i = 0; i<boost::python::len(staticMethods); ++i)
+        for(int i = 0; i<len(staticMethods); ++i)
         {
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             std::string qualifiedName =
-                    boost::python::extract<std::string>(staticMethods[i].attr("qualified_name"));
+                    extract<std::string>(staticMethods[i].attr("qualified_name"));
             model::PythonEntityPtr method = getPythonEntity(qualifiedName);
             if(!method)
             {
@@ -576,10 +560,10 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
             _members.push_back(classMember);
 
-            boost::python::list _usages =
-                    boost::python::extract<boost::python::list>(staticMethods[i].attr("usages"));
-            std::vector<model::PythonAstNodePtr>& _funcUsages = _functionUsages[method->id];
-            for(int j = 0; j<boost::python::len(_usages); ++j)
+            list _usages =
+                    extract<list>(staticMethods[i].attr("usages"));
+            AstNodeSet& _funcUsages = _functionUsages[method->id];
+            for(int j = 0; j<len(_usages); ++j)
             {
                 boost::optional<model::FileLoc> _fl = createFileLoc(_usages[j].attr("file_position"));
                 if(_fl == boost::none ||
@@ -599,20 +583,15 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-                if(isAstNodePersisted(_funcUsages, usageAstNode))
-                {
-                    continue;
-                }
-
-                _funcUsages.push_back(usageAstNode);
+                _funcUsages.insert(usageAstNode);
             }
         }
 
-        for(int i = 0; i<boost::python::len(attributes); ++i)
+        for(int i = 0; i<len(attributes); ++i)
         {
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             std::string qualifiedName =
-                    boost::python::extract<std::string>(attributes[i].attr("qualified_name"));
+                    extract<std::string>(attributes[i].attr("qualified_name"));
             if (qualifiedName.empty())
             {
                 continue;   // TODO: import symbol in class
@@ -631,10 +610,10 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
             _members.push_back(classMember);
 
-            boost::python::list _usages =
-                    boost::python::extract<boost::python::list>(attributes[i].attr("usages"));
-            std::vector<model::PythonAstNodePtr>& _varUsages = _variableUsages[attr->id];
-            for(int j = 0; j<boost::python::len(_usages); ++j)
+            list _usages =
+                    extract<list>(attributes[i].attr("usages"));
+            AstNodeSet& _varUsages = _variableUsages[attr->id];
+            for(int j = 0; j<len(_usages); ++j)
             {
                 boost::optional<model::FileLoc> _fl = createFileLoc(_usages[j].attr("file_position"));
                 if(_fl == boost::none ||
@@ -653,20 +632,15 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-                if(isAstNodePersisted(_varUsages, usageAstNode))
-                {
-                    continue;
-                }
-
-                _varUsages.push_back(usageAstNode);
+                _varUsages.insert(usageAstNode);
             }
         }
 
-        for(int i = 0; i<boost::python::len(staticAttributes); ++i)
+        for(int i = 0; i<len(staticAttributes); ++i)
         {
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
             std::string qualifiedName =
-                    boost::python::extract<std::string>(staticAttributes[i].attr("qualified_name"));
+                    extract<std::string>(staticAttributes[i].attr("qualified_name"));
             model::PythonEntityPtr attr = getPythonEntity(qualifiedName);
             if(!attr)
             {
@@ -681,10 +655,10 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
             _members.push_back(classMember);
 
-            boost::python::list _usages =
-                    boost::python::extract<boost::python::list>(staticAttributes[i].attr("usages"));
-            std::vector<model::PythonAstNodePtr>& _varUsages = _variableUsages[attr->id];
-            for(int j = 0; j<boost::python::len(_usages); ++j)
+            list _usages =
+                    extract<list>(staticAttributes[i].attr("usages"));
+            AstNodeSet& _varUsages = _variableUsages[attr->id];
+            for(int j = 0; j<len(_usages); ++j)
             {
                 boost::optional<model::FileLoc> _fl = createFileLoc(_usages[j].attr("file_position"));
                 if(_fl == boost::none ||
@@ -703,19 +677,14 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
 
                 usageAstNode->id = model::createIdentifier(*usageAstNode);
 
-                if(isAstNodePersisted(_varUsages, usageAstNode))
-                {
-                    continue;
-                }
-
-                _varUsages.push_back(usageAstNode);
+                _varUsages.insert(usageAstNode);
             }
         }
 
-        for(int i = 0; i<boost::python::len(classes); ++i)
+        for(int i = 0; i<len(classes); ++i)
         {
             model::PythonClassMemberPtr classMember(new model::PythonClassMember);
-            std::string qualifiedName = boost::python::extract<std::string>(classes[i].attr("qualified_name"));
+            std::string qualifiedName = extract<std::string>(classes[i].attr("qualified_name"));
             model::PythonEntityPtr inner = getPythonEntity(qualifiedName);
             if(!inner)
             {
@@ -736,31 +705,31 @@ void PythonPersistence::persistClass(boost::python::object pyClass)
     }
 }
 
-void PythonPersistence::persistImport(boost::python::object pyImport)
+void PythonPersistence::persistImport(object pyImport)
 {
     try {
         model::FilePtr file =
-                ctx.srcMgr.getFile(boost::python::extract<std::string>(pyImport.attr("importer")));
+                ctx.srcMgr.getFile(extract<std::string>(pyImport.attr("importer")));
 
-        boost::python::list importedModules =
-                boost::python::extract<boost::python::list>(pyImport.attr("imported_modules"));
+        list importedModules =
+                extract<list>(pyImport.attr("imported_modules"));
 
-        boost::python::dict importedSymbols =
-                boost::python::extract<boost::python::dict>(pyImport.attr("imported_symbols"));
+        dict importedSymbols =
+                extract<dict>(pyImport.attr("imported_symbols"));
 
         if (!file || importedModules.is_none() || importedSymbols.is_none())
         {
             return;
         }
 
-        for (int i = 0; i < boost::python::len(importedModules); ++i)
+        for (int i = 0; i < len(importedModules); ++i)
         {
-            boost::python::object importData = importedModules[i];
+            object importData = importedModules[i];
 
             model::FilePtr moduleFile =
-                    ctx.srcMgr.getFile(boost::python::extract<std::string>(importData.attr("imported")));
+                    ctx.srcMgr.getFile(extract<std::string>(importData.attr("imported")));
             boost::optional<model::FileLoc> fileLoc = createFileLoc(importData.attr("position"));
-            std::string qualifiedName = boost::python::extract<std::string>(importData.attr("qualified_name"));
+            std::string qualifiedName = extract<std::string>(importData.attr("qualified_name"));
 
             if (!moduleFile || fileLoc == boost::none)
             {
@@ -775,7 +744,7 @@ void PythonPersistence::persistImport(boost::python::object pyImport)
 
             moduleAstNode->id = model::createIdentifier(*moduleAstNode);
 
-            if(isAstNodePersisted(moduleAstNode))
+            if(!_astNodes.insert(moduleAstNode).second)
             {
                 continue;
             }
@@ -785,21 +754,20 @@ void PythonPersistence::persistImport(boost::python::object pyImport)
             moduleImport->importer = file;
             moduleImport->imported = moduleFile;
 
-            _astNodes.push_back(moduleAstNode);
             _imports.push_back(moduleImport);
         }
 
-        boost::python::list importDict = importedSymbols.items();
-        for (int i = 0; i < boost::python::len(importDict); ++i)
+        list importDict = importedSymbols.items();
+        for (int i = 0; i < len(importDict); ++i)
         {
-            boost::python::tuple import = boost::python::extract<boost::python::tuple>(importDict[i]);
+            tuple import = extract<tuple>(importDict[i]);
 
-            boost::python::object importData = import[0];
+            object importData = import[0];
 
             model::FilePtr moduleFile =
-                    ctx.srcMgr.getFile(boost::python::extract<std::string>(importData.attr("imported")));
+                    ctx.srcMgr.getFile(extract<std::string>(importData.attr("imported")));
             boost::optional<model::FileLoc> fileLoc = createFileLoc(importData.attr("position"));
-            std::string qualifiedName = boost::python::extract<std::string>(importData.attr("qualified_name"));
+            std::string qualifiedName = extract<std::string>(importData.attr("qualified_name"));
 
             if (!moduleFile || fileLoc == boost::none)
             {
@@ -814,19 +782,19 @@ void PythonPersistence::persistImport(boost::python::object pyImport)
 
             moduleAstNode->id = model::createIdentifier(*moduleAstNode);
 
-            if(isAstNodePersisted(moduleAstNode))
+            if(!_astNodes.insert(moduleAstNode).second)
             {
                 continue;
             }
 
-            for (int j = 0; j < boost::python::len(import[1]); ++j)
+            for (int j = 0; j < len(import[1]); ++j)
             {
                 model::PythonImportPtr moduleImport(new model::PythonImport);
                 moduleImport->astNodeId = moduleAstNode->id;
                 moduleImport->importer = file;
                 moduleImport->imported = moduleFile;
                 auto symb =
-                        getPythonEntity(boost::python::extract<std::string>(import[1][j]));
+                        getPythonEntity(extract<std::string>(import[1][j]));
                 if(!symb)
                 {
                     continue;
@@ -835,8 +803,6 @@ void PythonPersistence::persistImport(boost::python::object pyImport)
 
                 _imports.push_back(moduleImport);
             }
-
-            _astNodes.push_back(moduleAstNode);
         }
     } catch(std::exception e)
     {
@@ -844,23 +810,23 @@ void PythonPersistence::persistImport(boost::python::object pyImport)
     }
 }
 
-boost::optional<model::FileLoc> PythonPersistence::createFileLoc(boost::python::object filePosition)
+boost::optional<model::FileLoc> PythonPersistence::createFileLoc(object filePosition)
 {
     if (filePosition.is_none())
     {
         return boost::none;
     }
 
-    boost::python::object filePath = filePosition.attr("file");
-    boost::python::object pyRange = filePosition.attr("range");
+    object filePath = filePosition.attr("file");
+    object pyRange = filePosition.attr("range");
 
     if (filePath.is_none() || pyRange.is_none())
     {
         return boost::none;
     }
 
-    boost::python::object pyStartPosition = pyRange.attr("start_position");
-    boost::python::object pyEndPosition = pyRange.attr("end_position");
+    object pyStartPosition = pyRange.attr("start_position");
+    object pyEndPosition = pyRange.attr("end_position");
 
     if (pyStartPosition.is_none() || pyEndPosition.is_none())
     {
@@ -869,12 +835,12 @@ boost::optional<model::FileLoc> PythonPersistence::createFileLoc(boost::python::
 
     model::FileLoc fileLoc;
 
-    fileLoc.file = ctx.srcMgr.getFile(boost::python::extract<std::string>(filePath));
+    fileLoc.file = ctx.srcMgr.getFile(extract<std::string>(filePath));
 
-    model::Position startPosition(boost::python::extract<int>(pyStartPosition.attr("line")),
-                                  boost::python::extract<int>(pyStartPosition.attr("column")));
-    model::Position endPosition(boost::python::extract<int>(pyEndPosition.attr("line")),
-                                boost::python::extract<int>(pyEndPosition.attr("column")));
+    model::Position startPosition(extract<int>(pyStartPosition.attr("line")),
+                                  extract<int>(pyStartPosition.attr("column")));
+    model::Position endPosition(extract<int>(pyEndPosition.attr("line")),
+                                extract<int>(pyEndPosition.attr("column")));
 
     fileLoc.range = model::Range(startPosition, endPosition);
 
@@ -961,33 +927,33 @@ model::PythonClassPtr PythonPersistence::getPythonClass(const std::string& quali
     return nullptr;
 }
 
-bool PythonPersistence::isAstNodePersisted(const model::PythonAstNodePtr& node) const
-{
-    for(auto it : _astNodes)
-    {
-        if(*it == *node)
-        {
-            return true;
-        }
-    }
+//bool PythonPersistence::isAstNodePersisted(const model::PythonAstNodePtr& node) const
+//{
+//    for(const auto &it : _astNodes)
+//    {
+//        if(*it == *node)
+//        {
+//            return true;
+//        }
+//    }
+//
+//    return false;
+//}
 
-    return false;
-}
-
-bool PythonPersistence::isAstNodePersisted(
-        const std::vector<model::PythonAstNodePtr>& nodes,
-        const model::PythonAstNodePtr& node) const
-{
-    for(auto it : nodes)
-    {
-        if(*it == *node)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
+//bool PythonPersistence::isAstNodePersisted(
+//        const std::vector<model::PythonAstNodePtr>& nodes,
+//        const model::PythonAstNodePtr& node) const
+//{
+//    for(const auto &it : nodes)
+//    {
+//        if(*it == *node)
+//        {
+//            return true;
+//        }
+//    }
+//
+//    return false;
+//}
 
 }
 }
