@@ -33,6 +33,7 @@ namespace CSharpParser.model
         public string AstValue { get; set; }
         public AstSymbolTypeEnum AstSymbolType { get; set; }
         public AstTypeEnum AstType { get; set; }
+        public Accessibility Accessibility { get; set; }
         public long Location_range_start_line { get; set; }
         public long Location_range_start_column { get; set; }
         public long Location_range_end_line { get; set; }

@@ -73,13 +73,23 @@ namespace CSharpParser
 
         private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type, AstTypeEnum astType)
         {
+            Accessibility acc = Accessibility.NotApplicable;
+            try
+            {
+                acc = Model.GetDeclaredSymbol(node).DeclaredAccessibility;
+            }
+            catch (Exception)
+            {
+                WriteLine($"Can not get GetDeclaredSymbol of this node: {node}");
+            }
             CsharpAstNode astNode = new CsharpAstNode
             {
                 AstValue = node.ToString(),
                 RawKind = node.Kind(),
                 EntityHash = node.GetHashCode(),
                 AstSymbolType = type,
-                AstType = astType
+                AstType = astType,
+                Accessibility = acc
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
             astNode.Id = createIdentifier(astNode);          

@@ -52,6 +52,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
         ret.SymbolType = node.AstSymbolType.ToString();
         ret.Range = getFileRange(node);
 
+        List<string> tags = new List<string>();
+        tags.Add(node.Accessibility.ToString());
+
+        ret.Tags = tags;
+
         return ret;
     }
 

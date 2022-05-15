@@ -73,9 +73,9 @@ function (model, viewHandler, util) {
   function getCssClass(astNodeInfo) {
     var tags = astNodeInfo.tags;
 
-    return tags.indexOf('public')    > -1 ? 'icon-visibility icon-public'  :
-           tags.indexOf('private')   > -1 ? 'icon-visibility icon-private' :
-           tags.indexOf('protected') > -1 ? 'icon-visibility icon-protected' :
+    return tags.indexOf('Public')    > -1 ? 'icon-visibility icon-public'  :
+           tags.indexOf('Private')   > -1 ? 'icon-visibility icon-private' :
+           tags.indexOf('Protected') > -1 ? 'icon-visibility icon-protected' :
            null;
   }
 
