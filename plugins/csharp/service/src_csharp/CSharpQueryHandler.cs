@@ -256,6 +256,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                     .FirstOrDefault();
                 ret.Add("Name", EtcEntity.Name+" ");
                 ret.Add("Qualified Name", EtcEntity.QualifiedName+" ");
+                ret.Add("Qualified Type", EtcEntity.QualifiedType+" ");
                 ret.Add("Documentation Comment", EtcEntity.DocumentationCommentXML+" ");                
                 ret.Add("Etc Entity Type", EtcEntity.EtcEntityType.ToString());                
                 break;
@@ -355,7 +356,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         int ret = 0;
         switch ((ReferenceType)referenceId)
         {
-            case ReferenceType.READ:
+            case ReferenceType.USAGE:
                 ret = queryInvocations(node).Count();
                 break;
             case ReferenceType.DECLARATION:
@@ -380,8 +381,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         var ret = new List<language.AstNodeInfo>();
         switch ((ReferenceType)referenceId)
         {
-            case ReferenceType.READ:
-                ret = createAstNodeInfoList(queryInvocations(node)) ;
+            case ReferenceType.USAGE:
+                ret = createAstNodeInfoList(queryInvocations(node));
                 break;
             case ReferenceType.DECLARATION:
                 ret = createAstNodeInfoList(queryDeclarators(node));

@@ -69,7 +69,7 @@ void CsharpServiceHandler::getAstNodeInfo(
   std::stringstream ss;
   ss << file;
   return_.range.file = ss.str();
-  LOG(info) << "csharpQuery.getAstNodeInfo: file = " << ss.str();
+  //LOG(info) << "csharpQuery.getAstNodeInfo: file = " << return_.range.file;
 }
 
 void CsharpServiceHandler::getAstNodeInfoByPosition(
@@ -87,7 +87,7 @@ void CsharpServiceHandler::getSourceText(
         std::string& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "LOG(info)";
+  LOG(info) << "getSourceText";
   core::FileRange fileRange;
 
   csharpQueryHandler.getFileRange(fileRange, astNodeId_);
@@ -168,7 +168,7 @@ void CsharpServiceHandler::getFileDiagramLegend(
         std::string& return_,
         const std::int32_t diagramId_)
 {
-  //LOG(info) << "getFileDiagramLegend";
+  LOG(info) << "getFileDiagramLegend";
 }
 
 void CsharpServiceHandler::getReferenceTypes(
@@ -204,16 +204,11 @@ void CsharpServiceHandler::getReferences(
     });
     
     std::stringstream ss;
-    ss << file;
+    ss << file->id;
     nodeinfo.range.file = ss.str();
     ret.push_back(nodeinfo);
   }
   return_ = ret;
-  for (AstNodeInfo ninfo : return_)
-  {    
-    LOG(info) << "getReferences file = " << ninfo.range.file;
-  }
-
 }
 
 void CsharpServiceHandler::getReferencesInFile(

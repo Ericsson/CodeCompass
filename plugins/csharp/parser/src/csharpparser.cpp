@@ -65,8 +65,8 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   command.append(paths_[0]);
   command.append("' '");
   command.append(paths_[1]);
-  //command.append("' '");
-  //command.append(csharp_path.string());
+  command.append("' '");
+  command.append(csharp_path.string());
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
   LOG(info) << "CSharpParser command: " << command;
