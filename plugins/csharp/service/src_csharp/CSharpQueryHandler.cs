@@ -308,6 +308,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         Dictionary<string, string> ret = new Dictionary<string, string>();
         CsharpAstNode node = queryCsharpAstNode(astNodeIds);    
         ret.Add("AstNode Type", node.RawKind.ToString());    
+        ret.Add("Accessibility", node.Accessibility.ToString());    
         switch(node.AstSymbolType){
             case AstSymbolTypeEnum.Variable:
                 var variable = dbContext.CsharpVariables
@@ -437,14 +438,14 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
                 ret.Add("Inherits from", (int)ReferenceType.INHERIT_FROM);
                 ret.Add("Inherited by", (int)ReferenceType.INHERIT_BY);
-                ret.Add("Data member", (int)ReferenceType.DATA_MEMBER);
+                ret.Add("Data members", (int)ReferenceType.DATA_MEMBER);
                 ret.Add("Methods", (int)ReferenceType.METHOD);
                 ret.Add("Accesors", (int)ReferenceType.ACCESSOR);
                 ret.Add("Operators", (int)ReferenceType.OPERATOR);
                 ret.Add("Constructors", (int)ReferenceType.CONSTRUCTOR);
                 ret.Add("Delegates", (int)ReferenceType.DELEGATE);
                 ret.Add("Destructors", (int)ReferenceType.DESTRUCTOR);
-                ret.Add("Local variables", (int)ReferenceType.LOCAL_VAR);
+                ret.Add("Global variables", (int)ReferenceType.LOCAL_VAR);
                 break;
             case AstSymbolTypeEnum.Struct:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
@@ -457,7 +458,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Constructors", (int)ReferenceType.CONSTRUCTOR);
                 ret.Add("Delegates", (int)ReferenceType.DELEGATE);
                 ret.Add("Destructors", (int)ReferenceType.DESTRUCTOR);
-                ret.Add("Local variables", (int)ReferenceType.LOCAL_VAR);
+                ret.Add("Global variables", (int)ReferenceType.LOCAL_VAR);
                 break;
             case AstSymbolTypeEnum.Namespace:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
