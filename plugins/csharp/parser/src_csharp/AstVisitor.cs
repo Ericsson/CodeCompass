@@ -80,7 +80,7 @@ namespace CSharpParser
             }
             catch (Exception)
             {
-                WriteLine($"Can not get GetDeclaredSymbol of this node: {node}");
+                //WriteLine($"Can not get GetDeclaredSymbol of this node: {node}");
             }
             CsharpAstNode astNode = new CsharpAstNode
             {
@@ -125,7 +125,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Name}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Name}");
             }
 
             CsharpNamespace csharpNamespace = new CsharpNamespace
@@ -159,7 +159,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
@@ -211,7 +211,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
@@ -278,7 +278,7 @@ namespace CSharpParser
                 }
                 catch (Exception)
                 {
-                    WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                    //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
                 }  
                 CsharpEtcEntity csharpEntity = new CsharpEtcEntity
                 {
@@ -309,7 +309,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
@@ -376,7 +376,7 @@ namespace CSharpParser
                 }
                 catch (Exception)
                 {
-                    WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                    //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
                 }
                 CsharpEtcEntity csharpEntity = new CsharpEtcEntity
                 {
@@ -406,7 +406,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
@@ -474,7 +474,7 @@ namespace CSharpParser
                 }
                 catch (Exception)
                 {
-                    WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                    //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
                 }
                 CsharpEtcEntity csharpEntity = new CsharpEtcEntity
                 {
@@ -504,7 +504,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             CsharpMethod method = new CsharpMethod
@@ -529,7 +529,7 @@ namespace CSharpParser
         private void VisitDestructorDecl(DestructorDeclarationSyntax node, CsharpAstNode parent)
         {
             CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
-            // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
+            // //WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
             {
@@ -538,7 +538,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             CsharpMethod method = new CsharpMethod
@@ -568,7 +568,7 @@ namespace CSharpParser
         private void VisitConstructorDecl(ConstructorDeclarationSyntax node, CsharpAstNode parent)
         {
             CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
-            // WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
+            // //WriteLine($"\n ConstructorDeclaration visited: {node.Identifier}");
             string qName = "";
             try
             {
@@ -577,7 +577,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             CsharpMethod method = new CsharpMethod
@@ -607,7 +607,7 @@ namespace CSharpParser
         private void VisitMethodDecl(MethodDeclarationSyntax node, CsharpAstNode parent)
         {
             CsharpAstNode astNode = AstNode(node, AstSymbolTypeEnum.Method);
-           // WriteLine($"\n MethodDeclaration visited: {node.Identifier}");
+           // //WriteLine($"\n MethodDeclaration visited: {node.Identifier}");
             string qName = "";
             try
             {
@@ -616,7 +616,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             string qType = "";
@@ -627,7 +627,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
+                //WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
             }
 
             CsharpMethod method = new CsharpMethod
@@ -670,7 +670,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node}");
+                //WriteLine($"Can not get QualifiedName of this name: {node}");
             }
             string qType = "";
             try
@@ -680,7 +680,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
+                //WriteLine($"Can not get QualifiedType of this Type: {node.ReturnType}");
             }
 
             CsharpMethod csharpOperator = new CsharpMethod
@@ -713,7 +713,7 @@ namespace CSharpParser
         {
             foreach (var param in parameters)
             {
-                // WriteLine($"\t\t{param.Identifier} : {param.Type}");
+                // //WriteLine($"\t\t{param.Identifier} : {param.Type}");
                 CsharpAstNode astNode = AstNode(param, AstSymbolTypeEnum.Variable);
                 string paramQType = "";
                 try
@@ -723,7 +723,7 @@ namespace CSharpParser
                 catch (Exception)
                 {                    
                     FullyParsed = false;
-                    WriteLine($"Can not get QualifiedType of this Type: {param.Type}");
+                    //WriteLine($"Can not get QualifiedType of this Type: {param.Type}");
                 }
                 CsharpVariable varibale = new CsharpVariable
                 {
@@ -757,7 +757,7 @@ namespace CSharpParser
                 catch (Exception)
                 {
                     FullyParsed = false;
-                    WriteLine($"Can not get QualifiedType of this Type: {node.Type} at this node: '{node}'");
+                    //WriteLine($"Can not get QualifiedType of this Type: {node.Type} at this node: '{node}'");
                 }
                 
                 foreach (var member in node.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
@@ -771,8 +771,8 @@ namespace CSharpParser
                     || varQType.Contains("IOrderedEnumerable")  
                     || varQType.Contains("IQueryable")); 
 
-                if (isLINQvar) WriteLine($"LINQvar node: '{node}' QualifiedType: '{varQType}'");
-                if (varQType == "?") WriteLine($"LINQvar ? node: '{node}' QualifiedType: '{varQType}'");
+                //if (isLINQvar) WriteLine($"LINQvar node: '{node}' QualifiedType: '{varQType}'");
+                //if (varQType == "?") WriteLine($"LINQvar ? node: '{node}' QualifiedType: '{varQType}'");
 
                 CsharpVariable csharpVariable = new CsharpVariable
                 {
@@ -800,7 +800,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedType of this Type: {node.Type}");
+                //WriteLine($"Can not get QualifiedType of this Type: {node.Type}");
             }
             CsharpVariable variable = new CsharpVariable
             {
@@ -848,7 +848,7 @@ namespace CSharpParser
                         name = ".Unknown";
                         break;
                     default:
-                        WriteLine($"Can not get Type of this Accesor: {node}");
+                        //WriteLine($"Can not get Type of this Accesor: {node}");
                         break;
                 }
 
@@ -883,7 +883,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
 
             var nameSpaces = DbContext.CsharpNamespaces.Where(n => qName.Contains(n.Name)).ToList();
@@ -921,7 +921,7 @@ namespace CSharpParser
             catch (Exception)
             {
                 FullyParsed = false;
-                WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
+                //WriteLine($"Can not get QualifiedName of this name: {node.Identifier}");
             }
             CsharpEnumMember csharpEnumMember = new CsharpEnumMember
             {
@@ -939,7 +939,7 @@ namespace CSharpParser
                 }
                 catch (FormatException)
                 {
-                    WriteLine($"Unable to parse '{node.EqualsValue.Value}'");
+                    //WriteLine($"Unable to parse '{node.EqualsValue.Value}'");
                 }
             }
             DbContext.CsharpEnumMembers.Add(csharpEnumMember);
@@ -966,7 +966,7 @@ namespace CSharpParser
                             catch (Exception)
                             {
                                 FullyParsed = false;
-                                WriteLine($"Can not get GetDeclaredSymbol of this kind of node: {declaration.GetSyntax().Kind()}");                            
+                                //WriteLine($"Can not get GetDeclaredSymbol of this kind of node: {declaration.GetSyntax().Kind()}");                            
                             }
                             //WriteLine($">>>Used Variable: {node.Expression.GetFirstToken()}");    
                             var info = Model.GetTypeInfo(node).ConvertedType;
@@ -1014,7 +1014,7 @@ namespace CSharpParser
                     catch (Exception)
                     {
                         FullyParsed = false;
-                        WriteLine($"Can not get TypeInfo of this kind of node: {node.Kind()}");                            
+                        //WriteLine($"Can not get TypeInfo of this kind of node: {node.Kind()}");                            
                     }
                     //WriteLine($"IdentifierNameSyntax node: '{node}' decl node: '{declaration.GetSyntax().Kind()}'");
                     var kind = declaration.GetSyntax().Kind() == SyntaxKind.ForEachStatement ?
