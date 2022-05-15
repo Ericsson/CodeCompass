@@ -61,8 +61,15 @@ void CsharpServiceHandler::getAstNodeInfo(
         AstNodeInfo& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "csharpQuery.getAstNodeInfo";
   csharpQueryHandler.getAstNodeInfo(return_, astNodeId_);
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+      FileQuery::path == return_.range.file);
+  });
+  std::stringstream ss;
+  ss << file;
+  return_.range.file = ss.str();
+  LOG(info) << "csharpQuery.getAstNodeInfo: file = " << ss.str();
 }
 
 void CsharpServiceHandler::getAstNodeInfoByPosition(
@@ -188,6 +195,25 @@ void CsharpServiceHandler::getReferences(
 {
   //LOG(info) << "getReferences";
   csharpQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
+  std::vector<AstNodeInfo> ret;
+  for (AstNodeInfo nodeinfo : return_)
+  {
+    model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+    FileQuery::path == nodeinfo.range.file);
+    });
+    
+    std::stringstream ss;
+    ss << file;
+    nodeinfo.range.file = ss.str();
+    ret.push_back(nodeinfo);
+  }
+  return_ = ret;
+  for (AstNodeInfo ninfo : return_)
+  {    
+    LOG(info) << "getReferences file = " << ninfo.range.file;
+  }
+
 }
 
 void CsharpServiceHandler::getReferencesInFile(
