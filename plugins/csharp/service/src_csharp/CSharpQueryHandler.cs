@@ -137,6 +137,125 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.ToList();
     }
 
+    private List<CsharpAstNode> queryParams(CsharpAstNode astNode){        
+        var ret = dbContext.CsharpVariables
+            .Where(e => e.ParentNode.Id == astNode.Id 
+                && e.VariableType == VariableTypeEnum.Parameter)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+
+    private List<CsharpAstNode> queryLocals(CsharpAstNode astNode){        
+        var ret = dbContext.CsharpVariables
+            .Where(e => e.ParentNode.Id == astNode.Id 
+                && e.VariableType == VariableTypeEnum.Variable)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+
+    private List<CsharpAstNode> queryProperties(CsharpAstNode astNode){        
+        var ret = dbContext.CsharpVariables
+            .Where(e => e.ParentNode.Id == astNode.Id 
+                && e.VariableType == VariableTypeEnum.Property)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+
+    private List<CsharpAstNode> queryCalls(CsharpAstNode astNode){
+        var ret = 
+            from invoc in dbContext.CsharpEtcEntitys
+            join node in dbContext.CsharpAstNodes
+                on invoc.DeclaratorNodeId equals node.Id 
+            where node.AstSymbolType == AstSymbolTypeEnum.Method
+                && invoc.AstNode.Path == astNode.Path  
+                && invoc.AstNode.Location_range_start_line >= astNode.Location_range_start_line  
+                && invoc.AstNode.Location_range_end_line <= astNode.Location_range_end_line                     
+            select invoc.AstNode;
+        return ret.ToList();
+    }
+
+    private List<CsharpAstNode> queryCallees(CsharpAstNode astNode){
+        var ret = 
+            from invoc in dbContext.CsharpEtcEntitys
+            join node in dbContext.CsharpAstNodes
+                on invoc.DeclaratorNodeId equals node.Id 
+            where node.AstSymbolType == AstSymbolTypeEnum.Method
+                && invoc.AstNode.Path == astNode.Path  
+                && invoc.AstNode.Location_range_start_line >= astNode.Location_range_start_line  
+                && invoc.AstNode.Location_range_end_line <= astNode.Location_range_end_line       
+            select node;
+        return ret.Distinct().ToList();
+    }
+
+    private List<CsharpAstNode> queryCallers(CsharpAstNode astNode){
+        var invocations = dbContext.CsharpEtcEntitys
+            .Where(e => e.DeclaratorNodeId == astNode.Id)
+            .Select(e => e.AstNode);
+        var ret = 
+            from invoc in invocations
+            join node in dbContext.CsharpAstNodes
+                on invoc.Path equals node.Path 
+            where node.AstSymbolType == AstSymbolTypeEnum.Method     
+                && invoc.Location_range_start_line >= node.Location_range_start_line  
+                && invoc.Location_range_end_line <= node.Location_range_end_line 
+            select node;
+        return ret.Distinct().ToList();
+    }
+
+    private List<CsharpAstNode> queryEnumConsts(CsharpAstNode astNode){
+        var ret = new List<CsharpAstNode>();
+        if (astNode.AstSymbolType == AstSymbolTypeEnum.Enum)
+        {
+            ret = dbContext.CsharpEnumMembers
+            .Where(e => e.ParentNode.Id == astNode.Id)
+            .Select(e => e.AstNode)
+            .ToList();
+        } 
+        else if (astNode.AstSymbolType == AstSymbolTypeEnum.EnumMember)
+        {
+            var parent = dbContext.CsharpEnumMembers
+            .Where(e => e.AstNode.Id == astNode.Id)
+            .Select(e => e.ParentNode).FirstOrDefault();
+
+            ret = dbContext.CsharpEnumMembers
+            .Where(e => e.ParentNode.Id == parent.Id)
+            .Select(e => e.AstNode)
+            .ToList();
+        }
+        
+        return ret;
+    }
+    
+    private List<CsharpAstNode> queryMethods(CsharpAstNode astNode){
+        var ret = dbContext.CsharpMethods
+            .Where(e => e.ParentNode.Id == astNode.Id)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+
+    private List<CsharpAstNode> queryMethodType(CsharpAstNode astNode, MethodTypeEnum type){
+        var ret = dbContext.CsharpMethods
+            .Where(e => e.ParentNode.Id == astNode.Id
+                && e.MethodType == type)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+
+    private List<CsharpAstNode> queryEvents(CsharpAstNode astNode){
+        var ret = dbContext.CsharpEtcEntitys
+            .Where(e => e.ParentNode.Id == astNode.Id
+                && e.EtcEntityType == EtcEntityTypeEnum.Event)
+            .Select(e => e.AstNode)
+            .ToList();
+        return ret;
+    }
+    
+
     public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -285,7 +404,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
     {
         var node = queryCsharpAstNode(astNodeId);
         Dictionary<string, int> ret = new Dictionary<string, int>();
-        ret.Add("Definition", (int)ReferenceType.DEFINITION);
+        //ret.Add("Definition", (int)ReferenceType.DEFINITION);
         ret.Add("Declaration", (int)ReferenceType.DECLARATION);
         ret.Add("Usage", (int)ReferenceType.USAGE);
         switch(node.AstSymbolType){
@@ -306,27 +425,34 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("This calls", (int)ReferenceType.THIS_CALLS);
                 ret.Add("Callee", (int)ReferenceType.CALLEE);
                 ret.Add("Caller", (int)ReferenceType.CALLER);
-                ret.Add("Virtual call", (int)ReferenceType.VIRTUAL_CALL);
-                ret.Add("Function pointer call", (int)ReferenceType.FUNC_PTR_CALL);
                 ret.Add("Parameters", (int)ReferenceType.PARAMETER);
                 ret.Add("Local variables", (int)ReferenceType.LOCAL_VAR);
-                ret.Add("Overrides", (int)ReferenceType.OVERRIDE);
-                ret.Add("Overridden by", (int)ReferenceType.OVERRIDDEN_BY);
-                ret.Add("Return type", (int)ReferenceType.RETURN_TYPE);
                 break;
             case AstSymbolTypeEnum.Class:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
                 ret.Add("Inherits from", (int)ReferenceType.INHERIT_FROM);
                 ret.Add("Inherited by", (int)ReferenceType.INHERIT_BY);
                 ret.Add("Data member", (int)ReferenceType.DATA_MEMBER);
-                ret.Add("Method", (int)ReferenceType.METHOD);
+                ret.Add("Methods", (int)ReferenceType.METHOD);
+                ret.Add("Accesors", (int)ReferenceType.ACCESSOR);
+                ret.Add("Operators", (int)ReferenceType.OPERATOR);
+                ret.Add("Constructors", (int)ReferenceType.CONSTRUCTOR);
+                ret.Add("Delegates", (int)ReferenceType.DELEGATE);
+                ret.Add("Destructors", (int)ReferenceType.DESTRUCTOR);
+                ret.Add("Local variables", (int)ReferenceType.LOCAL_VAR);
                 break;
             case AstSymbolTypeEnum.Struct:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
                 ret.Add("Inherits from", (int)ReferenceType.INHERIT_FROM);
                 ret.Add("Inherited by", (int)ReferenceType.INHERIT_BY);
                 ret.Add("Data member", (int)ReferenceType.DATA_MEMBER);
-                ret.Add("Method", (int)ReferenceType.METHOD);
+                ret.Add("Methods", (int)ReferenceType.METHOD);
+                ret.Add("Accesors", (int)ReferenceType.ACCESSOR);
+                ret.Add("Operators", (int)ReferenceType.OPERATOR);
+                ret.Add("Constructors", (int)ReferenceType.CONSTRUCTOR);
+                ret.Add("Delegates", (int)ReferenceType.DELEGATE);
+                ret.Add("Destructors", (int)ReferenceType.DESTRUCTOR);
+                ret.Add("Local variables", (int)ReferenceType.LOCAL_VAR);
                 break;
             case AstSymbolTypeEnum.Namespace:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS);
@@ -335,6 +461,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret.Add("Enum constants", (int)ReferenceType.ENUM_CONSTANTS);
                 break;
             case AstSymbolTypeEnum.EnumMember:                
+                ret.Add("Enum constants", (int)ReferenceType.ENUM_CONSTANTS);
                 break;
             case AstSymbolTypeEnum.EtcEntity:
                 ret.Add("Aliases", (int)ReferenceType.ALIAS); 
@@ -365,6 +492,48 @@ public class CSharpQueryHandler : CsharpService.IAsync
             case ReferenceType.EVALUATION:
                 ret = queryEvals(node).Count();
                 break;
+            case ReferenceType.PARAMETER:
+                ret = queryParams(node).Count();
+                break;
+            case ReferenceType.LOCAL_VAR:
+                ret = queryLocals(node).Count();
+                break;
+            case ReferenceType.DATA_MEMBER:
+                ret = queryProperties(node).Count();
+                break;
+            case ReferenceType.THIS_CALLS:
+                ret = queryCalls(node).Count();
+                break;
+            case ReferenceType.CALLEE:
+                ret = queryCallees(node).Count();
+                break;
+            case ReferenceType.CALLER:
+                ret = queryCallers(node).Count();
+                break;
+            case ReferenceType.ENUM_CONSTANTS:
+                ret = queryEnumConsts(node).Count();
+                break;
+            case ReferenceType.METHOD:
+                ret = queryMethods(node).Count();
+                break;
+            case ReferenceType.CONSTRUCTOR:
+                ret = queryMethodType(node, MethodTypeEnum.Constructor).Count();
+                break;
+            case ReferenceType.DESTRUCTOR:
+                ret = queryMethodType(node, MethodTypeEnum.Destuctor).Count();
+                break;
+            case ReferenceType.OPERATOR:
+                ret = queryMethodType(node, MethodTypeEnum.Operator).Count();
+                break;
+            case ReferenceType.ACCESSOR:
+                ret = queryMethodType(node, MethodTypeEnum.Accessor).Count();
+                break;
+            case ReferenceType.DELEGATE:
+                ret = queryMethodType(node, MethodTypeEnum.Delegate).Count();
+                break;
+            case ReferenceType.EVENT:
+                ret = queryEvents(node).Count();
+                break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 
                     " ReferenceType is unhandled");
@@ -389,6 +558,48 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 break;
             case ReferenceType.EVALUATION:
                 ret = createAstNodeInfoList(queryEvals(node));
+                break;
+            case ReferenceType.PARAMETER:
+                ret = createAstNodeInfoList(queryParams(node));
+                break;
+            case ReferenceType.LOCAL_VAR:
+                ret = createAstNodeInfoList(queryLocals(node));
+                break;
+            case ReferenceType.DATA_MEMBER:
+                ret = createAstNodeInfoList(queryProperties(node));
+                break;
+            case ReferenceType.THIS_CALLS:
+                ret = createAstNodeInfoList(queryCalls(node));
+                break;
+            case ReferenceType.CALLEE:
+                ret = createAstNodeInfoList(queryCallees(node));
+                break;
+            case ReferenceType.CALLER:
+                ret = createAstNodeInfoList(queryCallers(node));
+                break;
+            case ReferenceType.ENUM_CONSTANTS:
+                ret = createAstNodeInfoList(queryEnumConsts(node));
+                break;
+            case ReferenceType.METHOD:
+                ret = createAstNodeInfoList(queryMethods(node));
+                break;
+            case ReferenceType.CONSTRUCTOR:
+                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Constructor));
+                break;
+            case ReferenceType.DESTRUCTOR:
+                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Destuctor));
+                break;
+            case ReferenceType.OPERATOR:
+                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Operator));
+                break;
+            case ReferenceType.ACCESSOR:
+                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Accessor));
+                break;
+            case ReferenceType.DELEGATE:
+                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Delegate));
+                break;
+            case ReferenceType.EVENT:
+                ret = createAstNodeInfoList(queryEvents(node));
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 

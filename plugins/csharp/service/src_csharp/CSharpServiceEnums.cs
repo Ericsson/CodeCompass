@@ -42,10 +42,11 @@ enum ReferenceType
 
     OVERRIDDEN_BY, /*!< This option returns the overrides of a function. */
 
-    READ, /*!< This option returns the places where a variable is read. */
+    USAGEREAD, /*!< This option returns the places where a variable is read. */
 
     WRITE, /*!< This option returns the places where a variable is written. */
 
+    READ,
     TYPE, /*!< This option returns the type of a variable. */
 
     ALIAS, /*!< Types may have aliases, e.g. by typedefs. */
@@ -70,7 +71,19 @@ enum ReferenceType
 
     EVALUATION, // LINQ evaluation
     
-    DATA_MODIFICATION // LINQ underlying datadtruct is modified
+    DATA_MODIFICATION, // LINQ underlying datadtruct is modified
+
+    CONSTRUCTOR,
+
+    DESTRUCTOR,
+
+    OPERATOR,
+
+    ACCESSOR,
+
+    DELEGATE,
+
+    EVENT
   };
 
   enum FileReferenceType
