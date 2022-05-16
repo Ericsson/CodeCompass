@@ -409,7 +409,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
     {
         var node = queryCsharpAstNode(astNodeId);
         Dictionary<string, int> ret = new Dictionary<string, int>();
-        //ret.Add("Definition", (int)ReferenceType.DEFINITION);
+        ret.Add("Definition", (int)ReferenceType.DEFINITION);
         ret.Add("Declaration", (int)ReferenceType.DECLARATION);
         ret.Add("Usage", (int)ReferenceType.USAGE);
         switch(node.AstSymbolType){
@@ -491,6 +491,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
             case ReferenceType.USAGE:
                 ret = queryInvocations(node).Count();
                 break;
+            case ReferenceType.DEFINITION:
             case ReferenceType.DECLARATION:
                 ret = queryDeclarators(node).Count();
                 break;
@@ -558,6 +559,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
             case ReferenceType.USAGE:
                 ret = createAstNodeInfoList(queryInvocations(node));
                 break;
+            case ReferenceType.DEFINITION:
             case ReferenceType.DECLARATION:
                 ret = createAstNodeInfoList(queryDeclarators(node));
                 break;
