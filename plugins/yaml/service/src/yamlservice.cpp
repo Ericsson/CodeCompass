@@ -43,6 +43,24 @@ std::string graphHtmlTag(
     .append(">");
 }
 
+void YamlServiceHandler::getYamlFileInfo(
+    std::string& _return,
+    const core::FileId& fileId)
+{
+  _transaction([&, this](){
+    typedef odb::query<model::Yaml> YamlQuery;
+    typedef odb::result<model::Yaml> YamlResult;
+
+    YamlResult yamlInfo = _db->query<model::Yaml>(
+          YamlQuery::file == std::stoull(fileId));
+    std::stringstream ss;
+    ss << yamlInfo.begin()->id << " " << yamlInfo.begin()->type;
+    if (!yamlInfo.empty())
+      _return = "<div class=\"main-doc\">" + ss.str()
+        + "</div>";
+  });
+}
+
 
 void YamlServiceHandler::getYamlFileDiagram(
     std::string& _return,
@@ -52,23 +70,18 @@ void YamlServiceHandler::getYamlFileDiagram(
     std::string colAttr = "border='0' align='left'";
     std::string label = "<table border='1' cellspacing='0'>";
     _transaction([&, this](){
-        typedef odb::result<model::File> FileResult;
-        typedef odb::query<model::File> FileQuery;
         typedef odb::result<model::YamlContent> YamlResult;
         typedef odb::query<model::YamlContent> YamlQuery;
 
-        YamlResult yamlContent = _db->query<model::YamlContent>();
-        // YamlQuery::file == static_cast<File::FileId>(fileId));
+        YamlResult yamlContent = _db->query<model::YamlContent>(
+            YamlQuery::file == std::stoull(fileId));
         core::FileInfo fileInfo;
         _projectService.getFileInfo(fileInfo, fileId);
         util::Graph::Node node = addNode(graph_, fileInfo);
         
-
-        ///GetDetailedClassNodeLabel
         
         for (const model::YamlContent& yc : yamlContent)
         {
-            ///core::FileId fileId = std::to_string(metric.file);
             std::string content = util::escapeHtml(yc.key + " : " + yc.data);
             label += graphHtmlTag("tr",
                 graphHtmlTag("td", content, colAttr));
@@ -76,12 +89,8 @@ void YamlServiceHandler::getYamlFileDiagram(
         label.append("</table>");
         
         graph_.setNodeAttribute(node, "content", label, true);
-        //  &&
-        // YamlQuery::file.in_range(
-        //     descendantFids.begin(), descendantFids.end()));
 
     });
-    // LOG(info) << "Label is " << label << std::endl;
     _return = label;
 }
 
@@ -105,12 +114,8 @@ util::Graph::Node YamlServiceHandler::addNode(
     std::string ext = boost::filesystem::extension(fileInfo_.path);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    if (ext == ".yaml")/// || ext == ".c" || ext == ".cc"  || ext == ".c")
+    if (ext == ".yaml" || ext == ".yml")
       decorateNode(graph_, node, sourceFileNodeDecoration);
-    // else if (ext == ".hpp" || ext == ".hxx" || ext == ".hh"  || ext == ".h")
-    //   decorateNode(graph_, node, headerFileNodeDecoration);
-    // else if (ext == ".o"  || ext == ".so" || ext == ".dll")
-    //   decorateNode(graph_, node, objectFileNodeDecoration);
   }
 
   return node;

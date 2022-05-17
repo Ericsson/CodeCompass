@@ -55,4 +55,49 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     type : viewHandler.moduleType.FileManagerContextMenu
   });
 
+  var fileInfoHandler = {
+    id : 'yaml-file-info-handler',
+
+    getInfo : function (diagramType, fileId, callback) {
+      model.yamlservice.getYamlFileInfo(fileId, callback);
+    },
+
+    mouseOverInfo : function (diagramType, fileId) {
+      return {
+        fileId : fileId,
+        selection : [1,1,1,1]
+      };
+    }
+  };
+
+  viewHandler.registerModule(fileInfoHandler, {
+    type : viewHandler.moduleType.Diagram
+  });
+
+  var infobox = {
+    id : 'yaml-file-info',
+    render : function (fileInfo) {
+      return new MenuItem({
+        label : 'YamlInfo',
+        onClick : function () {
+          topic.publish('codecompass/YamlFileInfo', {
+            handler : 'yaml-file-info-handler',
+            diagramType : 1,
+            node : fileInfo.id
+          })
+
+          // if (window.gtag) {
+          //     window.gtag ('event', 'documentation', {
+          //     'event_category' : urlHandler.getState('wsid')
+          //   });
+          // }
+        }
+      });
+    }
+  };
+
+  viewHandler.registerModule(infobox, {
+    type : viewHandler.moduleType.TextContextMenu
+  });
+
 });

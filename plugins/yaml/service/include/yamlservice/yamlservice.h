@@ -46,6 +46,10 @@ public:
     std::string& _return,
     const core::FileId& fileId);
 
+  void getYamlFileInfo(
+    std::string& _return,
+    const core::FileId& fileId);
+
   util::Graph::Node addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_);

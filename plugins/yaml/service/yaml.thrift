@@ -17,4 +17,7 @@ service YamlService
   string getYamlFileDiagram(
     1:common.FileId fileId)
 
+  string getYamlFileInfo(
+    1:common.FileId fileId)
+
 }
