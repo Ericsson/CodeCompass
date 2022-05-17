@@ -21,6 +21,9 @@ struct YamlContent
   std::string key;
 
   #pragma db not_null
+  std::string parent;
+
+  #pragma db not_null
   std::string data;
 
   #pragma db not_null

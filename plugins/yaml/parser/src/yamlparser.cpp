@@ -2,6 +2,7 @@
 #include <fstream>
 #include <memory>
 #include <functional>
+#include <regex>
 
 #include <boost/filesystem.hpp>
 
@@ -207,7 +208,55 @@ util::DirIterCallback YamlParser::getParserCallback()
 bool YamlParser::accept(const std::string& path_) const
 {
   std::string ext = boost::filesystem::extension(path_);
-  return ext == ".yaml" || ext == "yml";
+  return ext == ".yaml" || ext == ".yml";
+}
+
+std::string split (const std::string &s, bool isSeq) {
+    std::vector<std::string> result;
+
+    std::stringstream ss (s);
+    std::string tmp;
+    getline(ss, tmp, '\n');
+    std::string item;
+
+    while (getline (ss, item, '\n')) {
+        if (isSeq) {
+            item = std::regex_replace(item, std::regex("^\\s+-"), std::string(""));
+        }
+        result.push_back (item);
+    }
+    std::string list = "[";
+    for (auto s : result)
+        list += s + ",";
+    list.pop_back();
+    list += "]";
+    return list;
+}
+void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<keyData> &vec)
+{
+    
+    auto getkey = [](ryml::NodeRef node){ return node.has_key() ? node.key() : ryml::csubstr{}; };
+    auto getval = [](ryml::NodeRef node){ return node.has_val() ? node.val() : ryml::csubstr{}; };
+    if(!node.is_container())
+        vec.push_back(keyData(getkey(node), parent, getval(node)));
+    else {
+        std::string src = ryml::emitrs<std::string>(node);
+        if (node.is_seq())
+        {
+          std::string data = split(src, true); 
+          vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data) ));
+          return;
+        }
+        else if (node.is_map())
+        {
+          std::string data = split(src, false); 
+          vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data)));
+          for (ryml::NodeRef n : node.children())
+          {
+              getstr(n, getkey(node), vec);
+          }
+        }
+    }
 }
 
 /**
@@ -241,21 +290,24 @@ void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
     type = model::Yaml::OTHER;
   }
   ryml::NodeRef root = yamlTree.rootref();
+  getstr(root, "", keysDataPairs);
   
-  
-  for (ryml::NodeRef n : root.children())
-  {
-    keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
-  }
+  // for (ryml::NodeRef n : root.children())
+  // {
+  //   keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
+  // }
+  int i = 0;
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]{
     for (keyData kd : keysDataPairs)
     {
+      i++;
+      if (i==1) continue;
       LOG(info) << "In PersistData: YamlKeydata is: " << kd;
    
       model::YamlContent yamlContent;
-      yamlContent.file = file_->id; ///fileId_;
-      if (yamlTree[kd.key].is_keyval())
+      yamlContent.file = file_->id;
+      // if (yamlTree[kd.key].is_keyval())
       {
         std::stringstream ss;
         ss << kd.key;
@@ -263,44 +315,45 @@ void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
         ss.str("");
         ss << kd.data;
         yamlContent.data = ss.str();
+        yamlContent.parent = kd.parent;
       }
-      else if (root[kd.key].is_seq())
-      {
-        LOG(info) << "It is a sequence"<<std::endl;
-        /*for (auto it = yamlTree[kd.key].begin(); it != yamlTree[kd.key].end(); ++it)
-        {
-          LOG(warning) << *it;
-        }*/
-        std::function<bool(const ryml::NodeRef*, size_t)> print;
-        print = [&, this](const ryml::NodeRef* node, size_t ind) -> bool
-        {
-          if (node->has_children())
-            for (const auto c : node->children())
-            {
-              LOG(warning) << c;
-              print(&c, ind);
-            }
-          else
-          {
-            //LOG(warning) << node->val();
-          }
-           return true;
-        };
-        for (auto c : yamlTree[kd.key].children())
-        {
-          c.visit(print, 3);
-        }
-        std::stringstream ss;
-        ss << kd.key;
-        yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
-        ss.str("");
-        for (const auto& v : yamlTree[kd.key])
-        {
-          ss << v << " ";
-        }
+      // else if (root[kd.key].is_seq())
+      // {
+      //   LOG(info) << "It is a sequence"<<std::endl;
+      //   /*for (auto it = yamlTree[kd.key].begin(); it != yamlTree[kd.key].end(); ++it)
+      //   {
+      //     LOG(warning) << *it;
+      //   }*/
+      //   std::function<bool(const ryml::NodeRef*, size_t)> print;
+      //   print = [&, this](const ryml::NodeRef* node, size_t ind) -> bool
+      //   {
+      //     if (node->has_children())
+      //       for (const auto c : node->children())
+      //       {
+      //         LOG(warning) << c;
+      //         print(&c, ind);
+      //       }
+      //     else
+      //     {
+      //       //LOG(warning) << node->val();
+      //     }
+      //      return true;
+      //   };
+      //   for (auto c : yamlTree[kd.key].children())
+      //   {
+      //     c.visit(print, 3);
+      //   }
+      //   std::stringstream ss;
+      //   ss << kd.key;
+      //   yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
+      //   ss.str("");
+      //   for (const auto& v : yamlTree[kd.key])
+      //   {
+      //     ss << v << " ";
+      //   }
 
-        yamlContent.data = ss.str();
-      }
+      //   yamlContent.data = ss.str();
+      // }
       _ctx.db->persist(yamlContent);
     }
     model::Yaml yaml;

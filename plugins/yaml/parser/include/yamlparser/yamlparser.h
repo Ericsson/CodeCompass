@@ -23,28 +23,33 @@ public:
 
 private:
   util::DirIterCallback getParserCallback();
-  // enum Type
-  // {
-  //   KUBERNETES_CONFIG,
-  //   DOCKERFILE,
-  //   HELM_CHART,
-  //   CI,
-  //   OTHER
-  // };
   struct keyData {
-    ryml::csubstr key;
-    // ryml::csubstr parent;
-    ryml::csubstr data;
+    std::string key; // store as std::string!!!
+    std::string parent;
+    std::string data;
     keyData() {}
-    keyData(ryml::csubstr k, ryml::csubstr d) : key(k), data(d) {}
+    keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d) : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
 
     friend std::ostream& operator<<(std::ostream &os, const keyData &kd)
     {
-      os << kd.key << " " << kd.data << std::endl;
+      os << kd.key << " " << kd.parent << "  " << kd.data << std::endl;
       return os;
     }
   };
+  // struct keyData {
+  //   ryml::csubstr key;
+  //   ryml::csubstr parent;
+  //   ryml::csubstr data;
+  //   keyData() {}
+  //   keyData(ryml::csubstr k, ryml::csubstr d) : key(k), data(d) {}
 
+  //   friend std::ostream& operator<<(std::ostream &os, const keyData &kd)
+  //   {
+  //     os << kd.key << " " << kd.data << std::endl;
+  //     return os;
+  //   }
+  // };
+  void getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<keyData> &vec);
   bool accept(const std::string& path_) const;
   bool isCI (std::string const &filename, std::string const &ending) 
   {
