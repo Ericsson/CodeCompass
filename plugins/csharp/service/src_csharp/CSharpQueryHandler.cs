@@ -20,31 +20,31 @@ using CSharpParser.model;
 public class CSharpQueryHandler : CsharpService.IAsync
 {        
     private CsharpDbContext dbContext;
-    public CSharpQueryHandler(string connenctionString) {
-        //Converting the connectionstring into entiy framwork style connectionstring
+    public CSharpQueryHandler(string connenctionString)
+    {
+        // Converting the connectionstring into Entity Framework style connection string
         connenctionString = connenctionString.Substring(connenctionString.IndexOf(':')+1);
         connenctionString = connenctionString.Replace("user", "username");
         string[] properties = connenctionString.Split(';');
         string csharpConnenctionString = "";
-        for(int i = 0; i<properties.Length; ++i) {
-            if (properties[i].Contains("database=")) {
-                csharpConnenctionString += "Database=codecompass_csharp_db";
-            } else {
-                csharpConnenctionString += properties[i].Substring(0,1).ToUpper() 
-                    + properties[i].Substring(1);
-            }
-            if (i<properties.Length-1){
+        for (int i = 0; i < properties.Length; ++i)
+        {
+            csharpConnenctionString += properties[i].Substring(0,1).ToUpper()
+                + properties[i].Substring(1);
+            if (i < properties.Length-1)
+            {
                 csharpConnenctionString += ";";
             }
         }
 
-        //WriteLine($"[CSharpService] Converted connectionstring:\n{csharpConnenctionString}");
-
-        dbContext = new CsharpDbContext(csharpConnenctionString);
-        dbContext.Database.EnsureCreated();
+        var options = new DbContextOptionsBuilder<CsharpDbContext>()
+                    .UseNpgsql(csharpConnenctionString)
+                    .Options;
+        dbContext = new CsharpDbContext(options);
     }
 
-    private language.AstNodeInfo createAstNodeInfo(CsharpAstNode node){
+    private language.AstNodeInfo createAstNodeInfo(CsharpAstNode node)
+    {
         language.AstNodeInfo ret = new language.AstNodeInfo();
         ret.Id = node.Id.ToString();
         ret.AstNodeValue = node.AstValue;
@@ -60,28 +60,35 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<language.AstNodeInfo> createAstNodeInfoList(List<CsharpAstNode> nodeList){
+    private List<language.AstNodeInfo> createAstNodeInfoList(List<CsharpAstNode> nodeList)
+    {
         var ret = new List<language.AstNodeInfo>();
-        foreach(var node in nodeList){
+        foreach (var node in nodeList)
+        {
             var astNodeInfo = createAstNodeInfo(node);
             ret.Add(astNodeInfo);
-            //System.Console.WriteLine($"[CSharpService] createAstNodeInfoList got this: {astNodeInfo.AstNodeValue}");
         }
 
         return ret;
     }
 
-    private FileRange getFileRange(CsharpAstNode node) {
+    private FileRange getFileRange(CsharpAstNode node)
+    {
         FileRange fileRange = new FileRange();
-        Position startPosition = new Position{
+        Position startPosition = new Position
+        {
             Line = (int)node.Location_range_start_line,
-            Column = (int)node.Location_range_start_column};
+            Column = (int)node.Location_range_start_column
+        };
 
-        Position endPosition = new Position{
+        Position endPosition = new Position
+        {
             Line = (int)node.Location_range_end_line,
-            Column = (int)node.Location_range_end_column};
+            Column = (int)node.Location_range_end_column
+        };
 
-        Range range = new Range{
+        Range range = new Range
+        {
             Startpos = startPosition,
             Endpos = endPosition
         };
@@ -92,13 +99,17 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return fileRange;
     }
 
-    private CsharpAstNode queryCsharpAstNode(string astNodeId){
+    private CsharpAstNode queryCsharpAstNode(string astNodeId)
+    {
         CsharpAstNode ret;
-        try{
+        try
+        {
             ret = dbContext.CsharpAstNodes
                 .Where(a => a.Id.ToString()==astNodeId)
                 .First();
-        } catch(InvalidOperationException e){
+        }
+        catch (InvalidOperationException e)
+        {
             System.Console.WriteLine($"[CSharpService error] There are no AstNode with this ID:{astNodeId}");
             ret = new CsharpAstNode();
             ret.Id = 0;
@@ -106,7 +117,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryInvocations(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryInvocations(CsharpAstNode astNode)
+    {
         var ret = dbContext.CsharpEtcEntitys
             .Where(e => e.DeclaratorNodeId == astNode.Id)
             .Select(e => e.AstNode)
@@ -114,11 +126,13 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryDeclarators(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryDeclarators(CsharpAstNode astNode)
+    {
         var ids = dbContext.CsharpEtcEntitys
             .Where(e => e.AstNode.Id == astNode.Id)
             .Select(e => e.DeclaratorNodeId.ToString())
             .ToList();
+
         if (ids.Count == 0)
         {
             return new List<CsharpAstNode>();
@@ -129,7 +143,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         }
     }
 
-    private List<CsharpAstNode> queryEvals(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryEvals(CsharpAstNode astNode)
+    {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
             join variable in dbContext.CsharpVariables 
@@ -142,7 +157,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.ToList();
     }
 
-    private List<CsharpAstNode> queryParams(CsharpAstNode astNode){        
+    private List<CsharpAstNode> queryParams(CsharpAstNode astNode)
+    {
         var ret = dbContext.CsharpVariables
             .Where(e => e.ParentNode.Id == astNode.Id 
                 && e.VariableType == VariableTypeEnum.Parameter)
@@ -160,7 +176,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryProperties(CsharpAstNode astNode){        
+    private List<CsharpAstNode> queryProperties(CsharpAstNode astNode)
+    {
         var ret = dbContext.CsharpVariables
             .Where(e => e.ParentNode.Id == astNode.Id 
                 && e.VariableType == VariableTypeEnum.Property)
@@ -169,7 +186,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryCalls(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryCalls(CsharpAstNode astNode)
+    {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
             join node in dbContext.CsharpAstNodes
@@ -182,7 +200,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.ToList();
     }
 
-    private List<CsharpAstNode> queryCallees(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryCallees(CsharpAstNode astNode)
+    {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
             join node in dbContext.CsharpAstNodes
@@ -195,7 +214,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.Distinct().ToList();
     }
 
-    private List<CsharpAstNode> queryCallers(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryCallers(CsharpAstNode astNode)
+    {
         var invocations = dbContext.CsharpEtcEntitys
             .Where(e => e.DeclaratorNodeId == astNode.Id)
             .Select(e => e.AstNode);
@@ -210,7 +230,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.Distinct().ToList();
     }
 
-    private List<CsharpAstNode> queryEnumConsts(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryEnumConsts(CsharpAstNode astNode)
+    {
         var ret = new List<CsharpAstNode>();
         if (astNode.AstSymbolType == AstSymbolTypeEnum.Enum)
         {
@@ -234,7 +255,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
     
-    private List<CsharpAstNode> queryMethods(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryMethods(CsharpAstNode astNode)
+    {
         var ret = dbContext.CsharpMethods
             .Where(e => e.ParentNode.Id == astNode.Id)
             .Select(e => e.AstNode)
@@ -242,7 +264,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryMethodType(CsharpAstNode astNode, MethodTypeEnum type){
+    private List<CsharpAstNode> queryMethodType(CsharpAstNode astNode, MethodTypeEnum type)
+    {
         var ret = dbContext.CsharpMethods
             .Where(e => e.ParentNode.Id == astNode.Id
                 && e.MethodType == type)
@@ -251,7 +274,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryEvents(CsharpAstNode astNode){
+    private List<CsharpAstNode> queryEvents(CsharpAstNode astNode)
+    {
         var ret = dbContext.CsharpEtcEntitys
             .Where(e => e.ParentNode.Id == astNode.Id
                 && e.EtcEntityType == EtcEntityTypeEnum.Event)
@@ -272,9 +296,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
         Position pos_,
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        //System.Console.WriteLine("[CSharpService] getAstNodeInfoByPositionAsync"+
-        //$" pos = {pos_.Line}:{pos_.Column}");
-        
         var nodes = dbContext.CsharpAstNodes
             .Where(a => 
                 a.Path == path_ &&
@@ -284,7 +305,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ((a.Location_range_end_line == pos_.Line &&
                   a.Location_range_end_column > pos_.Column) ||
                   a.Location_range_end_line > pos_.Line));
-        if (nodes.Count() == 0){
+        if (nodes.Count() == 0)
+        {
             System.Console.WriteLine("[CSharpService error] There are no AstNode at this position!");
             return await Task.FromResult(new language.AstNodeInfo());
         } 
@@ -292,8 +314,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
         var minNode = nodes.FirstOrDefault();
         foreach (var node in nodes.ToList())
         {
-            //System.Console.WriteLine($"\tnode range: {node.Location_range_start_line}:{node.Location_range_start_column} - "+
-            //$"{node.Location_range_end_line}:{node.Location_range_end_column}");
             if (node.isRangeSmaller(minNode))
                 minNode = node;            
         }
@@ -304,11 +324,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        //System.Console.WriteLine("[CSharpService] getPropertiesAsync");
         Dictionary<string, string> ret = new Dictionary<string, string>();
         CsharpAstNode node = queryCsharpAstNode(astNodeIds);    
         ret.Add("AstNode Type", node.RawKind.ToString());    
-        switch(node.AstSymbolType){
+        switch (node.AstSymbolType)
+        {
             case AstSymbolTypeEnum.Variable:
                 var variable = dbContext.CsharpVariables
                     .Where(v => v.AstNode == node)
@@ -395,6 +415,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getDocumentationAsync");
+        CsharpAstNode node = queryCsharpAstNode(astNodeId);
         return await Task.FromResult("Documentation");
     }
 
@@ -412,7 +433,8 @@ public class CSharpQueryHandler : CsharpService.IAsync
         ret.Add("Definition", (int)ReferenceType.DEFINITION);
         ret.Add("Declaration", (int)ReferenceType.DECLARATION);
         ret.Add("Usage", (int)ReferenceType.USAGE);
-        switch(node.AstSymbolType){
+        switch (node.AstSymbolType)
+        {
             case AstSymbolTypeEnum.Variable:    
                 var variable = dbContext.CsharpVariables
                     .Where(v => v.AstNode == node)

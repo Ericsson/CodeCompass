@@ -5,11 +5,7 @@ namespace CSharpParser.model
 {
     class CsharpDbContext : DbContext
     {
-
-        string ConnenctionString;
-        public CsharpDbContext(string connectionString){
-            ConnenctionString = connectionString;
-        }
+        public CsharpDbContext(DbContextOptions options) : base(options) { }
         
         public DbSet<CsharpAstNode> CsharpAstNodes { get; set; }
         public DbSet<CsharpNamespace> CsharpNamespaces { get; set; }
@@ -21,12 +17,6 @@ namespace CSharpParser.model
         public DbSet<CsharpEnumMember> CsharpEnumMembers { get; set; }        
         public DbSet<CsharpEtcEntity> CsharpEtcEntitys { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql(ConnenctionString);
-            optionsBuilder.EnableSensitiveDataLogging();
-        }
-           // => optionsBuilder.UseNpgsql("Host=localhost;Database=postgres;Username=compass;Password=1234");
 
     }
 
