@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
 using System.Collections;
@@ -13,70 +14,69 @@ namespace CSharpParser
 {
     class Program
     {
-        
+        //private readonly CsharpDbContext _context;
+        private static string _rootDir = "";
+        private static string _buildDir = "";
+        private static string _buildDirBase = "";
+        private static string _connectionString = "";
+
         static int Main(string[] args)
         {
-            string rootDir = "";
-            string buildDir = "";
-            string buildDir_base = "";
-            string connenctionString = "";
             int threadNum = 4;
-            if (args.Length < 3){
+            if (args.Length < 3)
+            {
                 WriteLine("Missing command-line arguments in CSharpParser!");                              
                 return 1;
-            } else if (args.Length == 3){
-                connenctionString = args[0].Replace("'", "");
-                rootDir = args[1].Replace("'", "");
-                buildDir = args[2].Replace("'", "");
-            } else if (args.Length == 4){
-                connenctionString = args[0].Replace("'", "");
-                rootDir = args[1].Replace("'", "");
-                buildDir = args[2].Replace("'", "");
-                bool succes = int.TryParse(args[3], out threadNum);
-                if (!succes){
+            }
+            else if (args.Length == 3)
+            {
+                _connectionString = args[0].Replace("'", "");
+                _rootDir = args[1].Replace("'", "");
+                _buildDir = args[2].Replace("'", "");
+            }
+            else if (args.Length == 4)
+            {
+                _connectionString = args[0].Replace("'", "");
+                _rootDir = args[1].Replace("'", "");
+                _buildDir = args[2].Replace("'", "");
+                bool success = int.TryParse(args[3], out threadNum);
+                if (!success){
                     WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
                 }
-            } else if (args.Length == 5){
-                connenctionString = args[0].Replace("'", "");
-                rootDir = args[1].Replace("'", "");
-                buildDir = args[2].Replace("'", "");
-                buildDir_base = args[3].Replace("'", "");
-                bool succes = int.TryParse(args[4], out threadNum);
-                if (!succes){
+            }
+            else if (args.Length == 5)
+            {
+                _connectionString = args[0].Replace("'", "");
+                _rootDir = args[1].Replace("'", "");
+                _buildDir = args[2].Replace("'", "");
+                _buildDirBase = args[3].Replace("'", "");
+                bool success = int.TryParse(args[4], out threadNum);
+                if (!success)
+                {
                     WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
                 }            
-            } else if (args.Length > 5){
+            }
+            else if (args.Length > 5)
+            {
                 WriteLine("Too many command-line arguments in CSharpParser!");
                 return 1;
             }
 
             //Converting the connectionstring into entiy framwork style connectionstring
-            connenctionString = connenctionString.Substring(connenctionString.IndexOf(':')+1);
-            connenctionString = connenctionString.Replace("user", "username");
-            string[] properties = connenctionString.Split(';');
-            string csharpConnenctionString = "";
-            for(int i = 0; i<properties.Length; ++i) {
-                if (properties[i].Contains("database=")) {
-                    csharpConnenctionString += "Database=codecompass_csharp_db";
-                } else {
-                    csharpConnenctionString += properties[i].Substring(0,1).ToUpper() 
-                        + properties[i].Substring(1);
-                }
-                if (i<properties.Length-1){
-                    csharpConnenctionString += ";";
-                }
-            }
-            //WriteLine($"Converted connectionstring:\n{csharpConnenctionString}");
+            string csharpConnectionString = transformConnectionString();
 
-            CsharpDbContext dbContext = new CsharpDbContext(csharpConnenctionString);
-            dbContext.Database.EnsureDeleted();
-            dbContext.Database.EnsureCreated();
+            var options = new DbContextOptionsBuilder<CsharpDbContext>()
+                            .UseNpgsql(csharpConnectionString)
+                            .Options;
 
+            CsharpDbContext _context = new CsharpDbContext(options);
+            _context.Database.Migrate();
 
-            IEnumerable<string> allFiles = GetSourceFilesFromDir(rootDir, ".cs");
-            IEnumerable<string> assemblies = GetSourceFilesFromDir(buildDir, ".dll");
+            IEnumerable<string> allFiles = GetSourceFilesFromDir(_rootDir, ".cs");
+            IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
             IEnumerable<string> assemblies_base = assemblies;
-            if(args.Length == 5) assemblies_base = GetSourceFilesFromDir(buildDir_base, ".dll");
+            if (args.Length == 5)
+                assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll");
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -85,6 +85,7 @@ namespace CSharpParser
                 SyntaxTree tree = CSharpSyntaxTree.ParseText(programText, null, file);
                 trees.Add(tree);
             }
+
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
                 .AddSyntaxTrees(trees);
@@ -97,50 +98,39 @@ namespace CSharpParser
             {
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
-            
-            /*
-            foreach (SyntaxTree tree in trees)
-            {
-                SemanticModel model = compilation.GetSemanticModel(tree);
-                var visitor = new AstVisitor(dbContext, model, tree);
-                visitor.Visit(tree.GetCompilationUnitRoot());                
-                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
-            }           
 
-            dbContext.SaveChanges();
-            */
-            
-            var runtask = ParalellRun(csharpConnenctionString, threadNum, trees, compilation);
+            var runtask = ParalellRun(csharpConnectionString, threadNum, trees, compilation);
             int ret = runtask.Result;
             
             return 0;
         }
 
-        private static async Task<int> ParalellRun(string csharpConnenctionString, int threadNum,
+        private static async Task<int> ParalellRun(string csharpConnectionString, int threadNum,
             List<SyntaxTree> trees, CSharpCompilation compilation)
         {
-            CsharpDbContext dbContext = new CsharpDbContext(csharpConnenctionString);
-            dbContext.Database.EnsureDeleted();
-            dbContext.Database.EnsureCreated();
+            var options = new DbContextOptionsBuilder<CsharpDbContext>()
+                .UseNpgsql(csharpConnectionString)
+                .Options;
+            CsharpDbContext dbContext = new CsharpDbContext(options);
+
             var contextList = new List<CsharpDbContext>();
             contextList.Add(dbContext);
             for (int i = 1; i < threadNum; i++)
             {
-                CsharpDbContext dbContextInstance = new CsharpDbContext(csharpConnenctionString);
+                CsharpDbContext dbContextInstance = new CsharpDbContext(options);
                 contextList.Add(dbContextInstance);
             }
 
             var ParsingTasks = new List<Task<int>>();
-
             int maxThread = threadNum < trees.Count() ? threadNum : trees.Count();
-
             for (int i = 0; i < maxThread; i++)
             {                
                 ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i));
             }
 
             int nextTreeIndex = maxThread;
-            while (ParsingTasks.Count > 0){
+            while (ParsingTasks.Count > 0)
+            {
                 var finshedTask = await Task.WhenAny<int>(ParsingTasks);
                 int nextContextIndex = await finshedTask;
 
@@ -177,7 +167,6 @@ namespace CSharpParser
 
         public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)
         {
-            //WriteLine("GetSourceFilesFromDir:"+root);
             IEnumerable<string> allFiles = new string[]{};
             // Data structure to hold names of subfolders. 
             ArrayList dirs = new ArrayList();
@@ -248,5 +237,23 @@ namespace CSharpParser
             return allFiles;
         }
 
+        private static string transformConnectionString()
+        {
+            _connectionString = _connectionString.Substring(_connectionString.IndexOf(':')+1);
+            _connectionString = _connectionString.Replace("user", "username");
+            string [] properties = _connectionString.Split(';');
+            string csharpConnectionString = "";
+            for (int i = 0; i < properties.Length; ++i)
+            {
+                csharpConnectionString += properties[i].Substring(0,1).ToUpper()
+                    + properties[i].Substring(1);
+                if (i < properties.Length-1)
+                {
+                    csharpConnectionString += ";";
+                }
+            }
+
+            return csharpConnectionString;
+        }
     }
 }

@@ -48,6 +48,14 @@ jobs:
           llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev libgraphviz-dev
           libmagic-dev libgit2-dev ctags doxygen libgtest-dev npm libldap2-dev
 
+      - name: Install dotnet SDK
+        if: ${{ matrix.os == 'ubuntu-18.04' }}
+        run: |
+          wget https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https && sudo apt-get update && sudo apt-get install -y dotnet-sdk-6.0
+
       - name: Remove default Postgresql Ubuntu 18
         if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
         run: sudo apt-get remove libpq5
@@ -84,7 +92,7 @@ jobs:
           --enable-tutorial=no --enable-tests=no --with-libevent --with-zlib --without-nodejs
           --without-lua --without-ruby --without-csharp --without-erlang --without-perl
           --without-php --without-php_extension --without-dart --without-haskell --without-go
-          --without-rs --without-haxe --without-dotnetcore --without-d --without-qt4 --without-qt5
+          --without-rs --without-haxe --without-d --without-qt4 --without-qt5
           --without-java --without-swift
 
           make install -j $(nproc)
@@ -132,6 +140,14 @@ jobs:
           sudo apt-get install -y git cmake make g++ libboost-all-dev llvm-10-dev clang-10
           libclang-10-dev odb libodb-dev thrift-compiler libthrift-dev default-jdk libssl-dev
           libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen libgtest-dev npm libldap2-dev
+
+      - name: Install dotnet SDK
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        run: |
+          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https && sudo apt-get update && sudo apt-get install -y dotnet-sdk-6.0
 
       - name: Install Postgresql Ubuntu 20
         if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
