@@ -253,11 +253,12 @@ void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<ke
         }
         else if (node.is_map())
         {
-          std::string data = split(src, false); 
-          vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data)));
+          std::string data = split(src, false);
+          if (getkey(node) != "" && data != "")
+              vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data)));
           for (ryml::NodeRef n : node.children())
           {
-              getstr(n, getkey(node), vec);
+              getstr(n, getkey(node) != "" ? getkey(node) : parent , vec);
           }
         }
     }
