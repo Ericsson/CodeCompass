@@ -245,7 +245,11 @@ void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<ke
         {
           std::string data = split(src, true); 
           vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data) ));
-          return;
+          for (ryml::NodeRef n : node.children())
+          {
+            if (n.is_container())
+              getstr(n, getkey(node), vec);
+          }
         }
         else if (node.is_map())
         {
