@@ -47,18 +47,105 @@ void YamlServiceHandler::getYamlFileInfo(
     std::string& _return,
     const core::FileId& fileId)
 {
+  util::Graph graph_;
+  std::string colAttr = "border='0' align='left'";
+  // std::string label = "<table border='1' cellspacing='0'>";
+  // LOG(info) << "getYAMLINFO is being Called" <<std::endl; 
+  // _transaction([&, this](){
+  //   typedef odb::query<model::Yaml> YamlQuery;
+  //   typedef odb::result<model::Yaml> YamlResult;
+  //   typedef odb::result<model::YamlContent> YamlContentResult;
+  //   typedef odb::query<model::YamlContent> YamlContentQuery;
+
+  //   YamlResult yamlInfo = _db->query<model::Yaml>(
+  //         YamlQuery::file == std::stoull(fileId));
+
+  //   core::FileInfo fileInfo;
+  //   _projectService.getFileInfo(fileInfo, fileId);
+  //   util::Graph::Node node = addNode(graph_, fileInfo);
+
+  //   YamlContentResult yamlContent = _db->query<model::YamlContent>(
+  //       YamlContentQuery::file == std::stoull(fileId));
+        
+  //   label += graphHtmlTag("tr",
+  //           graphHtmlTag("td", "FileId", colAttr) + 
+  //           graphHtmlTag("td", "Type", colAttr) +
+  //           graphHtmlTag("td", "MainKeys", colAttr));
+  //   std::stringstream ssId;
+  //   std::stringstream ssType;
+  //   ssId << yamlInfo.begin()->id;
+  //   ///ssType << yamlInfo.begin()->type;
+  //   model::Yaml::Type type = static_cast<model::Yaml::Type>(yamlInfo.begin()->type);
+  //   ssType << type;
+  //   LOG(info)<< "ID is  :" << ssId.str() << ", Type is: " << ssType.str(); 
+  //   std::string mainKeys = "[";
+  //   for (const model::YamlContent& yc : yamlContent)
+  //   {
+  //     if (yc.parent == "")
+  //     {
+  //       mainKeys += yc.key + ",";
+  //     }
+  //   }
+  //   mainKeys.pop_back();
+  //   mainKeys += "]";
+
+  //   if (!yamlInfo.empty())
+  //     label += graphHtmlTag("tr",
+  //           graphHtmlTag("td", ssId.str(), colAttr) + 
+  //           graphHtmlTag("td", ssType.str(), colAttr) + 
+  //           graphHtmlTag("td", mainKeys, colAttr));
+  //   label.append("</table>");
+  //   graph_.setNodeAttribute(node, "FileInfo", label, true);
+  // });
+  // _return = label;
+
+  std::string label = "<p><strong> FileType: ";
+  LOG(info) << "getYAMLINFO is being Called" <<std::endl; 
   _transaction([&, this](){
     typedef odb::query<model::Yaml> YamlQuery;
     typedef odb::result<model::Yaml> YamlResult;
+    typedef odb::result<model::YamlContent> YamlContentResult;
+    typedef odb::query<model::YamlContent> YamlContentQuery;
 
+    typedef odb::result<model::File> FilePathResult;
+    typedef odb::query<model::File> FilePathQuery;
+    
+    FilePathResult yamlPath = _db->query<model::File>(
+          FilePathQuery::id == std::stoull(fileId));
     YamlResult yamlInfo = _db->query<model::Yaml>(
           YamlQuery::file == std::stoull(fileId));
-    std::stringstream ss;
-    ss << yamlInfo.begin()->id << " " << yamlInfo.begin()->type;
-    if (!yamlInfo.empty())
-      _return = "<div class=\"main-doc\">" + ss.str()
-        + "</div>";
+
+    core::FileInfo fileInfo;
+    _projectService.getFileInfo(fileInfo, fileId);
+    util::Graph::Node node = addNode(graph_, fileInfo);
+
+    YamlContentResult yamlContent = _db->query<model::YamlContent>(
+        YamlContentQuery::file == std::stoull(fileId));
+    std::string list[] = {"KUBERNETES_CONFIG", "DOCKERFILE", "HELM_CHART", "CI", "OTHER"};
+    std::stringstream ssId;
+    std::stringstream ssType;
+    int numOfDataPairs = yamlContent.size();
+    ssId << yamlInfo.begin()->id;
+    std::string type = list[yamlInfo.begin()->type];
+    std::string path = yamlPath.begin()->path;
+    label +=  type + "</p>";
+    label += "<p><strong> FilePath: " + path + "</strong></p>";
+    label += "<p><strong> Num of key-data pairs in the file: " + std::to_string(numOfDataPairs) + "</strong></p>";
+    label += graphHtmlTag("p",
+          graphHtmlTag("strong", "The main keys from the file are:") );
+    label += "<ul>";
+
+    for (const model::YamlContent& yc : yamlContent)
+    {
+      if (yc.parent == "")
+      {
+        label += graphHtmlTag("li", yc.key);
+      }
+    }
+    label += "</ul>";
+    graph_.setNodeAttribute(node, "FileInfo", label, true);
   });
+  _return = label;
 }
 
 
@@ -79,12 +166,18 @@ void YamlServiceHandler::getYamlFileDiagram(
         _projectService.getFileInfo(fileInfo, fileId);
         util::Graph::Node node = addNode(graph_, fileInfo);
         
+        label += graphHtmlTag("tr",
+              graphHtmlTag("td", "Key", colAttr) + 
+              graphHtmlTag("td", "Parent", colAttr) +
+              graphHtmlTag("td", "Data", colAttr));
         
         for (const model::YamlContent& yc : yamlContent)
         {
-            std::string content = util::escapeHtml(yc.key + " : " + yc.data);
+            ///std::string content = util::escapeHtml(yc.key + " : " + yc.data);
             label += graphHtmlTag("tr",
-                graphHtmlTag("td", content, colAttr));
+                graphHtmlTag("td", yc.key, colAttr) + 
+                graphHtmlTag("td", yc.parent, colAttr) +
+                graphHtmlTag("td", yc.data, colAttr));
         }
         label.append("</table>");
         
