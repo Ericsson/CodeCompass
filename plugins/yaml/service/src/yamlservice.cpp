@@ -48,10 +48,8 @@ void YamlServiceHandler::getYamlFileInfo(
     const core::FileId& fileId)
 {
   util::Graph graph_;
-  std::string colAttr = "border='0' align='left'";
 
-  std::string label = "<p><strong> FileType: ";
-  LOG(info) << "getYAMLINFO is being Called" <<std::endl; 
+  std::string label = "";
   _transaction([&, this](){
     typedef odb::query<model::Yaml> YamlQuery;
     typedef odb::result<model::Yaml> YamlResult;
@@ -79,11 +77,11 @@ void YamlServiceHandler::getYamlFileInfo(
     ssId << yamlInfo.begin()->id;
     std::string type = list[yamlInfo.begin()->type];
     std::string path = yamlPath.begin()->path;
-    label +=  type + "</p>";
-    label += "<p><strong> FilePath: " + path + "</strong></p>";
-    label += "<p><strong> Num of key-data pairs in the file: " + std::to_string(numOfDataPairs) + "</strong></p>";
+    label +=  "<p><strong> FileType: </strong>" + type + "</p>";
+    label += "<p><strong> FilePath: </strong>" + path + "</p>";
+    label += "<p><strong> Key-data pairs: </strong>" + std::to_string(numOfDataPairs) + "</p>";
     label += graphHtmlTag("p",
-          graphHtmlTag("strong", "The main keys from the file are:") );
+          graphHtmlTag("strong", "Main Keys:") );
     label += "<ul>";
 
     for (const model::YamlContent& yc : yamlContent)
@@ -105,8 +103,9 @@ void YamlServiceHandler::getYamlFileDiagram(
     const core::FileId& fileId)
 {
     util::Graph graph_;
-    std::string colAttr = "border='0' align='left'";
-    std::string label = "<table border='1' cellspacing='0'>";
+    std::string thAttr = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
+    std::string tdAttr = "style=\"height:30px\"";
+    std::string label = "<table border='1' cellspacing='1' width='75%'>";
     _transaction([&, this](){
         typedef odb::result<model::YamlContent> YamlResult;
         typedef odb::query<model::YamlContent> YamlQuery;
@@ -118,16 +117,16 @@ void YamlServiceHandler::getYamlFileDiagram(
         util::Graph::Node node = addNode(graph_, fileInfo);
         
         label += graphHtmlTag("tr",
-              graphHtmlTag("td", "Key", colAttr) + 
-              graphHtmlTag("td", "Parent", colAttr) +
-              graphHtmlTag("td", "Data", colAttr));
+              graphHtmlTag("th", "Key", thAttr) +
+              graphHtmlTag("th", "Parent", thAttr) +
+              graphHtmlTag("th", "Data", thAttr));
         
         for (const model::YamlContent& yc : yamlContent)
         {
             label += graphHtmlTag("tr",
-                graphHtmlTag("td", yc.key, colAttr) + 
-                graphHtmlTag("td", yc.parent, colAttr) +
-                graphHtmlTag("td", yc.data, colAttr));
+                graphHtmlTag("td", yc.key, tdAttr) + 
+                graphHtmlTag("td", yc.parent, tdAttr) +
+                graphHtmlTag("td", yc.data, tdAttr));
         }
         label.append("</table>");
         
