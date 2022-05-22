@@ -79,18 +79,15 @@ void file_put_contents(const char *filename, const char *buf, size_t sz, const c
 
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
-
-  ///QUESTION: Should I add YamlContent db object to the _fileIdCache as well? 
-
   util::OdbTransaction {_ctx.db} ([&, this] {
-    for (const model::Yaml& yf  ///QUESTION: Tried model::Yaml here as well
+    for (const model::Yaml& yf
       : _ctx.db->query<model::Yaml>())
     {
       _fileIdCache.insert(yf.file);
     }
   });
 
-  int threadNum = 1;//_ctx.options["jobs"].as<int>();///Not needed probably
+  int threadNum = _ctx.options["jobs"].as<int>();
   _pool = util::make_thread_pool<std::string>(
     threadNum, [this](const std::string& path_)
     {
@@ -114,7 +111,7 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
     });
 }
 
-bool YamlParser::cleanupDatabase()///I guess it comes later, can be omitted
+bool YamlParser::cleanupDatabase()
 {
   if (!_fileIdCache.empty())
   {
@@ -159,7 +156,6 @@ bool YamlParser::parse()
     util::OdbTransaction trans(_ctx.db);
     trans([&, this]() {
       auto cb = getParserCallback();
-      // auto cb = accept(path);
       /*--- Call non-empty iter-callback for all files
          in the current root directory. ---*/
       try
@@ -186,8 +182,7 @@ bool YamlParser::parse()
 
   return true;
 }
-///So, as per my understanding, this getParserCallback should return true
-///Only for yaml files and the dirs which contain yaml files
+
 util::DirIterCallback YamlParser::getParserCallback()
 {
   return [this](const std::string& currPath_)
@@ -196,9 +191,7 @@ util::DirIterCallback YamlParser::getParserCallback()
 
     if (boost::filesystem::is_regular_file(path))
     {
-      // if (accept(currPath_))
-        _pool->enqueue(currPath_);
-
+      _pool->enqueue(currPath_);
     }
     
     return true;
@@ -225,6 +218,8 @@ std::string split (const std::string &s, bool isSeq) {
         }
         result.push_back (item);
     }
+    if (result.empty())
+      return "";
     std::string list = "[";
     for (auto s : result)
         list += s + ",";
@@ -254,7 +249,7 @@ void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<ke
         else if (node.is_map())
         {
           std::string data = split(src, false);
-          if (getkey(node) != "" && data != "")
+          if (getkey(node) != "")
               vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data)));
           for (ryml::NodeRef n : node.children())
           {
@@ -264,11 +259,6 @@ void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<ke
     }
 }
 
-/**
-* Getting Loc(useful data) and putting it into the db, it is actually populating the
-* db object we created in model/yaml.h. It is using transaction
-*/
-// void YamlParser::persistData(const std::vector<keyData>& data_, model::FileId file_, Type type)
 void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
 {
   model::Yaml::Type type;
@@ -301,27 +291,26 @@ void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
   // {
   //   keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
   // }
-  int i = 0;
+  //int i = 0;
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]{
+    LOG(info) << "Currently iterating" << file_->path <<std::endl;
     for (keyData kd : keysDataPairs)
     {
-      i++;
-      if (i==1) continue;
       LOG(info) << "In PersistData: YamlKeydata is: " << kd;
    
       model::YamlContent yamlContent;
       yamlContent.file = file_->id;
       // if (yamlTree[kd.key].is_keyval())
-      {
-        std::stringstream ss;
-        ss << kd.key;
-        yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
-        ss.str("");
-        ss << kd.data;
-        yamlContent.data = ss.str();
-        yamlContent.parent = kd.parent;
-      }
+      //{
+      // std::stringstream ss;
+      // ss << kd.key;
+      yamlContent.key = kd.key;///ryml::emitrs<std::string>(kd.key);
+      // ss.str("");
+      // ss << kd.data;
+      yamlContent.data = kd.data;
+      yamlContent.parent = kd.parent;
+      //}
       // else if (root[kd.key].is_seq())
       // {
       //   LOG(info) << "It is a sequence"<<std::endl;

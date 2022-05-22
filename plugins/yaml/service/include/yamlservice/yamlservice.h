@@ -56,20 +56,8 @@ public:
 
   std::string getLastNParts(const std::string& path_, std::size_t n_);
 
-  // void getMetrics(
-  //   std::string& _return,
-  //   const core::FileId& fileId,
-  //   const std::vector<std::string>& fileTypeFilter,
-  //   const MetricsType::type metricsType) override;
-
-  // void getMetricsTypeNames(
-  //   std::vector<MetricsTypeName>& _return) override;
 
 private:
-  // std::string getMetricsFromDir(
-  //   const core::FileInfo& fileInfo,
-  //   const MetricsType::type metricsType,
-  //   const std::vector<std::string>& fileTypeFilter);
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
   std::shared_ptr<odb::database> _db;

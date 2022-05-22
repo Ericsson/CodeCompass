@@ -24,7 +24,7 @@ public:
 private:
   util::DirIterCallback getParserCallback();
   struct keyData {
-    std::string key; // store as std::string!!!
+    std::string key;
     std::string parent;
     std::string data;
     keyData() {}
@@ -36,19 +36,6 @@ private:
       return os;
     }
   };
-  // struct keyData {
-  //   ryml::csubstr key;
-  //   ryml::csubstr parent;
-  //   ryml::csubstr data;
-  //   keyData() {}
-  //   keyData(ryml::csubstr k, ryml::csubstr d) : key(k), data(d) {}
-
-  //   friend std::ostream& operator<<(std::ostream &os, const keyData &kd)
-  //   {
-  //     os << kd.key << " " << kd.data << std::endl;
-  //     return os;
-  //   }
-  // };
   void getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<keyData> &vec);
   bool accept(const std::string& path_) const;
   bool isCI (std::string const &filename, std::string const &ending) 
@@ -63,7 +50,7 @@ private:
     } 
 }
 
-  void persistData(model::FilePtr file_);//, model::FileId fileId_);
+  void persistData(model::FilePtr file_);
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
   std::atomic<int> _visitedFileCount;
