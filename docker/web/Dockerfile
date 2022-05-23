@@ -17,6 +17,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
+    wget \
     llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
@@ -34,6 +35,14 @@ RUN set -x && apt-get update -qq \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
+
+# Install .NET 6.
+RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+  dpkg -i packages-microsoft-prod.deb && \
+  apt-get update; \
+  apt-get install -y apt-transport-https && \
+  apt-get update && \
+  apt-get install -y dotnet-sdk-6.0
 
 ARG CC_GID=960
 ARG CC_UID=960

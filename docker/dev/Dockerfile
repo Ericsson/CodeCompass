@@ -8,6 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
   && apt-get -y install --no-install-recommends \
+  wget \
   cmake make \
   default-jdk \
   ctags \
@@ -30,6 +31,14 @@ RUN set -x && apt-get update -qq \
   odb libodb-sqlite-dev libodb-pgsql-dev && \
   ln -s /usr/bin/gcc-9 /usr/bin/gcc && \
   ln -s /usr/bin/g++-9 /usr/bin/g++
+
+# Install .NET 6.
+RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+  dpkg -i packages-microsoft-prod.deb && \
+  apt-get update; \
+  apt-get install -y apt-transport-https && \
+  apt-get update && \
+  apt-get install -y dotnet-sdk-6.0
 
 # Build GTest.
 RUN cd /usr/src/googletest && \
