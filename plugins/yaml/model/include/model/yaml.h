@@ -20,7 +20,7 @@ struct Yaml
   enum Type
   {
     KUBERNETES_CONFIG,
-    DOCKERFILE,
+    DOCKER_COMPOSE,
     HELM_CHART,
     CI,
     OTHER

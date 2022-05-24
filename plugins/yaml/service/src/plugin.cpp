@@ -3,15 +3,14 @@
 #include <yamlservice/yamlservice.h>
 
 /* These two methods are used by the plugin manager to allow dynamic loading
-   of CodeCompass Service plugins. Clang (>= version 6.0) gives a warning that
-   these C-linkage specified methods return types that are not proper from a
-   C code.
+  of CodeCompass Service plugins. Clang (>= version 6.0) gives a warning that
+  these C-linkage specified methods return types that are not proper from a
+  C code.
 
-   These codes are NOT to be called from any C code. The C linkage is used to
-   turn off the name mangling so that the dynamic loader can easily find the
-   symbol table needed to set the plugin up.
+  These codes are NOT to be called from any C code. The C linkage is used to
+  turn off the name mangling so that the dynamic loader can easily find the
+  symbol table needed to set the plugin up.
 */
-// When writing a plugin, please do NOT copy this notice to your code.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"

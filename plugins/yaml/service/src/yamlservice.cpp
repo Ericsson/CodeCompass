@@ -1,13 +1,11 @@
-#include <boost/filesystem.hpp>
-#include <model/file.h>
 #include <algorithm>
 #include <sstream>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/filesystem.hpp>
 
-
-
+#include <model/file.h>
 #include <yamlservice/yamlservice.h>
 
 namespace cc
@@ -44,112 +42,128 @@ std::string graphHtmlTag(
 }
 
 void YamlServiceHandler::getYamlFileInfo(
-    std::string& _return,
-    const core::FileId& fileId)
+  std::string& return_,
+  const core::FileId& fileId_)
 {
   util::Graph graph_;
 
-  std::string label = "";
+  std::string htmlContent = "";
   _transaction([&, this](){
+    typedef odb::result<model::File> FilePathResult;
+    typedef odb::query<model::File> FilePathQuery;
+
     typedef odb::query<model::Yaml> YamlQuery;
     typedef odb::result<model::Yaml> YamlResult;
+
     typedef odb::result<model::YamlContent> YamlContentResult;
     typedef odb::query<model::YamlContent> YamlContentQuery;
 
-    typedef odb::result<model::File> FilePathResult;
-    typedef odb::query<model::File> FilePathQuery;
-    
     FilePathResult yamlPath = _db->query<model::File>(
-          FilePathQuery::id == std::stoull(fileId));
-    YamlResult yamlInfo = _db->query<model::Yaml>(
-          YamlQuery::file == std::stoull(fileId));
+          FilePathQuery::id == std::stoull(fileId_));
 
-    core::FileInfo fileInfo;
-    _projectService.getFileInfo(fileInfo, fileId);
-    util::Graph::Node node = addNode(graph_, fileInfo);
+    YamlResult yamlInfo = _db->query<model::Yaml>(
+          YamlQuery::file == std::stoull(fileId_));
 
     YamlContentResult yamlContent = _db->query<model::YamlContent>(
-        YamlContentQuery::file == std::stoull(fileId));
-    std::string list[] = {"KUBERNETES_CONFIG", "DOCKERFILE", "HELM_CHART", "CI", "OTHER"};
-    std::stringstream ssId;
-    std::stringstream ssType;
+        YamlContentQuery::file == std::stoull(fileId_));
+
+    core::FileInfo fileInfo;
+    _projectService.getFileInfo(fileInfo, fileId_);
+    util::Graph::Node node = addNode(graph_, fileInfo);
+
+    std::string typeList[] = 
+    {
+      "KUBERNETES_CONFIG",
+      "DOCKER_COMPOSE",
+      "HELM_CHART",
+      "CI",
+      "OTHER"
+    };
+
     int numOfDataPairs = yamlContent.size();
-    ssId << yamlInfo.begin()->id;
-    std::string type = list[yamlInfo.begin()->type];
+    std::string type = typeList[yamlInfo.begin()->type];
     std::string path = yamlPath.begin()->path;
-    label +=  "<p><strong> FileType: </strong>" + type + "</p>";
-    label += "<p><strong> FilePath: </strong>" + path + "</p>";
-    label += "<p><strong> Key-data pairs: </strong>" + std::to_string(numOfDataPairs) + "</p>";
-    label += graphHtmlTag("p",
-          graphHtmlTag("strong", "Main Keys:") );
-    label += "<ul>";
+
+    htmlContent +=  "<p><strong> FileType: </strong>" + type + "</p>";
+    htmlContent += "<p><strong> FilePath: </strong>" + path + "</p>";
+    htmlContent += "<p><strong> Key-data pairs: </strong>"
+     + std::to_string(numOfDataPairs) + "</p>";
+
+    htmlContent += graphHtmlTag("p",
+          graphHtmlTag("strong", "Main Keys:"));
+
+    htmlContent += "<ul>";
 
     for (const model::YamlContent& yc : yamlContent)
     {
       if (yc.parent == "")
       {
-        label += graphHtmlTag("li", yc.key);
+        htmlContent += graphHtmlTag("li", yc.key);
       }
     }
-    label += "</ul>";
-    graph_.setNodeAttribute(node, "FileInfo", label, true);
+
+    htmlContent += "</ul>";
+    graph_.setNodeAttribute(node, "FileInfo", htmlContent, true);
   });
-  _return = label;
+  return_ = htmlContent;
 }
 
 
 void YamlServiceHandler::getYamlFileDiagram(
-    std::string& _return,
-    const core::FileId& fileId)
+  std::string& return_,
+  const core::FileId& fileId_)
 {
-    util::Graph graph_;
-    std::string thAttr = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
-    std::string tdAttr = "style=\"height:30px\"";
-    std::string label = "<table border='1' cellspacing='1' width='75%'>";
-    _transaction([&, this](){
-        typedef odb::result<model::YamlContent> YamlResult;
-        typedef odb::query<model::YamlContent> YamlQuery;
+  util::Graph graph_;
+  std::string thAttr 
+    = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
 
-        YamlResult yamlContent = _db->query<model::YamlContent>(
-            YamlQuery::file == std::stoull(fileId));
-        core::FileInfo fileInfo;
-        _projectService.getFileInfo(fileInfo, fileId);
-        util::Graph::Node node = addNode(graph_, fileInfo);
-        
-        label += graphHtmlTag("tr",
-              graphHtmlTag("th", "Key", thAttr) +
-              graphHtmlTag("th", "Parent", thAttr) +
-              graphHtmlTag("th", "Data", thAttr));
-        
-        for (const model::YamlContent& yc : yamlContent)
-        {
-            label += graphHtmlTag("tr",
-                graphHtmlTag("td", yc.key, tdAttr) + 
-                graphHtmlTag("td", yc.parent, tdAttr) +
-                graphHtmlTag("td", yc.data, tdAttr));
-        }
-        label.append("</table>");
-        
-        graph_.setNodeAttribute(node, "content", label, true);
+  std::string tdAttr = "style=\"height:30px\"";
+  std::string table = "<table border='1' cellspacing='1' width='75%'>";
+  _transaction([&, this](){
+    typedef odb::result<model::YamlContent> YamlResult;
+    typedef odb::query<model::YamlContent> YamlQuery;
 
-    });
-    _return = label;
+    YamlResult yamlContent = _db->query<model::YamlContent>(
+        YamlQuery::file == std::stoull(fileId_));
+
+    core::FileInfo fileInfo;
+    _projectService.getFileInfo(fileInfo, fileId_);
+    util::Graph::Node node = addNode(graph_, fileInfo);
+
+    table += graphHtmlTag("tr",
+          graphHtmlTag("th", "Key", thAttr) +
+          graphHtmlTag("th", "Parent", thAttr) +
+          graphHtmlTag("th", "Data", thAttr));
+
+    for (const model::YamlContent& yc : yamlContent)
+    {
+      table += graphHtmlTag("tr",
+          graphHtmlTag("td", yc.key, tdAttr) + 
+          graphHtmlTag("td", yc.parent, tdAttr) +
+          graphHtmlTag("td", yc.data, tdAttr));
+    }
+    table.append("</table>");
+
+    graph_.setNodeAttribute(node, "content", table, true);
+
+  });
+  return_ = table;
 }
 
 util::Graph::Node YamlServiceHandler::addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_)
 {
-  util::Graph::Node node = graph_.getOrCreateNode(fileInfo_.id);
-  graph_.setNodeAttribute(node, "label", getLastNParts(fileInfo_.path, 3));
+  util::Graph::Node node_ = graph_.getOrCreateNode(fileInfo_.id);
+  graph_.setNodeAttribute(node_, "label", getLastNParts(fileInfo_.path, 3));
 
   if (fileInfo_.type == model::File::DIRECTORY_TYPE)
   {
-    decorateNode(graph_, node, directoryNodeDecoration);
+    decorateNode(graph_, node_, directoryNodeDecoration);
   }
   else if (fileInfo_.type == model::File::BINARY_TYPE)
   {
-    decorateNode(graph_, node, binaryFileNodeDecoration);
+    decorateNode(graph_, node_, binaryFileNodeDecoration);
   }
   else
   {
@@ -157,13 +171,15 @@ util::Graph::Node YamlServiceHandler::addNode(
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if (ext == ".yaml" || ext == ".yml")
-      decorateNode(graph_, node, sourceFileNodeDecoration);
+      decorateNode(graph_, node_, sourceFileNodeDecoration);
   }
 
-  return node;
+  return node_;
 }
 
-std::string YamlServiceHandler::getLastNParts(const std::string& path_, std::size_t n_)
+std::string YamlServiceHandler::getLastNParts(
+  const std::string& path_,
+  std::size_t n_)
 {
   if (path_.empty() || n_ == 0)
     return "";
@@ -187,7 +203,8 @@ void YamlServiceHandler::decorateNode(
 
 
 
-const YamlServiceHandler::Decoration YamlServiceHandler::sourceFileNodeDecoration = {
+const YamlServiceHandler::Decoration 
+  YamlServiceHandler::sourceFileNodeDecoration = {
   {"shape", "box"},
   {"style", "filled"},
   {"fillcolor", "#116db6"},
@@ -195,11 +212,13 @@ const YamlServiceHandler::Decoration YamlServiceHandler::sourceFileNodeDecoratio
 };
 
 
-const YamlServiceHandler::Decoration YamlServiceHandler::directoryNodeDecoration = {
+const YamlServiceHandler::Decoration 
+  YamlServiceHandler::directoryNodeDecoration = {
   {"shape", "folder"}
 };
 
-const YamlServiceHandler::Decoration YamlServiceHandler::binaryFileNodeDecoration = {
+const YamlServiceHandler::Decoration
+  YamlServiceHandler::binaryFileNodeDecoration = {
   {"shape", "box3d"},
   {"style", "filled"},
   {"fillcolor", "#f18a21"},

@@ -74,31 +74,6 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
     type : viewHandler.moduleType.Diagram
   });
 
-  // var infobox = {
-  //   id : 'Yaml-infobox',
-  //   render : function (nodeInfo, fileInfo) {
-  //     return new MenuItem({
-  //       label : 'Documentation',
-  //       onClick : function () {
-  //         topic.publish('codecompass/documentation', {
-  //           handler : 'yaml-file-diagram-handler',
-  //           fileType    : fileInfo.type,
-  //           elementInfo : nodeInfo
-  //         });
-
-  //         if (window.gtag) {
-  //             window.gtag ('event', 'documentation', {
-  //             'event_category' : urlHandler.getState('wsid'),
-  //             'event_label' : urlHandler.getFileInfo().name
-  //                           + ': '
-  //                           + nodeInfo.astNodeValue
-  //           });
-  //         }
-  //       }
-  //     });
-  //   }
-  // };
-
   var infobox = {
     id : 'yamlMenu1',
     render : function (fileInfo) {
@@ -110,12 +85,6 @@ function (declare, dom, topic, style, MenuItem, Button, CheckBox, Select,
             diagramType : 1,
             node : fileInfo.id
           })
-
-          // if (window.gtag) {
-          //     window.gtag ('event', 'documentation', {
-          //     'event_category' : urlHandler.getState('wsid')
-          //   });
-          // }
         }
       });
     }

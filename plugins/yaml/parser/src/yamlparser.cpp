@@ -33,49 +33,31 @@ namespace parser
 {
 
 template<class CharContainer>
-size_t file_get_contents(const char *filename, CharContainer *v)
+size_t fileGetContents(const char* filename_, CharContainer* v_)
 {
-    ::FILE *fp = ::fopen(filename, "rb");
-    C4_CHECK_MSG(fp != nullptr, "could not open file");
-    ::fseek(fp, 0, SEEK_END);
-    long sz = ::ftell(fp);
-    v->resize(static_cast<typename CharContainer::size_type>(sz));
-    if(sz)
-    {
-        ::rewind(fp);
-        size_t ret = ::fread(&(*v)[0], 1, v->size(), fp);
-        C4_CHECK(ret == (size_t)sz);
-    }
-    ::fclose(fp);
-    return v->size();
+  ::FILE* fp = ::fopen(filename_, "rb");
+  C4_CHECK_MSG(fp != nullptr, "could not open file");
+  ::fseek(fp, 0, SEEK_END);
+  long sz = ::ftell(fp);
+  v_->resize(static_cast<typename CharContainer::size_type>(sz));
+  if(sz)
+  {
+    ::rewind(fp);
+    size_t ret = ::fread(&(*v_)[0], 1, v_->size(), fp);
+    C4_CHECK(ret == (size_t)sz);
+  }
+  ::fclose(fp);
+  return v_->size();
 }
 
 /** load a file from disk into an existing CharContainer */
 template<class CharContainer>
-CharContainer file_get_contents(const char *filename)
+CharContainer fileGetContents(const char* filename_)
 {
-    CharContainer cc;
-    file_get_contents(filename, &cc);
-    return cc;
+  CharContainer cc;
+  fileGetContents(filename_, &cc);
+  return cc;
 }
-
-/** save a buffer into a file */
-template<class CharContainer>
-void file_put_contents(const char *filename, CharContainer const& v, const char* access)
-{
-    file_put_contents(filename, v.empty() ? "" : &v[0], v.size(), access);
-}
-
-/** save a buffer into a file */
-void file_put_contents(const char *filename, const char *buf, size_t sz, const char* access)
-{
-    ::FILE *fp = ::fopen(filename, access);
-    C4_CHECK_MSG(fp != nullptr, "could not open file");
-    ::fwrite(buf, 1, sz, fp);
-    ::fclose(fp);
-}
-
-
 
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
@@ -103,7 +85,6 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
             file->parseStatus = model::File::PSFullyParsed;
             _ctx.srcMgr.updateFile(*file);
           }
-          
         }
         else
           LOG(debug) << "YamlParser already parsed this file: " << file->path;
@@ -120,7 +101,8 @@ bool YamlParser::cleanupDatabase()
       util::OdbTransaction {_ctx.db} ([this] {
         for (const model::File& file
           : _ctx.db->query<model::File>(
-          odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+          odb::query<model::File>::id.in_range(
+          _fileIdCache.begin(), _fileIdCache.end())))
         {
           auto it = _ctx.fileStatus.find(file.path);
           if (it != _ctx.fileStatus.end() &&
@@ -130,7 +112,8 @@ bool YamlParser::cleanupDatabase()
           {
             LOG(info) << "[yamlparser] Database cleanup: " << file.path;
 
-            _ctx.db->erase_query<model::Yaml>(odb::query<model::Yaml>::file == file.id);
+            _ctx.db->erase_query<model::Yaml>(
+              odb::query<model::Yaml>::file == file.id);
             _fileIdCache.erase(file.id);
           }
         }
@@ -160,7 +143,6 @@ bool YamlParser::parse()
          in the current root directory. ---*/
       try
       {
-        
         util::iterateDirectoryRecursive(path, cb);
       }
       catch (std::exception& ex_)
@@ -173,7 +155,6 @@ bool YamlParser::parse()
         LOG(warning)
           << "Yaml parser failed with unknown exception!";
       }
-
     });
   }
 
@@ -204,67 +185,92 @@ bool YamlParser::accept(const std::string& path_) const
   return ext == ".yaml" || ext == ".yml";
 }
 
-std::string split (const std::string &s, bool isSeq) {
-    std::vector<std::string> result;
-
-    std::stringstream ss (s);
-    std::string tmp;
-    getline(ss, tmp, '\n');
-    std::string item;
-
-    while (getline (ss, item, '\n')) {
-        if (isSeq) {
-            item = std::regex_replace(item, std::regex("^\\s+-"), std::string(""));
-        }
-        result.push_back (item);
-    }
-    if (result.empty())
-      return "";
-    std::string list = "[";
-    for (auto s : result)
-        list += s + ",";
-    list.pop_back();
-    list += "]";
-    return list;
-}
-void YamlParser::getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<keyData> &vec)
+std::string YamlParser::getDataFromNode(
+  const std::string &node_,
+  const bool isSeq_)
 {
-    
-    auto getkey = [](ryml::NodeRef node){ return node.has_key() ? node.key() : ryml::csubstr{}; };
-    auto getval = [](ryml::NodeRef node){ return node.has_val() ? node.val() : ryml::csubstr{}; };
-    if(!node.is_container())
-        vec.push_back(keyData(getkey(node), parent, getval(node)));
-    else {
-        std::string src = ryml::emitrs<std::string>(node);
-        if (node.is_seq())
-        {
-          std::string data = split(src, true); 
-          vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data) ));
-          for (ryml::NodeRef n : node.children())
-          {
-            if (n.is_container())
-              getstr(n, getkey(node), vec);
-          }
-        }
-        else if (node.is_map())
-        {
-          std::string data = split(src, false);
-          if (getkey(node) != "")
-              vec.push_back(keyData(getkey(node), parent, ryml::to_csubstr(data)));
-          for (ryml::NodeRef n : node.children())
-          {
-              getstr(n, getkey(node) != "" ? getkey(node) : parent , vec);
-          }
-        }
+  std::vector<std::string> children;
+  std::stringstream ss(node_);
+  std::string nodeKey;
+  getline(ss, nodeKey, '\n');
+  std::string childItem;
+
+  while (getline (ss, childItem, '\n')) {
+    if (isSeq_) {
+      childItem = std::regex_replace(childItem, std::regex(
+        "^\\s+-"), std::string(""));
     }
+    children.push_back (childItem);
+  }
+  if (children.empty())
+    return "";
+
+  std::string childrenList = "[";
+  for (auto child : children)
+      childrenList += child + ",";
+  childrenList.pop_back();
+  childrenList += "]";
+
+  return childrenList;
 }
 
-void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
+void YamlParser::getKeyDataFromTree(
+  ryml::NodeRef node_,
+  ryml::csubstr parent_,
+  std::vector<keyData>& dataVec_)
+{
+  auto getKey = [](ryml::NodeRef node_)
+  { 
+    return node_.has_key() ? node_.key() : ryml::csubstr{}; 
+  };
+  auto getVal = [](ryml::NodeRef node_)
+  { 
+    return node_.has_val() ? node_.val() : ryml::csubstr{}; 
+  };
+  if(!node_.is_container())
+    dataVec_.push_back(keyData(getKey(node_), parent_, getVal(node_)));
+  else {
+    std::string nodeData = ryml::emitrs<std::string>(node_);
+    if (node_.is_seq())
+    {
+      std::string childData = getDataFromNode(nodeData, true); 
+
+      dataVec_.push_back(keyData(
+        getKey(node_), parent_, ryml::to_csubstr(childData)));
+
+      for (ryml::NodeRef nodeChild : node_.children())
+      {
+        if (nodeChild.is_container())
+          getKeyDataFromTree(nodeChild, getKey(node_), dataVec_);
+      }
+    }
+    else if (node_.is_map())
+    {
+      std::string childData = getDataFromNode(nodeData, false);
+
+      if (getKey(node_) != "")
+      {
+        dataVec_.push_back(keyData(
+          getKey(node_), parent_, ryml::to_csubstr(childData)));
+      }
+
+      for (ryml::NodeRef nodeChild : node_.children())
+      {
+        getKeyDataFromTree(nodeChild, getKey(
+          node_) != "" ? getKey(node_) : parent_ , dataVec_);
+      }
+    }
+  }
+}
+
+void YamlParser::persistData(model::FilePtr file_)
 {
   model::Yaml::Type type;
-  std::vector<keyData> keysDataPairs;
-  std::vector<char> content = file_get_contents<std::vector<char>>(file_->path.c_str());
-  ryml::Tree yamlTree = ryml::parse_in_place(ryml::to_substr(content));
+  std::vector<keyData> keyDataPairs;
+  std::vector<char> fileContents
+    = fileGetContents<std::vector<char>>(file_->path.c_str());
+
+  ryml::Tree yamlTree = ryml::parse_in_place(ryml::to_substr(fileContents));
   if (yamlTree["apiVersion"].has_key()) 
   {
     if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
@@ -276,80 +282,34 @@ void YamlParser::persistData(model::FilePtr file_)//, model::FileId fileId_)
       type = model::Yaml::KUBERNETES_CONFIG;
     }
   }
-  else if (isCI(file_->path, "ci.yaml") || isCI(file_->path, "ci.yml") )
+  else if (isCIFile(file_->path, "ci.yaml") || isCIFile(file_->path, "ci.yml"))
   {
     type = model::Yaml::CI;
   }
-  else 
+  else if (file_->filename == "docker-compose.yml")
+  {
+    type = model::Yaml::DOCKER_COMPOSE;
+  }
+  else
   {
     type = model::Yaml::OTHER;
   }
+
   ryml::NodeRef root = yamlTree.rootref();
-  getstr(root, "", keysDataPairs);
-  
-  // for (ryml::NodeRef n : root.children())
-  // {
-  //   keysDataPairs.push_back(keyData(n.has_key() ? n.key() : ryml::csubstr{}, n.has_val() ? n.val() : ryml::csubstr{}));
-  // }
-  //int i = 0;
+  getKeyDataFromTree(root, "", keyDataPairs);
+
   util::OdbTransaction trans(_ctx.db);
   trans([&, this]{
-    LOG(info) << "Currently iterating" << file_->path <<std::endl;
-    for (keyData kd : keysDataPairs)
+    for (keyData kd : keyDataPairs)
     {
-      LOG(info) << "In PersistData: YamlKeydata is: " << kd;
-   
       model::YamlContent yamlContent;
       yamlContent.file = file_->id;
-      // if (yamlTree[kd.key].is_keyval())
-      //{
-      // std::stringstream ss;
-      // ss << kd.key;
-      yamlContent.key = kd.key;///ryml::emitrs<std::string>(kd.key);
-      // ss.str("");
-      // ss << kd.data;
+      yamlContent.key = kd.key;
       yamlContent.data = kd.data;
       yamlContent.parent = kd.parent;
-      //}
-      // else if (root[kd.key].is_seq())
-      // {
-      //   LOG(info) << "It is a sequence"<<std::endl;
-      //   /*for (auto it = yamlTree[kd.key].begin(); it != yamlTree[kd.key].end(); ++it)
-      //   {
-      //     LOG(warning) << *it;
-      //   }*/
-      //   std::function<bool(const ryml::NodeRef*, size_t)> print;
-      //   print = [&, this](const ryml::NodeRef* node, size_t ind) -> bool
-      //   {
-      //     if (node->has_children())
-      //       for (const auto c : node->children())
-      //       {
-      //         LOG(warning) << c;
-      //         print(&c, ind);
-      //       }
-      //     else
-      //     {
-      //       //LOG(warning) << node->val();
-      //     }
-      //      return true;
-      //   };
-      //   for (auto c : yamlTree[kd.key].children())
-      //   {
-      //     c.visit(print, 3);
-      //   }
-      //   std::stringstream ss;
-      //   ss << kd.key;
-      //   yamlContent.key = ss.str();///ryml::emitrs<std::string>(kd.key);
-      //   ss.str("");
-      //   for (const auto& v : yamlTree[kd.key])
-      //   {
-      //     ss << v << " ";
-      //   }
-
-      //   yamlContent.data = ss.str();
-      // }
       _ctx.db->persist(yamlContent);
     }
+
     model::Yaml yaml;
     yaml.file = file_->id;
     yaml.type = type;

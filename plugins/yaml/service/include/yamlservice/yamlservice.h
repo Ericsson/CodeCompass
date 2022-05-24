@@ -34,7 +34,7 @@ namespace service
 namespace yaml
 {
 
-class YamlServiceHandler  : virtual public YamlServiceIf 
+class YamlServiceHandler  : virtual public YamlServiceIf
 {
 public:
   YamlServiceHandler(
@@ -43,16 +43,16 @@ public:
     const cc::webserver::ServerContext& context_);
 
   void getYamlFileDiagram(
-    std::string& _return,
-    const core::FileId& fileId);
+    std::string& return_,
+    const core::FileId& fileId_);
 
   void getYamlFileInfo(
-    std::string& _return,
-    const core::FileId& fileId);
+    std::string& return_,
+    const core::FileId& fileId_);
 
   util::Graph::Node addNode(
-  util::Graph& graph_,
-  const core::FileInfo& fileInfo_);
+    util::Graph& graph_,
+    const core::FileInfo& fileInfo_);
 
   std::string getLastNParts(const std::string& path_, std::size_t n_);
 
@@ -64,16 +64,15 @@ private:
   util::OdbTransaction _transaction;
 
   static const Decoration sourceFileNodeDecoration;
-
   static const Decoration binaryFileNodeDecoration;
   static const Decoration directoryNodeDecoration;
 
   core::ProjectServiceHandler _projectService;
 
   void decorateNode(
-  util::Graph& graph_,
-  const util::Graph::Node& node_,
-  const Decoration& decoration_) const;
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    const Decoration& decoration_) const;
 
 };
 

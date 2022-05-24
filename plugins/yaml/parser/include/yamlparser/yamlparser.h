@@ -9,7 +9,6 @@
 #include <util/parserutil.h>
 
 
-
 namespace cc
 {
 namespace parser
@@ -22,35 +21,42 @@ public:
   virtual bool parse() override;
 
 private:
-  util::DirIterCallback getParserCallback();
-  struct keyData {
+  struct keyData
+  {
     std::string key;
     std::string parent;
     std::string data;
     keyData() {}
-    keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d) : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
-
-    friend std::ostream& operator<<(std::ostream &os, const keyData &kd)
-    {
-      os << kd.key << " " << kd.parent << "  " << kd.data << std::endl;
-      return os;
-    }
+    keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d)
+     : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
   };
-  void getstr(ryml::NodeRef node, ryml::csubstr parent, std::vector<keyData> &vec);
+
+  util::DirIterCallback getParserCallback();
+
+  std::string getDataFromNode(const std::string &node_, const bool isSeq_);
+
+  void getKeyDataFromTree(
+    ryml::NodeRef node_,
+    ryml::csubstr parent_,
+    std::vector<keyData>& dataVec_);
+  
   bool accept(const std::string& path_) const;
-  bool isCI (std::string const &filename, std::string const &ending) 
+
+  bool isCIFile (std::string const& filename_, std::string const& ending_)
   {
-    if (filename.length() >= ending.length())
+    if (filename_.length() >= ending_.length())
     {
-      return (0 == filename.compare (filename.length() - ending.length(), ending.length(), ending));
+      return (0 == filename_.compare (
+        filename_.length() - ending_.length(), ending_.length(), ending_));
     } 
     else
     {
       return false;
-    } 
-}
+    }
+  }
 
   void persistData(model::FilePtr file_);
+
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
   std::atomic<int> _visitedFileCount;
