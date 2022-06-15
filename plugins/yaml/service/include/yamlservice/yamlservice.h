@@ -14,6 +14,9 @@
 #include <model/yamlcontent.h>
 #include <model/yamlcontent-odb.hxx>
 
+#include <model/yamlastnode.h>
+#include <model/yamlastnode-odb.hxx>
+
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
@@ -25,16 +28,17 @@
 #include <util/legendbuilder.h>
 #include <util/util.h>
 
-#include <YamlService.h>
+#include <LanguageService.h>
+//#include <YamlService.h>
 
 namespace cc
 {
 namespace service
 {
-namespace yaml
+namespace language
 {
 
-class YamlServiceHandler  : virtual public YamlServiceIf
+class YamlServiceHandler  : virtual public LanguageServiceIf
 {
 public:
   YamlServiceHandler(
@@ -55,6 +59,100 @@ public:
     const core::FileInfo& fileInfo_);
 
   std::string getLastNParts(const std::string& path_, std::size_t n_);
+
+
+  void getFileTypes(std::vector<std::string>& return_) override;
+
+  void getAstNodeInfo(
+    AstNodeInfo& return_,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getAstNodeInfoByPosition(
+    AstNodeInfo& return_,
+    const core::FilePosition& fpos_) override;
+
+  void getSourceText(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getDocumentation(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getProperties(
+    std::map<std::string, std::string>& return_,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getDiagramTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getDiagram(
+    std::string& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t diagramId_) override;
+
+  void getDiagramLegend(
+    std::string& return_,
+    const std::int32_t diagramId_) override;
+
+  void getFileDiagramTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::FileId& fileId_) override;
+
+  void getFileDiagram(
+    std::string& return_,
+    const core::FileId& fileId_,
+    const int32_t diagramId_) override;
+
+  void getFileDiagramLegend(
+    std::string& return_,
+    const std::int32_t diagramId_) override;
+
+  void getReferenceTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::AstNodeId& astNodeId) override;
+
+  void getReferences(
+    std::vector<AstNodeInfo>& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_,
+    const std::vector<std::string>& tags_) override;
+
+  std::int32_t getReferenceCount(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_) override;
+
+  void getReferencesInFile(
+    std::vector<AstNodeInfo>& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_,
+    const core::FileId& fileId_,
+    const std::vector<std::string>& tags_) override;
+
+  void getReferencesPage(
+    std::vector<AstNodeInfo>& return_,
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t referenceId_,
+    const std::int32_t pageSize_,
+    const std::int32_t pageNo_) override;
+
+  void getFileReferenceTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const core::FileId& fileId_) override;
+
+  void getFileReferences(
+    std::vector<AstNodeInfo>& return_,
+    const core::FileId& fileId_,
+    const std::int32_t referenceId_) override;
+
+  std::int32_t getFileReferenceCount(
+    const core::FileId& fileId_,
+    const std::int32_t referenceId_) override;
+
+  void getSyntaxHighlight(
+    std::vector<SyntaxHighlight>& return_,
+    const core::FileRange& range_) override;
 
 
 private:

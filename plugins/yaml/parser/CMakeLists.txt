@@ -10,6 +10,7 @@ add_library(yamlparser SHARED
 
 target_link_libraries(yamlparser
   yamlmodel
+  model
   util
   ${Boost_LIBRARIES})
 

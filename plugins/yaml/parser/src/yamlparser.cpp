@@ -10,6 +10,7 @@
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
 #include <util/threadpool.h>
+#include <util/util.h>
 
 #include <parser/sourcemanager.h>
 
@@ -18,9 +19,10 @@
 
 #include <model/yaml.h>
 #include <model/yaml-odb.hxx>
-
 #include <model/yamlcontent.h>
 #include <model/yamlcontent-odb.hxx>
+#include <model/yamlastnode.h>
+#include <model/yamlastnode-odb.hxx>
 
 #define RYML_SINGLE_HDR_DEFINE_NOW
 #include "yamlparser/ryml_all.hpp"
@@ -159,6 +161,7 @@ bool YamlParser::parse()
   }
 
   _pool->wait();
+  //util::persistAll(_astNodes, _ctx.db);
   LOG(info) << "Processed files: " << this->_visitedFileCount;
 
   return true;
@@ -270,8 +273,13 @@ void YamlParser::persistData(model::FilePtr file_)
   std::vector<char> fileContents
     = fileGetContents<std::vector<char>>(file_->path.c_str());
 
+  c4::yml::Parser parser;
+  //ryml::Tree parserTree = parser.parse_in_place(ryml::to_csubstr(file_->path.c_str()),fileContents);
+  parser.parse_in_place(ryml::to_csubstr(file_->path.c_str()), ryml::to_substr(fileContents));
   ryml::Tree yamlTree = ryml::parse_in_place(ryml::to_substr(fileContents));
-  if (yamlTree["apiVersion"].has_key()) 
+  //c4::csubstr filename(file_->path);
+  //ryml::Tree yamlTree = parser.parse_in_arena(filename, yaml);
+  if (yamlTree["apiVersion"].has_key())
   {
     if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
     {
@@ -296,6 +304,8 @@ void YamlParser::persistData(model::FilePtr file_)
   }
 
   ryml::NodeRef root = yamlTree.rootref();
+  ryml::Location loc = parser.location(yamlTree["description"]);
+  //LOG(info) << loc.
   getKeyDataFromTree(root, "", keyDataPairs);
 
   util::OdbTransaction trans(_ctx.db);
@@ -307,7 +317,17 @@ void YamlParser::persistData(model::FilePtr file_)
       yamlContent.key = kd.key;
       yamlContent.data = kd.data;
       yamlContent.parent = kd.parent;
-      _ctx.db->persist(yamlContent);
+
+      model::YamlAstNodePtr keyAstNode = std::make_shared<model::YamlAstNode>();
+      keyAstNode->astValue = kd.key;
+      //keyAstNode->location = model::FileLoc();
+      keyAstNode->entityHash = util::fnvHash(kd.key);
+      keyAstNode->symbolType = model::YamlAstNode::SymbolType::Key;
+      keyAstNode->astType = model::YamlAstNode::AstType::Other;
+      //keyAstNode->id = model::createIdentifier(*keyAstNode);
+      _astNodes.push_back(keyAstNode);
+      //_ctx.db->persist(yamlContent);
+      _ctx.db->persist(keyAstNode);
     }
 
     model::Yaml yaml;
@@ -315,6 +335,19 @@ void YamlParser::persistData(model::FilePtr file_)
     yaml.type = type;
     _ctx.db->persist(yaml);
   });
+}
+
+model::FileLoc YamlParser::nodeLocation(
+    ryml::Parser& parser,
+    ryml::NodeRef& node)
+{
+  ryml::Location loc = parser.location(node);
+  model::FileLoc nodeLoc;
+  nodeLoc.range.start.line = loc.line;
+  nodeLoc.range.start.column = loc.col;
+  nodeLoc.range.end.line = loc.line;
+  nodeLoc.range.end.column = loc.col + node.key().size() + node.val().size();
+  return nodeLoc;
 }
 
 #pragma clang diagnostic push

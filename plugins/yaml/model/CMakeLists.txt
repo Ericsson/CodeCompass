@@ -1,4 +1,5 @@
 set(ODB_SOURCES
+  include/model/yamlastnode.h
   include/model/yaml.h
   include/model/yamlcontent.h)
 

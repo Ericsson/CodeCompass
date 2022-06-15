@@ -35,7 +35,7 @@ extern "C"
     cc::webserver::registerPluginSimple(
       context_,
       pluginHandler_,
-      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Yaml, yaml),
+      CODECOMPASS_LANGUAGE_SERVICE_FACTORY_WITH_CFG(Yaml),
       "YamlService");
   }
 }

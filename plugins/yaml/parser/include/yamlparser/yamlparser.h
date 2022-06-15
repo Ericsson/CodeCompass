@@ -56,10 +56,12 @@ private:
   }
 
   void persistData(model::FilePtr file_);
+  model::FileLoc nodeLocation(ryml::Parser&, ryml::NodeRef&);
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
   std::atomic<int> _visitedFileCount;
+  std::vector<model::YamlAstNodePtr> _astNodes;
 };
 
 } // namespace parser
