@@ -17,11 +17,12 @@ class YamlParser : public AbstractParser
 {
 public:
   YamlParser(ParserContext& ctx_);
+  ~YamlParser();
   virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
 private:
-  struct keyData
+  /*struct keyData
   {
     std::string key;
     std::string parent;
@@ -29,34 +30,40 @@ private:
     keyData() {}
     keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d)
      : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
-  };
+  };*/
+
+  void collectAstNodes(model::FilePtr file_);
+
+  void processScalar(
+    YAML::Node& node_,
+    model::FilePtr file_,
+    model::YamlAstNode::SymbolType symbolType_);
+  void processMap(
+    YAML::Node& node_,
+    model::FilePtr file_,
+    model::YamlAstNode::SymbolType symbolType_);
+  void processSequence(
+    YAML::Node& node_,
+    model::FilePtr file_,
+    model::YamlAstNode::SymbolType symbolType_);
+
+  model::Range getNodeLocation(YAML::Node& node_);
 
   util::DirIterCallback getParserCallback();
 
   std::string getDataFromNode(const std::string &node_, const bool isSeq_);
 
-  void getKeyDataFromTree(
-    ryml::NodeRef node_,
+  /*void getKeyDataFromTree(
+    YAML::Node node_,
     ryml::csubstr parent_,
-    std::vector<keyData>& dataVec_);
+    std::vector<keyData>& dataVec_);*/
   
   bool accept(const std::string& path_) const;
 
-  bool isCIFile (std::string const& filename_, std::string const& ending_)
-  {
-    if (filename_.length() >= ending_.length())
-    {
-      return (0 == filename_.compare (
-        filename_.length() - ending_.length(), ending_.length(), ending_));
-    } 
-    else
-    {
-      return false;
-    }
-  }
+  bool isCIFile(std::string const& filename_, std::string const& ending_);
 
-  void persistData(model::FilePtr file_);
-  model::FileLoc nodeLocation(ryml::Parser&, ryml::NodeRef&);
+  //void persistData(model::FilePtr file_);
+  //model::FileLoc nodeLocation(ryml::Parser&, ryml::NodeRef&);
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;

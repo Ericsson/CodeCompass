@@ -154,6 +154,8 @@ public:
     std::vector<SyntaxHighlight>& return_,
     const core::FileRange& range_) override;
 
+  model::YamlAstNode queryYamlAstNode(
+    const core::AstNodeId& astNodeId_);
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;

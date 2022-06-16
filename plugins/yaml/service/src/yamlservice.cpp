@@ -6,7 +6,14 @@
 #include <boost/filesystem.hpp>
 
 #include <model/file.h>
+#include <model/yamlastnode.h>
 #include <yamlservice/yamlservice.h>
+
+namespace
+{
+  typedef odb::query<cc::model::YamlAstNode> AstQuery;
+  typedef odb::result<cc::model::YamlAstNode> AstResult;
+}
 
 namespace cc
 {
@@ -201,101 +208,144 @@ void YamlServiceHandler::decorateNode(
     graph_.setNodeAttribute(node_, attr.first, attr.second);
 }
 
-    void YamlServiceHandler::getFileTypes(std::vector<std::string>& return_) {}
+void YamlServiceHandler::getFileTypes(std::vector<std::string>& return_)
+{
+  return_.push_back("YAML");
+}
 
-    void YamlServiceHandler::getAstNodeInfo(
-            AstNodeInfo& return_,
-            const core::AstNodeId& astNodeId_)
-    { }
+void YamlServiceHandler::getAstNodeInfo(
+  AstNodeInfo& return_,
+  const core::AstNodeId& astNodeId_)
+{
+  //return_ = _transaction([this, &astNodeId_](){
+  //    return CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+}
 
-    void YamlServiceHandler::getAstNodeInfoByPosition(
-            AstNodeInfo& return_,
-            const core::FilePosition& fpos_) {}
+void YamlServiceHandler::getAstNodeInfoByPosition(
+  AstNodeInfo& return_,
+  const core::FilePosition& fpos_)
+{
+}
 
-    void YamlServiceHandler::getSourceText(
-            std::string& return_,
-            const core::AstNodeId& astNodeId_)
-    {  }
+void YamlServiceHandler::getSourceText(
+        std::string& return_,
+        const core::AstNodeId& astNodeId_)
+{  }
 
-    void YamlServiceHandler::getDocumentation(
-            std::string& return_,
-            const core::AstNodeId& astNodeId_) {}
+void YamlServiceHandler::getDocumentation(
+        std::string& return_,
+        const core::AstNodeId& astNodeId_) {}
 
-    void YamlServiceHandler::getProperties(
-            std::map<std::string, std::string>& return_,
-            const core::AstNodeId& astNodeId_) {}
+void YamlServiceHandler::getProperties(
+        std::map<std::string, std::string>& return_,
+        const core::AstNodeId& astNodeId_) {}
 
-    void YamlServiceHandler::getDiagramTypes(
-            std::map<std::string, std::int32_t>& return_,
-            const core::AstNodeId& astNodeId_) {}
+void YamlServiceHandler::getDiagramTypes(
+        std::map<std::string, std::int32_t>& return_,
+        const core::AstNodeId& astNodeId_) {}
 
-    void YamlServiceHandler::getDiagram(
-            std::string& return_,
-            const core::AstNodeId& astNodeId_,
-            const std::int32_t diagramId_) {}
+void YamlServiceHandler::getDiagram(
+        std::string& return_,
+        const core::AstNodeId& astNodeId_,
+        const std::int32_t diagramId_) {}
 
-    void YamlServiceHandler::getDiagramLegend(
-            std::string& return_,
-            const std::int32_t diagramId_) {}
+void YamlServiceHandler::getDiagramLegend(
+        std::string& return_,
+        const std::int32_t diagramId_) {}
 
-    void YamlServiceHandler::getFileDiagramTypes(
-            std::map<std::string, std::int32_t>& return_,
-            const core::FileId& fileId_) {}
+void YamlServiceHandler::getFileDiagramTypes(
+        std::map<std::string, std::int32_t>& return_,
+        const core::FileId& fileId_) {}
 
-    void YamlServiceHandler::getFileDiagram(
-            std::string& return_,
-            const core::FileId& fileId_,
-            const int32_t diagramId_) {}
+void YamlServiceHandler::getFileDiagram(
+        std::string& return_,
+        const core::FileId& fileId_,
+        const int32_t diagramId_) {}
 
-    void YamlServiceHandler::getFileDiagramLegend(
-            std::string& return_,
-            const std::int32_t diagramId_) {}
+void YamlServiceHandler::getFileDiagramLegend(
+        std::string& return_,
+        const std::int32_t diagramId_) {}
 
-    void YamlServiceHandler::getReferenceTypes(
-            std::map<std::string, std::int32_t>& return_,
-            const core::AstNodeId& astNodeId) {}
+void YamlServiceHandler::getReferenceTypes(
+  std::map<std::string, std::int32_t>& return_,
+  const core::AstNodeId& astNodeId)
+{
+  model::YamlAstNode node = queryYamlAstNode(astNodeId_);
 
-    void YamlServiceHandler::getReferences(
-            std::vector<AstNodeInfo>& return_,
-            const core::AstNodeId& astNodeId_,
-            const std::int32_t referenceId_,
-            const std::vector<std::string>& tags_) {}
+  switch (node.symbolType)
+  {
+    case
+  }
+}
 
-    std::int32_t YamlServiceHandler::getReferenceCount(
-            const core::AstNodeId& astNodeId_,
-            const std::int32_t referenceId_) {}
+void YamlServiceHandler::getReferences(
+        std::vector<AstNodeInfo>& return_,
+        const core::AstNodeId& astNodeId_,
+        const std::int32_t referenceId_,
+        const std::vector<std::string>& tags_) {}
 
-    void YamlServiceHandler::getReferencesInFile(
-            std::vector<AstNodeInfo>& return_,
-            const core::AstNodeId& astNodeId_,
-            const std::int32_t referenceId_,
-            const core::FileId& fileId_,
-            const std::vector<std::string>& tags_) {}
+std::int32_t YamlServiceHandler::getReferenceCount(
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_)
+{
+  model::YamlAstNode node = queryYamlAstNode(astNodeId_);
 
-    void YamlServiceHandler::getReferencesPage(
-            std::vector<AstNodeInfo>& return_,
-            const core::AstNodeId& astNodeId_,
-            const std::int32_t referenceId_,
-            const std::int32_t pageSize_,
-            const std::int32_t pageNo_) {}
+  /*return _transaction([&, this]() -> std::int32_t {
+    switch (referenceId_)
+    {
+      case
+    }
+  });*/
+}
 
-    void YamlServiceHandler::getFileReferenceTypes(
-            std::map<std::string, std::int32_t>& return_,
-            const core::FileId& fileId_) {}
+void YamlServiceHandler::getReferencesInFile(
+        std::vector<AstNodeInfo>& return_,
+        const core::AstNodeId& astNodeId_,
+        const std::int32_t referenceId_,
+        const core::FileId& fileId_,
+        const std::vector<std::string>& tags_) {}
 
-    void YamlServiceHandler::getFileReferences(
-            std::vector<AstNodeInfo>& return_,
-            const core::FileId& fileId_,
-            const std::int32_t referenceId_) {}
+void YamlServiceHandler::getReferencesPage(
+        std::vector<AstNodeInfo>& return_,
+        const core::AstNodeId& astNodeId_,
+        const std::int32_t referenceId_,
+        const std::int32_t pageSize_,
+        const std::int32_t pageNo_) {}
 
-    std::int32_t YamlServiceHandler::getFileReferenceCount(
-            const core::FileId& fileId_,
-            const std::int32_t referenceId_) {}
+void YamlServiceHandler::getFileReferenceTypes(
+        std::map<std::string, std::int32_t>& return_,
+        const core::FileId& fileId_) {}
 
-    void YamlServiceHandler::getSyntaxHighlight(
-            std::vector<SyntaxHighlight>& return_,
-            const core::FileRange& range_) {}
+void YamlServiceHandler::getFileReferences(
+        std::vector<AstNodeInfo>& return_,
+        const core::FileId& fileId_,
+        const std::int32_t referenceId_) {}
 
+std::int32_t YamlServiceHandler::getFileReferenceCount(
+        const core::FileId& fileId_,
+        const std::int32_t referenceId_) {}
+
+void YamlServiceHandler::getSyntaxHighlight(
+        std::vector<SyntaxHighlight>& return_,
+        const core::FileRange& range_) {}
+
+model::YamlAstNode YamlServiceHandler::queryYamlAstNode(
+  const core::AstNodeId &astNodeId_)
+{
+  return _transaction([&, this](){
+    model::YamlAstNode node;
+
+    if (!_db->find(std::stoull(astNodeId_), node))
+    {
+      core::InvalidId ex;
+      ex.__set_msg("Invalid YamlAstNode ID");
+      ex.__set_nodeid(astNodeId_);
+      throw ex;
+    }
+
+    return node;
+  });
+}
 
 const YamlServiceHandler::Decoration 
   YamlServiceHandler::sourceFileNodeDecoration = {

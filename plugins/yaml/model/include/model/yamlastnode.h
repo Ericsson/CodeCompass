@@ -34,11 +34,15 @@ struct YamlAstNode
 
   enum class AstType
   {
-      Other
+      NULLTYPE,
+      SCALAR,
+      MAP,
+      SEQUENCE,
+      UNDEFINED = 50
   };
 
-  #pragma db id auto
-  YamlAstNodeId id;
+  #pragma db id
+  YamlAstNodeId id = 0;
 
   std::string astValue;
 
@@ -49,7 +53,7 @@ struct YamlAstNode
 
   SymbolType symbolType = SymbolType::Other;
 
-  AstType astType = AstType::Other;
+  AstType astType = AstType::NULLTYPE;
 
   std::string toString() const;
 
@@ -77,7 +81,11 @@ inline std::string astTypeToString(YamlAstNode::AstType type_)
 {
   switch (type_)
   {
-    case YamlAstNode::AstType::Other: return "Other";
+    case YamlAstNode::AstType::NULLTYPE: return "Null";
+    case YamlAstNode::AstType::SCALAR: return "Scalar";
+    case YamlAstNode::AstType::MAP: return "Map";
+    case YamlAstNode::AstType::SEQUENCE: return "Sequence";
+    case YamlAstNode::AstType::UNDEFINED: return "Undefined";
   }
 
   return std::string();

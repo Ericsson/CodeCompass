@@ -4,6 +4,8 @@
 #include <functional>
 #include <regex>
 
+#include "yaml-cpp/yaml.h"
+
 #include <boost/filesystem.hpp>
 
 #include <util/logutil.h>
@@ -24,74 +26,46 @@
 #include <model/yamlastnode.h>
 #include <model/yamlastnode-odb.hxx>
 
-#define RYML_SINGLE_HDR_DEFINE_NOW
-#include "yamlparser/ryml_all.hpp"
-
-#include <yamlparser/yamlparser.h>
+#include "yamlparser/yamlparser.h"
 
 namespace cc
 {
 namespace parser
 {
 
-template<class CharContainer>
-size_t fileGetContents(const char* filename_, CharContainer* v_)
-{
-  ::FILE* fp = ::fopen(filename_, "rb");
-  C4_CHECK_MSG(fp != nullptr, "could not open file");
-  ::fseek(fp, 0, SEEK_END);
-  long sz = ::ftell(fp);
-  v_->resize(static_cast<typename CharContainer::size_type>(sz));
-  if(sz)
-  {
-    ::rewind(fp);
-    size_t ret = ::fread(&(*v_)[0], 1, v_->size(), fp);
-    C4_CHECK(ret == (size_t)sz);
-  }
-  ::fclose(fp);
-  return v_->size();
-}
-
-/** load a file from disk into an existing CharContainer */
-template<class CharContainer>
-CharContainer fileGetContents(const char* filename_)
-{
-  CharContainer cc;
-  fileGetContents(filename_, &cc);
-  return cc;
-}
-
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   util::OdbTransaction {_ctx.db} ([&, this] {
-    for (const model::Yaml& yf
-      : _ctx.db->query<model::Yaml>())
-    {
-      _fileIdCache.insert(yf.file);
-    }
+      for (const model::Yaml& yf
+              : _ctx.db->query<model::Yaml>())
+      {
+        _fileIdCache.insert(yf.file);
+      }
   });
 
   int threadNum = _ctx.options["jobs"].as<int>();
   _pool = util::make_thread_pool<std::string>(
-    threadNum, [this](const std::string& path_)
+threadNum, [this](const std::string& path_)
+  {
+    model::FilePtr file = _ctx.srcMgr.getFile(path_);
+    if (file)
     {
-      model::FilePtr file = _ctx.srcMgr.getFile(path_);
-      if (file)
+      if (_fileIdCache.find(file->id) == _fileIdCache.end())
       {
-        if (_fileIdCache.find(file->id) == _fileIdCache.end())
+        if (accept(file->path))
         {
-          if (accept(file->path)) 
-          {
-            this->persistData(file);
-            ++this->_visitedFileCount;
-            file->parseStatus = model::File::PSFullyParsed;
-            _ctx.srcMgr.updateFile(*file);
-          }
+          //this->persistData(file);
+          collectAstNodes(file);
+          ++this->_visitedFileCount;
+          file->parseStatus = model::File::PSFullyParsed;
+          file->type = "YAML";
+          _ctx.srcMgr.updateFile(*file);
         }
-        else
-          LOG(debug) << "YamlParser already parsed this file: " << file->path;
       }
-    });
+      else
+        LOG(debug) << "YamlParser already parsed this file: " << file->path;
+    }
+  });
 }
 
 bool YamlParser::cleanupDatabase()
@@ -104,13 +78,13 @@ bool YamlParser::cleanupDatabase()
         for (const model::File& file
           : _ctx.db->query<model::File>(
           odb::query<model::File>::id.in_range(
-          _fileIdCache.begin(), _fileIdCache.end())))
+                  _fileIdCache.begin(), _fileIdCache.end())))
         {
           auto it = _ctx.fileStatus.find(file.path);
           if (it != _ctx.fileStatus.end() &&
-              (it->second == cc::parser::IncrementalStatus::DELETED ||
-               it->second == cc::parser::IncrementalStatus::MODIFIED ||
-               it->second == cc::parser::IncrementalStatus::ACTION_CHANGED))
+            (it->second == cc::parser::IncrementalStatus::DELETED ||
+             it->second == cc::parser::IncrementalStatus::MODIFIED ||
+             it->second == cc::parser::IncrementalStatus::ACTION_CHANGED))
           {
             LOG(info) << "[yamlparser] Database cleanup: " << file.path;
 
@@ -140,23 +114,23 @@ bool YamlParser::parse()
 
     util::OdbTransaction trans(_ctx.db);
     trans([&, this]() {
-      auto cb = getParserCallback();
-      /*--- Call non-empty iter-callback for all files
-         in the current root directory. ---*/
-      try
-      {
-        util::iterateDirectoryRecursive(path, cb);
-      }
-      catch (std::exception& ex_)
-      {
-        LOG(warning)
-          << "Yaml parser threw an exception: " << ex_.what();
-      }
-      catch (...)
-      {
-        LOG(warning)
-          << "Yaml parser failed with unknown exception!";
-      }
+        auto cb = getParserCallback();
+        /*--- Call non-empty iter-callback for all files
+           in the current root directory. ---*/
+        try
+        {
+          util::iterateDirectoryRecursive(path, cb);
+        }
+        catch (std::exception& ex_)
+        {
+          LOG(warning)
+                  << "Yaml parser threw an exception: " << ex_.what();
+        }
+        catch (...)
+        {
+          LOG(warning)
+                  << "Yaml parser failed with unknown exception!";
+        }
     });
   }
 
@@ -171,14 +145,14 @@ util::DirIterCallback YamlParser::getParserCallback()
 {
   return [this](const std::string& currPath_)
   {
-    boost::filesystem::path path(currPath_);
+      boost::filesystem::path path(currPath_);
 
-    if (boost::filesystem::is_regular_file(path))
-    {
-      _pool->enqueue(currPath_);
-    }
-    
-    return true;
+      if (boost::filesystem::is_regular_file(path))
+      {
+        _pool->enqueue(currPath_);
+      }
+
+      return true;
   };
 }
 
@@ -188,182 +162,158 @@ bool YamlParser::accept(const std::string& path_) const
   return ext == ".yaml" || ext == ".yml";
 }
 
-std::string YamlParser::getDataFromNode(
-  const std::string &node_,
-  const bool isSeq_)
+void YamlParser::collectAstNodes(model::FilePtr file_)
 {
-  std::vector<std::string> children;
-  std::stringstream ss(node_);
-  std::string nodeKey;
-  getline(ss, nodeKey, '\n');
-  std::string childItem;
-
-  while (getline (ss, childItem, '\n')) {
-    if (isSeq_) {
-      childItem = std::regex_replace(childItem, std::regex(
-        "^\\s+-"), std::string(""));
-    }
-    children.push_back (childItem);
-  }
-  if (children.empty())
-    return "";
-
-  std::string childrenList = "[";
-  for (auto child : children)
-      childrenList += child + ",";
-  childrenList.pop_back();
-  childrenList += "]";
-
-  return childrenList;
-}
-
-void YamlParser::getKeyDataFromTree(
-  ryml::NodeRef node_,
-  ryml::csubstr parent_,
-  std::vector<keyData>& dataVec_)
-{
-  auto getKey = [](ryml::NodeRef node_)
-  { 
-    return node_.has_key() ? node_.key() : ryml::csubstr{}; 
-  };
-  auto getVal = [](ryml::NodeRef node_)
-  { 
-    return node_.has_val() ? node_.val() : ryml::csubstr{}; 
-  };
-  if(!node_.is_container())
-    dataVec_.push_back(keyData(getKey(node_), parent_, getVal(node_)));
-  else {
-    std::string nodeData = ryml::emitrs<std::string>(node_);
-    if (node_.is_seq())
+  YAML::Node currentFile = YAML::LoadFile(file_->path);
+  for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
+  {
+    switch (it->first.Type())
     {
-      std::string childData = getDataFromNode(nodeData, true); 
-
-      dataVec_.push_back(keyData(
-        getKey(node_), parent_, ryml::to_csubstr(childData)));
-
-      for (ryml::NodeRef nodeChild : node_.children())
-      {
-        if (nodeChild.is_container())
-          getKeyDataFromTree(nodeChild, getKey(node_), dataVec_);
-      }
+      case YAML::NodeType::Null:
+        LOG(info) << it->first << ": null";
+        break;
+      case YAML::NodeType::Scalar:
+        LOG(info) << it->first << ": Scalar";
+        processScalar(it->first, file_, model::YamlAstNode::SymbolType::Key);
+        break;
+      case YAML::NodeType::Sequence:
+        LOG(info) << it->first << ": Sequence";
+        processSequence(it->first, file_, model::YamlAstNode::SymbolType::Key);
+        break;
+      case YAML::NodeType::Map:
+        LOG(info) << it->first << ": Map";
+        processMap(it->first, file_, model::YamlAstNode::SymbolType::Key);
+        break;
+      case YAML::NodeType::Undefined:
+        LOG(info) << it->first << ": Undefined";
+        break;
     }
-    else if (node_.is_map())
+
+    switch (it->second.Type())
     {
-      std::string childData = getDataFromNode(nodeData, false);
-
-      if (getKey(node_) != "")
-      {
-        dataVec_.push_back(keyData(
-          getKey(node_), parent_, ryml::to_csubstr(childData)));
-      }
-
-      for (ryml::NodeRef nodeChild : node_.children())
-      {
-        getKeyDataFromTree(nodeChild, getKey(
-          node_) != "" ? getKey(node_) : parent_ , dataVec_);
-      }
+      case YAML::NodeType::Null:
+        LOG(info) << it->second << ": null";
+        break;
+      case YAML::NodeType::Scalar:
+        LOG(info) << it->second << ": Scalar";
+        processScalar(it->second, file_, model::YamlAstNode::SymbolType::Value);
+        break;
+      case YAML::NodeType::Sequence:
+        LOG(info) << it->second << ": Sequence";
+        processSequence(it->second, file_, model::YamlAstNode::SymbolType::Value);
+        break;
+      case YAML::NodeType::Map:
+        LOG(info) << it->second << ": Map";
+        processMap(it->second, file_, model::YamlAstNode::SymbolType::Value);
+        break;
+      case YAML::NodeType::Undefined:
+        LOG(info) << it->second << ": Undefined";
+        break;
     }
   }
 }
 
-void YamlParser::persistData(model::FilePtr file_)
+void YamlParser::processScalar(
+  YAML::Node& node_,
+  model::FilePtr file_,
+  model::YamlAstNode::SymbolType symbolType_)
 {
-  model::Yaml::Type type;
-  std::vector<keyData> keyDataPairs;
-  std::vector<char> fileContents
-    = fileGetContents<std::vector<char>>(file_->path.c_str());
+  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
+  currentNode->astValue = node_.Scalar();
+  currentNode->location.file = file_;
+  currentNode->location.range = getNodeLocation(node_);
+  currentNode->astType = model::YamlAstNode::AstType::SCALAR;
+  currentNode->symbolType = symbolType_;
+  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
+  currentNode->id = model::createIdentifier(*currentNode);
+  _astNodes.push_back(currentNode);
+}
 
-  c4::yml::Parser parser;
-  //ryml::Tree parserTree = parser.parse_in_place(ryml::to_csubstr(file_->path.c_str()),fileContents);
-  parser.parse_in_place(ryml::to_csubstr(file_->path.c_str()), ryml::to_substr(fileContents));
-  ryml::Tree yamlTree = ryml::parse_in_place(ryml::to_substr(fileContents));
-  //c4::csubstr filename(file_->path);
-  //ryml::Tree yamlTree = parser.parse_in_arena(filename, yaml);
-  if (yamlTree["apiVersion"].has_key())
+void YamlParser::processMap(
+  YAML::Node& node_,
+  model::FilePtr file_,
+  model::YamlAstNode::SymbolType symbolType_)
+{
+  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
+  currentNode->astValue = YAML::Dump(node_);
+  currentNode->location.file = file_;
+  currentNode->location.range = getNodeLocation(node_);
+  currentNode->astType = model::YamlAstNode::AstType::MAP;
+  currentNode->symbolType = symbolType_;
+  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
+  currentNode->id = model::createIdentifier(*currentNode);
+  _astNodes.push_back(currentNode);
+}
+
+void YamlParser::processSequence(
+  YAML::Node& node_,
+  model::FilePtr file_,
+  model::YamlAstNode::SymbolType symbolType_)
+{
+  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
+  currentNode->astValue = YAML::Dump(node_);
+  currentNode->location.file = file_;
+  currentNode->location.range = getNodeLocation(node_);
+  currentNode->astType = model::YamlAstNode::AstType::SEQUENCE;
+  currentNode->symbolType = symbolType_;
+  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
+  currentNode->id = model::createIdentifier(*currentNode);
+  _astNodes.push_back(currentNode);
+}
+
+model::Range YamlParser::getNodeLocation(YAML::Node& node_)
+{
+  model::Range location;
+  location.start.line = node_.Mark().line;
+  location.start.column = node_.Mark().column;
+  std::string nodeValue = YAML::Dump(node_);
+  auto count = std::count(nodeValue.begin(), nodeValue.end(), '\n');
+  location.end.line = node_.Mark().line + count;
+
+  if (count > 0)
   {
-    if (yamlTree["name"].has_key() && yamlTree["version"].has_key())
-    {
-      type = model::Yaml::HELM_CHART;
-    }
-    else if (yamlTree["kind"].has_key())
-    {
-      type = model::Yaml::KUBERNETES_CONFIG;
-    }
-  }
-  else if (isCIFile(file_->path, "ci.yaml") || isCIFile(file_->path, "ci.yml"))
-  {
-    type = model::Yaml::CI;
-  }
-  else if (file_->filename == "docker-compose.yml")
-  {
-    type = model::Yaml::DOCKER_COMPOSE;
+    auto pos = nodeValue.find_last_of('\n');
+    location.end.column = nodeValue.size() - pos - 1;
   }
   else
   {
-    type = model::Yaml::OTHER;
+    location.end.column = node_.Mark().column + nodeValue.size();
   }
 
-  ryml::NodeRef root = yamlTree.rootref();
-  ryml::Location loc = parser.location(yamlTree["description"]);
-  //LOG(info) << loc.
-  getKeyDataFromTree(root, "", keyDataPairs);
-
-  util::OdbTransaction trans(_ctx.db);
-  trans([&, this]{
-    for (keyData kd : keyDataPairs)
-    {
-      model::YamlContent yamlContent;
-      yamlContent.file = file_->id;
-      yamlContent.key = kd.key;
-      yamlContent.data = kd.data;
-      yamlContent.parent = kd.parent;
-
-      model::YamlAstNodePtr keyAstNode = std::make_shared<model::YamlAstNode>();
-      keyAstNode->astValue = kd.key;
-      //keyAstNode->location = model::FileLoc();
-      keyAstNode->entityHash = util::fnvHash(kd.key);
-      keyAstNode->symbolType = model::YamlAstNode::SymbolType::Key;
-      keyAstNode->astType = model::YamlAstNode::AstType::Other;
-      //keyAstNode->id = model::createIdentifier(*keyAstNode);
-      _astNodes.push_back(keyAstNode);
-      //_ctx.db->persist(yamlContent);
-      _ctx.db->persist(keyAstNode);
-    }
-
-    model::Yaml yaml;
-    yaml.file = file_->id;
-    yaml.type = type;
-    _ctx.db->persist(yaml);
-  });
+  return location;
 }
 
-model::FileLoc YamlParser::nodeLocation(
-    ryml::Parser& parser,
-    ryml::NodeRef& node)
+bool YamlParser::isCIFile (std::string const& filename_, std::string const& ending_)
 {
-  ryml::Location loc = parser.location(node);
-  model::FileLoc nodeLoc;
-  nodeLoc.range.start.line = loc.line;
-  nodeLoc.range.start.column = loc.col;
-  nodeLoc.range.end.line = loc.line;
-  nodeLoc.range.end.column = loc.col + node.key().size() + node.val().size();
-  return nodeLoc;
+  if (filename_.length() >= ending_.length())
+  {
+    return (0 == filename_.compare (
+            filename_.length() - ending_.length(), ending_.length(), ending_));
+  }
+  return false;
+}
+
+YamlParser::~YamlParser()
+{
+  (util::OdbTransaction(_ctx.db))([this]{
+     util::persistAll(_astNodes, _ctx.db);
+  });
 }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
-  boost::program_options::options_description getOptions()
-  {
-    boost::program_options::options_description description("Yaml Plugin");
-    return description;
-  }
+boost::program_options::options_description getOptions()
+{
+  boost::program_options::options_description description("Yaml Plugin");
+  return description;
+}
 
-  std::shared_ptr<YamlParser> make(ParserContext& ctx_)
-  {
-    return std::make_shared<YamlParser>(ctx_);
-  }
+std::shared_ptr<YamlParser> make(ParserContext& ctx_)
+{
+  return std::make_shared<YamlParser>(ctx_);
+}
 }
 #pragma clang diagnostic pop
 
