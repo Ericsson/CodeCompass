@@ -47,6 +47,7 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
   _pool = util::make_thread_pool<std::string>(
 threadNum, [this](const std::string& path_)
   {
+    LOG(info) << "Processing " << path_;
     model::FilePtr file = _ctx.srcMgr.getFile(path_);
     if (file)
     {
@@ -55,9 +56,11 @@ threadNum, [this](const std::string& path_)
         if (accept(file->path))
         {
           //this->persistData(file);
-          collectAstNodes(file);
+          bool success = collectAstNodes(file);
           ++this->_visitedFileCount;
-          file->parseStatus = model::File::PSFullyParsed;
+          file->parseStatus = success
+            ? model::File::PSFullyParsed
+            : model::File::PSPartiallyParsed;
           file->type = "YAML";
           _ctx.srcMgr.updateFile(*file);
         }
@@ -162,67 +165,66 @@ bool YamlParser::accept(const std::string& path_) const
   return ext == ".yaml" || ext == ".yml";
 }
 
-void YamlParser::collectAstNodes(model::FilePtr file_)
+bool YamlParser::collectAstNodes(model::FilePtr file_)
 {
-  YAML::Node currentFile = YAML::LoadFile(file_->path);
-  for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
+  try
   {
-    switch (it->first.Type())
+    YAML::Node currentFile = YAML::LoadFile(file_->path);
+    for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
     {
-      case YAML::NodeType::Null:
-        LOG(info) << it->first << ": null";
-        break;
-      case YAML::NodeType::Scalar:
-        LOG(info) << it->first << ": Scalar";
-        processScalar(it->first, file_, model::YamlAstNode::SymbolType::Key);
-        break;
-      case YAML::NodeType::Sequence:
-        LOG(info) << it->first << ": Sequence";
-        processSequence(it->first, file_, model::YamlAstNode::SymbolType::Key);
-        break;
-      case YAML::NodeType::Map:
-        LOG(info) << it->first << ": Map";
-        processMap(it->first, file_, model::YamlAstNode::SymbolType::Key);
-        break;
-      case YAML::NodeType::Undefined:
-        LOG(info) << it->first << ": Undefined";
-        break;
-    }
-
-    switch (it->second.Type())
-    {
-      case YAML::NodeType::Null:
-        LOG(info) << it->second << ": null";
-        break;
-      case YAML::NodeType::Scalar:
-        LOG(info) << it->second << ": Scalar";
-        processScalar(it->second, file_, model::YamlAstNode::SymbolType::Value);
-        break;
-      case YAML::NodeType::Sequence:
-        LOG(info) << it->second << ": Sequence";
-        processSequence(it->second, file_, model::YamlAstNode::SymbolType::Value);
-        break;
-      case YAML::NodeType::Map:
-        LOG(info) << it->second << ": Map";
-        processMap(it->second, file_, model::YamlAstNode::SymbolType::Value);
-        break;
-      case YAML::NodeType::Undefined:
-        LOG(info) << it->second << ": Undefined";
-        break;
+      chooseCoreNodeType(it->first, file_, model::YamlAstNode::SymbolType::Key);
+      chooseCoreNodeType(it->second, file_, model::YamlAstNode::SymbolType::Value);
     }
   }
+  catch (YAML::ParserException& e)
+  {
+    LOG(warning) << "Exception thrown in : " << file_->path << ": " << e.what();
+    return false;
+  }
+
+  return true;
 }
 
-void YamlParser::processScalar(
+void YamlParser::chooseCoreNodeType(
   YAML::Node& node_,
   model::FilePtr file_,
   model::YamlAstNode::SymbolType symbolType_)
 {
+  switch (node_.Type())
+  {
+    case YAML::NodeType::Null:
+      //LOG(info) << node_ << ": null";
+      break;
+    case YAML::NodeType::Scalar:
+      //LOG(info) << node_ << ": Scalar";
+      processAtomicNode(node_, file_, symbolType_,
+model::YamlAstNode::AstType::SCALAR);
+      break;
+    case YAML::NodeType::Sequence:
+      //LOG(info) << node_ << ": Sequence";
+      processSequence(node_, file_, symbolType_);
+      break;
+    case YAML::NodeType::Map:
+      //LOG(info) << node_ << ": Map";
+      processMap(node_, file_, symbolType_);
+      break;
+    case YAML::NodeType::Undefined:
+      //LOG(info) << node_ << ": Undefined";
+      break;
+  }
+}
+
+void YamlParser::processAtomicNode(
+  YAML::Node& node_,
+  model::FilePtr file_,
+  model::YamlAstNode::SymbolType symbolType_,
+  model::YamlAstNode::AstType astType_)
+{
   model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
-  currentNode->astValue = node_.Scalar();
+  currentNode->astValue = YAML::Dump(node_);
   currentNode->location.file = file_;
   currentNode->location.range = getNodeLocation(node_);
-  currentNode->astType = model::YamlAstNode::AstType::SCALAR;
+  currentNode->astType = astType_;
   currentNode->symbolType = symbolType_;
   currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
   currentNode->id = model::createIdentifier(*currentNode);
@@ -234,15 +236,63 @@ void YamlParser::processMap(
   model::FilePtr file_,
   model::YamlAstNode::SymbolType symbolType_)
 {
-  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
-  currentNode->astValue = YAML::Dump(node_);
-  currentNode->location.file = file_;
-  currentNode->location.range = getNodeLocation(node_);
-  currentNode->astType = model::YamlAstNode::AstType::MAP;
-  currentNode->symbolType = symbolType_;
-  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
-  currentNode->id = model::createIdentifier(*currentNode);
-  _astNodes.push_back(currentNode);
+  try
+  {
+    for (auto it = node_.begin(); it != node_.end(); ++it)
+    {
+      switch (it->first.Type())
+      {
+        case YAML::NodeType::Null:
+          //LOG(info) << it->first << ": null";
+          break;
+        case YAML::NodeType::Scalar:
+          //LOG(info) << it->first << ": Scalar";
+          processAtomicNode(it->first, file_,
+                            model::YamlAstNode::SymbolType::NestedKey,
+                            model::YamlAstNode::AstType::MAP);
+          break;
+        case YAML::NodeType::Sequence:
+          //LOG(info) << it->first << ": Sequence";
+          processSequence(it->first, file_, symbolType_);
+          break;
+        case YAML::NodeType::Map:
+          //LOG(info) << it->first << ": Map";
+          processMap(it->first, file_, symbolType_);
+          break;
+        case YAML::NodeType::Undefined:
+          //LOG(info) << it->first << ": Undefined";
+          break;
+      }
+
+      switch (it->second.Type())
+      {
+        case YAML::NodeType::Null:
+          //LOG(info) << it->second << ": null";
+          break;
+        case YAML::NodeType::Scalar:
+          //LOG(info) << it->second << ": Scalar";
+          processAtomicNode(it->second, file_,
+    model::YamlAstNode::SymbolType::NestedValue,
+    model::YamlAstNode::AstType::MAP);
+          break;
+        case YAML::NodeType::Sequence:
+          //LOG(info) << it->second << ": Sequence";
+          processSequence(it->second, file_, symbolType_);
+          break;
+        case YAML::NodeType::Map:
+          //LOG(info) << it->second << ": Map";
+          processMap(it->second, file_, symbolType_);
+          break;
+        case YAML::NodeType::Undefined:
+          //LOG(info) << it->second << ": Undefined";
+          break;
+      }
+    }
+  }
+  catch (YAML::ParserException& e)
+  {
+    LOG(warning) << "Exception thrown in : " << file_->path << ": " << e.what();
+  }
 }
 
 void YamlParser::processSequence(
@@ -250,15 +300,13 @@ void YamlParser::processSequence(
   model::FilePtr file_,
   model::YamlAstNode::SymbolType symbolType_)
 {
-  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
-  currentNode->astValue = YAML::Dump(node_);
-  currentNode->location.file = file_;
-  currentNode->location.range = getNodeLocation(node_);
-  currentNode->astType = model::YamlAstNode::AstType::SEQUENCE;
-  currentNode->symbolType = symbolType_;
-  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
-  currentNode->id = model::createIdentifier(*currentNode);
-  _astNodes.push_back(currentNode);
+  for (size_t i = 0; i < node_.size(); ++i)
+  {
+    YAML::Node temp = node_[i];
+    processAtomicNode(temp, file_,
+        model::YamlAstNode::SymbolType::Value,
+model::YamlAstNode::AstType::SEQUENCE);
+  }
 }
 
 model::Range YamlParser::getNodeLocation(YAML::Node& node_)

@@ -270,12 +270,12 @@ void YamlServiceHandler::getReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::AstNodeId& astNodeId)
 {
-  model::YamlAstNode node = queryYamlAstNode(astNodeId_);
+  /*model::YamlAstNode node = queryYamlAstNode(astNodeId_);
 
   switch (node.symbolType)
   {
     case
-  }
+  }*/
 }
 
 void YamlServiceHandler::getReferences(

@@ -32,12 +32,18 @@ private:
      : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
   };*/
 
-  void collectAstNodes(model::FilePtr file_);
+  bool collectAstNodes(model::FilePtr file_);
 
-  void processScalar(
+  void chooseCoreNodeType(
     YAML::Node& node_,
     model::FilePtr file_,
     model::YamlAstNode::SymbolType symbolType_);
+
+  void processAtomicNode(
+    YAML::Node& node_,
+    model::FilePtr file_,
+    model::YamlAstNode::SymbolType symbolType_,
+    model::YamlAstNode::AstType astType_);
   void processMap(
     YAML::Node& node_,
     model::FilePtr file_,
