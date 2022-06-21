@@ -228,7 +228,12 @@ void YamlParser::processAtomicNode(
   currentNode->symbolType = symbolType_;
   currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
   currentNode->id = model::createIdentifier(*currentNode);
-  _astNodes.push_back(currentNode);
+
+  if (!std::count_if(_astNodes.begin(), _astNodes.end(),
+   [&](const model::YamlAstNodePtr& other){
+      return currentNode->id == other->id;
+    }))
+    _astNodes.push_back(currentNode);
 }
 
 void YamlParser::processMap(
@@ -236,62 +241,55 @@ void YamlParser::processMap(
   model::FilePtr file_,
   model::YamlAstNode::SymbolType symbolType_)
 {
-  try
+  for (auto it = node_.begin(); it != node_.end(); ++it)
   {
-    for (auto it = node_.begin(); it != node_.end(); ++it)
+    switch (it->first.Type())
     {
-      switch (it->first.Type())
-      {
-        case YAML::NodeType::Null:
-          //LOG(info) << it->first << ": null";
-          break;
-        case YAML::NodeType::Scalar:
-          //LOG(info) << it->first << ": Scalar";
-          processAtomicNode(it->first, file_,
-                            model::YamlAstNode::SymbolType::NestedKey,
-                            model::YamlAstNode::AstType::MAP);
-          break;
-        case YAML::NodeType::Sequence:
-          //LOG(info) << it->first << ": Sequence";
-          processSequence(it->first, file_, symbolType_);
-          break;
-        case YAML::NodeType::Map:
-          //LOG(info) << it->first << ": Map";
-          processMap(it->first, file_, symbolType_);
-          break;
-        case YAML::NodeType::Undefined:
-          //LOG(info) << it->first << ": Undefined";
-          break;
-      }
-
-      switch (it->second.Type())
-      {
-        case YAML::NodeType::Null:
-          //LOG(info) << it->second << ": null";
-          break;
-        case YAML::NodeType::Scalar:
-          //LOG(info) << it->second << ": Scalar";
-          processAtomicNode(it->second, file_,
-    model::YamlAstNode::SymbolType::NestedValue,
-    model::YamlAstNode::AstType::MAP);
-          break;
-        case YAML::NodeType::Sequence:
-          //LOG(info) << it->second << ": Sequence";
-          processSequence(it->second, file_, symbolType_);
-          break;
-        case YAML::NodeType::Map:
-          //LOG(info) << it->second << ": Map";
-          processMap(it->second, file_, symbolType_);
-          break;
-        case YAML::NodeType::Undefined:
-          //LOG(info) << it->second << ": Undefined";
-          break;
-      }
+      case YAML::NodeType::Null:
+        //LOG(info) << it->first << ": null";
+        break;
+      case YAML::NodeType::Scalar:
+        //LOG(info) << it->first << ": Scalar";
+        processAtomicNode(it->first, file_,
+                          model::YamlAstNode::SymbolType::NestedKey,
+                          model::YamlAstNode::AstType::MAP);
+        break;
+      case YAML::NodeType::Sequence:
+        //LOG(info) << it->first << ": Sequence";
+        processSequence(it->first, file_, symbolType_);
+        break;
+      case YAML::NodeType::Map:
+        //LOG(info) << it->first << ": Map";
+        processMap(it->first, file_, symbolType_);
+        break;
+      case YAML::NodeType::Undefined:
+        //LOG(info) << it->first << ": Undefined";
+        break;
     }
-  }
-  catch (YAML::ParserException& e)
-  {
-    LOG(warning) << "Exception thrown in : " << file_->path << ": " << e.what();
+
+    switch (it->second.Type())
+    {
+      case YAML::NodeType::Null:
+        //LOG(info) << it->second << ": null";
+        break;
+      case YAML::NodeType::Scalar:
+        //LOG(info) << it->second << ": Scalar";
+        processAtomicNode(it->second, file_,
+  model::YamlAstNode::SymbolType::NestedValue,
+  model::YamlAstNode::AstType::MAP);
+        break;
+      case YAML::NodeType::Sequence:
+        //LOG(info) << it->second << ": Sequence";
+        processSequence(it->second, file_, symbolType_);
+        break;
+      case YAML::NodeType::Map:
+        //LOG(info) << it->second << ": Map";
+        processMap(it->second, file_, symbolType_);
+        break;
+      case YAML::NodeType::Undefined:
+        //LOG(info) << it->second << ": Undefined";
+        break;
+    }
   }
 }
 
@@ -303,9 +301,29 @@ void YamlParser::processSequence(
   for (size_t i = 0; i < node_.size(); ++i)
   {
     YAML::Node temp = node_[i];
-    processAtomicNode(temp, file_,
-        model::YamlAstNode::SymbolType::Value,
-model::YamlAstNode::AstType::SEQUENCE);
+    switch (temp.Type())
+    {
+      case YAML::NodeType::Null:
+        //LOG(info) << it->first << ": null";
+        break;
+      case YAML::NodeType::Scalar:
+        //LOG(info) << it->first << ": Scalar";
+        processAtomicNode(temp, file_,
+      model::YamlAstNode::SymbolType::Value,
+      model::YamlAstNode::AstType::SEQUENCE);
+        break;
+      case YAML::NodeType::Sequence:
+        //LOG(info) << it->first << ": Sequence";
+        processSequence(temp, file_, symbolType_);
+        break;
+      case YAML::NodeType::Map:
+        //LOG(info) << it->first << ": Map";
+        processMap(temp, file_, symbolType_);
+        break;
+      case YAML::NodeType::Undefined:
+        //LOG(info) << it->first << ": Undefined";
+        break;
+    }
   }
 }
 
@@ -343,6 +361,18 @@ bool YamlParser::isCIFile (std::string const& filename_, std::string const& endi
 
 YamlParser::~YamlParser()
 {
+  /*LOG(warning) << "SIZE:" << _astNodes.size();
+  std::sort(_astNodes.begin(), _astNodes.end());
+  auto last = std::unique(_astNodes.begin(), _astNodes.end());
+  _astNodes.erase(last, _astNodes.end());
+  LOG(warning) << "SIZE:" << _astNodes.size();*/
+  for (auto var : _astNodes)
+  {
+    if (var->location.file->path == "/home/efekane/eric-pc-gateway/charts/eric-pc-kvdb-rd-operator/values.yaml")
+    {
+      LOG(debug) << var->toString() << std::endl;
+    }
+  }
   (util::OdbTransaction(_ctx.db))([this]{
      util::persistAll(_astNodes, _ctx.db);
   });

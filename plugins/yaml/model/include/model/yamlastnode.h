@@ -96,7 +96,7 @@ inline std::string YamlAstNode::toString() const
   return std::string("YamlAstNode")
     .append("\nid = ").append(std::to_string(id))
     .append("\nastValue = ").append(astValue)
-    //.append("\nlocation = ").append(location.file->path).append(" (")
+    .append("\nlocation = ").append(location.file->path).append(" (")
     .append(std::to_string(
       static_cast<signed>(location.range.start.line))).append(":")
     .append(std::to_string(

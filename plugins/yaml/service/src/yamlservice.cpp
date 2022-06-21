@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <regex>
 #include <sstream>
 
 #include <boost/property_tree/ptree.hpp>
@@ -13,6 +14,8 @@ namespace
 {
   typedef odb::query<cc::model::YamlAstNode> AstQuery;
   typedef odb::result<cc::model::YamlAstNode> AstResult;
+  typedef odb::query<cc::model::File> FileQuery;
+  typedef odb::result<cc::model::File> FileResult;
 }
 
 namespace cc
@@ -218,7 +221,7 @@ void YamlServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_)
 {
   //return_ = _transaction([this, &astNodeId_](){
-  //    return CreateAstNodeInfo()(queryCppAstNode(astNodeId_));
+  //    return CreateAstNodeInfo()(queryYamlAstNode(astNodeId_));
 }
 
 void YamlServiceHandler::getAstNodeInfoByPosition(
@@ -326,8 +329,74 @@ std::int32_t YamlServiceHandler::getFileReferenceCount(
         const std::int32_t referenceId_) {}
 
 void YamlServiceHandler::getSyntaxHighlight(
-        std::vector<SyntaxHighlight>& return_,
-        const core::FileRange& range_) {}
+  std::vector<SyntaxHighlight>& return_,
+  const core::FileRange& range_)
+{
+  std::vector<std::string> content;
+
+  _transaction([&, this]()
+  {
+    //--- Load the file content and break it into lines ---//
+
+    model::FilePtr file = _db->query_one<model::File>(
+            FileQuery::id == std::stoull(range_.file));
+
+    if (!file || !file->content.load())
+      return;
+
+    std::istringstream s(file->content->content);
+    std::string line;
+    while (std::getline(s, line))
+      content.push_back(line);
+
+    //--- Iterate over AST node elements ---//
+
+    for (const model::YamlAstNode& node : _db->query<model::YamlAstNode>(
+            AstQuery::location.file == std::stoull(range_.file) &&
+            AstQuery::location.range.start.line >= range_.range.startpos.line &&
+            AstQuery::location.range.end.line < range_.range.endpos.line &&
+            AstQuery::location.range.end.line != model::Position::npos))
+    {
+      if (node.astValue.empty())
+        continue;
+
+      // Regular expression to find element position
+      //const std::regex specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
+      //std::string sanitizedAstValue = std::regex_replace(node.astValue, specialChars, R"(\$&)");
+      //std::string reg = "\\b" + sanitizedAstValue + "\\b";
+      //LOG(debug) << sanitizedAstValue;
+
+      for (std::size_t i = node.location.range.start.line - 1;
+           i < node.location.range.end.line && i < content.size();
+           ++i)
+      {
+        //std::regex words_regex(reg);
+        /*std::regex words_regex(node);
+        auto words_begin = std::sregex_iterator(
+                content[i].begin(), content[i].end(),
+                words_regex);
+        auto words_end = std::sregex_iterator();
+
+        for (std::sregex_iterator ri = words_begin; ri != words_end; ++ri)
+        {*/
+        //for ()
+          SyntaxHighlight syntax;
+          syntax.range.startpos.line = i + 1;
+          syntax.range.startpos.column = node.location.range.start.column;//ri->position() + 1;
+          syntax.range.endpos.line = i + 1;
+          syntax.range.endpos.column =
+                  syntax.range.startpos.column + node.astValue.length();
+
+          std::string symbolClass =
+                  "cm-" + model::symbolTypeToString(node.symbolType);
+          syntax.className = symbolClass; // + " " +
+                             //symbolClass + "-" + model::astTypeToString(node.astType);
+          return_.push_back(std::move(syntax));
+        //}
+      }
+    }
+  });
+}
 
 model::YamlAstNode YamlServiceHandler::queryYamlAstNode(
   const core::AstNodeId &astNodeId_)
