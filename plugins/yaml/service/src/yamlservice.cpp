@@ -16,6 +16,51 @@ namespace
   typedef odb::result<cc::model::YamlAstNode> AstResult;
   typedef odb::query<cc::model::File> FileQuery;
   typedef odb::result<cc::model::File> FileResult;
+
+  /**
+ * This struct transforms a model::YamlAstNode to an AstNodeInfo Thrift
+ * object.
+ */
+  struct CreateAstNodeInfo
+  {
+    typedef std::map<cc::model::YamlAstNodeId, std::vector<std::string>> TagMap;
+
+    CreateAstNodeInfo(const TagMap& tags_ = {}) : _tags(tags_)
+    {
+    }
+
+    /**
+     * Returns the Thrift object for this Yaml AST node.
+     */
+    cc::service::language::AstNodeInfo operator()(
+            const cc::model::YamlAstNode& astNode_)
+    {
+      cc::service::language::AstNodeInfo ret;
+
+      ret.__set_id(std::to_string(astNode_.id));
+      ret.__set_entityHash(astNode_.entityHash);
+      ret.__set_astNodeType(cc::model::astTypeToString(astNode_.astType));
+      ret.__set_symbolType(cc::model::symbolTypeToString(astNode_.symbolType));
+      ret.__set_astNodeValue(astNode_.astValue);
+
+      ret.range.range.startpos.line = astNode_.location.range.start.line;
+      ret.range.range.startpos.column = astNode_.location.range.start.column;
+      ret.range.range.endpos.line = astNode_.location.range.end.line;
+      ret.range.range.endpos.column = astNode_.location.range.end.column;
+
+      if (astNode_.location.file)
+        ret.range.file = std::to_string(astNode_.location.file.object_id());
+
+      TagMap::const_iterator it = _tags.find(astNode_.id);
+      if (it != _tags.end())
+        ret.__set_tags(it->second);
+
+      return ret;
+    }
+
+    const std::map<cc::model::YamlAstNodeId, std::vector<std::string>>& _tags;
+    std::shared_ptr<odb::database> _db;
+  };
 }
 
 namespace cc
@@ -228,6 +273,32 @@ void YamlServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_)
 {
+  LOG(warning) << fpos_;
+  _transaction([&, this](){
+    //--- Query nodes at the given position ---//
+
+    AstResult nodes = _db->query<model::YamlAstNode>(
+      AstQuery::location.file == std::stoull(fpos_.file) &&
+      // StartPos <= Pos
+      ((AstQuery::location.range.start.line == fpos_.pos.line &&
+        AstQuery::location.range.start.column <= fpos_.pos.column) ||
+       AstQuery::location.range.start.line < fpos_.pos.line) &&
+      // Pos < EndPos
+      ((AstQuery::location.range.end.line == fpos_.pos.line &&
+        AstQuery::location.range.end.column > fpos_.pos.column) ||
+       AstQuery::location.range.end.line > fpos_.pos.line));
+
+    if (nodes.begin() == nodes.end())
+    {
+      LOG(warning) << "empty";
+    }
+    model::YamlAstNode temp = *(nodes.begin());
+
+    return_ = _transaction([this,&temp](){
+        //return CreateAstNodeInfo(getTags({*temp}))(*temp);
+        return CreateAstNodeInfo()(temp);
+    });
+  });
 }
 
 void YamlServiceHandler::getSourceText(
@@ -396,6 +467,88 @@ void YamlServiceHandler::getSyntaxHighlight(
       }
     }
   });
+}
+
+std::map<model::YamlAstNodeId, std::vector<std::string>>
+YamlServiceHandler::getTags(const std::vector<model::YamlAstNode>& nodes_)
+{
+  std::map<model::YamlAstNodeId, std::vector<std::string>> tags;
+
+  for (const model::YamlAstNode& node : nodes_)
+  {
+    
+  }
+  /*    std::vector<cc::model::YamlAstNode> defs
+      = queryDefinitions(std::to_string(node.id));
+
+    const model::YamlAstNode& defNode = defs.empty() ? node : defs.front();
+
+    switch (node.symbolType)
+    {
+      case model::YamlAstNode::SymbolType::Function:
+      {
+        for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
+                (MemTypeQuery::memberAstNode == defNode.id ||
+                 MemTypeQuery::memberAstNode == node.id) &&
+                MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+        {
+          //--- Visibility Tag---//
+
+          std::string visibility
+                  = cc::model::visibilityToString(mem.visibility);
+
+          if (!visibility.empty())
+            tags[node.id].push_back(visibility);
+        }
+
+        //--- Virtual Tag ---//
+
+        FuncResult funcNodes = _db->query<cc::model::CppFunction>(
+                FuncQuery::entityHash == defNode.entityHash);
+        const model::CppFunction& funcNode = *funcNodes.begin();
+
+        for (const model::Tag& tag : funcNode.tags)
+          tags[node.id].push_back(model::tagToString(tag));
+
+        break;
+      }
+
+      case model::YamlAstNode::SymbolType::Variable:
+      {
+        for (const model::CppMemberType& mem : _db->query<model::CppMemberType>(
+                (MemTypeQuery::memberAstNode == defNode.id ||
+                 MemTypeQuery::memberAstNode == node.id) &&
+                MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+        {
+          //--- Visibility Tag---//
+
+          std::string visibility = model::visibilityToString(mem.visibility);
+
+          if (!visibility.empty())
+            tags[node.id].push_back(visibility);
+        }
+
+        //--- Global Tag ---//
+
+        VarResult varNodes = _db->query<cc::model::CppVariable>(
+                VarQuery::entityHash == defNode.entityHash);
+        if (!varNodes.empty())
+        {
+          const model::CppVariable& varNode = *varNodes.begin();
+
+          for (const model::Tag& tag : varNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
+        else
+          LOG(warning) << "Database query result was not expected to be empty. "
+                       << __FILE__ << ", line #" << __LINE__;
+
+        break;
+      }
+    }
+  }*/
+
+  return tags;
 }
 
 model::YamlAstNode YamlServiceHandler::queryYamlAstNode(

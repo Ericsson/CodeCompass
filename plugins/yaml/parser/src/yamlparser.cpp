@@ -16,6 +16,8 @@
 
 #include <parser/sourcemanager.h>
 
+#include <model/buildlog.h>
+#include <model/buildlog-odb.hxx>
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
@@ -179,6 +181,19 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   catch (YAML::ParserException& e)
   {
     LOG(warning) << "Exception thrown in : " << file_->path << ": " << e.what();
+
+    util::OdbTransaction {_ctx.db} ([&] {
+      model::BuildLog buildLog;
+      buildLog.location.file = file_;
+      buildLog.location.range.start.line = e.mark.line + 1;
+      buildLog.location.range.start.column = e.mark.column;
+      buildLog.location.range.end.line = e.mark.line + 1;
+      buildLog.location.range.end.column = e.mark.column;
+      buildLog.log.message = e.what();
+      buildLog.log.type = model::BuildLogMessage::Error;
+      _ctx.db->persist(buildLog);
+    });
+
     return false;
   }
 
@@ -330,11 +345,11 @@ void YamlParser::processSequence(
 model::Range YamlParser::getNodeLocation(YAML::Node& node_)
 {
   model::Range location;
-  location.start.line = node_.Mark().line;
+  location.start.line = node_.Mark().line + 1;
   location.start.column = node_.Mark().column;
   std::string nodeValue = YAML::Dump(node_);
   auto count = std::count(nodeValue.begin(), nodeValue.end(), '\n');
-  location.end.line = node_.Mark().line + count;
+  location.end.line = node_.Mark().line + count + 1;
 
   if (count > 0)
   {
@@ -343,7 +358,7 @@ model::Range YamlParser::getNodeLocation(YAML::Node& node_)
   }
   else
   {
-    location.end.column = node_.Mark().column + nodeValue.size();
+    location.end.column = node_.Mark().column + nodeValue.size() + 1;
   }
 
   return location;

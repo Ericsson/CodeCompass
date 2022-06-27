@@ -157,6 +157,9 @@ public:
   model::YamlAstNode queryYamlAstNode(
     const core::AstNodeId& astNodeId_);
 
+  std::map<model::YamlAstNodeId, std::vector<std::string>>
+  getTags(const std::vector<model::YamlAstNode>& nodes_);
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
