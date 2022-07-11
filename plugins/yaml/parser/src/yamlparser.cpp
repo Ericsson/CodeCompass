@@ -21,8 +21,8 @@
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
-#include <model/yaml.h>
-#include <model/yaml-odb.hxx>
+#include <model/yamlfile.h>
+#include <model/yamlfile-odb.hxx>
 #include <model/yamlcontent.h>
 #include <model/yamlcontent-odb.hxx>
 #include <model/yamlastnode.h>
@@ -38,8 +38,8 @@ namespace parser
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   util::OdbTransaction {_ctx.db} ([&, this] {
-      for (const model::Yaml& yf
-              : _ctx.db->query<model::Yaml>())
+      for (const model::YamlFile& yf
+              : _ctx.db->query<model::YamlFile>())
       {
         _fileIdCache.insert(yf.file);
       }
@@ -57,7 +57,6 @@ threadNum, [this](const std::string& path_)
       {
         if (accept(file->path))
         {
-          //this->persistData(file);
           bool success = collectAstNodes(file);
           ++this->_visitedFileCount;
           file->parseStatus = success
@@ -93,8 +92,8 @@ bool YamlParser::cleanupDatabase()
           {
             LOG(info) << "[yamlparser] Database cleanup: " << file.path;
 
-            _ctx.db->erase_query<model::Yaml>(
-              odb::query<model::Yaml>::file == file.id);
+            _ctx.db->erase_query<model::YamlFile>(
+                    odb::query<model::YamlFile>::file == file.id);
             _fileIdCache.erase(file.id);
           }
         }
@@ -140,7 +139,6 @@ bool YamlParser::parse()
   }
 
   _pool->wait();
-  //util::persistAll(_astNodes, _ctx.db);
   LOG(info) << "Processed files: " << this->_visitedFileCount;
 
   return true;
@@ -167,11 +165,32 @@ bool YamlParser::accept(const std::string& path_) const
   return ext == ".yaml" || ext == ".yml";
 }
 
+void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
+{
+  util::OdbTransaction {_ctx.db} ([&] {
+    model::YamlFilePtr file = std::make_shared<model::YamlFile>();
+    file->file = file_->id;
+
+    if (file_->filename == "Chart.yaml" || file_->filename == "Chart.yml")
+      file->type = model::YamlFile::Type::HELM_CHART;
+    else if (file_->filename == "values.yaml" || file_->filename == "values.yml")
+      file->type = model::YamlFile::Type::HELM_VALUES;
+    else if (file_->path.find("templates/"))
+      file->type = model::YamlFile::Type::HELM_TEMPLATE;
+    else if (file_->filename == "compose.yaml" || file_->filename == "compose.yml"
+          || file_->filename == "docker-compose.yaml" || file_->filename == "docker-compose.yml")
+      file->type = model::YamlFile::Type::DOCKER_COMPOSE;
+
+    _yamlFiles.push_back(file);
+  });
+}
+
 bool YamlParser::collectAstNodes(model::FilePtr file_)
 {
   try
   {
     YAML::Node currentFile = YAML::LoadFile(file_->path);
+    processFileType(file_, currentFile);
     for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
     {
       chooseCoreNodeType(it->first, file_, model::YamlAstNode::SymbolType::Key);
@@ -376,20 +395,9 @@ bool YamlParser::isCIFile (std::string const& filename_, std::string const& endi
 
 YamlParser::~YamlParser()
 {
-  /*LOG(warning) << "SIZE:" << _astNodes.size();
-  std::sort(_astNodes.begin(), _astNodes.end());
-  auto last = std::unique(_astNodes.begin(), _astNodes.end());
-  _astNodes.erase(last, _astNodes.end());
-  LOG(warning) << "SIZE:" << _astNodes.size();*/
-  for (auto var : _astNodes)
-  {
-    if (var->location.file->path == "/home/efekane/eric-pc-gateway/charts/eric-pc-kvdb-rd-operator/values.yaml")
-    {
-      LOG(debug) << var->toString() << std::endl;
-    }
-  }
   (util::OdbTransaction(_ctx.db))([this]{
      util::persistAll(_astNodes, _ctx.db);
+     util::persistAll(_yamlFiles, _ctx.db);
   });
 }
 

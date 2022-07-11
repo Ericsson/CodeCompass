@@ -1,6 +1,6 @@
 set(ODB_SOURCES
   include/model/yamlastnode.h
-  include/model/yaml.h
+        include/model/yamlfile.h
   include/model/yamlcontent.h)
 
 generate_odb_files("${ODB_SOURCES}")

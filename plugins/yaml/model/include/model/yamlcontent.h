@@ -8,6 +8,7 @@
 #include <odb/nullable.hxx>
 
 #include <model/file.h>
+#include <model/yamlastnode.h>
 
 namespace cc
 {
@@ -17,20 +18,20 @@ namespace model
 #pragma db object
 struct YamlContent
 {
-  #pragma db not_null
-  std::string key;
+  #pragma db id auto
+  std::uint64_t id;
 
-  #pragma db not_null
-  std::string parent;
+  //#pragma db not_null
+  YamlAstNodeId key;
 
-  #pragma db not_null
-  std::string data;
+  //#pragma db not_null
+  YamlAstNodeId value;
+
+  //#pragma db
+  YamlAstNodeId parent;
 
   #pragma db not_null
   FileId file;
-
-  #pragma db id auto
-  std::uint64_t id;
 };
 
 

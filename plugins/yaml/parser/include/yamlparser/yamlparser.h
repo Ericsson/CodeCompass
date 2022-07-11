@@ -32,6 +32,8 @@ private:
      : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
   };*/
 
+  void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
+
   bool collectAstNodes(model::FilePtr file_);
 
   void chooseCoreNodeType(
@@ -75,6 +77,7 @@ private:
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
   std::atomic<int> _visitedFileCount;
   std::vector<model::YamlAstNodePtr> _astNodes;
+  std::vector<model::YamlFilePtr> _yamlFiles;
 };
 
 } // namespace parser

@@ -100,7 +100,7 @@ void YamlServiceHandler::getYamlFileInfo(
   std::string& return_,
   const core::FileId& fileId_)
 {
-  util::Graph graph_;
+  /*util::Graph graph_;
 
   std::string htmlContent = "";
   _transaction([&, this](){
@@ -160,7 +160,7 @@ void YamlServiceHandler::getYamlFileInfo(
     htmlContent += "</ul>";
     graph_.setNodeAttribute(node, "FileInfo", htmlContent, true);
   });
-  return_ = htmlContent;
+  return_ = htmlContent;*/
 }
 
 
@@ -168,7 +168,7 @@ void YamlServiceHandler::getYamlFileDiagram(
   std::string& return_,
   const core::FileId& fileId_)
 {
-  util::Graph graph_;
+  /*util::Graph graph_;
   std::string thAttr 
     = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
 
@@ -202,7 +202,7 @@ void YamlServiceHandler::getYamlFileDiagram(
     graph_.setNodeAttribute(node, "content", table, true);
 
   });
-  return_ = table;
+  return_ = table;*/
 }
 
 util::Graph::Node YamlServiceHandler::addNode(
@@ -265,15 +265,15 @@ void YamlServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
-  //return_ = _transaction([this, &astNodeId_](){
-  //    return CreateAstNodeInfo()(queryYamlAstNode(astNodeId_));
+  return_ = _transaction([this, &astNodeId_]() {
+    return CreateAstNodeInfo()(queryYamlAstNode(astNodeId_));
+  });
 }
 
 void YamlServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_)
 {
-  LOG(warning) << fpos_;
   _transaction([&, this](){
     //--- Query nodes at the given position ---//
 
@@ -288,31 +288,49 @@ void YamlServiceHandler::getAstNodeInfoByPosition(
         AstQuery::location.range.end.column > fpos_.pos.column) ||
        AstQuery::location.range.end.line > fpos_.pos.line));
 
-    if (nodes.begin() == nodes.end())
-    {
-      LOG(warning) << "empty";
-    }
     model::YamlAstNode temp = *(nodes.begin());
 
     return_ = _transaction([this,&temp](){
-        //return CreateAstNodeInfo(getTags({*temp}))(*temp);
         return CreateAstNodeInfo()(temp);
     });
   });
 }
 
 void YamlServiceHandler::getSourceText(
-        std::string& return_,
-        const core::AstNodeId& astNodeId_)
-{  }
+  std::string& return_,
+  const core::AstNodeId& astNodeId_)
+{
+  return_ = _transaction([this, &astNodeId_](){
+    model::YamlAstNode astNode = queryYamlAstNode(astNodeId_);
+
+    if (astNode.location.file)
+      return cc::util::textRange(
+      astNode.location.file.load()->content.load()->content,
+      astNode.location.range.start.line,
+      astNode.location.range.start.column,
+      astNode.location.range.end.line,
+      astNode.location.range.end.column);
+
+    return std::string();
+  });
+}
 
 void YamlServiceHandler::getDocumentation(
         std::string& return_,
         const core::AstNodeId& astNodeId_) {}
 
 void YamlServiceHandler::getProperties(
-        std::map<std::string, std::string>& return_,
-        const core::AstNodeId& astNodeId_) {}
+  std::map<std::string, std::string>& return_,
+  const core::AstNodeId& astNodeId_)
+{
+  _transaction([&, this]() {
+    model::YamlAstNode node = queryYamlAstNode(astNodeId_);
+
+    return_["Name"] = node.astValue;
+    return_["Symbol type"] = symbolTypeToString(node.symbolType);
+    return_["Value type"] = astTypeToString(node.astType);
+  });
+}
 
 void YamlServiceHandler::getDiagramTypes(
         std::map<std::string, std::int32_t>& return_,

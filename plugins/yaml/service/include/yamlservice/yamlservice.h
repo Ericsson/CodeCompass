@@ -8,8 +8,8 @@
 
 #include <odb/database.hxx>
 
-#include <model/yaml.h>
-#include <model/yaml-odb.hxx>
+#include <model/yamlfile.h>
+#include <model/yamlfile-odb.hxx>
 
 #include <model/yamlcontent.h>
 #include <model/yamlcontent-odb.hxx>
