@@ -324,11 +324,14 @@ void YamlServiceHandler::getProperties(
   const core::AstNodeId& astNodeId_)
 {
   _transaction([&, this]() {
+    LOG(info) << "step 1";
     model::YamlAstNode node = queryYamlAstNode(astNodeId_);
+      LOG(info) << "step 2";
 
     return_["Name"] = node.astValue;
     return_["Symbol type"] = symbolTypeToString(node.symbolType);
     return_["Value type"] = astTypeToString(node.astType);
+      LOG(info) << "step 3";
   });
 }
 
@@ -371,10 +374,10 @@ void YamlServiceHandler::getReferenceTypes(
 }
 
 void YamlServiceHandler::getReferences(
-        std::vector<AstNodeInfo>& return_,
-        const core::AstNodeId& astNodeId_,
-        const std::int32_t referenceId_,
-        const std::vector<std::string>& tags_) {}
+  std::vector<AstNodeInfo>& return_,
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_,
+  const std::vector<std::string>& tags_) {}
 
 std::int32_t YamlServiceHandler::getReferenceCount(
   const core::AstNodeId& astNodeId_,
