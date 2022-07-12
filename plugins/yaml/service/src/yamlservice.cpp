@@ -97,18 +97,16 @@ std::string graphHtmlTag(
 }
 
 void YamlServiceHandler::getYamlFileInfo(
-  std::string& return_,
+  util::Graph& graph_,
   const core::FileId& fileId_)
 {
-  /*util::Graph graph_;
-
   std::string htmlContent = "";
   _transaction([&, this](){
     typedef odb::result<model::File> FilePathResult;
     typedef odb::query<model::File> FilePathQuery;
 
-    typedef odb::query<model::Yaml> YamlQuery;
-    typedef odb::result<model::Yaml> YamlResult;
+    typedef odb::query<model::YamlFile> YamlQuery;
+    typedef odb::result<model::YamlFile> YamlResult;
 
     typedef odb::result<model::YamlContent> YamlContentResult;
     typedef odb::query<model::YamlContent> YamlContentQuery;
@@ -116,7 +114,7 @@ void YamlServiceHandler::getYamlFileInfo(
     FilePathResult yamlPath = _db->query<model::File>(
           FilePathQuery::id == std::stoull(fileId_));
 
-    YamlResult yamlInfo = _db->query<model::Yaml>(
+    YamlResult yamlInfo = _db->query<model::YamlFile>(
           YamlQuery::file == std::stoull(fileId_));
 
     YamlContentResult yamlContent = _db->query<model::YamlContent>(
@@ -126,17 +124,8 @@ void YamlServiceHandler::getYamlFileInfo(
     _projectService.getFileInfo(fileInfo, fileId_);
     util::Graph::Node node = addNode(graph_, fileInfo);
 
-    std::string typeList[] = 
-    {
-      "KUBERNETES_CONFIG",
-      "DOCKER_COMPOSE",
-      "HELM_CHART",
-      "CI",
-      "OTHER"
-    };
-
     int numOfDataPairs = yamlContent.size();
-    std::string type = typeList[yamlInfo.begin()->type];
+    std::string type = typeToString(yamlInfo.begin()->type);
     std::string path = yamlPath.begin()->path;
 
     htmlContent +=  "<p><strong> FileType: </strong>" + type + "</p>";
@@ -151,29 +140,27 @@ void YamlServiceHandler::getYamlFileInfo(
 
     for (const model::YamlContent& yc : yamlContent)
     {
-      if (yc.parent == "")
-      {
         htmlContent += graphHtmlTag("li", yc.key);
-      }
     }
 
     htmlContent += "</ul>";
     graph_.setNodeAttribute(node, "FileInfo", htmlContent, true);
   });
-  return_ = htmlContent;*/
+  //return_ = htmlContent;
 }
 
 
 void YamlServiceHandler::getYamlFileDiagram(
-  std::string& return_,
+  util::Graph& graph_,
   const core::FileId& fileId_)
 {
-  /*util::Graph graph_;
+  //util::Graph graph_;
   std::string thAttr 
     = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
 
   std::string tdAttr = "style=\"height:30px\"";
   std::string table = "<table border='1' cellspacing='1' width='75%'>";
+
   _transaction([&, this](){
     typedef odb::result<model::YamlContent> YamlResult;
     typedef odb::query<model::YamlContent> YamlQuery;
@@ -187,22 +174,23 @@ void YamlServiceHandler::getYamlFileDiagram(
 
     table += graphHtmlTag("tr",
           graphHtmlTag("th", "Key", thAttr) +
-          graphHtmlTag("th", "Parent", thAttr) +
-          graphHtmlTag("th", "Data", thAttr));
+          //graphHtmlTag("th", "Parent", thAttr) +
+          graphHtmlTag("th", "Value", thAttr));
 
     for (const model::YamlContent& yc : yamlContent)
     {
+      LOG(warning) << yc.key << "     " << yc.value;
       table += graphHtmlTag("tr",
           graphHtmlTag("td", yc.key, tdAttr) + 
-          graphHtmlTag("td", yc.parent, tdAttr) +
-          graphHtmlTag("td", yc.data, tdAttr));
+          //graphHtmlTag("td", yc.parent, tdAttr) +
+          graphHtmlTag("td", yc.value, tdAttr));
     }
     table.append("</table>");
 
     graph_.setNodeAttribute(node, "content", table, true);
-
+    LOG(warning) << graph_.output(util::Graph::SVG);
   });
-  return_ = table;*/
+  //return_ = table;
 }
 
 util::Graph::Node YamlServiceHandler::addNode(
@@ -258,7 +246,7 @@ void YamlServiceHandler::decorateNode(
 
 void YamlServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
-  return_.push_back("YAML");
+  return_.emplace_back("YAML");
 }
 
 void YamlServiceHandler::getAstNodeInfo(
@@ -288,11 +276,14 @@ void YamlServiceHandler::getAstNodeInfoByPosition(
         AstQuery::location.range.end.column > fpos_.pos.column) ||
        AstQuery::location.range.end.line > fpos_.pos.line));
 
-    model::YamlAstNode temp = *(nodes.begin());
+    if (!nodes.empty())
+    {
+      model::YamlAstNode temp = *(nodes.begin());
 
-    return_ = _transaction([this,&temp](){
-        return CreateAstNodeInfo()(temp);
-    });
+      return_ = _transaction([this,&temp](){
+          return CreateAstNodeInfo()(temp);
+      });
+    }
   });
 }
 
@@ -316,22 +307,19 @@ void YamlServiceHandler::getSourceText(
 }
 
 void YamlServiceHandler::getDocumentation(
-        std::string& return_,
-        const core::AstNodeId& astNodeId_) {}
+  std::string& return_,
+  const core::AstNodeId& astNodeId_) {}
 
 void YamlServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_)
 {
   _transaction([&, this]() {
-    LOG(info) << "step 1";
     model::YamlAstNode node = queryYamlAstNode(astNodeId_);
-      LOG(info) << "step 2";
 
     return_["Name"] = node.astValue;
     return_["Symbol type"] = symbolTypeToString(node.symbolType);
     return_["Value type"] = astTypeToString(node.astType);
-      LOG(info) << "step 3";
   });
 }
 
@@ -349,13 +337,46 @@ void YamlServiceHandler::getDiagramLegend(
         const std::int32_t diagramId_) {}
 
 void YamlServiceHandler::getFileDiagramTypes(
-        std::map<std::string, std::int32_t>& return_,
-        const core::FileId& fileId_) {}
+  std::map<std::string, std::int32_t>& return_,
+  const core::FileId& fileId_)
+{
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+    FileQuery::id == std::stoull(fileId_));
+  });
+
+  if (file)
+  {
+    if (file->type == "YAML")
+    {
+      return_["YAML"]     = YAML;
+      return_["YAMLInfo"] = YAMLINFO;
+    }
+  }
+}
 
 void YamlServiceHandler::getFileDiagram(
-        std::string& return_,
-        const core::FileId& fileId_,
-        const int32_t diagramId_) {}
+  std::string& return_,
+  const core::FileId& fileId_,
+  const int32_t diagramId_)
+{
+  util::Graph graph;
+  graph.setAttribute("rankdir", "LR");
+
+  switch (diagramId_)
+  {
+    case YAML:
+      getYamlFileDiagram(graph, fileId_);
+      break;
+    case YAMLINFO:
+      getYamlFileInfo(graph, fileId_);
+      break;
+  }
+
+  //if (graph.nodeCount() != 0)
+  //return_ = graph.output(util::Graph::SVG);
+  return_ = graph.output(util::Graph::DOT);
+}
 
 void YamlServiceHandler::getFileDiagramLegend(
         std::string& return_,
@@ -477,7 +498,7 @@ void YamlServiceHandler::getSyntaxHighlight(
           syntax.range.startpos.column = node.location.range.start.column;//ri->position() + 1;
           syntax.range.endpos.line = i + 1;
           syntax.range.endpos.column =
-                  syntax.range.startpos.column + node.astValue.length();
+                  syntax.range.startpos.column + node.astValue.length() + 1;
 
           std::string symbolClass =
                   "cm-" + model::symbolTypeToString(node.symbolType);

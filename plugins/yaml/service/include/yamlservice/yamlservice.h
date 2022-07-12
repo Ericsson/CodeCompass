@@ -47,11 +47,11 @@ public:
     const cc::webserver::ServerContext& context_);
 
   void getYamlFileDiagram(
-    std::string& return_,
+    util::Graph& graph_,
     const core::FileId& fileId_);
 
   void getYamlFileInfo(
-    std::string& return_,
+    util::Graph& graph_,
     const core::FileId& fileId_);
 
   util::Graph::Node addNode(
@@ -161,6 +161,12 @@ public:
   getTags(const std::vector<model::YamlAstNode>& nodes_);
 
 private:
+  enum DiagramType
+  {
+      YAML,
+      YAMLINFO
+  };
+
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
   std::shared_ptr<odb::database> _db;

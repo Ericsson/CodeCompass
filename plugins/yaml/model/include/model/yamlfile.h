@@ -22,7 +22,6 @@ struct YamlFile
 {
   enum Type
   {
-    KUBERNETES_CONFIG,
     DOCKER_COMPOSE,
     HELM_CHART,
     HELM_TEMPLATE,
@@ -47,7 +46,6 @@ inline std::string typeToString(YamlFile::Type type_)
 {
   switch (type_)
   {
-    case YamlFile::Type::KUBERNETES_CONFIG: return "Kubernetes_config";
     case YamlFile::Type::DOCKER_COMPOSE: return "docker-compose";
     case YamlFile::Type::HELM_CHART: return "Helm chart";
     case YamlFile::Type::HELM_TEMPLATE: return "Helm template";

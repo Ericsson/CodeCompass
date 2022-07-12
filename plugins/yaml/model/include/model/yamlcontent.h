@@ -15,6 +15,10 @@ namespace cc
 namespace model
 {
 
+struct YamlContent;
+
+typedef std::shared_ptr<YamlContent> YamlContentPtr;
+
 #pragma db object
 struct YamlContent
 {
@@ -22,18 +26,28 @@ struct YamlContent
   std::uint64_t id;
 
   //#pragma db not_null
-  YamlAstNodeId key;
+  std::string key;
 
   //#pragma db not_null
-  YamlAstNodeId value;
+  std::string value;
 
   //#pragma db
-  YamlAstNodeId parent;
+  //YamlAstNodeId parent;
 
   #pragma db not_null
   FileId file;
+
+  std::string toString() const;
 };
 
+inline std::string YamlContent::toString() const
+{
+  return std::string("YamlContent")
+    .append("\nid = ").append(std::to_string(id))
+    .append("\nkey = ").append(key)
+    .append("\nvalue = ").append(value)
+    .append("\nfile id = ").append(std::to_string(file));
+}
 
 } //model
 } //cc

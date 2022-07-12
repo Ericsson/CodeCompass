@@ -180,8 +180,25 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
     else if (file_->filename == "compose.yaml" || file_->filename == "compose.yml"
           || file_->filename == "docker-compose.yaml" || file_->filename == "docker-compose.yml")
       file->type = model::YamlFile::Type::DOCKER_COMPOSE;
+    else if (file_->filename.find("ci") != std::string::npos)
+      file->type = model::YamlFile::Type::CI;
 
     _yamlFiles.push_back(file);
+  });
+}
+
+void YamlParser::processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile)
+{
+  util::OdbTransaction {_ctx.db} ([&]{
+    for (const auto &pair: loadedFile)
+    {
+      model::YamlContentPtr content = std::make_shared<model::YamlContent>();
+      content->file = file_->id;
+      content->key = Dump(pair.first);
+      content->value = Dump(pair.second);
+
+      _rootPairs.push_back(content);
+    }
   });
 }
 
@@ -191,6 +208,7 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   {
     YAML::Node currentFile = YAML::LoadFile(file_->path);
     processFileType(file_, currentFile);
+    processRootKeys(file_, currentFile);
     for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
     {
       chooseCoreNodeType(it->first, file_, model::YamlAstNode::SymbolType::Key);
@@ -398,6 +416,7 @@ YamlParser::~YamlParser()
   (util::OdbTransaction(_ctx.db))([this]{
      util::persistAll(_astNodes, _ctx.db);
      util::persistAll(_yamlFiles, _ctx.db);
+     util::persistAll(_rootPairs, _ctx.db);
   });
 }
 

@@ -33,6 +33,7 @@ private:
   };*/
 
   void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
+  void processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile);
 
   bool collectAstNodes(model::FilePtr file_);
 
@@ -78,6 +79,7 @@ private:
   std::atomic<int> _visitedFileCount;
   std::vector<model::YamlAstNodePtr> _astNodes;
   std::vector<model::YamlFilePtr> _yamlFiles;
+  std::vector<model::YamlContentPtr> _rootPairs;
 };
 
 } // namespace parser
