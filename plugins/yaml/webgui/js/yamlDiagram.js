@@ -25,6 +25,10 @@ function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, Che
       model.yamlservice.getFileDiagram(fileId, diagramType, callback);
     },
 
+    getDiagramLegend : function (diagramType) {
+      return model.yamlservice.getFileDiagramLegend(diagramType);
+    },
+
     mouseOverInfo : function (diagramType, fileId) {
       return {
         fileId : fileId,
@@ -71,64 +75,4 @@ function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, Che
   viewHandler.registerModule(fileDiagrams, {
     type : viewHandler.moduleType.FileManagerContextMenu
   });
-
-  /*var yamlMenu = {
-    id     : 'yamlMenu',
-    render : function (fileInfo) {
-      return new MenuItem({
-        label    : 'Yaml',
-        onClick  : function () {
-          topic.publish('codecompass/openDiagram', {
-            handler : 'yaml-file-diagram-handler',
-            diagramType : 1,
-            node : fileInfo.id
-          })
-        }
-      });
-    }
-  };
-
-  viewHandler.registerModule(yamlMenu, {
-    type : viewHandler.moduleType.FileManagerContextMenu
-  });
-
-  var fileInfoHandler = {
-    id : 'yaml-file-info-handler',
-
-    getDiagram : function (diagramType, fileId, callback) {
-      model.yamlservice.getYamlFileInfo(fileId, callback);
-    },
-
-    mouseOverInfo : function (diagramType, fileId) {
-      return {
-        fileId : fileId,
-        selection : [1,1,1,1]
-      };
-    }
-  };
-
-  viewHandler.registerModule(fileInfoHandler, {
-    type : viewHandler.moduleType.Diagram
-  });
-
-  var infobox = {
-    id : 'yamlMenu1',
-    render : function (fileInfo) {
-      return new MenuItem({
-        label : 'YamlInfo',
-        onClick : function () {
-          topic.publish('codecompass/openDiagram', {
-            handler : 'yaml-file-info-handler',
-            diagramType : 1,
-            node : fileInfo.id
-          })
-        }
-      });
-    }
-  };
-
-  viewHandler.registerModule(infobox, {
-    type :  viewHandler.moduleType.FileManagerContextMenu
-  });*/
-
 });

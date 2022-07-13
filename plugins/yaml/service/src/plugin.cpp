@@ -1,6 +1,6 @@
 #include <webserver/pluginhelper.h>
 
-#include <yamlservice/yamlservice.h>
+#include <service/yamlservice.h>
 
 /* These two methods are used by the plugin manager to allow dynamic loading
   of CodeCompass Service plugins. Clang (>= version 6.0) gives a warning that

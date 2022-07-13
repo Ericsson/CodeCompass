@@ -46,21 +46,6 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void getYamlFileDiagram(
-    util::Graph& graph_,
-    const core::FileId& fileId_);
-
-  void getYamlFileInfo(
-    util::Graph& graph_,
-    const core::FileId& fileId_);
-
-  util::Graph::Node addNode(
-    util::Graph& graph_,
-    const core::FileInfo& fileInfo_);
-
-  std::string getLastNParts(const std::string& path_, std::size_t n_);
-
-
   void getFileTypes(std::vector<std::string>& return_) override;
 
   void getAstNodeInfo(
@@ -163,26 +148,15 @@ public:
 private:
   enum DiagramType
   {
-      YAML,
-      YAMLINFO
+      YAMLFILEINFO,
+      ROOTKEYS
   };
-
-  typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
-  static const Decoration sourceFileNodeDecoration;
-  static const Decoration binaryFileNodeDecoration;
-  static const Decoration directoryNodeDecoration;
-
-  core::ProjectServiceHandler _projectService;
-
-  void decorateNode(
-    util::Graph& graph_,
-    const util::Graph::Node& node_,
-    const Decoration& decoration_) const;
-
+  std::shared_ptr<std::string> _datadir;
+  const cc::webserver::ServerContext& _context;
 };
 
 } // yaml

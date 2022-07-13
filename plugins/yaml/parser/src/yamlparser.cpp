@@ -28,7 +28,7 @@
 #include <model/yamlastnode.h>
 #include <model/yamlastnode-odb.hxx>
 
-#include "yamlparser/yamlparser.h"
+#include "parser/yamlparser.h"
 
 namespace cc
 {

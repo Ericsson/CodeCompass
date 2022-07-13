@@ -41,6 +41,7 @@ add_library(yamlthrift STATIC
 
 add_library(yamlservice SHARED
   src/yamlservice.cpp
+  src/yamlfilediagram.cpp
   src/plugin.cpp)
 
 target_compile_options(yamlservice PUBLIC -Wno-unknown-pragmas)
