@@ -34,23 +34,15 @@ void YamlFileDiagram::getYamlFileInfo(
 {
   std::string htmlContent = "";
     _transaction([&, this](){
-      typedef odb::result<model::File> FilePathResult;
-      typedef odb::query<model::File> FilePathQuery;
-
-      typedef odb::query<model::YamlFile> YamlQuery;
-      typedef odb::result<model::YamlFile> YamlResult;
-
-      typedef odb::result<model::YamlContent> YamlContentResult;
-      typedef odb::query<model::YamlContent> YamlContentQuery;
 
       FilePathResult yamlPath = _db->query<model::File>(
-              FilePathQuery::id == std::stoull(fileId_));
+    FilePathQuery::id == std::stoull(fileId_));
 
       YamlResult yamlInfo = _db->query<model::YamlFile>(
-              YamlQuery::file == std::stoull(fileId_));
+    YamlQuery::file == std::stoull(fileId_));
 
       YamlContentResult yamlContent = _db->query<model::YamlContent>(
-              YamlContentQuery::file == std::stoull(fileId_));
+    YamlContentQuery::file == std::stoull(fileId_));
 
       core::FileInfo fileInfo;
       _projectHandler.getFileInfo(fileInfo, fileId_);
@@ -66,7 +58,7 @@ void YamlFileDiagram::getYamlFileInfo(
                      + std::to_string(numOfDataPairs) + "</p>";
 
       htmlContent += graphHtmlTag("p",
-                                  graphHtmlTag("strong", "Main Keys:"));
+            graphHtmlTag("strong", "Main Keys:"));
 
       htmlContent += "<ul>";
 

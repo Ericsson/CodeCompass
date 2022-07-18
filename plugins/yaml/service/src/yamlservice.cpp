@@ -186,8 +186,8 @@ void YamlServiceHandler::getFileDiagramTypes(
   {
     if (file->type == "YAML")
     {
-      return_["File Info"]     = YAMLFILEINFO;
-      return_["Root keys"]     = ROOTKEYS;
+      return_["File Info"]     = YAML_FILE_INFO;
+      return_["Root keys"]     = ROOT_KEYS;
     }
   }
 }
@@ -203,10 +203,10 @@ void YamlServiceHandler::getFileDiagram(
 
   switch (diagramId_)
   {
-    case ROOTKEYS:
+    case ROOT_KEYS:
       diagram.getYamlFileDiagram(graph, fileId_);
       break;
-    case YAMLFILEINFO:
+    case YAML_FILE_INFO:
       diagram.getYamlFileInfo(graph, fileId_);
       break;
   }

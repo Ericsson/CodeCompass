@@ -29,25 +29,28 @@
 #include <model/yamlastnode-odb.hxx>
 
 #include "parser/yamlparser.h"
+//#include "yamlastvisitor.h"
 
 namespace cc
 {
 namespace parser
 {
 
+namespace fs = boost::filesystem;
+
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   util::OdbTransaction {_ctx.db} ([&, this] {
-      for (const model::YamlFile& yf
-              : _ctx.db->query<model::YamlFile>())
-      {
-        _fileIdCache.insert(yf.file);
-      }
+    for (const model::YamlFile& yf
+            : _ctx.db->query<model::YamlFile>())
+    {
+      _fileIdCache.insert(yf.file);
+    }
   });
 
   int threadNum = _ctx.options["jobs"].as<int>();
   _pool = util::make_thread_pool<std::string>(
-threadNum, [this](const std::string& path_)
+  threadNum, [&, this](const std::string& path_)
   {
     LOG(info) << "Processing " << path_;
     model::FilePtr file = _ctx.srcMgr.getFile(path_);
@@ -70,6 +73,7 @@ threadNum, [this](const std::string& path_)
         LOG(debug) << "YamlParser already parsed this file: " << file->path;
     }
   });
+
 }
 
 bool YamlParser::cleanupDatabase()
@@ -112,30 +116,34 @@ bool YamlParser::parse()
 {
   this->_visitedFileCount = 0;
 
-  for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
+  for (const std::string& input :
+    _ctx.options["input"].as<std::vector<std::string>>())
   {
-    LOG(info) << "Yaml parse path: " << path;
+    if (fs::is_directory(input))
+    {
+      LOG(info) << "Yaml parse path: " << input;
 
-    util::OdbTransaction trans(_ctx.db);
-    trans([&, this]() {
+      util::OdbTransaction trans(_ctx.db);
+      trans([&, this]() {
         auto cb = getParserCallback();
         /*--- Call non-empty iter-callback for all files
            in the current root directory. ---*/
         try
         {
-          util::iterateDirectoryRecursive(path, cb);
+          util::iterateDirectoryRecursive(input, cb);
         }
         catch (std::exception& ex_)
         {
           LOG(warning)
-                  << "Yaml parser threw an exception: " << ex_.what();
+            << "Yaml parser threw an exception: " << ex_.what();
         }
         catch (...)
         {
           LOG(warning)
-                  << "Yaml parser failed with unknown exception!";
+            << "Yaml parser failed with unknown exception!";
         }
-    });
+      });
+    }
   }
 
   _pool->wait();
@@ -148,14 +156,14 @@ util::DirIterCallback YamlParser::getParserCallback()
 {
   return [this](const std::string& currPath_)
   {
-      boost::filesystem::path path(currPath_);
+    boost::filesystem::path path(currPath_);
 
-      if (boost::filesystem::is_regular_file(path))
-      {
-        _pool->enqueue(currPath_);
-      }
+    if (boost::filesystem::is_regular_file(path))
+    {
+      _pool->enqueue(currPath_);
+    }
 
-      return true;
+    return true;
   };
 }
 
@@ -183,7 +191,8 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
     else if (file_->filename.find("ci") != std::string::npos)
       file->type = model::YamlFile::Type::CI;
 
-    _yamlFiles.push_back(file);
+    _ctx.db->persist(file);
+    //_yamlFiles.push_back(file);
   });
 }
 
@@ -197,7 +206,10 @@ void YamlParser::processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile)
       content->key = Dump(pair.first);
       content->value = Dump(pair.second);
 
+      _ctx.db->persist(content);
+      /*_mutex.lock();
       _rootPairs.push_back(content);
+      _mutex.unlock();*/
     }
   });
 }
@@ -228,7 +240,10 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
       buildLog.location.range.end.column = e.mark.column;
       buildLog.log.message = e.what();
       buildLog.log.type = model::BuildLogMessage::Error;
-      _ctx.db->persist(buildLog);
+      //_ctx.db->persist(buildLog);
+      _mutex.lock();
+      _buildLogs.push_back(buildLog);
+      _mutex.unlock();
     });
 
     return false;
@@ -272,20 +287,29 @@ void YamlParser::processAtomicNode(
   model::YamlAstNode::SymbolType symbolType_,
   model::YamlAstNode::AstType astType_)
 {
-  model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
-  currentNode->astValue = YAML::Dump(node_);
-  currentNode->location.file = file_;
-  currentNode->location.range = getNodeLocation(node_);
-  currentNode->astType = astType_;
-  currentNode->symbolType = symbolType_;
-  currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
-  currentNode->id = model::createIdentifier(*currentNode);
+  (util::OdbTransaction(_ctx.db))([&, this]
+  {
+    model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
+    currentNode->astValue = YAML::Dump(node_);
+    //currentNode->location.file = file_;
+    currentNode->location.file = _ctx.srcMgr.getFile(file_->path);
+    currentNode->location.range = getNodeLocation(node_);
+    currentNode->astType = astType_;
+    currentNode->symbolType = symbolType_;
+    currentNode->entityHash = util::fnvHash(YAML::Dump(node_));
+    currentNode->id = model::createIdentifier(*currentNode);
 
-  if (!std::count_if(_astNodes.begin(), _astNodes.end(),
-   [&](const model::YamlAstNodePtr& other){
-      return currentNode->id == other->id;
-    }))
-    _astNodes.push_back(currentNode);
+    _mutex.lock();
+    //std::lock_guard<std::mutex> guard(_mutex);
+    if (!std::count_if(_astNodes.begin(), _astNodes.end(),
+     [&](const auto& other){
+        return currentNode->id == other->id;
+      }))
+    {
+      _astNodes.push_back(currentNode);
+    }
+    _mutex.unlock();
+  });
 }
 
 void YamlParser::processMap(
@@ -401,22 +425,15 @@ model::Range YamlParser::getNodeLocation(YAML::Node& node_)
   return location;
 }
 
-bool YamlParser::isCIFile (std::string const& filename_, std::string const& ending_)
-{
-  if (filename_.length() >= ending_.length())
-  {
-    return (0 == filename_.compare (
-            filename_.length() - ending_.length(), ending_.length(), ending_));
-  }
-  return false;
-}
-
 YamlParser::~YamlParser()
 {
   (util::OdbTransaction(_ctx.db))([this]{
      util::persistAll(_astNodes, _ctx.db);
-     util::persistAll(_yamlFiles, _ctx.db);
-     util::persistAll(_rootPairs, _ctx.db);
+
+     for (model::BuildLog& log : _buildLogs)
+       _ctx.db->persist(log);
+     //util::persistAll(_yamlFiles, _ctx.db);
+     //util::persistAll(_rootPairs, _ctx.db);
   });
 }
 

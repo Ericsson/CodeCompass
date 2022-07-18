@@ -22,15 +22,27 @@ public:
   virtual bool parse() override;
 
 private:
-  /*struct keyData
+  struct ParseJob
   {
-    std::string key;
-    std::string parent;
-    std::string data;
-    keyData() {}
-    keyData(ryml::csubstr k, ryml::csubstr p, ryml::csubstr d)
-     : key(k.str, k.len), parent(p.str, p.len), data(d.str, d.len) {}
-  };*/
+    std::string path;
+
+    std::size_t index;
+
+    ParseJob(const std::string& path_, std::size_t index_)
+      : path(path_), index(index_) {}
+
+    ParseJob(const ParseJob&) = default;
+  };
+
+  struct CleanupJob
+  {
+    std::string path;
+
+    std::size_t index;
+
+    CleanupJob(const std::string& path, std::size_t index)
+      : path(path), index(index) {}
+  };
 
   void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
   void processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile);
@@ -69,8 +81,6 @@ private:
   
   bool accept(const std::string& path_) const;
 
-  bool isCIFile(std::string const& filename_, std::string const& ending_);
-
   //void persistData(model::FilePtr file_);
   //model::FileLoc nodeLocation(ryml::Parser&, ryml::NodeRef&);
 
@@ -80,6 +90,9 @@ private:
   std::vector<model::YamlAstNodePtr> _astNodes;
   std::vector<model::YamlFilePtr> _yamlFiles;
   std::vector<model::YamlContentPtr> _rootPairs;
+  std::vector<model::BuildLog> _buildLogs;
+
+  std::mutex _mutex;
 };
 
 } // namespace parser

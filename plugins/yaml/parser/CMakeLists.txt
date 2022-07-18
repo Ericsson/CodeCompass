@@ -3,10 +3,12 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/parser/include
+  ${CMAKE_SOURCE_DIR}/parser/include
   ${PLUGIN_DIR}/model/include
   ${YAML_CPP_INCLUDE_DIRS})
 
 add_library(yamlparser SHARED
+        src/yamlentitycache.cpp
         src/yamlparser.cpp)
 
 target_link_libraries(yamlparser

@@ -8,28 +8,23 @@
 
 #include <odb/database.hxx>
 
+#include <model/file.h>
+#include <model/file-odb.hxx>
 #include <model/yamlfile.h>
 #include <model/yamlfile-odb.hxx>
-
 #include <model/yamlcontent.h>
 #include <model/yamlcontent-odb.hxx>
-
 #include <model/yamlastnode.h>
 #include <model/yamlastnode-odb.hxx>
 
-#include <model/file.h>
-#include <model/file-odb.hxx>
-
 #include <projectservice/projectservice.h>
-
-#include <util/odbtransaction.h>
-#include <webserver/servercontext.h>
 #include <util/graph.h>
 #include <util/legendbuilder.h>
+#include <util/odbtransaction.h>
 #include <util/util.h>
+#include <webserver/servercontext.h>
 
 #include <LanguageService.h>
-//#include <YamlService.h>
 
 namespace cc
 {
@@ -142,14 +137,11 @@ public:
   model::YamlAstNode queryYamlAstNode(
     const core::AstNodeId& astNodeId_);
 
-  std::map<model::YamlAstNodeId, std::vector<std::string>>
-  getTags(const std::vector<model::YamlAstNode>& nodes_);
-
 private:
   enum DiagramType
   {
-      YAMLFILEINFO,
-      ROOTKEYS
+      YAML_FILE_INFO,
+      ROOT_KEYS
   };
 
   std::shared_ptr<odb::database> _db;

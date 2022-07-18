@@ -12,6 +12,13 @@ namespace service
 namespace language
 {
 
+typedef odb::result<model::File> FilePathResult;
+typedef odb::query<model::File> FilePathQuery;
+typedef odb::query<model::YamlFile> YamlQuery;
+typedef odb::result<model::YamlFile> YamlResult;
+typedef odb::result<model::YamlContent> YamlContentResult;
+typedef odb::query<model::YamlContent> YamlContentQuery;
+
 class YamlFileDiagram
 {
 public:
