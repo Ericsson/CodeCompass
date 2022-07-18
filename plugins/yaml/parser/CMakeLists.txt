@@ -8,7 +8,6 @@ include_directories(
   ${YAML_CPP_INCLUDE_DIRS})
 
 add_library(yamlparser SHARED
-        src/yamlentitycache.cpp
         src/yamlparser.cpp)
 
 target_link_libraries(yamlparser
