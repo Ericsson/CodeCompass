@@ -141,7 +141,8 @@ private:
   enum DiagramType
   {
       YAML_FILE_INFO,
-      ROOT_KEYS
+      ROOT_KEYS,
+      MICROSERVICES
   };
 
   std::shared_ptr<odb::database> _db;

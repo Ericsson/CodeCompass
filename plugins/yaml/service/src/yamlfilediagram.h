@@ -35,8 +35,20 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
+  void getMicroserviceDiagram(
+    util::Graph& graph_,
+    const core::FileId& fileId_);
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
+
+  std::vector<util::Graph::Node> getMicroservices(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<core::FileId> getMicroserviceDirIds(
+    util::Graph&,
+    const util::Graph::Node& node_);
 
   std::string graphHtmlTag(
     const std::string& tag_,
@@ -57,6 +69,7 @@ private:
   static const Decoration sourceFileNodeDecoration;
   static const Decoration binaryFileNodeDecoration;
   static const Decoration directoryNodeDecoration;
+  static const Decoration microserviceNodeDecoration;
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

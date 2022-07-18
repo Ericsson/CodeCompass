@@ -17,6 +17,8 @@ namespace service
 namespace language
 {
 
+namespace fs = boost::filesystem;
+
 YamlFileDiagram::YamlFileDiagram(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
@@ -115,6 +117,69 @@ void YamlFileDiagram::getYamlFileDiagram(
   //return_ = table;
 }
 
+void YamlFileDiagram::getMicroserviceDiagram(
+  util::Graph& graph_,
+  const core::FileId& fileId_)
+{
+  core::FileInfo fileInfo;
+  _projectHandler.getFileInfo(fileInfo, fileId_);
+  util::Graph::Node currentNode = addNode(graph_, fileInfo);
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getMicroservices,
+    this, std::placeholders::_1, std::placeholders::_2),
+    microserviceNodeDecoration, {}, 1);
+
+  LOG(warning) << graph_.output(util::Graph::SVG);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  std::vector<util::Graph::Node> microservices;
+
+  std::vector<core::FileId> dirIds = getMicroserviceDirIds(graph_, node_);
+
+  for (const core::FileId& dirId : dirIds)
+  {
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, dirId);
+
+    microservices.push_back(addNode(graph_, fileInfo));
+  }
+
+  return microservices;
+}
+
+std::vector<core::FileId> YamlFileDiagram::getMicroserviceDirIds(
+  util::Graph&,
+  const util::Graph::Node& node_)
+{
+  std::vector<core::FileId> microservices;
+
+  _transaction([&, this] {
+    odb::result<model::YamlFile> res = _db->query<model::YamlFile>(
+      odb::query<model::YamlFile>::type == model::YamlFile::HELM_CHART);
+
+    for (const model::YamlFile& yamlFile : res)
+    {
+      auto fileRes = _db->query_one<model::File>(
+        odb::query<model::File>::id == yamlFile.file);
+
+      fs::path filePath(fileRes->path);
+      fs::path dirPath = filePath.parent_path();
+
+      auto dirRes = _db->query_one<model::File>(
+        odb::query<model::File>::path == dirPath.string());
+
+      core::FileId dirId = std::to_string(dirRes->id);
+      microservices.push_back(dirId);
+    }
+  });
+
+  return microservices;
+}
+
 std::string YamlFileDiagram::graphHtmlTag(
   const std::string& tag_,
   const std::string& content_,
@@ -136,7 +201,7 @@ util::Graph::Node YamlFileDiagram::addNode(
         const core::FileInfo& fileInfo_)
 {
   util::Graph::Node node_ = graph_.getOrCreateNode(fileInfo_.id);
-  //graph_.setNodeAttribute(node_, "label", getLastNParts(fileInfo_.path, 3));
+  graph_.setNodeAttribute(node_, "label", getLastNParts(fileInfo_.path, 3));
 
   if (fileInfo_.type == model::File::DIRECTORY_TYPE)
   {
@@ -201,6 +266,11 @@ const YamlFileDiagram::Decoration
   {"style", "filled"},
   {"fillcolor", "#f18a21"},
   {"fontcolor", "white"}
+};
+
+const YamlFileDiagram::Decoration YamlFileDiagram::microserviceNodeDecoration = {
+  {"shape", "folder"},
+  {"color", "blue"}
 };
 
 }

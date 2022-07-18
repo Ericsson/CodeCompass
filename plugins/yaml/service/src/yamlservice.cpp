@@ -84,6 +84,7 @@ YamlServiceHandler::YamlServiceHandler(
 void YamlServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
   return_.emplace_back("YAML");
+  return_.emplace_back("Dir");
 }
 
 void YamlServiceHandler::getAstNodeInfo(
@@ -189,6 +190,10 @@ void YamlServiceHandler::getFileDiagramTypes(
       return_["File Info"]     = YAML_FILE_INFO;
       return_["Root keys"]     = ROOT_KEYS;
     }
+    else if (file->type == "Dir")
+    {
+      return_["Microservices"] = MICROSERVICES;
+    }
   }
 }
 
@@ -205,13 +210,17 @@ void YamlServiceHandler::getFileDiagram(
   {
     case ROOT_KEYS:
       diagram.getYamlFileDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::DOT);
       break;
     case YAML_FILE_INFO:
       diagram.getYamlFileInfo(graph, fileId_);
+      return_ = graph.output(util::Graph::DOT);
+      break;
+    case MICROSERVICES:
+      diagram.getMicroserviceDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::SVG);
       break;
   }
-
-  return_ = graph.output(util::Graph::DOT);
 }
 
 void YamlServiceHandler::getFileDiagramLegend(

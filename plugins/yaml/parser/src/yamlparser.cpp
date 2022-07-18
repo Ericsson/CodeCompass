@@ -21,6 +21,8 @@
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
+#include <model/microservice.h>
+#include <model/microservice-odb.hxx>
 #include <model/yamlfile.h>
 #include <model/yamlfile-odb.hxx>
 #include <model/yamlcontent.h>
@@ -29,7 +31,6 @@
 #include <model/yamlastnode-odb.hxx>
 
 #include "parser/yamlparser.h"
-//#include "yamlastvisitor.h"
 
 namespace cc
 {
@@ -180,7 +181,13 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
     file->file = file_->id;
 
     if (file_->filename == "Chart.yaml" || file_->filename == "Chart.yml")
+    {
       file->type = model::YamlFile::Type::HELM_CHART;
+
+      model::Microservice service;
+      service.name = fs::path(file_->path).parent_path().string();
+      _ctx.db->persist(service);
+    }
     else if (file_->filename == "values.yaml" || file_->filename == "values.yml")
       file->type = model::YamlFile::Type::HELM_VALUES;
     else if (file_->path.find("templates/"))
