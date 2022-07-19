@@ -185,7 +185,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       file->type = model::YamlFile::Type::HELM_CHART;
 
       model::Microservice service;
-      service.name = fs::path(file_->path).parent_path().string();
+      service.name = fs::path(file_->path).parent_path().filename().string();
       _ctx.db->persist(service);
     }
     else if (file_->filename == "values.yaml" || file_->filename == "values.yml")

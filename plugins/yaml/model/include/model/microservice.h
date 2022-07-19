@@ -10,11 +10,13 @@ namespace cc
 namespace model
 {
 
+typedef std::uint64_t MicroserviceId;
+
 #pragma db object
 struct Microservice
 {
   #pragma db id auto
-  std::uint64_t id;
+  MicroserviceId id;
 
   #pragma db not_null
   std::string name;
