@@ -124,6 +124,8 @@ bool YamlParser::parse()
     {
       LOG(info) << "Yaml parse path: " << input;
 
+      //--- Parse YAML files ---//
+
       util::OdbTransaction trans(_ctx.db);
       trans([&, this]() {
         auto cb = getParserCallback();
@@ -144,6 +146,8 @@ bool YamlParser::parse()
             << "Yaml parser failed with unknown exception!";
         }
       });
+
+      //--- Collect relations ---/
     }
   }
 
@@ -226,8 +230,14 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   try
   {
     YAML::Node currentFile = YAML::LoadFile(file_->path);
+
+    _mutex.lock();
+    _fileAstCache.push_back(currentFile);
+    _mutex.unlock();
+
     processFileType(file_, currentFile);
     processRootKeys(file_, currentFile);
+
     for (auto it = currentFile.begin(); it != currentFile.end(); ++it)
     {
       chooseCoreNodeType(it->first, file_, model::YamlAstNode::SymbolType::Key);

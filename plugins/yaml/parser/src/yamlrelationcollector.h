@@ -21,7 +21,8 @@ class YamlRelationCollector
 {
 public:
   YamlRelationCollector(
-    ParserContext &ctx_);
+    ParserContext& ctx_,
+    std::vector<YAML::Node>& fileAstCache_);
 
   ~YamlRelationCollector();
 
@@ -31,13 +32,20 @@ private:
     const model::MicroserviceId& to_,
     std::string type_);
 
+  bool visitKeyValuePairs(
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+
   static std::unordered_set<model::YamlEdgeId> _edgeCache;
   std::vector<model::YamlEdgePtr> _newEdges;
+
+  static std::vector<model::Microservice> _microserviceCache;
 
   static std::mutex _edgeCacheMutex;
 
   //YAML::Node& _loadedFile;
-  ParserContext &_ctx;
+  ParserContext& _ctx;
+  std::vector<YAML::Node>& _fileAstCache;
 };
 
 }
