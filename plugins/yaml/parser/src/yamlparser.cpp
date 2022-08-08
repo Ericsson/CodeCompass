@@ -31,6 +31,7 @@
 #include <model/yamlastnode-odb.hxx>
 
 #include "parser/yamlparser.h"
+#include "yamlrelationcollector.h"
 
 namespace cc
 {
@@ -154,6 +155,11 @@ bool YamlParser::parse()
   _pool->wait();
   LOG(info) << "Processed files: " << this->_visitedFileCount;
 
+  _ctx.srcMgr.persistFiles();
+
+  YamlRelationCollector relationCollector(_ctx, _fileAstCache);
+  relationCollector.init();
+
   return true;
 }
 
@@ -189,7 +195,9 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       file->type = model::YamlFile::Type::HELM_CHART;
 
       model::Microservice service;
+      service.file = file_->id;
       service.name = fs::path(file_->path).parent_path().filename().string();
+      service.serviceId = cc::model::createIdentifier(service);
       _ctx.db->persist(service);
     }
     else if (file_->filename == "values.yaml" || file_->filename == "values.yml")
@@ -203,7 +211,6 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       file->type = model::YamlFile::Type::CI;
 
     _ctx.db->persist(file);
-    //_yamlFiles.push_back(file);
   });
 }
 
@@ -218,9 +225,6 @@ void YamlParser::processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile)
       content->value = Dump(pair.second);
 
       _ctx.db->persist(content);
-      /*_mutex.lock();
-      _rootPairs.push_back(content);
-      _mutex.unlock();*/
     }
   });
 }
@@ -232,7 +236,7 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
     YAML::Node currentFile = YAML::LoadFile(file_->path);
 
     _mutex.lock();
-    _fileAstCache.push_back(currentFile);
+    _fileAstCache.insert({file_->path, currentFile});
     _mutex.unlock();
 
     processFileType(file_, currentFile);

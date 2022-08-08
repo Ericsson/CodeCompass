@@ -1,6 +1,8 @@
 #include <parser/sourcemanager.h>
 #include <util/odbtransaction.h>
 
+#include <boost/filesystem.hpp>
+
 #include "yamlrelationcollector.h"
 
 namespace cc
@@ -8,9 +10,15 @@ namespace cc
 namespace parser
 {
 
+namespace fs = boost::filesystem;
+
+std::unordered_set<model::YamlEdgeId> YamlRelationCollector::_edgeCache;
+std::vector<model::Microservice> YamlRelationCollector::_microserviceCache;
+std::mutex YamlRelationCollector::_edgeCacheMutex;
+
 YamlRelationCollector::YamlRelationCollector(
   ParserContext& ctx_,
-  std::vector<YAML::Node>& fileAstCache_)
+  std::map<std::string, YAML::Node>& fileAstCache_)
   : _ctx(ctx_), _fileAstCache(fileAstCache_)
 {
   std::lock_guard<std::mutex> cacheLock(_edgeCacheMutex);
@@ -46,13 +54,31 @@ YamlRelationCollector::~YamlRelationCollector()
   });
 }
 
+void YamlRelationCollector::init()
+{
+  (util::OdbTransaction(_ctx.db))([this]{
+    std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
+    [&, this](std::pair<std::string, YAML::Node> pair)
+    {
+      auto currentService = std::find_if(_microserviceCache.begin(),
+      _microserviceCache.end(),
+      [&](model::Microservice &service)
+      {
+        auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == pair.first);
+        return service.file == filePtr->id;
+      });
+      visitKeyValuePairs(pair.second, *currentService);
+    });
+  });
+}
+
 bool YamlRelationCollector::visitKeyValuePairs(
   YAML::Node& currentNode_,
   model::Microservice& service_)
 {
   for (auto it = currentNode_.begin(); it != currentNode_.end(); ++it)
   {
-    if (!it->second.IsScalar())
+    if (it->second.IsDefined() && !it->second.IsScalar())
       visitKeyValuePairs(it->second, service_);
     else
     {
@@ -64,7 +90,7 @@ bool YamlRelationCollector::visitKeyValuePairs(
       });
 
       if (iter != _microserviceCache.end())
-        addEdge(service_.id, iter->id, YAML::Dump(it->first));
+        addEdge(service_.serviceId, iter->serviceId, YAML::Dump(it->first));
     }
   }
 }
@@ -90,6 +116,7 @@ void YamlRelationCollector::addEdge(
   if (_edgeCache.insert(edge->id).second)
   {
     _newEdges.push_back(edge);
+    LOG(warning) << "new edge added";
   }
 }
 

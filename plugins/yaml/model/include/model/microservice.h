@@ -5,6 +5,10 @@
 #include <odb/lazy-ptr.hxx>
 #include <odb/nullable.hxx>
 
+#include "model/file.h"
+
+#include "util/hash.h"
+
 namespace cc
 {
 namespace model
@@ -16,11 +20,24 @@ typedef std::uint64_t MicroserviceId;
 struct Microservice
 {
   #pragma db id auto
-  MicroserviceId id;
+  std::uint64_t id;
+
+  #pragma db not_null
+  MicroserviceId serviceId;
 
   #pragma db not_null
   std::string name;
+
+  #pragma db not_null
+  FileId file;
 };
+
+inline std::uint64_t createIdentifier(const Microservice& service_)
+{
+  return util::fnvHash(
+    service_.name +
+    std::to_string(service_.file));
+}
 }
 }
 
