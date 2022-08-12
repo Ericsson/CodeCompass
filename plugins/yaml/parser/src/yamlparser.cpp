@@ -199,9 +199,25 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       service.name = fs::path(file_->path).parent_path().filename().string();
       service.serviceId = cc::model::createIdentifier(service);
       _ctx.db->persist(service);
+
+      _mutex.lock();
+      _fileAstCache.insert({file_->path, loadedFile});
+      _mutex.unlock();
     }
     else if (file_->filename == "values.yaml" || file_->filename == "values.yml")
+    {
       file->type = model::YamlFile::Type::HELM_VALUES;
+
+      model::Microservice service;
+      service.file = file_->id;
+      service.name = fs::path(file_->path).parent_path().filename().string();
+      service.serviceId = cc::model::createIdentifier(service);
+      _ctx.db->persist(service);
+
+      _mutex.lock();
+      _fileAstCache.insert({file_->path, loadedFile});
+      _mutex.unlock();
+    }
     else if (file_->path.find("templates/"))
       file->type = model::YamlFile::Type::HELM_TEMPLATE;
     else if (file_->filename == "compose.yaml" || file_->filename == "compose.yml"
@@ -235,10 +251,6 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   {
     YAML::Node currentFile = YAML::LoadFile(file_->path);
 
-    _mutex.lock();
-    _fileAstCache.insert({file_->path, currentFile});
-    _mutex.unlock();
-
     processFileType(file_, currentFile);
     processRootKeys(file_, currentFile);
 
@@ -261,7 +273,7 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
       buildLog.location.range.end.column = e.mark.column;
       buildLog.log.message = e.what();
       buildLog.log.type = model::BuildLogMessage::Error;
-      //_ctx.db->persist(buildLog);
+
       _mutex.lock();
       _buildLogs.push_back(buildLog);
       _mutex.unlock();
