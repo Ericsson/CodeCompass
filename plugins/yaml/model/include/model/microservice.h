@@ -35,8 +35,7 @@ struct Microservice
 inline std::uint64_t createIdentifier(const Microservice& service_)
 {
   return util::fnvHash(
-    service_.name +
-    std::to_string(service_.file));
+    service_.name);
 }
 }
 }

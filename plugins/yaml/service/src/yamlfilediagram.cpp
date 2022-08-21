@@ -4,6 +4,9 @@
 
 #include <boost/filesystem.hpp>
 
+#include <model/yamledge.h>
+#include <model/yamledge-odb.hxx>
+
 #include <model/file.h>
 #include <service/yamlservice.h>
 #include <util/dbutil.h>
@@ -18,6 +21,11 @@ namespace language
 {
 
 namespace fs = boost::filesystem;
+
+typedef odb::query<model::YamlEdge> EdgeQuery;
+typedef odb::result<model::YamlEdge> EdgeResult;
+typedef odb::query<model::Microservice> MicroserviceQuery;
+typedef odb::result<model::Microservice> MicroserviceResult;
 
 YamlFileDiagram::YamlFileDiagram(
   std::shared_ptr<odb::database> db_,
@@ -180,6 +188,89 @@ std::vector<core::FileId> YamlFileDiagram::getMicroserviceDirIds(
   return microservices;
 }
 
+void YamlFileDiagram::getDependencyDiagram(
+  util::Graph& graph_,
+  const core::FileId& fileId_)
+{
+  core::FileInfo fileInfo;
+  _projectHandler.getFileInfo(fileInfo, fileId_);
+
+  util::Graph::Node currentNode;
+
+  _transaction([&, this]{
+    MicroserviceResult res = _db->query<model::Microservice>(
+      MicroserviceQuery::file == std::stoull(fileId_));
+
+    currentNode = addNode(graph_, *res.begin());
+  });
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getDependencies,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, dependsEdgeDecoration);
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getRevDependencies,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, dependsEdgeDecoration);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getDependencies(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentServices(graph_, node_);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getRevDependencies(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentServices(graph_, node_, true);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<util::Graph::Node> dependencies;
+  std::vector<model::MicroserviceId> serviceIds = getDependentServiceIds(graph_, node_, reverse_);
+
+  for (const model::MicroserviceId& serviceId : serviceIds)
+  {
+    _transaction([&, this]{
+      MicroserviceResult res = _db->query<model::Microservice>(
+        MicroserviceQuery::serviceId == serviceId);
+
+      dependencies.push_back(addNode(graph_, *res.begin()));
+    });
+  }
+
+  return dependencies;
+}
+
+std::vector<model::MicroserviceId> YamlFileDiagram::getDependentServiceIds(
+  util::Graph&,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<model::MicroserviceId> dependencies;
+
+  _transaction([&, this]{
+    EdgeResult res = _db->query<model::YamlEdge>(
+      (reverse_
+      ? EdgeQuery::to->serviceId
+      : EdgeQuery::from->serviceId) == std::stoull(node_));
+
+    for (const model::YamlEdge& edge : res)
+    {
+      model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
+      dependencies.push_back(serviceId);
+    }
+  });
+
+  return dependencies;
+}
+
 std::string YamlFileDiagram::graphHtmlTag(
   const std::string& tag_,
   const std::string& content_,
@@ -197,8 +288,8 @@ std::string YamlFileDiagram::graphHtmlTag(
 }
 
 util::Graph::Node YamlFileDiagram::addNode(
-        util::Graph& graph_,
-        const core::FileInfo& fileInfo_)
+  util::Graph& graph_,
+  const core::FileInfo& fileInfo_)
 {
   util::Graph::Node node_ = graph_.getOrCreateNode(fileInfo_.id);
   graph_.setNodeAttribute(node_, "label", getLastNParts(fileInfo_.path, 3));
@@ -219,6 +310,18 @@ util::Graph::Node YamlFileDiagram::addNode(
     if (ext == ".yaml" || ext == ".yml")
       decorateNode(graph_, node_, sourceFileNodeDecoration);
   }
+
+  return node_;
+}
+
+util::Graph::Node YamlFileDiagram::addNode(
+  util::Graph& graph_,
+  const model::Microservice& service_)
+{
+  util::Graph::Node node_ = graph_.getOrCreateNode(std::to_string(service_.serviceId));
+  graph_.setNodeAttribute(node_, "label", service_.name);
+
+  decorateNode(graph_, node_, microserviceNodeDecoration);
 
   return node_;
 }
@@ -247,6 +350,15 @@ void YamlFileDiagram::decorateNode(
     graph_.setNodeAttribute(node_, attr.first, attr.second);
 }
 
+void YamlFileDiagram::decorateEdge(
+  util::Graph& graph_,
+  const util::Graph::Edge& edge_,
+  const Decoration& decoration_) const
+{
+  for (const auto& attr : decoration_)
+    graph_.setEdgeAttribute(edge_, attr.first, attr.second);
+}
+
 const YamlFileDiagram::Decoration
   YamlFileDiagram::sourceFileNodeDecoration = {
   {"shape", "box"},
@@ -271,6 +383,10 @@ const YamlFileDiagram::Decoration
 const YamlFileDiagram::Decoration YamlFileDiagram::microserviceNodeDecoration = {
   {"shape", "folder"},
   {"color", "blue"}
+};
+
+const YamlFileDiagram::Decoration YamlFileDiagram::dependsEdgeDecoration = {
+  {"label", "depends on"}
 };
 
 }

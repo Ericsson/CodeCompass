@@ -91,7 +91,7 @@ bool YamlRelationCollector::visitKeyValuePairs(
       });
 
       if (iter != _microserviceCache.end())
-        addEdge(service_.serviceId, iter->serviceId, YAML::Dump(it->first));
+        addEdge(service_.id, iter->id, YAML::Dump(it->first));
     }
   }
 }

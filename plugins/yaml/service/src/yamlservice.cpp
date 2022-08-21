@@ -189,6 +189,7 @@ void YamlServiceHandler::getFileDiagramTypes(
     {
       return_["File Info"]     = YAML_FILE_INFO;
       return_["Root keys"]     = ROOT_KEYS;
+      return_["Dependencies"]  = DEPENDENCIES;
     }
     else if (file->type == "Dir")
     {
@@ -218,6 +219,10 @@ void YamlServiceHandler::getFileDiagram(
       break;
     case MICROSERVICES:
       diagram.getMicroserviceDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::SVG);
+      break;
+    case DEPENDENCIES:
+      diagram.getDependencyDiagram(graph, fileId_);
       return_ = graph.output(util::Graph::SVG);
       break;
   }

@@ -142,7 +142,8 @@ private:
   {
       YAML_FILE_INFO,
       ROOT_KEYS,
-      MICROSERVICES
+      MICROSERVICES,
+      DEPENDENCIES
   };
 
   std::shared_ptr<odb::database> _db;

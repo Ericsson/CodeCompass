@@ -1,6 +1,8 @@
 #ifndef CC_SERVICE_LANGUAGE_YAMLFILEDIAGRAM_H
 #define CC_SERVICE_LANGUAGE_YAMLFILEDIAGRAM_H
 
+#include <model/microservice.h>
+
 #include <service/yamlservice.h>
 #include <projectservice/projectservice.h>
 #include <util/graph.h>
@@ -39,6 +41,10 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
+  void getDependencyDiagram(
+    util::Graph& graph_,
+    const core::FileId& fileId_);
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
 
@@ -50,6 +56,29 @@ private:
     util::Graph&,
     const util::Graph::Node& node_);
 
+  std::vector<util::Graph::Node> getDependencies(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<util::Graph::Node> getRevDependencies(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  /**
+   * This method should return the relations between
+   * previously detected microservices. It works if
+   * the user chooses a file within a microservice.
+   */
+  std::vector<util::Graph::Node> getDependentServices(
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    bool reverse_ = false);
+
+  std::vector<model::MicroserviceId> getDependentServiceIds(
+    util::Graph&,
+    const util::Graph::Node& node_,
+    bool reverse_);
+
   std::string graphHtmlTag(
     const std::string& tag_,
     const std::string& content_,
@@ -59,9 +88,18 @@ private:
     util::Graph& graph_,
     const core::FileInfo& fileInfo_);
 
+  util::Graph::Node addNode(
+    util::Graph& graph_,
+    const model::Microservice& service_);
+
   std::string getLastNParts(const std::string& path_, std::size_t n_);
 
   void decorateNode(
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    const Decoration& decoration_) const;
+
+  void decorateEdge(
     util::Graph& graph_,
     const util::Graph::Node& node_,
     const Decoration& decoration_) const;
@@ -70,6 +108,8 @@ private:
   static const Decoration binaryFileNodeDecoration;
   static const Decoration directoryNodeDecoration;
   static const Decoration microserviceNodeDecoration;
+
+  static const Decoration dependsEdgeDecoration;
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
