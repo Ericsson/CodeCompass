@@ -136,8 +136,6 @@ void YamlFileDiagram::getMicroserviceDiagram(
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getMicroservices,
     this, std::placeholders::_1, std::placeholders::_2),
     microserviceNodeDecoration, {}, 1);
-
-  LOG(warning) << graph_.output(util::Graph::SVG);
 }
 
 std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
@@ -146,42 +144,10 @@ std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
 {
   std::vector<util::Graph::Node> microservices;
 
-  std::vector<core::FileId> dirIds = getMicroserviceDirIds(graph_, node_);
-
-  for (const core::FileId& dirId : dirIds)
-  {
-    core::FileInfo fileInfo;
-    _projectHandler.getFileInfo(fileInfo, dirId);
-
-    microservices.push_back(addNode(graph_, fileInfo));
-  }
-
-  return microservices;
-}
-
-std::vector<core::FileId> YamlFileDiagram::getMicroserviceDirIds(
-  util::Graph&,
-  const util::Graph::Node& node_)
-{
-  std::vector<core::FileId> microservices;
-
   _transaction([&, this] {
-    odb::result<model::YamlFile> res = _db->query<model::YamlFile>(
-      odb::query<model::YamlFile>::type == model::YamlFile::HELM_CHART);
-
-    for (const model::YamlFile& yamlFile : res)
+    for (const model::Microservice& service : _db->query<model::Microservice>())
     {
-      auto fileRes = _db->query_one<model::File>(
-        odb::query<model::File>::id == yamlFile.file);
-
-      fs::path filePath(fileRes->path);
-      fs::path dirPath = filePath.parent_path();
-
-      auto dirRes = _db->query_one<model::File>(
-        odb::query<model::File>::path == dirPath.string());
-
-      core::FileId dirId = std::to_string(dirRes->id);
-      microservices.push_back(dirId);
+      microservices.push_back(addNode(graph_, service));
     }
   });
 
@@ -206,11 +172,13 @@ void YamlFileDiagram::getDependencyDiagram(
 
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getDependencies,
     this, std::placeholders::_1, std::placeholders::_2),
-    {}, dependsEdgeDecoration);
+    {}, {});
 
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getRevDependencies,
     this, std::placeholders::_1, std::placeholders::_2),
-    {}, dependsEdgeDecoration);
+    {}, {});
+
+
 }
 
 std::vector<util::Graph::Node> YamlFileDiagram::getDependencies(
@@ -233,27 +201,30 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
   bool reverse_)
 {
   std::vector<util::Graph::Node> dependencies;
-  std::vector<model::MicroserviceId> serviceIds = getDependentServiceIds(graph_, node_, reverse_);
+  std::multimap<model::MicroserviceId, std::string> serviceIds = getDependentServiceIds(graph_, node_, reverse_);
 
-  for (const model::MicroserviceId& serviceId : serviceIds)
+  for (const auto& serviceId : serviceIds)
   {
     _transaction([&, this]{
       MicroserviceResult res = _db->query<model::Microservice>(
-        MicroserviceQuery::serviceId == serviceId);
+        MicroserviceQuery::serviceId == serviceId.first);
 
-      dependencies.push_back(addNode(graph_, *res.begin()));
+      util::Graph::Node newNode = addNode(graph_, *res.begin());
+      dependencies.push_back(newNode);
+      util::Graph::Edge edge = graph_.createEdge(node_, newNode);
+      decorateEdge(graph_, edge, {{"label", serviceId.second}});
     });
   }
 
   return dependencies;
 }
 
-std::vector<model::MicroserviceId> YamlFileDiagram::getDependentServiceIds(
+std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentServiceIds(
   util::Graph&,
   const util::Graph::Node& node_,
   bool reverse_)
 {
-  std::vector<model::MicroserviceId> dependencies;
+  std::multimap<model::MicroserviceId, std::string> dependencies;
 
   _transaction([&, this]{
     EdgeResult res = _db->query<model::YamlEdge>(
@@ -264,7 +235,7 @@ std::vector<model::MicroserviceId> YamlFileDiagram::getDependentServiceIds(
     for (const model::YamlEdge& edge : res)
     {
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
-      dependencies.push_back(serviceId);
+      dependencies.insert({serviceId, edge.type});
     }
   });
 

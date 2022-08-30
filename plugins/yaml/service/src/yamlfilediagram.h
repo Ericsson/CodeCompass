@@ -52,10 +52,6 @@ private:
     util::Graph& graph_,
     const util::Graph::Node& node_);
 
-  std::vector<core::FileId> getMicroserviceDirIds(
-    util::Graph&,
-    const util::Graph::Node& node_);
-
   std::vector<util::Graph::Node> getDependencies(
     util::Graph& graph_,
     const util::Graph::Node& node_);
@@ -74,7 +70,7 @@ private:
     const util::Graph::Node& node_,
     bool reverse_ = false);
 
-  std::vector<model::MicroserviceId> getDependentServiceIds(
+  std::multimap<model::MicroserviceId, std::string> getDependentServiceIds(
     util::Graph&,
     const util::Graph::Node& node_,
     bool reverse_);
