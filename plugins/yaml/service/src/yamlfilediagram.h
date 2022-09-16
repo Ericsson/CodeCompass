@@ -88,7 +88,9 @@ private:
     util::Graph& graph_,
     const model::Microservice& service_);
 
-  std::string getLastNParts(const std::string& path_, std::size_t n_);
+  std::string getLastNParts(
+    const std::string& path_,
+    std::size_t n_);
 
   void decorateNode(
     util::Graph& graph_,

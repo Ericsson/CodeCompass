@@ -23,38 +23,35 @@ public:
   virtual bool parse() override;
 
 private:
-  struct ParseJob
-  {
-    std::string path;
-
-    std::size_t index;
-
-    ParseJob(const std::string& path_, std::size_t index_)
-      : path(path_), index(index_) {}
-
-    ParseJob(const ParseJob&) = default;
-  };
-
-  struct CleanupJob
-  {
-    std::string path;
-
-    std::size_t index;
-
-    CleanupJob(const std::string& path, std::size_t index)
-      : path(path), index(index) {}
-  };
-
+  /**
+   * This method classifies a YAML file according to the purpose
+   * it serves, e.g. Helm chart or other type of configuration file.
+   * The classification is done based on naming conventions.
+   */
   void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
+
+  /**
+   * The first-level keys in a YAML files usually have great significance,
+   * so they should be collected in a separate collection.
+   * @param file_
+   * @param loadedFile
+   */
   void processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile);
 
   bool collectAstNodes(model::FilePtr file_);
 
+  /**
+   * This method is used to
+   */
   void chooseCoreNodeType(
     YAML::Node& node_,
     model::FilePtr file_,
     model::YamlAstNode::SymbolType symbolType_);
 
+  /**
+   * These methods handle the different key and value types
+   * in YAML files.
+   */
   void processAtomicNode(
     YAML::Node& node_,
     model::FilePtr file_,
@@ -71,15 +68,12 @@ private:
 
   model::Range getNodeLocation(YAML::Node& node_);
 
+  /**
+   * A method to recursively traverse the input directory and
+   * find YAML files.
+   */
   util::DirIterCallback getParserCallback();
 
-  std::string getDataFromNode(const std::string &node_, const bool isSeq_);
-
-  /*void getKeyDataFromTree(
-    YAML::Node node_,
-    ryml::csubstr parent_,
-    std::vector<keyData>& dataVec_);*/
-  
   bool accept(const std::string& path_) const;
 
   std::unordered_set<model::FileId> _fileIdCache;

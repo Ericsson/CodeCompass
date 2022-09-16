@@ -88,7 +88,7 @@ bool YamlParser::cleanupDatabase()
         for (const model::File& file
           : _ctx.db->query<model::File>(
           odb::query<model::File>::id.in_range(
-                  _fileIdCache.begin(), _fileIdCache.end())))
+            _fileIdCache.begin(), _fileIdCache.end())))
         {
           auto it = _ctx.fileStatus.find(file.path);
           if (it != _ctx.fileStatus.end() &&
@@ -99,7 +99,7 @@ bool YamlParser::cleanupDatabase()
             LOG(info) << "[yamlparser] Database cleanup: " << file.path;
 
             _ctx.db->erase_query<model::YamlFile>(
-                    odb::query<model::YamlFile>::file == file.id);
+              odb::query<model::YamlFile>::file == file.id);
             _fileIdCache.erase(file.id);
           }
         }
@@ -147,16 +147,14 @@ bool YamlParser::parse()
             << "Yaml parser failed with unknown exception!";
         }
       });
-
-      //--- Collect relations ---/
     }
   }
-
   _pool->wait();
   LOG(info) << "Processed files: " << this->_visitedFileCount;
 
   _ctx.srcMgr.persistFiles();
 
+  //--- Collect relations ---/
   YamlRelationCollector relationCollector(_ctx, _fileAstCache);
   relationCollector.init();
 
@@ -292,24 +290,18 @@ void YamlParser::chooseCoreNodeType(
 {
   switch (node_.Type())
   {
-    case YAML::NodeType::Null:
-      //LOG(info) << node_ << ": null";
-      break;
     case YAML::NodeType::Scalar:
-      //LOG(info) << node_ << ": Scalar";
       processAtomicNode(node_, file_, symbolType_,
 model::YamlAstNode::AstType::SCALAR);
       break;
     case YAML::NodeType::Sequence:
-      //LOG(info) << node_ << ": Sequence";
       processSequence(node_, file_, symbolType_);
       break;
     case YAML::NodeType::Map:
-      //LOG(info) << node_ << ": Map";
       processMap(node_, file_, symbolType_);
       break;
+    case YAML::NodeType::Null:
     case YAML::NodeType::Undefined:
-      //LOG(info) << node_ << ": Undefined";
       break;
   }
 }
@@ -324,7 +316,6 @@ void YamlParser::processAtomicNode(
   {
     model::YamlAstNodePtr currentNode = std::make_shared<model::YamlAstNode>();
     currentNode->astValue = YAML::Dump(node_);
-    //currentNode->location.file = file_;
     currentNode->location.file = _ctx.srcMgr.getFile(file_->path);
     currentNode->location.range = getNodeLocation(node_);
     currentNode->astType = astType_;
@@ -333,7 +324,6 @@ void YamlParser::processAtomicNode(
     currentNode->id = model::createIdentifier(*currentNode);
 
     _mutex.lock();
-    //std::lock_guard<std::mutex> guard(_mutex);
     if (!std::count_if(_astNodes.begin(), _astNodes.end(),
      [&](const auto& other){
         return currentNode->id == other->id;
@@ -354,49 +344,37 @@ void YamlParser::processMap(
   {
     switch (it->first.Type())
     {
-      case YAML::NodeType::Null:
-        //LOG(info) << it->first << ": null";
-        break;
       case YAML::NodeType::Scalar:
-        //LOG(info) << it->first << ": Scalar";
         processAtomicNode(it->first, file_,
                           model::YamlAstNode::SymbolType::NestedKey,
                           model::YamlAstNode::AstType::MAP);
         break;
       case YAML::NodeType::Sequence:
-        //LOG(info) << it->first << ": Sequence";
         processSequence(it->first, file_, symbolType_);
         break;
       case YAML::NodeType::Map:
-        //LOG(info) << it->first << ": Map";
         processMap(it->first, file_, symbolType_);
         break;
+      case YAML::NodeType::Null:
       case YAML::NodeType::Undefined:
-        //LOG(info) << it->first << ": Undefined";
         break;
     }
 
     switch (it->second.Type())
     {
-      case YAML::NodeType::Null:
-        //LOG(info) << it->second << ": null";
-        break;
       case YAML::NodeType::Scalar:
-        //LOG(info) << it->second << ": Scalar";
         processAtomicNode(it->second, file_,
   model::YamlAstNode::SymbolType::NestedValue,
   model::YamlAstNode::AstType::MAP);
         break;
       case YAML::NodeType::Sequence:
-        //LOG(info) << it->second << ": Sequence";
         processSequence(it->second, file_, symbolType_);
         break;
       case YAML::NodeType::Map:
-        //LOG(info) << it->second << ": Map";
         processMap(it->second, file_, symbolType_);
         break;
+      case YAML::NodeType::Null:
       case YAML::NodeType::Undefined:
-        //LOG(info) << it->second << ": Undefined";
         break;
     }
   }
@@ -412,25 +390,19 @@ void YamlParser::processSequence(
     YAML::Node temp = node_[i];
     switch (temp.Type())
     {
-      case YAML::NodeType::Null:
-        //LOG(info) << it->first << ": null";
-        break;
       case YAML::NodeType::Scalar:
-        //LOG(info) << it->first << ": Scalar";
         processAtomicNode(temp, file_,
       model::YamlAstNode::SymbolType::Value,
       model::YamlAstNode::AstType::SEQUENCE);
         break;
       case YAML::NodeType::Sequence:
-        //LOG(info) << it->first << ": Sequence";
         processSequence(temp, file_, symbolType_);
         break;
       case YAML::NodeType::Map:
-        //LOG(info) << it->first << ": Map";
         processMap(temp, file_, symbolType_);
         break;
+      case YAML::NodeType::Null:
       case YAML::NodeType::Undefined:
-        //LOG(info) << it->first << ": Undefined";
         break;
     }
   }
@@ -465,8 +437,6 @@ YamlParser::~YamlParser()
 
      for (model::BuildLog& log : _buildLogs)
        _ctx.db->persist(log);
-     //util::persistAll(_yamlFiles, _ctx.db);
-     //util::persistAll(_rootPairs, _ctx.db);
   });
 }
 

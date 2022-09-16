@@ -39,8 +39,8 @@ YamlFileDiagram::YamlFileDiagram(
 }
 
 void YamlFileDiagram::getYamlFileInfo(
-        util::Graph& graph_,
-        const core::FileId& fileId_)
+  util::Graph& graph_,
+  const core::FileId& fileId_)
 {
   std::string htmlContent = "";
     _transaction([&, this](){
@@ -80,15 +80,13 @@ void YamlFileDiagram::getYamlFileInfo(
       htmlContent += "</ul>";
       graph_.setNodeAttribute(node, "FileInfo", htmlContent, true);
   });
-  //return_ = htmlContent;
 }
 
 
 void YamlFileDiagram::getYamlFileDiagram(
-        util::Graph& graph_,
-        const core::FileId& fileId_)
+  util::Graph& graph_,
+  const core::FileId& fileId_)
 {
-  //util::Graph graph_;
   std::string thAttr
           = "style=\"background-color:lightGray; font-weight:bold; height:50px\"";
 
@@ -108,21 +106,18 @@ void YamlFileDiagram::getYamlFileDiagram(
 
       table += graphHtmlTag("tr",
         graphHtmlTag("th", "Key", thAttr) +
-        //graphHtmlTag("th", "Parent", thAttr) +
         graphHtmlTag("th", "Value", thAttr));
 
       for (const model::YamlContent& yc : yamlContent)
       {
         table += graphHtmlTag("tr",
           graphHtmlTag("td", yc.key, tdAttr) +
-          //graphHtmlTag("td", yc.parent, tdAttr) +
           graphHtmlTag("td", yc.value, tdAttr));
       }
       table.append("</table>");
 
       graph_.setNodeAttribute(node, "content", table, true);
   });
-  //return_ = table;
 }
 
 void YamlFileDiagram::getMicroserviceDiagram(
@@ -177,8 +172,6 @@ void YamlFileDiagram::getDependencyDiagram(
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getRevDependencies,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, {});
-
-
 }
 
 std::vector<util::Graph::Node> YamlFileDiagram::getDependencies(
