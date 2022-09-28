@@ -190,7 +190,10 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
 
     if (file_->filename == "Chart.yaml" || file_->filename == "Chart.yml")
     {
-      file->type = model::YamlFile::Type::HELM_CHART;
+      if (file_->path.find("charts/") != std::string::npos)
+        file->type = model::YamlFile::Type::HELM_SUBCHART;
+      else
+        file->type = model::YamlFile::Type::HELM_CHART;
 
       model::Microservice service;
       service.file = file_->id;
@@ -206,15 +209,22 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
     {
       file->type = model::YamlFile::Type::HELM_VALUES;
 
-      model::Microservice service;
-      service.file = file_->id;
-      service.name = fs::path(file_->path).parent_path().filename().string();
-      service.serviceId = cc::model::createIdentifier(service);
-      _ctx.db->persist(service);
+      // If a values.yaml file belongs to a subchart in the chart set,
+      // it should not be parsed since it contains default values
+      // that may provide false results in the microservice architecture
+      // dependency mapping.
+      if (file_->path.find("charts/") == std::string::npos)
+      {
+        model::Microservice service;
+        service.file = file_->id;
+        service.name = fs::path(file_->path).parent_path().filename().string();
+        service.serviceId = cc::model::createIdentifier(service);
+        _ctx.db->persist(service);
 
-      _mutex.lock();
-      _fileAstCache.insert({file_->path, loadedFile});
-      _mutex.unlock();
+        _mutex.lock();
+        _fileAstCache.insert({file_->path, loadedFile});
+        _mutex.unlock();
+      }
     }
     else if (file_->path.find("templates/"))
       file->type = model::YamlFile::Type::HELM_TEMPLATE;

@@ -71,6 +71,7 @@ RUN set -x && apt-get update -qq && \
     libldap-2.4-2 \
     libmagic-dev \
     libthrift-dev \
+    libyaml-cpp-dev \
     ctags && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \

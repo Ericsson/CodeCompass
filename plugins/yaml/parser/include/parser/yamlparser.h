@@ -41,7 +41,7 @@ private:
   bool collectAstNodes(model::FilePtr file_);
 
   /**
-   * This method is used to
+   * This method is used to decide the type of root keys and values.
    */
   void chooseCoreNodeType(
     YAML::Node& node_,

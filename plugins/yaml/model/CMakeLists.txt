@@ -1,4 +1,5 @@
 set(ODB_SOURCES
+  include/model/helmtemplate.h
   include/model/microservice.h
   include/model/yamlastnode.h
   include/model/yamlfile.h
