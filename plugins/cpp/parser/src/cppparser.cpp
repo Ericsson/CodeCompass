@@ -469,7 +469,7 @@ void CppParser::markModifiedFiles()
   // Detect changed files through C++ header inclusions.
   util::OdbTransaction {_ctx.db} ([&]
   {
-    for (const model::FilePtr file : filePtrs)
+    for (const model::FilePtr& file : filePtrs)
     {
       if(file)
       {
@@ -711,7 +711,7 @@ void CppParser::initBuildActions()
   });
 }
 
-void CppParser::markByInclusion(model::FilePtr file_)
+void CppParser::markByInclusion(const model::FilePtr& file_)
 {
   auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
     odb::query<model::CppHeaderInclusion>::included == file_->id);

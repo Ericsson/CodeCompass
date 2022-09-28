@@ -71,21 +71,19 @@ RUN set -x && apt-get update -qq && \
     libldap-2.4-2 \
     libmagic-dev \
     libthrift-dev \
-    libyaml-cpp-dev \
-    ctags && \
+    ibyaml-cpp-dev \
+    ctags \
+    tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
 
-ENV TINI_VERSION v0.18.0
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass
 
 ENV PATH="/codecompass/bin:$PATH"
 
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
 
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["tini", "--"]
 
