@@ -38,6 +38,10 @@ private:
     YAML::Node& currentFile_,
     model::Microservice& service_);
 
+  void processHelmTemplate(
+    model::FilePtr file_,
+    YAML::Node& loadedFile);
+
   static std::unordered_set<model::YamlEdgeId> _edgeCache;
   std::vector<model::YamlEdgePtr> _newEdges;
 

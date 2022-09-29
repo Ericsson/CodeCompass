@@ -96,6 +96,13 @@ bool YamlRelationCollector::visitKeyValuePairs(
   }
 }
 
+void YamlRelationCollector::processHelmTemplate(
+  model::FilePtr file_,
+  YAML::Node& loadedFile)
+{
+
+}
+
 void YamlRelationCollector::addEdge(
   const model::MicroserviceId& from_,
   const model::MicroserviceId& to_,
