@@ -8,6 +8,7 @@ include_directories(
   ${YAML_CPP_INCLUDE_DIRS})
 
 add_library(yamlparser SHARED
+  src/templateanalyzer.cpp
   src/yamlrelationcollector.cpp
   src/yamlparser.cpp)
 

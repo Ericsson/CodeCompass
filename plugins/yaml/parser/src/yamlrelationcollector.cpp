@@ -60,7 +60,6 @@ void YamlRelationCollector::init()
     std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
     [&, this](std::pair<std::string, YAML::Node> pair)
     {
-
       auto currentService = std::find_if(_microserviceCache.begin(),
       _microserviceCache.end(),
       [&](model::Microservice& service)
@@ -124,7 +123,6 @@ void YamlRelationCollector::addEdge(
   if (_edgeCache.insert(edge->id).second)
   {
     _newEdges.push_back(edge);
-    LOG(warning) << "new edge added";
   }
 }
 
