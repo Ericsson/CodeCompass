@@ -62,7 +62,6 @@ RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
     
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
-    wget \
     llvm-10 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
@@ -72,7 +71,8 @@ RUN set -x && apt-get update -qq && \
     libldap-2.4-2 \
     libmagic-dev \
     libthrift-dev \
-    ctags && \
+    ctags \
+    tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
@@ -85,15 +85,11 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
   apt-get update && \
   apt-get install -y dotnet-sdk-6.0
 
-ENV TINI_VERSION v0.18.0
-
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass
 
 ENV PATH="/codecompass/bin:$PATH"
 
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
 
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["tini", "--"]
 

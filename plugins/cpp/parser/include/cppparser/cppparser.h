@@ -105,16 +105,16 @@ private:
   bool isNonSourceFlag(const std::string& arg_) const;
   bool parseByJson(const std::string& jsonFile_, std::size_t threadNum_);
   int parseWorker(const clang::tooling::CompileCommand& command_);
-  
+
   void initBuildActions();
-  void markByInclusion(model::FilePtr file_);
+  void markByInclusion(const model::FilePtr& file_);
   std::vector<std::vector<std::string>> createCleanupOrder();
   bool cleanupWorker(const std::string& path_);
 
   std::unordered_set<std::uint64_t> _parsedCommandHashes;
 
 };
-  
+
 } // parser
 } // cc
 

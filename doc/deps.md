@@ -88,10 +88,10 @@ sudo apt install postgresql-server-dev-<version>
 
 ```bash
 # For SQLite database systems:
-sudo apt-get install libodb-sqlite-dev libsqlite3-dev
+sudo apt install libodb-sqlite-dev libsqlite3-dev
 
 # For PostgreSQL database systems:
-sudo apt-get install libodb-pgsql-dev postgresql-server-dev-<version>
+sudo apt install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
 
@@ -116,8 +116,8 @@ The ODB installation uses the build2 build system. (Build2 is not needed for
 CodeCompass so you may delete it right after the installation of ODB.)
 
 ```bash
-wget https://download.build2.org/0.14.0/build2-install-0.14.0.sh
-sh build2-install-0.14.0.sh --yes --trust yes "<build2_install_dir>"
+wget https://download.build2.org/0.15.0/build2-install-0.15.0.sh
+sh build2-install-0.15.0.sh --yes --trust yes "<build2_install_dir>"
 ```
 
 Now, utilizing the *Build2* toolchain, we can build the *ODB* compiler and
