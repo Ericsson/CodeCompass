@@ -15,6 +15,8 @@ namespace fs = boost::filesystem;
 namespace bp = boost::process;
 namespace pt = boost::property_tree;
 
+int CsharpServiceHandler::_thriftServerPort = 9091;
+
 CsharpServiceHandler::CsharpServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
@@ -24,17 +26,19 @@ CsharpServiceHandler::CsharpServiceHandler(
       _datadir(datadir_),
       _context(context_)
 {
+  _csharpQueryHandler.setThriftServerPort(_thriftServerPort);
   fs::path csharp_path =
    fs::system_complete("../lib/serviceplugin/csharpservice/");
 
   std::string command("./csharpservice ");
-  command.append("'");
   command.append(getDbString());
-  command.append("'");
+  command.append(" ");
+  command.append(std::to_string(_thriftServerPort));
+  ++_thriftServerPort;
   c = bp::child(bp::start_dir(csharp_path), command);
   try
   {
-    csharpQueryHandler.getClientInterface(25000);
+    _csharpQueryHandler.getClientInterface(25000);
   }
   catch (TransportException& ex)
   {
@@ -61,7 +65,7 @@ void CsharpServiceHandler::getAstNodeInfo(
         AstNodeInfo& return_,
         const core::AstNodeId& astNodeId_)
 {
-  csharpQueryHandler.getAstNodeInfo(return_, astNodeId_);
+  _csharpQueryHandler.getAstNodeInfo(return_, astNodeId_);
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
       FileQuery::path == return_.range.file);
@@ -80,7 +84,7 @@ void CsharpServiceHandler::getAstNodeInfoByPosition(
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fpos_.file));
   });
-  csharpQueryHandler.getAstNodeInfoByPosition(return_, file->path, fpos_.pos);
+  _csharpQueryHandler.getAstNodeInfoByPosition(return_, file->path, fpos_.pos);
 }
 
 void CsharpServiceHandler::getSourceText(
@@ -90,7 +94,7 @@ void CsharpServiceHandler::getSourceText(
   LOG(info) << "getSourceText";
   core::FileRange fileRange;
 
-  csharpQueryHandler.getFileRange(fileRange, astNodeId_);
+  _csharpQueryHandler.getFileRange(fileRange, astNodeId_);
 
   return_ = _transaction([&, this](){
       model::FilePtr file = _db->query_one<model::File>(
@@ -114,7 +118,7 @@ void CsharpServiceHandler::getProperties(
         const core::AstNodeId& astNodeId_)
 {
   //LOG(info) << "getProperties";
-  csharpQueryHandler.getProperties(return_, astNodeId_);
+  _csharpQueryHandler.getProperties(return_, astNodeId_);
 }
 
 void CsharpServiceHandler::getDocumentation(
@@ -122,7 +126,7 @@ void CsharpServiceHandler::getDocumentation(
         const core::AstNodeId& astNodeId_)
 {
   LOG(info) << "getDocumentation";
-  csharpQueryHandler.getDocumentation(return_, astNodeId_);
+  _csharpQueryHandler.getDocumentation(return_, astNodeId_);
 }
 
 void CsharpServiceHandler::getDiagramTypes(
@@ -176,7 +180,7 @@ void CsharpServiceHandler::getReferenceTypes(
         const core::AstNodeId& astNodeId_)
 {
   //LOG(info) << "getReferenceTypes";
-  csharpQueryHandler.getReferenceTypes(return_, astNodeId_);
+  _csharpQueryHandler.getReferenceTypes(return_, astNodeId_);
 }
 
 std::int32_t CsharpServiceHandler::getReferenceCount(
@@ -184,7 +188,7 @@ std::int32_t CsharpServiceHandler::getReferenceCount(
         const std::int32_t referenceId_)
 {
   //LOG(info) << "getReferenceCount";
-  return csharpQueryHandler.getReferenceCount(astNodeId_, referenceId_);
+  return _csharpQueryHandler.getReferenceCount(astNodeId_, referenceId_);
 }
 
 void CsharpServiceHandler::getReferences(
@@ -194,7 +198,7 @@ void CsharpServiceHandler::getReferences(
         const std::vector<std::string>& tags_)
 {
   //LOG(info) << "getReferences";
-  csharpQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
+  _csharpQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
   std::vector<AstNodeInfo> ret;
   for (AstNodeInfo nodeinfo : return_)
   {
@@ -218,7 +222,7 @@ void CsharpServiceHandler::getReferencesInFile(
         const core::FileId& /* fileId_ */,
         const std::vector<std::string>& /* tags_ */)
 {
-  LOG(info) << "getReferencesInFile";
+  //LOG(info) << "getReferencesInFile";
   // TODO
 }
 
@@ -229,7 +233,7 @@ void CsharpServiceHandler::getReferencesPage(
         const std::int32_t /* pageSize_ */,
         const std::int32_t /* pageNo_ */)
 {
-  LOG(info) << "getReferencesPage";
+  //LOG(info) << "getReferencesPage";
   // TODO
 }
 
@@ -237,20 +241,20 @@ void CsharpServiceHandler::getFileReferenceTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::FileId& /* fileId_*/)
 {
-  LOG(info) << "getFileReferenceTypes";
-  csharpQueryHandler.getFileReferenceTypes(return_);
+  //LOG(info) << "getFileReferenceTypes";
+  _csharpQueryHandler.getFileReferenceTypes(return_);
 }
 
 std::int32_t CsharpServiceHandler::getFileReferenceCount(
         const core::FileId& fileId_,
         const std::int32_t referenceId_)
 {
-  LOG(info) << "getFileReferenceCount";
+  //LOG(info) << "getFileReferenceCount";
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
   });
-  return csharpQueryHandler.getFileReferenceCount(file->path, referenceId_);
+  return _csharpQueryHandler.getFileReferenceCount(file->path, referenceId_);
 }
 
 void CsharpServiceHandler::getFileReferences(
@@ -258,12 +262,12 @@ void CsharpServiceHandler::getFileReferences(
         const core::FileId& fileId_,
         const std::int32_t referenceId_)
 {
-  LOG(info) << "getFileReferences";
+  //LOG(info) << "getFileReferences";
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
   });
-  csharpQueryHandler.getFileReferences(return_, file->path, referenceId_);
+  _csharpQueryHandler.getFileReferences(return_, file->path, referenceId_);
 }
 
 void CsharpServiceHandler::getSyntaxHighlight(
@@ -292,7 +296,8 @@ void CsharpServiceHandler::getSyntaxHighlight(
 
 namespace csharp
 {
-std::stringstream CSharpQueryHandler::thrift_ss;
+std::stringstream CSharpQueryHandler::_thriftStream;
+int CSharpQueryHandler::_thriftServerPort;
 }
 } // service
 } // cc

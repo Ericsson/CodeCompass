@@ -43,13 +43,19 @@ namespace Server
     {
         private static readonly ILogger Logger = LoggingHelper.CreateLogger<CSharpQueryServer>();
         private static readonly TConfiguration Configuration = new TConfiguration();
+        private static int port = 9091;
 
+        /*
+        * args[0]: database connection string
+        * args[1]: Thrift server port number
+        */
         public static void Main(string[] args)
         {
+            System.Console.WriteLine("New query server");
             using (var source = new CancellationTokenSource())
             {
-                string connenctionString = "";
-                connenctionString = args[0].Replace("'", "");        
+                string connenctionString = args[0];
+                port = Int32.Parse(args[1]);
                 System.Console.WriteLine("[CSharpService] Server started!");
                 RunAsync(source.Token, connenctionString).GetAwaiter().GetResult();
 
@@ -59,12 +65,11 @@ namespace Server
                 source.Cancel();
                 System.Console.WriteLine("[CSharpService] Server stopped");
             }
-
         }     
 
         private static async Task RunAsync(CancellationToken cancellationToken, string connenctionString)
         {
-            TServerTransport serverTransport = new TServerSocketTransport(9091, Configuration);
+            TServerTransport serverTransport = new TServerSocketTransport(port, Configuration);
             TTransportFactory transportFactory = new TBufferedTransport.Factory();
             TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
 
@@ -89,6 +94,5 @@ namespace Server
                 Logger.LogInformation("{x}",x);
             }
         }
-        
     }
 }
