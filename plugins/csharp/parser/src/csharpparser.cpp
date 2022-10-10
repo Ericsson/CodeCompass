@@ -30,26 +30,28 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
 
 bool CsharpParser::acceptProjectBuildPath(const std::vector<std::string>& path_)
 {
-  return path_.size()==2 && fs::is_directory(path_[0]) && fs::is_directory(path_[1]);
+  return path_.size() >= 2 && fs::is_directory(path_[0]) && fs::is_directory(path_[1]);
 }
 
 bool CsharpParser::parse()
 {        
-  bool succes = true;
+  bool success = true;
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
   
-    if(acceptProjectBuildPath(paths))
+    if (acceptProjectBuildPath(paths))
     {
       LOG(info) << "CsharpParser parse path: " << paths[0];
       LOG(info) << "Parsed csharp project build path: " << paths[1];
-      succes = succes && parseProjectBuildPath(paths);
-    } else {
+      success = success && parseProjectBuildPath(paths);
+    }
+    else
+    {
       LOG(info) << "Bulid path must be a directory!";
-      succes = false;
+      success = false;
     }
   
-  return succes;
+  return success;
 }
 
 bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_) {
