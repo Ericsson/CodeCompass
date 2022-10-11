@@ -12,7 +12,7 @@ namespace util
 namespace
 {
 
-void logFormatter(
+void consoleLogFormatter(
   const boost::log::record_view& rec, boost::log::formatting_ostream& strm)
 {
   auto severity = rec[boost::log::trivial::severity];
@@ -49,7 +49,18 @@ void logFormatter(
   }
 }
 
+void fileLogFormatter(
+  const boost::log::record_view& rec, boost::log::formatting_ostream& strm)
+{
+  auto severity = rec[boost::log::trivial::severity];
+
+  std::string sLevel = boost::log::trivial::to_string(severity.get());
+  std::transform(sLevel.begin(), sLevel.end(), sLevel.begin(), ::toupper);
+
+  strm << "[" << sLevel << "] " << rec[boost::log::expressions::smessage];
 }
+
+} // namespace
 
 boost::log::trivial::severity_level getSeverityLevel()
 {
@@ -58,13 +69,34 @@ boost::log::trivial::severity_level getSeverityLevel()
      boost::log::core::get()->get_global_attributes()["Severity"]).get();
 }
 
-void initLogger()
+void initConsoleLogger()
 {
   auto fsSink = boost::log::add_console_log(
     std::cout,
     boost::log::keywords::auto_flush = true);
 
-  fsSink->set_formatter(&logFormatter);
+  fsSink->set_formatter(&consoleLogFormatter);
+}
+
+bool initFileLogger(const std::string& path_)
+{
+  auto fsSink = boost::log::add_file_log(
+    boost::log::keywords::file_name = path_,
+    boost::log::keywords::auto_flush = true
+    );
+  fsSink->set_formatter(&fileLogFormatter);
+  try
+  {
+    // check if logging to file is possible
+    LOG(info) << "Start logging in file: " << path_;
+  }
+  catch(...)
+  {
+    boost::log::core::get()->remove_sink(fsSink);
+    LOG(warning) << "Could not open file for logging: " << path_;
+    return false;
+  }
+  return true;
 }
 
 } // util

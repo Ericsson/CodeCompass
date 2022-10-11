@@ -4,6 +4,7 @@ import cc.parser.search.FieldValue;
 import cc.parser.search.IndexerService;
 import cc.search.analysis.SourceAnalyzer;
 import cc.search.analysis.tags.TagGeneratorManager;
+import cc.search.common.FileLoggerInitializer;
 import cc.search.common.ipc.IPCProcessor;
 import cc.search.common.config.InvalidValueException;
 import cc.search.common.config.UnknownArgumentException;
@@ -81,6 +82,9 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
    */
   private Indexer(Options options_) throws IOException {
     _options = options_;
+
+    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(_options, _log);
+    addFileLogger.run();
 
     try {
       _indexDir = FSDirectory.open(new File(_options.indexDirPath),

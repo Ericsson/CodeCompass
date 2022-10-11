@@ -82,7 +82,10 @@ po::options_description commandLineArguments()
      "further actions modifying the state of the database.")
     ("incremental-threshold", po::value<int>()->default_value(10),
       "This is a threshold percentage. If the total ratio of changed files "
-      "is greater than this value, full parse is forced instead of incremental parsing.");
+      "is greater than this value, full parse is forced instead of incremental parsing.")
+    ("log-target", po::value<std::string>(),
+      "This is the path to the file where the logging output will be written. "
+      "If omitted, the output will be on the console only.");
 
   return desc;
 }
@@ -219,7 +222,7 @@ int main(int argc, char* argv[])
 
   cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
 
-  cc::util::initLogger();
+  cc::util::initConsoleLogger();
 
   //--- Process command line arguments ---//
 
@@ -228,6 +231,14 @@ int main(int argc, char* argv[])
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv)
     .options(desc).allow_unregistered().run(), vm);
+
+  if (vm.count("log-target"))
+  {
+    if(!cc::util::initFileLogger(vm["log-target"].as<std::string>()))
+    {
+      vm.at("log-target").value() = std::string("");
+    }
+  }
 
   //--- Skip parser list ---//
 

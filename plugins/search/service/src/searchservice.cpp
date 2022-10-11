@@ -106,7 +106,10 @@ SearchServiceHandler::SearchServiceHandler(
     _db(db_)
 {
   _javaProcess.reset(new ServiceProcess(*datadir_ + "/search",
-                                        context_.compassRoot));
+                                        context_.compassRoot,
+                                        context_.options.count("log-target")
+                                          ? context_.options["log-target"].as<std::string>()
+                                          : ""));
 }
 
 void SearchServiceHandler::search(

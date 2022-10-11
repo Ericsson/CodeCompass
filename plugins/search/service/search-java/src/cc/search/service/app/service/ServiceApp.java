@@ -1,5 +1,6 @@
 package cc.search.service.app.service;
 
+import cc.search.common.FileLoggerInitializer;
 import cc.search.common.ipc.IPCProcessor;
 import cc.search.common.config.InvalidValueException;
 import cc.search.common.config.UnknownArgumentException;
@@ -7,6 +8,9 @@ import cc.service.search.SearchService;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
+import java.util.Arrays;
 
 /**
  * The search service application.
@@ -45,20 +49,27 @@ public class ServiceApp extends SearchHandler {
   }
   
   public static void main(String[] args_)  {
-    _log.info("Search server started!");
-    
     try {
+    // Initialize file logger
+    ServiceAppOptions options = new ServiceAppOptions(args_);
+    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(options, _log);
+    addFileLogger.run();
+
+    _log.info("Search server started!");
       try (ServiceApp app =
-             new ServiceApp(new ServiceAppOptions(args_))) {
+             new ServiceApp(options)) {
 
         _log.log(Level.INFO, "Start serving search for index {0}",
           app._options.indexDirPath);
 
         app._processor.serve();
-      } catch (UnknownArgumentException | InvalidValueException | IOException e) {
+      } catch (IOException e) {
         _log.log(Level.SEVERE, "Fatal error!", e);
         System.exit(-1);
       } 
+    } catch (UnknownArgumentException | InvalidValueException e) {
+      _log.log(Level.SEVERE, "Fatal error!", e);
+      System.exit(-1);
     } catch (Exception ex) {
       _log.log(Level.SEVERE, "Something bad happened :-(", ex);
     } finally {

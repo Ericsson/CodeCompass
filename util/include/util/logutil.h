@@ -10,7 +10,9 @@ namespace cc
 namespace util 
 {
 
-void initLogger();
+void initConsoleLogger();
+
+bool initFileLogger(const std::string& path_);
 
 boost::log::trivial::severity_level getSeverityLevel();
 

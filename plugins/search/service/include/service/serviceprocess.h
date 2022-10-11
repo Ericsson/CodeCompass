@@ -33,7 +33,8 @@ public:
    * @param indexDatabase_ path to a index database
    */
   ServiceProcess(const std::string& indexDatabase_,
-                 const std::string& compassRoot_) :
+                 const std::string& compassRoot_,
+                 const std::string& logTarget_ = "") :
     _indexDatabase(indexDatabase_)
   {
     openPipe(_pipeFd2[0], _pipeFd2[1]);
@@ -71,6 +72,7 @@ public:
         "-ipcOutFd", outFd.c_str(),
         "-useSimpleFileLock",
         "-cleanupLocks",
+        "-logTarget", logTarget_.c_str(),
         nullptr);
 
       LOG(error) << "execlp failed!";

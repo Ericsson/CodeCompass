@@ -30,7 +30,8 @@ IndexerProcess::IndexerProcess(
   const std::string& indexDatabase_,
   const std::string& compassRoot_,
   IndexerProcess::OpenMode openMode_,
-  IndexerProcess::LockMode lockMode_)
+  IndexerProcess::LockMode lockMode_,
+  const std::string& logTarget_)
 {
   openPipe(_pipeFd2[0], _pipeFd2[1]);
 
@@ -65,7 +66,8 @@ IndexerProcess::IndexerProcess(
       "cc.search.indexer.app.Indexer",
       "-indexDB", indexDatabase_.c_str(),
       "-ipcInFd", inFd.c_str(),
-      "-ipcOutFd", outFd.c_str()
+      "-ipcOutFd", outFd.c_str(),
+      "-logTarget", logTarget_.c_str()
     };
 
     switch (openMode_)

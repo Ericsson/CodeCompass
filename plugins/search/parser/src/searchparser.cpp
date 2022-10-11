@@ -70,7 +70,11 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     _indexProcess.reset(new IndexerProcess(
       _searchDatabase,
       ctx_.compassRoot,
-      IndexerProcess::OpenMode::Create));
+      IndexerProcess::OpenMode::Create,
+      IndexerProcess::LockMode::Simple,
+      ctx_.options.count("log-target")
+        ? ctx_.options["log-target"].as<std::string>()
+        : ""));
   }
   catch (const IndexerProcess::Failure& ex_)
   {
