@@ -46,28 +46,98 @@ TemplateAnalyzer::TemplateAnalyzer(
   }
 }
 
+TemplateAnalyzer::~TemplateAnalyzer()
+{
+  (util::OdbTransaction(_ctx.db))([this]{
+    for (model::HelmTemplate& helmTemplate : _newTemplates)
+      _ctx.db->persist(helmTemplate);
+  });
+}
+
 bool TemplateAnalyzer::visitKeyValuePairs(
   YAML::Node& currentNode_,
   model::Microservice& service_)
 {
+  typedef model::HelmTemplate::DependencyType DependencyType;
   for (auto it = currentNode_.begin(); it != currentNode_.end(); ++it)
   {
     if (YAML::Dump(it->first) == "kind")
     {
-      model::HelmTemplate helmTemplate;
-      helmTemplate.kind = YAML::Dump(it->second);
+      auto type = _dependencyPairs.find(YAML::Dump(it->second));
+      if (type == _dependencyPairs.end())
+        break;
 
-      auto pair = _dependencyPairs.find(YAML::Dump(it->second));
-      if (pair != _dependencyPairs.end())
+      switch (type->second)
       {
-        helmTemplate.dependencyType = pair->second;
-      }
-      else
-      {
-        helmTemplate.dependencyType = model::HelmTemplate::DependencyType::OTHER;
+        case DependencyType::SERVICE:
+          processServiceDeps(currentNode_);
+          break;
+        case DependencyType::MOUNT:
+          processMountDeps(currentNode_);
+          break;
+        case DependencyType::CERTIFICATE:
+          processCertificateDeps(currentNode_);
+          break;
       }
     }
   }
+}
+
+void TemplateAnalyzer::processServiceDeps(YAML::Node& currentFile_)
+{
+  auto metadataIter = std::find_if(currentFile_.begin(), currentFile_.end(),
+    [](const auto& rootNode)
+    {
+      return Dump(rootNode.first) == "metadata";
+    });
+
+  if (metadataIter == currentFile_.end() || !metadataIter->second.IsMap())
+    return;
+
+  auto nameIter = std::find_if(metadataIter->begin(), metadataIter->end(),
+    [](const auto& pair)
+    {
+     return Dump(pair.first) == "name";
+    });
+
+  if (nameIter == metadataIter->end())
+    return;
+
+  auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+    [&](const model::Microservice& service)
+    {
+      return service.name == Dump(nameIter->second);
+    });
+
+  model::HelmTemplate helmTemplate;
+  helmTemplate.dependencyType = model::HelmTemplate::DependencyType::SERVICE;
+
+  if (serviceIter == _microserviceCache.end())
+  {
+    model::Microservice externalService;
+    externalService.name = Dump(nameIter->second);
+    externalService.type = model::Microservice::ServiceType::EXTERNAL;
+    createIdentifier(externalService);
+    _ctx.db->persist(externalService);
+
+    helmTemplate.depends = externalService.serviceId;
+  }
+  else
+  {
+    helmTemplate.depends = serviceIter->serviceId;
+  }
+
+  _newTemplates.push_back(helmTemplate);
+}
+
+void processMountDeps(YAML::Node& currentFile_)
+{
+
+}
+
+void processCertificateDeps(YAML::Node& currentFile_)
+{
+
 }
 
 void TemplateAnalyzer::fillDependencyPairsMap()

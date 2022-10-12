@@ -19,6 +19,12 @@ typedef std::uint64_t MicroserviceId;
 #pragma db object
 struct Microservice
 {
+  enum class ServiceType
+  {
+    INTERNAL,
+    EXTERNAL
+  };
+
   #pragma db id auto
   std::uint64_t id;
 
@@ -28,8 +34,11 @@ struct Microservice
   #pragma db not_null
   std::string name;
 
-  #pragma db not_null
+  //#pragma db
   FileId file;
+
+  //#pragma db
+  ServiceType type;
 };
 
 inline std::uint64_t createIdentifier(const Microservice& service_)

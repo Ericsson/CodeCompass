@@ -32,6 +32,7 @@
 
 #include "parser/yamlparser.h"
 #include "yamlrelationcollector.h"
+#include "templateanalyzer.h"
 
 namespace cc
 {
@@ -155,8 +156,10 @@ bool YamlParser::parse()
   _ctx.srcMgr.persistFiles();
 
   //--- Collect relations ---/
-  YamlRelationCollector relationCollector(_ctx, _fileAstCache);
-  relationCollector.init();
+  //YamlRelationCollector relationCollector(_ctx, _fileAstCache);
+  //relationCollector.init();
+
+  TemplateAnalyzer templateAnalyzer(_ctx, _fileAstCache);
 
   return true;
 }

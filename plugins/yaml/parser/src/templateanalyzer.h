@@ -25,17 +25,24 @@ public:
     ParserContext& ctx_,
     std::map<std::string, YAML::Node>& fileAstCache_);
 
+  ~TemplateAnalyzer();
+
 private:
   bool visitKeyValuePairs(
     YAML::Node& currentFile_,
     model::Microservice& service_);
+
+  void processServiceDeps(YAML::Node& currentFile_);
+  void processMountDeps(YAML::Node& currentFile_);
+  void processCertificateDeps(YAML::Node& currentFile_);
+  //void processCertificateDeps(YAML::Node& currentFile_);
 
   void fillDependencyPairsMap();
 
   std::map<std::string, model::HelmTemplate::DependencyType> _dependencyPairs;
 
   static std::unordered_set<model::YamlEdgeId> _edgeCache;
-  std::vector<model::YamlEdgePtr> _newEdges;
+  std::vector<model::HelmTemplate> _newTemplates;
 
   static std::vector<model::Microservice> _microserviceCache;
   model::Microservice _currentService;
