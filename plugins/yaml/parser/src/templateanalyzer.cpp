@@ -103,6 +103,9 @@ bool TemplateAnalyzer::visitKeyValuePairs(
     case DependencyType::CERTIFICATE:
       processCertificateDeps(path_, currentNode_);
       break;
+    case DependencyType::RESOURCE:
+    case DependencyType::OTHER:
+      break;
   }
 
   return true;

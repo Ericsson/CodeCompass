@@ -30,6 +30,10 @@ private:
    */
   void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
 
+  void processIntegrationChart(
+    model::FilePtr& file_,
+    YAML::Node& loadedFile);
+
   /**
    * The first-level keys in a YAML files usually have great significance,
    * so they should be collected in a separate collection.

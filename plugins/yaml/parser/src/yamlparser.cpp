@@ -197,7 +197,10 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       if (file_->path.find("charts/") != std::string::npos)
         file->type = model::YamlFile::Type::HELM_SUBCHART;
       else
+      {
         file->type = model::YamlFile::Type::HELM_CHART;
+        processIntegrationChart(file_, loadedFile);
+      }
 
       model::Microservice service;
       service.file = file_->id;
@@ -246,6 +249,37 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       file->type = model::YamlFile::Type::CI;
 
     _ctx.db->persist(file);
+  });
+}
+
+/*
+ * Integration charts (root charts) may contain several
+ * aliased microservices that are otherwise not contained
+ * in any subcharts.
+ */
+void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& loadedFile_)
+{
+  if (!loadedFile_["dependencies"] || !loadedFile_["dependencies"].IsMap())
+    return;
+
+  util::OdbTransaction {_ctx.db} ([&]
+  {
+    for (auto iter = loadedFile_["dependencies"].begin();
+         iter != loadedFile_["dependencies"].end();
+         ++iter)
+    {
+      model::Microservice service;
+      service.file = file_->id;
+      service.type = model::Microservice::ServiceType::INTERNAL;
+
+      if ((*iter)["alias"])
+        service.name = Dump((*iter)["alias"]);
+      else
+        service.name = Dump((*iter)["name"]);
+
+      service.serviceId = cc::model::createIdentifier(service);
+      _ctx.db->persist(service);
+    }
   });
 }
 
