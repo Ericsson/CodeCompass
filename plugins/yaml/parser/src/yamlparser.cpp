@@ -55,7 +55,7 @@ YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
   _pool = util::make_thread_pool<std::string>(
   threadNum, [&, this](const std::string& path_)
   {
-    LOG(info) << "Processing " << path_;
+    LOG(info) << "[yamlparser] Processing " << path_;
     model::FilePtr file = _ctx.srcMgr.getFile(path_);
     if (file)
     {
@@ -108,7 +108,7 @@ bool YamlParser::cleanupDatabase()
     }
     catch (odb::database_exception&)
     {
-      LOG(fatal) << "Transaction failed in yaml parser!";
+      LOG(fatal) << "[yamlparser] Transaction failed!";
       return false;
     }
   }
@@ -124,7 +124,7 @@ bool YamlParser::parse()
   {
     if (fs::is_directory(input))
     {
-      LOG(info) << "Yaml parse path: " << input;
+      LOG(info) << "[yamlparser]  Yaml parse path: " << input;
 
       //--- Parse YAML files ---//
 
@@ -140,18 +140,18 @@ bool YamlParser::parse()
         catch (std::exception& ex_)
         {
           LOG(warning)
-            << "Yaml parser threw an exception: " << ex_.what();
+            << "[yamlparser] Yaml parser threw an exception: " << ex_.what();
         }
         catch (...)
         {
           LOG(warning)
-            << "Yaml parser failed with unknown exception!";
+            << "[yamlparser]  Yaml parser failed with unknown exception!";
         }
       });
     }
   }
   _pool->wait();
-  LOG(info) << "Processed files: " << this->_visitedFileCount;
+  LOG(info) << "[yamlparser] Processed files: " << this->_visitedFileCount;
 
   _ctx.srcMgr.persistFiles();
 
@@ -160,6 +160,7 @@ bool YamlParser::parse()
   //relationCollector.init();
 
   TemplateAnalyzer templateAnalyzer(_ctx, _fileAstCache);
+  templateAnalyzer.init();
 
   return true;
 }
@@ -202,6 +203,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       service.file = file_->id;
       service.name = fs::path(file_->path).parent_path().filename().string();
       service.serviceId = cc::model::createIdentifier(service);
+      service.type = model::Microservice::ServiceType::INTERNAL;
       _ctx.db->persist(service);
 
       _mutex.lock();
@@ -229,8 +231,14 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
         _mutex.unlock();
       }
     }
-    else if (file_->path.find("templates/"))
+    else if (file_->path.find("templates/") != std::string::npos)
+    {
       file->type = model::YamlFile::Type::HELM_TEMPLATE;
+
+      _mutex.lock();
+      _fileAstCache.insert({file_->path, loadedFile});
+      _mutex.unlock();
+    }
     else if (file_->filename == "compose.yaml" || file_->filename == "compose.yml"
           || file_->filename == "docker-compose.yaml" || file_->filename == "docker-compose.yml")
       file->type = model::YamlFile::Type::DOCKER_COMPOSE;
@@ -273,7 +281,7 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   }
   catch (YAML::ParserException& e)
   {
-    LOG(warning) << "Exception thrown in : " << file_->path << ": " << e.what();
+    LOG(warning) << "[yamlparser]  Exception thrown in : " << file_->path << ": " << e.what();
 
     util::OdbTransaction {_ctx.db} ([&] {
       model::BuildLog buildLog;

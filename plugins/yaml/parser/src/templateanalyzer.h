@@ -8,8 +8,8 @@
 #include <model/helmtemplate.h>
 #include <model/microservice.h>
 #include <model/microservice-odb.hxx>
-#include <model/yamledge.h>
-#include <model/yamledge-odb.hxx>
+#include <model/microserviceedge.h>
+#include <model/microserviceedge-odb.hxx>
 
 #include <parser/parsercontext.h>
 
@@ -27,21 +27,38 @@ public:
 
   ~TemplateAnalyzer();
 
+  void init();
+
 private:
   bool visitKeyValuePairs(
+    std::string path_,
     YAML::Node& currentFile_,
     model::Microservice& service_);
 
-  void processServiceDeps(YAML::Node& currentFile_);
-  void processMountDeps(YAML::Node& currentFile_);
-  void processCertificateDeps(YAML::Node& currentFile_);
+  void processServiceDeps(
+    const std::string& path_,
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+  void processMountDeps(
+    const std::string& path_,
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+  void processCertificateDeps(
+    const std::string& path_,
+    YAML::Node& currentFile_);
   //void processCertificateDeps(YAML::Node& currentFile_);
+
+  void addEdge(
+    const model::MicroserviceId& from_,
+    const model::MicroserviceId& to_,
+    std::string type_);
 
   void fillDependencyPairsMap();
 
   std::map<std::string, model::HelmTemplate::DependencyType> _dependencyPairs;
 
-  static std::unordered_set<model::YamlEdgeId> _edgeCache;
+  static std::unordered_set<model::MicroserviceEdgeId> _edgeCache;
+  std::vector<model::MicroserviceEdgePtr> _newEdges;
   std::vector<model::HelmTemplate> _newTemplates;
 
   static std::vector<model::Microservice> _microserviceCache;

@@ -12,7 +12,7 @@ namespace parser
 
 namespace fs = boost::filesystem;
 
-std::unordered_set<model::YamlEdgeId> YamlRelationCollector::_edgeCache;
+std::unordered_set<model::MicroserviceEdgeId> YamlRelationCollector::_edgeCache;
 std::vector<model::Microservice> YamlRelationCollector::_microserviceCache;
 std::mutex YamlRelationCollector::_edgeCacheMutex;
 
@@ -26,7 +26,7 @@ YamlRelationCollector::YamlRelationCollector(
   {
     util::OdbTransaction{_ctx.db}([this]
     {
-      for (const model::YamlEdge& edge : _ctx.db->query<model::YamlEdge>())
+      for (const model::MicroserviceEdge& edge : _ctx.db->query<model::MicroserviceEdge>())
       {
         _edgeCache.insert(edge.id);
       }
@@ -110,7 +110,7 @@ void YamlRelationCollector::addEdge(
   static std::mutex m;
   std::lock_guard<std::mutex> guard(m);
 
-  model::YamlEdgePtr edge = std::make_shared<model::YamlEdge>();
+  model::MicroserviceEdgePtr edge = std::make_shared<model::MicroserviceEdge>();
 
   edge->from = std::make_shared<model::Microservice>();
   edge->from->id = from_;

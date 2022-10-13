@@ -4,8 +4,8 @@
 
 #include <boost/filesystem.hpp>
 
-#include <model/yamledge.h>
-#include <model/yamledge-odb.hxx>
+#include <model/microserviceedge.h>
+#include <model/microserviceedge-odb.hxx>
 
 #include <model/file.h>
 #include <service/yamlservice.h>
@@ -22,8 +22,8 @@ namespace language
 
 namespace fs = boost::filesystem;
 
-typedef odb::query<model::YamlEdge> EdgeQuery;
-typedef odb::result<model::YamlEdge> EdgeResult;
+typedef odb::query<model::MicroserviceEdge> EdgeQuery;
+typedef odb::result<model::MicroserviceEdge> EdgeResult;
 typedef odb::query<model::Microservice> MicroserviceQuery;
 typedef odb::result<model::Microservice> MicroserviceResult;
 
@@ -220,12 +220,12 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
   std::multimap<model::MicroserviceId, std::string> dependencies;
 
   _transaction([&, this]{
-    EdgeResult res = _db->query<model::YamlEdge>(
+    EdgeResult res = _db->query<model::MicroserviceEdge>(
       (reverse_
       ? EdgeQuery::to->serviceId
       : EdgeQuery::from->serviceId) == std::stoull(node_));
 
-    for (const model::YamlEdge& edge : res)
+    for (const model::MicroserviceEdge& edge : res)
     {
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
       dependencies.insert({serviceId, edge.type});

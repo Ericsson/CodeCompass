@@ -7,8 +7,8 @@
 
 #include <model/microservice.h>
 #include <model/microservice-odb.hxx>
-#include <model/yamledge.h>
-#include <model/yamledge-odb.hxx>
+#include <model/microserviceedge.h>
+#include <model/microserviceedge-odb.hxx>
 
 #include <parser/parsercontext.h>
 
@@ -42,8 +42,8 @@ private:
     model::FilePtr file_,
     YAML::Node& loadedFile);
 
-  static std::unordered_set<model::YamlEdgeId> _edgeCache;
-  std::vector<model::YamlEdgePtr> _newEdges;
+  static std::unordered_set<model::MicroserviceEdgeId> _edgeCache;
+  std::vector<model::MicroserviceEdgePtr> _newEdges;
 
   static std::vector<model::Microservice> _microserviceCache;
   model::Microservice _currentService;

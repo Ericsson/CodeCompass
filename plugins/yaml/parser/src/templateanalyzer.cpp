@@ -11,7 +11,7 @@ namespace cc
 namespace parser
 {
 
-std::unordered_set<model::YamlEdgeId> TemplateAnalyzer::_edgeCache;
+std::unordered_set<model::MicroserviceEdgeId> TemplateAnalyzer::_edgeCache;
 std::vector<model::Microservice> TemplateAnalyzer::_microserviceCache;
 std::mutex TemplateAnalyzer::_edgeCacheMutex;
 
@@ -27,7 +27,7 @@ TemplateAnalyzer::TemplateAnalyzer(
   {
     util::OdbTransaction{_ctx.db}([this]
     {
-      for (const model::YamlEdge& edge : _ctx.db->query<model::YamlEdge>())
+      for (const model::MicroserviceEdge& edge : _ctx.db->query<model::MicroserviceEdge>())
       {
         _edgeCache.insert(edge.id);
       }
@@ -51,73 +51,95 @@ TemplateAnalyzer::~TemplateAnalyzer()
   (util::OdbTransaction(_ctx.db))([this]{
     for (model::HelmTemplate& helmTemplate : _newTemplates)
       _ctx.db->persist(helmTemplate);
+
+    util::persistAll(_newEdges, _ctx.db);
+  });
+}
+
+void TemplateAnalyzer::init()
+{
+  (util::OdbTransaction(_ctx.db))([this]{
+    std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
+    [&, this](std::pair<std::string, YAML::Node> pair)
+    {
+      auto currentService = std::find_if(_microserviceCache.begin(),
+        _microserviceCache.end(),
+        [&](model::Microservice& service)
+        {
+          auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == pair.first);
+          return service.file == filePtr->id;
+        });
+
+      visitKeyValuePairs(pair.first, pair.second, *currentService);
+    });
   });
 }
 
 bool TemplateAnalyzer::visitKeyValuePairs(
+  std::string path_,
   YAML::Node& currentNode_,
   model::Microservice& service_)
 {
   typedef model::HelmTemplate::DependencyType DependencyType;
-  for (auto it = currentNode_.begin(); it != currentNode_.end(); ++it)
-  {
-    if (YAML::Dump(it->first) == "kind")
-    {
-      auto type = _dependencyPairs.find(YAML::Dump(it->second));
-      if (type == _dependencyPairs.end())
-        break;
 
-      switch (type->second)
-      {
-        case DependencyType::SERVICE:
-          processServiceDeps(currentNode_);
-          break;
-        case DependencyType::MOUNT:
-          processMountDeps(currentNode_);
-          break;
-        case DependencyType::CERTIFICATE:
-          processCertificateDeps(currentNode_);
-          break;
-      }
-    }
+  if (!currentNode_["metadata"] ||
+      !currentNode_["metadata"].IsMap() ||
+      !currentNode_["kind"] ||
+      !currentNode_["metadata"]["name"])
+    return false;
+
+  auto type = _dependencyPairs.find(YAML::Dump(currentNode_["kind"]));
+  if (type == _dependencyPairs.end())
+    return false;
+
+  switch (type->second)
+  {
+    case DependencyType::SERVICE:
+      processServiceDeps(path_, currentNode_, service_);
+      break;
+    case DependencyType::MOUNT:
+      processMountDeps(path_, currentNode_, service_);
+      break;
+    case DependencyType::CERTIFICATE:
+      processCertificateDeps(path_, currentNode_);
+      break;
   }
+
+  return true;
 }
 
-void TemplateAnalyzer::processServiceDeps(YAML::Node& currentFile_)
+void TemplateAnalyzer::processServiceDeps(
+  const std::string& path_,
+  YAML::Node& currentFile_,
+  model::Microservice& service_)
 {
-  auto metadataIter = std::find_if(currentFile_.begin(), currentFile_.end(),
-    [](const auto& rootNode)
-    {
-      return Dump(rootNode.first) == "metadata";
-    });
+  /* --- Process Service templates --- */
 
-  if (metadataIter == currentFile_.end() || !metadataIter->second.IsMap())
-    return;
-
-  auto nameIter = std::find_if(metadataIter->begin(), metadataIter->end(),
-    [](const auto& pair)
-    {
-     return Dump(pair.first) == "name";
-    });
-
-  if (nameIter == metadataIter->end())
-    return;
-
+  // Find MS in database.
   auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
     [&](const model::Microservice& service)
     {
-      return service.name == Dump(nameIter->second);
+      return service.name == Dump(currentFile_["metadata"]["name"]);
     });
 
+  // Persist template data to db.
   model::HelmTemplate helmTemplate;
   helmTemplate.dependencyType = model::HelmTemplate::DependencyType::SERVICE;
 
+  auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+  helmTemplate.file = filePtr->id;
+  helmTemplate.kind = Dump(currentFile_["kind"]);
+
+  // If the MS is not present in the db,
+  // it is an external / central MS,
+  // and should be added to the db.
   if (serviceIter == _microserviceCache.end())
   {
     model::Microservice externalService;
-    externalService.name = Dump(nameIter->second);
+    externalService.name = Dump(currentFile_["metadata"]["name"]);
     externalService.type = model::Microservice::ServiceType::EXTERNAL;
-    createIdentifier(externalService);
+    externalService.file = filePtr->id;
+    externalService.serviceId = createIdentifier(externalService);
     _ctx.db->persist(externalService);
 
     helmTemplate.depends = externalService.serviceId;
@@ -128,16 +150,88 @@ void TemplateAnalyzer::processServiceDeps(YAML::Node& currentFile_)
   }
 
   _newTemplates.push_back(helmTemplate);
+  addEdge(service_.serviceId, helmTemplate.depends, "Service");
 }
 
-void processMountDeps(YAML::Node& currentFile_)
+void TemplateAnalyzer::processMountDeps(
+  const std::string& path_,
+  YAML::Node& currentFile_,
+  model::Microservice& service_)
+{
+  /* --- Processing ConfigMap templates --- */
+
+  auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+    [&](const model::Microservice& service)
+    {
+      return service.name == Dump(currentFile_["metadata"]["name"]);
+    });
+
+  // Self-dependencies should be omitted.
+  if (path_.find(serviceIter->name) != std::string::npos)
+    return;
+
+  // Persist the template data into the database.
+  model::HelmTemplate helmTemplate;
+  helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
+
+  auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+  helmTemplate.file = filePtr->id;
+
+  auto kindIter = currentFile_.as<std::map<std::string, YAML::Node>>().find("kind");
+  helmTemplate.kind = Dump(kindIter->second);
+
+  if (serviceIter == _microserviceCache.end())
+  {
+    // If the microservice to which the template belongs
+    // is not present in the database,
+    // process and persist it.
+    model::Microservice externalService;
+    externalService.name = Dump(currentFile_["metadata"]["name"]);
+    externalService.type = model::Microservice::ServiceType::EXTERNAL;
+    externalService.file = filePtr->id;
+    externalService.serviceId = createIdentifier(externalService);
+    _ctx.db->persist(externalService);
+
+    helmTemplate.depends = externalService.serviceId;
+  }
+  else
+  {
+    helmTemplate.depends = serviceIter->serviceId;
+  }
+
+  _newTemplates.push_back(helmTemplate);
+  addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+}
+
+void TemplateAnalyzer::processCertificateDeps(
+  const std::string& path_,
+  YAML::Node& currentFile_)
 {
 
 }
 
-void processCertificateDeps(YAML::Node& currentFile_)
+void TemplateAnalyzer::addEdge(
+  const model::MicroserviceId& from_,
+  const model::MicroserviceId& to_,
+  std::string type_)
 {
+  static std::mutex m;
+  std::lock_guard<std::mutex> guard(m);
 
+  model::MicroserviceEdgePtr edge = std::make_shared<model::MicroserviceEdge>();
+
+  edge->from = std::make_shared<model::Microservice>();
+  edge->from->id = from_;
+  edge->to = std::make_shared<model::Microservice>();
+  edge->to->id = to_;
+
+  edge->type = std::move(type_);
+  edge->id = model::createIdentifier(*edge);
+
+  if (_edgeCache.insert(edge->id).second)
+  {
+    _newEdges.push_back(edge);
+  }
 }
 
 void TemplateAnalyzer::fillDependencyPairsMap()

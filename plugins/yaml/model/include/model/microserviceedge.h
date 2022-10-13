@@ -12,16 +12,16 @@ namespace cc
 namespace model
 {
 
-struct YamlEdge;
-typedef std::shared_ptr<YamlEdge> YamlEdgePtr;
+struct MicroserviceEdge;
+typedef std::shared_ptr<MicroserviceEdge> MicroserviceEdgePtr;
 
-typedef std::uint64_t YamlEdgeId;
+typedef std::uint64_t MicroserviceEdgeId;
 
 #pragma db object
-struct YamlEdge
+struct MicroserviceEdge
 {
   #pragma db id
-  YamlEdgeId id;
+  MicroserviceEdgeId id;
 
   #pragma db not_null
   #pragma db on_delete(cascade)
@@ -37,7 +37,7 @@ struct YamlEdge
   std::string toString() const;
 };
 
-inline std::string YamlEdge::toString() const
+inline std::string MicroserviceEdge::toString() const
 {
   return std::string("YamlEdge")
     .append("\nid = ").append(std::to_string(id))
@@ -46,7 +46,7 @@ inline std::string YamlEdge::toString() const
     .append("\ntype = ");
 }
 
-inline std::uint64_t createIdentifier(const YamlEdge& edge_)
+inline std::uint64_t createIdentifier(const MicroserviceEdge& edge_)
 {
   return util::fnvHash(
     std::to_string(edge_.from->id) +
