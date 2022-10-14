@@ -10,6 +10,8 @@
 
 #include <model/file.h>
 #include <model/file-odb.hxx>
+#include <model/microservice.h>
+#include <model/microservice-odb.hxx>
 #include <model/yamlfile.h>
 #include <model/yamlfile-odb.hxx>
 #include <model/yamlcontent.h>
@@ -24,7 +26,8 @@
 #include <util/util.h>
 #include <webserver/servercontext.h>
 
-#include <LanguageService.h>
+//#include <LanguageService.h>
+#include <YamlService.h>
 
 namespace cc
 {
@@ -33,7 +36,7 @@ namespace service
 namespace language
 {
 
-class YamlServiceHandler  : virtual public LanguageServiceIf
+class YamlServiceHandler  : virtual public YamlServiceIf
 {
 public:
   YamlServiceHandler(
@@ -137,6 +140,10 @@ public:
   model::YamlAstNode queryYamlAstNode(
     const core::AstNodeId& astNodeId_);
 
+  /* --- Extending language service --- */
+  void getMicroserviceList(
+    std::vector<MicroserviceInfo>& return_);
+
 private:
   enum DiagramType
   {
@@ -145,6 +152,9 @@ private:
       MICROSERVICES,
       DEPENDENCIES
   };
+
+  inline cc::service::language::ServiceType::type convertToThriftType(
+    model::Microservice::ServiceType type_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

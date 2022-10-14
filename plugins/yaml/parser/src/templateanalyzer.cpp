@@ -224,9 +224,9 @@ void TemplateAnalyzer::addEdge(
   model::MicroserviceEdgePtr edge = std::make_shared<model::MicroserviceEdge>();
 
   edge->from = std::make_shared<model::Microservice>();
-  edge->from->id = from_;
+  edge->from->serviceId = from_;
   edge->to = std::make_shared<model::Microservice>();
-  edge->to->id = to_;
+  edge->to->serviceId = to_;
 
   edge->type = std::move(type_);
   edge->id = model::createIdentifier(*edge);

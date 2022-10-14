@@ -4,7 +4,7 @@ require([
   'codecompass/util'],
 function (model, viewHandler, util) {
 
-  model.addService('yamlservice', 'YamlService', LanguageServiceClient);
+  model.addService('yamlservice', 'YamlService', YamlServiceClient);
 
   function createRootNode(elementInfo) {
     var rootLabel

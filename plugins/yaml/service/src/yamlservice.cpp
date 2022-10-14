@@ -16,6 +16,8 @@ namespace
   typedef odb::result<cc::model::YamlAstNode> AstResult;
   typedef odb::query<cc::model::File> FileQuery;
   typedef odb::result<cc::model::File> FileResult;
+  typedef odb::query<cc::model::Microservice> MicroserviceQuery;
+  typedef odb::result<cc::model::Microservice> MicroserviceResult;
 
   /**
  * This struct transforms a model::YamlAstNode to an AstNodeInfo Thrift
@@ -324,6 +326,38 @@ void YamlServiceHandler::getSyntaxHighlight(
       }
     }
   });
+}
+
+/* --- Extending language service --- */
+
+void YamlServiceHandler::getMicroserviceList(
+  std::vector<MicroserviceInfo>& return_)
+{
+  _transaction([&, this]() {
+    MicroserviceResult services = _db->query<model::Microservice>();
+
+    for (const auto& service : services)
+    {
+      MicroserviceInfo msInfo;
+      msInfo.serviceId = std::to_string(service.serviceId);
+      msInfo.fileId = std::to_string(service.file);
+      msInfo.name = service.name;
+      msInfo.type = convertToThriftType(service.type);
+
+      return_.push_back(msInfo);
+    }
+  });
+}
+
+inline cc::service::language::ServiceType::type YamlServiceHandler::convertToThriftType(
+  model::Microservice::ServiceType type_)
+{
+  typedef model::Microservice::ServiceType MSServiceType;
+  switch(type_)
+  {
+    case MSServiceType::INTERNAL: return ServiceType::Internal;
+    case MSServiceType::EXTERNAL: return ServiceType::External;
+  }
 }
 
 model::YamlAstNode YamlServiceHandler::queryYamlAstNode(

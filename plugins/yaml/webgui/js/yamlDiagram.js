@@ -16,7 +16,7 @@ require([
 function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, CheckBox, Select,
   ContentPane, viewHandler, urlHandler, model) {
   
-  model.addService('yamlservice', 'YamlService', LanguageServiceClient);
+  model.addService('yamlservice', 'YamlService', YamlServiceClient);
 
   var fileDiagramHandler = {
     id : 'yaml-file-diagram-handler',

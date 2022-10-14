@@ -9,7 +9,7 @@ require([
   'codecompass/viewHandler'],
 function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, viewHandler) {
 
-  model.addService('yamlservice', 'YamlService', LanguageServiceClient);
+  model.addService('yamlservice', 'YamlService', YamlServiceClient);
 /*
   var getdefintion = {
     id : 'yaml-text-getdefintion',
