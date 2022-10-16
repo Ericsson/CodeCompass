@@ -1,14 +1,11 @@
 package cc.search.common.ipc;
 
-import cc.search.common.FileLoggerInitializer;
 import cc.search.common.config.CommonOptions;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.FileHandler;
-import java.util.logging.SimpleFormatter;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -25,8 +22,7 @@ public class IPCProcessor implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(
-    IPCProcessor.class.getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Processor for thrift messages.
    */
@@ -62,9 +58,6 @@ public class IPCProcessor implements AutoCloseable {
   public IPCProcessor(CommonOptions options_, TProcessor processor_)
     throws FileNotFoundException {
     _processor = processor_;
-
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(options_, _log);
-    addFileLogger.run();
     
     TProtocolFactory factory = new TBinaryProtocol.Factory();
     _inTransport = new TIOStreamTransport(

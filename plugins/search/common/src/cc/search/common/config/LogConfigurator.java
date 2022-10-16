@@ -25,7 +25,7 @@ public class LogConfigurator {
       logManager.readConfiguration(cfgStream);
       
     } catch (IOException | SecurityException ex) {
-      Logger.getLogger(LogConfigurator.class.getName()).log(Level.SEVERE,
+      Logger.getLogger("GLOBAL_LOGGER").log(Level.SEVERE,
         "Failed to configure custom log propeties!", ex);
     }
   }

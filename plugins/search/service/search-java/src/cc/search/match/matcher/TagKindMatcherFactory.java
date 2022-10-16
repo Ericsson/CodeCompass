@@ -22,8 +22,7 @@ class TagKindMatcherFactory implements ResultMatcherFactory {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(TagKindMatcherFactory.
-    class.getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Token filter for filtering relevant tokens by its kind.
    */

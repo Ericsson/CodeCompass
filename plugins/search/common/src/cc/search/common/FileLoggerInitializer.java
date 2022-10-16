@@ -10,7 +10,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * Adds file to logging when needed
  */
-public class FileLoggerInitializer implements Runnable {
+public class FileLoggerInitializer {
   /**
    * The name of the "path" field. Path contains the full path of the file.
    */
@@ -20,8 +20,8 @@ public class FileLoggerInitializer implements Runnable {
    */
   private static Logger _log;
 
-  public FileLoggerInitializer(CommonOptions options_, Logger log_) {
-    _filePathField = options_.logFilePath;
+  public FileLoggerInitializer(CommonOptions options_, Logger log_, String pluginName_) {
+    _filePathField = options_.logFilePath + "." + pluginName_;
     _log = log_;
   }
 

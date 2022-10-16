@@ -14,8 +14,7 @@ public final class TagGeneratorManager implements AutoCloseable {
   /**
    * Logger.
    */
-  private final static Logger _log = Logger.getLogger(
-    TagGeneratorManager.class.getName());
+  private final static Logger _log = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Singleton instance.
    */

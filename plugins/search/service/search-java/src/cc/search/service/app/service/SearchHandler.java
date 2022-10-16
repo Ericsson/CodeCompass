@@ -1,6 +1,5 @@
 package cc.search.service.app.service;
 
-import cc.search.common.FileLoggerInitializer;
 import cc.search.analysis.AdvancedTagQueryParser;
 import cc.search.analysis.QueryAnalyzer;
 import cc.search.analysis.log.LogQueryBuilder;
@@ -50,8 +49,7 @@ abstract class SearchHandler extends SearchAppCommon
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(SearchHandler.class
-    .getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Handler for suggestion requests.
    */
@@ -148,9 +146,6 @@ abstract class SearchHandler extends SearchAppCommon
   public SearchHandler(CommonOptions options_) throws IOException {
     super(options_);
 
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(options_, _log);
-    addFileLogger.run();
-    
     Analyzer analyzer = new QueryAnalyzer();
     
     _advDefQueryParser = new AdvancedTagQueryParser(analyzer);

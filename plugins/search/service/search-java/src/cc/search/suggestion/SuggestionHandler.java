@@ -1,6 +1,5 @@
 package cc.search.suggestion;
 
-import cc.search.common.FileLoggerInitializer;
 import cc.search.common.SuggestionDatabase;
 import cc.search.common.config.CommonOptions;
 import java.io.IOException;
@@ -26,8 +25,7 @@ public final class SuggestionHandler implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log = Logger.getLogger(SuggestionHandler.class
-    .getName());
+  private static final Logger _log = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Filename suggester.
    */
@@ -44,9 +42,6 @@ public final class SuggestionHandler implements AutoCloseable {
    * @param opts_ the program options.
    */
   public void loadDatabases(CommonOptions opts_) {
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(opts_, _log);
-    addFileLogger.run();
-    
     try {
       loadFileNameSuggester(opts_);
     } catch (IOException ex) {

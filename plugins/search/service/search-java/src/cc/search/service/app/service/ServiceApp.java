@@ -8,9 +8,6 @@ import cc.service.search.SearchService;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.FileHandler;
-import java.util.logging.SimpleFormatter;
-import java.util.Arrays;
 
 /**
  * The search service application.
@@ -19,8 +16,7 @@ public class ServiceApp extends SearchHandler {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(ServiceApp.class
-    .getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * IPC message processor.
    */
@@ -52,7 +48,7 @@ public class ServiceApp extends SearchHandler {
     try {
     // Initialize file logger
     ServiceAppOptions options = new ServiceAppOptions(args_);
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(options, _log);
+    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(options, _log, "searchPlugin");
     addFileLogger.run();
 
     _log.info("Search server started!");

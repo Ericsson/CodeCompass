@@ -3,7 +3,6 @@ package cc.search.service.app;
 import cc.search.analysis.QueryAnalyzer;
 import cc.search.common.config.CommonOptions;
 import cc.search.common.IndexFields;
-import cc.search.common.FileLoggerInitializer;
 import cc.search.match.Context;
 import cc.search.match.QueryContext;
 import cc.search.match.matcher.MasterMatcherFactory;
@@ -76,8 +75,7 @@ public abstract class SearchAppCommon implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(SearchAppCommon.class
-    .getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   
   /**
    * Async task class for matching lines in a document.
@@ -227,9 +225,6 @@ public abstract class SearchAppCommon implements AutoCloseable {
    */
   protected SearchAppCommon(CommonOptions options_) throws IOException {
     _options = options_;
-
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(_options, _log);
-    addFileLogger.run();
 
     try {
       _indexReader = DirectoryReader.open(FSDirectory.open(

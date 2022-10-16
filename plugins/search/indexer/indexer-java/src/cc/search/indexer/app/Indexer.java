@@ -41,7 +41,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
   /**
    * Logger.
    */
-  private static final Logger _log = Logger.getLogger(Indexer.class.getName());
+  private static final Logger _log = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Command line options.
    */
@@ -83,7 +83,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
   private Indexer(Options options_) throws IOException {
     _options = options_;
 
-    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(_options, _log);
+    FileLoggerInitializer addFileLogger = new FileLoggerInitializer(_options, _log, "indexPlugin");
     addFileLogger.run();
 
     try {

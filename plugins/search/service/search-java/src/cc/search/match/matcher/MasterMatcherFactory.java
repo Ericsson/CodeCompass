@@ -15,8 +15,7 @@ public class MasterMatcherFactory implements ResultMatcherFactory {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(MasterMatcherFactory.
-    class.getName());
+  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
   /**
    * Matcher wrapper for matching with multiple matchers.
    */
