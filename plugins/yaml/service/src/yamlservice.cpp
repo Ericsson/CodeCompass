@@ -331,10 +331,12 @@ void YamlServiceHandler::getSyntaxHighlight(
 /* --- Extending language service --- */
 
 void YamlServiceHandler::getMicroserviceList(
-  std::vector<MicroserviceInfo>& return_)
+  std::vector<MicroserviceInfo>& return_,
+  ServiceType::type type_)
 {
   _transaction([&, this]() {
-    MicroserviceResult services = _db->query<model::Microservice>();
+    MicroserviceResult services = _db->query<model::Microservice>(
+      MicroserviceQuery::type == convertToModelType(type_));
 
     for (const auto& service : services)
     {
@@ -346,7 +348,21 @@ void YamlServiceHandler::getMicroserviceList(
 
       return_.push_back(msInfo);
     }
+
+    std::sort(return_.begin(), return_.end(),
+      [](MicroserviceInfo& lhs, MicroserviceInfo& rhs)
+      {
+        return lhs.name < rhs.name;
+      });
   });
+}
+
+void YamlServiceHandler::getMicroserviceTypes(
+  std::vector<cc::service::language::ServiceType::type>& return_)
+{
+  typedef model::Microservice::ServiceType MSServiceType;
+  return_.push_back(convertToThriftType(MSServiceType::INTERNAL));
+  return_.push_back(convertToThriftType(MSServiceType::EXTERNAL));
 }
 
 inline cc::service::language::ServiceType::type YamlServiceHandler::convertToThriftType(
@@ -357,6 +373,17 @@ inline cc::service::language::ServiceType::type YamlServiceHandler::convertToThr
   {
     case MSServiceType::INTERNAL: return ServiceType::Internal;
     case MSServiceType::EXTERNAL: return ServiceType::External;
+  }
+}
+
+inline model::Microservice::ServiceType YamlServiceHandler::convertToModelType(
+  cc::service::language::ServiceType::type type_)
+{
+  typedef model::Microservice::ServiceType MSServiceType;
+  switch(type_)
+  {
+    case ServiceType::Internal: return MSServiceType::INTERNAL;
+    case ServiceType::External: return MSServiceType::EXTERNAL;
   }
 }
 

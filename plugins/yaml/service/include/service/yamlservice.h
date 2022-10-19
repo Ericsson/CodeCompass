@@ -142,7 +142,11 @@ public:
 
   /* --- Extending language service --- */
   void getMicroserviceList(
-    std::vector<MicroserviceInfo>& return_);
+    std::vector<MicroserviceInfo>& return_,
+    ServiceType::type type_);
+
+  void getMicroserviceTypes(
+    std::vector<cc::service::language::ServiceType::type>& return_);
 
 private:
   enum DiagramType
@@ -155,6 +159,8 @@ private:
 
   inline cc::service::language::ServiceType::type convertToThriftType(
     model::Microservice::ServiceType type_);
+  inline model::Microservice::ServiceType convertToModelType(
+    cc::service::language::ServiceType::type type_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

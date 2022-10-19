@@ -31,6 +31,7 @@ function (lang, Deferred, model) {
       InfoTree               :  6, /** Info tree item (eg. CppInforTree)**/
       FileManagerContextMenu :  7, /** File manager context menu (eg. Diagram directory)**/
       InfoPage               :  8, /** Info page (eg. Credit, User Guide) **/
+      MicroserviceContextMenu:  9  /** Microservice navigator context menu **/
     },
 
     /**

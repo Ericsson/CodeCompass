@@ -23,7 +23,10 @@ struct MicroserviceInfo
 
 service YamlService extends language.LanguageService
 {
-  list<MicroserviceInfo> getMicroserviceList()
+  list<MicroserviceInfo> getMicroserviceList(
+    1:ServiceType type)
+
+  list<ServiceType> getMicroserviceTypes()
   /**
    * This function returns a JSON string which represents the file hierarcy with
    * the given file in the root. Every JSON object belongs to a directory or a
