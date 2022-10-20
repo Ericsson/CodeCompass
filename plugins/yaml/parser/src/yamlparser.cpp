@@ -202,12 +202,12 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
         processIntegrationChart(file_, loadedFile);
       }
 
-      model::Microservice service;
+      /*model::Microservice service;
       service.file = file_->id;
       service.name = fs::path(file_->path).parent_path().filename().string();
       service.serviceId = cc::model::createIdentifier(service);
       service.type = model::Microservice::ServiceType::INTERNAL;
-      _ctx.db->persist(service);
+      _ctx.db->persist(service);*/
 
       _mutex.lock();
       _fileAstCache.insert({file_->path, loadedFile});
@@ -221,7 +221,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       // it should not be parsed since it contains default values
       // that may provide false results in the microservice architecture
       // dependency mapping.
-      if (file_->path.find("charts/") == std::string::npos)
+      /*if (file_->path.find("charts/") == std::string::npos)
       {
         model::Microservice service;
         service.file = file_->id;
@@ -232,7 +232,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
         _mutex.lock();
         _fileAstCache.insert({file_->path, loadedFile});
         _mutex.unlock();
-      }
+      }*/
     }
     else if (file_->path.find("templates/") != std::string::npos)
     {
@@ -259,7 +259,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
  */
 void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& loadedFile_)
 {
-  if (!loadedFile_["dependencies"] || !loadedFile_["dependencies"].IsMap())
+  if (!loadedFile_["dependencies"] || !loadedFile_["dependencies"].IsSequence())
     return;
 
   util::OdbTransaction {_ctx.db} ([&]

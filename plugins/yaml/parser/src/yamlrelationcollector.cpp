@@ -90,7 +90,7 @@ bool YamlRelationCollector::visitKeyValuePairs(
       });
 
       if (iter != _microserviceCache.end())
-        addEdge(service_.id, iter->id, YAML::Dump(it->first));
+        addEdge(service_.serviceId, iter->serviceId, YAML::Dump(it->first));
     }
   }
 }
@@ -113,9 +113,9 @@ void YamlRelationCollector::addEdge(
   model::MicroserviceEdgePtr edge = std::make_shared<model::MicroserviceEdge>();
 
   edge->from = std::make_shared<model::Microservice>();
-  edge->from->id = from_;
+  edge->from->serviceId = from_;
   edge->to = std::make_shared<model::Microservice>();
-  edge->to->id = to_;
+  edge->to->serviceId = to_;
 
   edge->type = std::move(type_);
   edge->id = model::createIdentifier(*edge);

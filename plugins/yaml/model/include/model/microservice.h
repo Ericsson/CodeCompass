@@ -25,10 +25,10 @@ struct Microservice
     EXTERNAL
   };
 
-  #pragma db id auto
-  std::uint64_t id;
+  //#pragma db id auto
+  //std::uint64_t id;
 
-  #pragma db not_null
+  #pragma db id
   MicroserviceId serviceId;
 
   #pragma db not_null

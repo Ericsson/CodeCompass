@@ -151,16 +151,16 @@ std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
 
 void YamlFileDiagram::getDependencyDiagram(
   util::Graph& graph_,
-  const core::FileId& fileId_)
+  const language::MicroserviceId& serviceId_)
 {
-  core::FileInfo fileInfo;
-  _projectHandler.getFileInfo(fileInfo, fileId_);
+  //core::FileInfo fileInfo;
+  //_projectHandler.getFileInfo(fileInfo, fileId_);
 
   util::Graph::Node currentNode;
 
   _transaction([&, this]{
     MicroserviceResult res = _db->query<model::Microservice>(
-      MicroserviceQuery::file == std::stoull(fileId_));
+      MicroserviceQuery::serviceId == std::stoull(serviceId_));
 
     currentNode = addNode(graph_, *res.begin());
   });
@@ -223,7 +223,8 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
     EdgeResult res = _db->query<model::MicroserviceEdge>(
       (reverse_
       ? EdgeQuery::to->serviceId
-      : EdgeQuery::from->serviceId) == std::stoull(node_));
+      : EdgeQuery::from->serviceId) == std::stoull(node_)
+      && EdgeQuery::type == "Service");
 
     for (const model::MicroserviceEdge& edge : res)
     {

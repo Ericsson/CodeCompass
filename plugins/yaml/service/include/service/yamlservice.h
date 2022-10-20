@@ -141,6 +141,15 @@ public:
     const core::AstNodeId& astNodeId_);
 
   /* --- Extending language service --- */
+  void getMicroserviceDiagramTypes(
+    std::map<std::string, std::int32_t>& return_,
+    const language::MicroserviceId& serviceId_);
+
+  void getMicroserviceDiagram(
+    std::string& return_,
+    const language::MicroserviceId & fileId_,
+    const int32_t diagramId_);
+
   void getMicroserviceList(
     std::vector<MicroserviceInfo>& return_,
     ServiceType::type type_);

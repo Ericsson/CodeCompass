@@ -39,18 +39,18 @@ struct MicroserviceEdge
 
 inline std::string MicroserviceEdge::toString() const
 {
-  return std::string("YamlEdge")
-    .append("\nid = ").append(std::to_string(id))
-    .append("\nfrom = ").append(std::to_string(from->id))
-    .append("\nto = ").append(std::to_string(to->id))
+  return std::string("MicroserviceEdge")
+    //.append("\nid = ").append(std::to_string(id))
+    .append("\nfrom = ").append(std::to_string(from->serviceId))
+    .append("\nto = ").append(std::to_string(to->serviceId))
     .append("\ntype = ");
 }
 
 inline std::uint64_t createIdentifier(const MicroserviceEdge& edge_)
 {
   return util::fnvHash(
-    std::to_string(edge_.from->id) +
-    std::to_string(edge_.to->id) +
+    std::to_string(edge_.from->serviceId) +
+    std::to_string(edge_.to->serviceId) +
     edge_.type);
 }
 

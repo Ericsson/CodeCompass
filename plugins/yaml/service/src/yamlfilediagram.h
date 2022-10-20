@@ -43,7 +43,7 @@ public:
 
   void getDependencyDiagram(
     util::Graph& graph_,
-    const core::FileId& fileId_);
+    const language::MicroserviceId& serviceId_);
 
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;

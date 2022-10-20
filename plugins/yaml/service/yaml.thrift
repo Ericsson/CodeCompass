@@ -23,6 +23,13 @@ struct MicroserviceInfo
 
 service YamlService extends language.LanguageService
 {
+  map<string, i32> getMicroserviceDiagramTypes(1:MicroserviceId serviceId)
+      throws (1:common.InvalidId ex)
+
+  string getMicroserviceDiagram(
+    1:MicroserviceId serviceId,
+    2:i32 diagramId)
+
   list<MicroserviceInfo> getMicroserviceList(
     1:ServiceType type)
 
@@ -39,7 +46,5 @@ service YamlService extends language.LanguageService
 
   string getYamlFileInfo(
     1:common.FileId fileId)*/
-
-
 
 }

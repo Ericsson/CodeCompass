@@ -66,8 +66,9 @@ void TemplateAnalyzer::init()
         _microserviceCache.end(),
         [&](model::Microservice& service)
         {
-          auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == pair.first);
-          return service.file == filePtr->id;
+          //auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == pair.first);
+          //return service.file == filePtr->id;
+          return pair.first.find(service.name) != std::string::npos;
         });
 
       visitKeyValuePairs(pair.first, pair.second, *currentService);

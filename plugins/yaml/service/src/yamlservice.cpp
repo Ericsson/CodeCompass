@@ -191,7 +191,7 @@ void YamlServiceHandler::getFileDiagramTypes(
     {
       return_["File Info"]     = YAML_FILE_INFO;
       return_["Root keys"]     = ROOT_KEYS;
-      return_["Dependencies"]  = DEPENDENCIES;
+      //return_["Dependencies"]  = DEPENDENCIES;
     }
     else if (file->type == "Dir")
     {
@@ -329,6 +329,31 @@ void YamlServiceHandler::getSyntaxHighlight(
 }
 
 /* --- Extending language service --- */
+
+void YamlServiceHandler::getMicroserviceDiagramTypes(
+  std::map<std::string, std::int32_t>& return_,
+  const language::MicroserviceId& serviceId_)
+{
+  return_["Dependent services"]  = DEPENDENCIES;
+}
+
+void YamlServiceHandler::getMicroserviceDiagram(
+  std::string& return_,
+  const language::MicroserviceId& serviceId_,
+  const int32_t diagramId_)
+{
+  YamlFileDiagram diagram(_db, _datadir, _context);
+  util::Graph graph;
+  graph.setAttribute("rankdir", "LR");
+
+  switch (diagramId_)
+  {
+    case DEPENDENCIES:
+      diagram.getDependencyDiagram(graph, serviceId_);
+      return_ = graph.output(util::Graph::SVG);
+      break;
+  }
+}
 
 void YamlServiceHandler::getMicroserviceList(
   std::vector<MicroserviceInfo>& return_,

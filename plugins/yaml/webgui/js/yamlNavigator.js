@@ -1,5 +1,6 @@
 require([
     'dojo/on',
+    'dojo/query',
     'dijit/Tooltip',
     'dijit/tree/ObjectStoreModel',
     'dojo/_base/declare',
@@ -12,7 +13,7 @@ require([
     'codecompass/viewHandler',
     'codecompass/util',
     'codecompass/view/component/ContextMenu'],
-  function (on, Tooltip, ObjectStoreModel, declare, Memory, Observable, Tree, topic,
+  function (on, query, Tooltip, ObjectStoreModel, declare, Memory, Observable, Tree, topic,
             HtmlTree, model, viewHandler, util, ContextMenu) {
 
   model.addService('yamlservice', 'YamlService', YamlServiceClient);
@@ -98,18 +99,22 @@ require([
       });
 
       on(this, '.dijitTreeNode:contextmenu', function (event) {
-        that.buildContextMenu(contextMenu);
+        var serviceInfo = dijit.byNode(
+          query(event.target).closest('.dijitTreeNode')[0]).item.id;
+        console.log(serviceInfo);
+
+        that.buildContextMenu(contextMenu, serviceInfo);
       });
     },
 
-    buildContextMenu : function (contextMenu) {
+    buildContextMenu : function (contextMenu, serviceInfo) {
       contextMenu.clear();
 
       viewHandler.getModules({
         type : viewHandler.moduleType.MicroserviceContextMenu,
-        fileType : fileInfo.type
+        serviceId : serviceInfo.id
       }).forEach(function (menuItem) {
-        var item = menuItem.render(fileInfo);
+        var item = menuItem.render(serviceInfo);
         if (item)
           contextMenu.addChild(item);
       });

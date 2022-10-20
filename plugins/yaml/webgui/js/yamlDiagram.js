@@ -43,10 +43,10 @@ function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, Che
 
   var fileDiagrams = {
     id : 'yaml-file-diagrams',
-    render : function (fileInfo) {
+    render : function (serviceInfo) {
       var submenu = new Menu();
 
-      var diagramTypes = model.yamlservice.getFileDiagramTypes(fileInfo.id);
+      var diagramTypes = model.yamlservice.getMicroserviceDiagramTypes(serviceInfo);
       for (let diagramType in diagramTypes)
         submenu.addChild(new MenuItem({
           label   : diagramType,
@@ -54,12 +54,12 @@ function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, Che
           onClick : function () {
             var that = this;
 
-            topic.publish('codecompass/openFile', { fileId : fileInfo.id });
+            //topic.publish('codecompass/openFile', { fileId : serviceInfo.id });
 
             topic.publish('codecompass/openDiagram', {
               handler : 'yaml-file-diagram-handler',
               diagramType : diagramTypes[that.type],
-              node : fileInfo.id
+              node : serviceInfo
             });
           }
         }));
@@ -73,6 +73,6 @@ function (declare, dom, topic, style, Menu, MenuItem, PopupMenuItem, Button, Che
   };
 
   viewHandler.registerModule(fileDiagrams, {
-    type : viewHandler.moduleType.FileManagerContextMenu
+    type : viewHandler.moduleType.MicroserviceContextMenu
   });
 });
