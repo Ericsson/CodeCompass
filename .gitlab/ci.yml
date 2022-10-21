@@ -70,7 +70,7 @@ tarball suse-15:
         - zypper refresh
         - zypper update -y
         # download tools
-        - zypper install -y curl wget bzip2 unzip ca-certificates
+        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
@@ -93,7 +93,7 @@ tarball suse-42.1:
         - zypper refresh
         - zypper update -y
         # download tools
-        - zypper install -y curl wget bzip2 unzip ca-certificates
+        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
@@ -118,7 +118,7 @@ tarball ubuntu-16.04:
     before_script:
         - apt-get update -yqq
         # download tools
-        - apt-get install -yqq curl wget bzip2 unzip ca-certificates
+        - apt-get install -yqq curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
         # build tools for ctags
