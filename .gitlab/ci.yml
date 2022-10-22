@@ -80,6 +80,7 @@ tarball suse-15:
         - zypper install -y libffi-devel
         # show GLIBC verison
         - *show-glibc-version
+    when: manual
 
 tarball suse-42.1:
     extends: .tarball
