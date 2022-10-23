@@ -58,7 +58,8 @@ variables:
     echo "GLIBC version: $GLIBC_VERSION"
     echo "GLIBCXX versions: $GLIBCXX_VERSIONS"
 
-tarball suse-15:
+# Temporarily disabled job
+.tarball suse-15:
     extends: .tarball
     image: opensuse/leap:15
     cache:
@@ -80,7 +81,6 @@ tarball suse-15:
         - zypper install -y libffi-devel
         # show GLIBC verison
         - *show-glibc-version
-    when: manual
 
 tarball suse-42.1:
     extends: .tarball
@@ -144,15 +144,14 @@ tarball ubuntu-16.04:
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
     script:
         - ssh-add <(echo "$CD_PRIVATE_KEY")
-        - 'BRANCH_SUFFIX=${CI_COMMIT_REF_SLUG#"release-"}'
-        - 'BRANCH_SUFFIX=${BRANCH_SUFFIX#"feature-"}'
-        - "echo Branch suffix: $BRANCH_SUFFIX"
-        - FILENAME=codecompass-$BRANCH_SUFFIX-$ARCH_SUFFIX.tar.gz
+        - "echo Branch name: $CI_COMMIT_REF_SLUG"
+        - FILENAME=codecompass-$CI_COMMIT_REF_SLUG-$ARCH_SUFFIX.tar.gz
         - "echo Filename: $FILENAME"
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
-upload suse-15:
+# Temporarily disabled job
+.upload suse-15:
     extends: .upload
     variables:
         ARCH_SUFFIX: suse-15
