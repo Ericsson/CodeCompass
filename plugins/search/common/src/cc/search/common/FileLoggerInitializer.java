@@ -11,30 +11,17 @@ import java.util.logging.SimpleFormatter;
  * Adds file to logging when needed
  */
 public class FileLoggerInitializer {
-  /**
-   * The name of the "path" field. Path contains the full path of the file.
-   */
-  private static String _filePathField = "";
-  /**
-   * The logger that needs the file handler
-   */
-  private static Logger _log;
-
-  public FileLoggerInitializer(CommonOptions options_, Logger log_, String pluginName_) {
-    _filePathField = options_.logFilePath + "." + pluginName_;
-    _log = log_;
-  }
-
-  public void run() {
-    if (!_filePathField.isEmpty()) {
+  public static void addFileOutput(CommonOptions options_, Logger log_, String pluginName_) {
+    String filePathField = options_.logFilePath + "." + pluginName_;
+    if (!pluginName_.isEmpty()) {
       try {
-        FileHandler fileHandler = new FileHandler(_filePathField, true); // append mode
+        FileHandler fileHandler = new FileHandler(filePathField, false);
         SimpleFormatter formatter = new SimpleFormatter();
         fileHandler.setFormatter(formatter);
-        _log.addHandler(fileHandler);
-        _log.info("Logging started to file: " + _filePathField);
+        log_.addHandler(fileHandler);
+        log_.info("Logging started to file: " + filePathField);
       } catch (Exception ex) {
-        _log.log(Level.WARNING, "Could not add logs to file: " + _filePathField, ex);
+        log_.log(Level.WARNING, "Could not add logs to file: " + filePathField, ex);
       }
     }
   }
