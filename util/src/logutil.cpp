@@ -4,6 +4,7 @@
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/attributes.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace cc
 {
@@ -12,6 +13,22 @@ namespace util
 
 namespace
 {
+
+BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "TimeStamp", boost::posix_time::ptime)
+
+std::string getFormattedTime(boost::posix_time::ptime ptime_)
+{
+  std::stringstream stream;
+  boost::posix_time::time_facet* facet = new boost::posix_time::time_facet();
+  facet->format("%Y-%m-%d %H:%M:%S%F");
+  stream.imbue(std::locale(std::locale::classic(), facet));
+
+  stream << ptime_;
+  std::string ret = stream.str();
+  ret.resize(ret.size() - 3); // keep milliseconds from microseconds
+
+  return ret;
+}
 
 void consoleLogFormatter(
   const boost::log::record_view& rec, boost::log::formatting_ostream& strm)
@@ -41,7 +58,9 @@ void consoleLogFormatter(
   std::string sLevel = boost::log::trivial::to_string(severity.get());
   std::transform(sLevel.begin(), sLevel.end(), sLevel.begin(), ::toupper);
 
-  strm << "[" << sLevel << "] " << rec[boost::log::expressions::smessage];
+  std::string timeString = getFormattedTime(rec[timestamp].get());
+
+  strm << timeString << " [" << sLevel << "] " << rec[boost::log::expressions::smessage];
 
   // Restore the default color
   if (severity)
@@ -72,6 +91,7 @@ boost::log::trivial::severity_level getSeverityLevel()
 
 void initConsoleLogger()
 {
+  boost::log::add_common_attributes();
   auto fsSink = boost::log::add_console_log(
     std::cout,
     boost::log::keywords::auto_flush = true);
