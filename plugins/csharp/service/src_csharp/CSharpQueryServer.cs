@@ -18,7 +18,7 @@ using Thrift.Transport.Server;
 using Thrift.Processor;
 using System.Diagnostics;
 using language;
-using csharp;
+using cc.service.csharp;
 using CSharpParser.model;
 
 namespace Server
