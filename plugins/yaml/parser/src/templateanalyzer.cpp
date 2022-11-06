@@ -164,6 +164,7 @@ void TemplateAnalyzer::processMountDeps(
 {
   /* --- Processing ConfigMap templates --- */
 
+
   auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
     [&](const model::Microservice& service)
     {
@@ -212,6 +213,38 @@ void TemplateAnalyzer::processCertificateDeps(
   YAML::Node& currentFile_)
 {
 
+}
+
+YAML::Node TemplateAnalyzer::findKey(
+  const std::string& key_,
+  YAML::Node& node_)
+{
+  switch (node_.Type())
+  {
+    case YAML::NodeType::Scalar:
+      break;
+    case YAML::NodeType::Null:
+    case YAML::NodeType::Undefined:
+      break;
+    case YAML::NodeType::Sequence:
+      for (auto elem : node_)
+        if (elem.IsMap())
+          return findKey(key_, elem);
+      break;
+    case YAML::NodeType::Map:
+      if (node_[key_])
+        return node_[key_];
+      else
+        for (auto iter = node_.begin(); iter != node_.end(); ++iter)
+        {
+          YAML::Node temp = findKey(key_, iter->second);
+          if (temp.IsDefined())
+            return temp;
+        }
+      break;
+  }
+
+  return YAML::Node(YAML::NodeType::Undefined);
 }
 
 void TemplateAnalyzer::addEdge(

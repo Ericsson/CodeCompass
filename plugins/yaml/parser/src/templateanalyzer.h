@@ -54,6 +54,9 @@ private:
     std::string type_);
 
   void fillDependencyPairsMap();
+  YAML::Node findKey(
+    const std::string& key_,
+    YAML::Node& currentFile_);
 
   std::map<std::string, model::HelmTemplate::DependencyType> _dependencyPairs;
 
