@@ -14,6 +14,9 @@ namespace util
 namespace
 {
 
+// timestamp length required for nanosecond precision
+static constexpr size_t TIMESTAMP_LENGTH = 29;
+
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "TimeStamp", boost::posix_time::ptime)
 
 std::string getFormattedTime(boost::posix_time::ptime ptime_)
@@ -25,7 +28,7 @@ std::string getFormattedTime(boost::posix_time::ptime ptime_)
 
   stream << ptime_;
   std::string ret = stream.str();
-  ret.resize(ret.size() - 3); // keep milliseconds from microseconds
+  ret.resize(TIMESTAMP_LENGTH, '0'); // we need nanoseconds even if it is 0
 
   return ret;
 }
