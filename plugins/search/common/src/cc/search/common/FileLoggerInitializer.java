@@ -12,8 +12,8 @@ import java.util.logging.SimpleFormatter;
  */
 public class FileLoggerInitializer {
   public static void addFileOutput(CommonOptions options_, Logger log_, String pluginName_) {
-    String filePathField = options_.logFilePath + "." + pluginName_;
-    if (!pluginName_.isEmpty()) {
+    String filePathField = options_.logFilePath + pluginName_ + ".log";
+    if (!options_.logFilePath.isEmpty()) {
       try {
         FileHandler fileHandler = new FileHandler(filePathField, false);
         SimpleFormatter formatter = new SimpleFormatter();

@@ -12,6 +12,8 @@ namespace util
 
 void initConsoleLogger();
 
+std::string getLoggingBase(const std::string& path_, const std::string& name_);
+
 bool initFileLogger(const std::string& path_);
 
 boost::log::trivial::severity_level getSeverityLevel();

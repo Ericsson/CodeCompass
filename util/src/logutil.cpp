@@ -3,6 +3,7 @@
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/attributes.hpp>
+#include <boost/filesystem.hpp>
 
 namespace cc
 {
@@ -76,6 +77,18 @@ void initConsoleLogger()
     boost::log::keywords::auto_flush = true);
 
   fsSink->set_formatter(&consoleLogFormatter);
+}
+
+std::string getLoggingBase(const std::string& path_, const std::string& name_)
+{
+  if (path_.find('~') != std::string::npos)
+  {
+    throw std::invalid_argument("The path should not contain a \'~\' character. \
+                                 Please provide an absolute path");
+  }
+  using namespace boost::filesystem;
+
+  return canonical(absolute(path(path_))).string() + '/' + name_ + '_';
 }
 
 bool initFileLogger(const std::string& path_)

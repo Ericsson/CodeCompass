@@ -1,6 +1,7 @@
 package cc.search.service.app.query;
 
 import cc.search.service.app.SearchAppCommon;
+import cc.search.common.FileLoggerInitializer;
 import cc.search.common.config.InvalidValueException;
 import cc.search.common.config.UnknownArgumentException;
 import cc.search.match.QueryContext;
@@ -35,6 +36,7 @@ public class QueryApp extends SearchAppCommon {
   private QueryApp(QueryAppOptions options_) throws IOException {
     super(options_);
     _appOptions = options_;
+    FileLoggerInitializer.addFileOutput(options_, _log, "query");
   }
 
   /**

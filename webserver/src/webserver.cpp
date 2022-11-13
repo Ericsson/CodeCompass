@@ -40,7 +40,7 @@ po::options_description commandLineArguments()
         ("jobs,j", po::value<int>()->default_value(4),
          "Number of worker threads.")
         ("log-target", po::value<std::string>(),
-         "This is the path to the file where the logging output will be written. "
+         "This is the path to the folder where the logging output files will be written. "
          "If omitted, the output will be on the console only.");
 
     return desc;
@@ -72,7 +72,11 @@ int main(int argc, char* argv[])
 
     if (vm.count("log-target"))
     {
-      if(!cc::util::initFileLogger(vm["log-target"].as<std::string>()))
+    vm.at("log-target").value() = cc::util::getLoggingBase( vm["log-target"].as<std::string>()
+                                                          , "CodeCompass"
+                                                          );
+
+      if (!cc::util::initFileLogger(vm["log-target"].as<std::string>() + "webserver.log"))
       {
         vm.at("log-target").value() = std::string("");
       }

@@ -84,7 +84,7 @@ po::options_description commandLineArguments()
       "This is a threshold percentage. If the total ratio of changed files "
       "is greater than this value, full parse is forced instead of incremental parsing.")
     ("log-target", po::value<std::string>(),
-      "This is the path to the file where the logging output will be written. "
+      "This is the path to the folder where the logging output files will be written. "
       "If omitted, the output will be on the console only.");
 
   return desc;
@@ -234,7 +234,10 @@ int main(int argc, char* argv[])
 
   if (vm.count("log-target"))
   {
-    if(!cc::util::initFileLogger(vm["log-target"].as<std::string>()))
+    vm.at("log-target").value() = cc::util::getLoggingBase( vm["log-target"].as<std::string>()
+                                                          , vm["name"].as<std::string>()
+                                                          );
+    if (!cc::util::initFileLogger(vm["log-target"].as<std::string>() + "parser.log"))
     {
       vm.at("log-target").value() = std::string("");
     }

@@ -48,7 +48,7 @@ public class ServiceApp extends SearchHandler {
     try {
     // Initialize file logger
     ServiceAppOptions options = new ServiceAppOptions(args_);
-    FileLoggerInitializer.addFileOutput(options, _log, "searchPlugin");
+    FileLoggerInitializer.addFileOutput(options, _log, "search");
 
     _log.info("Search server started!");
       try (ServiceApp app =

@@ -83,7 +83,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
   private Indexer(Options options_) throws IOException {
     _options = options_;
 
-    FileLoggerInitializer.addFileOutput(_options, _log, "indexPlugin");
+    FileLoggerInitializer.addFileOutput(_options, _log, "indexer");
 
     try {
       _indexDir = FSDirectory.open(new File(_options.indexDirPath),
