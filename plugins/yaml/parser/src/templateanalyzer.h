@@ -5,11 +5,12 @@
 
 #include "model/file.h"
 
-#include <model/helmtemplate.h>
 #include <model/microservice.h>
 #include <model/microservice-odb.hxx>
 #include <model/microserviceedge.h>
 #include <model/microserviceedge-odb.hxx>
+#include <model/helmtemplate.h>
+#include <model/helmtemplate-odb.hxx>
 
 #include <parser/parsercontext.h>
 
@@ -63,6 +64,7 @@ private:
   static std::unordered_set<model::MicroserviceEdgeId> _edgeCache;
   std::vector<model::MicroserviceEdgePtr> _newEdges;
   std::vector<model::HelmTemplate> _newTemplates;
+  uint64_t templateCounter;
 
   static std::vector<model::Microservice> _microserviceCache;
   model::Microservice _currentService;

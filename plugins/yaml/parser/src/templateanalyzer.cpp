@@ -1,9 +1,6 @@
 #include <parser/sourcemanager.h>
 #include <util/odbtransaction.h>
 
-#include <model/helmtemplate.h>
-#include <model/helmtemplate-odb.hxx>
-
 #include "templateanalyzer.h"
 
 namespace cc
@@ -44,6 +41,8 @@ TemplateAnalyzer::TemplateAnalyzer(
       }
     });
   }
+
+  templateCounter = 0;
 }
 
 TemplateAnalyzer::~TemplateAnalyzer()
@@ -89,16 +88,25 @@ bool TemplateAnalyzer::visitKeyValuePairs(
       !currentNode_["metadata"]["name"])
     return false;
 
-  auto type = _dependencyPairs.find(YAML::Dump(currentNode_["kind"]));
-  if (type == _dependencyPairs.end())
-    return false;
+  auto typeIter = _dependencyPairs.find(YAML::Dump(currentNode_["kind"]));
+  auto type = typeIter->second;
 
-  switch (type->second)
+  if (typeIter == _dependencyPairs.end())
+  {
+    auto volumesNode = findKey("volumes", currentNode_);
+    if (volumesNode.IsDefined())
+      type = DependencyType::MOUNT;
+    else
+      return false;
+  }
+
+  switch (type)
   {
     case DependencyType::SERVICE:
       processServiceDeps(path_, currentNode_, service_);
       break;
     case DependencyType::MOUNT:
+      LOG(info) << path_;
       processMountDeps(path_, currentNode_, service_);
       break;
     case DependencyType::CERTIFICATE:
@@ -123,16 +131,17 @@ void TemplateAnalyzer::processServiceDeps(
   auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
     [&](const model::Microservice& service)
     {
-      return service.name == Dump(currentFile_["metadata"]["name"]);
+      return service.name == YAML::Dump(currentFile_["metadata"]["name"]);
     });
 
   // Persist template data to db.
-  model::HelmTemplate helmTemplate;
+  model::HelmTemplate helmTemplate;// = std::make_shared<model::HelmTemplate>();
   helmTemplate.dependencyType = model::HelmTemplate::DependencyType::SERVICE;
 
   auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
   helmTemplate.file = filePtr->id;
   helmTemplate.kind = Dump(currentFile_["kind"]);
+  helmTemplate.name = "";
 
   // If the MS is not present in the db,
   // it is an external / central MS,
@@ -140,7 +149,7 @@ void TemplateAnalyzer::processServiceDeps(
   if (serviceIter == _microserviceCache.end())
   {
     model::Microservice externalService;
-    externalService.name = Dump(currentFile_["metadata"]["name"]);
+    externalService.name = YAML::Dump(currentFile_["metadata"]["name"]);
     externalService.type = model::Microservice::ServiceType::EXTERNAL;
     externalService.file = filePtr->id;
     externalService.serviceId = createIdentifier(externalService);
@@ -153,7 +162,7 @@ void TemplateAnalyzer::processServiceDeps(
     helmTemplate.depends = serviceIter->serviceId;
   }
 
-  _newTemplates.push_back(helmTemplate);
+  _newTemplates.emplace_back(helmTemplate);
   addEdge(service_.serviceId, helmTemplate.depends, "Service");
 }
 
@@ -163,49 +172,77 @@ void TemplateAnalyzer::processMountDeps(
   model::Microservice& service_)
 {
   /* --- Processing ConfigMap templates --- */
+  //auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+    //[&](const model::Microservice& service)
+    //{
+      //return service.name == Dump(currentFile_["metadata"]["name"]);
+    //});
 
+  auto volumesNode = findKey("volumes", currentFile_);
 
-  auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
-    [&](const model::Microservice& service)
-    {
-      return service.name == Dump(currentFile_["metadata"]["name"]);
-    });
-
-  // Self-dependencies should be omitted.
-  if (path_.find(serviceIter->name) != std::string::npos)
+  if (!volumesNode.IsDefined())
     return;
 
-  // Persist the template data into the database.
-  model::HelmTemplate helmTemplate;
-  helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
 
-  auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
-  helmTemplate.file = filePtr->id;
 
-  auto kindIter = currentFile_.as<std::map<std::string, YAML::Node>>().find("kind");
-  helmTemplate.kind = Dump(kindIter->second);
-
-  if (serviceIter == _microserviceCache.end())
+  for (auto volume = volumesNode.begin(); volume != volumesNode.end(); ++volume)
   {
-    // If the microservice to which the template belongs
-    // is not present in the database,
-    // process and persist it.
-    model::Microservice externalService;
-    externalService.name = Dump(currentFile_["metadata"]["name"]);
-    externalService.type = model::Microservice::ServiceType::EXTERNAL;
-    externalService.file = filePtr->id;
-    externalService.serviceId = createIdentifier(externalService);
-    _ctx.db->persist(externalService);
+    LOG(info) << YAML::Dump(*volume);
+    if ((*volume)["configMap"] && (*volume)["configMap"]["name"])
+    {
+      model::HelmTemplate helmTemplate;
+      helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
+      helmTemplate.kind = "ConfigMap";
+      auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+      helmTemplate.file = filePtr->id;
+      helmTemplate.name = YAML::Dump((*volume)["configMap"]["name"]);
 
-    helmTemplate.depends = externalService.serviceId;
-  }
-  else
-  {
-    helmTemplate.depends = serviceIter->serviceId;
-  }
+      auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+        [&](const model::Microservice& service)
+        {
+          return (YAML::Dump((*volume)["configMap"]["name"])).find(service.name) != std::string::npos;
+        });
 
-  _newTemplates.push_back(helmTemplate);
-  addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+      if (serviceIter == _microserviceCache.end())
+      {
+        helmTemplate.depends = -1;
+      }
+      else
+      {
+        helmTemplate.depends = serviceIter->serviceId;
+        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+      }
+
+      _newTemplates.push_back(helmTemplate);
+    }
+    else if ((*volume)["secret"] && (*volume)["secret"]["secretName"])
+    {
+      model::HelmTemplate helmTemplate;
+      helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
+      helmTemplate.kind = "Secret";
+      auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+      helmTemplate.file = filePtr->id;
+      helmTemplate.name = YAML::Dump((*volume)["secret"]["secretName"]);
+
+      auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+        [&](const model::Microservice& service)
+        {
+          return (YAML::Dump((*volume)["secret"]["secretName"])).find(service.name) != std::string::npos;
+        });
+
+      if (serviceIter == _microserviceCache.end())
+      {
+        helmTemplate.depends = -1;
+      }
+      else
+      {
+        helmTemplate.depends = serviceIter->serviceId;
+        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+      }
+
+      _newTemplates.push_back(helmTemplate);
+    }
+  }
 }
 
 void TemplateAnalyzer::processCertificateDeps(
@@ -263,6 +300,7 @@ void TemplateAnalyzer::addEdge(
   edge->to->serviceId = to_;
 
   edge->type = std::move(type_);
+  edge->helperId = ++templateCounter;
   edge->id = model::createIdentifier(*edge);
 
   if (_edgeCache.insert(edge->id).second)

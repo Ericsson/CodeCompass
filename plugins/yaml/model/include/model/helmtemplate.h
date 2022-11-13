@@ -32,6 +32,8 @@ struct HelmTemplate
   #pragma db not_null
   FileId file;
 
+  std::string name;
+
   #pragma db not_null
   DependencyType dependencyType;
 

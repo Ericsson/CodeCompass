@@ -24,6 +24,9 @@ struct MicroserviceEdge
   MicroserviceEdgeId id;
 
   #pragma db not_null
+  uint64_t helperId;
+
+  #pragma db not_null
   #pragma db on_delete(cascade)
   std::shared_ptr<Microservice> from;
 
@@ -51,6 +54,7 @@ inline std::uint64_t createIdentifier(const MicroserviceEdge& edge_)
   return util::fnvHash(
     std::to_string(edge_.from->serviceId) +
     std::to_string(edge_.to->serviceId) +
+    std::to_string(edge_.helperId) +
     edge_.type);
 }
 
