@@ -1,9 +1,9 @@
 #include <util/logutil.h>
 
+#include <boost/filesystem.hpp>
 #include <boost/log/utility/setup.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/attributes.hpp>
-#include <boost/filesystem.hpp>
 
 namespace cc
 {
@@ -86,7 +86,15 @@ std::string getLoggingBase(const std::string& path_, const std::string& name_)
     throw std::invalid_argument("The path should not contain a \'~\' character. \
                                  Please provide an absolute path");
   }
+
   using namespace boost::filesystem;
+
+  boost::system::error_code ec;
+  create_directory(path_, ec);
+  if (ec)
+  {
+    throw std::invalid_argument("Permission denied to create " + path_);
+  }
 
   return canonical(absolute(path(path_))).string() + '/' + name_ + '_';
 }
