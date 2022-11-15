@@ -4,6 +4,7 @@
 #include <string>
 
 #include <model/microservice.h>
+#include "model/helmtemplate.h"
 
 #include <util/hash.h>
 
@@ -33,6 +34,10 @@ struct MicroserviceEdge
   #pragma db not_null
   #pragma db on_delete(cascade)
   std::shared_ptr<Microservice> to;
+
+  #pragma db not_null
+  #pragma db on_delete(cascade)
+  std::shared_ptr<HelmTemplate> connection;
 
   #pragma db not_null
   std::string type;

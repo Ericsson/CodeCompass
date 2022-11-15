@@ -6,6 +6,8 @@
 
 #include <model/microserviceedge.h>
 #include <model/microserviceedge-odb.hxx>
+#include <model/helmtemplate.h>
+#include <model/helmtemplate-odb.hxx>
 
 #include <model/file.h>
 #include <service/yamlservice.h>
@@ -26,6 +28,8 @@ typedef odb::query<model::MicroserviceEdge> EdgeQuery;
 typedef odb::result<model::MicroserviceEdge> EdgeResult;
 typedef odb::query<model::Microservice> MicroserviceQuery;
 typedef odb::result<model::Microservice> MicroserviceResult;
+typedef odb::query<model::HelmTemplate> HelmTemplateQuery;
+typedef odb::result<model::HelmTemplate> HelmTemplateResult;
 
 YamlFileDiagram::YamlFileDiagram(
   std::shared_ptr<odb::database> db_,
@@ -149,13 +153,12 @@ std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
   return microservices;
 }
 
-void YamlFileDiagram::getDependencyDiagram(
+/* ---- Dependent microservices ---- */
+
+void YamlFileDiagram::getDependentServicesDiagram(
   util::Graph& graph_,
   const language::MicroserviceId& serviceId_)
 {
-  //core::FileInfo fileInfo;
-  //_projectHandler.getFileInfo(fileInfo, fileId_);
-
   util::Graph::Node currentNode;
 
   _transaction([&, this]{
@@ -215,6 +218,90 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
 std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentServiceIds(
   util::Graph&,
   const util::Graph::Node& node_,
+  bool reverse_) {
+  std::multimap<model::MicroserviceId, std::string> dependencies;
+
+  _transaction([&, this] {
+    EdgeResult res = _db->query<model::MicroserviceEdge>(
+      (reverse_
+       ? EdgeQuery::to->serviceId
+       : EdgeQuery::from->serviceId) == std::stoull(node_)
+      && (EdgeQuery::type == "Service"));
+
+    for (const model::MicroserviceEdge &edge: res) {
+      model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
+      dependencies.insert({serviceId, edge.type});
+    }
+  });
+
+  return dependencies;
+}
+
+/* ---- Generated config maps ---- */
+
+void YamlFileDiagram::getConfigMapsDiagram(
+  util::Graph& graph_,
+  const language::MicroserviceId& serviceId_)
+{
+  util::Graph::Node currentNode;
+
+  _transaction([&, this]{
+    MicroserviceResult res = _db->query<model::Microservice>(
+      MicroserviceQuery::serviceId == std::stoull(serviceId_));
+
+    currentNode = addNode(graph_, *res.begin());
+  });
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getConfigMaps,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, {});
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getRevConfigMaps,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, {});
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getConfigMaps(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentConfigMaps(graph_, node_);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getRevConfigMaps(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentConfigMaps(graph_, node_, true);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<util::Graph::Node> dependencies;
+  std::multimap<model::MicroserviceId, std::string> serviceIds = getDependentConfigMapIds(graph_, node_, reverse_);
+
+  for (const auto& serviceId : serviceIds)
+  {
+    _transaction([&, this]{
+      MicroserviceResult res = _db->query<model::Microservice>(
+        MicroserviceQuery::serviceId == serviceId.first);
+
+      util::Graph::Node newNode = addNode(graph_, *res.begin());
+      dependencies.push_back(newNode);
+      util::Graph::Edge edge = graph_.createEdge(node_, newNode);
+      decorateEdge(graph_, edge, {{"label", serviceId.second}});
+    });
+  }
+
+  return dependencies;
+}
+
+std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentConfigMapIds(
+  util::Graph&,
+  const util::Graph::Node& node_,
   bool reverse_)
 {
   std::multimap<model::MicroserviceId, std::string> dependencies;
@@ -222,14 +309,103 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
   _transaction([&, this]{
     EdgeResult res = _db->query<model::MicroserviceEdge>(
       (reverse_
-      ? EdgeQuery::to->serviceId
-      : EdgeQuery::from->serviceId) == std::stoull(node_)
-      && EdgeQuery::type == "Service");
+       ? EdgeQuery::to->serviceId
+       : EdgeQuery::from->serviceId) == std::stoull(node_)
+      && (EdgeQuery::type == "ConfigMap"));
 
     for (const model::MicroserviceEdge& edge : res)
     {
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
       dependencies.insert({serviceId, edge.type});
+    }
+  });
+
+  return dependencies;
+}
+
+/* ---- Secrets ---- */
+
+void YamlFileDiagram::getSecretsDiagram(
+  util::Graph& graph_,
+  const language::MicroserviceId& serviceId_)
+{
+  util::Graph::Node currentNode;
+
+  _transaction([&, this]{
+    MicroserviceResult res = _db->query<model::Microservice>(
+      MicroserviceQuery::serviceId == std::stoull(serviceId_));
+
+    currentNode = addNode(graph_, *res.begin());
+  });
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getSecrets,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, {});
+
+  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getRevSecrets,
+    this, std::placeholders::_1, std::placeholders::_2),
+    {}, {});
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getSecrets(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentSecrets(graph_, node_);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getRevSecrets(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  return getDependentSecrets(graph_, node_, true);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getDependentSecrets(
+  util::Graph& graph_,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::vector<util::Graph::Node> dependencies;
+  std::multimap<model::MicroserviceId, std::string> secretIds = getDependentSecretIds(graph_, node_, reverse_);
+
+  for (const auto& secretId : secretIds)
+  {
+    _transaction([&, this]{
+      MicroserviceResult res = _db->query<model::Microservice>(
+        MicroserviceQuery::serviceId == secretId.first);
+
+      util::Graph::Node newNode = addNode(graph_, *res.begin());
+      dependencies.push_back(newNode);
+      util::Graph::Edge edge = graph_.createEdge(node_, newNode);
+      decorateEdge(graph_, edge, {{"label", secretId.second}});
+    });
+  }
+
+  return dependencies;
+}
+
+std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentSecretIds(
+  util::Graph&,
+  const util::Graph::Node& node_,
+  bool reverse_)
+{
+  std::multimap<model::MicroserviceId, std::string> dependencies;
+
+  _transaction([&, this]{
+    EdgeResult res = _db->query<model::MicroserviceEdge>(
+      (reverse_
+       ? EdgeQuery::to->serviceId
+       : EdgeQuery::from->serviceId) == std::stoull(node_)
+      && (EdgeQuery::type == "Secret"));
+
+    for (const model::MicroserviceEdge& edge : res)
+    {
+      auto helm = _db->query_one<model::HelmTemplate>(
+        HelmTemplateQuery::id == edge.connection->id);
+      model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
+      LOG(info) << helm->name;
+      dependencies.insert({serviceId, helm->name});
     }
   });
 

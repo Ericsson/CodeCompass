@@ -223,9 +223,19 @@ void YamlServiceHandler::getFileDiagram(
       diagram.getMicroserviceDiagram(graph, fileId_);
       return_ = graph.output(util::Graph::SVG);
       break;
-    case DEPENDENCIES:
-      diagram.getDependencyDiagram(graph, fileId_);
+    case SERVICES:
+      diagram.getDependentServicesDiagram(graph, fileId_);
       return_ = graph.output(util::Graph::SVG);
+      break;
+    case CONFIGMAPS:
+      diagram.getConfigMapsDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::SVG);
+      break;
+    case SECRETS:
+      diagram.getSecretsDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::SVG);
+      break;
+    case CERTIFICATES:
       break;
   }
 }
@@ -249,31 +259,31 @@ std::int32_t YamlServiceHandler::getReferenceCount(
   const std::int32_t referenceId_) {}
 
 void YamlServiceHandler::getReferencesInFile(
-        std::vector<AstNodeInfo>& return_,
-        const core::AstNodeId& astNodeId_,
-        const std::int32_t referenceId_,
-        const core::FileId& fileId_,
-        const std::vector<std::string>& tags_) {}
+  std::vector<AstNodeInfo>& return_,
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_,
+  const core::FileId& fileId_,
+  const std::vector<std::string>& tags_) {}
 
 void YamlServiceHandler::getReferencesPage(
-        std::vector<AstNodeInfo>& return_,
-        const core::AstNodeId& astNodeId_,
-        const std::int32_t referenceId_,
-        const std::int32_t pageSize_,
-        const std::int32_t pageNo_) {}
+  std::vector<AstNodeInfo>& return_,
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t referenceId_,
+  const std::int32_t pageSize_,
+  const std::int32_t pageNo_) {}
 
 void YamlServiceHandler::getFileReferenceTypes(
-        std::map<std::string, std::int32_t>& return_,
-        const core::FileId& fileId_) {}
+  std::map<std::string, std::int32_t>& return_,
+  const core::FileId& fileId_) {}
 
 void YamlServiceHandler::getFileReferences(
-        std::vector<AstNodeInfo>& return_,
-        const core::FileId& fileId_,
-        const std::int32_t referenceId_) {}
+  std::vector<AstNodeInfo>& return_,
+  const core::FileId& fileId_,
+  const std::int32_t referenceId_) {}
 
 std::int32_t YamlServiceHandler::getFileReferenceCount(
-        const core::FileId& fileId_,
-        const std::int32_t referenceId_) {}
+  const core::FileId& fileId_,
+  const std::int32_t referenceId_) {}
 
 void YamlServiceHandler::getSyntaxHighlight(
   std::vector<SyntaxHighlight>& return_,
@@ -299,27 +309,27 @@ void YamlServiceHandler::getSyntaxHighlight(
     //--- Iterate over AST node elements ---//
 
     for (const model::YamlAstNode& node : _db->query<model::YamlAstNode>(
-            AstQuery::location.file == std::stoull(range_.file) &&
-            AstQuery::location.range.start.line >= range_.range.startpos.line &&
-            AstQuery::location.range.end.line < range_.range.endpos.line &&
-            AstQuery::location.range.end.line != model::Position::npos))
+      AstQuery::location.file == std::stoull(range_.file) &&
+      AstQuery::location.range.start.line >= range_.range.startpos.line &&
+      AstQuery::location.range.end.line < range_.range.endpos.line &&
+      AstQuery::location.range.end.line != model::Position::npos))
     {
       if (node.astValue.empty())
         continue;
 
       for (std::size_t i = node.location.range.start.line - 1;
-           i < node.location.range.end.line && i < content.size();
-           ++i)
+        i < node.location.range.end.line && i < content.size();
+        ++i)
       {
         SyntaxHighlight syntax;
         syntax.range.startpos.line = i + 1;
         syntax.range.startpos.column = node.location.range.start.column;//ri->position() + 1;
         syntax.range.endpos.line = i + 1;
         syntax.range.endpos.column =
-                syntax.range.startpos.column + node.astValue.length() + 1;
+          syntax.range.startpos.column + node.astValue.length() + 1;
 
         std::string symbolClass =
-                "cm-" + model::symbolTypeToString(node.symbolType);
+          "cm-" + model::symbolTypeToString(node.symbolType);
         syntax.className = symbolClass;
 
         return_.push_back(std::move(syntax));
@@ -334,7 +344,9 @@ void YamlServiceHandler::getMicroserviceDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const language::MicroserviceId& serviceId_)
 {
-  return_["Dependent services"]  = DEPENDENCIES;
+  return_["Dependent services"]  = SERVICES;
+  return_["Config maps"] = CONFIGMAPS;
+  return_["Secrets"] = SECRETS;
 }
 
 void YamlServiceHandler::getMicroserviceDiagram(
@@ -348,8 +360,8 @@ void YamlServiceHandler::getMicroserviceDiagram(
 
   switch (diagramId_)
   {
-    case DEPENDENCIES:
-      diagram.getDependencyDiagram(graph, serviceId_);
+    case SERVICES:
+      diagram.getDependentServicesDiagram(graph, serviceId_);
       return_ = graph.output(util::Graph::SVG);
       break;
   }

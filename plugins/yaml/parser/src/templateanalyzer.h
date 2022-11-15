@@ -46,12 +46,15 @@ private:
     model::Microservice& service_);
   void processCertificateDeps(
     const std::string& path_,
-    YAML::Node& currentFile_);
-  //void processCertificateDeps(YAML::Node& currentFile_);
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+
+  void addHelmTemplate(model::HelmTemplate& helmTemplate_);
 
   void addEdge(
     const model::MicroserviceId& from_,
     const model::MicroserviceId& to_,
+    const model::HelmTemplateId& connect_,
     std::string type_);
 
   void fillDependencyPairsMap();

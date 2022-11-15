@@ -93,11 +93,19 @@ bool TemplateAnalyzer::visitKeyValuePairs(
 
   if (typeIter == _dependencyPairs.end())
   {
-    auto volumesNode = findKey("volumes", currentNode_);
-    if (volumesNode.IsDefined())
-      type = DependencyType::MOUNT;
+    if (YAML::Dump(currentNode_["kind"]).find("Certificate") != std::string::npos ||
+        YAML::Dump(currentNode_["kind"]).find("InternalUserCA") != std::string::npos)
+    {
+      type = DependencyType::CERTIFICATE;
+    }
     else
-      return false;
+    {
+      auto volumesNode = findKey("volumes", currentNode_);
+      if (volumesNode.IsDefined())
+        type = DependencyType::MOUNT;
+      else
+        return false;
+    }
   }
 
   switch (type)
@@ -106,11 +114,10 @@ bool TemplateAnalyzer::visitKeyValuePairs(
       processServiceDeps(path_, currentNode_, service_);
       break;
     case DependencyType::MOUNT:
-      LOG(info) << path_;
       processMountDeps(path_, currentNode_, service_);
       break;
     case DependencyType::CERTIFICATE:
-      processCertificateDeps(path_, currentNode_);
+      processCertificateDeps(path_, currentNode_, service_);
       break;
     case DependencyType::RESOURCE:
     case DependencyType::OTHER:
@@ -140,7 +147,7 @@ void TemplateAnalyzer::processServiceDeps(
 
   auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
   helmTemplate.file = filePtr->id;
-  helmTemplate.kind = Dump(currentFile_["kind"]);
+  helmTemplate.kind = YAML::Dump(currentFile_["kind"]);
   helmTemplate.name = "";
 
   // If the MS is not present in the db,
@@ -162,8 +169,9 @@ void TemplateAnalyzer::processServiceDeps(
     helmTemplate.depends = serviceIter->serviceId;
   }
 
-  _newTemplates.emplace_back(helmTemplate);
-  addEdge(service_.serviceId, helmTemplate.depends, "Service");
+  helmTemplate.id = createIdentifier(helmTemplate);
+  addHelmTemplate(helmTemplate);
+  addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
 }
 
 void TemplateAnalyzer::processMountDeps(
@@ -172,22 +180,14 @@ void TemplateAnalyzer::processMountDeps(
   model::Microservice& service_)
 {
   /* --- Processing ConfigMap templates --- */
-  //auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
-    //[&](const model::Microservice& service)
-    //{
-      //return service.name == Dump(currentFile_["metadata"]["name"]);
-    //});
 
   auto volumesNode = findKey("volumes", currentFile_);
 
   if (!volumesNode.IsDefined())
     return;
 
-
-
   for (auto volume = volumesNode.begin(); volume != volumesNode.end(); ++volume)
   {
-    LOG(info) << YAML::Dump(*volume);
     if ((*volume)["configMap"] && (*volume)["configMap"]["name"])
     {
       model::HelmTemplate helmTemplate;
@@ -210,10 +210,11 @@ void TemplateAnalyzer::processMountDeps(
       else
       {
         helmTemplate.depends = serviceIter->serviceId;
-        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
       }
 
-      _newTemplates.push_back(helmTemplate);
+      helmTemplate.id = createIdentifier(helmTemplate);
+      addHelmTemplate(helmTemplate);
     }
     else if ((*volume)["secret"] && (*volume)["secret"]["secretName"])
     {
@@ -237,19 +238,66 @@ void TemplateAnalyzer::processMountDeps(
       else
       {
         helmTemplate.depends = serviceIter->serviceId;
-        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.kind);
+        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
       }
 
-      _newTemplates.push_back(helmTemplate);
+      helmTemplate.id = createIdentifier(helmTemplate);
+      addHelmTemplate(helmTemplate);
     }
   }
 }
 
 void TemplateAnalyzer::processCertificateDeps(
   const std::string& path_,
-  YAML::Node& currentFile_)
+  YAML::Node& currentFile_,
+  model::Microservice& service_)
 {
+  model::HelmTemplate helmTemplate;
+  helmTemplate.dependencyType = model::HelmTemplate::DependencyType::CERTIFICATE;
+  helmTemplate.kind = YAML::Dump(currentFile_["kind"]);
+  auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+  helmTemplate.file = filePtr->id;
+  helmTemplate.name = YAML::Dump(currentFile_["metadata"]["name"]);
 
+  auto keyName = findKey("generatedSecretName", currentFile_);
+
+  auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+    [&](const model::Microservice& service)
+    {
+      return (YAML::Dump(keyName)).find(service.name) != std::string::npos;
+    });
+
+  if (serviceIter == _microserviceCache.end())
+  {
+    helmTemplate.depends = -1;
+  }
+  else
+  {
+    helmTemplate.depends = serviceIter->serviceId;
+    addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
+  }
+
+  helmTemplate.id = createIdentifier(helmTemplate);
+  addHelmTemplate(helmTemplate);
+
+  model::HelmTemplate secretTemplate;
+  secretTemplate.dependencyType = model::HelmTemplate::DependencyType::CERTIFICATE;
+  secretTemplate.kind = "Secret";
+  secretTemplate.file = filePtr->id;
+  secretTemplate.name = YAML::Dump(keyName);
+
+  if (serviceIter == _microserviceCache.end())
+  {
+    secretTemplate.depends = -1;
+  }
+  else
+  {
+    secretTemplate.depends = serviceIter->serviceId;
+    addEdge(service_.serviceId, secretTemplate.depends, secretTemplate.id, secretTemplate.kind);
+  }
+
+  helmTemplate.id = createIdentifier(secretTemplate);
+  addHelmTemplate(secretTemplate);
 }
 
 YAML::Node TemplateAnalyzer::findKey(
@@ -284,9 +332,22 @@ YAML::Node TemplateAnalyzer::findKey(
   return YAML::Node(YAML::NodeType::Undefined);
 }
 
+void TemplateAnalyzer::addHelmTemplate(model::HelmTemplate& helmTemplate_)
+{
+  auto it = std::find_if(_newTemplates.begin(), _newTemplates.end(),
+                         [&](auto& helm)
+  {
+      return helm.id == helmTemplate_.id;
+  });
+
+  if (it == _newTemplates.end())
+    _newTemplates.push_back(helmTemplate_);
+}
+
 void TemplateAnalyzer::addEdge(
   const model::MicroserviceId& from_,
   const model::MicroserviceId& to_,
+  const model::HelmTemplateId& connect_,
   std::string type_)
 {
   static std::mutex m;
@@ -298,6 +359,9 @@ void TemplateAnalyzer::addEdge(
   edge->from->serviceId = from_;
   edge->to = std::make_shared<model::Microservice>();
   edge->to->serviceId = to_;
+
+  edge->connection = std::make_shared<model::HelmTemplate>();
+  edge->connection->id = connect_;
 
   edge->type = std::move(type_);
   edge->helperId = ++templateCounter;

@@ -14,6 +14,9 @@ namespace cc
 {
 namespace model
 {
+
+typedef uint64_t HelmTemplateId;
+
 #pragma db object
 struct HelmTemplate
 {
@@ -26,8 +29,8 @@ struct HelmTemplate
     OTHER
   };
 
-  #pragma db id auto
-  std::uint64_t id;
+  #pragma db id
+  HelmTemplateId id;
 
   #pragma db not_null
   FileId file;
@@ -42,7 +45,27 @@ struct HelmTemplate
 
   #pragma db not_null
   MicroserviceId depends;
+
+  bool operator==(HelmTemplate& rhs);
 };
+/*
+bool HelmTemplate::operator==(HelmTemplate& rhs)
+{
+  return this->kind == rhs.kind &&
+         this->name == rhs.name &&
+         this->depends == rhs.depends &&
+         this->file == rhs.file &&
+         this->dependencyType == rhs.dependencyType;
+}*/
+
+inline std::uint64_t createIdentifier(const HelmTemplate& helm_)
+{
+  return util::fnvHash(
+    helm_.name +
+    helm_.kind +
+    std::to_string(helm_.depends) +
+    std::to_string(helm_.file));
+}
 }
 }
 

@@ -163,7 +163,10 @@ private:
       YAML_FILE_INFO,
       ROOT_KEYS,
       MICROSERVICES,
-      DEPENDENCIES
+      SERVICES,
+      CONFIGMAPS,
+      SECRETS,
+      CERTIFICATES
   };
 
   inline cc::service::language::ServiceType::type convertToThriftType(

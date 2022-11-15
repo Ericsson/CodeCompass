@@ -41,7 +41,15 @@ public:
     util::Graph& graph_,
     const core::FileId& fileId_);
 
-  void getDependencyDiagram(
+  void getDependentServicesDiagram(
+    util::Graph& graph_,
+    const language::MicroserviceId& serviceId_);
+
+  void getConfigMapsDiagram(
+    util::Graph& graph_,
+    const language::MicroserviceId& serviceId_);
+
+  void getSecretsDiagram(
     util::Graph& graph_,
     const language::MicroserviceId& serviceId_);
 
@@ -71,6 +79,46 @@ private:
     bool reverse_ = false);
 
   std::multimap<model::MicroserviceId, std::string> getDependentServiceIds(
+    util::Graph&,
+    const util::Graph::Node& node_,
+    bool reverse_);
+
+  /* Config map diagram functions */
+
+  std::vector<util::Graph::Node> getConfigMaps(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<util::Graph::Node> getRevConfigMaps(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<util::Graph::Node> getDependentConfigMaps(
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    bool reverse_ = false);
+
+  std::multimap<model::MicroserviceId, std::string> getDependentConfigMapIds(
+    util::Graph&,
+    const util::Graph::Node& node_,
+    bool reverse_);
+
+  /* ---- Secret diagram functions ---- */
+
+  std::vector<util::Graph::Node> getSecrets(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<util::Graph::Node> getRevSecrets(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
+  std::vector<util::Graph::Node> getDependentSecrets(
+    util::Graph& graph_,
+    const util::Graph::Node& node_,
+    bool reverse_ = false);
+
+  std::multimap<model::MicroserviceId, std::string> getDependentSecretIds(
     util::Graph&,
     const util::Graph::Node& node_,
     bool reverse_);
