@@ -61,6 +61,7 @@ void TemplateAnalyzer::init()
     std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
     [&, this](std::pair<std::string, YAML::Node> pair)
     {
+      LOG(info) << pair.first;
       auto currentService = std::find_if(_microserviceCache.begin(),
         _microserviceCache.end(),
         [&](model::Microservice& service)
@@ -70,7 +71,8 @@ void TemplateAnalyzer::init()
           return pair.first.find(service.name) != std::string::npos;
         });
 
-      visitKeyValuePairs(pair.first, pair.second, *currentService);
+      if (currentService != _microserviceCache.end())
+        visitKeyValuePairs(pair.first, pair.second, *currentService);
     });
   });
 }

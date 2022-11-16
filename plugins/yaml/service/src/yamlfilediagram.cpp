@@ -252,8 +252,6 @@ void YamlFileDiagram::getConfigMapsDiagram(
     currentNode = addNode(graph_, *res.begin());
   });
 
-  LOG(info) << "step 1";
-
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getConfigMaps,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, {});
@@ -267,7 +265,6 @@ std::vector<util::Graph::Node> YamlFileDiagram::getConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
-  LOG(info) << "step 2";
   return getDependentConfigMaps(graph_, node_);
 }
 
@@ -275,7 +272,6 @@ std::vector<util::Graph::Node> YamlFileDiagram::getRevConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
-  LOG(info) << "step 3";
   return getDependentConfigMaps(graph_, node_, true);
 }
 
@@ -286,7 +282,6 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
 {
   std::vector<util::Graph::Node> dependencies;
   std::multimap<model::MicroserviceId, std::string> serviceIds = getDependentConfigMapIds(graph_, node_, reverse_);
-  LOG(info) << "step 4";
   for (const auto& serviceId : serviceIds)
   {
     _transaction([&, this]{
@@ -297,7 +292,6 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
       dependencies.push_back(newNode);
       util::Graph::Edge edge = graph_.createEdge(node_, newNode);
       decorateEdge(graph_, edge, {{"label", serviceId.second}});
-      LOG(info) << "step 5";
     });
   }
 

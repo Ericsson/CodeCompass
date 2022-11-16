@@ -194,20 +194,21 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
 
     if (file_->filename == "Chart.yaml" || file_->filename == "Chart.yml")
     {
-      if (file_->path.find("charts/") != std::string::npos)
+      if (file_->path.find("charts/") != std::string::npos) {
         file->type = model::YamlFile::Type::HELM_SUBCHART;
+
+        model::Microservice service;
+        service.file = file_->id;
+        service.name = YAML::Dump(loadedFile["name"]);
+        service.type = model::Microservice::ServiceType::INTERNAL;
+        service.serviceId = cc::model::createIdentifier(service);
+        _ctx.db->persist(service);
+      }
       else
       {
         file->type = model::YamlFile::Type::HELM_CHART;
         processIntegrationChart(file_, loadedFile);
       }
-
-      /*model::Microservice service;
-      service.file = file_->id;
-      service.name = fs::path(file_->path).parent_path().filename().string();
-      service.serviceId = cc::model::createIdentifier(service);
-      service.type = model::Microservice::ServiceType::INTERNAL;
-      _ctx.db->persist(service);*/
 
       _mutex.lock();
       _fileAstCache.insert({file_->path, loadedFile});
