@@ -206,14 +206,15 @@ void TemplateAnalyzer::processMountDeps(
       if (serviceIter == _microserviceCache.end())
       {
         helmTemplate.depends = -1;
+        helmTemplate.id = createIdentifier(helmTemplate);
       }
       else
       {
         helmTemplate.depends = serviceIter->serviceId;
+        helmTemplate.id = createIdentifier(helmTemplate);
         addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
       }
 
-      helmTemplate.id = createIdentifier(helmTemplate);
       addHelmTemplate(helmTemplate);
     }
     else if ((*volume)["secret"] && (*volume)["secret"]["secretName"])
@@ -234,14 +235,15 @@ void TemplateAnalyzer::processMountDeps(
       if (serviceIter == _microserviceCache.end())
       {
         helmTemplate.depends = -1;
+        helmTemplate.id = createIdentifier(helmTemplate);
       }
       else
       {
         helmTemplate.depends = serviceIter->serviceId;
+        helmTemplate.id = createIdentifier(helmTemplate);
         addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
       }
 
-      helmTemplate.id = createIdentifier(helmTemplate);
       addHelmTemplate(helmTemplate);
     }
   }
@@ -270,14 +272,15 @@ void TemplateAnalyzer::processCertificateDeps(
   if (serviceIter == _microserviceCache.end())
   {
     helmTemplate.depends = -1;
+    helmTemplate.id = createIdentifier(helmTemplate);
   }
   else
   {
     helmTemplate.depends = serviceIter->serviceId;
+    helmTemplate.id = createIdentifier(helmTemplate);
     addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
   }
 
-  helmTemplate.id = createIdentifier(helmTemplate);
   addHelmTemplate(helmTemplate);
 
   model::HelmTemplate secretTemplate;
@@ -289,14 +292,15 @@ void TemplateAnalyzer::processCertificateDeps(
   if (serviceIter == _microserviceCache.end())
   {
     secretTemplate.depends = -1;
+    secretTemplate.id = createIdentifier(secretTemplate);
   }
   else
   {
     secretTemplate.depends = serviceIter->serviceId;
+    secretTemplate.id = createIdentifier(secretTemplate);
     addEdge(service_.serviceId, secretTemplate.depends, secretTemplate.id, secretTemplate.kind);
   }
 
-  helmTemplate.id = createIdentifier(secretTemplate);
   addHelmTemplate(secretTemplate);
 }
 

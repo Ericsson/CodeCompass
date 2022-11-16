@@ -252,6 +252,8 @@ void YamlFileDiagram::getConfigMapsDiagram(
     currentNode = addNode(graph_, *res.begin());
   });
 
+  LOG(info) << "step 1";
+
   util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getConfigMaps,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, {});
@@ -265,6 +267,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
+  LOG(info) << "step 2";
   return getDependentConfigMaps(graph_, node_);
 }
 
@@ -272,6 +275,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getRevConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
+  LOG(info) << "step 3";
   return getDependentConfigMaps(graph_, node_, true);
 }
 
@@ -282,7 +286,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
 {
   std::vector<util::Graph::Node> dependencies;
   std::multimap<model::MicroserviceId, std::string> serviceIds = getDependentConfigMapIds(graph_, node_, reverse_);
-
+  LOG(info) << "step 4";
   for (const auto& serviceId : serviceIds)
   {
     _transaction([&, this]{
@@ -293,6 +297,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
       dependencies.push_back(newNode);
       util::Graph::Edge edge = graph_.createEdge(node_, newNode);
       decorateEdge(graph_, edge, {{"label", serviceId.second}});
+      LOG(info) << "step 5";
     });
   }
 
@@ -300,7 +305,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
 }
 
 std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentConfigMapIds(
-  util::Graph&,
+  util::Graph& graph_,
   const util::Graph::Node& node_,
   bool reverse_)
 {
@@ -315,8 +320,10 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentC
 
     for (const model::MicroserviceEdge& edge : res)
     {
+      auto helm = _db->query_one<model::HelmTemplate>(
+        HelmTemplateQuery::id == edge.connection->id);
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
-      dependencies.insert({serviceId, edge.type});
+      dependencies.insert({serviceId, helm->name});
     }
   });
 
@@ -404,7 +411,6 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
       auto helm = _db->query_one<model::HelmTemplate>(
         HelmTemplateQuery::id == edge.connection->id);
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
-      LOG(info) << helm->name;
       dependencies.insert({serviceId, helm->name});
     }
   });
