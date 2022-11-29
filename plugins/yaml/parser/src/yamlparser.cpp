@@ -43,6 +43,8 @@ namespace fs = boost::filesystem;
 
 YamlParser::YamlParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  _areDependenciesListed = true;
+
   util::OdbTransaction {_ctx.db} ([&, this] {
     for (const model::YamlFile& yf
             : _ctx.db->query<model::YamlFile>())
@@ -197,12 +199,22 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       if (file_->path.find("charts/") != std::string::npos) {
         file->type = model::YamlFile::Type::HELM_SUBCHART;
 
-        model::Microservice service;
-        service.file = file_->id;
-        service.name = YAML::Dump(loadedFile["name"]);
-        service.type = model::Microservice::ServiceType::INTERNAL;
-        service.serviceId = cc::model::createIdentifier(service);
-        _ctx.db->persist(service);
+        /*auto isServiceInDb = _ctx.db->query<model::Microservice>(
+          odb::query<model::Microservice>::file == file_->id &&
+          odb::query<model::Microservice>::type == model::Microservice::ServiceType::INTERNAL &&
+          odb::query<model::Microservice>::name == YAML::Dump(loadedFile["name"]));
+
+        if (isServiceInDb.empty())
+        {*/
+        if (!_areDependenciesListed)
+        {
+          model::Microservice service;
+          service.file = file_->id;
+          service.name = YAML::Dump(loadedFile["name"]);
+          service.type = model::Microservice::ServiceType::INTERNAL;
+          service.serviceId = cc::model::createIdentifier(service);
+          _ctx.db->persist(service);
+        }
       }
       else
       {
@@ -261,7 +273,10 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
 void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& loadedFile_)
 {
   if (!loadedFile_["dependencies"] || !loadedFile_["dependencies"].IsSequence())
+  {
+    _areDependenciesListed = false;
     return;
+  }
 
   util::OdbTransaction {_ctx.db} ([&]
   {

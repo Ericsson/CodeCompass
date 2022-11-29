@@ -90,6 +90,7 @@ private:
   std::vector<model::BuildLog> _buildLogs;
 
   std::mutex _mutex;
+  bool _areDependenciesListed;
 };
 
 } // namespace parser
