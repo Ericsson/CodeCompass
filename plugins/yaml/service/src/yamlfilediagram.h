@@ -2,6 +2,7 @@
 #define CC_SERVICE_LANGUAGE_YAMLFILEDIAGRAM_H
 
 #include <model/microservice.h>
+#include <model/msresource.h>
 
 #include <service/yamlservice.h>
 #include <projectservice/projectservice.h>
@@ -50,6 +51,10 @@ public:
     const language::MicroserviceId& serviceId_);
 
   void getSecretsDiagram(
+    util::Graph& graph_,
+    const language::MicroserviceId& serviceId_);
+
+  void getResourcesDiagram(
     util::Graph& graph_,
     const language::MicroserviceId& serviceId_);
 
@@ -123,6 +128,12 @@ private:
     const util::Graph::Node& node_,
     bool reverse_);
 
+  /* ---- Resource diagram functions ---- */
+
+  std::vector<util::Graph::Node> getResources(
+    util::Graph& graph_,
+    const util::Graph::Node& node_);
+
   std::string graphHtmlTag(
     const std::string& tag_,
     const std::string& content_,
@@ -135,6 +146,11 @@ private:
   util::Graph::Node addNode(
     util::Graph& graph_,
     const model::Microservice& service_);
+
+  util::Graph::Node addNode(
+    util::Graph& graph_,
+    const model::MSResource::ResourceType& type_,
+    float amount_);
 
   std::string getLastNParts(
     const std::string& path_,

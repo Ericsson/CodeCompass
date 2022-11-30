@@ -6,12 +6,15 @@
 
 #include <model/microserviceedge.h>
 #include <model/microserviceedge-odb.hxx>
+#include <model/msresource.h>
+#include <model/msresource-odb.hxx>
 #include <model/helmtemplate.h>
 #include <model/helmtemplate-odb.hxx>
 
 #include <model/file.h>
 #include <service/yamlservice.h>
 #include <util/dbutil.h>
+#include <numeric>
 
 #include "yamlfilediagram.h"
 
@@ -28,6 +31,8 @@ typedef odb::query<model::MicroserviceEdge> EdgeQuery;
 typedef odb::result<model::MicroserviceEdge> EdgeResult;
 typedef odb::query<model::Microservice> MicroserviceQuery;
 typedef odb::result<model::Microservice> MicroserviceResult;
+typedef odb::query<model::MSResource> MSResourceQuery;
+typedef odb::result<model::MSResource> MSResourceResult;
 typedef odb::query<model::HelmTemplate> HelmTemplateQuery;
 typedef odb::result<model::HelmTemplate> HelmTemplateResult;
 
@@ -395,6 +400,72 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
   return dependencies;
 }
 
+void YamlFileDiagram::getResourcesDiagram(
+  util::Graph& graph_,
+  const language::MicroserviceId& serviceId_)
+{
+  util::Graph::Node currentNode;
+
+  _transaction([&, this]{
+    MicroserviceResult res = _db->query<model::Microservice>(
+      MicroserviceQuery::serviceId == std::stoull(serviceId_));
+
+    currentNode = addNode(graph_, *res.begin());
+  });
+
+  std::vector<util::Graph::Node> secretNodes = getResources(graph_, currentNode);
+}
+
+std::vector<util::Graph::Node> YamlFileDiagram::getResources(
+  util::Graph& graph_,
+  const util::Graph::Node& node_)
+{
+  std::vector<util::Graph::Node> resources;
+
+  _transaction([&, this]{
+    MSResourceResult cpu = _db->query<model::MSResource>(
+      MSResourceQuery::service == std::stoull(node_) &&
+      MSResourceQuery::type == model::MSResource::ResourceType::CPU);
+
+    float cpuSum = 0.0f;
+    for (auto it = cpu.begin(); it != cpu.end(); ++it)
+      cpuSum += it->amount;
+
+    util::Graph::Node cpuNode = addNode(graph_, model::MSResource::ResourceType::CPU, cpuSum);
+    resources.push_back(cpuNode);
+    util::Graph::Edge cpuEdge = graph_.createEdge(node_, cpuNode);
+    decorateEdge(graph_, cpuEdge, {{"label", resourceTypeToString(model::MSResource::ResourceType::CPU)}});
+
+    MSResourceResult memory = _db->query<model::MSResource>(
+      MSResourceQuery::service == std::stoull(node_) &&
+      MSResourceQuery::type == model::MSResource::ResourceType::MEMORY);
+
+    float memorySum = 0.0f;
+    for (auto it = memory.begin(); it != memory.end(); ++it)
+      memorySum += it->amount;
+
+    util::Graph::Node memoryNode = addNode(graph_, model::MSResource::ResourceType::MEMORY, memorySum);
+    resources.push_back(memoryNode);
+    util::Graph::Edge memoryEdge = graph_.createEdge(node_, memoryNode);
+    decorateEdge(graph_, memoryEdge, {{"label", resourceTypeToString(model::MSResource::ResourceType::MEMORY)}});
+
+    MSResourceResult storage = _db->query<model::MSResource>(
+      MSResourceQuery::service == std::stoull(node_) &&
+      MSResourceQuery::type == model::MSResource::ResourceType::STORAGE);
+
+    float storageSum = 0.0f;
+    for (auto it = memory.begin(); it != memory.end(); ++it)
+      memorySum += it->amount;
+
+    util::Graph::Node storageNode = addNode(graph_, model::MSResource::ResourceType::STORAGE, storageSum);
+    resources.push_back(storageNode);
+    util::Graph::Edge storageEdge = graph_.createEdge(node_, storageNode);
+    decorateEdge(graph_, storageEdge, {{"label", resourceTypeToString(model::MSResource::ResourceType::STORAGE)}});
+  });
+
+  return resources;
+}
+
 std::string YamlFileDiagram::graphHtmlTag(
   const std::string& tag_,
   const std::string& content_,
@@ -446,6 +517,19 @@ util::Graph::Node YamlFileDiagram::addNode(
   graph_.setNodeAttribute(node_, "label", service_.name);
 
   decorateNode(graph_, node_, microserviceNodeDecoration);
+
+  return node_;
+}
+
+util::Graph::Node YamlFileDiagram::addNode(
+  util::Graph& graph_,
+  const model::MSResource::ResourceType& type_,
+  float amount_)
+{
+  util::Graph::Node node_ = graph_.getOrCreateNode(resourceTypeToString(type_));
+  graph_.setNodeAttribute(node_, "label", std::to_string(std::ceil(amount_ * 100.0) / 100.0));
+
+  decorateNode(graph_, node_, sourceFileNodeDecoration);
 
   return node_;
 }

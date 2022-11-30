@@ -166,7 +166,8 @@ private:
       SERVICES,
       CONFIGMAPS,
       SECRETS,
-      CERTIFICATES
+      CERTIFICATES,
+      RESOURCES
   };
 
   inline cc::service::language::ServiceType::type convertToThriftType(

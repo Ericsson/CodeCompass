@@ -323,13 +323,10 @@ void TemplateAnalyzer::processResources(
   if (!resourcesKey.IsDefined())
     return;
 
-  //LOG(info) << YAML::Dump(resourcesKey);
   YAML::Node requestsKey = findKey("requests", resourcesKey);
 
   if (!requestsKey.IsDefined())
     return;
-
-  LOG(info) << YAML::Dump(requestsKey);
 
   /* Collect the resources. */
 

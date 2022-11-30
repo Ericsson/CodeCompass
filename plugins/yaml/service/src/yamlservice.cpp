@@ -237,6 +237,10 @@ void YamlServiceHandler::getFileDiagram(
       break;
     case CERTIFICATES:
       break;
+    case RESOURCES:
+      diagram.getResourcesDiagram(graph, fileId_);
+      return_ = graph.output(util::Graph::SVG);
+      break;
   }
 }
 
@@ -347,6 +351,7 @@ void YamlServiceHandler::getMicroserviceDiagramTypes(
   return_["Dependent services"]  = SERVICES;
   return_["Config maps"] = CONFIGMAPS;
   return_["Secrets"] = SECRETS;
+  return_["Resource usage"] = RESOURCES;
 }
 
 void YamlServiceHandler::getMicroserviceDiagram(

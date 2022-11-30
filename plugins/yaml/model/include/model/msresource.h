@@ -40,6 +40,18 @@ struct MSResource
   #pragma db not_null
   std::string unit;
 };
+
+inline std::string resourceTypeToString(MSResource::ResourceType type_)
+{
+  switch (type_)
+  {
+    case MSResource::ResourceType::CPU: return "CPU";
+    case MSResource::ResourceType::MEMORY: return "Memory";
+    case MSResource::ResourceType::STORAGE: return "Storage";
+  }
+
+  return std::string();
+}
 }
 }
 
