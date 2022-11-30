@@ -18,6 +18,7 @@ TemplateAnalyzer::TemplateAnalyzer(
   : _ctx(ctx_), _fileAstCache(fileAstCache_)
 {
   fillDependencyPairsMap();
+  fillResourceTypePairsMap();
 
   std::lock_guard<std::mutex> cacheLock(_edgeCacheMutex);
   if (_edgeCache.empty())
@@ -51,6 +52,9 @@ TemplateAnalyzer::~TemplateAnalyzer()
     for (model::HelmTemplate& helmTemplate : _newTemplates)
       _ctx.db->persist(helmTemplate);
 
+    for (model::MSResource& msResource : _msResources)
+      _ctx.db->persist(msResource);
+
     util::persistAll(_newEdges, _ctx.db);
   });
 }
@@ -61,7 +65,6 @@ void TemplateAnalyzer::init()
     std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
     [&, this](std::pair<std::string, YAML::Node> pair)
     {
-      LOG(info) << pair.first;
       auto currentService = std::find_if(_microserviceCache.begin(),
         _microserviceCache.end(),
         [&](model::Microservice& service)
@@ -125,6 +128,8 @@ bool TemplateAnalyzer::visitKeyValuePairs(
     case DependencyType::OTHER:
       break;
   }
+
+  processResources(path_, currentNode_, service_);
 
   return true;
 }
@@ -306,6 +311,90 @@ void TemplateAnalyzer::processCertificateDeps(
   addHelmTemplate(secretTemplate);
 }
 
+void TemplateAnalyzer::processResources(
+  const std::string& path_,
+  YAML::Node& currentFile_,
+  model::Microservice& service_)
+{
+  /* If the resource keys are not found, return. */
+
+  YAML::Node resourcesKey = findKey("resources", currentFile_);
+
+  if (!resourcesKey.IsDefined())
+    return;
+
+  //LOG(info) << YAML::Dump(resourcesKey);
+  YAML::Node requestsKey = findKey("requests", resourcesKey);
+
+  if (!requestsKey.IsDefined())
+    return;
+
+  LOG(info) << YAML::Dump(requestsKey);
+
+  /* Collect the resources. */
+
+  for (const auto& pair : requestsKey)
+  {
+    auto it = _msResourcePairs.find(YAML::Dump(pair.first));
+
+    if (it == _msResourcePairs.end())
+      return;
+
+    model::MSResource resource;
+    resource.type = it->second;
+    resource.service = service_.serviceId;
+
+    auto convertedAmount = convertUnit(YAML::Dump(pair.second), it->second);
+    resource.amount = convertedAmount.first;
+    resource.unit = convertedAmount.second;
+
+    _msResources.push_back(resource);
+  }
+}
+
+std::pair<float, std::string> TemplateAnalyzer::convertUnit(
+  std::string amount_,
+  model::MSResource::ResourceType type_)
+{
+  switch (type_)
+  {
+    case model::MSResource::ResourceType::CPU:
+    {
+      int m = amount_.find('m');
+      if (m != std::string::npos)
+      {
+        amount_.erase(m, 1);
+        return std::make_pair(std::stof(amount_) / 1000, "");
+      }
+      else
+      {
+        return std::make_pair(std::stof(amount_), "");
+      }
+    }
+
+    case model::MSResource::ResourceType::MEMORY:
+    case model::MSResource::ResourceType::STORAGE:
+    {
+      int m = amount_.find('M');
+      if (m != std::string::npos)
+      {
+        amount_.erase(m, 2);
+        return std::make_pair(std::stof(amount_) / 1024, "Gi");
+      }
+
+      int g = amount_.find('G');
+      if (m != std::string::npos)
+      {
+        amount_.erase(g, 2);
+        return std::make_pair(std::stof(amount_), "Gi");
+      }
+      break;
+    }
+  }
+
+  return {};
+}
+
 YAML::Node TemplateAnalyzer::findKey(
   const std::string& key_,
   YAML::Node& node_)
@@ -313,7 +402,6 @@ YAML::Node TemplateAnalyzer::findKey(
   switch (node_.Type())
   {
     case YAML::NodeType::Scalar:
-      break;
     case YAML::NodeType::Null:
     case YAML::NodeType::Undefined:
       break;
@@ -341,10 +429,10 @@ YAML::Node TemplateAnalyzer::findKey(
 void TemplateAnalyzer::addHelmTemplate(model::HelmTemplate& helmTemplate_)
 {
   auto it = std::find_if(_newTemplates.begin(), _newTemplates.end(),
-                         [&](auto& helm)
-  {
-      return helm.id == helmTemplate_.id;
-  });
+    [&](auto& helm)
+    {
+        return helm.id == helmTemplate_.id;
+    });
 
   if (it == _newTemplates.end())
     _newTemplates.push_back(helmTemplate_);
@@ -386,6 +474,13 @@ void TemplateAnalyzer::fillDependencyPairsMap()
   _dependencyPairs.insert({"Secret", model::HelmTemplate::DependencyType::MOUNT});
   _dependencyPairs.insert({"Certificate", model::HelmTemplate::DependencyType::CERTIFICATE});
   _dependencyPairs.insert({"VolumeClaim", model::HelmTemplate::DependencyType::RESOURCE});
+}
+
+void TemplateAnalyzer::fillResourceTypePairsMap()
+{
+  _msResourcePairs.insert({"cpu", model::MSResource::ResourceType::CPU});
+  _msResourcePairs.insert({"memory", model::MSResource::ResourceType::MEMORY});
+  _msResourcePairs.insert({"storage", model::MSResource::ResourceType::STORAGE});
 }
 
 }

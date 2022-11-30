@@ -9,6 +9,8 @@
 #include <model/microservice-odb.hxx>
 #include <model/microserviceedge.h>
 #include <model/microserviceedge-odb.hxx>
+#include <model/msresource.h>
+#include <model/msresource-odb.hxx>
 #include <model/helmtemplate.h>
 #include <model/helmtemplate-odb.hxx>
 
@@ -36,15 +38,47 @@ private:
     YAML::Node& currentFile_,
     model::Microservice& service_);
 
+  /**
+   *
+   * @param path_ The currently processed file path.
+   * @param currentFile_ The currently processed file as a YAML node.
+   * @param service_ The microservice in which the file is defined.
+   */
   void processServiceDeps(
     const std::string& path_,
     YAML::Node& currentFile_,
     model::Microservice& service_);
+
+  /**
+   *
+   * @param path_ The currently processed file path.
+   * @param currentFile_ The currently processed file as a YAML node.
+   * @param service_ The microservice in which the file is defined.
+   */
   void processMountDeps(
     const std::string& path_,
     YAML::Node& currentFile_,
     model::Microservice& service_);
+
+  /**
+   *
+   * @param path_ The currently processed file path.
+   * @param currentFile_ The currently processed file as a YAML node.
+   * @param service_ The microservice in which the file is defined.
+   */
   void processCertificateDeps(
+    const std::string& path_,
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+
+  /**
+   * Collect and store the various resources that a
+   * cluster uses: CPU, memory, storage.
+   * @param path_ The currently processed file path.
+   * @param currentFile_ The currently processed file as a YAML node.
+   * @param service_ The microservice in which the file is defined.
+   */
+  void processResources(
     const std::string& path_,
     YAML::Node& currentFile_,
     model::Microservice& service_);
@@ -58,11 +92,18 @@ private:
     std::string type_);
 
   void fillDependencyPairsMap();
+  void fillResourceTypePairsMap();
+
+  std::pair<float, std::string> convertUnit(
+    std::string amount_,
+    model::MSResource::ResourceType type_);
+
   YAML::Node findKey(
     const std::string& key_,
     YAML::Node& currentFile_);
 
   std::map<std::string, model::HelmTemplate::DependencyType> _dependencyPairs;
+  std::map<std::string, model::MSResource::ResourceType> _msResourcePairs;
 
   static std::unordered_set<model::MicroserviceEdgeId> _edgeCache;
   std::vector<model::MicroserviceEdgePtr> _newEdges;
@@ -71,6 +112,8 @@ private:
 
   static std::vector<model::Microservice> _microserviceCache;
   model::Microservice _currentService;
+
+  std::vector<model::MSResource> _msResources;
 
   static std::mutex _edgeCacheMutex;
 
