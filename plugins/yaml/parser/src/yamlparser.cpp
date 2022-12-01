@@ -196,7 +196,8 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
 
     if (file_->filename == "Chart.yaml" || file_->filename == "Chart.yml")
     {
-      if (file_->path.find("charts/") != std::string::npos) {
+      if (file_->path.find("charts/") != std::string::npos)
+      {
         file->type = model::YamlFile::Type::HELM_SUBCHART;
 
         /*auto isServiceInDb = _ctx.db->query<model::Microservice>(
@@ -206,15 +207,16 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
 
         if (isServiceInDb.empty())
         {*/
-        if (!_areDependenciesListed)
-        {
+        //if (!_areDependenciesListed)
+        //{
           model::Microservice service;
           service.file = file_->id;
           service.name = YAML::Dump(loadedFile["name"]);
           service.type = model::Microservice::ServiceType::INTERNAL;
           service.serviceId = cc::model::createIdentifier(service);
           _ctx.db->persist(service);
-        }
+          _processedMS.push_back(service.name);
+        //}
       }
       else
       {
@@ -293,8 +295,12 @@ void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& load
       else
         service.name = Dump((*iter)["name"]);
 
-      service.serviceId = cc::model::createIdentifier(service);
-      _ctx.db->persist(service);
+      if (std::find(_processedMS.begin(), _processedMS.end(), service.name) != _processedMS.end())
+      {
+        service.serviceId = cc::model::createIdentifier(service);
+        _ctx.db->persist(service);
+        _processedMS.push_back(service.name);
+      }
     }
   });
 }

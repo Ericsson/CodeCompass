@@ -88,6 +88,7 @@ private:
   std::vector<model::YamlFilePtr> _yamlFiles;
   std::vector<model::YamlContentPtr> _rootPairs;
   std::vector<model::BuildLog> _buildLogs;
+  std::vector<std::string> _processedMS;
 
   std::mutex _mutex;
   bool _areDependenciesListed;
