@@ -174,6 +174,7 @@ void YamlFileDiagram::getDependentServicesDiagram(
   });
 
   std::vector<util::Graph::Node> serviceNodes = getDependencies(graph_, currentNode);
+  std::vector<util::Graph::Node> revServiceNodes = getRevDependencies(graph_, currentNode);
 }
 
 std::vector<util::Graph::Node> YamlFileDiagram::getDependencies(
@@ -206,7 +207,8 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
 
       util::Graph::Node newNode = addNode(graph_, *res.begin());
       dependencies.push_back(newNode);
-      util::Graph::Edge edge = graph_.createEdge(node_, newNode);
+      util::Graph::Edge edge;
+      edge = reverse_ ? graph_.createEdge(newNode, node_) : graph_.createEdge(node_, newNode);
       decorateEdge(graph_, edge, {{"label", serviceId.second}});
     });
   }
