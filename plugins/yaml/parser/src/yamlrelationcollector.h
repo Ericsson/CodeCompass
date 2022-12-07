@@ -9,6 +9,8 @@
 #include <model/microservice-odb.hxx>
 #include <model/microserviceedge.h>
 #include <model/microserviceedge-odb.hxx>
+#include <model/helmtemplate.h>
+#include <model/helmtemplate-odb.hxx>
 
 #include <parser/parsercontext.h>
 
@@ -22,28 +24,36 @@ class YamlRelationCollector
 public:
   YamlRelationCollector(
     ParserContext& ctx_,
-    std::map<std::string, YAML::Node>& fileAstCache_);
+    std::map<std::string, YAML::Node>& fileAstCache_,
+    uint64_t templateIdCounter);
 
   void init();
 
   ~YamlRelationCollector();
 
 private:
+  YAML::Node findValue(
+    std::string value_,
+    YAML::Node& currentFile_);
+
   void addEdge(
     const model::MicroserviceId& from_,
     const model::MicroserviceId& to_,
+    const model::HelmTemplateId& connect_,
     std::string type_);
 
   bool visitKeyValuePairs(
     YAML::Node& currentNode_,
-    model::Microservice& service_);
+    model::Microservice& service_,
+    const model::FilePtr& file_);
 
-  void processHelmTemplate(
-    model::FilePtr file_,
-    YAML::Node& loadedFile);
+  void addHelmTemplate(
+    model::HelmTemplate& helmTemplate_);
 
   static std::unordered_set<model::MicroserviceEdgeId> _edgeCache;
   std::vector<model::MicroserviceEdgePtr> _newEdges;
+  std::vector<model::HelmTemplate> _newTemplates;
+  uint64_t _templateCounter;
 
   static std::vector<model::Microservice> _microserviceCache;
   model::Microservice _currentService;

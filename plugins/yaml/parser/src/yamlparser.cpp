@@ -158,11 +158,11 @@ bool YamlParser::parse()
   _ctx.srcMgr.persistFiles();
 
   //--- Collect relations ---/
-  //YamlRelationCollector relationCollector(_ctx, _fileAstCache);
-  //relationCollector.init();
-
   TemplateAnalyzer templateAnalyzer(_ctx, _fileAstCache);
   templateAnalyzer.init();
+
+  YamlRelationCollector relationCollector(_ctx, _valuesAstCache, templateAnalyzer.getTemplateCounter());
+  relationCollector.init();
 
   return true;
 }
@@ -199,14 +199,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       if (file_->path.find("charts/") != std::string::npos)
       {
         file->type = model::YamlFile::Type::HELM_SUBCHART;
-
-        /*auto isServiceInDb = _ctx.db->query<model::Microservice>(
-          odb::query<model::Microservice>::file == file_->id &&
-          odb::query<model::Microservice>::type == model::Microservice::ServiceType::INTERNAL &&
-          odb::query<model::Microservice>::name == YAML::Dump(loadedFile["name"]));
-
-        if (isServiceInDb.empty())
-        {*/
+        
         //if (!_areDependenciesListed)
         //{
           model::Microservice service;
@@ -236,6 +229,9 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       // it should not be parsed since it contains default values
       // that may provide false results in the microservice architecture
       // dependency mapping.
+      _mutex.lock();
+      _valuesAstCache.insert({file_->path, loadedFile});
+      _mutex.unlock();
       /*if (file_->path.find("charts/") == std::string::npos)
       {
         model::Microservice service;
@@ -243,10 +239,6 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
         service.name = fs::path(file_->path).parent_path().filename().string();
         service.serviceId = cc::model::createIdentifier(service);
         _ctx.db->persist(service);
-
-        _mutex.lock();
-        _fileAstCache.insert({file_->path, loadedFile});
-        _mutex.unlock();
       }*/
     }
     else if (file_->path.find("templates/") != std::string::npos)

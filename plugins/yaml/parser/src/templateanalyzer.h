@@ -31,6 +31,7 @@ public:
   ~TemplateAnalyzer();
 
   void init();
+  uint64_t getTemplateCounter() { return templateCounter; }
 
 private:
   bool visitKeyValuePairs(

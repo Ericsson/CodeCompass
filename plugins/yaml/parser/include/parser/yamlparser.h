@@ -28,7 +28,9 @@ private:
    * it serves, e.g. Helm chart or other type of configuration file.
    * The classification is done based on naming conventions.
    */
-  void processFileType(model::FilePtr& file_, YAML::Node& loadedFile);
+  void processFileType(
+    model::FilePtr& file_,
+    YAML::Node& loadedFile);
 
   void processIntegrationChart(
     model::FilePtr& file_,
@@ -40,7 +42,9 @@ private:
    * @param file_
    * @param loadedFile
    */
-  void processRootKeys(model::FilePtr& file_, YAML::Node& loadedFile);
+  void processRootKeys(
+    model::FilePtr& file_,
+    YAML::Node& loadedFile);
 
   bool collectAstNodes(model::FilePtr file_);
 
@@ -82,6 +86,7 @@ private:
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::map<std::string, YAML::Node> _fileAstCache;
+  std::map<std::string, YAML::Node> _valuesAstCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
   std::atomic<int> _visitedFileCount;
   std::vector<model::YamlAstNodePtr> _astNodes;
