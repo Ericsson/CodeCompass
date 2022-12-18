@@ -202,6 +202,8 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
         
         //if (!_areDependenciesListed)
         //{
+        if (std::find(_processedMS.begin(), _processedMS.end(), YAML::Dump(loadedFile["name"])) == _processedMS.end())
+        {
           model::Microservice service;
           service.file = file_->id;
           service.name = YAML::Dump(loadedFile["name"]);
@@ -209,6 +211,7 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
           service.serviceId = cc::model::createIdentifier(service);
           _ctx.db->persist(service);
           _processedMS.push_back(service.name);
+        }
         //}
       }
       else
@@ -283,11 +286,11 @@ void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& load
       service.type = model::Microservice::ServiceType::INTERNAL;
 
       if ((*iter)["alias"])
-        service.name = Dump((*iter)["alias"]);
+        service.name = YAML::Dump((*iter)["alias"]);
       else
-        service.name = Dump((*iter)["name"]);
+        service.name = YAML::Dump((*iter)["name"]);
 
-      if (std::find(_processedMS.begin(), _processedMS.end(), service.name) != _processedMS.end())
+      if (std::find(_processedMS.begin(), _processedMS.end(), service.name) == _processedMS.end())
       {
         service.serviceId = cc::model::createIdentifier(service);
         _ctx.db->persist(service);

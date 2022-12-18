@@ -70,7 +70,6 @@ void YamlRelationCollector::init()
         _microserviceCache.end(),
         [&](model::Microservice& service)
         {
-          //return service.file == filePtr->id;
           return pair.first.find(service.name) != std::string::npos;
         });
 
@@ -100,7 +99,6 @@ bool YamlRelationCollector::visitKeyValuePairs(
 
       if (iter != _microserviceCache.end())
       {
-        LOG(info) << iter->name << ", ";
         model::HelmTemplate helmTemplate;
         helmTemplate.name = "";
         helmTemplate.dependencyType = model::HelmTemplate::DependencyType::SERVICE;
@@ -114,43 +112,6 @@ bool YamlRelationCollector::visitKeyValuePairs(
       }
     }
   }
-}
-
-YAML::Node YamlRelationCollector::findValue(
-  std::string value_,
-  YAML::Node& node_)
-{
-  /*switch (node_.Type())
-  {
-    case YAML::NodeType::Scalar:
-    case YAML::NodeType::Null:
-    case YAML::NodeType::Undefined:
-      break;
-    case YAML::NodeType::Sequence:
-      for (auto elem : node_)
-      {
-        if (elem.IsMap())
-          return findValue(value_, elem);
-        if (YAML::Dump(elem) == value_)
-          return elem;
-      }
-      break;
-    case YAML::NodeType::Map:
-      if (node_[value_])
-        return node_[value_];
-      else
-      for (auto iter = node_.begin(); iter != node_.end(); ++iter)
-      {
-        if (iter->second.IsScalar() && YAML::Dump(iter->second) == value_)
-          return *iter;
-        YAML::Node temp = findKey(key_, iter->second);
-        if (temp.IsDefined())
-          return temp;
-      }
-      break;
-  }*/
-
-  return YAML::Node(YAML::NodeType::Undefined);
 }
 
 void YamlRelationCollector::addHelmTemplate(

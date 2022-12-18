@@ -69,8 +69,6 @@ void TemplateAnalyzer::init()
         _microserviceCache.end(),
         [&](model::Microservice& service)
         {
-          //auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == pair.first);
-          //return service.file == filePtr->id;
           return pair.first.find(service.name) != std::string::npos;
         });
 
@@ -130,6 +128,7 @@ bool TemplateAnalyzer::visitKeyValuePairs(
   }
 
   processResources(path_, currentNode_, service_);
+  processStorageResources(path_, currentNode_, service_);
 
   return true;
 }
@@ -188,70 +187,83 @@ void TemplateAnalyzer::processMountDeps(
 {
   /* --- Processing ConfigMap templates --- */
 
-  auto volumesNode = findKey("volumes", currentFile_);
+  //auto volumesNode = findKey("volumes", currentFile_);
+  std::vector<YAML::Node> nodes;
+  findKeys("volumes", nodes, currentFile_);
 
-  if (!volumesNode.IsDefined())
-    return;
-
-  for (auto volume = volumesNode.begin(); volume != volumesNode.end(); ++volume)
+  for (auto volumesNode = nodes.begin(); volumesNode != nodes.end(); ++volumesNode)
   {
-    if ((*volume)["configMap"] && (*volume)["configMap"]["name"])
+    if (!volumesNode->IsDefined())
+      return;
+
+    for (auto volume = volumesNode->begin(); volume != volumesNode->end(); ++volume)
     {
-      model::HelmTemplate helmTemplate;
-      helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
-      helmTemplate.kind = "ConfigMap";
-      auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
-      helmTemplate.file = filePtr->id;
-      helmTemplate.name = YAML::Dump((*volume)["configMap"]["name"]);
+      if ((*volume)["configMap"] && (*volume)["configMap"]["name"])
+      {
+        model::HelmTemplate helmTemplate;
+        helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
+        helmTemplate.kind = "ConfigMap";
+        auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+        helmTemplate.file = filePtr->id;
+        helmTemplate.name = YAML::Dump((*volume)["configMap"]["name"]);
 
-      auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
-        [&](const model::Microservice& service)
+        auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+          [&](const model::Microservice &service)
+          {
+            return (YAML::Dump((*volume)["configMap"]["name"])).find(service.name) !=
+                   std::string::npos;
+          });
+
+        if (serviceIter == _microserviceCache.end())
         {
-          return (YAML::Dump((*volume)["configMap"]["name"])).find(service.name) != std::string::npos;
-        });
-
-      if (serviceIter == _microserviceCache.end())
-      {
-        helmTemplate.depends = -1;
-        helmTemplate.id = createIdentifier(helmTemplate);
-      }
-      else
-      {
-        helmTemplate.depends = serviceIter->serviceId;
-        helmTemplate.id = createIdentifier(helmTemplate);
-        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
-      }
-
-      addHelmTemplate(helmTemplate);
-    }
-    else if ((*volume)["secret"] && (*volume)["secret"]["secretName"])
-    {
-      model::HelmTemplate helmTemplate;
-      helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
-      helmTemplate.kind = "Secret";
-      auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
-      helmTemplate.file = filePtr->id;
-      helmTemplate.name = YAML::Dump((*volume)["secret"]["secretName"]);
-
-      auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
-        [&](const model::Microservice& service)
+          helmTemplate.depends = -1;
+          helmTemplate.id = createIdentifier(helmTemplate);
+        }
+        else
         {
-          return (YAML::Dump((*volume)["secret"]["secretName"])).find(service.name) != std::string::npos;
-        });
+          helmTemplate.depends = serviceIter->serviceId;
+          helmTemplate.id = createIdentifier(helmTemplate);
+          addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
+        }
 
-      if (serviceIter == _microserviceCache.end())
-      {
-        helmTemplate.depends = -1;
-        helmTemplate.id = createIdentifier(helmTemplate);
+        addHelmTemplate(helmTemplate);
       }
-      else
+      else if ((*volume)["secret"] && (*volume)["secret"]["secretName"])
       {
-        helmTemplate.depends = serviceIter->serviceId;
-        helmTemplate.id = createIdentifier(helmTemplate);
-        addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
-      }
+        model::HelmTemplate helmTemplate;
+        helmTemplate.dependencyType = model::HelmTemplate::DependencyType::MOUNT;
+        helmTemplate.kind = "Secret";
+        auto filePtr = _ctx.db->query_one<model::File>(odb::query<model::File>::path == path_);
+        helmTemplate.file = filePtr->id;
+        helmTemplate.name = YAML::Dump((*volume)["secret"]["secretName"]);
 
-      addHelmTemplate(helmTemplate);
+        auto serviceIter = std::find_if(_microserviceCache.begin(), _microserviceCache.end(),
+          [&](const model::Microservice &service)
+          {
+            return (YAML::Dump((*volume)["secret"]["secretName"])).find(service.name) !=
+                   std::string::npos;
+          });
+
+        if (serviceIter == _microserviceCache.end())
+        {
+          /*auto dependentServiceIt = std::find_if(_newTemplates.begin(), _newTemplates.end(),
+            [&](const model::HelmTemplate &dependentService)
+            {
+             return (YAML::Dump((*volume)["secret"]["secretName"])).find(service.name) !=
+                    std::string::npos;
+            });*/
+          helmTemplate.depends = -1;
+          helmTemplate.id = createIdentifier(helmTemplate);
+        }
+        else
+        {
+          helmTemplate.depends = serviceIter->serviceId;
+          helmTemplate.id = createIdentifier(helmTemplate);
+          addEdge(service_.serviceId, helmTemplate.depends, helmTemplate.id, helmTemplate.kind);
+        }
+
+        addHelmTemplate(helmTemplate);
+      }
     }
   }
 }
@@ -317,14 +329,11 @@ void TemplateAnalyzer::processResources(
   model::Microservice& service_)
 {
   /* If the resource keys are not found, return. */
-
   YAML::Node resourcesKey = findKey("resources", currentFile_);
-
   if (!resourcesKey.IsDefined())
     return;
 
   YAML::Node requestsKey = findKey("requests", resourcesKey);
-
   if (!requestsKey.IsDefined())
     return;
 
@@ -333,7 +342,6 @@ void TemplateAnalyzer::processResources(
   for (const auto& pair : requestsKey)
   {
     auto it = _msResourcePairs.find(YAML::Dump(pair.first));
-
     if (it == _msResourcePairs.end())
       return;
 
@@ -347,6 +355,39 @@ void TemplateAnalyzer::processResources(
 
     _msResources.push_back(resource);
   }
+}
+
+void TemplateAnalyzer::processStorageResources(
+  const std::string& path_,
+  YAML::Node& currentFile_,
+  model::Microservice& service_)
+{
+  /* --- Collect storage resources --- */
+  YAML::Node volumeClaimsKey = findKey("volumeClaimTemplates", currentFile_);
+  if (!volumeClaimsKey.IsDefined())
+    return;
+
+  YAML::Node storageKey = findKey("storage", volumeClaimsKey);
+  if (!storageKey.IsDefined())
+  {
+    LOG(info) << " storageKey not found";
+    return;
+  }
+
+  auto it = _msResourcePairs.find("storage");
+  if (it == _msResourcePairs.end())
+    return;
+
+  model::MSResource resource;
+  resource.type = it->second;
+  resource.service = service_.serviceId;
+
+  LOG(info) << YAML::Dump(storageKey);
+  auto convertedAmount = convertUnit(YAML::Dump(storageKey), it->second);
+  resource.amount = convertedAmount.first;
+  resource.unit = convertedAmount.second;
+
+  _msResources.push_back(resource);
 }
 
 std::pair<float, std::string> TemplateAnalyzer::convertUnit(
@@ -376,13 +417,15 @@ std::pair<float, std::string> TemplateAnalyzer::convertUnit(
       if (m != std::string::npos)
       {
         amount_.erase(m, 2);
+        LOG(info) << std::stof(amount_);
         return std::make_pair(std::stof(amount_) / 1024, "Gi");
       }
 
       int g = amount_.find('G');
-      if (m != std::string::npos)
+      if (g != std::string::npos)
       {
         amount_.erase(g, 2);
+        LOG(info) << std::stof(amount_);
         return std::make_pair(std::stof(amount_), "Gi");
       }
       break;
@@ -394,7 +437,7 @@ std::pair<float, std::string> TemplateAnalyzer::convertUnit(
 
 YAML::Node TemplateAnalyzer::findKey(
   const std::string& key_,
-  YAML::Node& node_)
+  const YAML::Node& node_)
 {
   switch (node_.Type())
   {
@@ -421,6 +464,45 @@ YAML::Node TemplateAnalyzer::findKey(
   }
 
   return YAML::Node(YAML::NodeType::Undefined);
+}
+
+std::vector<YAML::Node> TemplateAnalyzer::findKeys(
+  const std::string& key_,
+  std::vector<YAML::Node>& nodes_,
+  YAML::Node& node_)
+{
+  switch (node_.Type())
+  {
+    case YAML::NodeType::Scalar:
+    case YAML::NodeType::Null:
+    case YAML::NodeType::Undefined:
+      break;
+    case YAML::NodeType::Sequence:
+      for (auto elem : node_)
+        if (elem.IsMap())
+          findKeys(key_, nodes_, elem);
+      break;
+    case YAML::NodeType::Map:
+      if (node_[key_])
+      {
+        nodes_.push_back(node_[key_]);
+        //return findKeys(key_, nodes_, node_);
+        //return nodes_;
+      }
+      else
+        for (auto iter = node_.begin(); iter != node_.end(); ++iter)
+        {
+          findKeys(key_, nodes_, iter->second);
+          //if (temp.IsDefined())
+          //{
+            //nodes_.push_back(temp);
+            //return nodes_;
+          //}
+        }
+      break;
+  }
+
+  return nodes_;
 }
 
 void TemplateAnalyzer::addHelmTemplate(model::HelmTemplate& helmTemplate_)
@@ -462,6 +544,43 @@ void TemplateAnalyzer::addEdge(
   {
     _newEdges.push_back(edge);
   }
+}
+
+int TemplateAnalyzer::LCSubStr(std::string& s1, std::string& s2, int m, int n)
+{
+  // Create a table to store
+  // lengths of longest
+  // common suffixes of substrings.
+  // Note that LCSuff[i][j] contains
+  // length of longest common suffix
+  // of X[0..i-1] and Y[0..j-1].
+
+  int LCSuff[m + 1][n + 1];
+  int result = 0; // To store length of the
+  // longest common substring
+
+  /* Following steps build LCSuff[m+1][n+1] in
+      bottom up fashion. */
+  for (int i = 0; i <= m; i++)
+  {
+    for (int j = 0; j <= n; j++)
+    {
+      // The first row and first column
+      // entries have no logical meaning,
+      // they are used only for simplicity
+      // of program
+      if (i == 0 || j == 0)
+        LCSuff[i][j] = 0;
+
+      else if (s1[i - 1] == s2[j - 1]) {
+        LCSuff[i][j] = LCSuff[i - 1][j - 1] + 1;
+        result = std::max(result, LCSuff[i][j]);
+      }
+      else
+        LCSuff[i][j] = 0;
+    }
+  }
+  return result;
 }
 
 void TemplateAnalyzer::fillDependencyPairsMap()

@@ -232,7 +232,8 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
     for (const model::MicroserviceEdge &edge: res)
     {
       model::MicroserviceId serviceId = reverse_ ? edge.from->serviceId : edge.to->serviceId;
-      dependencies.insert({serviceId, edge.type});
+      if (std::to_string(serviceId) != node_)
+        dependencies.insert({serviceId, edge.type});
     }
   });
 
@@ -456,8 +457,8 @@ std::vector<util::Graph::Node> YamlFileDiagram::getResources(
       MSResourceQuery::type == model::MSResource::ResourceType::STORAGE);
 
     float storageSum = 0.0f;
-    for (auto it = memory.begin(); it != memory.end(); ++it)
-      memorySum += it->amount;
+    for (auto it = storage.begin(); it != storage.end(); ++it)
+      storageSum += it->amount;
 
     util::Graph::Node storageNode = addNode(graph_, model::MSResource::ResourceType::STORAGE, storageSum);
     resources.push_back(storageNode);

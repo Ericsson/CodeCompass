@@ -84,6 +84,11 @@ private:
     YAML::Node& currentFile_,
     model::Microservice& service_);
 
+  void processStorageResources(
+    const std::string& path_,
+    YAML::Node& currentFile_,
+    model::Microservice& service_);
+
   void addHelmTemplate(model::HelmTemplate& helmTemplate_);
 
   void addEdge(
@@ -101,7 +106,14 @@ private:
 
   YAML::Node findKey(
     const std::string& key_,
-    YAML::Node& currentFile_);
+    const YAML::Node& currentFile_);
+
+  std::vector<YAML::Node> findKeys(
+    const std::string& key_,
+    std::vector<YAML::Node>& nodes_,
+    YAML::Node& node_);
+
+  int LCSubStr(std::string& s1, std::string& s2, int m, int n);
 
   std::map<std::string, model::HelmTemplate::DependencyType> _dependencyPairs;
   std::map<std::string, model::MSResource::ResourceType> _msResourcePairs;
