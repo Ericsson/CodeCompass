@@ -50,7 +50,7 @@ public:
     using BufferedTransport = apache::thrift::transport::TBufferedTransport;
     using Socket = apache::thrift::transport::TSocket;
     using Protocol = apache::thrift::protocol::TBinaryProtocol;
-    namespace chrono = std::chrono;
+    namespace ch = std::chrono;
 
     std::string host = "localhost";
     std::shared_ptr<Transport> socket(new Socket(host, _thriftServerPort));
@@ -61,9 +61,12 @@ public:
 
     // Redirect Thrift output into std::stringstream
     apache::thrift::GlobalOutput.setOutputFunction(
-    [](const char* x) {_thriftStream << x;});
+      [](const char* x)
+      {
+        _thriftStream << x;
+      });
 
-    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+    ch::steady_clock::time_point begin = ch::steady_clock::now();
 
     while (!transport->isOpen())
     {
@@ -73,8 +76,8 @@ public:
       }
       catch (TransportException& ex)
       {
-        chrono::steady_clock::time_point current = chrono::steady_clock::now();
-        float elapsed_time = chrono::duration_cast<chrono::milliseconds>(current - begin).count();
+        ch::steady_clock::time_point current = ch::steady_clock::now();
+        float elapsed_time = ch::duration_cast<ch::milliseconds>(current - begin).count();
 
         if (elapsed_time > timeoutInMs_)
         {
@@ -98,7 +101,6 @@ public:
           language::AstNodeInfo& return_,
           const core::AstNodeId& astNodeId_) override
   {
-    //LOG(info) << "_service -> getAstNodeInfo";
     _service -> getAstNodeInfo(return_, astNodeId_);
   }
 
@@ -107,7 +109,6 @@ public:
           const std::string& path_,
           const core::Position& fpos_) override
   {
-    //LOG(info) << "_service -> getAstNodeInfoByPosition";
     _service -> getAstNodeInfoByPosition(return_, path_, fpos_);
   }
 
@@ -122,7 +123,6 @@ public:
           std::map<std::string, std::string>& return_,
           const core::AstNodeId& astNodeId_) override
   {
-    //LOG(info) << "_service -> getProperties";
     _service -> getProperties(return_, astNodeId_);
   }
 
@@ -130,7 +130,6 @@ public:
           std::string& return_,
           const core::AstNodeId& astNodeId_) override
   {
-    //LOG(info) << "_service -> getDocumentation";
     _service -> getDocumentation(return_, astNodeId_);
   }
 

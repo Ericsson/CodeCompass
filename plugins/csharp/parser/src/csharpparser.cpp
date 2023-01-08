@@ -11,7 +11,6 @@
 
 #include <parser/sourcemanager.h>
 
-#include <util/hash.h>
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
 #include <util/threadpool.h>
@@ -41,21 +40,22 @@ bool CsharpParser::parse()
   
     if (acceptProjectBuildPath(paths))
     {
-      LOG(info) << "CsharpParser parse path: " << paths[0];
-      LOG(info) << "Parsed csharp project build path: " << paths[1];
+      LOG(debug) << "C# parser parse path: " << paths[0];
+      LOG(debug) << "Parsed csharp project build path: " << paths[1];
       success = success && parseProjectBuildPath(paths);
     }
     else
     {
-      LOG(info) << "Bulid path must be a directory!";
+      LOG(error) << "Build path must be a directory!";
       success = false;
     }
   
   return success;
 }
 
-bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_) {
-  namespace chrono = std::chrono;
+bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
+{
+  namespace ch = std::chrono;
   fs::path csharp_path = fs::system_complete("../lib/csharp/");
 
   std::future<std::string> log;
@@ -71,45 +71,49 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
   command.append(csharp_path.string());
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
-  LOG(info) << "CSharpParser command: " << command;
+  LOG(debug) << "CSharpParser command: " << command;
 
-  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+  ch::steady_clock::time_point begin = ch::steady_clock::now();
   
   int result = bp::system(command, bp::start_dir(csharp_path), bp::std_out > log);
 
-  chrono::steady_clock::time_point current = chrono::steady_clock::now();
-  float elapsed_time =
-    chrono::duration_cast<chrono::milliseconds>(current - begin).count();
-  LOG(info) << "CSharp Parse time: " << elapsed_time << " ms";
+  ch::steady_clock::time_point current = ch::steady_clock::now();
+  float elapsed_time = ch::duration_cast<ch::milliseconds>(current - begin).count();
+  LOG(debug) << "CSharp Parse time: " << elapsed_time << " ms";
 
   std::string line;
-
   std::stringstream log_str(log.get());
-
   int countFull = 0, countPart = 0;
   
-  while(std::getline(log_str, line, '\n')){
-    if (line[0] == '+' || line[0] == '-') {
+  while(std::getline(log_str, line, '\n'))
+  {
+    if (line[0] == '+' || line[0] == '-')
+    {
       addSource(line.substr(1), line[0] == '-');
-      if (line[0] == '+'){
+      if (line[0] == '+')
+      {
         countFull++;
-      } else {
+      }
+      else
+      {
         countPart++;
       }
     }
   }
-  chrono::steady_clock::time_point after = chrono::steady_clock::now();
+
+  ch::steady_clock::time_point after = ch::steady_clock::now();
   elapsed_time =
-    chrono::duration_cast<chrono::milliseconds>(after - current).count();
-  LOG(info) << "CSharp source manage time: " << elapsed_time << " ms";
+    ch::duration_cast<ch::milliseconds>(after - current).count();
+
+  LOG(debug) << "C# source manage time: " << elapsed_time << " ms";
   LOG(info) << "Number of files fully parsed: " << countFull << 
     ", partially parsed: " << countPart << ", total: " <<  countFull+countPart;
 
   return result == 0;
 }
 
-void CsharpParser::addSource(const std::string& filepath_, bool error_){
-  ///*
+void CsharpParser::addSource(const std::string& filepath_, bool error_)
+{
   util::OdbTransaction transaction(_ctx.db);
 
   model::BuildActionPtr buildAction(new model::BuildAction);
@@ -131,7 +135,6 @@ void CsharpParser::addSource(const std::string& filepath_, bool error_){
     _ctx.db->persist(buildAction);
     _ctx.db->persist(buildSource);
   });
-  //*/
 }
 
 
@@ -139,23 +142,13 @@ CsharpParser::~CsharpParser()
 {
 }
 
-/* These two methods are used by the plugin manager to allow dynamic loading
-   of CodeCompass Parser plugins. Clang (>= version 6.0) gives a warning that
-   these C-linkage specified methods return types that are not proper from a
-   C code.
-
-   These codes are NOT to be called from any C code. The C linkage is used to
-   turn off the name mangling so that the dynamic loader can easily find the
-   symbol table needed to set the plugin up.
-*/
-// When writing a plugin, please do NOT copy this notice to your code.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 extern "C"
 {
   boost::program_options::options_description getOptions()
   {
-    boost::program_options::options_description description("Dummy Plugin");
+    boost::program_options::options_description description("C# Plugin");
 
     description.add_options()
         ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),

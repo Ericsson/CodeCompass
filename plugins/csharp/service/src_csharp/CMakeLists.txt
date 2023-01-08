@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(CodeCompassCSharp)
 
-add_custom_target(dotnetbuildservice #ALL
+add_custom_target(dotnetbuildservice
   COMMAND ${THRIFT_EXECUTABLE} --gen netstd
     -o ${CMAKE_CURRENT_BINARY_DIR}
     -I ${PROJECT_SOURCE_DIR}/service

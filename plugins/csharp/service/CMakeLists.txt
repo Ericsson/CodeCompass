@@ -1,8 +1,8 @@
 include_directories(
   include
+  ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include
-  ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
@@ -29,7 +29,7 @@ add_custom_command(
 
 # Create cpp static library from thrift files
 add_library(csharpservicethrift STATIC
-        ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CsharpService.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CsharpService.cpp)
 
 target_compile_options(csharpservicethrift PUBLIC -fPIC)
 

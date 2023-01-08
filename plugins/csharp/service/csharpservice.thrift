@@ -55,5 +55,4 @@ service CsharpService
   list<language.SyntaxHighlight> getSyntaxHighlight(
    1:common.FileRange range,
    2:list<string> content)
-
 }
