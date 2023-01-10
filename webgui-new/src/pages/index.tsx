@@ -1,5 +1,7 @@
+import Link from 'next/link';
+
 const Home = (): JSX.Element => {
-  return <></>;
+  return <Link href={'/project/CodeCompass'}>{'CodeCompass project'}</Link>;
 };
 
 export default Home;
