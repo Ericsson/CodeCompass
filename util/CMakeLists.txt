@@ -6,7 +6,7 @@ include_directories(
 include_directories(SYSTEM
   ${ODB_INCLUDE_DIRS})
 
-add_library(util STATIC
+add_library(util SHARED
   src/dbutil.cpp
   src/dynamiclibrary.cpp
   src/filesystem.cpp
@@ -17,9 +17,8 @@ add_library(util STATIC
   src/pipedprocess.cpp
   src/util.cpp)
 
-target_compile_options(util PUBLIC -fPIC)
-
 target_link_libraries(util
+  gvc
   ${Boost_LIBRARIES})
 
 string(TOLOWER "${DATABASE}" _database)
@@ -27,3 +26,5 @@ if (${_database} STREQUAL "sqlite")
   target_link_libraries(util
     sqlite3)
 endif()
+
+install(TARGETS util DESTINATION ${INSTALL_LIB_DIR})
