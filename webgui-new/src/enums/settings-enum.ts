@@ -6,9 +6,9 @@ export enum SearchOptions {
 }
 
 export enum SearchMethods {
-  EXPRESSION = 'Search by expression, "like foo AND bar"',
-  FILE_REGEX = 'File name filter regex (*.cpp)',
-  PATH_REGEX = 'Path filter regex (click on a dir below)',
+  EXPRESSION = 'Search by expression',
+  FILE_REGEX = 'File name filter regex',
+  PATH_REGEX = 'Path filter regex',
 }
 
 export enum SearchMainLanguages {

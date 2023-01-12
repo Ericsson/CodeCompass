@@ -23,7 +23,7 @@ const colors = {
   background: {
     primary: '#000000',
   },
-  foreground: {
+  text: {
     primary: '#ffffff',
   },
 };
@@ -42,6 +42,6 @@ export const appTheme = createTheme({
     primary: colors.background.primary,
   },
   colors: {
-    primary: colors.foreground.primary,
+    primary: colors.text.primary,
   },
 });
