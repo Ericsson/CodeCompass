@@ -1,7 +1,7 @@
-import { Button, InputAdornment, Menu, MenuItem, TextField, styled } from '@mui/material';
+import { Button, IconButton, InputAdornment, Menu, MenuItem, TextField, styled } from '@mui/material';
 import { ProjectSelect } from '../project-select/project-select';
 import { useRouter } from 'next/router';
-import { Search, Settings, MoreVert } from '@mui/icons-material';
+import { Search, Settings, MoreVert, MoreHoriz } from '@mui/icons-material';
 import Logo from '../../../../public/logo.png';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -16,6 +16,20 @@ const StyledHeader = styled('header')(({ theme }) => ({
   alignItems: 'center',
   gap: '1rem',
   borderBottom: `1px solid ${theme.colors?.primary}`,
+
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'column',
+  },
+}));
+
+const HeaderContent = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '1rem',
+
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'column',
+  },
 }));
 
 const Title = styled('div')({
@@ -50,7 +64,7 @@ export const Header = (): JSX.Element => {
 
   return (
     <StyledHeader>
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <HeaderContent>
         <Title>
           <Image src={Logo} width={'50'} height={'50'} alt={'logo'} />
           <h1>{'CodeCompass'}</h1>
@@ -81,18 +95,16 @@ export const Header = (): JSX.Element => {
           selectedTypes={selectedTypes}
           setSelectedTypes={setSelectedTypes}
         />
-      </div>
-      <div>
-        <Button sx={{ textTransform: 'none' }} startIcon={<MoreVert />} onClick={(e) => handleMenuOpen(e)}>
-          {'Menu'}
-        </Button>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-          <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
-        </Menu>
-      </div>
+      </HeaderContent>
+      <IconButton onClick={(e) => handleMenuOpen(e)}>
+        <MoreVert />
+      </IconButton>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
+        <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
+        <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
+        <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
+      </Menu>
     </StyledHeader>
   );
 };

@@ -4,6 +4,7 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
+  IconButton,
   InputLabel,
   MenuItem,
   Radio,
@@ -327,7 +328,9 @@ export const SettingsModal = ({
       <ModalWindow>
         <Title>
           <h2>{'Search settings'}</h2>
-          <Close sx={{ cursor: 'pointer' }} onClick={() => setModalOpen(false)} />
+          <IconButton onClick={() => setModalOpen(false)}>
+            <Close />
+          </IconButton>
         </Title>
         <FormControl>
           <SearchMethodContainer>
