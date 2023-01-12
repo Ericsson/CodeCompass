@@ -21,7 +21,7 @@ import {
   SearchTypes,
 } from '../../../enums/settings-enum';
 import { enumToArray, removeFromArray } from '../../../utils/array-utils';
-import InfoIcon from '@mui/icons-material/Info';
+import { Info, Close } from '@mui/icons-material';
 
 const ModalWindow = styled('div')(({ theme }) => ({
   position: 'absolute',
@@ -34,9 +34,16 @@ const ModalWindow = styled('div')(({ theme }) => ({
   maxHeight: '700px',
   padding: '1.5rem',
   border: `2px solid ${theme.colors?.primary}`,
+  backgroundColor: theme.backgroundColors?.primary,
   borderRadius: '5px',
   overflowY: 'scroll',
 }));
+
+const Title = styled('div')({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+});
 
 const SearchMethodContainer = styled('div')({
   margin: '20px 0',
@@ -207,7 +214,10 @@ export const SettingsModal = ({
   return (
     <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
       <ModalWindow>
-        <h2>{'Search settings'}</h2>
+        <Title>
+          <h2>{'Search settings'}</h2>
+          <Close sx={{ cursor: 'pointer' }} onClick={() => setModalOpen(false)} />
+        </Title>
         <FormControl>
           <SearchMethodContainer>
             <FormLabel>{'Search method'}</FormLabel>
