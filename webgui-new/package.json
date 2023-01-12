@@ -17,11 +17,14 @@
     "typescript": "4.9.4"
   },
   "dependencies": {
+    "@codemirror/lang-cpp": "^6.0.2",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.4",
     "@next/font": "13.1.1",
+    "@uiw/codemirror-theme-okaidia": "^4.19.6",
+    "@uiw/react-codemirror": "^4.19.6",
     "next": "13.1.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
