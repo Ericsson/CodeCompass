@@ -1,14 +1,14 @@
+export enum SearchMethods {
+  EXPRESSION = 'Search by expression',
+  FILE_REGEX = 'File name filter regex',
+  PATH_REGEX = 'Path filter regex',
+}
+
 export enum SearchOptions {
   TEXT = 'Text search',
   DEFINITION = 'Definition search',
   FILE_NAME = 'File name search',
   LOG = 'Log search',
-}
-
-export enum SearchMethods {
-  EXPRESSION = 'Search by expression',
-  FILE_REGEX = 'File name filter regex',
-  PATH_REGEX = 'Path filter regex',
 }
 
 export enum SearchMainLanguages {
@@ -18,7 +18,6 @@ export enum SearchMainLanguages {
   SHELLSCRIPT = 'ShellScript',
   PEARL = 'Pearl',
   PYTHON = 'Python',
-  ANY = 'Any',
 }
 
 export enum SearchOtherLanguages {
