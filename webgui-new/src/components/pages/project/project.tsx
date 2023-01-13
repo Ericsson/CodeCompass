@@ -1,9 +1,9 @@
 import ReactCodeMirror from '@uiw/react-codemirror';
-import { okaidia } from '@uiw/codemirror-theme-okaidia';
 import { Header } from '../../lib/header/header';
 import { SidebarMenu } from '../../lib/sidebar-menu/sidebar-menu';
 import { styled } from '@mui/material';
 import { cpp } from '@codemirror/lang-cpp';
+import { atomone } from '@uiw/codemirror-theme-atomone';
 
 const MainContainer = styled('div')({
   display: 'flex',
@@ -57,7 +57,7 @@ export const Project = (): JSX.Element => {
         <ReactCodeMirror
           readOnly={true}
           extensions={[cpp()]}
-          theme={okaidia}
+          theme={atomone}
           style={{ flexGrow: '1' }}
           value={placeholder}
           width={'100%'}

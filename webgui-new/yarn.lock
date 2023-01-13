@@ -651,10 +651,10 @@
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.0.0"
 
-"@uiw/codemirror-theme-okaidia@^4.19.6":
+"@uiw/codemirror-theme-atomone@^4.19.6":
   version "4.19.6"
-  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-okaidia/-/codemirror-theme-okaidia-4.19.6.tgz#7f64d3c6373135afc07b14e5aac56d81124087d4"
-  integrity sha512-1vJ9JKe92EyeF4eI/6bjyx1MxPqohIMy8ngQdhKCURnJWj5VF0W6CBdfiTgUXgAXmgMMKehtAr/e4Y8T+Bt0Dw==
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-atomone/-/codemirror-theme-atomone-4.19.6.tgz#5c3c4219f5534560ac99ce92507e0e2156d68c3e"
+  integrity sha512-ugrwVdxo08GNw5strL9qhyvPucjyNCiIj14+1DAcxl5jsWpRBgbD8RZZuVkeFk+H/z4PBhKFirErkamIU0eWWQ==
   dependencies:
     "@uiw/codemirror-themes" "4.19.6"
 
