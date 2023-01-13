@@ -1,3 +1,4 @@
+import { green, orange, red } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
@@ -7,6 +8,9 @@ declare module '@mui/material/styles' {
     };
     colors?: {
       primary?: string;
+      error?: string;
+      warning?: string;
+      success?: string;
     };
   }
   export interface ThemeOptions {
@@ -15,6 +19,9 @@ declare module '@mui/material/styles' {
     };
     colors?: {
       primary?: React.CSSProperties['color'];
+      error?: React.CSSProperties['color'];
+      warning?: React.CSSProperties['color'];
+      success?: React.CSSProperties['color'];
     };
   }
 }
@@ -26,6 +33,9 @@ const colors = {
     },
     text: {
       primary: '#000000',
+      error: red.A400,
+      warning: orange.A400,
+      success: green.A400,
     },
   },
   dark: {
@@ -34,6 +44,9 @@ const colors = {
     },
     text: {
       primary: '#ffffff',
+      error: red.A400,
+      warning: orange.A400,
+      success: green.A400,
     },
   },
 };
@@ -53,6 +66,9 @@ export const lightTheme = createTheme({
   },
   colors: {
     primary: colors.light.text.primary,
+    error: colors.light.text.error,
+    warning: colors.light.text.warning,
+    success: colors.light.text.success,
   },
 });
 
@@ -71,5 +87,8 @@ export const darkTheme = createTheme({
   },
   colors: {
     primary: colors.dark.text.primary,
+    error: colors.dark.text.error,
+    warning: colors.dark.text.warning,
+    success: colors.dark.text.success,
   },
 });

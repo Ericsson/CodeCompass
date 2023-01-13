@@ -7,9 +7,17 @@ import { useContext } from 'react';
 import { ThemeContext } from '../../../themes/theme-context';
 import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night';
 import { tokyoNightDay } from '@uiw/codemirror-theme-tokyo-night-day';
+import { FileName } from '../../lib/file-name/file-name';
 
 const MainContainer = styled('div')({
   display: 'flex',
+});
+
+const CodeMirrorContainer = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '100%',
 });
 
 const placeholder = `
@@ -59,15 +67,16 @@ export const Project = (): JSX.Element => {
       <Header />
       <MainContainer>
         <SidebarMenu />
-        <ReactCodeMirror
-          readOnly={true}
-          extensions={[cpp()]}
-          theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
-          style={{ flexGrow: '1' }}
-          value={placeholder}
-          width={'100%'}
-          height={'100%'}
-        />
+        <CodeMirrorContainer>
+          <FileName fileName={'main.c'} filePath={'/projects/c/main.c'} parseStatus={'Fully parsed'} />
+          <ReactCodeMirror
+            readOnly={true}
+            extensions={[cpp()]}
+            theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
+            style={{ flexGrow: '1' }}
+            value={placeholder}
+          />
+        </CodeMirrorContainer>
       </MainContainer>
     </>
   );
