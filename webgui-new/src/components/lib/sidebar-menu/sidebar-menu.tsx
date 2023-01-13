@@ -1,6 +1,8 @@
 import { IconButton, styled } from '@mui/material';
 import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
 import { ArrowCircleRight, ArrowCircleLeft, Folder, Search, Info, GitHub } from '@mui/icons-material';
+import { useContext } from 'react';
+import { ThemeContext } from '../../../themes/theme-context';
 
 const SidebarContainer = styled('div')({});
 
@@ -22,6 +24,8 @@ const IconLabel = styled('div')({
 export const SidebarMenu = (): JSX.Element => {
   const { collapseSidebar, toggleSidebar, collapsed, toggled, broken, rtl } = useProSidebar();
 
+  const { theme } = useContext(ThemeContext);
+
   return (
     <SidebarContainer>
       <SidebarHeader>
@@ -35,11 +39,11 @@ export const SidebarMenu = (): JSX.Element => {
           menuItemStyles={{
             button: ({ level, active, disabled }) => {
               return {
-                color: '#fff',
-                backgroundColor: '#000',
+                color: theme === 'dark' ? '#fff' : '#000',
+                backgroundColor: theme === 'dark' ? '#000' : '#fff',
                 ':hover': {
-                  color: '#fff',
-                  backgroundColor: '#000',
+                  color: theme === 'dark' ? '#fff' : '#000',
+                  backgroundColor: theme === 'dark' ? '#000' : '#fff',
                 },
               };
             },

@@ -1,13 +1,14 @@
 import { Button, IconButton, InputAdornment, Menu, MenuItem, TextField, styled } from '@mui/material';
 import { ProjectSelect } from '../project-select/project-select';
 import { useRouter } from 'next/router';
-import { Search, Settings, MoreVert, MoreHoriz } from '@mui/icons-material';
+import { Search, Settings, MoreVert, LightMode, DarkMode } from '@mui/icons-material';
 import Logo from '../../../../public/logo.png';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../../enums/settings-enum';
 import { enumToArray } from '../../../utils/array-utils';
 import { SettingsModal } from '../settings-modal/settings-modal';
+import { ThemeContext } from '../../../themes/theme-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   padding: '10px',
@@ -41,6 +42,8 @@ const Title = styled('div')({
 export const Header = (): JSX.Element => {
   const router = useRouter();
 
+  const { theme, setTheme } = useContext(ThemeContext);
+
   const searchOptions = enumToArray(SearchOptions);
   const searchMethods = enumToArray(SearchMethods);
   const searchMainLanguages = enumToArray(SearchMainLanguages);
@@ -60,6 +63,10 @@ export const Header = (): JSX.Element => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const changeTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -96,15 +103,18 @@ export const Header = (): JSX.Element => {
           setSelectedTypes={setSelectedTypes}
         />
       </HeaderContent>
-      <IconButton onClick={(e) => handleMenuOpen(e)}>
-        <MoreVert />
-      </IconButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
-        <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
-        <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
-        <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
-      </Menu>
+      <div>
+        <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
+        <IconButton onClick={(e) => handleMenuOpen(e)}>
+          <MoreVert />
+        </IconButton>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
+        </Menu>
+      </div>
     </StyledHeader>
   );
 };

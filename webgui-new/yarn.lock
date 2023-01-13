@@ -651,10 +651,17 @@
     "@codemirror/state" "^6.0.0"
     "@codemirror/view" "^6.0.0"
 
-"@uiw/codemirror-theme-atomone@^4.19.6":
+"@uiw/codemirror-theme-tokyo-night-day@^4.19.6":
   version "4.19.6"
-  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-atomone/-/codemirror-theme-atomone-4.19.6.tgz#5c3c4219f5534560ac99ce92507e0e2156d68c3e"
-  integrity sha512-ugrwVdxo08GNw5strL9qhyvPucjyNCiIj14+1DAcxl5jsWpRBgbD8RZZuVkeFk+H/z4PBhKFirErkamIU0eWWQ==
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-tokyo-night-day/-/codemirror-theme-tokyo-night-day-4.19.6.tgz#2029ea5b1b698ad09504d942233888fc69840e71"
+  integrity sha512-uZj7PvTtEuJUF8fNosLnTo/fxJFBt8lJFuI8ZOVn6+OlyPBwrqaEqoKGr46f2v+ttCSMU1vmL/Z6Dh/7FNF2EA==
+  dependencies:
+    "@uiw/codemirror-themes" "4.19.6"
+
+"@uiw/codemirror-theme-tokyo-night@^4.19.6":
+  version "4.19.6"
+  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-tokyo-night/-/codemirror-theme-tokyo-night-4.19.6.tgz#b2fae6aa1f5a7783a92284dc6cdaba662da4985d"
+  integrity sha512-lz50+mWe6kAIzXPqmbFo1xMmRgdYxM0MARcc1s+KpeJkBjxvJqAyQk28303A2ZNKm2v+s3LltCvB7/HEqJAvlw==
   dependencies:
     "@uiw/codemirror-themes" "4.19.6"
 

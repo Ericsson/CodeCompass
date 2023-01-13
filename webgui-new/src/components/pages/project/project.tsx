@@ -3,7 +3,10 @@ import { Header } from '../../lib/header/header';
 import { SidebarMenu } from '../../lib/sidebar-menu/sidebar-menu';
 import { styled } from '@mui/material';
 import { cpp } from '@codemirror/lang-cpp';
-import { atomone } from '@uiw/codemirror-theme-atomone';
+import { useContext } from 'react';
+import { ThemeContext } from '../../../themes/theme-context';
+import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night';
+import { tokyoNightDay } from '@uiw/codemirror-theme-tokyo-night-day';
 
 const MainContainer = styled('div')({
   display: 'flex',
@@ -49,6 +52,8 @@ int main() {
 `;
 
 export const Project = (): JSX.Element => {
+  const { theme } = useContext(ThemeContext);
+
   return (
     <>
       <Header />
@@ -57,7 +62,7 @@ export const Project = (): JSX.Element => {
         <ReactCodeMirror
           readOnly={true}
           extensions={[cpp()]}
-          theme={atomone}
+          theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
           style={{ flexGrow: '1' }}
           value={placeholder}
           width={'100%'}

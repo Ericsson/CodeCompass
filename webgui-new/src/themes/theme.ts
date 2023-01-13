@@ -20,15 +20,43 @@ declare module '@mui/material/styles' {
 }
 
 const colors = {
-  background: {
-    primary: '#000000',
+  light: {
+    background: {
+      primary: '#ffffff',
+    },
+    text: {
+      primary: '#000000',
+    },
   },
-  text: {
-    primary: '#ffffff',
+  dark: {
+    background: {
+      primary: '#000000',
+    },
+    text: {
+      primary: '#ffffff',
+    },
   },
 };
 
-export const appTheme = createTheme({
+export const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    background: {
+      default: '#ffffff',
+    },
+    text: {
+      primary: '#000000',
+    },
+  },
+  backgroundColors: {
+    primary: colors.light.background.primary,
+  },
+  colors: {
+    primary: colors.light.text.primary,
+  },
+});
+
+export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
@@ -39,9 +67,9 @@ export const appTheme = createTheme({
     },
   },
   backgroundColors: {
-    primary: colors.background.primary,
+    primary: colors.dark.background.primary,
   },
   colors: {
-    primary: colors.text.primary,
+    primary: colors.dark.text.primary,
   },
 });
