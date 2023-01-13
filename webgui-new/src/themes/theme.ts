@@ -42,10 +42,10 @@ export const lightTheme = createTheme({
   palette: {
     mode: 'light',
     background: {
-      default: '#ffffff',
+      default: colors.light.background.primary,
     },
     text: {
-      primary: '#000000',
+      primary: colors.light.text.primary,
     },
   },
   backgroundColors: {
@@ -60,10 +60,10 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
-      default: '#000000',
+      default: colors.dark.background.primary,
     },
     text: {
-      primary: '#ffffff',
+      primary: colors.dark.text.primary,
     },
   },
   backgroundColors: {

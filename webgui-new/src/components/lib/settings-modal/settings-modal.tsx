@@ -102,6 +102,30 @@ export const SettingsModal = ({
   const [searchOtherLanguage, setSearchOtherLanguage] = useState<string>(searchOtherLanguages[0]);
   const [isOtherLanguage, setIsOtherLanguage] = useState<boolean>(false);
 
+  const [searchOptionsDisabled, setSearchOptionsDisabled] = useState<boolean>(
+    searchMethod !== SearchMethods.EXPRESSION.toString()
+  );
+
+  const [searchLanguagesDisabled, setSearchLanguagesDisabled] = useState<boolean>(
+    searchMethod !== SearchMethods.EXPRESSION.toString() &&
+      (searchOption !== SearchOptions.TEXT.toString() || searchOption !== SearchOptions.DEFINITION.toString())
+  );
+
+  const [searchTypesDisabled, setSearchTypesDisabled] = useState<boolean>(
+    searchMethod !== SearchMethods.EXPRESSION.toString() || searchOption !== SearchOptions.DEFINITION.toString()
+  );
+
+  useEffect(() => {
+    setSearchOptionsDisabled(searchMethod !== SearchMethods.EXPRESSION.toString());
+    setSearchLanguagesDisabled(
+      searchMethod !== SearchMethods.EXPRESSION.toString() ||
+        (searchOption !== SearchOptions.TEXT.toString() && searchOption !== SearchOptions.DEFINITION.toString())
+    );
+    setSearchTypesDisabled(
+      searchMethod !== SearchMethods.EXPRESSION.toString() || searchOption !== SearchOptions.DEFINITION.toString()
+    );
+  }, [searchMethod, searchOption]);
+
   useEffect(() => {
     if (isOtherLanguage) {
       setSearchLanguage(searchOtherLanguage);
@@ -116,8 +140,9 @@ export const SettingsModal = ({
           {searchOptions.map((elem, idx) => {
             return (
               <FormControlLabel
+                disabled={searchOptionsDisabled}
                 key={idx}
-                onClick={() => setSearchOption(elem)}
+                onClick={() => (!searchOptionsDisabled ? setSearchOption(elem) : '')}
                 value={elem}
                 control={<Radio />}
                 label={elem}
@@ -137,8 +162,10 @@ export const SettingsModal = ({
           {searchMainLanguages.map((elem, idx) => {
             return (
               <FormControlLabel
+                disabled={searchLanguagesDisabled}
                 key={idx}
                 onClick={() => {
+                  if (searchLanguagesDisabled) return;
                   setSearchLanguage(elem);
                   setIsOtherLanguage(false);
                 }}
@@ -150,7 +177,9 @@ export const SettingsModal = ({
           })}
           <RadioWithInfo>
             <FormControlLabel
+              disabled={searchLanguagesDisabled}
               onClick={() => {
+                if (searchLanguagesDisabled) return;
                 setSearchLanguage('Any');
                 setIsOtherLanguage(false);
               }}
@@ -164,7 +193,9 @@ export const SettingsModal = ({
           </RadioWithInfo>
           <OtherLanguagesContainer>
             <FormControlLabel
+              disabled={searchLanguagesDisabled}
               onClick={() => {
+                if (searchLanguagesDisabled) return;
                 setSearchLanguage(searchOtherLanguage);
                 setIsOtherLanguage(true);
               }}
@@ -176,9 +207,10 @@ export const SettingsModal = ({
             <FormControl>
               <InputLabel>{'Other'}</InputLabel>
               <Select
+                disabled={searchLanguagesDisabled}
                 value={searchOtherLanguage}
                 label='Other'
-                onChange={(e) => setSearchOtherLanguage(e.target.value)}
+                onChange={(e) => (!searchLanguagesDisabled ? setSearchOtherLanguage(e.target.value) : '')}
               >
                 {searchOtherLanguages.map((elem, idx) => {
                   return (
@@ -202,14 +234,16 @@ export const SettingsModal = ({
         {searchTypes.map((elem, idx) => {
           return (
             <FormControlLabel
+              disabled={searchTypesDisabled}
               key={idx}
               control={
                 <Checkbox
-                  disabled={searchOption === 'Text search'}
                   onChange={(e) =>
-                    setSelectedTypes(
-                      e.currentTarget.checked ? [...selectedTypes, elem] : removeFromArray(selectedTypes, elem)
-                    )
+                    !searchTypesDisabled
+                      ? setSelectedTypes(
+                          e.currentTarget.checked ? [...selectedTypes, elem] : removeFromArray(selectedTypes, elem)
+                        )
+                      : ''
                   }
                   checked={selectedTypes.includes(elem)}
                 />
@@ -219,10 +253,12 @@ export const SettingsModal = ({
           );
         })}
         <FormControlLabel
+          disabled={searchTypesDisabled}
           control={
             <Checkbox
-              disabled={searchOption === 'Text search'}
-              onChange={(e) => setSelectedTypes(e.currentTarget.checked ? searchTypes : [])}
+              onChange={(e) =>
+                !searchTypesDisabled ? setSelectedTypes(e.currentTarget.checked ? searchTypes : []) : ''
+              }
               checked={searchTypes.every((t) => selectedTypes.includes(t))}
             />
           }
@@ -353,21 +389,11 @@ export const SettingsModal = ({
               })}
             </RadioGroup>
           </SearchMethodContainer>
-          {searchMethod === SearchMethods.EXPRESSION ? (
-            <ExpressionSearchSettings>
-              <Options />
-              {searchOption === SearchOptions.TEXT || searchOption === SearchOptions.DEFINITION ? (
-                <>
-                  <Languages />
-                  <Types />
-                </>
-              ) : (
-                ''
-              )}
-            </ExpressionSearchSettings>
-          ) : (
-            ''
-          )}
+          <ExpressionSearchSettings>
+            <Options />
+            <Languages />
+            <Types />
+          </ExpressionSearchSettings>
         </FormControl>
       </ModalWindow>
     </Modal>
