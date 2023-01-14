@@ -131,7 +131,6 @@ public:
     std::vector<SyntaxHighlight>& return_,
     const core::FileRange& range_) override;
 
-private:
   enum ReferenceType
   {
     DEFINITION, /*!< By this option the definition(s) of the AST node can be
@@ -258,6 +257,7 @@ private:
       of a module. */
   };
 
+private:
   static bool compareByPosition(
     const model::CppAstNode& lhs,
     const model::CppAstNode& rhs);

@@ -28,10 +28,10 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${RUNENV_LD_LIBRARY_PATH}")
 add_subdirectory(logger)
 add_subdirectory(model)
 add_subdirectory(parser)
+add_subdirectory(plugins) # must precede service
 add_subdirectory(scripts)
 add_subdirectory(service)
 add_subdirectory(util)
-add_subdirectory(plugins) # must precede webgui
 add_subdirectory(webgui)
 add_subdirectory(webserver)
 
