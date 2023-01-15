@@ -61,7 +61,7 @@ IndexerProcess::IndexerProcess(
       "java", JAVAMEMORYAMOUNT,
       "-classpath", classpath.c_str(),
       "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
-      "-Djava.util.logging.SimpleFormatter.format=%1$tY-%1$tm-%1$td %1$tT.%1$tN [%4$s] %5$s%6$s%n",
+      "-Djava.util.logging.SimpleFormatter.format=%1$tY-%1$tm-%1$td %1$tT [%4$s] %5$s%6$s%n",
       logLevelOpt.c_str(),
       "cc.search.indexer.app.Indexer",
       "-indexDB", indexDatabase_.c_str(),

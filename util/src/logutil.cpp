@@ -23,14 +23,12 @@ std::string getFormattedTime(boost::posix_time::ptime ptime_)
 {
   std::stringstream stream;
   boost::posix_time::time_facet* facet = new boost::posix_time::time_facet();
-  facet->format("%Y-%m-%d %H:%M:%S%F");
+  facet->format("%Y-%m-%d %H:%M:%S");
   stream.imbue(std::locale(std::locale::classic(), facet));
 
   stream << ptime_;
-  std::string ret = stream.str();
-  ret.resize(TIMESTAMP_LENGTH, '0'); // we need nanoseconds even if it is 0
 
-  return ret;
+  return stream.str();
 }
 
 void consoleLogFormatter(

@@ -76,10 +76,10 @@ int main(int argc, char* argv[])
                                                           , "CodeCompass"
                                                           );
 
-      if (!cc::util::initFileLogger(vm["log-target"].as<std::string>() + "webserver.log"))
-      {
-        vm.at("log-target").value() = std::string("");
-      }
+        if (!cc::util::initFileLogger(vm["log-target"].as<std::string>() + "webserver.log"))
+        {
+            vm.at("log-target").value() = std::string("");
+        }
     }
 
     if (argc < 2 || vm.count("help"))
