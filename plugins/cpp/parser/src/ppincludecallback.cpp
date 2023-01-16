@@ -77,39 +77,48 @@ void PPIncludeCallback::InclusionDirective(
 
   std::string includedPath = searchPath_.str() + '/' + fileName_.str();
   model::FilePtr included = _ctx.srcMgr.getFile(includedPath);
-  included->parseStatus = model::File::PSFullyParsed;
-  if (included->type != model::File::DIRECTORY_TYPE &&
-      included->type != _cppSourceType)
+  if (included)
   {
-    included->type = _cppSourceType;
-    _ctx.srcMgr.updateFile(*included);
+    included->parseStatus = model::File::PSFullyParsed;
+    if (included->type != model::File::DIRECTORY_TYPE &&
+        included->type != _cppSourceType)
+    {
+      included->type = _cppSourceType;
+        _ctx.srcMgr.updateFile(*included);
+    }
   }
 
   //--- Includer file ---//
 
   std::string includerPath = presLoc.getFilename();
   model::FilePtr includer = _ctx.srcMgr.getFile(includerPath);
-  includer->parseStatus = model::File::PSFullyParsed;
-  if (includer->type != model::File::DIRECTORY_TYPE &&
-      includer->type != _cppSourceType)
+  if (includer)
   {
-    includer->type = _cppSourceType;
-    _ctx.srcMgr.updateFile(*includer);
+    includer->parseStatus = model::File::PSFullyParsed;
+    if (includer->type != model::File::DIRECTORY_TYPE &&
+        includer->type != _cppSourceType)
+    {
+      includer->type = _cppSourceType;
+        _ctx.srcMgr.updateFile(*includer);
+    }
   }
 
   //--- CppAstNode ---//
 
-  model::CppAstNodePtr fileNode =
-    createFileAstNode(included, filenameRange_.getAsRange());
+  if (included && includer)
+  {
+    model::CppAstNodePtr fileNode =
+      createFileAstNode(included, filenameRange_.getAsRange());
 
-  if (_entityCache.insert(*fileNode))
-    _astNodes.push_back(fileNode);
+    if (_entityCache.insert(*fileNode))
+      _astNodes.push_back(fileNode);
 
-  model::CppHeaderInclusionPtr inclusion(new model::CppHeaderInclusion);
-  inclusion->includer = includer;
-  inclusion->included = included;
+    model::CppHeaderInclusionPtr inclusion(new model::CppHeaderInclusion);
+    inclusion->includer = includer;
+    inclusion->included = included;
 
-  _headerIncs.push_back(inclusion);
+    _headerIncs.push_back(inclusion);
+  }
 }
 
 } // parser

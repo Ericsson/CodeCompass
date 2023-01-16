@@ -259,23 +259,28 @@ void CppParser::addCompileCommand(
   {
     model::BuildSource buildSource;
     buildSource.file = _ctx.srcMgr.getFile(srcTarget.first);
-    buildSource.file->parseStatus = error_
-      ? model::File::PSPartiallyParsed
-      : model::File::PSFullyParsed;
-    _ctx.srcMgr.updateFile(*buildSource.file);
-    buildSource.action = buildAction_;
-    sources.push_back(std::move(buildSource));
+    if (buildSource.file) 
+    {
+      buildSource.file->parseStatus = error_
+        ? model::File::PSPartiallyParsed
+        : model::File::PSFullyParsed;
+        _ctx.srcMgr.updateFile(*buildSource.file);
+      buildSource.action = buildAction_;
+      sources.push_back(std::move(buildSource));
+    }
 
     model::BuildTarget buildTarget;
     buildTarget.file = _ctx.srcMgr.getFile(srcTarget.second);
-    buildTarget.action = buildAction_;
-    if (buildTarget.file->type != model::File::BINARY_TYPE)
+    if (buildTarget.file)
     {
-      buildTarget.file->type = model::File::BINARY_TYPE;
-      _ctx.srcMgr.updateFile(*buildTarget.file);
+      buildTarget.action = buildAction_;
+      if (buildTarget.file->type != model::File::BINARY_TYPE)
+      {
+        buildTarget.file->type = model::File::BINARY_TYPE;
+          _ctx.srcMgr.updateFile(*buildTarget.file);
+      }
+      targets.push_back(std::move(buildTarget));
     }
-
-    targets.push_back(std::move(buildTarget));
   }
 
   _ctx.srcMgr.persistFiles();
@@ -374,17 +379,20 @@ std::vector<std::vector<std::string>> CppParser::createCleanupOrder()
       {
         auto file = _ctx.srcMgr.getFile(item.first);
 
-        auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
-          odb::query<model::CppHeaderInclusion>::included == file->id);
-
-        for (const auto& inclusion : inclusions)
+        if (file)
         {
-          bool inserted;
-          model::FilePtr includer = inclusion.includer.load();
-          boost::graph_traits<Graph>::edge_descriptor e;
-          boost::tie(e, inserted) = boost::add_edge(
-            fileNameToVertex.at(includer->path),
-            fileNameToVertex.at(file->path), g);
+          auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
+            odb::query<model::CppHeaderInclusion>::included == file->id);
+
+          for (const auto& inclusion : inclusions)
+          {
+            bool inserted;
+            model::FilePtr includer = inclusion.includer.load();
+            boost::graph_traits<Graph>::edge_descriptor e;
+            boost::tie(e, inserted) = boost::add_edge(
+              fileNameToVertex.at(includer->path),
+              fileNameToVertex.at(file->path), g);
+          }
         }
       }
     });
@@ -622,38 +630,41 @@ bool CppParser::cleanupWorker(const std::string& path_)
             // Fetch file from SourceManager by path
             model::FilePtr delFile = _ctx.srcMgr.getFile(path_);
 
-            // Query CppAstNode
-            auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
-              odb::query<model::CppAstNode>::location.file == delFile->id);
-
-            for (const model::CppAstNode& astNode : defCppAstNodes)
+            if (delFile)
             {
-              // Delete CppEntity
-              _ctx.db->erase_query<model::CppEntity>(odb::query<model::CppEntity>::astNodeId == astNode.id);
+              // Query CppAstNode
+              auto defCppAstNodes = _ctx.db->query<model::CppAstNode>(
+                odb::query<model::CppAstNode>::location.file == delFile->id);
 
-              if (astNode.astType == model::CppAstNode::AstType::Definition)
+              for (const model::CppAstNode& astNode : defCppAstNodes)
               {
-                // Delete CppInheritance
-                _ctx.db->erase_query<model::CppInheritance>(
-                  odb::query<model::CppInheritance>::derived == astNode.entityHash);
+                // Delete CppEntity
+                _ctx.db->erase_query<model::CppEntity>(odb::query<model::CppEntity>::astNodeId == astNode.id);
 
-                // Delete CppFriendship
-                _ctx.db->erase_query<model::CppFriendship>(
-                  odb::query<model::CppFriendship>::target == astNode.entityHash);
+                if (astNode.astType == model::CppAstNode::AstType::Definition)
+                {
+                  // Delete CppInheritance
+                  _ctx.db->erase_query<model::CppInheritance>(
+                    odb::query<model::CppInheritance>::derived == astNode.entityHash);
+
+                  // Delete CppFriendship
+                  _ctx.db->erase_query<model::CppFriendship>(
+                    odb::query<model::CppFriendship>::target == astNode.entityHash);
+                }
               }
+
+              // Delete BuildAction
+              auto delSources = _ctx.db->query<model::BuildSource>(
+                odb::query<model::BuildSource>::file == delFile->id);
+              for (const model::BuildSource& source : delSources)
+              {
+                _ctx.db->erase<model::BuildAction>(source.action->id);
+              }
+
+              // Delete CppEdge (connected to File)
+              _ctx.db->erase_query<model::CppEdge>(odb::query<model::CppEdge>::from == delFile->id);
+
             }
-
-            // Delete BuildAction
-            auto delSources = _ctx.db->query<model::BuildSource>(
-              odb::query<model::BuildSource>::file == delFile->id);
-            for (const model::BuildSource& source : delSources)
-            {
-              _ctx.db->erase<model::BuildAction>(source.action->id);
-            }
-
-            // Delete CppEdge (connected to File)
-            _ctx.db->erase_query<model::CppEdge>(odb::query<model::CppEdge>::from == delFile->id);
-
             break;
           }
 

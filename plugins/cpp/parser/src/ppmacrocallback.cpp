@@ -219,14 +219,17 @@ void PPMacroCallback::addFileLoc(
   _fileLocUtil.setRange(start_, end_, fileLoc.range);
   fileLoc.file = _ctx.srcMgr.getFile(_fileLocUtil.getFilePath(start_));
 
-  const std::string& type = fileLoc.file.load()->type;
-  if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+  if (fileLoc.file) 
   {
-    fileLoc.file->type = _cppSourceType;
-    _ctx.srcMgr.updateFile(*fileLoc.file);
-  }
+    const std::string& type = fileLoc.file.load()->type;
+    if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+    {
+      fileLoc.file->type = _cppSourceType;
+        _ctx.srcMgr.updateFile(*fileLoc.file);
+    }
 
-  astNode_->location = fileLoc;
+    astNode_->location = fileLoc;
+  }
 }
 
 bool PPMacroCallback::isBuiltInMacro(const clang::MacroInfo* mi_) const
