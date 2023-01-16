@@ -1,11 +1,12 @@
 import { styled } from '@mui/material';
 
-const Container = styled('div')({
+const Container = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '0.6rem',
-  padding: '10px',
-});
+  padding: '5px',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+}));
 
 const ParseStatus = styled('div')({
   borderRadius: '5px',

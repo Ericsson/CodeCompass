@@ -1,10 +1,11 @@
 import { IconButton, styled } from '@mui/material';
 import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
 import { ArrowCircleRight, ArrowCircleLeft, Folder, Search, Info, GitHub } from '@mui/icons-material';
-import { useContext } from 'react';
-import { ThemeContext } from '../../../themes/theme-context';
 
-const SidebarContainer = styled('div')({});
+const SidebarContainer = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+});
 
 const SidebarHeader = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -13,6 +14,22 @@ const SidebarHeader = styled('div')(({ theme }) => ({
   gap: '1rem',
   borderBottom: `1px solid ${theme.colors?.primary}`,
   borderRight: `1px solid ${theme.colors?.primary}`,
+  padding: '10px',
+}));
+
+const StyledMenu = styled(Menu)(({ theme }) => ({
+  '& > aside': {
+    borderRightStyle: 'none',
+    borderRight: `1px solid ${theme.colors?.primary}`,
+  },
+  '& a': {
+    color: theme.colors?.primary,
+    backgroundColor: theme.backgroundColors?.primary,
+  },
+  '& a:hover': {
+    color: theme.backgroundColors?.primary,
+    backgroundColor: theme.colors?.primary,
+  },
 }));
 
 const IconLabel = styled('div')({
@@ -24,8 +41,6 @@ const IconLabel = styled('div')({
 export const SidebarMenu = (): JSX.Element => {
   const { collapseSidebar, toggleSidebar, collapsed, toggled, broken, rtl } = useProSidebar();
 
-  const { theme } = useContext(ThemeContext);
-
   return (
     <SidebarContainer>
       <SidebarHeader>
@@ -35,20 +50,7 @@ export const SidebarMenu = (): JSX.Element => {
         </IconButton>
       </SidebarHeader>
       <Sidebar>
-        <Menu
-          menuItemStyles={{
-            button: ({ level, active, disabled }) => {
-              return {
-                color: theme === 'dark' ? '#fff' : '#000',
-                backgroundColor: theme === 'dark' ? '#000' : '#fff',
-                ':hover': {
-                  color: theme === 'dark' ? '#fff' : '#000',
-                  backgroundColor: theme === 'dark' ? '#000' : '#fff',
-                },
-              };
-            },
-          }}
-        >
+        <StyledMenu>
           <SubMenu
             label={
               <IconLabel>
@@ -91,7 +93,7 @@ export const SidebarMenu = (): JSX.Element => {
           >
             <MenuItem>Content</MenuItem>
           </SubMenu>
-        </Menu>
+        </StyledMenu>
       </Sidebar>
     </SidebarContainer>
   );

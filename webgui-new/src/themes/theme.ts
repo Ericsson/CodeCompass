@@ -29,10 +29,10 @@ declare module '@mui/material/styles' {
 const colors = {
   light: {
     background: {
-      primary: '#ffffff',
+      primary: '#e1e2e7',
     },
     text: {
-      primary: '#000000',
+      primary: '#1a1b26',
       error: red.A400,
       warning: orange.A400,
       success: green.A400,
@@ -40,10 +40,10 @@ const colors = {
   },
   dark: {
     background: {
-      primary: '#000000',
+      primary: '#1a1b26',
     },
     text: {
-      primary: '#ffffff',
+      primary: '#b6cad4',
       error: red.A400,
       warning: orange.A400,
       success: green.A400,

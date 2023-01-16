@@ -20,8 +20,7 @@ const CodeMirrorContainer = styled('div')({
   height: '100%',
 });
 
-const placeholder = `
-#include <stdio.h>
+const placeholder = `#include <stdio.h>
 #include <stdlib.h>
 
 char* readStr() {
