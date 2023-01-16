@@ -11,31 +11,23 @@ import { SettingsModal } from '../settings-modal/settings-modal';
 import { ThemeContext } from '../../../themes/theme-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
-  padding: '10px',
+  padding: '10px 10px 10px 20px',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: '1rem',
+  height: '85px',
   borderBottom: `1px solid ${theme.colors?.primary}`,
-
-  [theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
-  },
 }));
 
 const HeaderContent = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1rem',
-
-  [theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
-  },
 }));
 
-const Title = styled('div')({
+const ButtonGroup = styled('div')({
   display: 'flex',
-  alignItems: 'center',
   gap: '1rem',
 });
 
@@ -72,10 +64,6 @@ export const Header = (): JSX.Element => {
   return (
     <StyledHeader>
       <HeaderContent>
-        <Title>
-          <Image src={Logo} width={'50'} height={'50'} alt={'logo'} />
-          <h1>{'CodeCompass'}</h1>
-        </Title>
         <ProjectSelect currentProject={router.query.id as string} projects={['CodeCompass', 'cJSON']} />
         <TextField
           placeholder={searchMethod}
@@ -90,6 +78,18 @@ export const Header = (): JSX.Element => {
         <Button sx={{ textTransform: 'none' }} startIcon={<Settings />} onClick={() => setModalOpen(true)}>
           {'Search settings'}
         </Button>
+      </HeaderContent>
+      <ButtonGroup>
+        <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
+        <IconButton onClick={(e) => handleMenuOpen(e)}>
+          <MoreVert />
+        </IconButton>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
+          <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
+        </Menu>
         <SettingsModal
           modalOpen={modalOpen}
           setModalOpen={setModalOpen}
@@ -102,19 +102,7 @@ export const Header = (): JSX.Element => {
           selectedTypes={selectedTypes}
           setSelectedTypes={setSelectedTypes}
         />
-      </HeaderContent>
-      <div>
-        <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
-        <IconButton onClick={(e) => handleMenuOpen(e)}>
-          <MoreVert />
-        </IconButton>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-          <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
-          <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
-        </Menu>
-      </div>
+      </ButtonGroup>
     </StyledHeader>
   );
 };

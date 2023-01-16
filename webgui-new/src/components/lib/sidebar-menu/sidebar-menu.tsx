@@ -1,6 +1,8 @@
 import { IconButton, styled } from '@mui/material';
 import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
 import { ArrowCircleRight, ArrowCircleLeft, Folder, Search, Info, GitHub } from '@mui/icons-material';
+import Image from 'next/image';
+import Logo from '../../../../public/logo.png';
 
 const SidebarContainer = styled('div')({
   display: 'flex',
@@ -11,10 +13,20 @@ const SidebarHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  gap: '1rem',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-  borderRight: `1px solid ${theme.colors?.primary}`,
   padding: '10px',
+  height: '80px',
+  color: theme.colors?.primary,
+  backgroundColor: theme.backgroundColors?.primary,
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  backgroundImage: `url('${Logo.src}')`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'left center',
+  backgroundSize: '100%',
+
+  '& > div': {
+    backgroundColor: theme.backgroundColors?.primary,
+    borderRadius: '5px',
+  },
 }));
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
@@ -32,6 +44,10 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   },
 }));
 
+const StyledHeading = styled('h1')(({ theme }) => ({
+  fontSize: '1.2rem',
+}));
+
 const IconLabel = styled('div')({
   display: 'flex',
   alignItems: 'center',
@@ -43,13 +59,15 @@ export const SidebarMenu = (): JSX.Element => {
 
   return (
     <SidebarContainer>
-      <SidebarHeader>
-        {collapsed ? '' : 'Menu'}
-        <IconButton onClick={() => collapseSidebar()}>
-          {collapsed ? <ArrowCircleRight /> : <ArrowCircleLeft />}
-        </IconButton>
-      </SidebarHeader>
       <Sidebar>
+        <SidebarHeader>
+          <IconLabel>
+            <IconButton onClick={() => collapseSidebar()}>
+              {collapsed ? <ArrowCircleRight /> : <ArrowCircleLeft />}
+            </IconButton>
+            {collapsed ? '' : <StyledHeading>{'CodeCompass'}</StyledHeading>}
+          </IconLabel>
+        </SidebarHeader>
         <StyledMenu>
           <SubMenu
             label={

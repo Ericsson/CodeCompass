@@ -4,7 +4,7 @@ const Container = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '0.6rem',
-  padding: '5px',
+  padding: '10px 10px 10px 20px',
   borderBottom: `1px solid ${theme.colors?.primary}`,
 }));
 

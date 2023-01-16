@@ -9,8 +9,14 @@ import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night';
 import { tokyoNightDay } from '@uiw/codemirror-theme-tokyo-night-day';
 import { FileName } from '../../lib/file-name/file-name';
 
-const MainContainer = styled('div')({
+const OuterContainer = styled('div')({
   display: 'flex',
+});
+
+const InnerContainer = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  flexGrow: '1',
 });
 
 const CodeMirrorContainer = styled('div')({
@@ -62,10 +68,10 @@ export const Project = (): JSX.Element => {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <>
-      <Header />
-      <MainContainer>
-        <SidebarMenu />
+    <OuterContainer>
+      <SidebarMenu />
+      <InnerContainer>
+        <Header />
         <CodeMirrorContainer>
           <FileName fileName={'main.c'} filePath={'/projects/c/main.c'} parseStatus={'Fully parsed'} />
           <ReactCodeMirror
@@ -76,7 +82,7 @@ export const Project = (): JSX.Element => {
             value={placeholder}
           />
         </CodeMirrorContainer>
-      </MainContainer>
-    </>
+      </InnerContainer>
+    </OuterContainer>
   );
 };
