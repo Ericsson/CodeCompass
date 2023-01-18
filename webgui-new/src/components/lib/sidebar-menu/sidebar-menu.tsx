@@ -1,13 +1,13 @@
 import { IconButton, styled } from '@mui/material';
 import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
 import { ArrowCircleRight, ArrowCircleLeft, Folder, Search, Info, GitHub } from '@mui/icons-material';
-import Image from 'next/image';
 import Logo from '../../../../public/logo.png';
 
-const SidebarContainer = styled('div')({
+const SidebarContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
-});
+  borderRight: `1px solid ${theme.colors?.primary}`,
+}));
 
 const SidebarHeader = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -31,8 +31,7 @@ const SidebarHeader = styled('div')(({ theme }) => ({
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '& > aside': {
-    borderRightStyle: 'none',
-    borderRight: `1px solid ${theme.colors?.primary}`,
+    border: 'none',
   },
   '& a': {
     color: theme.colors?.primary,
