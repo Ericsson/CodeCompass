@@ -2,6 +2,7 @@ import { IconButton, styled } from '@mui/material';
 import { Sidebar, Menu, MenuItem, SubMenu, useProSidebar } from 'react-pro-sidebar';
 import { ArrowCircleRight, ArrowCircleLeft, Folder, Search, Info, GitHub } from '@mui/icons-material';
 import Logo from '../../../../public/logo.png';
+import { FileTree } from '../file-tree/file-tree';
 
 const SidebarContainer = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -76,8 +77,7 @@ export const SidebarMenu = (): JSX.Element => {
               </IconLabel>
             }
           >
-            <MenuItem>auth.c</MenuItem>
-            <MenuItem>auth.h</MenuItem>
+            <FileTree />
           </SubMenu>
           <SubMenu
             label={
