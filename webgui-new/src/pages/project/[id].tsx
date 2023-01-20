@@ -9,20 +9,18 @@ import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
 import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
 
-const OuterContainer = styled('div')({
-  display: 'flex',
-  flexDirection: 'column',
-});
-
 const InnerContainer = styled('div')({
-  display: 'flex',
+  display: 'grid',
+  gridTemplate: `
+    'sidebar codemirror' 1fr
+    / 0.2fr 1fr
+  `,
 });
 
 const CodeMirrorContainer = styled('div')({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100%',
+  gridArea: 'codemirror',
+  height: '90vh',
+  overflowY: 'scroll',
 });
 
 const placeholder = `#include <stdio.h>
@@ -37,7 +35,7 @@ char* readStr() {
 
   str = realloc(NULL, sizeof(*str) * size);
 
-  while (((ch = fgetc(stdin)) != EOF) && (ch != '\n')) {
+  while (((ch = fgetc(stdin)) != EOF) && (ch != '\\n')) {
     str[len++] = ch;
 
     if (len == size) {
@@ -46,7 +44,7 @@ char* readStr() {
     }
   }
 
-  str[len++] = '\0';
+  str[len++] = '\\0';
   str = realloc(str, sizeof(*str) * len);
 
   return str;
@@ -56,7 +54,7 @@ int main() {
   printf("Input: ");
   char* str = readStr();
   
-  printf("Output: %s\n", str);
+  printf("Output: %s\\n", str);
   free(str);
 
   return 0;
@@ -67,7 +65,7 @@ const Page = () => {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <OuterContainer>
+    <>
       <Header />
       <InnerContainer>
         <AccordionMenu />
@@ -77,12 +75,11 @@ const Page = () => {
             readOnly={true}
             extensions={[cpp()]}
             theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
-            style={{ flexGrow: '1' }}
             value={placeholder}
           />
         </CodeMirrorContainer>
       </InnerContainer>
-    </OuterContainer>
+    </>
   );
 };
 

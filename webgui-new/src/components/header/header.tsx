@@ -12,7 +12,6 @@ const StyledHeader = styled('header')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1rem',
-  height: '85px',
   padding: '10px 10px 10px 20px',
   borderBottom: `1px solid ${theme.colors?.primary}`,
 }));
