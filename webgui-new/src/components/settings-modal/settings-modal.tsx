@@ -21,8 +21,8 @@ import {
   SearchOptions,
   SearchOtherLanguages,
   SearchTypes,
-} from '../../../enums/settings-enum';
-import { enumToArray, removeFromArray } from '../../../utils/array-utils';
+} from '../../enums/settings-enum';
+import { enumToArray, removeFromArray } from '../../utils/array-utils';
 import { Info, Close } from '@mui/icons-material';
 
 const ModalWindow = styled('div')(({ theme }) => ({

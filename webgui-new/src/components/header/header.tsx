@@ -5,10 +5,10 @@ import { Search, Settings, MoreVert, LightMode, DarkMode } from '@mui/icons-mate
 import Logo from '../../../../public/logo.png';
 import Image from 'next/image';
 import { useContext, useState } from 'react';
-import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../../enums/settings-enum';
-import { enumToArray } from '../../../utils/array-utils';
+import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
+import { enumToArray } from '../../utils/array-utils';
 import { SettingsModal } from '../settings-modal/settings-modal';
-import { ThemeContext } from '../../../themes/theme-context';
+import { ThemeContext } from '../../themes/theme-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   padding: '10px 10px 10px 20px',
