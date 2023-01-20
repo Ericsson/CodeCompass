@@ -3,7 +3,6 @@ import { ThemeContext } from '../themes/theme-context';
 import { lightTheme, darkTheme } from '../themes/theme';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import type { AppProps } from 'next/app';
-import { ProSidebarProvider } from 'react-pro-sidebar';
 import { useState } from 'react';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
@@ -13,9 +12,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
         <CssBaseline />
-        <ProSidebarProvider>
-          <Component {...pageProps} />
-        </ProSidebarProvider>
+        <Component {...pageProps} />
       </ThemeProvider>
     </ThemeContext.Provider>
   );

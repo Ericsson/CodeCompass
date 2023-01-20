@@ -7,16 +7,15 @@ import ReactCodeMirror from '@uiw/react-codemirror';
 import { useContext } from 'react';
 import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
-import { SidebarMenu } from '../../components/sidebar-menu/sidebar-menu';
+import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
 
 const OuterContainer = styled('div')({
   display: 'flex',
+  flexDirection: 'column',
 });
 
 const InnerContainer = styled('div')({
   display: 'flex',
-  flexDirection: 'column',
-  flexGrow: '1',
 });
 
 const CodeMirrorContainer = styled('div')({
@@ -69,9 +68,9 @@ const Page = () => {
 
   return (
     <OuterContainer>
-      <SidebarMenu />
+      <Header />
       <InnerContainer>
-        <Header />
+        <AccordionMenu />
         <CodeMirrorContainer>
           <FileName fileName={'main.c'} filePath={'/projects/c/main.c'} parseStatus={'Fully parsed'} />
           <ReactCodeMirror
