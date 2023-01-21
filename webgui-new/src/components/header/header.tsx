@@ -7,19 +7,22 @@ import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '
 import { enumToArray } from '../../utils/array-utils';
 import { SettingsModal } from '../settings-modal/settings-modal';
 import { ThemeContext } from '../../themes/theme-context';
+import Logo from '../../../public/logo.png';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1rem',
-  padding: '10px 10px 10px 20px',
   borderBottom: `1px solid ${theme.colors?.primary}`,
 }));
 
-const HeaderTitle = styled('div')({
-  '& h1': {
-    fontSize: '1.5rem',
-  },
+const HeaderLogo = styled('div')({
+  minWidth: '280px',
+  height: '76px',
+  backgroundImage: `url('${Logo.src}')`,
+  backgroundRepeat: 'no-repeat',
+  backgroundSize: 'cover',
+  backgroundPosition: 'left center',
 });
 
 const HeaderContent = styled('div')(({ theme }) => ({
@@ -27,6 +30,7 @@ const HeaderContent = styled('div')(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   flexGrow: '1',
+  padding: '10px 10px 10px 0px',
 }));
 
 const SettingsContainer = styled('div')({
@@ -70,9 +74,7 @@ export const Header = (): JSX.Element => {
 
   return (
     <StyledHeader>
-      <HeaderTitle>
-        <h1>{'CodeCompass'}</h1>
-      </HeaderTitle>
+      <HeaderLogo />
       <HeaderContent>
         <SettingsContainer>
           <ProjectSelect currentProject={router.query.id as string} projects={['CodeCompass', 'cJSON']} />
