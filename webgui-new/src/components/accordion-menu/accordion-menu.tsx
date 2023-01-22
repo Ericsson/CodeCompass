@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 const Container = styled('div')({
   gridArea: 'sidebar',
+  minWidth: '280px',
 });
 
 const IconLabel = styled('div')({

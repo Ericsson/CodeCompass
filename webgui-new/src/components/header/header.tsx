@@ -12,26 +12,26 @@ import Logo from '../../../public/logo.png';
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: '1rem',
   borderBottom: `1px solid ${theme.colors?.primary}`,
 }));
 
-const HeaderLogo = styled('div')({
+const HeaderLogo = styled('div')(({ theme }) => ({
   minWidth: '280px',
   height: '76px',
   backgroundImage: `url('${Logo.src}')`,
   backgroundRepeat: 'no-repeat',
-  backgroundSize: 'cover',
-  backgroundPosition: 'left center',
-});
+  backgroundSize: '90%',
+  backgroundPosition: 'center center',
+  borderRight: `1px solid ${theme.colors?.primary}`,
+}));
 
-const HeaderContent = styled('div')(({ theme }) => ({
+const HeaderContent = styled('div')({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   flexGrow: '1',
-  padding: '10px 10px 10px 0px',
-}));
+  padding: '10px 10px 10px 15px',
+});
 
 const SettingsContainer = styled('div')({
   display: 'flex',

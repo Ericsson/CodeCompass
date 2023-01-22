@@ -8,6 +8,7 @@ import { useContext } from 'react';
 import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
 import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
+import { placeholder } from '../../utils/placeholder';
 
 const InnerContainer = styled('div')({
   display: 'grid',
@@ -19,47 +20,7 @@ const InnerContainer = styled('div')({
 
 const CodeMirrorContainer = styled('div')({
   gridArea: 'codemirror',
-  height: '90vh',
-  overflowY: 'scroll',
 });
-
-const placeholder = `#include <stdio.h>
-#include <stdlib.h>
-
-char* readStr() {
-  char* str;
-
-  size_t len = 0;
-  size_t size = 10;
-  char ch;
-
-  str = realloc(NULL, sizeof(*str) * size);
-
-  while (((ch = fgetc(stdin)) != EOF) && (ch != '\\n')) {
-    str[len++] = ch;
-
-    if (len == size) {
-      size += 16;
-      str = realloc(str, sizeof(*str) * size);
-    }
-  }
-
-  str[len++] = '\\0';
-  str = realloc(str, sizeof(*str) * len);
-
-  return str;
-}
-
-int main() {
-  printf("Input: ");
-  char* str = readStr();
-  
-  printf("Output: %s\\n", str);
-  free(str);
-
-  return 0;
-}
-`;
 
 const Page = () => {
   const { theme } = useContext(ThemeContext);
@@ -70,12 +31,17 @@ const Page = () => {
       <InnerContainer>
         <AccordionMenu />
         <CodeMirrorContainer>
-          <FileName fileName={'main.c'} filePath={'/projects/c/main.c'} parseStatus={'Fully parsed'} />
+          <FileName
+            fileName={'webserver.cpp'}
+            filePath={'/projects/CodeCompass/webserver/src/webserver.cpp'}
+            parseStatus={'Fully parsed'}
+          />
           <ReactCodeMirror
             readOnly={true}
             extensions={[cpp()]}
             theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
             value={placeholder}
+            style={{ height: '86vh', overflowY: 'scroll', fontSize: '0.8rem' }}
           />
         </CodeMirrorContainer>
       </InnerContainer>
