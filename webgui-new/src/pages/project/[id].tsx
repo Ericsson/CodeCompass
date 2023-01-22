@@ -20,6 +20,7 @@ const InnerContainer = styled('div')({
 
 const CodeMirrorContainer = styled('div')({
   gridArea: 'codemirror',
+  minWidth: 'calc(1440px - 280px)',
 });
 
 const Page = () => {

@@ -1,18 +1,20 @@
-import { Button, IconButton, InputAdornment, Menu, MenuItem, TextField, styled } from '@mui/material';
+import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled } from '@mui/material';
 import { ProjectSelect } from '../project-select/project-select';
 import { useRouter } from 'next/router';
-import { Search, Settings, MoreVert, LightMode, DarkMode } from '@mui/icons-material';
+import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
 import { enumToArray } from '../../utils/array-utils';
-import { SettingsModal } from '../settings-modal/settings-modal';
 import { ThemeContext } from '../../themes/theme-context';
 import Logo from '../../../public/logo.png';
+import { SettingsMenu } from '../settings-menu/settings-menu';
+import { getTooltipText } from './get-tooltip-text';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   borderBottom: `1px solid ${theme.colors?.primary}`,
+  minWidth: '1440px',
 }));
 
 const HeaderLogo = styled('div')(({ theme }) => ({
@@ -58,14 +60,15 @@ export const Header = (): JSX.Element => {
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(e.currentTarget);
+    setMenuAnchorEl(e.currentTarget);
   };
 
   const handleMenuClose = () => {
-    setAnchorEl(null);
+    setMenuAnchorEl(null);
   };
 
   const changeTheme = () => {
@@ -79,42 +82,87 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect currentProject={router.query.id as string} projects={['CodeCompass', 'cJSON']} />
           <TextField
-            placeholder={searchMethod}
+            placeholder={
+              searchOption === SearchOptions.FILE_NAME
+                ? 'File name regex'
+                : searchOption === SearchOptions.LOG
+                ? 'Arbitrary log message'
+                : 'Search by expression'
+            }
             InputProps={{
               startAdornment: (
                 <InputAdornment position={'start'}>
                   <Search />
                 </InputAdornment>
               ),
+              endAdornment: (
+                <InputAdornment position={'end'}>
+                  <IconButton onClick={(e) => setSettingsAnchorEl(e.currentTarget)}>
+                    <Settings />
+                  </IconButton>
+                  <Tooltip title={getTooltipText(SearchMethods.EXPRESSION)}>
+                    <Info />
+                  </Tooltip>
+                </InputAdornment>
+              ),
             }}
           />
-          <Button sx={{ textTransform: 'none' }} startIcon={<Settings />} onClick={() => setModalOpen(true)}>
-            {'Search settings'}
-          </Button>
+          <TextField
+            placeholder={'File name filter regex'}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position={'start'}>
+                  <Search />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position={'end'}>
+                  <Tooltip title={getTooltipText(SearchMethods.FILE_REGEX)}>
+                    <Info />
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            placeholder={'Path filter regex'}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position={'start'}>
+                  <Search />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position={'end'}>
+                  <Tooltip title={getTooltipText(SearchMethods.PATH_REGEX)}>
+                    <Info />
+                  </Tooltip>
+                </InputAdornment>
+              ),
+            }}
+          />
+          <SettingsMenu
+            searchOption={searchOption}
+            setSearchOption={setSearchOption}
+            searchLanguage={searchLanguage}
+            setSearchLanguage={setSearchLanguage}
+            selectedTypes={selectedTypes}
+            setSelectedTypes={setSelectedTypes}
+            anchorEl={settingsAnchorEl}
+            setAnchorEl={setSettingsAnchorEl}
+          />
         </SettingsContainer>
         <MenuContainer>
           <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
           <IconButton onClick={(e) => handleMenuOpen(e)}>
             <MoreVert />
           </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
             <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
             <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
             <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
             <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
           </Menu>
-          <SettingsModal
-            modalOpen={modalOpen}
-            setModalOpen={setModalOpen}
-            searchOption={searchOption}
-            setSearchOption={setSearchOption}
-            searchMethod={searchMethod}
-            setSearchMethod={setSearchMethod}
-            searchLanguage={searchLanguage}
-            setSearchLanguage={setSearchLanguage}
-            selectedTypes={selectedTypes}
-            setSelectedTypes={setSelectedTypes}
-          />
         </MenuContainer>
       </HeaderContent>
     </StyledHeader>
