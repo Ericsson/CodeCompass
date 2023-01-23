@@ -56,7 +56,8 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   backgroundColor: theme.backgroundColors?.primary,
   borderTop: `1px solid ${theme.colors?.primary}`,
   padding: theme.spacing(2),
-  height: '70vh',
+  height: 'calc(100vh - 81px - 4 * 48px)',
+  overflowY: 'scroll',
 }));
 
 export const AccordionMenu = () => {

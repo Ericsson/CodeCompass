@@ -24,7 +24,7 @@ const InnerContainer = styled('div')({
 });
 
 const CodeMirrorContainer = styled('div')({
-  height: 'calc(100vh - 76px - 48px)',
+  height: 'calc(100vh - 78px - 49px)',
 });
 
 const Page = () => {
@@ -46,7 +46,7 @@ const Page = () => {
             extensions={[cpp()]}
             theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
             value={placeholder}
-            style={{ height: 'calc(100vh - 76px - 48px)', overflowY: 'scroll', fontSize: '0.8rem' }}
+            style={{ height: 'calc(100vh - 78px - 49px)', overflowY: 'scroll', fontSize: '0.8rem' }}
           />
         </CodeMirrorContainer>
       </InnerContainer>
