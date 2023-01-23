@@ -10,24 +10,28 @@ import { Header } from '../../components/header/header';
 import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
 import { placeholder } from '../../utils/placeholder';
 
+const OuterContainer = styled('div')({
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gridTemplateRows: '76px 1fr',
+  height: '100vh',
+});
+
 const InnerContainer = styled('div')({
   display: 'grid',
-  gridTemplate: `
-    'sidebar codemirror' 1fr
-    / 0.2fr 1fr
-  `,
+  gridTemplateColumns: '280px 1fr',
+  gridTemplateRows: '1fr',
 });
 
 const CodeMirrorContainer = styled('div')({
-  gridArea: 'codemirror',
-  minWidth: 'calc(1440px - 280px)',
+  height: 'calc(100vh - 76px - 48px)',
 });
 
 const Page = () => {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <>
+    <OuterContainer>
       <Header />
       <InnerContainer>
         <AccordionMenu />
@@ -42,11 +46,11 @@ const Page = () => {
             extensions={[cpp()]}
             theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
             value={placeholder}
-            style={{ height: '86vh', overflowY: 'scroll', fontSize: '0.8rem' }}
+            style={{ height: 'calc(100vh - 76px - 48px)', overflowY: 'scroll', fontSize: '0.8rem' }}
           />
         </CodeMirrorContainer>
       </InnerContainer>
-    </>
+    </OuterContainer>
   );
 };
 

@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 
 const Container = styled('div')({
-  gridArea: 'sidebar',
   minWidth: '280px',
 });
 

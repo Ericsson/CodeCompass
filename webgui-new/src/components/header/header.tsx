@@ -11,15 +11,15 @@ import { SettingsMenu } from '../settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
 
 const StyledHeader = styled('header')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
+  display: 'grid',
+  gridTemplateColumns: '280px 1fr',
+  gridTemplateRows: '1fr',
   borderBottom: `1px solid ${theme.colors?.primary}`,
   minWidth: '1440px',
 }));
 
 const HeaderLogo = styled('div')(({ theme }) => ({
-  minWidth: '280px',
-  height: '76px',
+  height: '75px',
   backgroundImage: `url('${Logo.src}')`,
   backgroundRepeat: 'no-repeat',
   backgroundSize: '90%',
@@ -51,15 +51,12 @@ export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
 
   const searchOptions = enumToArray(SearchOptions);
-  const searchMethods = enumToArray(SearchMethods);
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchTypes = enumToArray(SearchTypes);
 
   const [searchOption, setSearchOption] = useState<string>(searchOptions[0]);
-  const [searchMethod, setSearchMethod] = useState<string>(searchMethods[0]);
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
