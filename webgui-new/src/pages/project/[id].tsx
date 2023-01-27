@@ -15,17 +15,6 @@ const OuterContainer = styled('div')({
   gridTemplateColumns: '1fr',
   gridTemplateRows: '76px 1fr',
   height: '100vh',
-  '&::-webkit-scrollbar': {
-    width: '5px',
-  },
-  '&::-webkit-scrollbar-track': {
-    boxShadow: 'inset 0 0 5px rgb(39, 39, 39)',
-    borderRadius: '10px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: 'rgb(100, 100, 100)',
-    borderRadius: '5px',
-  },
 });
 
 const InnerContainer = styled('div')({
