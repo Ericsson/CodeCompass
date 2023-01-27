@@ -30,7 +30,8 @@ const CodeMirrorContainer = styled('div')(({ theme }) => ({
     overflowY: 'scroll',
     fontSize: '0.8rem',
     '&::-webkit-scrollbar': {
-      width: '5px',
+      width: '4px',
+      borderLeft: `1px solid ${theme.colors?.primary}`,
     },
     '&::-webkit-scrollbar-track': {
       boxShadow: `inset 0 0 5px ${theme.backgroundColors?.primary}`,

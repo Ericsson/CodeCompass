@@ -5,6 +5,6 @@ export const FileIcon = ({ fileName }: { fileName: string }): JSX.Element => {
 
   switch (fileExtension) {
     default:
-      return <TextSnippet></TextSnippet>;
+      return <TextSnippet sx={{ width: '20px', height: '20px' }}></TextSnippet>;
   }
 };

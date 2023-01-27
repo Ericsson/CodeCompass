@@ -5,6 +5,7 @@ import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/Accord
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
+import { FileTree } from '../file-tree/file-tree';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -55,11 +56,12 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,
   borderTop: `1px solid ${theme.colors?.primary}`,
-  padding: theme.spacing(2),
+  padding: '0',
   height: 'calc(100vh - 81px - 4 * 48px)',
   overflowY: 'scroll',
   '&::-webkit-scrollbar': {
-    width: '5px',
+    width: '4px',
+    borderLeft: `1px solid ${theme.colors?.primary}`,
   },
   '&::-webkit-scrollbar-track': {
     boxShadow: `inset 0 0 5px ${theme.backgroundColors?.primary}`,
@@ -91,7 +93,9 @@ export const AccordionMenu = () => {
             <Typography>{'File manager'}</Typography>
           </IconLabel>
         </AccordionSummary>
-        <AccordionDetails>{placeholder}</AccordionDetails>
+        <AccordionDetails>
+          <FileTree treeView={false} />
+        </AccordionDetails>
       </Accordion>
       <Accordion expanded={expanded === 'panel2'} onChange={() => setExpanded('panel2')}>
         <AccordionSummary aria-controls={'panel2-controls'} id={'panel2-header'}>

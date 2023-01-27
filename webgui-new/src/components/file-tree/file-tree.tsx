@@ -3,9 +3,19 @@ import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
 import { FileIcon } from '../file-icon/file-icon';
 
+const Container = styled('div')({
+  padding: '10px 20px',
+});
+
+const Foldername = styled('div')(({ theme }) => ({
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  padding: '5px 20px',
+}));
+
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,
+  padding: '10px 20px',
 }));
 
 const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
@@ -19,7 +29,37 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 const IconLabel = styled('div')({
   display: 'flex',
   gap: '0.5rem',
+  cursor: 'pointer',
 });
+
+// Example response:
+// {
+//   1: { str: 'id' },
+//   2: { str: 'file/dirname' },
+//   3: { str: 'type (Dir | Unknown)' },
+//   4: { str: 'filepath' }
+// }
+
+const placeHolderFiles = [
+  {
+    1: { str: '1' },
+    2: { str: 'index.tsx' },
+    3: { str: 'Unknown' },
+    4: { str: '/src/index.ts' },
+  },
+  {
+    1: { str: '2' },
+    2: { str: '_app.tsx' },
+    3: { str: 'Unknown' },
+    4: { str: '/src/_app.tsx' },
+  },
+  {
+    1: { str: '3' },
+    2: { str: 'project.tsx' },
+    3: { str: 'Unknown' },
+    4: { str: '/src/project.tsx' },
+  },
+];
 
 const project = {
   'package.json': 'package.json',
@@ -39,30 +79,42 @@ const project = {
   '.gitignore': '.gitignore',
 };
 
-export const FileTree = (): JSX.Element => {
-  let nodeId = 1;
+export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
+  if (!treeView) {
+    return (
+      <>
+        <Foldername>{'/src'}</Foldername>
+        <Container>
+          {placeHolderFiles.map((file, idx) => {
+            return (
+              <IconLabel key={idx}>
+                <FileIcon fileName={file[2].str} />
+                <div>{file[2].str}</div>
+              </IconLabel>
+            );
+          })}
+        </Container>
+      </>
+    );
+  }
 
+  let nodeId = 1;
+  let keyId = 1;
   const getFileTree = (obj: any): JSX.Element[] => {
     const tree: JSX.Element[] = [];
     for (let key in obj) {
       if (typeof obj[key] === 'object') {
         tree.push(
-          <StyledTreeItem key={nodeId} nodeId={`${nodeId++}`} label={key}>
+          <StyledTreeItem key={keyId++} nodeId={`${nodeId++}`} label={key}>
             {getFileTree(obj[key])}
           </StyledTreeItem>
         );
       } else {
         tree.push(
-          <StyledTreeItem
-            key={nodeId}
-            nodeId={`${nodeId++}`}
-            label={
-              <IconLabel>
-                <FileIcon fileName={obj[key]} />
-                <div>{obj[key]}</div>
-              </IconLabel>
-            }
-          />
+          <IconLabel key={keyId++}>
+            <FileIcon fileName={obj[key]} />
+            <div>{obj[key]}</div>
+          </IconLabel>
         );
       }
     }
