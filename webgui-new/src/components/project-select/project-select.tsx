@@ -10,7 +10,7 @@ export const ProjectSelect = ({
 }): JSX.Element => {
   const router = useRouter();
 
-  return currentProject ? (
+  return currentProject && projects ? (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
       <Select value={currentProject} label={'Project'} onChange={(e) => router.push(`/project/${e.target.value}`)}>

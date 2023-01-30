@@ -74,6 +74,8 @@ int MainRequestHandler::begin_request_handler(struct mg_connection* conn_)
   // We advance it by one because of the '/' character.
   const std::string& uri = conn_->uri + 1;
 
+  mg_send_header(conn_, "Access-Control-Allow-Origin", "http://localhost:3000");
+
   auto handler = pluginHandler.getImplementation(uri);
   if (handler)
     return handler->beginRequest(conn_);
