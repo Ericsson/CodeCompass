@@ -13,8 +13,9 @@ export const getRootFiles = async () => {
   return await client.getRootFiles();
 };
 
-export const getParent = async (fileId: string) => {
-  return await client.getParent(fileId);
+export const getParentFiles = async (filePath: string) => {
+  const parentFileInfo = await client.getFileInfoByPath(filePath);
+  return await client.getChildFiles(parentFileInfo.id as string);
 };
 
 export const getChildFiles = async (fileId: string) => {

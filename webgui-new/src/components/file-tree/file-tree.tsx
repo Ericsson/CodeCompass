@@ -4,70 +4,59 @@ import { alpha, styled } from '@mui/material';
 import { useState, useEffect, useContext } from 'react';
 import { FileInfo } from '../../../build/project/cc/service/core';
 import { ProjectContext } from '../../global-context/project-context';
-import { getRootFiles, getChildFiles, getFileContent } from '../../service/project-service';
+import { getRootFiles, getChildFiles, getFileContent, getParentFiles } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';
 
 const Container = styled('div')({
-  padding: '10px 20px',
+  padding: '5px',
+  fontSize: '0.85rem',
 });
 
 const Foldername = styled('div')(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
-  padding: '5px 20px',
+  padding: '5px',
+  fontSize: '0.85rem',
 }));
 
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,
-  padding: '10px 20px',
+  padding: '5px',
 }));
 
 const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
   [`& .${treeItemClasses.group}`]: {
-    marginLeft: 15,
-    paddingLeft: 18,
+    marginLeft: '10px',
+    paddingLeft: '5px',
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
   },
 }));
 
-const IconLabel = styled('div')({
+const IconLabel = styled('div')(({ theme }) => ({
   display: 'flex',
+  alignItems: 'center',
   gap: '0.5rem',
   cursor: 'pointer',
-});
-
-const FolderUp = styled('div')({
-  padding: '10px 20px 0 20px',
-  display: 'flex',
-  gap: '0.5rem',
-  cursor: 'pointer',
-});
-
-const project = {
-  'package.json': 'package.json',
-  'eslint.json': 'eslint.json',
-  src: {
-    pages: {
-      project: {
-        '[id].tsx': '[id].tsx',
-        search: {
-          'results.tsx': 'results.tsx',
-        },
-      },
-      '_app.tsx': '_app.tsx',
-      'index.tsx': 'index.tsx',
-    },
+  ':hover': {
+    backgroundColor: alpha(theme.palette.text.primary, 0.3),
   },
-  '.gitignore': '.gitignore',
-};
+}));
+
+const FolderUp = styled('div')(({ theme }) => ({
+  padding: '5px',
+  display: 'flex',
+  gap: '0.5rem',
+  cursor: 'pointer',
+  ':hover': {
+    backgroundColor: alpha(theme.palette.text.primary, 0.3),
+  },
+}));
 
 export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const { setFileContent, setFileInfo } = useContext(ProjectContext);
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [currentFileId, setCurrentFileId] = useState<string | undefined>(undefined);
-  const [parentFileId, setParentFileId] = useState<string | undefined>(undefined);
   const [folderPath, setFolderPath] = useState<string>('/');
   const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
 
@@ -101,28 +90,29 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       setRootFiles(rootFileData);
       setFiles(rootFileData);
       setFileTree(await renderFileTree(await getRootFiles()));
-      setParentFileId(rootFileData[0].id);
     };
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!currentFileId) {
+  const navigateBack = async () => {
+    const pathAsArray = folderPath.split('/');
+    pathAsArray.pop();
+    const trimmedPath = pathAsArray.join('/');
+    setFolderPath(trimmedPath);
+    if (trimmedPath === '') {
+      setFiles(rootFiles);
       return;
     }
-    const getData = async () => {
-      const children = await getChildFiles(currentFileId);
-      setFiles(children);
-    };
-    getData();
-  }, [currentFileId]);
-
-  const navigateBack = async () => {};
+    const parentFiles = await getParentFiles(trimmedPath);
+    setFiles(parentFiles);
+  };
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
-      setCurrentFileId(file.id);
+      const children = await getChildFiles(file.id as string);
+      setFiles(children);
+      setFolderPath(file.path as string);
     } else {
       const fileContent = await getFileContent(file.id as string);
       setFileContent(fileContent);
@@ -146,20 +136,22 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     </StyledTreeView>
   ) : (
     <>
-      <Foldername>{folderPath}</Foldername>
       {files === rootFiles ? (
         ''
       ) : (
-        <FolderUp onClick={() => navigateBack()}>
-          <DriveFolderUpload />
-          <div>{'..'}</div>
-        </FolderUp>
+        <>
+          <Foldername>{folderPath}</Foldername>
+          <FolderUp onClick={() => navigateBack()}>
+            <DriveFolderUpload />
+            <div>{'..'}</div>
+          </FolderUp>
+        </>
       )}
       <Container>
         {files.map((file, idx) => {
           return (
             <IconLabel key={idx} onClick={() => handleFileClick(file)}>
-              <FileIcon fileName={file.id as string} />
+              {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
               <div>{file.name}</div>
             </IconLabel>
           );
