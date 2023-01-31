@@ -1,6 +1,9 @@
-import { Folder, FolderOpen } from '@mui/icons-material';
+import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { FileInfo } from '../../../build/project/cc/service/core';
+import { getRootFiles, getChildFiles } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';
 
 const Container = styled('div')({
@@ -32,34 +35,12 @@ const IconLabel = styled('div')({
   cursor: 'pointer',
 });
 
-// Example response:
-// {
-//   1: { str: 'id' },
-//   2: { str: 'file/dirname' },
-//   3: { str: 'type (Dir | Unknown)' },
-//   4: { str: 'filepath' }
-// }
-
-const placeHolderFiles = [
-  {
-    1: { str: '1' },
-    2: { str: 'index.tsx' },
-    3: { str: 'Unknown' },
-    4: { str: '/src/index.ts' },
-  },
-  {
-    1: { str: '2' },
-    2: { str: '_app.tsx' },
-    3: { str: 'Unknown' },
-    4: { str: '/src/_app.tsx' },
-  },
-  {
-    1: { str: '3' },
-    2: { str: 'project.tsx' },
-    3: { str: 'Unknown' },
-    4: { str: '/src/project.tsx' },
-  },
-];
+const FolderUp = styled('div')({
+  padding: '10px 20px 0 20px',
+  display: 'flex',
+  gap: '0.5rem',
+  cursor: 'pointer',
+});
 
 const project = {
   'package.json': 'package.json',
@@ -80,16 +61,52 @@ const project = {
 };
 
 export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
+  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
+  const [folderPath, setFolderPath] = useState<string>('/');
+  const [currentFileId, setCurrentFileId] = useState<string | undefined>(undefined);
+  const [childFiles, setChildFiles] = useState<FileInfo[]>([]);
+
+  useEffect(() => {
+    const getData = async () => {
+      const rootFileData = await getRootFiles();
+      setRootFiles(rootFileData);
+      setFiles(rootFileData);
+    };
+    getData();
+  }, []);
+
+  useEffect(() => {
+    if (!currentFileId) {
+      return;
+    }
+    const getData = async () => {
+      const children = await getChildFiles(currentFileId);
+      setFiles(children);
+    };
+    getData();
+  }, [currentFileId]);
+
+  const navigateBack = async () => {};
+
   if (!treeView) {
     return (
       <>
-        <Foldername>{'/src'}</Foldername>
+        <Foldername>{folderPath}</Foldername>
+        {files === rootFiles ? (
+          ''
+        ) : (
+          <FolderUp onClick={() => navigateBack()}>
+            <DriveFolderUpload />
+            <div>{'..'}</div>
+          </FolderUp>
+        )}
         <Container>
-          {placeHolderFiles.map((file, idx) => {
+          {files.map((file, idx) => {
             return (
-              <IconLabel key={idx}>
-                <FileIcon fileName={file[2].str} />
-                <div>{file[2].str}</div>
+              <IconLabel key={idx} onClick={() => (file.isDirectory ? setCurrentFileId(file.id) : '')}>
+                <FileIcon fileName={file.name as string} />
+                <div>{file.name}</div>
               </IconLabel>
             );
           })}

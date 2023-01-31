@@ -4,9 +4,9 @@ import { lightTheme, darkTheme } from '../themes/theme';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
-import { WorkspaceInfo } from '../../build/cc/service/workspace';
 import { getWorkspaces } from '../service/workspace-service';
 import { WorkspaceContext } from '../global-context/workspace-context';
+import { WorkspaceInfo } from '../../build/workspace/cc/service/workspace';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [theme, setTheme] = useState('dark');
@@ -25,7 +25,6 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
       <ThemeContext.Provider value={{ theme, setTheme }}>
         <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
           <CssBaseline />
-
           <Component {...pageProps} />
         </ThemeProvider>
       </ThemeContext.Provider>
