@@ -6,6 +6,7 @@ import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { FileTree } from '../file-tree/file-tree';
+import { Checkbox, FormControlLabel } from '@mui/material';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -16,6 +17,17 @@ const IconLabel = styled('div')({
   alignItems: 'center',
   gap: '0.5rem',
 });
+
+const FileManagerHeader = styled('div')({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '0.5rem',
+});
+
+const TreeSetting = styled(FormControlLabel)(({ theme }) => ({
+  marginLeft: '5px',
+}));
 
 const Accordion = styled((props: AccordionProps) => <MuiAccordion disableGutters elevation={0} square {...props} />)(
   ({ theme }) => ({
@@ -75,6 +87,7 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 
 export const AccordionMenu = () => {
   const [expanded, setExpanded] = useState<string>('panel1');
+  const [treeView, setTreeView] = useState<boolean>(false);
 
   const placeholder = (
     <Typography>
@@ -90,11 +103,17 @@ export const AccordionMenu = () => {
         <AccordionSummary aria-controls={'panel1-controls'} id={'panel1-header'}>
           <IconLabel>
             <Folder />
-            <Typography>{'File manager'}</Typography>
+            <FileManagerHeader>
+              <Typography>{'File manager'}</Typography>
+              <TreeSetting
+                control={<Checkbox checked={treeView} onChange={() => setTreeView(!treeView)} sx={{ padding: '0' }} />}
+                label={'Tree'}
+              />
+            </FileManagerHeader>
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>
-          <FileTree treeView={false} />
+          <FileTree treeView={treeView} />
         </AccordionDetails>
       </Accordion>
       <Accordion expanded={expanded === 'panel2'} onChange={() => setExpanded('panel2')}>

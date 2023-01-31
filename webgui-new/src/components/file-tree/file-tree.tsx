@@ -69,15 +69,42 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [currentFileId, setCurrentFileId] = useState<string | undefined>(undefined);
   const [parentFileId, setParentFileId] = useState<string | undefined>(undefined);
   const [folderPath, setFolderPath] = useState<string>('/');
+  const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
+
+  let nodeId = 1;
+  let keyId = 1;
+  const renderFileTree = async (files: FileInfo[]): Promise<JSX.Element[]> => {
+    const tree: JSX.Element[] = [];
+    files.forEach(async (file) => {
+      if (file.isDirectory) {
+        const children = await getChildFiles(file.id as string);
+        tree.push(
+          <StyledTreeItem key={keyId++} nodeId={`${nodeId++}`} label={file.name}>
+            {await renderFileTree(children)}
+          </StyledTreeItem>
+        );
+      } else {
+        tree.push(
+          <IconLabel key={keyId++} onClick={() => handleTreeViewFileClick(file)}>
+            <FileIcon fileName={file.name as string} />
+            <div>{file.name}</div>
+          </IconLabel>
+        );
+      }
+    });
+    return tree;
+  };
 
   useEffect(() => {
     const getData = async () => {
       const rootFileData = await getRootFiles();
       setRootFiles(rootFileData);
       setFiles(rootFileData);
+      setFileTree(await renderFileTree(await getRootFiles()));
       setParentFileId(rootFileData[0].id);
     };
     getData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -103,58 +130,41 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     }
   };
 
-  if (!treeView) {
-    return (
-      <>
-        <Foldername>{folderPath}</Foldername>
-        {files === rootFiles ? (
-          ''
-        ) : (
-          <FolderUp onClick={() => navigateBack()}>
-            <DriveFolderUpload />
-            <div>{'..'}</div>
-          </FolderUp>
-        )}
-        <Container>
-          {files.map((file, idx) => {
-            return (
-              <IconLabel key={idx} onClick={() => handleFileClick(file)}>
-                <FileIcon fileName={file.id as string} />
-                <div>{file.name}</div>
-              </IconLabel>
-            );
-          })}
-        </Container>
-      </>
-    );
-  }
-
-  let nodeId = 1;
-  let keyId = 1;
-  const getFileTree = (obj: any): JSX.Element[] => {
-    const tree: JSX.Element[] = [];
-    for (let key in obj) {
-      if (typeof obj[key] === 'object') {
-        tree.push(
-          <StyledTreeItem key={keyId++} nodeId={`${nodeId++}`} label={key}>
-            {getFileTree(obj[key])}
-          </StyledTreeItem>
-        );
-      } else {
-        tree.push(
-          <IconLabel key={keyId++}>
-            <FileIcon fileName={obj[key]} />
-            <div>{obj[key]}</div>
-          </IconLabel>
-        );
-      }
+  const handleTreeViewFileClick = async (file: FileInfo) => {
+    if (file.isDirectory) {
+      return;
+    } else {
+      const fileContent = await getFileContent(file.id as string);
+      setFileContent(fileContent);
+      setFileInfo(file);
     }
-    return tree;
   };
 
-  return (
+  return treeView ? (
     <StyledTreeView defaultCollapseIcon={<FolderOpen />} defaultExpandIcon={<Folder />}>
-      {getFileTree(project).map((elem) => elem)}
+      {fileTree}
     </StyledTreeView>
+  ) : (
+    <>
+      <Foldername>{folderPath}</Foldername>
+      {files === rootFiles ? (
+        ''
+      ) : (
+        <FolderUp onClick={() => navigateBack()}>
+          <DriveFolderUpload />
+          <div>{'..'}</div>
+        </FolderUp>
+      )}
+      <Container>
+        {files.map((file, idx) => {
+          return (
+            <IconLabel key={idx} onClick={() => handleFileClick(file)}>
+              <FileIcon fileName={file.id as string} />
+              <div>{file.name}</div>
+            </IconLabel>
+          );
+        })}
+      </Container>
+    </>
   );
 };
