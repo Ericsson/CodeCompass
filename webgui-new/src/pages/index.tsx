@@ -1,18 +1,9 @@
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { WorkspaceInfo } from '../../build/cc/service/workspace';
-import { getWorkspaces } from '../service/workspace-service';
+import { useContext } from 'react';
+import { WorkspaceContext } from '../global-context/workspace-context';
 
 const Home = () => {
-  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
-
-  useEffect(() => {
-    const getWorkspaceData = async () => {
-      const workspaceData = await getWorkspaces();
-      setWorkspaces(workspaceData);
-    };
-    getWorkspaceData();
-  }, []);
+  const workspaces = useContext(WorkspaceContext);
 
   return (
     <div>

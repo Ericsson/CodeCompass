@@ -2,15 +2,14 @@ import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled 
 import { ProjectSelect } from '../project-select/project-select';
 import { useRouter } from 'next/router';
 import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
 import { enumToArray } from '../../utils/array-utils';
 import { ThemeContext } from '../../themes/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from '../settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
-import { getWorkspaces } from '../../service/workspace-service';
-import { WorkspaceInfo } from '../../../build/cc/service/workspace';
+import { WorkspaceContext } from '../../global-context/workspace-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -48,15 +47,7 @@ const MenuContainer = styled('div')({
 });
 
 export const Header = (): JSX.Element => {
-  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
-
-  useEffect(() => {
-    const getWorkspaceData = async () => {
-      const workspaceData = await getWorkspaces();
-      setWorkspaces(workspaceData);
-    };
-    getWorkspaceData();
-  }, []);
+  const workspaces = useContext(WorkspaceContext);
 
   const router = useRouter();
 
