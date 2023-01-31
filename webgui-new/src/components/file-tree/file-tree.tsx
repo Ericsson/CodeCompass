@@ -1,9 +1,10 @@
 import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { FileInfo } from '../../../build/project/cc/service/core';
-import { getRootFiles, getChildFiles } from '../../service/project-service';
+import { ProjectContext } from '../../global-context/project-context';
+import { getRootFiles, getChildFiles, getFileContent } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';
 
 const Container = styled('div')({
@@ -61,17 +62,20 @@ const project = {
 };
 
 export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
-  const [files, setFiles] = useState<FileInfo[]>([]);
+  const { setFileContent, setFileInfo } = useContext(ProjectContext);
+
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
-  const [folderPath, setFolderPath] = useState<string>('/');
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const [currentFileId, setCurrentFileId] = useState<string | undefined>(undefined);
-  const [childFiles, setChildFiles] = useState<FileInfo[]>([]);
+  const [parentFileId, setParentFileId] = useState<string | undefined>(undefined);
+  const [folderPath, setFolderPath] = useState<string>('/');
 
   useEffect(() => {
     const getData = async () => {
       const rootFileData = await getRootFiles();
       setRootFiles(rootFileData);
       setFiles(rootFileData);
+      setParentFileId(rootFileData[0].id);
     };
     getData();
   }, []);
@@ -89,6 +93,16 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
 
   const navigateBack = async () => {};
 
+  const handleFileClick = async (file: FileInfo) => {
+    if (file.isDirectory) {
+      setCurrentFileId(file.id);
+    } else {
+      const fileContent = await getFileContent(file.id as string);
+      setFileContent(fileContent);
+      setFileInfo(file);
+    }
+  };
+
   if (!treeView) {
     return (
       <>
@@ -104,8 +118,8 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
         <Container>
           {files.map((file, idx) => {
             return (
-              <IconLabel key={idx} onClick={() => (file.isDirectory ? setCurrentFileId(file.id) : '')}>
-                <FileIcon fileName={file.name as string} />
+              <IconLabel key={idx} onClick={() => handleFileClick(file)}>
+                <FileIcon fileName={file.id as string} />
                 <div>{file.name}</div>
               </IconLabel>
             );

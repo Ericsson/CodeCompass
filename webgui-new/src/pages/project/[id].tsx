@@ -7,8 +7,8 @@ import { useContext } from 'react';
 import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
 import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
-import { placeholder } from '../../utils/placeholder';
 import { styled } from '@mui/material';
+import { ProjectContext } from '../../global-context/project-context';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -46,6 +46,7 @@ const CodeMirrorContainer = styled('div')(({ theme }) => ({
 
 const Page = () => {
   const { theme } = useContext(ThemeContext);
+  const { fileContent, fileInfo } = useContext(ProjectContext);
 
   return (
     <OuterContainer>
@@ -54,15 +55,15 @@ const Page = () => {
         <AccordionMenu />
         <CodeMirrorContainer>
           <FileName
-            fileName={'webserver.cpp'}
-            filePath={'/projects/CodeCompass/webserver/src/webserver.cpp'}
-            parseStatus={'Fully parsed'}
+            fileName={fileInfo ? (fileInfo.name as string) : ''}
+            filePath={fileInfo ? (fileInfo.path as string) : ''}
+            parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
           />
           <ReactCodeMirror
             readOnly={true}
             extensions={[cpp()]}
             theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
-            value={placeholder}
+            value={fileContent ?? ''}
           />
         </CodeMirrorContainer>
       </InnerContainer>

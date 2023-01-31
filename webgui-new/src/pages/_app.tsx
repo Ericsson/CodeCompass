@@ -7,10 +7,14 @@ import { useEffect, useState } from 'react';
 import { getWorkspaces } from '../service/workspace-service';
 import { WorkspaceContext } from '../global-context/workspace-context';
 import { WorkspaceInfo } from '../../build/workspace/cc/service/workspace';
+import { ProjectContext } from '../global-context/project-context';
+import { FileInfo } from '../../build/project/cc/service/core';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [theme, setTheme] = useState('dark');
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
+  const [fileContent, setFileContent] = useState<string | undefined>();
+  const [fileInfo, setFileInfo] = useState<FileInfo | undefined>();
 
   useEffect(() => {
     const getWorkspaceData = async () => {
@@ -22,12 +26,14 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
 
   return (
     <WorkspaceContext.Provider value={workspaces}>
-      <ThemeContext.Provider value={{ theme, setTheme }}>
-        <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
-          <CssBaseline />
-          <Component {...pageProps} />
-        </ThemeProvider>
-      </ThemeContext.Provider>
+      <ProjectContext.Provider value={{ fileContent, setFileContent, fileInfo, setFileInfo }}>
+        <ThemeContext.Provider value={{ theme, setTheme }}>
+          <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
+            <CssBaseline />
+            <Component {...pageProps} />
+          </ThemeProvider>
+        </ThemeContext.Provider>
+      </ProjectContext.Provider>
     </WorkspaceContext.Provider>
   );
 };

@@ -21,33 +21,34 @@ export const FileName = ({
 }: {
   fileName: string;
   filePath: string;
-  parseStatus: string;
+  parseStatus: number;
 }): JSX.Element => {
+  const getParseStatusText = (status: number): string => {
+    if (status === 2) {
+      return 'Partially parsed';
+    } else if (status === 3) {
+      return 'Fully parsed';
+    } else {
+      return 'Not parsed';
+    }
+  };
   return (
     <Container>
       <ParseStatus
         sx={{
           color: (theme) =>
-            parseStatus === 'Not parsed'
-              ? theme.colors?.error
-              : parseStatus === 'Partially parsed'
-              ? theme.colors?.warning
-              : parseStatus === 'Fully parsed'
-              ? theme.colors?.success
-              : theme.colors?.primary,
+            parseStatus === 2 ? theme.colors?.warning : parseStatus === 3 ? theme.colors?.success : theme.colors?.error,
           border: (theme) =>
             `1px solid ${
-              parseStatus === 'Not parsed'
-                ? theme.colors?.error
-                : parseStatus === 'Partially parsed'
+              parseStatus === 2
                 ? theme.colors?.warning
-                : parseStatus === 'Fully parsed'
+                : parseStatus === 3
                 ? theme.colors?.success
-                : theme.colors?.primary
+                : theme.colors?.error
             }`,
         }}
       >
-        {parseStatus}
+        {getParseStatusText(parseStatus)}
       </ParseStatus>
       <div>{fileName}</div>
       <div>{'::'}</div>

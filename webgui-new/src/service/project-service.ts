@@ -20,3 +20,7 @@ export const getParent = async (fileId: string) => {
 export const getChildFiles = async (fileId: string) => {
   return await client.getChildFiles(fileId);
 };
+
+export const getFileContent = async (fileId: string) => {
+  return await client.getFileContent(fileId);
+};
