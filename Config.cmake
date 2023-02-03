@@ -26,6 +26,9 @@ set(INSTALL_AUTH_DIR "${INSTALL_LIB_DIR}/${INSTALL_AUTH_DIR_NAME}")
 # Installation directory of web GUI
 set(INSTALL_WEBROOT_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/webgui")
 
+# Installation directory of the new React-based web GUI
+set(INSTALL_WEBROOT_REACT_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/webgui-new")
+
 # Installation directory of SQL files
 set(INSTALL_SQL_DIR "${CMAKE_INSTALL_PREFIX}/share/codecompass/sql")
 
@@ -44,6 +47,9 @@ set(INSTALL_SCRIPTS_DIR "${INSTALL_WEBROOT_DIR}/scripts/codecompass")
 
 # Installation directory of generated Thrift API stubs
 set(INSTALL_GEN_DIR "${INSTALL_SCRIPTS_DIR}/generated")
+
+# Installation directory of generated Thrift API stubs for the new React-based web GUI
+set(INSTALL_GEN_REACT_DIR "${INSTALL_WEBROOT_REACT_DIR}/generated")
 
 # Installation directory for Java libraries
 set(INSTALL_JAVA_LIB_DIR "${INSTALL_LIB_DIR}/java")
