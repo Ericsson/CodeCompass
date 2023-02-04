@@ -25,14 +25,9 @@ struct YamlContent
   #pragma db id auto
   std::uint64_t id;
 
-  //#pragma db not_null
   std::string key;
 
-  //#pragma db not_null
   std::string value;
-
-  //#pragma db
-  //YamlAstNodeId parent;
 
   #pragma db not_null
   FileId file;

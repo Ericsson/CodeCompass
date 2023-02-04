@@ -200,8 +200,6 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
       {
         file->type = model::YamlFile::Type::HELM_SUBCHART;
         
-        //if (!_areDependenciesListed)
-        //{
         if (std::find(_processedMS.begin(), _processedMS.end(), YAML::Dump(loadedFile["name"])) == _processedMS.end())
         {
           model::Microservice service;
@@ -212,7 +210,6 @@ void YamlParser::processFileType(model::FilePtr& file_, YAML::Node& loadedFile)
           _ctx.db->persist(service);
           _processedMS.push_back(service.name);
         }
-        //}
       }
       else
       {
@@ -271,7 +268,20 @@ void YamlParser::processIntegrationChart(model::FilePtr& file_, YAML::Node& load
 {
   if (!loadedFile_["dependencies"] || !loadedFile_["dependencies"].IsSequence())
   {
-    _areDependenciesListed = false;
+    //_areDependenciesListed = false;
+
+    model::Microservice service;
+    service.file = file_->id;
+    service.type = model::Microservice::ServiceType::INTERNAL;
+    service.name = YAML::Dump(loadedFile_["name"]);
+
+    if (std::find(_processedMS.begin(), _processedMS.end(), service.name) == _processedMS.end())
+    {
+      service.serviceId = cc::model::createIdentifier(service);
+      _ctx.db->persist(service);
+      _processedMS.push_back(service.name);
+    }
+
     return;
   }
 
@@ -332,9 +342,10 @@ bool YamlParser::collectAstNodes(model::FilePtr file_)
   }
   catch (YAML::ParserException& e)
   {
-    LOG(warning) << "[yamlparser]  Exception thrown in : " << file_->path << ": " << e.what();
+    LOG(warning) << "[yamlparser] Exception thrown in : " << file_->path << ": " << e.what();
 
-    util::OdbTransaction {_ctx.db} ([&] {
+    util::OdbTransaction {_ctx.db} ([&]
+    {
       model::BuildLog buildLog;
       buildLog.location.file = file_;
       buildLog.location.range.start.line = e.mark.line + 1;
@@ -364,7 +375,7 @@ void YamlParser::chooseCoreNodeType(
   {
     case YAML::NodeType::Scalar:
       processAtomicNode(node_, file_, symbolType_,
-model::YamlAstNode::AstType::SCALAR);
+        model::YamlAstNode::AstType::SCALAR);
       break;
     case YAML::NodeType::Sequence:
       processSequence(node_, file_, symbolType_);
@@ -436,8 +447,8 @@ void YamlParser::processMap(
     {
       case YAML::NodeType::Scalar:
         processAtomicNode(it->second, file_,
-  model::YamlAstNode::SymbolType::NestedValue,
-  model::YamlAstNode::AstType::MAP);
+          model::YamlAstNode::SymbolType::NestedValue,
+          model::YamlAstNode::AstType::MAP);
         break;
       case YAML::NodeType::Sequence:
         processSequence(it->second, file_, symbolType_);
@@ -464,8 +475,8 @@ void YamlParser::processSequence(
     {
       case YAML::NodeType::Scalar:
         processAtomicNode(temp, file_,
-      model::YamlAstNode::SymbolType::Value,
-      model::YamlAstNode::AstType::SEQUENCE);
+          model::YamlAstNode::SymbolType::Value,
+          model::YamlAstNode::AstType::SEQUENCE);
         break;
       case YAML::NodeType::Sequence:
         processSequence(temp, file_, symbolType_);

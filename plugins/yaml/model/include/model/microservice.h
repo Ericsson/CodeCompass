@@ -25,19 +25,14 @@ struct Microservice
     EXTERNAL
   };
 
-  //#pragma db id auto
-  //std::uint64_t id;
-
   #pragma db id
   MicroserviceId serviceId;
 
   #pragma db not_null
   std::string name;
 
-  //#pragma db
   FileId file;
 
-  //#pragma db
   ServiceType type;
 };
 

@@ -48,15 +48,6 @@ struct HelmTemplate
 
   bool operator==(HelmTemplate& rhs);
 };
-/*
-bool HelmTemplate::operator==(HelmTemplate& rhs)
-{
-  return this->kind == rhs.kind &&
-         this->name == rhs.name &&
-         this->depends == rhs.depends &&
-         this->file == rhs.file &&
-         this->dependencyType == rhs.dependencyType;
-}*/
 
 inline std::uint64_t createIdentifier(const HelmTemplate& helm_)
 {

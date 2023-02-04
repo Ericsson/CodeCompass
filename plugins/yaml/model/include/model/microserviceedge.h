@@ -48,7 +48,6 @@ struct MicroserviceEdge
 inline std::string MicroserviceEdge::toString() const
 {
   return std::string("MicroserviceEdge")
-    //.append("\nid = ").append(std::to_string(id))
     .append("\nfrom = ").append(std::to_string(from->serviceId))
     .append("\nto = ").append(std::to_string(to->serviceId))
     .append("\ntype = ");
