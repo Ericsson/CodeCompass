@@ -33,6 +33,7 @@ add_subdirectory(service)
 add_subdirectory(util)
 add_subdirectory(plugins) # must precede webgui
 add_subdirectory(webgui)
+add_subdirectory(webgui-new)
 add_subdirectory(webserver)
 
 # Install java libraries
