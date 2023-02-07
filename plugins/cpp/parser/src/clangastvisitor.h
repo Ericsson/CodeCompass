@@ -146,13 +146,12 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
     
-    astNode->astValue =  getSourceText(
-      _clangSrcMgr,
-      forRangeStmt->getRangeStmt()->getBeginLoc(),
-      forRangeStmt->getRangeStmt()->getEndLoc(),
-      true);
-    astNode->location = getFileLoc(forRangeStmt->getRangeStmt()->getBeginLoc(), forRangeStmt->getRangeStmt()->getEndLoc());
-    astNode->entityHash = util::fnvHash(getUSR(forRangeStmt->getLoopVariable()));
+    astNode->astValue = VisitDeclRefExpr(llvm::dyn_cast<clang::DeclRefExpr>(forRangeStmt->getRangeInit()));
+    astNode->location = getFileLoc(forRangeStmt->getBeginLoc(), forRangeStmt->getEndLoc());
+
+    const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(forRangeStmt->getRangeStmt()->getSingleDecl());
+    astNode->entityHash = util::fnvHash(getUSR(vd));
+
     astNode->symbolType = model::CppAstNode::SymbolType::Variable;
     astNode->astType = model::CppAstNode::AstType::Read;
     astNode->id = model::createIdentifier(*astNode);
