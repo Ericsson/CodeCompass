@@ -141,6 +141,26 @@ public:
     return b;
   }
 
+
+  bool	TraverseCXXForRangeStmt (clang::CXXForRangeStmt *forRangeStmt){
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+    
+    astNode->astValue =  getSourceText(
+      _clangSrcMgr,
+      forRangeStmt->getRangeStmt()->getBeginLoc(),
+      forRangeStmt->getRangeStmt()->getEndLoc(),
+      true);
+    astNode->location = getFileLoc(forRangeStmt->getRangeStmt()->getBeginLoc(), forRangeStmt->getRangeStmt()->getEndLoc());
+    astNode->entityHash = util::fnvHash(getUSR(forRangeStmt->getLoopVariable()));
+    astNode->symbolType = model::CppAstNode::SymbolType::Variable;
+    astNode->astType = model::CppAstNode::AstType::Read;
+    astNode->id = model::createIdentifier(*astNode);
+
+    _astNodes.push_back(astNode);
+    return true;
+  }
+
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
     _functionStack.push(std::make_shared<model::CppFunction>());
