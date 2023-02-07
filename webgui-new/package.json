@@ -7,11 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "thrift-gen-workspace": "thrift-typescript --sourceDir ../service/workspace/ --outDir ./build/workspace",
-    "thrift-gen-project": "thrift-typescript --sourceDir ../service/project/ --outDir ./build/project",
-    "thrift-gen-plugin": "thrift-typescript --sourceDir ../service/plugin/ --outDir ./build/plugin",
-    "thrift-gen-language": "thrift-typescript --sourceDir ../service/language/ --outDir ./build/language",
-    "thrift-gen-auth": "thrift-typescript --sourceDir ../service/authentication/ --outDir ./build/auth"
+    "thrift-codegen": "thrift-typescript --sourceDir ../service --outDir ./generated --fallbackNamespace none"
   },
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",
