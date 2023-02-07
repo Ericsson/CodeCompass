@@ -5,8 +5,9 @@ require([
   'dijit/PopupMenuItem',
   'codecompass/astHelper',
   'codecompass/model',
+  'codecompass/urlHandler',
   'codecompass/viewHandler'],
-function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
+function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, urlHandler, viewHandler) {
 
   model.addService('cppservice', 'CppService', LanguageServiceClient);
 
@@ -22,6 +23,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
 
           var languageService = model.getLanguageService(fileInfo.type);
           astHelper.jumpToDef(nodeInfo.id, model.cppservice);
+
+          if (window.gtag) {
+            window.gtag ('event', 'jump_to_def', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                  + ': '
+                  + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }
@@ -45,6 +55,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
             fileType : fileInfo.type,
             elementInfo : nodeInfo
           });
+
+          if (window.gtag) {
+              window.gtag ('event', 'info_tree', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                  + ': '
+                  + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }
@@ -65,6 +84,15 @@ function (topic, Menu, MenuItem, PopupMenuItem, astHelper, model, viewHandler) {
             fileType    : fileInfo.type,
             elementInfo : nodeInfo
           });
+
+          if (window.gtag) {
+              window.gtag ('event', 'documentation', {
+              'event_category' : urlHandler.getState('wsid'),
+              'event_label' : urlHandler.getFileInfo().name
+                            + ': '
+                            + nodeInfo.astNodeValue
+            });
+          }
         }
       });
     }

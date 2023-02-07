@@ -11,6 +11,7 @@ RUN set -x && apt-get update -qq \
   cmake make \
   default-jdk \
   ctags \
+  doxygen \
   gcc-9 gcc-9-plugin-dev g++-9 \
   libboost-filesystem-dev \
   libboost-log-dev \
@@ -19,6 +20,7 @@ RUN set -x && apt-get update -qq \
   libgit2-dev \
   libgraphviz-dev \
   libgtest-dev \
+  libldap2-dev \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
@@ -40,6 +42,7 @@ RUN cd /usr/src/googletest && \
 
 # Adding CodeCompass builder script.
 COPY docker/dev/codecompass-build.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/codecompass-build.sh
 
 # Setting the environment.
 ENV DATABASE=sqlite \
@@ -48,6 +51,7 @@ ENV DATABASE=sqlite \
     INSTALL_DIR=/CodeCompass/install \
     SOURCE_DIR=/CodeCompass/CodeCompass \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
-    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
+    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
+    WITH_AUTH="plain;ldap"
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"

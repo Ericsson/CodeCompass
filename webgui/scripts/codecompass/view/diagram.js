@@ -71,6 +71,13 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
       this._handlerId = handlerId;
       this._diagramType = diagramType;
 
+      if (window.gtag) {
+        window.gtag ('event', 'load_diagram: ' + diagramType.toString(), {
+          'event_category' : urlHandler.getState('wsid'),
+          'event_label' : urlHandler.getFileInfo().name
+        });
+      }
+
       try {
         this._diagCont.set('content', dom.create('span', {
           class : 'diagram-loading'
@@ -284,6 +291,26 @@ function (declare, attr, dom, query, topic, BorderContainer, ContentPane,
   viewHandler.registerModule(exportToSvgButton, {
     type     : viewHandler.moduleType.ContextButton,
     priority : 30,
+    center   : 'diagram'
+  });
+
+  var downloadImageButton = new Button({
+    label   : 'Download image',
+    render  : function () { return this; },
+    onClick : function () {
+      var element = document.createElement('a');
+      element.setAttribute('href',
+          'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(diagram._svg));
+      element.setAttribute('download', 'diagram.svg');
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
+  });
+
+  viewHandler.registerModule(downloadImageButton, {
+    type     : viewHandler.moduleType.ContextButton,
+    priority : 40,
     center   : 'diagram'
   });
 });

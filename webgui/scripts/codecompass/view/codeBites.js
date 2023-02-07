@@ -129,7 +129,16 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
           cssClass : 'cb-label cb-label-' + colorIdx
         }]]
       });
-    
+
+    if (window.gtag) {
+      window.gtag ('event', 'code_bites', {
+        'event_category' : urlHandler.getState('wsid'),
+        'event_label' : urlHandler.getFileInfo().name
+                      + ': '
+                      + astNodeInfo.astNodeValue.toString()
+      });
+    }
+
     return newElement;
   }
 
@@ -339,7 +348,7 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
       fPos.file   = this.astNodeInfo.range.file;
 
       var astNodeInfo    = languageService.getAstNodeInfoByPosition(fPos);
-      var refTypes       = model.cppservice.getReferenceTypes(astNodeInfo.id);
+      var refTypes       = languageService.getReferenceTypes(astNodeInfo.id);
       var defAstNodeInfo = languageService.getReferences(
           astNodeInfo.id, refTypes["Definition"])[0];
 

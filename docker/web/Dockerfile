@@ -23,6 +23,7 @@ RUN set -x && apt-get update -qq \
     postgresql-server-dev-12 \
     default-jre \
     libgit2-dev \
+    libldap-2.4-2 \
     libssl1.1 \
     libgvc6 \
     libthrift-dev \
@@ -30,6 +31,7 @@ RUN set -x && apt-get update -qq \
     libodb-pgsql-dev \
     # To switch user and exec command.
     gosu \
+    tini \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
@@ -40,7 +42,6 @@ ARG CC_UID=960
 ENV CC_GID ${CC_GID}
 ENV CC_UID ${CC_UID}
 
-ENV TINI_VERSION v0.18.0
 
 # Create user and group for CodeCompass.
 RUN groupadd --system codecompass --gid ${CC_GID} && \
@@ -55,11 +56,9 @@ ENV PATH="/codecompass/bin:$PATH"
 COPY --chown=codecompass:codecompass docker/web/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
 
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
 
 EXPOSE 8080
 
-ENTRYPOINT ["/tini", "--", "/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint.sh"]
 
 CMD ["CodeCompass_webserver", "-w", "/workspace", "-p", "8080"]

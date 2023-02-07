@@ -378,7 +378,7 @@ int main(int argc, char* argv[])
     cc::util::removeTables(db, SQL_DIR);
     cc::util::createTables(db, SQL_DIR);
 
-    srcMgr.cacheFiles();
+    srcMgr.reloadCache();
     ctx.fileStatus.clear();
   }
 

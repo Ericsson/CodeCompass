@@ -84,17 +84,18 @@ public class IPCProcessor implements AutoCloseable {
       return;
     }
     
-    boolean cont = _continueServing;
-    while (cont) {
-      try {
-        cont = _continueServing && _processor.process(_inProtocol, _outProtocol);
-      } catch (TTransportException ex) {
-        _log.log(Level.SEVERE, "Client died!", ex);
-        return;
-      } catch (TException ex) {
-        _log.log(Level.SEVERE, "Something went wrong!", ex);
+    try {
+      while (_continueServing) {
+        _processor.process(_inProtocol, _outProtocol);
       }
+    } catch (TTransportException ex) {
+      _log.log(Level.SEVERE, "Client died!", ex);
+    } catch (TException ex) {
+      _log.log(Level.SEVERE, "Something went wrong!", ex);
+    } catch (Exception x) {
+      _log.log(Level.SEVERE, "Error occurred during processing of message.", x);
     }
+    close();
   }
   
   /**
@@ -117,7 +118,12 @@ public class IPCProcessor implements AutoCloseable {
 
   @Override
   public void close() {
-    _inTransport.close();
-    _outTransport.close();
+    stopServe();
+    if (_inTransport != null) {
+      _inTransport.close();
+    }
+    if (_outTransport != null) {
+      _outTransport.close();
+    }
   }
 }

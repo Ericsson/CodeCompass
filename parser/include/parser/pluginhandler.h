@@ -6,7 +6,6 @@
 #include <map>
 #include <vector>
 
-#include <parser/pluginhandler.h>
 #include <parser/abstractparser.h>
 #include <util/dynamiclibrary.h>
 
