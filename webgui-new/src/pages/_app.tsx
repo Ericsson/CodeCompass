@@ -6,9 +6,9 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 import { getWorkspaces } from '../service/workspace-service';
 import { WorkspaceContext } from '../global-context/workspace-context';
-import { WorkspaceInfo } from '@thrift-generated/workspace_types';
+import { WorkspaceInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../global-context/project-context';
-import { FileInfo } from '@thrift-generated/project_types';
+import { FileInfo } from '@thrift-generated/index';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [theme, setTheme] = useState('dark');

@@ -2,7 +2,7 @@ import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
 import { useState, useEffect, useContext } from 'react';
-import { FileInfo } from '@thrift-generated/project_types';
+import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
 import { getRootFiles, getChildFiles, getFileContent, getParentFiles } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';

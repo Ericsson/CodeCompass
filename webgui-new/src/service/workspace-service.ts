@@ -1,12 +1,12 @@
 import thrift from 'thrift';
-import { WorkspaceServiceClient } from '@thrift-generated/WorkspaceService';
+import { WorkspaceService } from '@thrift-generated/index';
 
 const connection = thrift.createXHRConnection('localhost', 8080, {
   transport: thrift.TBufferedTransport,
   protocol: thrift.TJSONProtocol,
   path: '/WorkspaceService',
 });
-const client = thrift.createXHRClient(WorkspaceServiceClient, connection);
+const client = thrift.createXHRClient(WorkspaceService, connection);
 
 export const getWorkspaces = async () => {
   return await client.getWorkspaces();

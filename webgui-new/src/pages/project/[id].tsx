@@ -44,7 +44,7 @@ const CodeMirrorContainer = styled('div')(({ theme }) => ({
   },
 }));
 
-const Page = () => {
+const Project = () => {
   const { theme } = useContext(ThemeContext);
   const { fileContent, fileInfo } = useContext(ProjectContext);
 
@@ -71,4 +71,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default Project;

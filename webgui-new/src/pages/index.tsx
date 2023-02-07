@@ -6,13 +6,13 @@ const Home = () => {
   const workspaces = useContext(WorkspaceContext);
 
   return (
-    <div>
+    <ul>
       {workspaces.map((ws) => (
-        <Link key={ws.id} href={`/project/${ws.id}`}>
-          {ws.description}
-        </Link>
+        <li key={ws.id}>
+          <Link href={`/project/${ws.id}`}>{ws.description}</Link>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };
 

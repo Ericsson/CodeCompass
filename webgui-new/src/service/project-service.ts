@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { ProjectServiceClient } from '@thrift-generated/ProjectService';
+import { ProjectService } from '@thrift-generated/index';
 
 const connection = thrift.createXHRConnection('localhost', 8080, {
   transport: thrift.TBufferedTransport,
@@ -7,7 +7,7 @@ const connection = thrift.createXHRConnection('localhost', 8080, {
   // TODO: dynamic path based on workspace
   path: '/cjson/ProjectService',
 });
-const client = thrift.createXHRClient(ProjectServiceClient, connection);
+const client = thrift.createXHRClient(ProjectService, connection);
 
 export const getRootFiles = async () => {
   return await client.getRootFiles();

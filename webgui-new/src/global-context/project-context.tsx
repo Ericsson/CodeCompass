@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { FileInfo } from '@thrift-generated/project_types';
+import { FileInfo } from '@thrift-generated/index';
 
 type ContextType = {
   fileContent: string | undefined;
