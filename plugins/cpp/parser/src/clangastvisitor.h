@@ -146,11 +146,18 @@ public:
     return Base::TraverseCXXForRangeStmt(forRangeStmt);
   }
 
-  bool VisitCXXForRangeStmt(clang::CXXForRangeStmt *forRangeStmt)
+bool VisitCXXForRangeStmt(clang::CXXForRangeStmt *forRangeStmt)
   {
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
-
-    astNode->astValue = VisitDeclRefExpr(llvm::dyn_cast<clang::DeclRefExpr>(forRangeStmt->getRangeInit()));
+    
+    clang::Stmt* stmt = llvm::dyn_cast<clang::Stmt>(forRangeStmt->getRangeInit());
+    clang::DeclRefExpr* declRefExpr = llvm::dyn_cast<clang::DeclRefExpr>(stmt);
+    VisitDeclRefExpr(declRefExpr);
+    astNode->astValue =  getSourceText(
+      _clangSrcMgr,
+      forRangeStmt->getRangeStmt()->getBeginLoc(),
+      forRangeStmt->getRangeStmt()->getEndLoc(),
+      true);    
 
     astNode->location = getFileLoc(forRangeStmt->getBeginLoc(), forRangeStmt->getEndLoc());
 
@@ -166,6 +173,7 @@ public:
     _astNodes.push_back(astNode);
     return true;
   }
+
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
