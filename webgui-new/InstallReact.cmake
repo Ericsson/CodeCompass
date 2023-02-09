@@ -15,6 +15,19 @@ endif()
 
 message("Installation of npm packages are finished.")
 
+execute_process(
+  COMMAND
+    npm run thrift-codegen-build
+      ${CMAKE_SOURCE_DIR}/service/workspace/workspace.thrift
+      ${CMAKE_SOURCE_DIR}/service/project/project.thrift
+      ${CMAKE_SOURCE_DIR}/service/project/common.thrift
+      ${CMAKE_SOURCE_DIR}/service/plugin/plugin.thrift
+      ${CMAKE_SOURCE_DIR}/service/language/language.thrift
+      ${CMAKE_SOURCE_DIR}/service/authentication/authentication.thrift
+      ${CMAKE_SOURCE_DIR}/plugins/dummy/service/dummy.thrift
+      ${CMAKE_SOURCE_DIR}/plugins/git/service/git.thrift
+  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
+
 message("Building React App...")
 
 execute_process(

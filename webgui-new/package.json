@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "thrift-codegen": "thrift-typescript --sourceDir ../service --outDir ./generated --fallbackNamespace none"
+    "thrift-codegen": "thrift-typescript --sourceDir ../service --outDir ./generated --fallbackNamespace none",
+    "thrift-codegen-build": "thrift-typescript --outDir ./generated --fallbackNamespace none"
   },
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",

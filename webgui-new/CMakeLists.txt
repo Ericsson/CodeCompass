@@ -1,8 +1,5 @@
-# Generate files from Thrift
-install(SCRIPT GenerateThrift.cmake)
-
 install(DIRECTORY
-        public src generated
+        public src
         DESTINATION ${INSTALL_WEBROOT_REACT_DIR}/app
         USE_SOURCE_PERMISSIONS
         FILES_MATCHING PATTERN "[^.]*")
