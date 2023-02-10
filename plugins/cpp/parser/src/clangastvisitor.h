@@ -957,24 +957,22 @@ public:
     return true;
   }
   
-  
-  
   bool VisitUsingDecl(clang::UsingDecl* ud_)
   {
-
     //--- CppAstNode ---//
     
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
-    
+
     astNode->astValue = getSourceText(
       _clangSrcMgr,
       ud_->getBeginLoc(),
       ud_->getLocation(),
       true);
-    std::string usr = getUSR(ud_);
     astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
-    astNode->entityHash = util::fnvHash(usr);
-    astNode->astType = model::CppAstNode::AstType::Definition;
+    astNode->entityHash = util::fnvHash(getUSR(ud_));
+    astNode->symbolType = model::CppAstNode::SymbolType::Other;
+    astNode->astType = model::CppAstNode::AstType::Usage;
+
     astNode->id = model::createIdentifier(*astNode);
     
     if (insertToCache(ud_, astNode))
@@ -983,34 +981,32 @@ public:
     return true;
   }
   
-  
   bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* udd_)
   {
-        //--- CppAstNode ---//
+    //--- CppAstNode ---//
     
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
-    
+
+    const clang::NamespaceDecl* nd = udd_->getNominatedNamespace();
+
     astNode->astValue = getSourceText(
       _clangSrcMgr,
       udd_->getBeginLoc(),
       udd_->getLocation(),
       true);
-    std::string usr = getUSR(udd_);
     astNode->location = getFileLoc(udd_->getBeginLoc(), udd_->getEndLoc());
-    astNode->entityHash = util::fnvHash(usr);
-    astNode->astType = model::CppAstNode::AstType::Definition;
+    astNode->entityHash = util::fnvHash(getUSR(nd));
+    astNode->symbolType = model::CppAstNode::SymbolType::Namespace;
+    astNode->astType = model::CppAstNode::AstType::Usage;
+
     astNode->id = model::createIdentifier(*astNode);
     
     if (insertToCache(udd_, astNode))
       _astNodes.push_back(astNode);
     
     return true;
-  
-  
   }
   
-  
-
   bool VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
   {
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
