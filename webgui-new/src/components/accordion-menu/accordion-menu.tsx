@@ -71,18 +71,6 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   padding: '0',
   height: 'calc(100vh - 81px - 4 * 48px)',
   overflowY: 'scroll',
-  '&::-webkit-scrollbar': {
-    width: '4px',
-    borderLeft: `1px solid ${theme.colors?.primary}`,
-  },
-  '&::-webkit-scrollbar-track': {
-    boxShadow: `inset 0 0 5px ${theme.backgroundColors?.primary}`,
-    borderRadius: '10px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: theme.colors?.primary,
-    borderRadius: '5px',
-  },
 }));
 
 export const AccordionMenu = () => {

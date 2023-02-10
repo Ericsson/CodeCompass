@@ -1,8 +1,7 @@
 import { cpp } from '@codemirror/lang-cpp';
 import { ThemeContext } from '../../themes/theme-context';
-import { tokyoNight } from '@uiw/codemirror-theme-tokyo-night';
-import { tokyoNightDay } from '@uiw/codemirror-theme-tokyo-night-day';
 import ReactCodeMirror from '@uiw/react-codemirror';
+import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
 import { useContext } from 'react';
 import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
@@ -23,27 +22,6 @@ const InnerContainer = styled('div')({
   gridTemplateRows: '1fr',
 });
 
-const CodeMirrorContainer = styled('div')(({ theme }) => ({
-  height: 'calc(100vh - 78px - 49px)',
-  '& > div:nth-of-type(2)': {
-    height: 'calc(100vh - 78px - 49px)',
-    overflowY: 'scroll',
-    fontSize: '0.8rem',
-    '&::-webkit-scrollbar': {
-      width: '4px',
-      borderLeft: `1px solid ${theme.colors?.primary}`,
-    },
-    '&::-webkit-scrollbar-track': {
-      boxShadow: `inset 0 0 5px ${theme.backgroundColors?.primary}`,
-      borderRadius: '10px',
-    },
-    '&::-webkit-scrollbar-thumb': {
-      background: theme.colors?.primary,
-      borderRadius: '5px',
-    },
-  },
-}));
-
 const Project = () => {
   const { theme } = useContext(ThemeContext);
   const { fileContent, fileInfo } = useContext(ProjectContext);
@@ -53,7 +31,7 @@ const Project = () => {
       <Header />
       <InnerContainer>
         <AccordionMenu />
-        <CodeMirrorContainer>
+        <div>
           <FileName
             fileName={fileInfo ? (fileInfo.name as string) : ''}
             filePath={fileInfo ? (fileInfo.path as string) : ''}
@@ -62,10 +40,15 @@ const Project = () => {
           <ReactCodeMirror
             readOnly={true}
             extensions={[cpp()]}
-            theme={theme === 'dark' ? tokyoNight : tokyoNightDay}
+            theme={theme === 'dark' ? githubDark : githubLight}
             value={fileContent ?? ''}
+            width={'100%'}
+            height={'100%'}
+            maxWidth={'calc(100vw - 280px)'}
+            maxHeight={'calc(100vh - 78px - 49px)'}
+            style={{ fontSize: '0.8rem' }}
           />
-        </CodeMirrorContainer>
+        </div>
       </InnerContainer>
     </OuterContainer>
   );

@@ -14,14 +14,16 @@ const Container = styled('div')({
 
 const Foldername = styled('div')(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
-  padding: '5px',
+  padding: '5px 10px',
   fontSize: '0.85rem',
+  width: '280px',
 }));
 
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,
   padding: '5px',
+  fontSize: '0.85rem',
 }));
 
 const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
@@ -29,6 +31,9 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     marginLeft: '10px',
     paddingLeft: '5px',
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
+  },
+  [`& .${treeItemClasses.label}`]: {
+    fontSize: '0.85rem',
   },
 }));
 
@@ -41,6 +46,8 @@ const IconLabel = styled('div')(({ theme }) => ({
     backgroundColor: alpha(theme.palette.text.primary, 0.3),
   },
 }));
+
+const FileLabel = styled('div')({});
 
 const FolderUp = styled('div')(({ theme }) => ({
   padding: '5px',
@@ -76,7 +83,18 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
         tree.push(
           <IconLabel key={keyId++} onClick={() => handleTreeViewFileClick(file)}>
             <FileIcon fileName={file.name as string} />
-            <div>{file.name}</div>
+            <FileLabel
+              sx={{
+                color: (theme) =>
+                  file.parseStatus === 3
+                    ? theme.colors?.success
+                    : file.parseStatus === 2
+                    ? theme.colors?.warning
+                    : theme.colors?.primary,
+              }}
+            >
+              {file.name}
+            </FileLabel>
           </IconLabel>
         );
       }
@@ -140,7 +158,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
         ''
       ) : (
         <>
-          <Foldername>{folderPath}</Foldername>
+          <Foldername>{folderPath === '/' ? '/' : '../' + folderPath.split('/').reverse()[0]}</Foldername>
           <FolderUp onClick={() => navigateBack()}>
             <DriveFolderUpload />
             <div>{'..'}</div>
@@ -152,7 +170,18 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
           return (
             <IconLabel key={idx} onClick={() => handleFileClick(file)}>
               {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
-              <div>{file.name}</div>
+              <FileLabel
+                sx={{
+                  color: (theme) =>
+                    file.parseStatus === 3
+                      ? theme.colors?.success
+                      : file.parseStatus === 2
+                      ? theme.colors?.warning
+                      : theme.colors?.primary,
+                }}
+              >
+                {file.name}
+              </FileLabel>
             </IconLabel>
           );
         })}

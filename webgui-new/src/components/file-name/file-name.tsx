@@ -7,6 +7,7 @@ const Container = styled('div')(({ theme }) => ({
   paddingLeft: '15px',
   minHeight: '49px',
   borderBottom: `1px solid ${theme.colors?.primary}`,
+  fontSize: '0.85rem',
 }));
 
 const ParseStatus = styled('div')({
@@ -36,7 +37,8 @@ export const FileName = ({
     <Container>
       <ParseStatus
         sx={{
-          color: (theme) =>
+          color: '#FFFFFF',
+          backgroundColor: (theme) =>
             parseStatus === 2 ? theme.colors?.warning : parseStatus === 3 ? theme.colors?.success : theme.colors?.error,
           border: (theme) =>
             `1px solid ${

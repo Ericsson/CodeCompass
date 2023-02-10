@@ -29,24 +29,24 @@ declare module '@mui/material/styles' {
 const colors = {
   light: {
     background: {
-      primary: '#e1e2e7',
+      primary: '#FFFFFF',
     },
     text: {
-      primary: '#1a1b26',
-      error: red.A400,
-      warning: orange.A400,
-      success: green.A400,
+      primary: '#24292F',
+      error: '#C13333',
+      warning: orange[800],
+      success: '#43BA45',
     },
   },
   dark: {
     background: {
-      primary: '#1a1b26',
+      primary: '#0D1117',
     },
     text: {
-      primary: '#b6cad4',
-      error: red.A400,
-      warning: orange.A400,
-      success: green.A400,
+      primary: '#C9D1D9',
+      error: '#BF0000',
+      warning: orange[900],
+      success: green[700],
     },
   },
 };
