@@ -44,6 +44,7 @@ const Project = () => {
             fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
             filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
             parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
+            info={projectCtx.fileInfo}
           />
           <ReactCodeMirror
             readOnly={true}

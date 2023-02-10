@@ -66,6 +66,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [folderPath, setFolderPath] = useState<string>('/');
   const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
+  const [selectedFile, setSelectedFile] = useState<string>();
 
   let nodeId = 1;
   let keyId = 1;
@@ -138,6 +139,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(file);
+      setSelectedFile(file.id);
     }
   };
 
@@ -171,7 +173,14 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       <Container>
         {files.map((file, idx) => {
           return (
-            <IconLabel key={idx} onClick={() => handleFileClick(file)}>
+            <IconLabel
+              key={idx}
+              onClick={() => handleFileClick(file)}
+              sx={{
+                backgroundColor: (theme) =>
+                  selectedFile === file.id ? alpha(theme.palette.text.primary, 0.4) : 'unset',
+              }}
+            >
               {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
               <FileLabel
                 sx={{
