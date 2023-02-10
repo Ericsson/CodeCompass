@@ -11,7 +11,7 @@ import { ProjectContext } from '../global-context/project-context';
 import { FileInfo } from '@thrift-generated/index';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<string>('');
   const [fileContent, setFileContent] = useState<string | undefined>();
@@ -23,6 +23,11 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
       setWorkspaces(workspaceData);
     };
     getWorkspaceData();
+
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      setTheme(storedTheme);
+    }
   }, []);
 
   const projectContext = {

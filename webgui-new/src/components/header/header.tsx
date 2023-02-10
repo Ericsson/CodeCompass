@@ -68,6 +68,7 @@ export const Header = ({ workspaceName }: { workspaceName: string }): JSX.Elemen
   };
 
   const changeTheme = () => {
+    localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 

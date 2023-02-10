@@ -112,6 +112,26 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       setRootFiles(rootFileData);
       setFiles(rootFileData);
       setFileTree(await renderFileTree(await getRootFiles(projectCtx.currentWorkspace)));
+      const storedCurrentFiles = localStorage.getItem('currentFiles');
+      if (storedCurrentFiles) {
+        setFiles(JSON.parse(storedCurrentFiles));
+      }
+      const storedCurrentPath = localStorage.getItem('currentPath');
+      if (storedCurrentPath) {
+        setFolderPath(storedCurrentPath);
+      }
+      const storedCurrentFileContent = localStorage.getItem('currentFileContent');
+      if (storedCurrentFileContent) {
+        projectCtx.setFileContent(storedCurrentFileContent);
+      }
+      const storedCurrentFileInfo = localStorage.getItem('currentFileInfo');
+      if (storedCurrentFileInfo) {
+        projectCtx.setFileInfo(JSON.parse(storedCurrentFileInfo));
+      }
+      const storedCurrentSelectedFile = localStorage.getItem('currentSelectedFile');
+      if (storedCurrentSelectedFile) {
+        setSelectedFile(storedCurrentSelectedFile);
+      }
     };
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,24 +142,32 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     pathAsArray.pop();
     const trimmedPath = pathAsArray.join('/');
     setFolderPath(trimmedPath);
+    localStorage.setItem('currentPath', trimmedPath);
     if (trimmedPath === '') {
       setFiles(rootFiles);
+      localStorage.setItem('currentFiles', JSON.stringify(rootFiles));
       return;
     }
     const parentFiles = await getParentFiles(projectCtx.currentWorkspace, trimmedPath);
     setFiles(parentFiles);
+    localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
   };
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
       const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
       setFiles(children);
+      localStorage.setItem('currentFiles', JSON.stringify(children));
       setFolderPath(file.path as string);
+      localStorage.setItem('currentPath', file.path as string);
     } else {
       const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
       projectCtx.setFileContent(fileContent);
+      localStorage.setItem('currentFileContent', fileContent);
       projectCtx.setFileInfo(file);
+      localStorage.setItem('currentFileInfo', JSON.stringify(file));
       setSelectedFile(file.id);
+      localStorage.setItem('currentSelectedFile', file.id as string);
     }
   };
 
