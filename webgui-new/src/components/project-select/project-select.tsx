@@ -15,6 +15,11 @@ export const ProjectSelect = ({
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     router.push(`/project/${e.target.value}`);
+    localStorage.removeItem('currentFiles');
+    localStorage.removeItem('currentPath');
+    localStorage.removeItem('currentFileContent');
+    localStorage.removeItem('currentFileInfo');
+    localStorage.removeItem('currentSelectedFile');
     projectCtx.setFileContent(undefined);
     projectCtx.setFileInfo(undefined);
   };
