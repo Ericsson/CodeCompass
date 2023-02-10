@@ -13,6 +13,7 @@ import { FileInfo } from '@thrift-generated/index';
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [theme, setTheme] = useState('dark');
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState<string>('');
   const [fileContent, setFileContent] = useState<string | undefined>();
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>();
 
@@ -24,9 +25,18 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
     getWorkspaceData();
   }, []);
 
+  const projectContext = {
+    currentWorkspace,
+    setCurrentWorkspace,
+    fileContent,
+    setFileContent,
+    fileInfo,
+    setFileInfo,
+  };
+
   return (
     <WorkspaceContext.Provider value={workspaces}>
-      <ProjectContext.Provider value={{ fileContent, setFileContent, fileInfo, setFileInfo }}>
+      <ProjectContext.Provider value={projectContext}>
         <ThemeContext.Provider value={{ theme, setTheme }}>
           <ThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme}>
             <CssBaseline />

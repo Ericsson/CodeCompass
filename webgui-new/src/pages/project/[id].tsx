@@ -2,12 +2,14 @@ import { cpp } from '@codemirror/lang-cpp';
 import { ThemeContext } from '../../themes/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { FileName } from '../../components/file-name/file-name';
 import { Header } from '../../components/header/header';
 import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
-import { styled } from '@mui/material';
+import { Box, CircularProgress, styled } from '@mui/material';
 import { ProjectContext } from '../../global-context/project-context';
+import { useRouter } from 'next/router';
+import { WorkspaceContext } from 'global-context/workspace-context';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -23,25 +25,31 @@ const InnerContainer = styled('div')({
 });
 
 const Project = () => {
+  const router = useRouter();
   const { theme } = useContext(ThemeContext);
-  const { fileContent, fileInfo } = useContext(ProjectContext);
+  const projectCtx = useContext(ProjectContext);
+  const workspaces = useContext(WorkspaceContext);
 
-  return (
+  useEffect(() => {
+    projectCtx.setCurrentWorkspace(router.query.id as string);
+  }, [router.query.id, projectCtx]);
+
+  return workspaces.map((ws) => ws.id).includes(router.query.id as string) || !router.query.id ? (
     <OuterContainer>
-      <Header />
+      <Header workspaceName={router.query.id as string} />
       <InnerContainer>
         <AccordionMenu />
         <div>
           <FileName
-            fileName={fileInfo ? (fileInfo.name as string) : ''}
-            filePath={fileInfo ? (fileInfo.path as string) : ''}
-            parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
+            fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
+            filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
+            parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
           />
           <ReactCodeMirror
             readOnly={true}
             extensions={[cpp()]}
             theme={theme === 'dark' ? githubDark : githubLight}
-            value={fileContent ?? ''}
+            value={projectCtx.fileContent ?? ''}
             width={'100%'}
             height={'100%'}
             maxWidth={'calc(100vw - 280px)'}
@@ -51,6 +59,10 @@ const Project = () => {
         </div>
       </InnerContainer>
     </OuterContainer>
+  ) : (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <CircularProgress />
+    </Box>
   );
 };
 

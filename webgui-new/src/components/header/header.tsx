@@ -1,6 +1,5 @@
 import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled } from '@mui/material';
 import { ProjectSelect } from '../project-select/project-select';
-import { useRouter } from 'next/router';
 import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
@@ -46,11 +45,8 @@ const MenuContainer = styled('div')({
   gap: '1rem',
 });
 
-export const Header = (): JSX.Element => {
+export const Header = ({ workspaceName }: { workspaceName: string }): JSX.Element => {
   const workspaces = useContext(WorkspaceContext);
-
-  const router = useRouter();
-
   const { theme, setTheme } = useContext(ThemeContext);
 
   const searchOptions = enumToArray(SearchOptions);
@@ -81,7 +77,7 @@ export const Header = (): JSX.Element => {
       <HeaderContent>
         <SettingsContainer>
           <ProjectSelect
-            currentProject={workspaces.map((ws) => ws.id as string).filter((wsId) => wsId === router.query.id)[0]}
+            currentProject={workspaces.map((ws) => ws.id as string).filter((wsId) => wsId === workspaceName)[0]}
             projects={workspaces.map((ws) => ws.id as string)}
           />
           <TextField

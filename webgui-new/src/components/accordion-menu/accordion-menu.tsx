@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { ArrowForwardIosSharp, Folder, Search, Info, GitHub } from '@mui/icons-material';
+import { ArrowForwardIosSharp, Folder, Search, Info, GitHub, Construction } from '@mui/icons-material';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
@@ -78,11 +78,10 @@ export const AccordionMenu = () => {
   const [treeView, setTreeView] = useState<boolean>(false);
 
   const placeholder = (
-    <Typography>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet blandit leo
-      lobortis eget. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit amet
-      blandit leo lobortis eget.
-    </Typography>
+    <IconLabel sx={{ padding: '20px' }}>
+      <Construction />
+      <div>{'Under construction'}</div>
+    </IconLabel>
   );
 
   return (

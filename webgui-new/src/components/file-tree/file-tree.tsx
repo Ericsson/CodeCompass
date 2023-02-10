@@ -60,7 +60,7 @@ const FolderUp = styled('div')(({ theme }) => ({
 }));
 
 export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
-  const { setFileContent, setFileInfo } = useContext(ProjectContext);
+  const projectCtx = useContext(ProjectContext);
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -73,7 +73,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     const tree: JSX.Element[] = [];
     files.forEach(async (file) => {
       if (file.isDirectory) {
-        const children = await getChildFiles(file.id as string);
+        const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
         tree.push(
           <StyledTreeItem key={keyId++} nodeId={`${nodeId++}`} label={file.name}>
             {await renderFileTree(children)}
@@ -103,15 +103,18 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   };
 
   useEffect(() => {
+    if (!projectCtx.currentWorkspace) {
+      return;
+    }
     const getData = async () => {
-      const rootFileData = await getRootFiles();
+      const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
       setRootFiles(rootFileData);
       setFiles(rootFileData);
-      setFileTree(await renderFileTree(await getRootFiles()));
+      setFileTree(await renderFileTree(await getRootFiles(projectCtx.currentWorkspace)));
     };
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [projectCtx.currentWorkspace]);
 
   const navigateBack = async () => {
     const pathAsArray = folderPath.split('/');
@@ -122,19 +125,19 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       setFiles(rootFiles);
       return;
     }
-    const parentFiles = await getParentFiles(trimmedPath);
+    const parentFiles = await getParentFiles(projectCtx.currentWorkspace, trimmedPath);
     setFiles(parentFiles);
   };
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
-      const children = await getChildFiles(file.id as string);
+      const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
       setFiles(children);
       setFolderPath(file.path as string);
     } else {
-      const fileContent = await getFileContent(file.id as string);
-      setFileContent(fileContent);
-      setFileInfo(file);
+      const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
+      projectCtx.setFileContent(fileContent);
+      projectCtx.setFileInfo(file);
     }
   };
 
@@ -142,9 +145,9 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     if (file.isDirectory) {
       return;
     } else {
-      const fileContent = await getFileContent(file.id as string);
-      setFileContent(fileContent);
-      setFileInfo(file);
+      const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
+      projectCtx.setFileContent(fileContent);
+      projectCtx.setFileInfo(file);
     }
   };
 
