@@ -31,17 +31,6 @@ const Project = () => {
   const workspaces = useContext(WorkspaceContext);
 
   useEffect(() => {
-    if (
-      router.query.id &&
-      projectCtx.currentWorkspace !== '' &&
-      (router.query.id as string) !== projectCtx.currentWorkspace
-    ) {
-      localStorage.removeItem('currentFiles');
-      localStorage.removeItem('currentPath');
-      localStorage.removeItem('currentFileContent');
-      localStorage.removeItem('currentFileInfo');
-      localStorage.removeItem('currentSelectedFile');
-    }
     projectCtx.setCurrentWorkspace(router.query.id as string);
   }, [router.query.id, projectCtx]);
 
