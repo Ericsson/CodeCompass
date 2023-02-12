@@ -16,7 +16,7 @@ public class ServiceApp extends SearchHandler {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * IPC message processor.
    */

@@ -27,7 +27,7 @@ public final class DatabaseBuilder {
   /**
    * Logger.
    */
-  private static final Logger _log = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log = Logger.getGlobal();
   /**
    * An index reader for the main index database.
    */

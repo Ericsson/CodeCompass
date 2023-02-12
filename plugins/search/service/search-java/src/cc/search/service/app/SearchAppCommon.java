@@ -75,7 +75,7 @@ public abstract class SearchAppCommon implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   
   /**
    * Async task class for matching lines in a document.

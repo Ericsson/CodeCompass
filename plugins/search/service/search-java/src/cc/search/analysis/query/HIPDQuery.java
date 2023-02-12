@@ -50,7 +50,7 @@ public class HIPDQuery extends Query {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * The default value of the maximal allowed difference.
    */

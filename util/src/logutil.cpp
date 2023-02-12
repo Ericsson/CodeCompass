@@ -6,6 +6,8 @@
 #include <boost/log/attributes.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace fs = boost::filesystem;
+
 namespace cc
 {
 namespace util
@@ -13,9 +15,6 @@ namespace util
 
 namespace
 {
-
-// timestamp length required for nanosecond precision
-static constexpr size_t TIMESTAMP_LENGTH = 29;
 
 BOOST_LOG_ATTRIBUTE_KEYWORD(timestamp, "TimeStamp", boost::posix_time::ptime)
 
@@ -78,7 +77,9 @@ void fileLogFormatter(
   std::string sLevel = boost::log::trivial::to_string(severity.get());
   std::transform(sLevel.begin(), sLevel.end(), sLevel.begin(), ::toupper);
 
-  strm << "[" << sLevel << "] " << rec[boost::log::expressions::smessage];
+  std::string timeString = getFormattedTime(rec[timestamp].get());
+
+  strm << timeString << " [" << sLevel << "] " << rec[boost::log::expressions::smessage];
 }
 
 } // namespace
@@ -108,16 +109,16 @@ std::string getLoggingBase(const std::string& path_, const std::string& name_)
                                  Please provide an absolute path");
   }
 
-  using namespace boost::filesystem;
-
   boost::system::error_code ec;
-  create_directory(path_, ec);
+  fs::create_directory(path_, ec);
   if (ec)
   {
     throw std::invalid_argument("Permission denied to create " + path_);
   }
 
-  return canonical(absolute(path(path_))).string() + '/' + name_ + '_';
+  const std::string fullpath = canonical(absolute(fs::path(path_))).string();
+
+  return fullpath + (fullpath.back() == '/' ? "" : "/") + name_ + '_';
 }
 
 bool initFileLogger(const std::string& path_)

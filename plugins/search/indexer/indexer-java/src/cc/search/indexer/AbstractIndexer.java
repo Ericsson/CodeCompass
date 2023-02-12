@@ -42,7 +42,7 @@ abstract public class AbstractIndexer {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Field type for storing tags.
    */

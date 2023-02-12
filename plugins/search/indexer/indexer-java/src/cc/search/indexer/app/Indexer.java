@@ -41,7 +41,7 @@ public class Indexer implements AutoCloseable, IndexerService.Iface {
   /**
    * Logger.
    */
-  private static final Logger _log = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log = Logger.getGlobal();
   /**
    * Command line options.
    */

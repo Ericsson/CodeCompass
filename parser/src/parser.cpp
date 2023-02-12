@@ -70,6 +70,9 @@ po::options_description commandLineArguments()
       po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
       "error, critical.")
+    ("logtarget", po::value<std::string>(),
+      "This is the path to the folder where the logging output files will be written. "
+      "If omitted, the output will be on the console only.")
     ("jobs,j", po::value<int>()->default_value(4),
       "Number of threads the parsers can use.")
     ("skip,s", po::value<std::vector<std::string>>(),
@@ -82,10 +85,7 @@ po::options_description commandLineArguments()
      "further actions modifying the state of the database.")
     ("incremental-threshold", po::value<int>()->default_value(10),
       "This is a threshold percentage. If the total ratio of changed files "
-      "is greater than this value, full parse is forced instead of incremental parsing.")
-    ("log-target", po::value<std::string>(),
-      "This is the path to the folder where the logging output files will be written. "
-      "If omitted, the output will be on the console only.");
+      "is greater than this value, full parse is forced instead of incremental parsing.");
 
   return desc;
 }
@@ -232,14 +232,14 @@ int main(int argc, char* argv[])
   po::store(po::command_line_parser(argc, argv)
     .options(desc).allow_unregistered().run(), vm);
 
-  if (vm.count("log-target"))
+  if (vm.count("logtarget"))
   {
-    vm.at("log-target").value() = cc::util::getLoggingBase( vm["log-target"].as<std::string>()
+    vm.at("logtarget").value() = cc::util::getLoggingBase( vm["logtarget"].as<std::string>()
                                                           , vm["name"].as<std::string>()
                                                           );
-    if (!cc::util::initFileLogger(vm["log-target"].as<std::string>() + "parser.log"))
+    if (!cc::util::initFileLogger(vm["logtarget"].as<std::string>() + "parser.log"))
     {
-      vm.at("log-target").value() = std::string("");
+      vm.at("logtarget").value() = std::string();
     }
   }
 

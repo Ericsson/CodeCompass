@@ -23,7 +23,7 @@ public class QueryApp extends SearchAppCommon {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Application options.
    */

@@ -20,7 +20,7 @@ public final class SourceAnalyzer extends AnalyzerWrapper {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Analyzer for a full path.
    */

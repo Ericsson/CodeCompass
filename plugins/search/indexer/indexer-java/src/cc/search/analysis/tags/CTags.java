@@ -19,7 +19,7 @@ class CTags implements TagGenerator {
   /**
    * Logger.
    */
-  private final static Logger _log  = Logger.getLogger("GLOBAL_LOGGER");
+  private final static Logger _log  = Logger.getGlobal();
   /**
    * Filter terminator string for ctags.
    */
