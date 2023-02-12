@@ -1,8 +1,9 @@
 import thrift from 'thrift';
 import { ProjectService } from '@thrift-generated/index';
+import { config } from './config';
 
 const getClient = (workspace: string) => {
-  const connection = thrift.createXHRConnection('localhost', 8080, {
+  const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
     path: `/${workspace}/ProjectService`,
