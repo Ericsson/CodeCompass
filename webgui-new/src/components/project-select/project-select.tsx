@@ -1,7 +1,5 @@
 import { Select, MenuItem, Box, CircularProgress, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
-import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
-import { useContext } from 'react';
 
 export const ProjectSelect = ({
   currentProject,
@@ -11,17 +9,14 @@ export const ProjectSelect = ({
   projects: string[];
 }): JSX.Element => {
   const router = useRouter();
-  const projectCtx = useContext(ProjectContext);
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
-    router.push(`/project/${e.target.value}`);
     localStorage.removeItem('currentFiles');
     localStorage.removeItem('currentPath');
     localStorage.removeItem('currentFileContent');
     localStorage.removeItem('currentFileInfo');
     localStorage.removeItem('currentSelectedFile');
-    projectCtx.setFileContent(undefined);
-    projectCtx.setFileInfo(undefined);
+    router.push(`/project/${e.target.value}`);
   };
 
   return currentProject && projects ? (

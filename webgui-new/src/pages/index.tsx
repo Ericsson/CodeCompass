@@ -1,18 +1,28 @@
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { WorkspaceContext } from '../global-context/workspace-context';
 
 const Home = () => {
+  const router = useRouter();
   const workspaces = useContext(WorkspaceContext);
 
+  const loadWorkspace = (workspace: string) => {
+    localStorage.removeItem('currentFiles');
+    localStorage.removeItem('currentPath');
+    localStorage.removeItem('currentFileContent');
+    localStorage.removeItem('currentFileInfo');
+    localStorage.removeItem('currentSelectedFile');
+    router.push(`/project/${workspace}`);
+  };
+
   return (
-    <ul>
+    <div>
       {workspaces.map((ws) => (
-        <li key={ws.id}>
-          <Link href={`/project/${ws.id}`}>{ws.description}</Link>
-        </li>
+        <div key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
+          {ws.id}
+        </div>
       ))}
-    </ul>
+    </div>
   );
 };
 

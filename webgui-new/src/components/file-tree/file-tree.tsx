@@ -64,9 +64,9 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [folderPath, setFolderPath] = useState<string>('/');
+  const [folderPath, setFolderPath] = useState<string>('');
   const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>();
+  const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined);
 
   let nodeId = 1;
   let keyId = 1;
@@ -111,7 +111,12 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
       setRootFiles(rootFileData);
       setFiles(rootFileData);
-      setFileTree(await renderFileTree(await getRootFiles(projectCtx.currentWorkspace)));
+      setFileTree(await renderFileTree(rootFileData));
+      setFolderPath('');
+      setSelectedFile(undefined);
+      projectCtx.setFileContent(undefined);
+      projectCtx.setFileInfo(undefined);
+
       const storedCurrentFiles = localStorage.getItem('currentFiles');
       if (storedCurrentFiles) {
         setFiles(JSON.parse(storedCurrentFiles));
@@ -187,7 +192,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     </StyledTreeView>
   ) : (
     <>
-      {files === rootFiles ? (
+      {folderPath === '' ? (
         ''
       ) : (
         <>

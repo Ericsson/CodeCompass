@@ -4,7 +4,7 @@ import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FileTree } from '../file-tree/file-tree';
 import { Checkbox, FormControlLabel } from '@mui/material';
 
@@ -77,6 +77,13 @@ export const AccordionMenu = () => {
   const [expanded, setExpanded] = useState<string>('panel1');
   const [treeView, setTreeView] = useState<boolean>(false);
 
+  useEffect(() => {
+    const storedTreeViewSetting = localStorage.getItem('treeView');
+    if (storedTreeViewSetting) {
+      setTreeView(JSON.parse(storedTreeViewSetting));
+    }
+  }, []);
+
   const placeholder = (
     <IconLabel sx={{ padding: '20px' }}>
       <Construction />
@@ -93,7 +100,16 @@ export const AccordionMenu = () => {
             <FileManagerHeader>
               <Typography>{'File manager'}</Typography>
               <TreeSetting
-                control={<Checkbox checked={treeView} onChange={() => setTreeView(!treeView)} sx={{ padding: '0' }} />}
+                control={
+                  <Checkbox
+                    checked={treeView}
+                    onChange={() => {
+                      localStorage.setItem('treeView', JSON.stringify(!treeView));
+                      setTreeView(!treeView);
+                    }}
+                    sx={{ padding: '0' }}
+                  />
+                }
                 label={'Tree'}
               />
             </FileManagerHeader>
