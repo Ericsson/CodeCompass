@@ -2,7 +2,7 @@ import { cpp } from '@codemirror/lang-cpp';
 import { ThemeContext } from '../themes/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { FileName } from '../components/file-name/file-name';
 import { Header } from '../components/header/header';
 import { AccordionMenu } from '../components/accordion-menu/accordion-menu';
@@ -25,8 +25,6 @@ const InnerContainer = styled('div')({
 const Project = () => {
   const { theme } = useContext(ThemeContext);
   const projectCtx = useContext(ProjectContext);
-
-  useEffect(() => {}, [projectCtx.currentWorkspace]);
 
   return (
     <OuterContainer>
