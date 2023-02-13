@@ -1,16 +1,13 @@
 import { cpp } from '@codemirror/lang-cpp';
-import { ThemeContext } from '../../themes/theme-context';
+import { ThemeContext } from '../themes/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
 import { useContext, useEffect } from 'react';
-import { FileName } from '../../components/file-name/file-name';
-import { Header } from '../../components/header/header';
-import { AccordionMenu } from '../../components/accordion-menu/accordion-menu';
-import { Box, CircularProgress, styled } from '@mui/material';
-import { ProjectContext } from '../../global-context/project-context';
-import { useRouter } from 'next/router';
-import { WorkspaceContext } from 'global-context/workspace-context';
-import { readWorkspaceFolders } from 'utils/read-workspace-folders';
+import { FileName } from '../components/file-name/file-name';
+import { Header } from '../components/header/header';
+import { AccordionMenu } from '../components/accordion-menu/accordion-menu';
+import { styled } from '@mui/material';
+import { ProjectContext } from '../global-context/project-context';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -26,18 +23,14 @@ const InnerContainer = styled('div')({
 });
 
 const Project = () => {
-  const router = useRouter();
   const { theme } = useContext(ThemeContext);
   const projectCtx = useContext(ProjectContext);
-  const workspaces = useContext(WorkspaceContext);
 
-  useEffect(() => {
-    projectCtx.setCurrentWorkspace(router.query.id as string);
-  }, [router.query.id, projectCtx]);
+  useEffect(() => {}, [projectCtx.currentWorkspace]);
 
-  return workspaces.map((ws) => ws.id).includes(router.query.id as string) ? (
+  return (
     <OuterContainer>
-      <Header workspaceName={router.query.id as string} />
+      <Header />
       <InnerContainer>
         <AccordionMenu />
         <div>
@@ -61,27 +54,7 @@ const Project = () => {
         </div>
       </InnerContainer>
     </OuterContainer>
-  ) : (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <CircularProgress />
-    </Box>
   );
-};
-
-export const getStaticPaths = async () => {
-  const folders = (await readWorkspaceFolders()) as string[];
-  const paths = folders.map((name) => {
-    return {
-      params: {
-        id: name,
-      },
-    };
-  });
-  return { paths, fallback: false };
-};
-
-export const getStaticProps = async () => {
-  return { props: {} };
 };
 
 export default Project;

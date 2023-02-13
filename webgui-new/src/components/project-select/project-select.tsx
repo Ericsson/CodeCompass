@@ -1,14 +1,11 @@
-import { Select, MenuItem, Box, CircularProgress, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
-import { useRouter } from 'next/router';
+import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { ProjectContext } from 'global-context/project-context';
+import { WorkspaceContext } from 'global-context/workspace-context';
+import { useContext } from 'react';
 
-export const ProjectSelect = ({
-  currentProject,
-  projects,
-}: {
-  currentProject: string;
-  projects: string[];
-}): JSX.Element => {
-  const router = useRouter();
+export const ProjectSelect = (): JSX.Element => {
+  const workspaces = useContext(WorkspaceContext);
+  const projectCtx = useContext(ProjectContext);
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     localStorage.removeItem('currentFiles');
@@ -16,23 +13,19 @@ export const ProjectSelect = ({
     localStorage.removeItem('currentFileContent');
     localStorage.removeItem('currentFileInfo');
     localStorage.removeItem('currentSelectedFile');
-    router.push(`/project/${e.target.value}`);
+    projectCtx.setCurrentWorkspace(e.target.value);
   };
 
-  return currentProject && projects ? (
+  return (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
-      <Select value={currentProject} label={'Project'} onChange={(e) => loadWorkspace(e)}>
-        {projects.map((project) => (
-          <MenuItem key={project} value={project}>
-            {project}
+      <Select value={projectCtx.currentWorkspace} label={'Project'} onChange={(e) => loadWorkspace(e)}>
+        {workspaces.map((workspace) => (
+          <MenuItem key={workspace.id} value={workspace.id}>
+            {workspace.id}
           </MenuItem>
         ))}
       </Select>
     </FormControl>
-  ) : (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <CircularProgress />
-    </Box>
   );
 };

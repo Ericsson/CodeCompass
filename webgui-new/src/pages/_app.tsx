@@ -21,6 +21,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
     const getWorkspaceData = async () => {
       const workspaceData = await getWorkspaces();
       setWorkspaces(workspaceData);
+      setCurrentWorkspace(workspaceData[0].id as string);
     };
     getWorkspaceData();
 

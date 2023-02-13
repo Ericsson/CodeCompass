@@ -8,7 +8,6 @@ import { ThemeContext } from '../../themes/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from '../settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
-import { WorkspaceContext } from '../../global-context/workspace-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -45,8 +44,7 @@ const MenuContainer = styled('div')({
   gap: '1rem',
 });
 
-export const Header = ({ workspaceName }: { workspaceName: string }): JSX.Element => {
-  const workspaces = useContext(WorkspaceContext);
+export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
 
   const searchOptions = enumToArray(SearchOptions);
@@ -77,10 +75,7 @@ export const Header = ({ workspaceName }: { workspaceName: string }): JSX.Elemen
       <HeaderLogo />
       <HeaderContent>
         <SettingsContainer>
-          <ProjectSelect
-            currentProject={workspaces.map((ws) => ws.id as string).filter((wsId) => wsId === workspaceName)[0]}
-            projects={workspaces.map((ws) => ws.id as string)}
-          />
+          <ProjectSelect />
           <TextField
             placeholder={
               searchOption === SearchOptions.FILE_NAME
