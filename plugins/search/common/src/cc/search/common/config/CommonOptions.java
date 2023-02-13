@@ -17,6 +17,11 @@ public abstract class CommonOptions {
    */
   public String indexDirPath;
   /**
+   * Logging file path
+   * (if there is no file logging, empty string)
+   */
+  public String logFilePath = "";
+  /**
    * Input file descriptor for thrift IPC.
    */
   public int ipcInFd;
@@ -74,6 +79,15 @@ public abstract class CommonOptions {
           } else {
             argIter.remove();
             indexDirPath = argIter.next();
+            argIter.remove();
+          }
+          break;
+        case "-logTarget":
+          if (!argIter.hasNext()) {
+            throw new InvalidValueException("No path for -logTarget");
+          } else {
+            argIter.remove();
+            logFilePath = argIter.next();
             argIter.remove();
           }
           break;
@@ -136,6 +150,7 @@ public abstract class CommonOptions {
       + "\t-ipcInFd fd\n\t\tFile descriptor for IPC IN.\n"
       + "\t-ipcOutFd id\n\t\tFile descriptor for IPC OUT.\n"
       + "\t-useSimpleFileLock\n\t\tUse NFS friendly file locks.\n"
+      + "\t-logTarget\n\t\tPath to logging file.\n"
       + "\t-cleanupLocks\n\t\tCleanup locks before first lock..\n";
   }
 }

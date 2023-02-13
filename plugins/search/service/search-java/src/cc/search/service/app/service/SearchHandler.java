@@ -49,8 +49,7 @@ abstract class SearchHandler extends SearchAppCommon
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(SearchHandler.class
-    .getName());
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Handler for suggestion requests.
    */
@@ -146,7 +145,7 @@ abstract class SearchHandler extends SearchAppCommon
    */
   public SearchHandler(CommonOptions options_) throws IOException {
     super(options_);
-    
+
     Analyzer analyzer = new QueryAnalyzer();
     
     _advDefQueryParser = new AdvancedTagQueryParser(analyzer);
