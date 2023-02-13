@@ -16,6 +16,12 @@ namespace util
  */
 std::string binaryPathToInstallDir(const char* path);
 
+/**
+ * @brief Find the directory where a CodeCompass binary is being run from.
+ * @return The absolute path of the directory where the binary is located.
+ */
+std::string findCurrentExecutableDir();
+
 } // namespace util
 } // namespace cc
 

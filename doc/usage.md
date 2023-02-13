@@ -285,3 +285,10 @@ CodeCompass_webserver \
 
 The server will be available in a browser on
 [`http://localhost:6251`](http://localhost:6251).
+
+### Logging
+
+In both the parser and the webserver it is possible to write the logs to a given directory.
+This feature can be enabled by passing the `--logtarget` command line option with the full
+path to the directory to be used for storing the log files.
+If this argument is not specified, the logs will be written to the terminal only.
