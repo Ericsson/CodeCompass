@@ -15,6 +15,6 @@ for FILE in $FILES_TS
 do
 	if [ -f "$FILE" ]
 	then
-		sed -i -e "/import Int64 = require('node-int64');/d" "$FILE"
+		sed -i -e "s/import Int64 = require(\"node-int64\");/import Int64 from 'node-int64';/g" "$FILE"
 	fi
 done

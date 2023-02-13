@@ -15,6 +15,7 @@ endif()
 
 message("Installation of npm packages are finished.")
 
+# Generate TypeScript from Thrift
 execute_process(
   COMMAND
     npm run thrift-codegen-build
@@ -28,6 +29,11 @@ execute_process(
       ${CMAKE_SOURCE_DIR}/plugins/git/service/git.thrift
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
+# Convert imports to default
+execute_process(
+  COMMAND ${CMAKE_SOURCE_DIR}/scripts/remover.sh
+  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app/generated)
+
 message("Building React App...")
 
 execute_process(
@@ -35,7 +41,9 @@ execute_process(
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 # Move build directory out of application directory
-file(RENAME ${INSTALL_WEBROOT_REACT_DIR}/app/build ${INSTALL_WEBROOT_REACT_DIR})
+execute_process(
+  COMMAND /bin/sh -c "cp -r ./out ../"
+  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   # Remove application source code in case of Release build

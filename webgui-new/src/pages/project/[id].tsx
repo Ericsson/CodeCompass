@@ -10,6 +10,7 @@ import { Box, CircularProgress, styled } from '@mui/material';
 import { ProjectContext } from '../../global-context/project-context';
 import { useRouter } from 'next/router';
 import { WorkspaceContext } from 'global-context/workspace-context';
+import { readWorkspaceFolders } from 'utils/read-workspace-folders';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -65,6 +66,22 @@ const Project = () => {
       <CircularProgress />
     </Box>
   );
+};
+
+export const getStaticPaths = async () => {
+  const folders = (await readWorkspaceFolders()) as string[];
+  const paths = folders.map((name) => {
+    return {
+      params: {
+        id: name,
+      },
+    };
+  });
+  return { paths, fallback: false };
+};
+
+export const getStaticProps = async () => {
+  return { props: {} };
 };
 
 export default Project;

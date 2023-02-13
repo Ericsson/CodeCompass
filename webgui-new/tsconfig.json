@@ -16,7 +16,6 @@
     "incremental": true,
     "baseUrl": "src",
     "paths": {
-      // "@thrift-generated/*": ["../../generated/*"]
       "@thrift-generated/*": ["../generated/*"]
     }
   },
