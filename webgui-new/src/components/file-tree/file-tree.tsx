@@ -108,6 +108,10 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       return;
     }
     const getData = async () => {
+      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
+      if (storedCurrentWorkspace) {
+        projectCtx.setCurrentWorkspace(storedCurrentWorkspace);
+      }
       const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
       setRootFiles(rootFileData);
       setFiles(rootFileData);
