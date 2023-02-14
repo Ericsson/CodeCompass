@@ -42,7 +42,7 @@ execute_process(
 
 # Move build directory out of application directory
 execute_process(
-  COMMAND /bin/sh -c "cp -r ./out ../"
+  COMMAND /bin/sh -c "rm -rf ../out && mv -f ./out ../"
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
