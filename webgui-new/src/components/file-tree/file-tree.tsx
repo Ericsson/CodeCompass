@@ -29,11 +29,8 @@ const StyledTreeView = styled(TreeView)(({ theme }) => ({
 const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
   [`& .${treeItemClasses.group}`]: {
     marginLeft: '10px',
-    paddingLeft: '5px',
+    paddingLeft: '1px',
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-  [`& .${treeItemClasses.label}`]: {
-    fontSize: '0.85rem',
   },
 }));
 
@@ -47,7 +44,9 @@ const IconLabel = styled('div')(({ theme }) => ({
   },
 }));
 
-const FileLabel = styled('div')({});
+const FileLabel = styled('div')({
+  fontSize: '0.8rem',
+});
 
 const FolderUp = styled('div')(({ theme }) => ({
   padding: '5px',
@@ -68,21 +67,19 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined);
 
-  let nodeId = 1;
-  let keyId = 1;
   const renderFileTree = async (files: FileInfo[]): Promise<JSX.Element[]> => {
     const tree: JSX.Element[] = [];
     files.forEach(async (file) => {
       if (file.isDirectory) {
         const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
         tree.push(
-          <StyledTreeItem key={keyId++} nodeId={`${nodeId++}`} label={file.name}>
+          <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
             {await renderFileTree(children)}
           </StyledTreeItem>
         );
       } else {
         tree.push(
-          <IconLabel key={keyId++} onClick={() => handleTreeViewFileClick(file)}>
+          <IconLabel key={file.id} onClick={() => handleTreeViewFileClick(file)} sx={{ marginLeft: '5px' }}>
             <FileIcon fileName={file.name as string} />
             <FileLabel
               sx={{
