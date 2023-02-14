@@ -163,25 +163,6 @@ public:
     if(callExpr){ //lvalue Function
       VisitCallExpr(callExpr);
     }
-    
-    astNode->astValue =  getSourceText(
-      _clangSrcMgr,
-      forRangeStmt->getRangeStmt()->getBeginLoc(),
-      forRangeStmt->getRangeStmt()->getEndLoc(),
-      true);    
-
-    astNode->location = getFileLoc(forRangeStmt->getBeginLoc(), forRangeStmt->getEndLoc());
-
-    const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(forRangeStmt->getRangeStmt()->getSingleDecl());
-    astNode->entityHash = util::fnvHash(getUSR(vd));
-
-    astNode->symbolType = model::CppAstNode::SymbolType::Variable;
-
-    astNode->astType = model::CppAstNode::AstType::Read;
-
-    astNode->id = model::createIdentifier(*astNode);
-
-    _astNodes.push_back(astNode);
     return true;
   }
 
