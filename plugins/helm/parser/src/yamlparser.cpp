@@ -31,7 +31,7 @@
 #include <model/yamlastnode-odb.hxx>
 
 #include "parser/yamlparser.h"
-#include "yamlrelationcollector.h"
+#include "valueanalyzer.h"
 #include "templateanalyzer.h"
 
 namespace cc
@@ -161,7 +161,7 @@ bool YamlParser::parse()
   TemplateAnalyzer templateAnalyzer(_ctx, _fileAstCache);
   templateAnalyzer.init();
 
-  YamlRelationCollector relationCollector(_ctx, _valuesAstCache, templateAnalyzer.getTemplateCounter());
+  ValueAnalyzer relationCollector(_ctx, _valuesAstCache, templateAnalyzer.getTemplateCounter());
   relationCollector.init();
 
   return true;

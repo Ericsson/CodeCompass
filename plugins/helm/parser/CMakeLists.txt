@@ -9,7 +9,7 @@ include_directories(
 
 add_library(yamlparser SHARED
   src/templateanalyzer.cpp
-  src/yamlrelationcollector.cpp
+  src/valueanalyzer.cpp
   src/yamlparser.cpp)
 
 target_link_libraries(yamlparser

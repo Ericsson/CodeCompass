@@ -3,7 +3,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "yamlrelationcollector.h"
+#include "valueanalyzer.h"
 
 namespace cc
 {
@@ -12,11 +12,11 @@ namespace parser
 
 namespace fs = boost::filesystem;
 
-std::unordered_set<model::MicroserviceEdgeId> YamlRelationCollector::_edgeCache;
-std::vector<model::Microservice> YamlRelationCollector::_microserviceCache;
-std::mutex YamlRelationCollector::_edgeCacheMutex;
+std::unordered_set<model::MicroserviceEdgeId> ValueAnalyzer::_edgeCache;
+std::vector<model::Microservice> ValueAnalyzer::_microserviceCache;
+std::mutex ValueAnalyzer::_edgeCacheMutex;
 
-YamlRelationCollector::YamlRelationCollector(
+ValueAnalyzer::ValueAnalyzer(
   ParserContext& ctx_,
   std::map<std::string, YAML::Node>& fileAstCache_,
   std::uint64_t templateIdCounter)
@@ -47,7 +47,7 @@ YamlRelationCollector::YamlRelationCollector(
   }
 }
 
-YamlRelationCollector::~YamlRelationCollector()
+ValueAnalyzer::~ValueAnalyzer()
 {
   _ctx.srcMgr.persistFiles();
 
@@ -59,7 +59,7 @@ YamlRelationCollector::~YamlRelationCollector()
   });
 }
 
-void YamlRelationCollector::init()
+void ValueAnalyzer::init()
 {
   (util::OdbTransaction(_ctx.db))([this]{
     std::for_each(_fileAstCache.begin(), _fileAstCache.end(),
@@ -79,7 +79,7 @@ void YamlRelationCollector::init()
   });
 }
 
-bool YamlRelationCollector::visitKeyValuePairs(
+bool ValueAnalyzer::visitKeyValuePairs(
   YAML::Node& currentNode_,
   model::Microservice& service_,
   const model::FilePtr& file_)
@@ -114,7 +114,7 @@ bool YamlRelationCollector::visitKeyValuePairs(
   }
 }
 
-void YamlRelationCollector::addHelmTemplate(
+void ValueAnalyzer::addHelmTemplate(
   model::HelmTemplate& helmTemplate_)
 {
   auto it = std::find_if(_newTemplates.begin(), _newTemplates.end(),
@@ -127,7 +127,7 @@ void YamlRelationCollector::addHelmTemplate(
     _newTemplates.push_back(helmTemplate_);
 }
 
-void YamlRelationCollector::addEdge(
+void ValueAnalyzer::addEdge(
   const model::MicroserviceId& from_,
   const model::MicroserviceId& to_,
   const model::HelmTemplateId& connect_,

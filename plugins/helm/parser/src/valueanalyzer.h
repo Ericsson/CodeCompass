@@ -19,17 +19,17 @@ namespace cc
 namespace parser
 {
 
-class YamlRelationCollector
+class ValueAnalyzer
 {
 public:
-  YamlRelationCollector(
+  ValueAnalyzer(
     ParserContext& ctx_,
     std::map<std::string, YAML::Node>& fileAstCache_,
     uint64_t templateIdCounter);
 
   void init();
 
-  ~YamlRelationCollector();
+  ~ValueAnalyzer();
 
 private:
   YAML::Node findValue(

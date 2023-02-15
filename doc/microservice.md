@@ -130,6 +130,7 @@ The following resources are collected:
 - _CPU:_ listed with `resources` and `requests` keys. This resource is calculated in
   the number of CPU cores which can be a fraction.
 - _Memory:_ listed with `resources` and `requests` keys. Calculated in gigabytes.
-- _Storage:_ listed within a `volumeClaimTemplates` list, with a `storage` key. Calculated in gigabytes.
+- _Storage:_ listed within a `volumeClaimTemplates` list, with a `storage` key. 
+  Calculated in gigabytes.
 
 ### Analysis of _values_ files
