@@ -42,6 +42,9 @@ const IconLabel = styled('div')(({ theme }) => ({
   ':hover': {
     backgroundColor: alpha(theme.palette.text.primary, 0.3),
   },
+  '&[data-selected="true"]': {
+    backgroundColor: theme.colors?.primary,
+  },
 }));
 
 const FileLabel = styled('div')({
@@ -82,6 +85,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
           tree.push(
             <IconLabel
               key={file.id}
+              data-id={file.id}
               onClick={async () => {
                 if (file.isDirectory) {
                   return;
@@ -147,6 +151,20 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     };
     getData();
   }, [projectCtx, renderFileTree]);
+
+  useEffect(() => {
+    if (!selectedFile) {
+      return;
+    }
+    const prevSelectedTreeViewFile = document.querySelector('[data-selected]') as HTMLDivElement;
+    const selectedTreeViewFile = document.querySelector(`[data-id="${selectedFile}"]`) as HTMLDivElement;
+    if (prevSelectedTreeViewFile) {
+      prevSelectedTreeViewFile?.removeAttribute('data-selected');
+    }
+    if (selectedTreeViewFile) {
+      selectedTreeViewFile.setAttribute('data-selected', 'true');
+    }
+  }, [selectedFile, treeView, expanded]);
 
   const navigateBack = async () => {
     const pathAsArray = folderPath.split('/');
@@ -217,14 +235,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       <Container>
         {files.map((file, idx) => {
           return (
-            <IconLabel
-              key={idx}
-              onClick={() => handleFileClick(file)}
-              sx={{
-                backgroundColor: (theme) =>
-                  selectedFile === file.id ? alpha(theme.palette.text.primary, 0.4) : 'unset',
-              }}
-            >
+            <IconLabel key={idx} data-id={file.id} onClick={() => handleFileClick(file)}>
               {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
               <FileLabel
                 sx={{
