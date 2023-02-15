@@ -40,10 +40,10 @@ const IconLabel = styled('div')(({ theme }) => ({
   gap: '0.5rem',
   cursor: 'pointer',
   ':hover': {
-    backgroundColor: alpha(theme.palette.text.primary, 0.3),
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
   '&[data-selected="true"]': {
-    backgroundColor: theme.colors?.primary,
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
 }));
 

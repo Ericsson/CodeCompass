@@ -1,10 +1,10 @@
-import { green, orange, red } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   export interface Theme {
     backgroundColors?: {
       primary?: string;
+      secondary?: string;
     };
     colors?: {
       primary?: string;
@@ -16,6 +16,7 @@ declare module '@mui/material/styles' {
   export interface ThemeOptions {
     backgroundColors?: {
       primary?: React.CSSProperties['color'];
+      secondary?: React.CSSProperties['color'];
     };
     colors?: {
       primary?: React.CSSProperties['color'];
@@ -30,23 +31,25 @@ const colors = {
   light: {
     background: {
       primary: '#FFFFFF',
+      secondary: '#6598D9',
     },
     text: {
       primary: '#24292F',
-      error: '#C13333',
-      warning: orange[800],
-      success: '#43BA45',
+      error: '#C62336',
+      warning: '#FF6E3D',
+      success: '#0BB662',
     },
   },
   dark: {
     background: {
       primary: '#0D1117',
+      secondary: '#88C7EC',
     },
     text: {
       primary: '#C9D1D9',
-      error: '#BF0000',
-      warning: orange[900],
-      success: green[700],
+      error: '#D03547',
+      warning: '#EC7A54',
+      success: '#3EE993',
     },
   },
 };
@@ -63,6 +66,7 @@ export const lightTheme = createTheme({
   },
   backgroundColors: {
     primary: colors.light.background.primary,
+    secondary: colors.light.background.secondary,
   },
   colors: {
     primary: colors.light.text.primary,
@@ -84,6 +88,7 @@ export const darkTheme = createTheme({
   },
   backgroundColors: {
     primary: colors.dark.background.primary,
+    secondary: colors.dark.background.secondary,
   },
   colors: {
     primary: colors.dark.text.primary,

@@ -42,7 +42,12 @@ export const FileName = ({
         <>
           <ParseStatus
             sx={{
-              color: '#FFFFFF',
+              color: (theme) =>
+                parseStatus === 2
+                  ? theme.backgroundColors?.primary
+                  : parseStatus === 3
+                  ? theme.backgroundColors?.primary
+                  : '#FFFFFF',
               backgroundColor: (theme) =>
                 parseStatus === 2
                   ? theme.colors?.warning
