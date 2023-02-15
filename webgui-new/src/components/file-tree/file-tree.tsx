@@ -16,7 +16,7 @@ const Foldername = styled('div')(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
   padding: '5px 10px',
   fontSize: '0.85rem',
-  width: '280px',
+  width: '100%',
 }));
 
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
@@ -57,7 +57,7 @@ const FolderUp = styled('div')(({ theme }) => ({
   gap: '0.5rem',
   cursor: 'pointer',
   ':hover': {
-    backgroundColor: alpha(theme.palette.text.primary, 0.3),
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
 }));
 

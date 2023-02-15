@@ -14,7 +14,7 @@ const StyledHeader = styled('header')(({ theme }) => ({
   gridTemplateColumns: '280px 1fr',
   gridTemplateRows: '1fr',
   borderBottom: `1px solid ${theme.colors?.primary}`,
-  minWidth: '1440px',
+  minWidth: '1460px',
 }));
 
 const HeaderLogo = styled('div')(({ theme }) => ({

@@ -56,6 +56,7 @@ const Project = () => {
             value={projectCtx.fileContent ?? ''}
             width={'100%'}
             height={'100%'}
+            minWidth={'calc(1460px - 280px)'}
             maxWidth={'calc(100vw - 280px)'}
             maxHeight={'calc(100vh - 78px - 49px)'}
             style={{ fontSize: '0.8rem' }}
