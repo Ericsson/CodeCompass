@@ -22,13 +22,18 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
       const workspaceData = await getWorkspaces();
       setWorkspaces(workspaceData);
       setCurrentWorkspace(workspaceData[0].id as string);
+
+      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
+      if (storedCurrentWorkspace) {
+        setCurrentWorkspace(storedCurrentWorkspace);
+      }
+
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) {
+        setTheme(storedTheme);
+      }
     };
     getWorkspaceData();
-
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      setTheme(storedTheme);
-    }
   }, []);
 
   const projectContext = {

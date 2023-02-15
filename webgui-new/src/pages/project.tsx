@@ -2,12 +2,14 @@ import { cpp } from '@codemirror/lang-cpp';
 import { ThemeContext } from '../themes/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { FileName } from '../components/file-name/file-name';
 import { Header } from '../components/header/header';
 import { AccordionMenu } from '../components/accordion-menu/accordion-menu';
-import { styled } from '@mui/material';
+import { Box, CircularProgress, styled } from '@mui/material';
 import { ProjectContext } from '../global-context/project-context';
+import { createProjectClient } from '../service/project-service';
+import { ProjectService } from '@thrift-generated/index';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -25,8 +27,17 @@ const InnerContainer = styled('div')({
 const Project = () => {
   const { theme } = useContext(ThemeContext);
   const projectCtx = useContext(ProjectContext);
+  const [projectClient, setProjectClient] = useState<ProjectService.Client | undefined>(undefined);
 
-  return (
+  useEffect(() => {
+    if (!projectCtx.currentWorkspace) {
+      return;
+    }
+    const projectClient = createProjectClient(projectCtx.currentWorkspace);
+    setProjectClient(projectClient);
+  }, [projectCtx.currentWorkspace]);
+
+  return projectClient ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
@@ -52,6 +63,10 @@ const Project = () => {
         </div>
       </InnerContainer>
     </OuterContainer>
+  ) : (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>
   );
 };
 

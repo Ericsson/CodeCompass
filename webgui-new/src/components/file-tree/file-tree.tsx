@@ -68,16 +68,8 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [expanded, setExpanded] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!projectCtx.currentWorkspace) {
-      return;
-    }
     const getData = async () => {
-      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
-      if (storedCurrentWorkspace) {
-        projectCtx.setCurrentWorkspace(storedCurrentWorkspace);
-      }
-
-      const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
+      const rootFileData = await getRootFiles();
       setRootFiles(rootFileData);
 
       const renderedFileTree = await renderFileTree(rootFileData);
@@ -103,13 +95,13 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     };
     getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectCtx.currentWorkspace]);
+  }, []);
 
   const renderFileTree = async (files: FileInfo[]): Promise<JSX.Element[]> => {
     const tree: JSX.Element[] = [];
     files.forEach(async (file) => {
       if (file.isDirectory) {
-        const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
+        const children = await getChildFiles(file.id as string);
         tree.push(
           <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
             {await renderFileTree(children)}
@@ -149,7 +141,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       localStorage.setItem('currentFiles', JSON.stringify(rootFiles));
       return;
     }
-    const parentFiles = await getParentFiles(projectCtx.currentWorkspace, trimmedPath);
+    const parentFiles = await getParentFiles(trimmedPath);
     setFiles(parentFiles);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
   };
@@ -159,13 +151,13 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       if (treeView) {
         return;
       }
-      const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
+      const children = await getChildFiles(file.id as string);
       setFiles(children);
       setFolderPath(file.path as string);
       localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentPath', file.path as string);
     } else {
-      const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
+      const fileContent = await getFileContent(file.id as string);
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(file);
       setSelectedFile(file.id);

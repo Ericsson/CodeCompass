@@ -2,41 +2,46 @@ import thrift from 'thrift';
 import { ProjectService } from '@thrift-generated/index';
 import { config } from './config';
 
-const getClient = (workspace: string) => {
+let client: ProjectService.Client | undefined;
+export const createProjectClient = (workspace: string) => {
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
     path: `/${workspace}/ProjectService`,
   });
-  const client = thrift.createXHRClient(ProjectService, connection);
-  return { client, connection };
+  client = thrift.createXHRClient(ProjectService, connection);
+  return client;
 };
 
-export const getRootFiles = async (workspace: string) => {
-  const { client, connection } = getClient(workspace);
+export const getRootFiles = async () => {
+  if (!client) {
+    return [];
+  }
   const files = await client.getRootFiles();
-  connection.close();
   return files;
 };
 
-export const getParentFiles = async (workspace: string, filePath: string) => {
-  const { client, connection } = getClient(workspace);
+export const getParentFiles = async (filePath: string) => {
+  if (!client) {
+    return [];
+  }
   const parentFileInfo = await client.getFileInfoByPath(filePath);
   const parentFiles = await client.getChildFiles(parentFileInfo.id as string);
-  connection.close();
   return parentFiles;
 };
 
-export const getChildFiles = async (workspace: string, fileId: string) => {
-  const { client, connection } = getClient(workspace);
+export const getChildFiles = async (fileId: string) => {
+  if (!client) {
+    return [];
+  }
   const files = await client.getChildFiles(fileId);
-  connection.close();
   return files;
 };
 
-export const getFileContent = async (workspace: string, fileId: string) => {
-  const { client, connection } = getClient(workspace);
+export const getFileContent = async (fileId: string) => {
+  if (!client) {
+    return '';
+  }
   const fileContent = await client.getFileContent(fileId);
-  connection.close();
   return fileContent;
 };
