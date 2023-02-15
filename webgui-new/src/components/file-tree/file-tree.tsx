@@ -70,58 +70,56 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [folderPath, setFolderPath] = useState<string>('');
   const [expanded, setExpanded] = useState<string[]>([]);
 
-  const renderFileTree = useCallback(
-    async (files: FileInfo[]): Promise<JSX.Element[]> => {
-      const tree: JSX.Element[] = [];
-      for (const file of files) {
-        if (file.isDirectory) {
-          const children = await getChildFiles(file.id as string);
-          tree.push(
-            <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
-              {await renderFileTree(children)}
-            </StyledTreeItem>
-          );
-        } else {
-          tree.push(
-            <IconLabel
-              key={file.id}
-              data-id={file.id}
-              onClick={async () => {
-                if (file.isDirectory) {
-                  return;
-                } else {
-                  const fileContent = await getFileContent(file.id as string);
-                  projectCtx.setFileContent(fileContent);
-                  projectCtx.setFileInfo(file);
-                  setSelectedFile(file.id);
-                  localStorage.setItem('currentFileContent', fileContent);
-                  localStorage.setItem('currentFileInfo', JSON.stringify(file));
-                  localStorage.setItem('currentSelectedFile', file.id as string);
-                }
+  const renderFileTree = useCallback(async (files: FileInfo[]): Promise<JSX.Element[]> => {
+    const tree: JSX.Element[] = [];
+    for (const file of files) {
+      if (file.isDirectory) {
+        const children = await getChildFiles(file.id as string);
+        tree.push(
+          <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
+            {await renderFileTree(children)}
+          </StyledTreeItem>
+        );
+      } else {
+        tree.push(
+          <IconLabel
+            key={file.id}
+            data-id={file.id}
+            onClick={async () => {
+              if (file.isDirectory) {
+                return;
+              } else {
+                const fileContent = await getFileContent(file.id as string);
+                projectCtx.setFileContent(fileContent);
+                projectCtx.setFileInfo(file);
+                setSelectedFile(file.id);
+                localStorage.setItem('currentFileContent', fileContent);
+                localStorage.setItem('currentFileInfo', JSON.stringify(file));
+                localStorage.setItem('currentSelectedFile', file.id as string);
+              }
+            }}
+            sx={{ marginLeft: '5px' }}
+          >
+            <FileIcon fileName={file.name as string} />
+            <FileLabel
+              sx={{
+                color: (theme) =>
+                  file.parseStatus === 3
+                    ? theme.colors?.success
+                    : file.parseStatus === 2
+                    ? theme.colors?.warning
+                    : theme.colors?.primary,
               }}
-              sx={{ marginLeft: '5px' }}
             >
-              <FileIcon fileName={file.name as string} />
-              <FileLabel
-                sx={{
-                  color: (theme) =>
-                    file.parseStatus === 3
-                      ? theme.colors?.success
-                      : file.parseStatus === 2
-                      ? theme.colors?.warning
-                      : theme.colors?.primary,
-                }}
-              >
-                {file.name}
-              </FileLabel>
-            </IconLabel>
-          );
-        }
+              {file.name}
+            </FileLabel>
+          </IconLabel>
+        );
       }
-      return tree;
-    },
-    [projectCtx]
-  );
+    }
+    return tree;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const getData = async () => {
@@ -150,7 +148,8 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       setExpanded(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
     };
     getData();
-  }, [projectCtx, renderFileTree]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectCtx.currentWorkspace]);
 
   useEffect(() => {
     if (!selectedFile) {
