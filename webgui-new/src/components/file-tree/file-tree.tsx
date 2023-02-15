@@ -1,7 +1,7 @@
 import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
-import { useState, useEffect, useContext, SyntheticEvent } from 'react';
+import { useState, useEffect, useContext, SyntheticEvent, useCallback } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
 import { getRootFiles, getChildFiles, getFileContent, getParentFiles } from '../../service/project-service';
@@ -67,6 +67,58 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const [folderPath, setFolderPath] = useState<string>('');
   const [expanded, setExpanded] = useState<string[]>([]);
 
+  const renderFileTree = useCallback(
+    async (files: FileInfo[]): Promise<JSX.Element[]> => {
+      const tree: JSX.Element[] = [];
+      for (const file of files) {
+        if (file.isDirectory) {
+          const children = await getChildFiles(file.id as string);
+          tree.push(
+            <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
+              {await renderFileTree(children)}
+            </StyledTreeItem>
+          );
+        } else {
+          tree.push(
+            <IconLabel
+              key={file.id}
+              onClick={async () => {
+                if (file.isDirectory) {
+                  return;
+                } else {
+                  const fileContent = await getFileContent(file.id as string);
+                  projectCtx.setFileContent(fileContent);
+                  projectCtx.setFileInfo(file);
+                  setSelectedFile(file.id);
+                  localStorage.setItem('currentFileContent', fileContent);
+                  localStorage.setItem('currentFileInfo', JSON.stringify(file));
+                  localStorage.setItem('currentSelectedFile', file.id as string);
+                }
+              }}
+              sx={{ marginLeft: '5px' }}
+            >
+              <FileIcon fileName={file.name as string} />
+              <FileLabel
+                sx={{
+                  color: (theme) =>
+                    file.parseStatus === 3
+                      ? theme.colors?.success
+                      : file.parseStatus === 2
+                      ? theme.colors?.warning
+                      : theme.colors?.primary,
+                }}
+              >
+                {file.name}
+              </FileLabel>
+            </IconLabel>
+          );
+        }
+      }
+      return tree;
+    },
+    [projectCtx]
+  );
+
   useEffect(() => {
     const getData = async () => {
       const rootFileData = await getRootFiles();
@@ -94,41 +146,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       setExpanded(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
     };
     getData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const renderFileTree = async (files: FileInfo[]): Promise<JSX.Element[]> => {
-    const tree: JSX.Element[] = [];
-    files.forEach(async (file) => {
-      if (file.isDirectory) {
-        const children = await getChildFiles(file.id as string);
-        tree.push(
-          <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
-            {await renderFileTree(children)}
-          </StyledTreeItem>
-        );
-      } else {
-        tree.push(
-          <IconLabel key={file.id} onClick={() => handleFileClick(file)} sx={{ marginLeft: '5px' }}>
-            <FileIcon fileName={file.name as string} />
-            <FileLabel
-              sx={{
-                color: (theme) =>
-                  file.parseStatus === 3
-                    ? theme.colors?.success
-                    : file.parseStatus === 2
-                    ? theme.colors?.warning
-                    : theme.colors?.primary,
-              }}
-            >
-              {file.name}
-            </FileLabel>
-          </IconLabel>
-        );
-      }
-    });
-    return tree;
-  };
+  }, [projectCtx, renderFileTree]);
 
   const navigateBack = async () => {
     const pathAsArray = folderPath.split('/');
@@ -148,9 +166,6 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
-      if (treeView) {
-        return;
-      }
       const children = await getChildFiles(file.id as string);
       setFiles(children);
       setFolderPath(file.path as string);
