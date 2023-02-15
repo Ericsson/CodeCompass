@@ -14,6 +14,7 @@ const Home = () => {
     localStorage.removeItem('currentFileContent');
     localStorage.removeItem('currentFileInfo');
     localStorage.removeItem('currentSelectedFile');
+    localStorage.removeItem('expandedNodes');
     localStorage.setItem('currentWorkspace', workspace);
     projectCtx.setCurrentWorkspace(workspace);
     router.push('/project');

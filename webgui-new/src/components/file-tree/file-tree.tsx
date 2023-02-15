@@ -1,7 +1,7 @@
 import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
 import { alpha, styled } from '@mui/material';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, SyntheticEvent } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
 import { getRootFiles, getChildFiles, getFileContent, getParentFiles } from '../../service/project-service';
@@ -60,12 +60,50 @@ const FolderUp = styled('div')(({ theme }) => ({
 
 export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
-
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const [folderPath, setFolderPath] = useState<string>('');
-  const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined);
+  const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
+  const [folderPath, setFolderPath] = useState<string>('');
+  const [expanded, setExpanded] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!projectCtx.currentWorkspace) {
+      return;
+    }
+    const getData = async () => {
+      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
+      if (storedCurrentWorkspace) {
+        projectCtx.setCurrentWorkspace(storedCurrentWorkspace);
+      }
+
+      const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
+      setRootFiles(rootFileData);
+
+      const renderedFileTree = await renderFileTree(rootFileData);
+      setFileTree(renderedFileTree);
+
+      const storedCurrentFiles = localStorage.getItem('currentFiles');
+      setFiles(storedCurrentFiles ? JSON.parse(storedCurrentFiles) : rootFileData);
+
+      const storedCurrentSelectedFile = localStorage.getItem('currentSelectedFile');
+      setSelectedFile(storedCurrentSelectedFile ?? undefined);
+
+      const storedCurrentPath = localStorage.getItem('currentPath');
+      setFolderPath(storedCurrentPath ?? '');
+
+      const storedCurrentFileContent = localStorage.getItem('currentFileContent');
+      projectCtx.setFileContent(storedCurrentFileContent ?? undefined);
+
+      const storedCurrentFileInfo = localStorage.getItem('currentFileInfo');
+      projectCtx.setFileInfo(storedCurrentFileInfo ? JSON.parse(storedCurrentFileInfo) : undefined);
+
+      const storedExpandedNodes = localStorage.getItem('expandedNodes');
+      setExpanded(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
+    };
+    getData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectCtx.currentWorkspace]);
 
   const renderFileTree = async (files: FileInfo[]): Promise<JSX.Element[]> => {
     const tree: JSX.Element[] = [];
@@ -79,7 +117,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
         );
       } else {
         tree.push(
-          <IconLabel key={file.id} onClick={() => handleTreeViewFileClick(file)} sx={{ marginLeft: '5px' }}>
+          <IconLabel key={file.id} onClick={() => handleFileClick(file)} sx={{ marginLeft: '5px' }}>
             <FileIcon fileName={file.name as string} />
             <FileLabel
               sx={{
@@ -100,49 +138,6 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     return tree;
   };
 
-  useEffect(() => {
-    if (!projectCtx.currentWorkspace) {
-      return;
-    }
-    const getData = async () => {
-      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
-      if (storedCurrentWorkspace) {
-        projectCtx.setCurrentWorkspace(storedCurrentWorkspace);
-      }
-      const rootFileData = await getRootFiles(projectCtx.currentWorkspace);
-      setRootFiles(rootFileData);
-      setFiles(rootFileData);
-      setFileTree(await renderFileTree(rootFileData));
-      setFolderPath('');
-      setSelectedFile(undefined);
-      projectCtx.setFileContent(undefined);
-      projectCtx.setFileInfo(undefined);
-
-      const storedCurrentFiles = localStorage.getItem('currentFiles');
-      if (storedCurrentFiles) {
-        setFiles(JSON.parse(storedCurrentFiles));
-      }
-      const storedCurrentPath = localStorage.getItem('currentPath');
-      if (storedCurrentPath) {
-        setFolderPath(storedCurrentPath);
-      }
-      const storedCurrentFileContent = localStorage.getItem('currentFileContent');
-      if (storedCurrentFileContent) {
-        projectCtx.setFileContent(storedCurrentFileContent);
-      }
-      const storedCurrentFileInfo = localStorage.getItem('currentFileInfo');
-      if (storedCurrentFileInfo) {
-        projectCtx.setFileInfo(JSON.parse(storedCurrentFileInfo));
-      }
-      const storedCurrentSelectedFile = localStorage.getItem('currentSelectedFile');
-      if (storedCurrentSelectedFile) {
-        setSelectedFile(storedCurrentSelectedFile);
-      }
-    };
-    getData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectCtx.currentWorkspace]);
-
   const navigateBack = async () => {
     const pathAsArray = folderPath.split('/');
     pathAsArray.pop();
@@ -161,34 +156,42 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
+      if (treeView) {
+        return;
+      }
       const children = await getChildFiles(projectCtx.currentWorkspace, file.id as string);
       setFiles(children);
-      localStorage.setItem('currentFiles', JSON.stringify(children));
       setFolderPath(file.path as string);
+      localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentPath', file.path as string);
     } else {
       const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
       projectCtx.setFileContent(fileContent);
-      localStorage.setItem('currentFileContent', fileContent);
       projectCtx.setFileInfo(file);
-      localStorage.setItem('currentFileInfo', JSON.stringify(file));
       setSelectedFile(file.id);
+      localStorage.setItem('currentFileContent', fileContent);
+      localStorage.setItem('currentFileInfo', JSON.stringify(file));
       localStorage.setItem('currentSelectedFile', file.id as string);
     }
   };
 
-  const handleTreeViewFileClick = async (file: FileInfo) => {
-    if (file.isDirectory) {
-      return;
-    } else {
-      const fileContent = await getFileContent(projectCtx.currentWorkspace, file.id as string);
-      projectCtx.setFileContent(fileContent);
-      projectCtx.setFileInfo(file);
-    }
-  };
-
   return treeView ? (
-    <StyledTreeView defaultCollapseIcon={<FolderOpen />} defaultExpandIcon={<Folder />}>
+    <StyledTreeView
+      defaultCollapseIcon={<FolderOpen />}
+      defaultExpandIcon={<Folder />}
+      expanded={expanded}
+      onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+        const index = expanded.indexOf(nodeId);
+        const copyExpanded = [...expanded];
+        if (index === -1) {
+          copyExpanded.push(nodeId);
+        } else {
+          copyExpanded.splice(index, 1);
+        }
+        setExpanded(copyExpanded);
+        localStorage.setItem('expandedNodes', JSON.stringify(copyExpanded));
+      }}
+    >
       {fileTree}
     </StyledTreeView>
   ) : (

@@ -13,6 +13,7 @@ export const ProjectSelect = (): JSX.Element => {
     localStorage.removeItem('currentFileContent');
     localStorage.removeItem('currentFileInfo');
     localStorage.removeItem('currentSelectedFile');
+    localStorage.removeItem('expandedNodes');
     localStorage.setItem('currentWorkspace', e.target.value);
     projectCtx.setCurrentWorkspace(e.target.value);
   };
