@@ -4,7 +4,7 @@ import { alpha, styled } from '@mui/material';
 import { useState, useEffect, useContext, SyntheticEvent, useCallback } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
-import { getRootFiles, getChildFiles, getFileContent, getParentFiles } from '../../service/project-service';
+import { getRootFiles, getChildFiles, getFileContent, getParentFiles, getParents } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';
 
 const Container = styled('div')({
@@ -76,7 +76,18 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       if (file.isDirectory) {
         const children = await getChildFiles(file.id as string);
         tree.push(
-          <StyledTreeItem key={file.id} nodeId={`${file.id}`} label={<FileLabel>{file.name}</FileLabel>}>
+          <StyledTreeItem
+            key={file.id}
+            nodeId={`${file.id}`}
+            label={<FileLabel>{file.name}</FileLabel>}
+            onClick={async () => {
+              const children = await getChildFiles(file.id as string);
+              setFiles(children);
+              setFolderPath(file.path as string);
+              localStorage.setItem('currentFiles', JSON.stringify(children));
+              localStorage.setItem('currentPath', file.path as string);
+            }}
+          >
             {await renderFileTree(children)}
           </StyledTreeItem>
         );
@@ -86,17 +97,16 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
             key={file.id}
             data-id={file.id}
             onClick={async () => {
-              if (file.isDirectory) {
-                return;
-              } else {
-                const fileContent = await getFileContent(file.id as string);
-                projectCtx.setFileContent(fileContent);
-                projectCtx.setFileInfo(file);
-                setSelectedFile(file.id);
-                localStorage.setItem('currentFileContent', fileContent);
-                localStorage.setItem('currentFileInfo', JSON.stringify(file));
-                localStorage.setItem('currentSelectedFile', file.id as string);
-              }
+              const children = await getChildFiles(file.parent as string);
+              setFiles(children);
+              const fileContent = await getFileContent(file.id as string);
+              projectCtx.setFileContent(fileContent);
+              projectCtx.setFileInfo(file);
+              setSelectedFile(file.id);
+              localStorage.setItem('currentFileContent', fileContent);
+              localStorage.setItem('currentFileInfo', JSON.stringify(file));
+              localStorage.setItem('currentSelectedFile', file.id as string);
+              localStorage.setItem('currentFiles', JSON.stringify(children));
             }}
             sx={{ marginLeft: '5px' }}
           >
@@ -173,12 +183,17 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
     localStorage.setItem('currentPath', trimmedPath);
     if (trimmedPath === '') {
       setFiles(rootFiles);
+      setExpanded([]);
       localStorage.setItem('currentFiles', JSON.stringify(rootFiles));
+      localStorage.setItem('expandedNodes', JSON.stringify([]));
       return;
     }
     const parentFiles = await getParentFiles(trimmedPath);
     setFiles(parentFiles);
+    const parents = await getParents(trimmedPath);
+    setExpanded(parents);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
+    localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
   const handleFileClick = async (file: FileInfo) => {
@@ -186,16 +201,22 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       const children = await getChildFiles(file.id as string);
       setFiles(children);
       setFolderPath(file.path as string);
+      const parents = await getParents(file.path as string);
+      setExpanded(parents);
       localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentPath', file.path as string);
+      localStorage.setItem('expandedNodes', JSON.stringify(parents));
     } else {
       const fileContent = await getFileContent(file.id as string);
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(file);
       setSelectedFile(file.id);
+      const parents = await getParents(folderPath);
+      setExpanded(parents);
       localStorage.setItem('currentFileContent', fileContent);
       localStorage.setItem('currentFileInfo', JSON.stringify(file));
       localStorage.setItem('currentSelectedFile', file.id as string);
+      localStorage.setItem('expandedNodes', JSON.stringify(parents));
     }
   };
 

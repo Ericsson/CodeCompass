@@ -30,6 +30,24 @@ export const getParentFiles = async (filePath: string) => {
   return parentFiles;
 };
 
+export const getParents = async (filePath: string) => {
+  if (!client) {
+    return [];
+  }
+  const parents: string[] = [];
+  let currentPath = filePath;
+  while (currentPath) {
+    let parent = await client.getFileInfoByPath(currentPath);
+    parents.push(parent.id as string);
+    const pathAsArray = currentPath.split('/');
+    pathAsArray.pop();
+    currentPath = pathAsArray.join('/');
+  }
+  const root = await client.getFileInfoByPath('/');
+  parents.push(root.id as string);
+  return parents;
+};
+
 export const getChildFiles = async (fileId: string) => {
   if (!client) {
     return [];
