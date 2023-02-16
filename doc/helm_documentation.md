@@ -1,4 +1,4 @@
-# Microservice plugin
+# Helm chart static analysis plugin
 ## Developers' documentation
 
 The microservice plugin serves the purpose of analyzing Helm charts and storing data about the microservices and their relations in the database.
@@ -97,7 +97,7 @@ This analysis is implemented in the `TemplateAnalyzer` class.
 
 #### Dependencies
 
-After basic parsing, the previously collected template files are analyzed to collect
+After basic YAML parsing, the previously collected template files are analyzed to collect
 microservice dependencies.
 The content of each template file is investigated.
 Any template object should be persisted in the database as a `HelmTemplate` object with
@@ -134,3 +134,28 @@ The following resources are collected:
   Calculated in gigabytes.
 
 ### Analysis of _values_ files
+
+This analysis is implemented in the `ValueAnalyzer` class.
+
+After basic YAML parsing, the previously collected _values.yaml_ files are analyzed to find
+further connection points based on references. 
+Values files otherwise contain default values which might be overridden during deployment.
+
+Every values file is checked for references for microservices.
+If the analyzer finds a reference, a new `HelmTemplate` object is persisted in the database,
+and a new edge is defined between the microservices.
+
+## Frontend functionality
+
+The plugin is capable of providing the following functionality:
+
+- _Syntax highlight:_ the YAML nodes are colored according to the symbol type.
+- _InfoTree:_ some very basic metadata is available of the nodes (name, symbol type, value type).
+- _Microservice navigator:_ there is an accordion menu on the left side in which the detected
+  microservices are listed. The diagrams are available by right clicking the services.
+- _Diagrams:_
+  - Dependent services
+  - Config maps
+  - Secrets
+  - Resource usage
+

@@ -74,7 +74,7 @@ For full documentation see:
   (`-E SQL_ASCII` flag is recommended!)
 - [Start PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-postgres.html)
 
-## 1. Generate compilation database
+## 1/a. Generate compilation database
 If you want to parse a C++ project, you have to create a [compilation database
 file](http://clang.llvm.org/docs/JSONCompilationDatabase.html).
 
@@ -102,6 +102,19 @@ The `CodeCompass_logger` is provided in the `bin` directory in the CodeCompass
 installation. The first command line argument is the output file name and the
 second argument is the build command which compiles your project. This can be a
 simple compiler invocation or starting a build system.
+
+## 1/b. Prepare Helm charts
+If you want to parse a Helm chart, and the chart files contain template files,
+you need to run the `helm template` command on the
+charts first, in order to bring the chart to a pure YAML format.
+
+1. Run `helm template` on the chart. Save the output of the command in a separate directory,
+  e.g. if you run the command from the root of the chart, 
+  `helm template <chart name> . --output-dir=./output`
+2. Copy all files and directories from the chart to the output directory (except the original
+   template files), in the original directory order: Chart.yaml, values.yaml files, files
+   directories, etc. This is needed because of the recursive directory traversal.
+3. Parse the project as described in below, with the output directory as input.
 
 ## 2. Parse the project
 For parsing a project with CodeCompass, the following command has to be emitted:
