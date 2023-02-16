@@ -27,6 +27,7 @@ webgui-new/build
 # misc
 webgui-new/.DS_Store
 webgui-new/*.pem
+webgui-new/.env
 
 # debug
 webgui-new/npm-debug.log*
