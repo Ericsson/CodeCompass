@@ -7,16 +7,3 @@
 body {
   height: 100vh;
 }
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-  border-left: 1px solid white;
-}
-::-webkit-scrollbar-track {
-  background: black;
-}
-::-webkit-scrollbar-thumb {
-  background: white;
-  border-radius: 10px;
-}

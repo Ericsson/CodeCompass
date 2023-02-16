@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { alpha, createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
   export interface Theme {
@@ -74,6 +74,25 @@ export const lightTheme = createTheme({
     warning: colors.light.text.warning,
     success: colors.light.text.success,
   },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+            width: '0.5rem',
+            height: '0.5rem',
+          },
+          '&::-webkit-scrollbar-track, & *::-webkit-scrollbar-track': {
+            backgroundColor: colors.light.background.primary,
+          },
+          '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
+            borderRadius: '1rem',
+            backgroundColor: alpha(colors.light.background.secondary, 0.5),
+          },
+        },
+      },
+    },
+  },
 });
 
 export const darkTheme = createTheme({
@@ -95,5 +114,24 @@ export const darkTheme = createTheme({
     error: colors.dark.text.error,
     warning: colors.dark.text.warning,
     success: colors.dark.text.success,
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+            width: '0.5rem',
+            height: '0.5rem',
+          },
+          '&::-webkit-scrollbar-track, & *::-webkit-scrollbar-track': {
+            backgroundColor: colors.dark.background.primary,
+          },
+          '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
+            borderRadius: '1rem',
+            backgroundColor: alpha(colors.dark.background.secondary, 0.5),
+          },
+        },
+      },
+    },
   },
 });
