@@ -32,13 +32,17 @@ Generate files from Thrift with:
 npm run thrift-codegen
 ```
 
-You can specify the webserver host and port by creating a .env file at the root of the project (webgui-new/), like this:\
-(Note: The default values are localhost and 8080, even without a .env file. Make sure the host and port are the same as the webserver.)
+You can specify the properties of the webserver by creating a `.env` file at the root of the project.\
+Without a `.env` file, the default values are: `localhost` for host, `8080` for port, `false` for https, and path will be an empty string.\
+For development, you may only need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver.\
+For production, you need to set these variables with the correct properties of the actual webserver.
 
 ```py
 # .env
-WEBSERVER_HOST=localhost
-WEBSERVER_PORT=8080
+WEBSERVER_HOST=
+WEBSERVER_PORT=
+WEBSERVER_HTTPS=
+WEBSERVER_PATH=
 ```
 
 After, this, you can run the development server with:

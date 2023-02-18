@@ -7,7 +7,8 @@ export const createProjectClient = (workspace: string) => {
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
-    path: `/${workspace}/ProjectService`,
+    https: config.webserver_https,
+    path: `${config.webserver_path}/${workspace}/ProjectService`,
   });
   client = thrift.createXHRClient(ProjectService, connection);
   return client;

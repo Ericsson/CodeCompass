@@ -5,7 +5,8 @@ import { config } from './config';
 const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
   transport: thrift.TBufferedTransport,
   protocol: thrift.TJSONProtocol,
-  path: '/WorkspaceService',
+  https: config.webserver_https,
+  path: `${config.webserver_path}/WorkspaceService`,
 });
 const client = thrift.createXHRClient(WorkspaceService, connection);
 
