@@ -16,6 +16,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [currentWorkspace, setCurrentWorkspace] = useState<string>('');
   const [fileContent, setFileContent] = useState<string | undefined>();
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>();
+  const [projectLoadComplete, setProjectLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
     const getWorkspaceData = async () => {
@@ -43,6 +44,8 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
     setFileContent,
     fileInfo,
     setFileInfo,
+    projectLoadComplete,
+    setProjectLoadComplete,
   };
 
   return (

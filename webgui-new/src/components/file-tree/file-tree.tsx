@@ -1,6 +1,6 @@
 import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
 import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
-import { alpha, styled } from '@mui/material';
+import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { useState, useEffect, useContext, SyntheticEvent, useCallback } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
@@ -132,6 +132,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
   }, []);
 
   useEffect(() => {
+    projectCtx.setProjectLoadComplete(false);
     const getData = async () => {
       const rootFileData = await getRootFiles();
       setRootFiles(rootFileData);
@@ -157,7 +158,7 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       const storedExpandedNodes = localStorage.getItem('expandedNodes');
       setExpanded(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
     };
-    getData();
+    getData().then(() => projectCtx.setProjectLoadComplete(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectCtx.currentWorkspace]);
 
@@ -219,6 +220,24 @@ export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
       localStorage.setItem('expandedNodes', JSON.stringify(parents));
     }
   };
+
+  if (!projectCtx.projectLoadComplete) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '1rem',
+          paddingTop: '10px',
+        }}
+      >
+        <div>{'Loading files...'}</div>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return treeView ? (
     <StyledTreeView

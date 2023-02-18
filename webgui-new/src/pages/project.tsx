@@ -47,13 +47,13 @@ const Project = () => {
             fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
             filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
             parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-            info={projectCtx.fileInfo}
+            info={projectCtx.projectLoadComplete ? projectCtx.fileInfo : undefined}
           />
           <ReactCodeMirror
             readOnly={true}
             extensions={[cpp()]}
             theme={theme === 'dark' ? githubDark : githubLight}
-            value={projectCtx.fileContent ?? ''}
+            value={projectCtx.projectLoadComplete ? projectCtx.fileContent : ''}
             width={'100%'}
             height={'100%'}
             minWidth={'calc(1460px - 280px)'}
