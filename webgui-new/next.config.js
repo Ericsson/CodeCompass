@@ -12,6 +12,7 @@ const nextConfig = {
     WEBSERVER_HOST: process.env.WEBSERVER_HOST || 'localhost',
     WEBSERVER_PORT: process.env.WEBSERVER_PORT || 8080,
   },
+  trailingSlash: true,
 };
 
 module.exports = nextConfig;
