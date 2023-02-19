@@ -5,7 +5,7 @@ import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/Accord
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
-import { FileTree } from '../file-tree/file-tree';
+import { FileManager } from '../file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 
 const Container = styled('div')({
@@ -116,7 +116,7 @@ export const AccordionMenu = () => {
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>
-          <FileTree treeView={treeView} />
+          <FileManager treeView={treeView} />
         </AccordionDetails>
       </Accordion>
       <Accordion expanded={expanded === 'panel2'} onChange={() => setExpanded('panel2')}>

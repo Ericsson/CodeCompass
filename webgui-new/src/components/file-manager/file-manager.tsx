@@ -61,7 +61,7 @@ const FolderUp = styled('div')(({ theme }) => ({
   },
 }));
 
-export const FileTree = ({ treeView }: { treeView: boolean }): JSX.Element => {
+export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
   const [files, setFiles] = useState<FileInfo[]>([]);
