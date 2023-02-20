@@ -13,9 +13,15 @@ import { FileInfo } from '@thrift-generated/index';
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const [theme, setTheme] = useState('light');
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
+
   const [currentWorkspace, setCurrentWorkspace] = useState<string>('');
-  const [fileContent, setFileContent] = useState<string | undefined>();
-  const [fileInfo, setFileInfo] = useState<FileInfo | undefined>();
+  const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
+  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [fileContent, setFileContent] = useState<string>('');
+  const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
+  const [selectedFile, setSelectedFile] = useState<string>('');
+  const [folderPath, setFolderPath] = useState<string>('');
+  const [expandedFileTreeNodes, setExpandedFileTreeNodes] = useState<string[]>([]);
   const [projectLoadComplete, setProjectLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
@@ -40,10 +46,20 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   const projectContext = {
     currentWorkspace,
     setCurrentWorkspace,
+    rootFiles,
+    setRootFiles,
+    files,
+    setFiles,
     fileContent,
     setFileContent,
     fileInfo,
     setFileInfo,
+    selectedFile,
+    setSelectedFile,
+    folderPath,
+    setFolderPath,
+    expandedFileTreeNodes,
+    setExpandedFileTreeNodes,
     projectLoadComplete,
     setProjectLoadComplete,
   };
