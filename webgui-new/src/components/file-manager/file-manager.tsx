@@ -101,17 +101,17 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
     localStorage.setItem('currentPath', trimmedPath);
     if (trimmedPath === '') {
       projectCtx.setFiles(projectCtx.rootFiles);
-      projectCtx.setExpandedFileTreeNodes([]);
+      // projectCtx.setExpandedFileTreeNodes([]);
       localStorage.setItem('currentFiles', JSON.stringify(projectCtx.rootFiles));
-      localStorage.setItem('expandedNodes', JSON.stringify([]));
+      // localStorage.setItem('expandedNodes', JSON.stringify([]));
       return;
     }
-    const parents = await getParents(trimmedPath);
+    // const parents = await getParents(trimmedPath);
     const parentFiles = await getParentFiles(trimmedPath);
     projectCtx.setFiles(parentFiles);
-    projectCtx.setExpandedFileTreeNodes(parents);
+    // projectCtx.setExpandedFileTreeNodes(parents);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
-    localStorage.setItem('expandedNodes', JSON.stringify(parents));
+    // localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
   const handleFileClick = async (file: FileInfo) => {
@@ -157,7 +157,7 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
   }
 
   return treeView ? (
-    <FileTree />
+    <FileTree treeView={treeView} />
   ) : (
     <>
       {projectCtx.folderPath === '' ? (

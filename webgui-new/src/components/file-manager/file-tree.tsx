@@ -113,7 +113,7 @@ const findNodeById = (node: TreeNode, nodeId: string): TreeNode | null => {
   return null;
 };
 
-export const FileTree = () => {
+export const FileTree = ({ treeView }: { treeView: boolean }) => {
   const projectCtx = useContext(ProjectContext);
   const [tree, setTree] = useState<TreeNode | undefined>(undefined);
 
@@ -161,7 +161,20 @@ export const FileTree = () => {
     if (selectedTreeViewFile) {
       selectedTreeViewFile.setAttribute('data-selected', 'true');
     }
-  }, [projectCtx.selectedFile, projectCtx.expandedFileTreeNodes]);
+  }, [projectCtx.selectedFile, projectCtx.expandedFileTreeNodes, treeView]);
+
+  const getChildTreeNodes = async (childFiles: FileInfo[]): Promise<TreeNode[]> => {
+    const childNodes: TreeNode[] = [];
+    for (const childFile of childFiles) {
+      if (childFile.isDirectory && projectCtx.expandedFileTreeNodes.includes(childFile.id as string)) {
+        const children = await getChildFiles(childFile.id as string);
+        childNodes.push({ info: childFile, children: await getChildTreeNodes(children) });
+      } else {
+        childNodes.push({ info: childFile } as TreeNode);
+      }
+    }
+    return childNodes;
+  };
 
   const handleClick = async (info: FileInfo) => {
     if (info.isDirectory) {
@@ -171,9 +184,7 @@ export const FileTree = () => {
       localStorage.setItem('currentFiles', JSON.stringify(childFiles));
       localStorage.setItem('currentPath', info.path as string);
 
-      const childTreeNodes = childFiles.map((childFile) => {
-        return { info: childFile } as TreeNode;
-      });
+      const childTreeNodes = await getChildTreeNodes(childFiles);
 
       setTree((prevTree) => {
         if (!prevTree) {
