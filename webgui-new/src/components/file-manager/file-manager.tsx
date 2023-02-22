@@ -39,6 +39,8 @@ const FileLabel = styled('div')({
 const FolderUp = styled('div')(({ theme }) => ({
   padding: '5px',
   display: 'flex',
+  alignItems: 'center',
+  fontSize: '0.8rem',
   gap: '0.5rem',
   cursor: 'pointer',
   ':hover': {
@@ -178,7 +180,7 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
             {projectCtx.folderPath === '/' ? '/' : '../' + projectCtx.folderPath.split('/').reverse()[0]}
           </Foldername>
           <FolderUp onClick={() => navigateBack()}>
-            <DriveFolderUpload />
+            <DriveFolderUpload sx={{ width: '20px', height: '20px' }} />
             <div>{'..'}</div>
           </FolderUp>
         </>
@@ -187,7 +189,11 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
         {projectCtx.files.map((file, idx) => {
           return (
             <IconLabel key={idx} data-id={file.id} onClick={() => handleFileClick(file)}>
-              {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
+              {file.isDirectory ? (
+                <Folder sx={{ width: '20px', height: '20px' }} />
+              ) : (
+                <FileIcon fileName={file.name as string} />
+              )}
               <FileLabel
                 sx={{
                   color: (theme) =>
