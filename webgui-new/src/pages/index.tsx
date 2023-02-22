@@ -1,7 +1,27 @@
+import { Button, styled } from '@mui/material';
 import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { WorkspaceContext } from '../global-context/workspace-context';
+
+const OuterContainer = styled('div')({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  height: '100vh',
+});
+
+const InnerContainer = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+});
+
+const Title = styled('div')({
+  fontSize: '1.2rem',
+  marginBottom: '10px',
+});
 
 const Home = () => {
   const router = useRouter();
@@ -23,13 +43,16 @@ const Home = () => {
   };
 
   return (
-    <div>
-      {workspaces.map((ws) => (
-        <div key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
-          {ws.id}
-        </div>
-      ))}
-    </div>
+    <OuterContainer>
+      <InnerContainer>
+        <Title>{'Click on a project to start using CodeCompass!'}</Title>
+        {workspaces.map((ws) => (
+          <Button sx={{ textTransform: 'none' }} key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
+            {ws.id}
+          </Button>
+        ))}
+      </InnerContainer>
+    </OuterContainer>
   );
 };
 

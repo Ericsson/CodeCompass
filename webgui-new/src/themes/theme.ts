@@ -75,6 +75,14 @@ export const lightTheme = createTheme({
     success: colors.light.text.success,
   },
   components: {
+    MuiList: {
+      styleOverrides: {
+        root: {
+          color: colors.light.text.primary,
+          backgroundColor: colors.light.background.primary,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -116,6 +124,14 @@ export const darkTheme = createTheme({
     success: colors.dark.text.success,
   },
   components: {
+    MuiList: {
+      styleOverrides: {
+        root: {
+          color: colors.dark.text.primary,
+          backgroundColor: colors.dark.background.primary,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
