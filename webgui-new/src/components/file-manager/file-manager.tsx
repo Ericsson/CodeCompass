@@ -95,23 +95,28 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
   }, [projectCtx.selectedFile, treeView, projectCtx.expandedFileTreeNodes]);
 
   const navigateBack = async () => {
-    const pathAsArray = projectCtx.folderPath.split('/');
-    pathAsArray.pop();
-    const trimmedPath = pathAsArray.join('/');
-    projectCtx.setFolderPath(trimmedPath);
-    localStorage.setItem('currentPath', trimmedPath);
-    if (trimmedPath === '') {
+    if (projectCtx.folderPath === '/') {
+      projectCtx.setFolderPath('');
       projectCtx.setFiles(projectCtx.rootFiles);
       projectCtx.setExpandedFileTreeNodes([]);
+      localStorage.setItem('currentPath', '');
       localStorage.setItem('currentFiles', JSON.stringify(projectCtx.rootFiles));
       localStorage.setItem('expandedNodes', JSON.stringify([]));
       setNodesUpdated(true);
       return;
     }
+    const pathAsArray = projectCtx.folderPath.split('/');
+    pathAsArray.pop();
+    if (pathAsArray.length === 1) {
+      pathAsArray.push('');
+    }
+    const trimmedPath = pathAsArray.join('/');
     const parents = await getParents(trimmedPath);
     const parentFiles = await getParentFiles(trimmedPath);
+    projectCtx.setFolderPath(trimmedPath);
     projectCtx.setFiles(parentFiles);
     projectCtx.setExpandedFileTreeNodes(parents);
+    localStorage.setItem('currentPath', trimmedPath);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
     localStorage.setItem('expandedNodes', JSON.stringify(parents));
     setNodesUpdated(true);
