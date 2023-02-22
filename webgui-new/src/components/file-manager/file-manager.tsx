@@ -1,6 +1,6 @@
 import { Folder, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
 import { getRootFiles, getChildFiles, getFileContent, getParentFiles, getParents } from '../../service/project-service';
@@ -48,6 +48,7 @@ const FolderUp = styled('div')(({ theme }) => ({
 
 export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
+  const [nodesUpdated, setNodesUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     projectCtx.setProjectLoadComplete(false);
@@ -101,40 +102,44 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
     localStorage.setItem('currentPath', trimmedPath);
     if (trimmedPath === '') {
       projectCtx.setFiles(projectCtx.rootFiles);
-      // projectCtx.setExpandedFileTreeNodes([]);
+      projectCtx.setExpandedFileTreeNodes([]);
       localStorage.setItem('currentFiles', JSON.stringify(projectCtx.rootFiles));
-      // localStorage.setItem('expandedNodes', JSON.stringify([]));
+      localStorage.setItem('expandedNodes', JSON.stringify([]));
+      setNodesUpdated(true);
       return;
     }
-    // const parents = await getParents(trimmedPath);
+    const parents = await getParents(trimmedPath);
     const parentFiles = await getParentFiles(trimmedPath);
     projectCtx.setFiles(parentFiles);
-    // projectCtx.setExpandedFileTreeNodes(parents);
+    projectCtx.setExpandedFileTreeNodes(parents);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
-    // localStorage.setItem('expandedNodes', JSON.stringify(parents));
+    localStorage.setItem('expandedNodes', JSON.stringify(parents));
+    setNodesUpdated(true);
   };
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
       const children = await getChildFiles(file.id as string);
-      // const parents = await getParents(file.path as string);
+      const parents = await getParents(file.path as string);
       projectCtx.setFiles(children);
       projectCtx.setFolderPath(file.path as string);
-      // projectCtx.setExpandedFileTreeNodes(parents);
+      projectCtx.setExpandedFileTreeNodes(parents);
       localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentPath', file.path as string);
-      // localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      setNodesUpdated(true);
     } else {
-      // const parents = await getParents(projectCtx.folderPath);
+      const parents = await getParents(projectCtx.folderPath);
       const fileContent = await getFileContent(file.id as string);
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(file);
       projectCtx.setSelectedFile(file.id as string);
-      // projectCtx.setExpandedFileTreeNodes(parents);
+      projectCtx.setExpandedFileTreeNodes(parents);
       localStorage.setItem('currentFileContent', fileContent);
       localStorage.setItem('currentFileInfo', JSON.stringify(file));
       localStorage.setItem('currentSelectedFile', file.id as string);
-      // localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      setNodesUpdated(true);
     }
   };
 
@@ -157,7 +162,7 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
   }
 
   return treeView ? (
-    <FileTree treeView={treeView} />
+    <FileTree treeView={treeView} nodesUpdated={nodesUpdated} />
   ) : (
     <>
       {projectCtx.folderPath === '' ? (

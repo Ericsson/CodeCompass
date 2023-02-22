@@ -113,7 +113,7 @@ const findNodeById = (node: TreeNode, nodeId: string): TreeNode | null => {
   return null;
 };
 
-export const FileTree = ({ treeView }: { treeView: boolean }) => {
+export const FileTree = ({ treeView, nodesUpdated }: { treeView: boolean; nodesUpdated: boolean }) => {
   const projectCtx = useContext(ProjectContext);
   const [tree, setTree] = useState<TreeNode | undefined>(undefined);
 
@@ -162,6 +162,41 @@ export const FileTree = ({ treeView }: { treeView: boolean }) => {
       selectedTreeViewFile.setAttribute('data-selected', 'true');
     }
   }, [projectCtx.selectedFile, projectCtx.expandedFileTreeNodes, treeView]);
+
+  useEffect(() => {
+    if (!nodesUpdated) {
+      return;
+    }
+    const updateNodes = async () => {
+      const rootDirectory = projectCtx.rootFiles.find((info) => info.isDirectory) as FileInfo;
+      const childFiles = await getChildFiles(rootDirectory.id as string);
+      const childTreeNodes = await getChildTreeNodes(childFiles);
+
+      const prevSelectedTreeViewFile = document.querySelector('[data-selected]') as HTMLDivElement;
+      const selectedTreeViewFile = document.querySelector(`[data-id="${projectCtx.selectedFile}"]`) as HTMLDivElement;
+      if (prevSelectedTreeViewFile) {
+        prevSelectedTreeViewFile.removeAttribute('data-selected');
+      }
+      if (selectedTreeViewFile) {
+        selectedTreeViewFile.setAttribute('data-selected', 'true');
+      }
+
+      setTree((prevTree) => {
+        if (!prevTree) {
+          return;
+        }
+        const updatedNode = findNodeById(prevTree, rootDirectory.id as string);
+        if (!updatedNode) {
+          return;
+        }
+        updatedNode.children = childTreeNodes;
+        localStorage.setItem('currentFileTree', JSON.stringify({ ...prevTree }));
+        return { ...prevTree };
+      });
+    };
+    updateNodes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodesUpdated]);
 
   const getChildTreeNodes = async (childFiles: FileInfo[]): Promise<TreeNode[]> => {
     const childNodes: TreeNode[] = [];
