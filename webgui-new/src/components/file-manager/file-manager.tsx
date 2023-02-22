@@ -1,11 +1,11 @@
-import { Folder, FolderOpen, DriveFolderUpload } from '@mui/icons-material';
-import { TreeItem, TreeView, treeItemClasses } from '@mui/lab';
+import { Folder, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
-import { useState, useEffect, useContext, SyntheticEvent, useCallback } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { FileInfo } from '@thrift-generated/index';
 import { ProjectContext } from '../../global-context/project-context';
 import { getRootFiles, getChildFiles, getFileContent, getParentFiles, getParents } from '../../service/project-service';
 import { FileIcon } from '../file-icon/file-icon';
+import { FileTree } from './file-tree';
 
 const Container = styled('div')({
   padding: '5px',
@@ -17,21 +17,6 @@ const Foldername = styled('div')(({ theme }) => ({
   padding: '5px 10px',
   fontSize: '0.85rem',
   width: '100%',
-}));
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    paddingLeft: '1px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
 }));
 
 const IconLabel = styled('div')(({ theme }) => ({
@@ -54,6 +39,8 @@ const FileLabel = styled('div')({
 const FolderUp = styled('div')(({ theme }) => ({
   padding: '5px',
   display: 'flex',
+  alignItems: 'center',
+  fontSize: '0.8rem',
   gap: '0.5rem',
   cursor: 'pointer',
   ':hover': {
@@ -63,161 +50,103 @@ const FolderUp = styled('div')(({ theme }) => ({
 
 export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
-  const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
-  const [files, setFiles] = useState<FileInfo[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined);
-  const [fileTree, setFileTree] = useState<JSX.Element[]>([]);
-  const [folderPath, setFolderPath] = useState<string>('');
-  const [expanded, setExpanded] = useState<string[]>([]);
-
-  const renderFileTree = useCallback(async (files: FileInfo[]): Promise<JSX.Element[]> => {
-    const tree: JSX.Element[] = [];
-    for (const file of files) {
-      if (file.isDirectory) {
-        const children = await getChildFiles(file.id as string);
-        tree.push(
-          <StyledTreeItem
-            key={file.id}
-            nodeId={`${file.id}`}
-            label={<FileLabel>{file.name}</FileLabel>}
-            onClick={async () => {
-              const children = await getChildFiles(file.id as string);
-              setFiles(children);
-              setFolderPath(file.path as string);
-              localStorage.setItem('currentFiles', JSON.stringify(children));
-              localStorage.setItem('currentPath', file.path as string);
-            }}
-          >
-            {await renderFileTree(children)}
-          </StyledTreeItem>
-        );
-      } else {
-        tree.push(
-          <IconLabel
-            key={file.id}
-            data-id={file.id}
-            onClick={async () => {
-              const children = await getChildFiles(file.parent as string);
-              setFiles(children);
-              const fileContent = await getFileContent(file.id as string);
-              projectCtx.setFileContent(fileContent);
-              projectCtx.setFileInfo(file);
-              setSelectedFile(file.id);
-              localStorage.setItem('currentFileContent', fileContent);
-              localStorage.setItem('currentFileInfo', JSON.stringify(file));
-              localStorage.setItem('currentSelectedFile', file.id as string);
-              localStorage.setItem('currentFiles', JSON.stringify(children));
-            }}
-            sx={{ marginLeft: '5px' }}
-          >
-            <FileIcon fileName={file.name as string} />
-            <FileLabel
-              sx={{
-                color: (theme) =>
-                  file.parseStatus === 3
-                    ? theme.colors?.success
-                    : file.parseStatus === 2
-                    ? theme.colors?.warning
-                    : theme.colors?.primary,
-              }}
-            >
-              {file.name}
-            </FileLabel>
-          </IconLabel>
-        );
-      }
-    }
-    return tree;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [nodesUpdated, setNodesUpdated] = useState<boolean>(false);
 
   useEffect(() => {
     projectCtx.setProjectLoadComplete(false);
     const getData = async () => {
       const rootFileData = await getRootFiles();
-      setRootFiles(rootFileData);
 
-      const renderedFileTree = await renderFileTree(rootFileData);
-      setFileTree(renderedFileTree);
+      const storedRootFiles = localStorage.getItem('currentRootFiles');
+      projectCtx.setRootFiles(storedRootFiles ? JSON.parse(storedRootFiles) : rootFileData);
 
       const storedCurrentFiles = localStorage.getItem('currentFiles');
-      setFiles(storedCurrentFiles ? JSON.parse(storedCurrentFiles) : rootFileData);
+      projectCtx.setFiles(storedCurrentFiles ? JSON.parse(storedCurrentFiles) : rootFileData);
 
       const storedCurrentSelectedFile = localStorage.getItem('currentSelectedFile');
-      setSelectedFile(storedCurrentSelectedFile ?? undefined);
+      projectCtx.setSelectedFile(storedCurrentSelectedFile ?? '');
 
       const storedCurrentPath = localStorage.getItem('currentPath');
-      setFolderPath(storedCurrentPath ?? '');
+      projectCtx.setFolderPath(storedCurrentPath ?? '');
 
       const storedCurrentFileContent = localStorage.getItem('currentFileContent');
-      projectCtx.setFileContent(storedCurrentFileContent ?? undefined);
+      projectCtx.setFileContent(storedCurrentFileContent ?? '');
 
       const storedCurrentFileInfo = localStorage.getItem('currentFileInfo');
       projectCtx.setFileInfo(storedCurrentFileInfo ? JSON.parse(storedCurrentFileInfo) : undefined);
 
       const storedExpandedNodes = localStorage.getItem('expandedNodes');
-      setExpanded(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
+      projectCtx.setExpandedFileTreeNodes(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
     };
     getData().then(() => projectCtx.setProjectLoadComplete(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectCtx.currentWorkspace]);
 
   useEffect(() => {
-    if (!selectedFile) {
+    if (!projectCtx.selectedFile) {
       return;
     }
     const prevSelectedTreeViewFile = document.querySelector('[data-selected]') as HTMLDivElement;
-    const selectedTreeViewFile = document.querySelector(`[data-id="${selectedFile}"]`) as HTMLDivElement;
+    const selectedTreeViewFile = document.querySelector(`[data-id="${projectCtx.selectedFile}"]`) as HTMLDivElement;
     if (prevSelectedTreeViewFile) {
       prevSelectedTreeViewFile?.removeAttribute('data-selected');
     }
     if (selectedTreeViewFile) {
       selectedTreeViewFile.setAttribute('data-selected', 'true');
     }
-  }, [selectedFile, treeView, expanded]);
+  }, [projectCtx.selectedFile, treeView, projectCtx.expandedFileTreeNodes]);
 
   const navigateBack = async () => {
-    const pathAsArray = folderPath.split('/');
-    pathAsArray.pop();
-    const trimmedPath = pathAsArray.join('/');
-    setFolderPath(trimmedPath);
-    localStorage.setItem('currentPath', trimmedPath);
-    if (trimmedPath === '') {
-      setFiles(rootFiles);
-      setExpanded([]);
-      localStorage.setItem('currentFiles', JSON.stringify(rootFiles));
+    if (projectCtx.folderPath === '/') {
+      projectCtx.setFolderPath('');
+      projectCtx.setFiles(projectCtx.rootFiles);
+      projectCtx.setExpandedFileTreeNodes([]);
+      localStorage.setItem('currentPath', '');
+      localStorage.setItem('currentFiles', JSON.stringify(projectCtx.rootFiles));
       localStorage.setItem('expandedNodes', JSON.stringify([]));
+      setNodesUpdated(true);
       return;
     }
-    const parentFiles = await getParentFiles(trimmedPath);
-    setFiles(parentFiles);
+    const pathAsArray = projectCtx.folderPath.split('/');
+    pathAsArray.pop();
+    if (pathAsArray.length === 1) {
+      pathAsArray.push('');
+    }
+    const trimmedPath = pathAsArray.join('/');
     const parents = await getParents(trimmedPath);
-    setExpanded(parents);
+    const parentFiles = await getParentFiles(trimmedPath);
+    projectCtx.setFolderPath(trimmedPath);
+    projectCtx.setFiles(parentFiles);
+    projectCtx.setExpandedFileTreeNodes(parents);
+    localStorage.setItem('currentPath', trimmedPath);
     localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
     localStorage.setItem('expandedNodes', JSON.stringify(parents));
+    setNodesUpdated(true);
   };
 
   const handleFileClick = async (file: FileInfo) => {
     if (file.isDirectory) {
       const children = await getChildFiles(file.id as string);
-      setFiles(children);
-      setFolderPath(file.path as string);
       const parents = await getParents(file.path as string);
-      setExpanded(parents);
+      projectCtx.setFiles(children);
+      projectCtx.setFolderPath(file.path as string);
+      projectCtx.setExpandedFileTreeNodes(parents);
       localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentPath', file.path as string);
       localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      setNodesUpdated(true);
     } else {
+      const parents = await getParents(projectCtx.folderPath);
       const fileContent = await getFileContent(file.id as string);
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(file);
-      setSelectedFile(file.id);
-      const parents = await getParents(folderPath);
-      setExpanded(parents);
+      projectCtx.setSelectedFile(file.id as string);
+      projectCtx.setExpandedFileTreeNodes(parents);
       localStorage.setItem('currentFileContent', fileContent);
       localStorage.setItem('currentFileInfo', JSON.stringify(file));
       localStorage.setItem('currentSelectedFile', file.id as string);
       localStorage.setItem('expandedNodes', JSON.stringify(parents));
+      setNodesUpdated(true);
     }
   };
 
@@ -240,42 +169,31 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
   }
 
   return treeView ? (
-    <StyledTreeView
-      defaultCollapseIcon={<FolderOpen />}
-      defaultExpandIcon={<Folder />}
-      expanded={expanded}
-      onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-        const index = expanded.indexOf(nodeId);
-        const copyExpanded = [...expanded];
-        if (index === -1) {
-          copyExpanded.push(nodeId);
-        } else {
-          copyExpanded.splice(index, 1);
-        }
-        setExpanded(copyExpanded);
-        localStorage.setItem('expandedNodes', JSON.stringify(copyExpanded));
-      }}
-    >
-      {fileTree}
-    </StyledTreeView>
+    <FileTree treeView={treeView} nodesUpdated={nodesUpdated} />
   ) : (
     <>
-      {folderPath === '' ? (
+      {projectCtx.folderPath === '' ? (
         ''
       ) : (
         <>
-          <Foldername>{folderPath === '/' ? '/' : '../' + folderPath.split('/').reverse()[0]}</Foldername>
+          <Foldername>
+            {projectCtx.folderPath === '/' ? '/' : '../' + projectCtx.folderPath.split('/').reverse()[0]}
+          </Foldername>
           <FolderUp onClick={() => navigateBack()}>
-            <DriveFolderUpload />
+            <DriveFolderUpload sx={{ width: '20px', height: '20px' }} />
             <div>{'..'}</div>
           </FolderUp>
         </>
       )}
       <Container>
-        {files.map((file, idx) => {
+        {projectCtx.files.map((file, idx) => {
           return (
             <IconLabel key={idx} data-id={file.id} onClick={() => handleFileClick(file)}>
-              {file.isDirectory ? <Folder /> : <FileIcon fileName={file.name as string} />}
+              {file.isDirectory ? (
+                <Folder sx={{ width: '20px', height: '20px' }} />
+              ) : (
+                <FileIcon fileName={file.name as string} />
+              )}
               <FileLabel
                 sx={{
                   color: (theme) =>
