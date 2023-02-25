@@ -197,7 +197,6 @@ void Diagram::getFunctionCallDiagram(
 
   util::Graph::Node centerNode = addNode(graph_, nodes.front());
   decorateNode(graph_, centerNode, centerNodeDecoration);
-  setNodeTooltip(graph_, centerNode, nodes.front());
   visitedNodes[astNodeId_] = centerNode;
 
   //--- Callees ---//
@@ -214,7 +213,6 @@ void Diagram::getFunctionCallDiagram(
     {
       calleeNode = addNode(graph_, node);
       decorateNode(graph_, calleeNode, calleeNodeDecoration);
-      setNodeTooltip(graph_, calleeNode, node);
       visitedNodes.insert(it, std::make_pair(node.id, calleeNode));
     }
     else
@@ -241,7 +239,6 @@ void Diagram::getFunctionCallDiagram(
     {
       callerNode = addNode(graph_, node);
       decorateNode(graph_, callerNode, callerNodeDecoration);
-      setNodeTooltip(graph_, callerNode, node);
       visitedNodes.insert(it, std::make_pair(node.id, callerNode));
     }
     else
@@ -430,6 +427,17 @@ util::Graph::Node Diagram::addNode(
 
   graph_.setNodeAttribute(node, "label", nodeInfo_.astNodeValue);
 
+  std::stringstream ss;
+  ss<<_cppHandler._transaction([&, this](){
+        return _cppHandler._db->load<model::File>(std::stoull(nodeInfo_.range.file))->path;
+      })
+    <<';'
+    <<nodeInfo_.range.range.startpos.line
+    <<';'
+    <<nodeInfo_.range.range.startpos.column;
+
+  graph_.setNodeAttribute(node, "tooltip", ss.str(), true);
+
   return node;
 }
 
@@ -509,23 +517,6 @@ void Diagram::decorateNode(
 {
   for (const auto& attr : decoration_)
     graph_.setNodeAttribute(node_, attr.first, attr.second);
-}
-
-void Diagram::setNodeTooltip(
-  util::Graph& graph_,
-  const util::Graph::Node& node_,
-  const AstNodeInfo& info_)
-{
-  std::stringstream ss;
-  ss<<_cppHandler._transaction([&, this](){
-        return _cppHandler._db->load<model::File>(std::stoull(info_.range.file))->path;
-      })
-    <<';'
-    <<info_.range.range.startpos.line
-    <<';'
-    <<info_.range.range.startpos.column;
-
-  graph_.setNodeAttribute(node_, "tooltip", ss.str());
 }
 
 void Diagram::decorateEdge(

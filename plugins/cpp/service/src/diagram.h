@@ -121,19 +121,6 @@ private:
     const Decoration& decoration_) const;
 
   /**
-   * Add a tooltip containing the data needed for making the node clickable.
-   * It should contain the file, row and column (when applicable)
-   * of the element represented by the node.
-   * @param graph_ A graph object.
-   * @param node_ A graph node.
-   * @param info_ AST info containing the attributes of the node.
-   */
-  void setNodeTooltip(
-    util::Graph& graph_,
-    const util::Graph::Node& node_,
-    const AstNodeInfo& info_);
-
-  /**
    * This function decorates a graph edge.
    * @param graph_ A graph object.
    * @param elem_ A graph edge

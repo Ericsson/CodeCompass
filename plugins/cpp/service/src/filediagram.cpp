@@ -107,7 +107,7 @@ void FileDiagram::getIncludeDependencyDiagram(
   util::bfsBuild(graph_, currentNode,std::bind(&FileDiagram::getRevUsages,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, revUsagesEdgeDecoration, 3);
-  
+
   util::bfsBuild(graph_, currentNode, std::bind(&FileDiagram::getProvides,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, usagesEdgeDecoration, 3);
@@ -700,6 +700,7 @@ util::Graph::Node FileDiagram::addNode(
 {
   util::Graph::Node node = graph_.getOrCreateNode(fileInfo_.id);
   graph_.setNodeAttribute(node, "label", getLastNParts(fileInfo_.path, 3));
+  graph_.setNodeAttribute(node, "tooltip", fileInfo_.path, true);
 
   if (fileInfo_.type == model::File::DIRECTORY_TYPE)
   {
