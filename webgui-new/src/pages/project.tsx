@@ -1,5 +1,5 @@
 import { cpp } from '@codemirror/lang-cpp';
-import { ThemeContext } from '../themes/theme-context';
+import { ThemeContext } from '../global-context/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
 import { useContext, useEffect, useState } from 'react';

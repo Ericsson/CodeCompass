@@ -4,7 +4,7 @@ import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icon
 import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
 import { enumToArray } from '../../utils/array-utils';
-import { ThemeContext } from '../../themes/theme-context';
+import { ThemeContext } from '../../global-context/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from '../settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';

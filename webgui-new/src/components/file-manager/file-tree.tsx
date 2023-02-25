@@ -35,9 +35,6 @@ const FileLabel = styled('div')(({ theme }) => ({
   ':hover': {
     backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
-  '&[data-selected="true"]': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
 }));
 
 const StyledDiv = styled('div')({});
@@ -59,9 +56,17 @@ const Directory = (
   );
 };
 
-const File = (info: FileInfo, handleClick: (info: FileInfo) => Promise<void>): JSX.Element => {
+const File = (info: FileInfo, selected: string, handleClick: (info: FileInfo) => Promise<void>): JSX.Element => {
   return (
-    <FileLabel key={info.id} data-id={info.id} onClick={() => handleClick(info)}>
+    <FileLabel
+      key={info.id}
+      data-id={info.id}
+      onClick={() => handleClick(info)}
+      sx={{
+        backgroundColor: (theme) =>
+          info.id === selected ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+      }}
+    >
       <FileIcon fileName={info.name as string} />
       <StyledDiv
         sx={{
@@ -98,118 +103,8 @@ const Loading = (): JSX.Element => {
   );
 };
 
-const findNodeById = (node: TreeNode, nodeId: string): TreeNode | null => {
-  if (node.info.id === nodeId) {
-    return node;
-  }
-  if (node.children) {
-    for (const child of node.children) {
-      const foundNode = findNodeById(child, nodeId);
-      if (foundNode) {
-        return foundNode;
-      }
-    }
-  }
-  return null;
-};
-
-export const FileTree = ({ treeView, nodesUpdated }: { treeView: boolean; nodesUpdated: boolean }) => {
+export const FileTree = () => {
   const projectCtx = useContext(ProjectContext);
-  const [tree, setTree] = useState<TreeNode | undefined>(undefined);
-
-  useEffect(() => {
-    const getFileData = async () => {
-      const storedRootFiles = localStorage.getItem('currentRootFiles');
-      const storedFileTree = localStorage.getItem('currentFileTree');
-
-      if (storedFileTree) {
-        if (storedRootFiles) {
-          projectCtx.setRootFiles(JSON.parse(storedRootFiles));
-        }
-        setTree(JSON.parse(storedFileTree));
-      } else {
-        let rootFileData: FileInfo[] = [];
-        if (storedRootFiles) {
-          rootFileData = JSON.parse(storedRootFiles) as FileInfo[];
-        } else {
-          rootFileData = await getRootFiles();
-          localStorage.setItem('currentRootFiles', JSON.stringify(rootFileData));
-        }
-        const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;
-        projectCtx.setRootFiles(rootFileData);
-        setTree({
-          info: rootDirectory,
-        });
-      }
-
-      const storedExpandedNodes = localStorage.getItem('expandedNodes');
-      projectCtx.setExpandedFileTreeNodes(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
-    };
-    getFileData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!projectCtx.selectedFile) {
-      return;
-    }
-    const prevSelectedTreeViewFile = document.querySelector('[data-selected]') as HTMLDivElement;
-    const selectedTreeViewFile = document.querySelector(`[data-id="${projectCtx.selectedFile}"]`) as HTMLDivElement;
-    if (prevSelectedTreeViewFile) {
-      prevSelectedTreeViewFile.removeAttribute('data-selected');
-    }
-    if (selectedTreeViewFile) {
-      selectedTreeViewFile.setAttribute('data-selected', 'true');
-    }
-  }, [projectCtx.selectedFile, projectCtx.expandedFileTreeNodes, treeView]);
-
-  useEffect(() => {
-    if (!nodesUpdated) {
-      return;
-    }
-    const updateNodes = async () => {
-      const rootDirectory = projectCtx.rootFiles.find((info) => info.isDirectory) as FileInfo;
-      const childFiles = await getChildFiles(rootDirectory.id as string);
-      const childTreeNodes = await getChildTreeNodes(childFiles);
-
-      const prevSelectedTreeViewFile = document.querySelector('[data-selected]') as HTMLDivElement;
-      const selectedTreeViewFile = document.querySelector(`[data-id="${projectCtx.selectedFile}"]`) as HTMLDivElement;
-      if (prevSelectedTreeViewFile) {
-        prevSelectedTreeViewFile.removeAttribute('data-selected');
-      }
-      if (selectedTreeViewFile) {
-        selectedTreeViewFile.setAttribute('data-selected', 'true');
-      }
-
-      setTree((prevTree) => {
-        if (!prevTree) {
-          return;
-        }
-        const updatedNode = findNodeById(prevTree, rootDirectory.id as string);
-        if (!updatedNode) {
-          return;
-        }
-        updatedNode.children = childTreeNodes;
-        localStorage.setItem('currentFileTree', JSON.stringify({ ...prevTree }));
-        return { ...prevTree };
-      });
-    };
-    updateNodes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodesUpdated]);
-
-  const getChildTreeNodes = async (childFiles: FileInfo[]): Promise<TreeNode[]> => {
-    const childNodes: TreeNode[] = [];
-    for (const childFile of childFiles) {
-      if (childFile.isDirectory && projectCtx.expandedFileTreeNodes.includes(childFile.id as string)) {
-        const children = await getChildFiles(childFile.id as string);
-        childNodes.push({ info: childFile, children: await getChildTreeNodes(children) });
-      } else {
-        childNodes.push({ info: childFile } as TreeNode);
-      }
-    }
-    return childNodes;
-  };
 
   const handleClick = async (info: FileInfo) => {
     if (info.isDirectory) {
@@ -218,21 +113,6 @@ export const FileTree = ({ treeView, nodesUpdated }: { treeView: boolean; nodesU
       projectCtx.setFolderPath(info.path as string);
       localStorage.setItem('currentFiles', JSON.stringify(childFiles));
       localStorage.setItem('currentPath', info.path as string);
-
-      const childTreeNodes = await getChildTreeNodes(childFiles);
-
-      setTree((prevTree) => {
-        if (!prevTree) {
-          return;
-        }
-        const updatedNode = findNodeById(prevTree, info.id as string);
-        if (!updatedNode) {
-          return;
-        }
-        updatedNode.children = childTreeNodes;
-        localStorage.setItem('currentFileTree', JSON.stringify({ ...prevTree }));
-        return { ...prevTree };
-      });
     } else {
       const children = await getChildFiles(info.parent as string);
       const fileContent = await getFileContent(info.id as string);
@@ -247,19 +127,19 @@ export const FileTree = ({ treeView, nodesUpdated }: { treeView: boolean; nodesU
     }
   };
 
-  const renderFileTree = (node: TreeNode): JSX.Element[] => {
-    return node.children
+  const renderFileTree = (node: TreeNode | undefined): JSX.Element[] => {
+    return node && node.children
       ? node.children.map((childNode) => {
           if (childNode.info.isDirectory) {
             return Directory(childNode.info, () => handleClick(childNode.info), renderFileTree(childNode));
           } else {
-            return File(childNode.info, () => handleClick(childNode.info));
+            return File(childNode.info, projectCtx.selectedFile, () => handleClick(childNode.info));
           }
         })
       : [];
   };
 
-  return tree ? (
+  return projectCtx.fileTree ? (
     <StyledTreeView
       defaultCollapseIcon={<FolderOpen />}
       defaultExpandIcon={<Folder />}
@@ -279,8 +159,8 @@ export const FileTree = ({ treeView, nodesUpdated }: { treeView: boolean; nodesU
     >
       {projectCtx.rootFiles.map((info) =>
         info.isDirectory
-          ? Directory(info, () => handleClick(info), renderFileTree(tree))
-          : File(info, () => handleClick(info))
+          ? Directory(info, () => handleClick(info), renderFileTree(projectCtx.fileTree))
+          : File(info, projectCtx.selectedFile, () => handleClick(info))
       )}
     </StyledTreeView>
   ) : (
