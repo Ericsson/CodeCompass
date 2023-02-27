@@ -15,6 +15,10 @@ const nextConfig = {
     WEBSERVER_PATH: process.env.WEBSERVER_PATH || '',
   },
   trailingSlash: true,
+  ...(process.env.NODE_ENV === 'production' && {
+    assetPrefix: '/new',
+    basePath: '/new',
+  }),
 };
 
 module.exports = nextConfig;
