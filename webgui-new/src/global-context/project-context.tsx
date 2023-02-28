@@ -111,8 +111,6 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
 
       const storedExpandedNodes = localStorage.getItem('expandedNodes');
       setExpandedFileTreeNodes(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
-
-      createProjectClient(currentWorkspace);
     };
     init().then(() => setProjectLoadComplete(true));
   }, [currentWorkspace]);

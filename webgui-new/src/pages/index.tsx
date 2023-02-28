@@ -3,6 +3,7 @@ import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { WorkspaceContext } from '../global-context/workspace-context';
+import { createProjectClient } from 'service/project-service';
 
 const OuterContainer = styled('div')({
   display: 'flex',
@@ -39,6 +40,7 @@ const Home = () => {
     localStorage.removeItem('expandedNodes');
     localStorage.setItem('currentWorkspace', workspace);
     projectCtx.setCurrentWorkspace(workspace);
+    createProjectClient(workspace);
     router.push('/project');
   };
 
