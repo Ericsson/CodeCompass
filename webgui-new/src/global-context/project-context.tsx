@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { FileInfo } from '@thrift-generated/cc/service/core';
 import { WorkspaceContext } from './workspace-context';
-import { getChildFiles, getRootFiles } from 'service/project-service';
+import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
 
 type TreeNode = {
   info: FileInfo;
@@ -85,6 +85,8 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     }
     setProjectLoadComplete(false);
     const init = async () => {
+      createProjectClient(currentWorkspace);
+
       const rootFileData = await getRootFiles();
       const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;
 

@@ -40,7 +40,6 @@ const Home = () => {
     localStorage.removeItem('expandedNodes');
     localStorage.setItem('currentWorkspace', workspace);
     projectCtx.setCurrentWorkspace(workspace);
-    createProjectClient(workspace);
     router.push('/project');
   };
 
