@@ -17,22 +17,12 @@ message("Installation of npm packages are finished.")
 
 # Generate TypeScript from Thrift
 execute_process(
-  COMMAND
-    npm run thrift-codegen-build
-      ${CMAKE_SOURCE_DIR}/service/workspace/workspace.thrift
-      ${CMAKE_SOURCE_DIR}/service/project/project.thrift
-      ${CMAKE_SOURCE_DIR}/service/project/common.thrift
-      ${CMAKE_SOURCE_DIR}/service/plugin/plugin.thrift
-      ${CMAKE_SOURCE_DIR}/service/language/language.thrift
-      ${CMAKE_SOURCE_DIR}/service/authentication/authentication.thrift
-      ${CMAKE_SOURCE_DIR}/plugins/dummy/service/dummy.thrift
-      ${CMAKE_SOURCE_DIR}/plugins/git/service/git.thrift
+  COMMAND /bin/sh -c "chmod +x thrift-codegen.sh"
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
-# Convert imports to default
 execute_process(
-  COMMAND ${CMAKE_SOURCE_DIR}/scripts/remover.sh
-  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app/generated)
+  COMMAND bash thrift-codegen.sh --thrift-source ${CMAKE_SOURCE_DIR}
+  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 message("Building React App...")
 

@@ -1,11 +1,11 @@
 import { FolderOpen, Folder } from '@mui/icons-material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
-import { FileInfo } from '@thrift-generated/FileInfo';
-import { FileIcon } from '../file-icon/file-icon';
-import { SyntheticEvent, useContext, useEffect, useState } from 'react';
-import { getRootFiles, getChildFiles, getFileContent } from '../../service/project-service';
-import { ProjectContext } from '../../global-context/project-context';
+import { FileInfo } from '@thrift-generated/cc/service/core';
+import { FileIcon } from 'components/file-icon/file-icon';
+import { SyntheticEvent, useContext } from 'react';
+import { getChildFiles, getFileContent } from 'service/project-service';
+import { ProjectContext } from 'global-context/project-context';
 
 type TreeNode = {
   info: FileInfo;

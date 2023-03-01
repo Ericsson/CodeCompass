@@ -26,10 +26,10 @@ Install npm packages with:
 npm install
 ```
 
-Generate files from Thrift with:
+Generate TypeScript files from Thrift by running the following command:
 
 ```bash
-npm run thrift-codegen
+chmod +x thrift-codegen.sh && ./thrift-codegen.sh --thrift-source ../
 ```
 
 You can specify the properties of the webserver by creating a `.env` file at the root of the project.\
@@ -45,7 +45,7 @@ WEBSERVER_HTTPS=
 WEBSERVER_PATH=
 ```
 
-After, this, you can run the development server with:
+After this, you can run the development server with:
 
 ```bash
 npm run dev
@@ -69,4 +69,4 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 For building and installing the application, or parsing projects, please refer to the [CodeCompass README](/README.md) documentations and development sections.\
 (Note: For development, use SQLite as a database for parsing projects.)
 
-After installing, the static HTML exported from Next.js will be available in `install/share/codecompass/webgui-new/out/`
+After installing, the current webgui will still be available at the root URL of the webserver (`/`), but you can also reach the new webgui at (`/new`).

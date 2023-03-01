@@ -7,6 +7,7 @@ install(DIRECTORY
 install(FILES
         tsconfig.json
         next.config.js
+        thrift-codegen.sh
         DESTINATION ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 # Install React application

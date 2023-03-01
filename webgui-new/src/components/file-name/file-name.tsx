@@ -1,5 +1,5 @@
 import { styled } from '@mui/material';
-import { FileInfo } from '@thrift-generated/index';
+import { FileInfo } from '@thrift-generated/cc/service/core';
 
 const Container = styled('div')(({ theme }) => ({
   display: 'flex',

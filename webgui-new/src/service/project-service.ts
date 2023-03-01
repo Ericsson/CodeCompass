@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { ProjectService } from '@thrift-generated/index';
+import { ProjectService } from '@thrift-generated/cc/service/core';
 import { config } from './config';
 
 let client: ProjectService.Client | undefined;

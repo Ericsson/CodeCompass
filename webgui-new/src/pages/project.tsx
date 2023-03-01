@@ -9,7 +9,7 @@ import { AccordionMenu } from '../components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled } from '@mui/material';
 import { ProjectContext } from '../global-context/project-context';
 import { createProjectClient } from '../service/project-service';
-import { ProjectService } from '@thrift-generated/index';
+import { ProjectService } from '@thrift-generated/cc/service/core';
 
 const OuterContainer = styled('div')({
   display: 'grid',

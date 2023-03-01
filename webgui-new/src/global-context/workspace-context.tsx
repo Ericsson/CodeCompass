@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from 'react';
-import { WorkspaceInfo } from '@thrift-generated/index';
+import { WorkspaceInfo } from '@thrift-generated/cc/service/workspace';
 import { getWorkspaces } from 'service/workspace-service';
 
 export const WorkspaceContext = createContext<WorkspaceInfo[]>([]);
