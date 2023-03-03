@@ -1,15 +1,13 @@
 import { cpp } from '@codemirror/lang-cpp';
-import { ThemeContext } from '../global-context/theme-context';
+import { ThemeContext } from 'global-context/theme-context';
 import ReactCodeMirror from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { useContext, useEffect, useState } from 'react';
-import { FileName } from '../components/file-name/file-name';
-import { Header } from '../components/header/header';
-import { AccordionMenu } from '../components/accordion-menu/accordion-menu';
+import { useContext } from 'react';
+import { FileName } from 'components/file-name/file-name';
+import { Header } from 'components/header/header';
+import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled } from '@mui/material';
-import { ProjectContext } from '../global-context/project-context';
-import { createProjectClient } from '../service/project-service';
-import { ProjectService } from '@thrift-generated/cc/service/core';
+import { ProjectContext } from 'global-context/project-context';
 
 const OuterContainer = styled('div')({
   display: 'grid',
@@ -27,17 +25,8 @@ const InnerContainer = styled('div')({
 const Project = () => {
   const { theme } = useContext(ThemeContext);
   const projectCtx = useContext(ProjectContext);
-  const [projectClient, setProjectClient] = useState<ProjectService.Client | undefined>(undefined);
 
-  useEffect(() => {
-    if (!projectCtx.currentWorkspace) {
-      return;
-    }
-    const projectClient = createProjectClient(projectCtx.currentWorkspace);
-    setProjectClient(projectClient);
-  }, [projectCtx.currentWorkspace]);
-
-  return projectClient ? (
+  return projectCtx.currentWorkspace ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
