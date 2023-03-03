@@ -2,9 +2,9 @@ import { Folder, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { useContext } from 'react';
 import { FileInfo } from '@thrift-generated/cc/service/core';
-import { ProjectContext } from '../../global-context/project-context';
-import { getChildFiles, getFileContent, getParentFiles, getParents } from '../../service/project-service';
-import { FileIcon } from '../file-icon/file-icon';
+import { ProjectContext } from 'global-context/project-context';
+import { getChildFiles, getFileContent, getParentFiles, getParents } from 'service/project-service';
+import { FileIcon } from 'components/file-icon/file-icon';
 import { FileTree } from './file-tree';
 
 const Container = styled('div')({

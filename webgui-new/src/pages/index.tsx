@@ -2,14 +2,13 @@ import { Button, styled } from '@mui/material';
 import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
-import { WorkspaceContext } from '../global-context/workspace-context';
-import { createProjectClient } from 'service/project-service';
+import { WorkspaceContext } from 'global-context/workspace-context';
 
 const OuterContainer = styled('div')({
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  height: '100vh',
+  marginTop: '150px',
 });
 
 const InnerContainer = styled('div')({

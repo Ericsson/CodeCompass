@@ -15,8 +15,8 @@ import {
   styled,
 } from '@mui/material';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypes } from '../../enums/settings-enum';
-import { enumToArray, removeFromArray } from '../../utils/array-utils';
+import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypes } from 'enums/settings-enum';
+import { enumToArray, removeFromArray } from 'utils/array-utils';
 import { Info, Close } from '@mui/icons-material';
 
 const Container = styled('div')(({ theme }) => ({
@@ -182,7 +182,7 @@ export const SettingsMenu = ({
               <Select
                 disabled={searchLanguagesDisabled}
                 value={searchOtherLanguage}
-                label='Other'
+                label="Other"
                 onChange={(e) => (!searchLanguagesDisabled ? setSearchOtherLanguage(e.target.value) : '')}
               >
                 {searchOtherLanguages.map((elem, idx) => {

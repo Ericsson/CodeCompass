@@ -5,7 +5,7 @@ import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/Accord
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
-import { FileManager } from '../file-manager/file-manager';
+import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 
 const Container = styled('div')({

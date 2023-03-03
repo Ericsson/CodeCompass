@@ -1,12 +1,12 @@
 import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled } from '@mui/material';
-import { ProjectSelect } from '../project-select/project-select';
+import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { useContext, useState } from 'react';
-import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
-import { enumToArray } from '../../utils/array-utils';
-import { ThemeContext } from '../../global-context/theme-context';
+import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/settings-enum';
+import { enumToArray } from 'utils/array-utils';
+import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
-import { SettingsMenu } from '../settings-menu/settings-menu';
+import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
 
 const StyledHeader = styled('header')(({ theme }) => ({
