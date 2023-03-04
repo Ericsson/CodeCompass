@@ -4,9 +4,11 @@ import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
+import { AccordionLabel } from 'enums/accordion-enum';
+import { OtherContext } from 'global-context/other-context';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -74,7 +76,7 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 }));
 
 export const AccordionMenu = () => {
-  const [expanded, setExpanded] = useState<string>('panel1');
+  const otherCtx = useContext(OtherContext);
   const [treeView, setTreeView] = useState<boolean>(false);
 
   useEffect(() => {
@@ -83,6 +85,11 @@ export const AccordionMenu = () => {
       setTreeView(JSON.parse(storedTreeViewSetting));
     }
   }, []);
+
+  const setAccordion = (value: string) => {
+    otherCtx.setActiveAccordion(value);
+    localStorage.setItem('activeAccordion', value);
+  };
 
   const placeholder = (
     <IconLabel sx={{ padding: '20px' }}>
@@ -93,12 +100,15 @@ export const AccordionMenu = () => {
 
   return (
     <Container>
-      <Accordion expanded={expanded === 'panel1'} onChange={() => setExpanded('panel1')}>
-        <AccordionSummary aria-controls={'panel1-controls'} id={'panel1-header'}>
+      <Accordion
+        expanded={otherCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
+        onChange={() => setAccordion(AccordionLabel.FILE_MANAGER)}
+      >
+        <AccordionSummary>
           <IconLabel>
             <Folder />
             <FileManagerHeader>
-              <Typography>{'File manager'}</Typography>
+              <Typography>{AccordionLabel.FILE_MANAGER}</Typography>
               <TreeSetting
                 control={
                   <Checkbox
@@ -119,29 +129,38 @@ export const AccordionMenu = () => {
           <FileManager treeView={treeView} />
         </AccordionDetails>
       </Accordion>
-      <Accordion expanded={expanded === 'panel2'} onChange={() => setExpanded('panel2')}>
-        <AccordionSummary aria-controls={'panel2-controls'} id={'panel2-header'}>
+      <Accordion
+        expanded={otherCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
+        onChange={() => setAccordion(AccordionLabel.SEARCH_RESULTS)}
+      >
+        <AccordionSummary>
           <IconLabel>
             <Search />
-            <Typography>{'Search results'}</Typography>
+            <Typography>{AccordionLabel.SEARCH_RESULTS}</Typography>
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>{placeholder}</AccordionDetails>
       </Accordion>
-      <Accordion expanded={expanded === 'panel3'} onChange={() => setExpanded('panel3')}>
-        <AccordionSummary aria-controls={'panel3-controls'} id={'panel3-header'}>
+      <Accordion
+        expanded={otherCtx.activeAccordion === AccordionLabel.INFO_TREE}
+        onChange={() => setAccordion(AccordionLabel.INFO_TREE)}
+      >
+        <AccordionSummary>
           <IconLabel>
             <Info />
-            <Typography>{'Info tree'}</Typography>
+            <Typography>{AccordionLabel.INFO_TREE}</Typography>
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>{placeholder}</AccordionDetails>
       </Accordion>
-      <Accordion expanded={expanded === 'panel4'} onChange={() => setExpanded('panel4')}>
-        <AccordionSummary aria-controls={'panel4-controls'} id={'panel4-header'}>
+      <Accordion
+        expanded={otherCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
+        onChange={() => setAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
+      >
+        <AccordionSummary>
           <IconLabel>
             <GitHub />
-            <Typography>{'Revision control navigator'}</Typography>
+            <Typography>{AccordionLabel.REVISION_CONTROL_NAVIGATOR}</Typography>
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>{placeholder}</AccordionDetails>

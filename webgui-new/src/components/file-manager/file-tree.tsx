@@ -6,6 +6,8 @@ import { FileIcon } from 'components/file-icon/file-icon';
 import { SyntheticEvent, useContext } from 'react';
 import { getChildFiles, getFileContent } from 'service/project-service';
 import { ProjectContext } from 'global-context/project-context';
+import { OtherContext } from 'global-context/other-context';
+import { TabName } from 'enums/tab-enum';
 
 type TreeNode = {
   info: FileInfo;
@@ -104,6 +106,7 @@ const Loading = (): JSX.Element => {
 };
 
 export const FileTree = () => {
+  const otherCtx = useContext(OtherContext);
   const projectCtx = useContext(ProjectContext);
 
   const handleClick = async (info: FileInfo) => {
@@ -120,6 +123,8 @@ export const FileTree = () => {
       projectCtx.setFileContent(fileContent);
       projectCtx.setFileInfo(info);
       projectCtx.setSelectedFile(info.id as string);
+      otherCtx.setActiveTab(TabName.CODE);
+      localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
       localStorage.setItem('currentFiles', JSON.stringify(children));
       localStorage.setItem('currentFileContent', fileContent);
       localStorage.setItem('currentFileInfo', JSON.stringify(info));

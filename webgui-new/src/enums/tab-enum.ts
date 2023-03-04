@@ -1,0 +1,10 @@
+export enum TabName {
+  WELCOME,
+  CODE,
+  GIT_BLAME,
+  GIT_DIFF,
+  METRICS,
+  DIAGRAMS,
+  USER_GUIDE,
+  CREDITS,
+}

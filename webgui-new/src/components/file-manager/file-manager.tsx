@@ -6,6 +6,8 @@ import { ProjectContext } from 'global-context/project-context';
 import { getChildFiles, getFileContent, getParentFiles, getParents } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { FileTree } from './file-tree';
+import { OtherContext } from 'global-context/other-context';
+import { TabName } from 'enums/tab-enum';
 
 const Container = styled('div')({
   padding: '5px',
@@ -46,6 +48,7 @@ const FolderUp = styled('div')(({ theme }) => ({
 }));
 
 export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element => {
+  const otherCtx = useContext(OtherContext);
   const projectCtx = useContext(ProjectContext);
 
   const navigateBack = async () => {
@@ -91,6 +94,8 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
       projectCtx.setFileInfo(file);
       projectCtx.setSelectedFile(file.id as string);
       projectCtx.setExpandedFileTreeNodes(parents);
+      otherCtx.setActiveTab(TabName.CODE);
+      localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
       localStorage.setItem('currentFileContent', fileContent);
       localStorage.setItem('currentFileInfo', JSON.stringify(file));
       localStorage.setItem('currentSelectedFile', file.id as string);
