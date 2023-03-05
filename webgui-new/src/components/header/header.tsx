@@ -1,6 +1,6 @@
-import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled } from '@mui/material';
+import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
-import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
+import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/settings-enum';
 import { enumToArray } from 'utils/array-utils';
@@ -39,11 +39,6 @@ const SettingsContainer = styled('div')({
   gap: '1rem',
 });
 
-const MenuContainer = styled('div')({
-  display: 'flex',
-  gap: '1rem',
-});
-
 export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
 
@@ -54,21 +49,7 @@ export const Header = (): JSX.Element => {
   const [searchOption, setSearchOption] = useState<string>(searchOptions[0]);
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setMenuAnchorEl(e.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-  };
-
-  const changeTheme = () => {
-    localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
 
   return (
     <StyledHeader>
@@ -147,18 +128,14 @@ export const Header = (): JSX.Element => {
             setAnchorEl={setSettingsAnchorEl}
           />
         </SettingsContainer>
-        <MenuContainer>
-          <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
-          <IconButton onClick={(e) => handleMenuOpen(e)}>
-            <MoreVert />
-          </IconButton>
-          <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
-            <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
-          </Menu>
-        </MenuContainer>
+        <IconButton
+          onClick={() => {
+            localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
+            setTheme(theme === 'dark' ? 'light' : 'dark');
+          }}
+        >
+          {theme === 'dark' ? <LightMode /> : <DarkMode />}
+        </IconButton>
       </HeaderContent>
     </StyledHeader>
   );
