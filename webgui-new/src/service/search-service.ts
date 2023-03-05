@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { SearchService } from '@thrift-generated/cc/service/search';
+import { SearchService } from '@thrift-generated';
 import { config } from './config';
 
 let client: SearchService.Client | undefined;

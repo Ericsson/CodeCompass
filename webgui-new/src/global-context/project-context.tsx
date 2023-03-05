@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { FileInfo } from '@thrift-generated/cc/service/core';
+import { FileInfo } from '@thrift-generated';
 import { WorkspaceContext } from './workspace-context';
 import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
 

@@ -1,7 +1,7 @@
 import { FolderOpen, Folder } from '@mui/icons-material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
-import { FileInfo } from '@thrift-generated/cc/service/core';
+import { FileInfo } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { SyntheticEvent, useContext } from 'react';
 import { getChildFiles, getFileContent } from 'service/project-service';
