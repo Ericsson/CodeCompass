@@ -9,6 +9,7 @@ import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { OtherContext } from 'global-context/other-context';
+import { SearchResults } from 'components/search-results/search-results';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -139,7 +140,9 @@ export const AccordionMenu = () => {
             <Typography>{AccordionLabel.SEARCH_RESULTS}</Typography>
           </IconLabel>
         </AccordionSummary>
-        <AccordionDetails>{placeholder}</AccordionDetails>
+        <AccordionDetails>
+          <SearchResults />
+        </AccordionDetails>
       </Accordion>
       <Accordion
         expanded={otherCtx.activeAccordion === AccordionLabel.INFO_TREE}

@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { SearchService } from '@thrift-generated';
+import { SearchParams, SearchRange, SearchService } from '@thrift-generated';
 import { config } from './config';
 
 let client: SearchService.Client | undefined;
@@ -20,4 +20,18 @@ export const getSearchTypes = async () => {
   }
   const searchTypes = await client.getSearchTypes();
   return searchTypes;
+};
+
+export const getSearchResults = async (options: number, query: string) => {
+  if (!client) {
+    return [];
+  }
+  const searchResults = await client.search(
+    new SearchParams({
+      options,
+      query,
+      range: new SearchRange({ start: 1, maxSize: 10 }),
+    })
+  );
+  return searchResults;
 };

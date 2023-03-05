@@ -8,6 +8,9 @@ import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
+import { getSearchResults } from 'service/search-service';
+import { SearchContext } from 'global-context/search-context';
+import { SearchResult } from '@thrift-generated';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -41,6 +44,7 @@ const SettingsContainer = styled('div')({
 
 export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
+  const searchCtx = useContext(SearchContext);
 
   const searchOptions = enumToArray(SearchOptions);
   const searchMainLanguages = enumToArray(SearchMainLanguages);
@@ -50,6 +54,12 @@ export const Header = (): JSX.Element => {
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const handleSearch = async () => {
+    const searchResults = await getSearchResults(searchCtx.searchOption, searchQuery);
+    searchCtx.setSearchResult(searchResults as SearchResult);
+  };
 
   return (
     <StyledHeader>
@@ -58,6 +68,8 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect />
           <TextField
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => (e.key === 'Enter' ? handleSearch() : '')}
             placeholder={
               searchOption === SearchOptions.FILE_NAME
                 ? 'File name regex'
