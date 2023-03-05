@@ -7,7 +7,7 @@
     "build": "next build && next export",
     "start": "next start",
     "lint": "next lint",
-    "thrift-ts": "thrift-typescript"
+    "thrift-ts": "thrift-typescript --fallbackNamespace none"
   },
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",

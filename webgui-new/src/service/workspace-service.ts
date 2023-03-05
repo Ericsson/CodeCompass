@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { WorkspaceService } from '@thrift-generated/cc/service/workspace';
+import { WorkspaceService } from '@thrift-generated';
 import { config } from './config';
 
 const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
