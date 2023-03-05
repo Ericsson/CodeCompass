@@ -1,11 +1,25 @@
 import { FolderOpen, Folder } from '@mui/icons-material';
 import { TreeItem, TreeView } from '@mui/lab';
-import { styled } from '@mui/material';
+import { alpha, styled } from '@mui/material';
+import { FileInfo } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
+import { TabName } from 'enums/tab-enum';
+import { OtherContext } from 'global-context/other-context';
+import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
-import { SyntheticEvent, useContext, useEffect, useState } from 'react';
+import { SyntheticEvent, useContext } from 'react';
+import { getParents, getFileContent } from 'service/project-service';
 
 const StyledDiv = styled('div')({});
+
+const FileLine = styled('div')(({ theme }) => ({
+  fontSize: '0.85rem',
+  marginTop: '3px',
+  cursor: 'pointer',
+  ':hover': {
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
+  },
+}));
 
 type FileNodesType = {
   [key: string]: {
@@ -14,49 +28,27 @@ type FileNodesType = {
 };
 
 export const SearchResults = (): JSX.Element => {
+  const otherCtx = useContext(OtherContext);
+  const projectCtx = useContext(ProjectContext);
   const searchCtx = useContext(SearchContext);
-  const [resultPaths, setResultPaths] = useState<string[]>([]);
-  const [expandedPathNodes, setExpandedPathNodes] = useState<string[]>([]);
-  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
-
-  useEffect(() => {
-    if (!searchCtx.searchResult?.results) {
-      return;
-    }
-    const paths = new Set(searchCtx.searchResult?.results?.map((entry) => entry.finfo?.path) as string[]);
-    setResultPaths([...paths]);
-    setExpandedPathNodes([...paths].map((_e, idx) => idx.toString()));
-
-    const expandedFileNodesMap: FileNodesType = {};
-    let idx = 0;
-    for (const path of paths) {
-      const fileIds = searchCtx.searchResult.results
-        .filter((entry) => entry.finfo?.path === path)
-        .map((entry) => entry.finfo?.id) as string[];
-      expandedFileNodesMap[idx.toString()] = {
-        expandedNodes: fileIds,
-      };
-      ++idx;
-    }
-    setExpandedFileNodes(expandedFileNodesMap);
-  }, [searchCtx.searchResult?.results]);
 
   const handleDirNodeSelect = () => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-      const index = expandedPathNodes.indexOf(nodeId);
-      const copyExpanded = [...expandedPathNodes];
+      const index = searchCtx.expandedPathNodes.indexOf(nodeId);
+      const copyExpanded = [...searchCtx.expandedPathNodes];
       if (index === -1) {
         copyExpanded.push(nodeId);
       } else {
         copyExpanded.splice(index, 1);
       }
-      setExpandedPathNodes(copyExpanded);
+      localStorage.setItem('expandedPathNodes', JSON.stringify(copyExpanded));
+      searchCtx.setExpandedPathNodes(copyExpanded);
     };
   };
 
   const handleFileNodeSelect = (pathIdx: string) => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-      const expandedNodes = expandedFileNodes[pathIdx].expandedNodes;
+      const expandedNodes = searchCtx.expandedFileNodes[pathIdx].expandedNodes;
       const index = expandedNodes.indexOf(nodeId);
       const copyExpanded = [...expandedNodes];
       if (index === -1) {
@@ -64,29 +56,46 @@ export const SearchResults = (): JSX.Element => {
       } else {
         copyExpanded.splice(index, 1);
       }
-      setExpandedFileNodes((prevExpanded) => {
-        prevExpanded[pathIdx].expandedNodes = copyExpanded;
-        return {
-          ...prevExpanded,
-        };
-      });
+      const expandedFileNodesCopy = { ...searchCtx.expandedFileNodes } as FileNodesType;
+      expandedFileNodesCopy[pathIdx].expandedNodes = copyExpanded;
+      localStorage.setItem('expandedFileNodes', JSON.stringify({ ...expandedFileNodesCopy }));
+      searchCtx.setExpandedFileNodes(expandedFileNodesCopy);
     };
+  };
+
+  const handleFileLineClick = async (file: FileInfo) => {
+    const parents = await getParents(projectCtx.folderPath);
+    const fileContent = await getFileContent(file.id as string);
+    projectCtx.setFileContent(fileContent);
+    projectCtx.setFileInfo(file);
+    projectCtx.setSelectedFile(file.id as string);
+    projectCtx.setExpandedFileTreeNodes(parents);
+    otherCtx.setActiveTab(TabName.CODE);
+    localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
+    localStorage.setItem('currentFileContent', fileContent);
+    localStorage.setItem('currentFileInfo', JSON.stringify(file));
+    localStorage.setItem('currentSelectedFile', file.id as string);
+    localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
   return (
     <TreeView
       defaultCollapseIcon={<FolderOpen />}
       defaultExpandIcon={<Folder />}
-      expanded={expandedPathNodes}
+      expanded={searchCtx.expandedPathNodes}
       onNodeSelect={handleDirNodeSelect()}
       sx={{ padding: '10px 5px', width: 'fit-content' }}
     >
       {searchCtx.searchResult ? (
         <>
-          {resultPaths.map((path, pathNodeIdx) => {
+          {searchCtx.resultPaths.map((path, pathNodeIdx) => {
             return (
               <div key={pathNodeIdx}>
-                <TreeItem nodeId={`${pathNodeIdx}`} label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}>
+                <TreeItem
+                  nodeId={`${pathNodeIdx}`}
+                  label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
+                  sx={{ marginTop: '3px' }}
+                >
                   {searchCtx.searchResult?.results
                     ?.filter((result) => result.finfo?.path === path)
                     .map((entry, fileNodeIdx) => {
@@ -95,22 +104,26 @@ export const SearchResults = (): JSX.Element => {
                           <TreeView
                             defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                             defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
-                            expanded={expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
+                            expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
                             onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
                           >
                             <TreeItem
                               nodeId={`${entry.finfo?.id as string}`}
                               label={
-                                <StyledDiv sx={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                <StyledDiv sx={{ fontSize: '0.85rem', marginTop: '3px', fontWeight: 'bold' }}>
                                   {entry.finfo?.name}
                                 </StyledDiv>
                               }
                             >
                               {entry.matchingLines?.map((line, idx) => {
                                 return (
-                                  <StyledDiv key={idx} sx={{ fontSize: '0.85rem' }}>
+                                  <FileLine
+                                    key={idx}
+                                    sx={{ fontSize: '0.85rem', marginTop: '3px' }}
+                                    onClick={() => handleFileLineClick(entry.finfo as FileInfo)}
+                                  >
                                     {line.text}
-                                  </StyledDiv>
+                                  </FileLine>
                                 );
                               })}
                             </TreeItem>

@@ -59,6 +59,9 @@ export const Header = (): JSX.Element => {
   const handleSearch = async () => {
     const searchResults = await getSearchResults(searchCtx.searchOption, searchQuery);
     searchCtx.setSearchResult(searchResults as SearchResult);
+    localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult));
+    localStorage.removeItem('expandedPathNodes');
+    localStorage.removeItem('expandedFileNodes');
   };
 
   return (
