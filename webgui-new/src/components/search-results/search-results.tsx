@@ -17,7 +17,7 @@ export const SearchResults = (): JSX.Element => {
   const searchCtx = useContext(SearchContext);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[]>([]);
-  // const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
+  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
 
   useEffect(() => {
     if (!searchCtx.searchResult?.results) {
@@ -27,16 +27,18 @@ export const SearchResults = (): JSX.Element => {
     setResultPaths([...paths]);
     setExpandedPathNodes([...paths].map((_e, idx) => idx.toString()));
 
-    // const expandedFileNodesMap: FileNodesType = {};
-    // for (const path of paths) {
-    //   const fileIds = searchCtx.searchResult.results
-    //     .filter((entry) => entry.finfo?.path === path)
-    //     .map((entry) => entry.finfo?.id) as string[];
-    //   expandedFileNodesMap[path] = {
-    //     expandedNodes: fileIds,
-    //   };
-    // }
-    // setExpandedFileNodes(expandedFileNodesMap);
+    const expandedFileNodesMap: FileNodesType = {};
+    let idx = 0;
+    for (const path of paths) {
+      const fileIds = searchCtx.searchResult.results
+        .filter((entry) => entry.finfo?.path === path)
+        .map((entry) => entry.finfo?.id) as string[];
+      expandedFileNodesMap[idx.toString()] = {
+        expandedNodes: fileIds,
+      };
+      ++idx;
+    }
+    setExpandedFileNodes(expandedFileNodesMap);
   }, [searchCtx.searchResult?.results]);
 
   const handleDirNodeSelect = () => {
@@ -52,24 +54,24 @@ export const SearchResults = (): JSX.Element => {
     };
   };
 
-  // const handleFileNodeSelect = () => {
-  //   return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-  //     const expandedNodes = expandedFileNodes[nodeId].expandedNodes;
-  //     const index = expandedNodes.indexOf(nodeId);
-  //     const copyExpanded = [...expandedNodes];
-  //     if (index === -1) {
-  //       copyExpanded.push(nodeId);
-  //     } else {
-  //       copyExpanded.splice(index, 1);
-  //     }
-  //     setExpandedFileNodes((prevExpanded) => {
-  //       prevExpanded[nodeId].expandedNodes = copyExpanded;
-  //       return {
-  //         ...prevExpanded,
-  //       };
-  //     });
-  //   };
-  // };
+  const handleFileNodeSelect = (pathIdx: string) => {
+    return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+      const expandedNodes = expandedFileNodes[pathIdx].expandedNodes;
+      const index = expandedNodes.indexOf(nodeId);
+      const copyExpanded = [...expandedNodes];
+      if (index === -1) {
+        copyExpanded.push(nodeId);
+      } else {
+        copyExpanded.splice(index, 1);
+      }
+      setExpandedFileNodes((prevExpanded) => {
+        prevExpanded[pathIdx].expandedNodes = copyExpanded;
+        return {
+          ...prevExpanded,
+        };
+      });
+    };
+  };
 
   return (
     <TreeView
@@ -77,23 +79,24 @@ export const SearchResults = (): JSX.Element => {
       defaultExpandIcon={<Folder />}
       expanded={expandedPathNodes}
       onNodeSelect={handleDirNodeSelect()}
+      sx={{ padding: '10px 5px', width: 'fit-content' }}
     >
       {searchCtx.searchResult ? (
         <>
-          {resultPaths.map((path, idx) => {
+          {resultPaths.map((path, pathNodeIdx) => {
             return (
-              <div key={idx}>
-                <TreeItem nodeId={`${idx}`} label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}>
+              <div key={pathNodeIdx}>
+                <TreeItem nodeId={`${pathNodeIdx}`} label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}>
                   {searchCtx.searchResult?.results
                     ?.filter((result) => result.finfo?.path === path)
-                    .map((entry, idx) => {
+                    .map((entry, fileNodeIdx) => {
                       return (
-                        <div key={idx}>
+                        <div key={fileNodeIdx}>
                           <TreeView
                             defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                             defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
-                            // expanded={expandedFileNodes[entry.finfo?.id as string].expandedNodes}
-                            // onNodeSelect={handleFileNodeSelect()}
+                            expanded={expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
+                            onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
                           >
                             <TreeItem
                               nodeId={`${entry.finfo?.id as string}`}
