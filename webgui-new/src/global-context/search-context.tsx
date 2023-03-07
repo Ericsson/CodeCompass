@@ -14,6 +14,12 @@ type SearchContextType = {
   setSearchOption: (_val: number) => void;
   searchResult: SearchResult | undefined;
   setSearchResult: (_val: SearchResult | undefined) => void;
+  searchQuery: string;
+  setSearchQuery: (_val: string) => void;
+  searchStart: number;
+  setSearchStart: (_val: number) => void;
+  searchSize: number;
+  setSearchSize: (_val: number) => void;
   resultPaths: string[];
   setResultPaths: (_val: string[]) => void;
   expandedPathNodes: string[];
@@ -27,6 +33,12 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchOption: (_val) => {},
   searchResult: undefined,
   setSearchResult: (_val) => {},
+  searchQuery: '',
+  setSearchQuery: (_val) => {},
+  searchStart: 0,
+  setSearchStart: (_val) => {},
+  searchSize: 5,
+  setSearchSize: (_val) => {},
   resultPaths: [],
   setResultPaths: (_val) => {},
   expandedPathNodes: [],
@@ -39,6 +51,9 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const projectCtx = useContext(ProjectContext);
   const [searchOption, setSearchOption] = useState<number>(1);
   const [searchResult, setSearchResult] = useState<SearchResult | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchStart, setSearchStart] = useState<number>(0);
+  const [searchSize, setSearchSize] = useState<number>(10);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[]>([]);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
@@ -91,6 +106,12 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchOption,
     searchResult,
     setSearchResult,
+    searchQuery,
+    setSearchQuery,
+    searchStart,
+    setSearchStart,
+    searchSize,
+    setSearchSize,
     resultPaths,
     setResultPaths,
     expandedPathNodes,
