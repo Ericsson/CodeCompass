@@ -22,7 +22,7 @@ export const getSearchTypes = async () => {
   return searchTypes;
 };
 
-export const getSearchResults = async (options: number, query: string, start?: number, maxSize?: number) => {
+export const getSearchResults = async (options: number, query: string, start: number, maxSize: number) => {
   if (!client) {
     return [];
   }
@@ -30,7 +30,7 @@ export const getSearchResults = async (options: number, query: string, start?: n
     new SearchParams({
       options,
       query,
-      range: start && maxSize ? new SearchRange({ start, maxSize }) : undefined,
+      range: new SearchRange({ start, maxSize }),
     })
   );
   return searchResults;

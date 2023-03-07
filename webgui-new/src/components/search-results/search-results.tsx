@@ -1,14 +1,15 @@
 import { FolderOpen, Folder, ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { TreeItem, TreeView } from '@mui/lab';
+import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
-import { FileInfo } from '@thrift-generated';
+import { FileInfo, SearchResult } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { TabName } from 'enums/tab-enum';
 import { OtherContext } from 'global-context/other-context';
 import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
-import { SyntheticEvent, useContext, useState } from 'react';
+import { SyntheticEvent, useContext } from 'react';
 import { getParents, getFileContent } from 'service/project-service';
+import { getSearchResults } from 'service/search-service';
 
 type FileNodesType = {
   [key: string]: {
@@ -36,11 +37,24 @@ const PaginationContainer = styled('div')({
   width: '280px',
 });
 
+const StyledTreeView = styled(TreeView)(({ theme }) => ({
+  color: theme.colors?.primary,
+  backgroundColor: theme.backgroundColors?.primary,
+  padding: '5px',
+  fontSize: '0.85rem',
+}));
+
+const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
+  [`& .${treeItemClasses.group}`]: {
+    marginLeft: '10px',
+    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
+  },
+}));
+
 export const SearchResults = (): JSX.Element => {
   const otherCtx = useContext(OtherContext);
   const projectCtx = useContext(ProjectContext);
   const searchCtx = useContext(SearchContext);
-  const [page, setPage] = useState<number>(0);
 
   const handleDirNodeSelect = () => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
@@ -88,12 +102,33 @@ export const SearchResults = (): JSX.Element => {
     localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
-  const handlePageChange = (direction: 'left' | 'right') => {
-    setPage((prevPage) => (direction === 'left' ? prevPage - 1 : prevPage + 1));
+  const handlePageChange = (direction?: 'left' | 'right') => {
+    const newPage = direction === 'left' ? searchCtx.searchPage - 1 : searchCtx.searchPage + 1;
+    searchCtx.setSearchPage(newPage);
+    updateResults(newPage);
+  };
+
+  const updateResults = async (newPage?: number, newSearchSize?: number) => {
+    if (!searchCtx.searchQuery) {
+      return;
+    }
+    searchCtx.setSearchStart(newPage ?? searchCtx.searchPage);
+    const searchResults = (await getSearchResults(
+      searchCtx.searchOption,
+      searchCtx.searchQuery,
+      newPage ?? searchCtx.searchPage,
+      newSearchSize ?? searchCtx.searchSize
+    )) as SearchResult;
+    searchCtx.setSearchResult(searchResults);
+    localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult));
+    localStorage.setItem('currentSearchPage', JSON.stringify(newPage ?? searchCtx.searchPage));
+    localStorage.setItem('currentSearchSize', JSON.stringify(newSearchSize ?? searchCtx.searchSize));
+    localStorage.removeItem('expandedPathNodes');
+    localStorage.removeItem('expandedFileNodes');
   };
 
   return (
-    <TreeView
+    <StyledTreeView
       defaultCollapseIcon={<FolderOpen />}
       defaultExpandIcon={<Folder />}
       expanded={searchCtx.expandedPathNodes}
@@ -109,8 +144,9 @@ export const SearchResults = (): JSX.Element => {
                 value={searchCtx.searchSize}
                 label={'Size'}
                 onChange={(e) => {
-                  setPage(0);
+                  searchCtx.setSearchPage(0);
                   searchCtx.setSearchSize(e.target.value as number);
+                  updateResults(0, e.target.value as number);
                 }}
                 sx={{ height: '40px' }}
               >
@@ -121,14 +157,14 @@ export const SearchResults = (): JSX.Element => {
                 ))}
               </Select>
             </FormControl>
-            <div>{`${page + 1} of ${Math.ceil(100 / searchCtx.searchSize)}`}</div>
+            <div>{`${searchCtx.searchPage + 1} of ${Math.ceil(100 / searchCtx.searchSize)}`}</div>
             <StyledDiv>
-              <IconButton onClick={() => handlePageChange('left')} disabled={page === 0}>
+              <IconButton onClick={() => handlePageChange('left')} disabled={searchCtx.searchPage === 0}>
                 <ChevronLeft />
               </IconButton>
               <IconButton
                 onClick={() => handlePageChange('right')}
-                disabled={page === Math.ceil(100 / searchCtx.searchSize) - 1}
+                disabled={searchCtx.searchPage === Math.ceil(100 / searchCtx.searchSize) - 1}
               >
                 <ChevronRight />
               </IconButton>
@@ -138,7 +174,7 @@ export const SearchResults = (): JSX.Element => {
             {searchCtx.resultPaths.map((path, pathNodeIdx) => {
               return (
                 <div key={pathNodeIdx}>
-                  <TreeItem
+                  <StyledTreeItem
                     nodeId={`${pathNodeIdx}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
                     sx={{ marginTop: '3px' }}
@@ -148,13 +184,13 @@ export const SearchResults = (): JSX.Element => {
                       .map((entry, fileNodeIdx) => {
                         return (
                           <div key={fileNodeIdx}>
-                            <TreeView
+                            <StyledTreeView
                               defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                               defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                               expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
                               onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
                             >
-                              <TreeItem
+                              <StyledTreeItem
                                 nodeId={`${entry.finfo?.id as string}`}
                                 label={
                                   <StyledDiv sx={{ fontSize: '0.85rem', marginTop: '3px', fontWeight: 'bold' }}>
@@ -166,19 +202,19 @@ export const SearchResults = (): JSX.Element => {
                                   return (
                                     <FileLine
                                       key={idx}
-                                      sx={{ fontSize: '0.85rem', marginTop: '3px' }}
+                                      sx={{ fontSize: '0.85rem', marginTop: '3px', paddingLeft: '5px' }}
                                       onClick={() => handleFileLineClick(entry.finfo as FileInfo)}
                                     >
                                       {line.text}
                                     </FileLine>
                                   );
                                 })}
-                              </TreeItem>
-                            </TreeView>
+                              </StyledTreeItem>
+                            </StyledTreeView>
                           </div>
                         );
                       })}
-                  </TreeItem>
+                  </StyledTreeItem>
                 </div>
               );
             })}
@@ -187,6 +223,6 @@ export const SearchResults = (): JSX.Element => {
       ) : (
         'No results'
       )}
-    </TreeView>
+    </StyledTreeView>
   );
 };

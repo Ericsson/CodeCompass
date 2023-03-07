@@ -54,21 +54,18 @@ export const Header = (): JSX.Element => {
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
-  const [query, setQuery] = useState<string>('');
 
   const handleSearch = async (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && query) {
-      searchCtx.setSearchStart(5);
-      searchCtx.setSearchQuery(query);
+    if (e.key === 'Enter' && searchCtx.searchQuery) {
       const searchResults = (await getSearchResults(
         searchCtx.searchOption,
-        query,
-        5,
+        searchCtx.searchQuery,
+        searchCtx.searchStart,
         searchCtx.searchSize
       )) as SearchResult;
-      console.log(searchResults);
       searchCtx.setSearchResult(searchResults);
       localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult));
+      localStorage.setItem('currentSearchQuery', searchCtx.searchQuery);
       localStorage.removeItem('expandedPathNodes');
       localStorage.removeItem('expandedFileNodes');
     } else {
@@ -83,7 +80,8 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect />
           <TextField
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchCtx.searchQuery}
+            onChange={(e) => searchCtx.setSearchQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={
               searchOption === SearchOptions.FILE_NAME
