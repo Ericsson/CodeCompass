@@ -2,7 +2,7 @@ import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/mat
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { KeyboardEvent, useContext, useState } from 'react';
-import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/settings-enum';
+import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/search-enum';
 import { enumToArray } from 'utils/array-utils';
 import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
@@ -10,7 +10,7 @@ import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
 import { getSearchResults } from 'service/search-service';
 import { SearchContext } from 'global-context/search-context';
-import { SearchResult } from '@thrift-generated';
+import { FileSearchResult, SearchResult } from '@thrift-generated';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -46,31 +46,86 @@ export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
   const searchCtx = useContext(SearchContext);
 
-  const searchOptions = enumToArray(SearchOptions);
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchTypes = enumToArray(SearchTypes);
 
-  const [searchOption, setSearchOption] = useState<string>(searchOptions[0]);
   const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleSearch = async (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' && searchCtx.searchQuery) {
+    if (e.key === 'Enter') {
+      const query = createQueryString(searchCtx.searchQuery);
       const searchResults = (await getSearchResults(
-        searchCtx.searchOption,
-        searchCtx.searchQuery,
+        searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString(),
+        searchCtx.searchCurrentOption?.id as number,
+        query,
         searchCtx.searchStart,
         searchCtx.searchSize
-      )) as SearchResult;
+      )) as SearchResult | FileSearchResult;
+      searchCtx.setSearchPage(0);
+      searchCtx.setSearchSize(10);
       searchCtx.setSearchResult(searchResults);
-      localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult));
+      searchCtx.setIsFileSearch(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString());
+      localStorage.setItem(
+        'isFileSearch',
+        JSON.stringify(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString())
+      );
+      localStorage.setItem('searchResults', JSON.stringify(searchResults));
+      localStorage.setItem('currentSearchPage', JSON.stringify(0));
+      localStorage.setItem('currentSearchSize', JSON.stringify(10));
       localStorage.setItem('currentSearchQuery', searchCtx.searchQuery);
       localStorage.removeItem('expandedPathNodes');
       localStorage.removeItem('expandedFileNodes');
     } else {
       return;
     }
+  };
+
+  const getSearchTypeQuery = (searchType: string): string => {
+    if (searchType === SearchTypes.TYPE) {
+      return 'type';
+    } else if (searchType === SearchTypes.FUNCTION) {
+      return 'func';
+    } else if (searchType === SearchTypes.CONSTANT) {
+      return 'const';
+    } else if (searchType === SearchTypes.VARIABLE) {
+      return 'var';
+    } else if (searchType === SearchTypes.FIELD) {
+      return 'field';
+    } else if (searchType === SearchTypes.LABEL) {
+      return 'label';
+    } else if (searchType === SearchTypes.MACRO) {
+      return 'macro';
+    } else if (searchType === SearchTypes.MODULE) {
+      return 'module';
+    } else {
+      return '';
+    }
+  };
+
+  const createQueryString = (queryString: string): string => {
+    let modifiedQueryString: string = '';
+    const allTypesSelected = searchTypes.every((t) => selectedTypes.includes(t));
+
+    if (searchCtx.searchCurrentOption?.name === SearchOptions.DEFINITION.toString()) {
+      modifiedQueryString = `defs:(${queryString})`;
+
+      if (!allTypesSelected) {
+        modifiedQueryString += ` AND (${getSearchTypeQuery(selectedTypes[0])}:(${queryString})`;
+
+        if (selectedTypes.length > 1) {
+          for (let i = 1; i < selectedTypes.length; ++i) {
+            modifiedQueryString += ` OR ${getSearchTypeQuery(selectedTypes[i])}:(${queryString})`;
+          }
+        }
+
+        modifiedQueryString += ')';
+      }
+    } else {
+      modifiedQueryString = queryString;
+    }
+    return modifiedQueryString;
   };
 
   return (
@@ -84,9 +139,9 @@ export const Header = (): JSX.Element => {
             onChange={(e) => searchCtx.setSearchQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={
-              searchOption === SearchOptions.FILE_NAME
+              searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME
                 ? 'File name regex'
-                : searchOption === SearchOptions.LOG
+                : searchCtx.searchCurrentOption?.name === SearchOptions.LOG
                 ? 'Arbitrary log message'
                 : 'Search by expression'
             }
@@ -143,8 +198,6 @@ export const Header = (): JSX.Element => {
             }}
           />
           <SettingsMenu
-            searchOption={searchOption}
-            setSearchOption={setSearchOption}
             searchLanguage={searchLanguage}
             setSearchLanguage={setSearchLanguage}
             selectedTypes={selectedTypes}

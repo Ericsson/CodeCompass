@@ -42,7 +42,9 @@ const Home = () => {
     localStorage.removeItem('searchResults');
     localStorage.removeItem('currentSearchPage');
     localStorage.removeItem('currentSearchSize');
+    localStorage.removeItem('currentSearchOption');
     localStorage.removeItem('currentSearchQuery');
+    localStorage.removeItem('isFileSearch');
     localStorage.setItem('currentWorkspace', workspace);
     projectCtx.setCurrentWorkspace(workspace);
     router.push('/project');

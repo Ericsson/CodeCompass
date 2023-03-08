@@ -22,16 +22,31 @@ export const getSearchTypes = async () => {
   return searchTypes;
 };
 
-export const getSearchResults = async (options: number, query: string, start: number, maxSize: number) => {
+export const getSearchResults = async (
+  file: boolean,
+  options: number,
+  query: string,
+  start: number,
+  maxSize: number
+) => {
   if (!client) {
     return [];
   }
-  const searchResults = await client.search(
-    new SearchParams({
-      options,
-      query,
-      range: new SearchRange({ start, maxSize }),
-    })
-  );
+
+  const searchResults = file
+    ? await client.searchFile(
+        new SearchParams({
+          options,
+          query,
+          range: new SearchRange({ start, maxSize }),
+        })
+      )
+    : await client.search(
+        new SearchParams({
+          options,
+          query,
+          range: new SearchRange({ start, maxSize }),
+        })
+      );
   return searchResults;
 };
