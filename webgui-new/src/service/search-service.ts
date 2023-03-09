@@ -1,5 +1,5 @@
 import thrift from 'thrift';
-import { SearchParams, SearchRange, SearchService } from '@thrift-generated';
+import { SearchFilter, SearchParams, SearchRange, SearchService } from '@thrift-generated';
 import { config } from './config';
 
 let client: SearchService.Client | undefined;
@@ -27,7 +27,9 @@ export const getSearchResults = async (
   options: number,
   query: string,
   start: number,
-  maxSize: number
+  maxSize: number,
+  fileFilter: string = '',
+  dirFilter: string = ''
 ) => {
   if (!client) {
     return [];
@@ -39,6 +41,7 @@ export const getSearchResults = async (
           options,
           query,
           range: new SearchRange({ start, maxSize }),
+          filter: new SearchFilter({ fileFilter, dirFilter }),
         })
       )
     : await client.search(
@@ -46,6 +49,7 @@ export const getSearchResults = async (
           options,
           query,
           range: new SearchRange({ start, maxSize }),
+          filter: new SearchFilter({ fileFilter, dirFilter }),
         })
       );
   return searchResults;

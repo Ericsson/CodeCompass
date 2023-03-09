@@ -44,6 +44,8 @@ const Home = () => {
     localStorage.removeItem('currentSearchSize');
     localStorage.removeItem('currentSearchOption');
     localStorage.removeItem('currentSearchQuery');
+    localStorage.removeItem('currentSearchFileFilterQuery');
+    localStorage.removeItem('currentSearchDirFilterQuery');
     localStorage.removeItem('isFileSearch');
     localStorage.setItem('currentWorkspace', workspace);
     projectCtx.setCurrentWorkspace(workspace);

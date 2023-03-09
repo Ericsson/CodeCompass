@@ -23,6 +23,8 @@ export const ProjectSelect = (): JSX.Element => {
     localStorage.removeItem('currentSearchSize');
     localStorage.removeItem('currentSearchOption');
     localStorage.removeItem('currentSearchQuery');
+    localStorage.removeItem('currentSearchFileFilterQuery');
+    localStorage.removeItem('currentSearchDirFilterQuery');
     localStorage.removeItem('isFileSearch');
     localStorage.setItem('currentWorkspace', e.target.value);
     projectCtx.setCurrentWorkspace(e.target.value);

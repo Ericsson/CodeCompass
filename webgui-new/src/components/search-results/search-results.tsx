@@ -116,7 +116,9 @@ export const SearchResults = (): JSX.Element => {
       searchCtx.searchCurrentOption?.id as number,
       searchCtx.searchQuery ?? '',
       newPage ?? searchCtx.searchPage,
-      newSearchSize ?? searchCtx.searchSize
+      newSearchSize ?? searchCtx.searchSize,
+      searchCtx.searchFileFilterQuery,
+      searchCtx.searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
     searchCtx.setSearchResult(searchResults);
     searchCtx.setIsFileSearch(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString());

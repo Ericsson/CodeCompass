@@ -20,6 +20,10 @@ type SearchContextType = {
   setSearchResult: (_val: SearchResult | FileSearchResult | undefined) => void;
   searchQuery: string;
   setSearchQuery: (_val: string) => void;
+  searchFileFilterQuery: string;
+  setSearchFileFilterQuery: (_val: string) => void;
+  searchDirFilterQuery: string;
+  setSearchDirFilterQuery: (_val: string) => void;
   searchStart: number;
   setSearchStart: (_val: number) => void;
   searchSize: number;
@@ -45,6 +49,10 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchResult: (_val) => {},
   searchQuery: '',
   setSearchQuery: (_val) => {},
+  searchFileFilterQuery: '',
+  setSearchDirFilterQuery: (_val) => {},
+  searchDirFilterQuery: '',
+  setSearchFileFilterQuery: (_val) => {},
   searchStart: 0,
   setSearchStart: (_val) => {},
   searchSize: 5,
@@ -67,6 +75,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [isFileSearch, setIsFileSearch] = useState<boolean>(false);
   const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string>('');
+  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string>('');
   const [searchStart, setSearchStart] = useState<number>(0);
   const [searchSize, setSearchSize] = useState<number>(10);
   const [searchPage, setSearchPage] = useState<number>(0);
@@ -95,6 +105,12 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
 
       const storedSearchQuery = localStorage.getItem('currentSearchQuery');
       setSearchQuery(storedSearchQuery ? storedSearchQuery : '');
+
+      const storedSearchFileFilterQuery = localStorage.getItem('currentSearchFileFilterQuery');
+      setSearchFileFilterQuery(storedSearchFileFilterQuery ? storedSearchFileFilterQuery : '');
+
+      const storedSearchDirFilterQuery = localStorage.getItem('currentSearchDirFilterQuery');
+      setSearchDirFilterQuery(storedSearchDirFilterQuery ? storedSearchDirFilterQuery : '');
 
       const storedSearchSize = localStorage.getItem('currentSearchSize');
       setSearchSize(storedSearchSize ? JSON.parse(storedSearchSize) : 10);
@@ -147,6 +163,10 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchResult,
     searchQuery,
     setSearchQuery,
+    searchFileFilterQuery,
+    setSearchFileFilterQuery,
+    searchDirFilterQuery,
+    setSearchDirFilterQuery,
     searchStart,
     setSearchStart,
     searchSize,
