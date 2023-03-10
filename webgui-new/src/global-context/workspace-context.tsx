@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react';
 import { WorkspaceInfo } from '@thrift-generated';
-import { getWorkspaces } from 'service/workspace-service';
+import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
 
 export const WorkspaceContext = createContext<WorkspaceInfo[]>([]);
 
@@ -9,6 +9,7 @@ export const WorkspaceContextController = ({ children }: { children: JSX.Element
 
   useEffect(() => {
     const init = async () => {
+      createWorkspaceClient();
       const workspaceData = await getWorkspaces();
       setWorkspaces(workspaceData);
     };

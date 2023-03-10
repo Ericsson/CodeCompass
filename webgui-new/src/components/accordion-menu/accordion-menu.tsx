@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from 'react';
 import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { AccordionLabel } from 'enums/accordion-enum';
-import { OtherContext } from 'global-context/other-context';
+import { ConfigContext } from 'global-context/config-context';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -76,7 +76,7 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 }));
 
 export const AccordionMenu = () => {
-  const otherCtx = useContext(OtherContext);
+  const configCtx = useContext(ConfigContext);
   const [treeView, setTreeView] = useState<boolean>(false);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export const AccordionMenu = () => {
   }, []);
 
   const setAccordion = (value: string) => {
-    otherCtx.setActiveAccordion(value);
+    configCtx.setActiveAccordion(value);
     localStorage.setItem('activeAccordion', value);
   };
 
@@ -101,7 +101,7 @@ export const AccordionMenu = () => {
   return (
     <Container>
       <Accordion
-        expanded={otherCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
+        expanded={configCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
         onChange={() => setAccordion(AccordionLabel.FILE_MANAGER)}
       >
         <AccordionSummary>
@@ -130,7 +130,7 @@ export const AccordionMenu = () => {
         </AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={otherCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
+        expanded={configCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
         onChange={() => setAccordion(AccordionLabel.SEARCH_RESULTS)}
       >
         <AccordionSummary>
@@ -142,7 +142,7 @@ export const AccordionMenu = () => {
         <AccordionDetails>{placeholder}</AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={otherCtx.activeAccordion === AccordionLabel.INFO_TREE}
+        expanded={configCtx.activeAccordion === AccordionLabel.INFO_TREE}
         onChange={() => setAccordion(AccordionLabel.INFO_TREE)}
       >
         <AccordionSummary>
@@ -154,7 +154,7 @@ export const AccordionMenu = () => {
         <AccordionDetails>{placeholder}</AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={otherCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
+        expanded={configCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
         onChange={() => setAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
       >
         <AccordionSummary>

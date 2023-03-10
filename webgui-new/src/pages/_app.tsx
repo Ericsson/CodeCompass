@@ -4,11 +4,11 @@ import { CssBaseline } from '@mui/material';
 import { WorkspaceContextController } from 'global-context/workspace-context';
 import { ProjectContextController } from 'global-context/project-context';
 import { ThemeContextController } from 'global-context/theme-context';
-import { OtherContextController } from 'global-context/other-context';
+import { ConfigContextController } from 'global-context/config-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <OtherContextController>
+    <ConfigContextController>
       <WorkspaceContextController>
         <ProjectContextController>
           <ThemeContextController>
@@ -17,7 +17,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
           </ThemeContextController>
         </ProjectContextController>
       </WorkspaceContextController>
-    </OtherContextController>
+    </ConfigContextController>
   );
 };
 

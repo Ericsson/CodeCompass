@@ -10,7 +10,7 @@ import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';
 import { ProjectContext } from 'global-context/project-context';
 import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { OtherContext } from 'global-context/other-context';
+import { ConfigContext } from 'global-context/config-context';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -64,7 +64,7 @@ const placeholder = (
 
 const Project = () => {
   const { theme } = useContext(ThemeContext);
-  const otherCtx = useContext(OtherContext);
+  const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
 
   return projectCtx.currentWorkspace ? (
@@ -74,9 +74,9 @@ const Project = () => {
         <AccordionMenu />
         <div>
           <StyledTabs
-            value={otherCtx.activeTab}
+            value={configCtx.activeTab}
             onChange={(_e: SyntheticEvent, newValue: number) => {
-              otherCtx.setActiveTab(newValue);
+              configCtx.setActiveTab(newValue);
               localStorage.setItem('activeTab', JSON.stringify(newValue));
             }}
           >
@@ -89,10 +89,10 @@ const Project = () => {
             <StyledTab label="User guide" />
             <StyledTab label="Credits" />
           </StyledTabs>
-          <TabPanel value={otherCtx.activeTab} index={TabName.WELCOME}>
+          <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.CODE}>
+          <TabPanel value={configCtx.activeTab} index={TabName.CODE}>
             <FileName
               fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
               filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
@@ -112,22 +112,22 @@ const Project = () => {
               style={{ fontSize: '0.8rem' }}
             />
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.METRICS}>
+          <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.DIAGRAMS}>
+          <TabPanel value={configCtx.activeTab} index={TabName.DIAGRAMS}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.GIT_BLAME}>
+          <TabPanel value={configCtx.activeTab} index={TabName.GIT_BLAME}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.GIT_DIFF}>
+          <TabPanel value={configCtx.activeTab} index={TabName.GIT_DIFF}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.USER_GUIDE}>
+          <TabPanel value={configCtx.activeTab} index={TabName.USER_GUIDE}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={otherCtx.activeTab} index={TabName.CREDITS}>
+          <TabPanel value={configCtx.activeTab} index={TabName.CREDITS}>
             {placeholder}
           </TabPanel>
         </div>
