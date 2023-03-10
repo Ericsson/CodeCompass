@@ -4,6 +4,7 @@ import { config } from './config';
 
 let client: SearchService.Client | undefined;
 export const createSearchClient = (workspace: string) => {
+  if (!config) return;
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
