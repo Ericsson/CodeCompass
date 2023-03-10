@@ -8,16 +8,16 @@ import { ConfigContextController } from 'global-context/config-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <ConfigContextController>
+    <ProjectContextController>
       <WorkspaceContextController>
-        <ProjectContextController>
+        <ConfigContextController>
           <ThemeContextController>
             <CssBaseline />
             <Component {...pageProps} />
           </ThemeContextController>
-        </ProjectContextController>
+        </ConfigContextController>
       </WorkspaceContextController>
-    </ConfigContextController>
+    </ProjectContextController>
   );
 };
 
