@@ -5,7 +5,7 @@ import { FileInfo, FileSearchResult, SearchResult, SearchResultEntry } from '@th
 import { FileIcon } from 'components/file-icon/file-icon';
 import { SearchOptions } from 'enums/search-enum';
 import { TabName } from 'enums/tab-enum';
-import { OtherContext } from 'global-context/other-context';
+import { ConfigContext } from 'global-context/config-context';
 import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
@@ -53,7 +53,7 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 export const SearchResults = (): JSX.Element => {
-  const otherCtx = useContext(OtherContext);
+  const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
   const searchCtx = useContext(SearchContext);
 
@@ -95,7 +95,7 @@ export const SearchResults = (): JSX.Element => {
     projectCtx.setFileInfo(file);
     projectCtx.setSelectedFile(file.id as string);
     projectCtx.setExpandedFileTreeNodes(parents);
-    otherCtx.setActiveTab(TabName.CODE);
+    configCtx.setActiveTab(TabName.CODE);
     localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
     localStorage.setItem('currentFileContent', fileContent);
     localStorage.setItem('currentFileInfo', JSON.stringify(file));

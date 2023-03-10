@@ -4,12 +4,12 @@ import { CssBaseline } from '@mui/material';
 import { WorkspaceContextController } from 'global-context/workspace-context';
 import { ProjectContextController } from 'global-context/project-context';
 import { ThemeContextController } from 'global-context/theme-context';
-import { OtherContextController } from 'global-context/other-context';
+import { ConfigContextController } from 'global-context/config-context';
 import { SearchContextController } from 'global-context/search-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <OtherContextController>
+    <ConfigContextController>
       <WorkspaceContextController>
         <ProjectContextController>
           <SearchContextController>
@@ -20,7 +20,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
           </SearchContextController>
         </ProjectContextController>
       </WorkspaceContextController>
-    </OtherContextController>
+    </ConfigContextController>
   );
 };
 
