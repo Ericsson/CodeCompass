@@ -4,6 +4,7 @@ import { config } from './config';
 
 let client: ProjectService.Client | undefined;
 export const createProjectClient = (workspace: string) => {
+  if (!config) return;
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,

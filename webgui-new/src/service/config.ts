@@ -10,12 +10,7 @@ type ConfigType = {
   webserver_path: string;
 };
 
-export let config: ConfigType = {
-  webserver_host: 'localhost',
-  webserver_port: 8080,
-  webserver_https: false,
-  webserver_path: '',
-};
+export let config: ConfigType | undefined = undefined;
 
 export const createConfig = (props: ConfigType) => {
   if (!isDevEnvironment) {

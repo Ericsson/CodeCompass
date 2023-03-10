@@ -4,6 +4,7 @@ import { config } from './config';
 
 let client: WorkspaceService.Client | undefined;
 export const createWorkspaceClient = () => {
+  if (!config) return;
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
