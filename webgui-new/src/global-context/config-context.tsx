@@ -23,12 +23,16 @@ export const ConfigContextController = ({ children }: { children: JSX.Element | 
 
   useEffect(() => {
     const init = async () => {
+      const wHost = window.location.hostname;
+      const wPort = window.location.port;
+      const wHTTPS = window.location.protocol === 'https:';
+      const wPath = window.location.pathname;
+
       createConfig({
-        webserver_host: window.location.hostname,
-        webserver_port:
-          window.location.protocol === 'https:' && !window.location.port ? 443 : parseInt(window.location.port),
-        webserver_https: window.location.protocol === 'https:',
-        webserver_path: '',
+        webserver_host: wHost,
+        webserver_port: wHTTPS && !wPort ? 443 : parseInt(wPort),
+        webserver_https: wHTTPS,
+        webserver_path: wPath === '/new' ? '' : wPath.slice(0, wPath.lastIndexOf('/new')),
       });
 
       const storedActiveAccordion = localStorage.getItem('activeAccordion');
