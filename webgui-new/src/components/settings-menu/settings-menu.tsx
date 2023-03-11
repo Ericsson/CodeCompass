@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypes } from 'enums/search-enum';
-import { enumToArray, removeFromArray } from 'utils/array-utils';
+import { enumToArray, removeFromArray } from 'utils/utils';
 import { Info, Close } from '@mui/icons-material';
 import { SearchContext } from 'global-context/search-context';
 

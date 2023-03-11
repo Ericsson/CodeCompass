@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createSearchClient, getSearchTypes } from 'service/search-service';
 import { FileInfo, FileSearchResult, SearchResult, SearchResultEntry, SearchType } from '@thrift-generated';
 import { ProjectContext } from './project-context';
+import { getFileFolderPath } from 'utils/utils';
 
 type FileNodesType = {
   [key: string]: {
@@ -125,8 +126,12 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     if (!searchResult || !searchResult.results) return;
 
     const paths = !isFileSearch
-      ? new Set((searchResult?.results as SearchResultEntry[])?.map((entry) => entry.finfo?.path) as string[])
-      : new Set((searchResult?.results as FileInfo[])?.map((entry) => entry.path) as string[]);
+      ? new Set(
+          (searchResult?.results as SearchResultEntry[])?.map((entry) =>
+            getFileFolderPath(entry.finfo?.path)
+          ) as string[]
+        )
+      : new Set((searchResult?.results as FileInfo[])?.map((entry) => getFileFolderPath(entry.path)) as string[]);
     setResultPaths([...paths]);
 
     const storedExpandedPathNodes = localStorage.getItem('expandedPathNodes');
@@ -139,10 +144,10 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     for (const path of paths) {
       const fileIds = !isFileSearch
         ? ((searchResult?.results as SearchResultEntry[])
-            ?.filter((entry) => entry.finfo?.path === path)
+            ?.filter((entry) => getFileFolderPath(entry.finfo?.path) === path)
             .map((entry) => entry.finfo?.id) as string[])
         : ((searchResult?.results as FileInfo[])
-            ?.filter((entry) => entry.path === path)
+            ?.filter((entry) => getFileFolderPath(entry.path) === path)
             .map((entry) => entry.id) as string[]);
       expandedFileNodesMap[idx.toString()] = {
         expandedNodes: fileIds,

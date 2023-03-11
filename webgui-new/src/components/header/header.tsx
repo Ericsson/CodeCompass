@@ -3,7 +3,7 @@ import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import { KeyboardEvent, useContext, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/search-enum';
-import { enumToArray } from 'utils/array-utils';
+import { enumToArray } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';

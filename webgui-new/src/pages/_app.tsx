@@ -9,18 +9,18 @@ import { SearchContextController } from 'global-context/search-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <SearchContextController>
+    <WorkspaceContextController>
       <ProjectContextController>
-        <WorkspaceContextController>
+        <SearchContextController>
           <ConfigContextController>
             <ThemeContextController>
               <CssBaseline />
               <Component {...pageProps} />
             </ThemeContextController>
           </ConfigContextController>
-        </WorkspaceContextController>
+        </SearchContextController>
       </ProjectContextController>
-    </SearchContextController>
+    </WorkspaceContextController>
   );
 };
 

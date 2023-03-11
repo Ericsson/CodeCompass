@@ -11,6 +11,7 @@ import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
 import { getParents, getFileContent } from 'service/project-service';
 import { getSearchResults } from 'service/search-service';
+import { getFileFolderPath } from 'utils/utils';
 
 type FileNodesType = {
   [key: string]: {
@@ -29,14 +30,20 @@ const FileLine = styled('div')(({ theme }) => ({
   },
 }));
 
+const OuterContainer = styled('div')({
+  padding: '15px 10px',
+});
+
 const PaginationContainer = styled('div')({
   display: 'flex',
   alignItems: 'center',
   gap: '15px',
-  padding: '0 10px',
-  margin: '5px 0px 15px 0px',
+  padding: '0',
+  marginBottom: '10px',
   width: '280px',
 });
+
+const ResultsContainer = styled('div')({});
 
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
@@ -103,181 +110,191 @@ export const SearchResults = (): JSX.Element => {
     localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
-  const handlePageChange = (direction?: 'left' | 'right') => {
-    const newPage = direction === 'left' ? searchCtx.searchPage - 1 : searchCtx.searchPage + 1;
-    searchCtx.setSearchPage(newPage);
-    updateResults(newPage);
-  };
-
-  const updateResults = async (newPage?: number, newSearchSize?: number) => {
-    searchCtx.setSearchStart(newPage ?? searchCtx.searchPage);
+  const updateSelectResults = async (newSearchSize: number) => {
     const searchResults = (await getSearchResults(
-      searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString(),
+      searchCtx.isFileSearch,
       searchCtx.searchCurrentOption?.id as number,
       searchCtx.searchQuery ?? '',
-      newPage ?? searchCtx.searchPage,
-      newSearchSize ?? searchCtx.searchSize,
+      0,
+      newSearchSize,
       searchCtx.searchFileFilterQuery,
       searchCtx.searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
+
+    searchCtx.setSearchPage(0);
+    searchCtx.setSearchSize(newSearchSize);
     searchCtx.setSearchResult(searchResults);
-    searchCtx.setIsFileSearch(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString());
-    localStorage.setItem(
-      'isFileSearch',
-      JSON.stringify(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString())
-    );
+
     localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
-    localStorage.setItem('currentSearchPage', JSON.stringify(newPage ?? searchCtx.searchPage));
-    localStorage.setItem('currentSearchSize', JSON.stringify(newSearchSize ?? searchCtx.searchSize));
+    localStorage.setItem('currentSearchPage', JSON.stringify(0));
+    localStorage.setItem('currentSearchSize', JSON.stringify(newSearchSize));
+    localStorage.removeItem('expandedPathNodes');
+    localStorage.removeItem('expandedFileNodes');
+  };
+
+  const updatePageResults = async (direction: 'left' | 'right') => {
+    const start =
+      direction === 'left' ? searchCtx.searchPage - searchCtx.searchSize : searchCtx.searchPage + searchCtx.searchSize;
+
+    const searchResults = (await getSearchResults(
+      searchCtx.isFileSearch,
+      searchCtx.searchCurrentOption?.id as number,
+      searchCtx.searchQuery ?? '',
+      start,
+      searchCtx.searchSize,
+      searchCtx.searchFileFilterQuery,
+      searchCtx.searchDirFilterQuery
+    )) as SearchResult | FileSearchResult;
+
+    searchCtx.setSearchPage(start);
+    searchCtx.setSearchResult(searchResults);
+
+    localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
+    localStorage.setItem('currentSearchPage', JSON.stringify(start));
     localStorage.removeItem('expandedPathNodes');
     localStorage.removeItem('expandedFileNodes');
   };
 
   return (
-    <StyledTreeView
-      defaultCollapseIcon={<FolderOpen />}
-      defaultExpandIcon={<Folder />}
-      expanded={searchCtx.expandedPathNodes}
-      onNodeSelect={handleDirNodeSelect()}
-      sx={{ padding: '10px 5px', width: 'fit-content' }}
-    >
-      {searchCtx.searchResult ? (
+    <OuterContainer>
+      <PaginationContainer>
+        <FormControl>
+          <InputLabel>{'Size'}</InputLabel>
+          <Select
+            value={searchCtx.searchSize}
+            label={'Size'}
+            onChange={(e) => {
+              searchCtx.setSearchPage(0);
+              searchCtx.setSearchSize(e.target.value as number);
+              updateSelectResults(e.target.value as number);
+            }}
+            sx={{ height: '40px' }}
+          >
+            {[10, 20, 30, 40, 50].map((num) => (
+              <MenuItem key={num} value={num}>
+                {num}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <div>{`${Math.ceil(searchCtx.searchPage / 10 / (searchCtx.searchSize / 10)) + 1} of ${Math.ceil(
+          100 / searchCtx.searchSize
+        )}`}</div>
         <StyledDiv>
-          <PaginationContainer>
-            <FormControl>
-              <InputLabel>{'Size'}</InputLabel>
-              <Select
-                value={searchCtx.searchSize}
-                label={'Size'}
-                onChange={(e) => {
-                  searchCtx.setSearchPage(0);
-                  searchCtx.setSearchSize(e.target.value as number);
-                  updateResults(0, e.target.value as number);
-                }}
-                sx={{ height: '40px' }}
-              >
-                {[10, 20, 30, 40, 50].map((num) => (
-                  <MenuItem key={num} value={num}>
-                    {num}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <div>{`${searchCtx.searchPage + 1} of ${Math.ceil(100 / searchCtx.searchSize)}`}</div>
-            <StyledDiv>
-              <IconButton onClick={() => handlePageChange('left')} disabled={searchCtx.searchPage === 0}>
-                <ChevronLeft />
-              </IconButton>
-              <IconButton
-                onClick={() => handlePageChange('right')}
-                disabled={searchCtx.searchPage === Math.ceil(100 / searchCtx.searchSize) - 1}
-              >
-                <ChevronRight />
-              </IconButton>
-            </StyledDiv>
-          </PaginationContainer>
-          <StyledDiv>
-            {searchCtx.resultPaths.map((path, pathNodeIdx) => {
-              if (!searchCtx.searchResult || !searchCtx.searchResult.results) return;
-              return (
-                <div key={pathNodeIdx}>
-                  <StyledTreeItem
-                    nodeId={`${pathNodeIdx}`}
-                    label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
-                    sx={{ marginTop: '3px' }}
-                  >
-                    {!searchCtx.isFileSearch
-                      ? (searchCtx.searchResult?.results as SearchResultEntry[])
-                          ?.filter((result) => result.finfo?.path === path)
-                          .map((entry, fileNodeIdx) => {
-                            return (
-                              <div key={fileNodeIdx}>
-                                <StyledTreeView
-                                  defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
-                                  defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
-                                  expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
-                                  onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
-                                >
-                                  <StyledTreeItem
-                                    nodeId={`${entry.finfo?.id as string}`}
-                                    label={
-                                      <StyledDiv
-                                        sx={{
-                                          fontSize: '0.85rem',
-                                          marginTop: '3px',
-                                          fontWeight: 'bold',
-                                          color: (theme) =>
-                                            entry.finfo?.parseStatus === 3
-                                              ? theme.colors?.success
-                                              : entry.finfo?.parseStatus === 2
-                                              ? theme.colors?.warning
-                                              : theme.colors?.primary,
-                                        }}
-                                      >
-                                        {entry.finfo?.name}
-                                      </StyledDiv>
-                                    }
-                                  >
-                                    {entry.matchingLines?.map((line, idx) => {
-                                      return (
-                                        <FileLine
-                                          key={idx}
-                                          sx={{ fontSize: '0.85rem', marginTop: '3px', paddingLeft: '5px' }}
-                                          onClick={() => handleFileLineClick(entry.finfo as FileInfo)}
-                                        >
-                                          {line.text}
-                                        </FileLine>
-                                      );
-                                    })}
-                                  </StyledTreeItem>
-                                </StyledTreeView>
-                              </div>
-                            );
-                          })
-                      : (searchCtx.searchResult?.results as FileInfo[])
-                          ?.filter((result) => result.path === path)
-                          .map((entry, fileNodeIdx) => {
-                            return (
-                              <div key={fileNodeIdx}>
-                                <StyledTreeView
-                                  defaultCollapseIcon={<FileIcon fileName={entry.name as string} />}
-                                  defaultExpandIcon={<FileIcon fileName={entry.name as string} />}
-                                  expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
-                                  onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
-                                >
-                                  <StyledTreeItem
-                                    nodeId={`${entry.id as string}`}
-                                    label={
-                                      <StyledDiv
-                                        sx={{
-                                          fontSize: '0.85rem',
-                                          marginTop: '3px',
-                                          fontWeight: 'bold',
-                                          color: (theme) =>
-                                            entry.parseStatus === 3
-                                              ? theme.colors?.success
-                                              : entry.parseStatus === 2
-                                              ? theme.colors?.warning
-                                              : theme.colors?.primary,
-                                        }}
-                                      >
-                                        {entry.name}
-                                      </StyledDiv>
-                                    }
-                                  ></StyledTreeItem>
-                                </StyledTreeView>
-                              </div>
-                            );
-                          })}
-                  </StyledTreeItem>
-                </div>
-              );
-            })}
-          </StyledDiv>
+          <IconButton onClick={() => updatePageResults('left')} disabled={searchCtx.searchPage === 0}>
+            <ChevronLeft />
+          </IconButton>
+          <IconButton
+            onClick={() => updatePageResults('right')}
+            disabled={
+              Math.ceil(searchCtx.searchPage / 10 / (searchCtx.searchSize / 10)) + 1 ===
+              Math.ceil(100 / searchCtx.searchSize)
+            }
+          >
+            <ChevronRight />
+          </IconButton>
         </StyledDiv>
-      ) : (
-        'No results'
-      )}
-    </StyledTreeView>
+      </PaginationContainer>
+      <ResultsContainer>
+        {searchCtx.searchResult?.results?.length ? (
+          <StyledTreeView
+            defaultCollapseIcon={<FolderOpen />}
+            defaultExpandIcon={<Folder />}
+            expanded={searchCtx.expandedPathNodes}
+            onNodeSelect={handleDirNodeSelect()}
+            sx={{ width: 'fit-content' }}
+          >
+            <StyledDiv>
+              <StyledDiv>
+                {searchCtx.resultPaths.map((path, pathNodeIdx) => {
+                  if (!searchCtx.searchResult || !searchCtx.searchResult.results) return;
+                  return (
+                    <div key={pathNodeIdx}>
+                      <StyledTreeItem
+                        nodeId={`${pathNodeIdx}`}
+                        label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
+                        sx={{ marginTop: '3px' }}
+                      >
+                        {!searchCtx.isFileSearch
+                          ? (searchCtx.searchResult?.results as SearchResultEntry[])
+                              ?.filter((result) => getFileFolderPath(result.finfo?.path) === path)
+                              .map((entry, fileNodeIdx) => {
+                                return (
+                                  <div key={fileNodeIdx}>
+                                    <StyledTreeView
+                                      defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
+                                      defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
+                                      expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
+                                      onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
+                                    >
+                                      <StyledTreeItem
+                                        nodeId={`${entry.finfo?.id as string}`}
+                                        label={
+                                          <StyledDiv
+                                            sx={{
+                                              fontSize: '0.85rem',
+                                              marginTop: '3px',
+                                              fontWeight: 'bold',
+                                              color: (theme) =>
+                                                entry.finfo?.parseStatus === 3
+                                                  ? theme.colors?.success
+                                                  : entry.finfo?.parseStatus === 2
+                                                  ? theme.colors?.warning
+                                                  : theme.colors?.primary,
+                                            }}
+                                          >
+                                            {entry.finfo?.name}
+                                          </StyledDiv>
+                                        }
+                                      >
+                                        {entry.matchingLines?.map((line, idx) => {
+                                          return (
+                                            <FileLine
+                                              key={idx}
+                                              sx={{ fontSize: '0.85rem', marginTop: '3px', paddingLeft: '15px' }}
+                                              onClick={() => handleFileLineClick(entry.finfo as FileInfo)}
+                                            >
+                                              {line.text}
+                                            </FileLine>
+                                          );
+                                        })}
+                                      </StyledTreeItem>
+                                    </StyledTreeView>
+                                  </div>
+                                );
+                              })
+                          : (searchCtx.searchResult?.results as FileInfo[])
+                              ?.filter((result) => getFileFolderPath(result?.path) === path)
+                              .map((entry, fileNodeIdx) => {
+                                return (
+                                  <FileLine
+                                    onClick={() => handleFileLineClick(entry)}
+                                    key={fileNodeIdx}
+                                    sx={{
+                                      paddingLeft: '15px',
+                                      color: (theme) =>
+                                        entry.parseStatus === 3
+                                          ? theme.colors?.success
+                                          : entry.parseStatus === 2
+                                          ? theme.colors?.warning
+                                          : theme.colors?.primary,
+                                    }}
+                                  >
+                                    {entry.name}
+                                  </FileLine>
+                                );
+                              })}
+                      </StyledTreeItem>
+                    </div>
+                  );
+                })}
+              </StyledDiv>
+            </StyledDiv>
+          </StyledTreeView>
+        ) : (
+          <div>{'No results'}</div>
+        )}
+      </ResultsContainer>
+    </OuterContainer>
   );
 };
