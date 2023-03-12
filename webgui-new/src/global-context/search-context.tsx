@@ -29,8 +29,6 @@ type SearchContextType = {
   setSearchStart: (_val: number) => void;
   searchSize: number;
   setSearchSize: (_val: number) => void;
-  searchPage: number;
-  setSearchPage: (_val: number) => void;
   resultPaths: string[];
   setResultPaths: (_val: string[]) => void;
   expandedPathNodes: string[];
@@ -58,8 +56,6 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchStart: (_val) => {},
   searchSize: 5,
   setSearchSize: (_val) => {},
-  searchPage: 0,
-  setSearchPage: (_val) => {},
   resultPaths: [],
   setResultPaths: (_val) => {},
   expandedPathNodes: [],
@@ -80,7 +76,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string>('');
   const [searchStart, setSearchStart] = useState<number>(0);
   const [searchSize, setSearchSize] = useState<number>(10);
-  const [searchPage, setSearchPage] = useState<number>(0);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[]>([]);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
@@ -113,11 +108,11 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       const storedSearchDirFilterQuery = localStorage.getItem('currentSearchDirFilterQuery');
       setSearchDirFilterQuery(storedSearchDirFilterQuery ? storedSearchDirFilterQuery : '');
 
+      const storedSearchStart = localStorage.getItem('currentSearchStart');
+      setSearchStart(storedSearchStart ? JSON.parse(storedSearchStart) : 0);
+
       const storedSearchSize = localStorage.getItem('currentSearchSize');
       setSearchSize(storedSearchSize ? JSON.parse(storedSearchSize) : 10);
-
-      const storedSearchPage = localStorage.getItem('currentSearchPage');
-      setSearchPage(storedSearchPage ? JSON.parse(storedSearchPage) : 0);
     };
     init();
   }, [projectCtx.currentWorkspace]);
@@ -176,8 +171,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchStart,
     searchSize,
     setSearchSize,
-    searchPage,
-    setSearchPage,
     resultPaths,
     setResultPaths,
     expandedPathNodes,

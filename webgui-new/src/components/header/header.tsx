@@ -11,6 +11,8 @@ import { getTooltipText } from './get-tooltip-text';
 import { getSearchResults } from 'service/search-service';
 import { SearchContext } from 'global-context/search-context';
 import { FileSearchResult, SearchResult } from '@thrift-generated';
+import { ConfigContext } from 'global-context/config-context';
+import { AccordionLabel } from 'enums/accordion-enum';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -44,6 +46,7 @@ const SettingsContainer = styled('div')({
 
 export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
+  const configCtx = useContext(ConfigContext);
   const searchCtx = useContext(SearchContext);
 
   const searchTypes = enumToArray(SearchTypes);
@@ -55,8 +58,9 @@ export const Header = (): JSX.Element => {
     if (e.key === 'Enter') {
       const query = createQueryString(searchCtx.searchQuery);
       if (query === '') return;
+      const isFileSearch = searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
       const searchResults = (await getSearchResults(
-        searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString(),
+        isFileSearch,
         searchCtx.searchCurrentOption?.id as number,
         query,
         searchCtx.searchStart,
@@ -64,17 +68,12 @@ export const Header = (): JSX.Element => {
         searchCtx.searchFileFilterQuery,
         searchCtx.searchDirFilterQuery
       )) as SearchResult | FileSearchResult;
-      searchCtx.setSearchPage(0);
-      searchCtx.setSearchSize(10);
       searchCtx.setSearchResult(searchResults);
-      searchCtx.setIsFileSearch(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString());
-      localStorage.setItem(
-        'isFileSearch',
-        JSON.stringify(searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString())
-      );
+      searchCtx.setIsFileSearch(isFileSearch);
+      configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
+      localStorage.setItem('activeAccordion', AccordionLabel.SEARCH_RESULTS);
+      localStorage.setItem('isFileSearch', JSON.stringify(isFileSearch));
       localStorage.setItem('searchResults', JSON.stringify(searchResults));
-      localStorage.setItem('currentSearchPage', JSON.stringify(0));
-      localStorage.setItem('currentSearchSize', JSON.stringify(10));
       localStorage.setItem('currentSearchQuery', searchCtx.searchQuery);
       localStorage.setItem('currentSearchFileFilterQuery', searchCtx.searchFileFilterQuery);
       localStorage.setItem('currentSearchDirFilterQuery', searchCtx.searchFileFilterQuery);

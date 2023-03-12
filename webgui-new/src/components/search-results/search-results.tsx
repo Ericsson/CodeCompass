@@ -121,12 +121,12 @@ export const SearchResults = (): JSX.Element => {
       searchCtx.searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
 
-    searchCtx.setSearchPage(0);
+    searchCtx.setSearchStart(0);
     searchCtx.setSearchSize(newSearchSize);
     searchCtx.setSearchResult(searchResults);
 
     localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
-    localStorage.setItem('currentSearchPage', JSON.stringify(0));
+    localStorage.setItem('currentSearchStart', JSON.stringify(0));
     localStorage.setItem('currentSearchSize', JSON.stringify(newSearchSize));
     localStorage.removeItem('expandedPathNodes');
     localStorage.removeItem('expandedFileNodes');
@@ -134,7 +134,9 @@ export const SearchResults = (): JSX.Element => {
 
   const updatePageResults = async (direction: 'left' | 'right') => {
     const start =
-      direction === 'left' ? searchCtx.searchPage - searchCtx.searchSize : searchCtx.searchPage + searchCtx.searchSize;
+      direction === 'left'
+        ? searchCtx.searchStart - searchCtx.searchSize
+        : searchCtx.searchStart + searchCtx.searchSize;
 
     const searchResults = (await getSearchResults(
       searchCtx.isFileSearch,
@@ -146,11 +148,11 @@ export const SearchResults = (): JSX.Element => {
       searchCtx.searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
 
-    searchCtx.setSearchPage(start);
+    searchCtx.setSearchStart(start);
     searchCtx.setSearchResult(searchResults);
 
     localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
-    localStorage.setItem('currentSearchPage', JSON.stringify(start));
+    localStorage.setItem('currentSearchStart', JSON.stringify(start));
     localStorage.removeItem('expandedPathNodes');
     localStorage.removeItem('expandedFileNodes');
   };
@@ -164,7 +166,7 @@ export const SearchResults = (): JSX.Element => {
             value={searchCtx.searchSize}
             label={'Size'}
             onChange={(e) => {
-              searchCtx.setSearchPage(0);
+              searchCtx.setSearchStart(0);
               searchCtx.setSearchSize(e.target.value as number);
               updateSelectResults(e.target.value as number);
             }}
@@ -177,17 +179,17 @@ export const SearchResults = (): JSX.Element => {
             ))}
           </Select>
         </FormControl>
-        <div>{`${Math.ceil(searchCtx.searchPage / 10 / (searchCtx.searchSize / 10)) + 1} of ${Math.ceil(
+        <div>{`${Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1} of ${Math.ceil(
           100 / searchCtx.searchSize
         )}`}</div>
         <StyledDiv>
-          <IconButton onClick={() => updatePageResults('left')} disabled={searchCtx.searchPage === 0}>
+          <IconButton onClick={() => updatePageResults('left')} disabled={searchCtx.searchStart === 0}>
             <ChevronLeft />
           </IconButton>
           <IconButton
             onClick={() => updatePageResults('right')}
             disabled={
-              Math.ceil(searchCtx.searchPage / 10 / (searchCtx.searchSize / 10)) + 1 ===
+              Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1 ===
               Math.ceil(100 / searchCtx.searchSize)
             }
           >
