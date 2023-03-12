@@ -23,10 +23,11 @@ namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
 
 std::unordered_map<std::string, LspHandler::LspMethod> LspHandler::_methodMap = {
-  { "textDocument/definition",  LspHandler::LspMethod::Definition },
-  { "textDocument/references",  LspHandler::LspMethod::References },
-  { "diagram/diagramTypes",     LspHandler::LspMethod::DiagramTypes },
-  { "diagram/diagram",          LspHandler::LspMethod::Diagram},
+  { "textDocument/definition",     LspHandler::LspMethod::Definition },
+  { "textDocument/implementation", LspHandler::LspMethod::Implementation },
+  { "textDocument/references",     LspHandler::LspMethod::References },
+  { "diagram/diagramTypes",        LspHandler::LspMethod::DiagramTypes },
+  { "diagram/diagram",             LspHandler::LspMethod::Diagram},
 };
 
 LspHandler::LspHandler(const ServerContext& ctx_)
@@ -106,6 +107,29 @@ int LspHandler::beginRequest(struct mg_connection *conn_)
         {
           pt::ptree resultNode;
           for (const Location &location : gotoDefLocations)
+          {
+            resultNode.push_back(std::make_pair("", location.createNode()));
+          }
+          responseTree.put_child("result", resultNode);
+        }
+        break;
+      }
+      case LspMethod::Implementation:
+      {
+        TextDocumentPositionParams implementationParams;
+        implementationParams.readNode(params);
+
+        std::vector<Location> implementationLocations =
+          _service->implementation(implementationParams);
+
+        if (implementationLocations.size() == 1)
+        {
+          responseTree.put_child("result", implementationLocations[0].createNode());
+        }
+        else if (implementationLocations.size() > 1)
+        {
+          pt::ptree resultNode;
+          for (const Location &location : implementationLocations)
           {
             resultNode.push_back(std::make_pair("", location.createNode()));
           }

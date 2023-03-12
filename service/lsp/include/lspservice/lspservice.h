@@ -33,6 +33,9 @@ public:
   std::vector<Location> references(
     const ReferenceParams& params_);
 
+  std::vector<Location> implementation(
+    const TextDocumentPositionParams& params_);
+
   CompletionList fileDiagramTypes(
     const DiagramTypeParams& params_);
 

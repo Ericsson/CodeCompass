@@ -32,6 +32,7 @@ private:
   {
     Unknown = 0,
     Definition,
+    Implementation,
     References,
     DiagramTypes,
     Diagram

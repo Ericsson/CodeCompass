@@ -69,6 +69,52 @@ std::vector<Location> LspServiceHandler::definition(
   return definitionLocations;
 }
 
+std::vector<Location> LspServiceHandler::implementation(
+  const TextDocumentPositionParams& params_)
+{
+  language::AstNodeInfo astNodeInfo;
+  core::FilePosition cppPosition;
+
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+      odb::query<model::File>::path == params_.textDocument.uri);
+  });
+
+  if (!file)
+    return std::vector<Location>();
+
+  cppPosition.file = std::to_string(file->id);
+  cppPosition.pos.line = params_.position.line;
+  cppPosition.pos.column = params_.position.character;
+
+  _cppService.getAstNodeInfoByPosition(astNodeInfo, cppPosition);
+
+  std::vector<language::AstNodeInfo> implementationInfo;
+  _cppService.getReferences(implementationInfo, astNodeInfo.id, language::CppServiceHandler::INHERIT_BY, {});
+
+  std::vector<Location> implementationLocations(implementationInfo.size());
+  std::transform(
+    implementationInfo.begin(), implementationInfo.end(),
+    implementationLocations.begin(),
+    [&, this](const language::AstNodeInfo& definition)
+    {
+      std::string path = _transaction([&, this](){
+        return _db->load<model::File>(std::stoull(definition.range.file))->path;
+      });
+
+      Location location;
+      location.uri = path;
+      location.range.start.line = definition.range.range.startpos.line;
+      location.range.start.character = definition.range.range.startpos.column;
+      location.range.end.line = definition.range.range.endpos.line;
+      location.range.end.character = definition.range.range.endpos.column;
+
+      return location;
+    });
+
+  return implementationLocations;
+}
+
 std::vector<Location> LspServiceHandler::references(
   const ReferenceParams& params_)
 {
