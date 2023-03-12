@@ -4,7 +4,7 @@ import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { AccordionLabel } from 'enums/accordion-enum';
@@ -78,19 +78,6 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 
 export const AccordionMenu = () => {
   const configCtx = useContext(ConfigContext);
-  const [treeView, setTreeView] = useState<boolean>(false);
-
-  useEffect(() => {
-    const storedTreeViewSetting = localStorage.getItem('treeView');
-    if (storedTreeViewSetting) {
-      setTreeView(JSON.parse(storedTreeViewSetting));
-    }
-  }, []);
-
-  const setAccordion = (value: string) => {
-    configCtx.setActiveAccordion(value);
-    localStorage.setItem('activeAccordion', value);
-  };
 
   const placeholder = (
     <IconLabel sx={{ padding: '20px' }}>
@@ -103,7 +90,7 @@ export const AccordionMenu = () => {
     <Container>
       <Accordion
         expanded={configCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
-        onChange={() => setAccordion(AccordionLabel.FILE_MANAGER)}
+        onChange={() => configCtx.setActiveAccordion(AccordionLabel.FILE_MANAGER)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -113,11 +100,8 @@ export const AccordionMenu = () => {
               <TreeSetting
                 control={
                   <Checkbox
-                    checked={treeView}
-                    onChange={() => {
-                      localStorage.setItem('treeView', JSON.stringify(!treeView));
-                      setTreeView(!treeView);
-                    }}
+                    checked={configCtx.treeViewOption}
+                    onChange={() => configCtx.setTreeViewOption(!configCtx.treeViewOption)}
                     sx={{ padding: '0' }}
                   />
                 }
@@ -127,12 +111,12 @@ export const AccordionMenu = () => {
           </IconLabel>
         </AccordionSummary>
         <AccordionDetails>
-          <FileManager treeView={treeView} />
+          <FileManager />
         </AccordionDetails>
       </Accordion>
       <Accordion
         expanded={configCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
-        onChange={() => setAccordion(AccordionLabel.SEARCH_RESULTS)}
+        onChange={() => configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -146,7 +130,7 @@ export const AccordionMenu = () => {
       </Accordion>
       <Accordion
         expanded={configCtx.activeAccordion === AccordionLabel.INFO_TREE}
-        onChange={() => setAccordion(AccordionLabel.INFO_TREE)}
+        onChange={() => configCtx.setActiveAccordion(AccordionLabel.INFO_TREE)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -158,7 +142,7 @@ export const AccordionMenu = () => {
       </Accordion>
       <Accordion
         expanded={configCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
-        onChange={() => setAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
+        onChange={() => configCtx.setActiveAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
       >
         <AccordionSummary>
           <IconLabel>

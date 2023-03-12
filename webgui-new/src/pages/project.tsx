@@ -67,7 +67,7 @@ const Project = () => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
 
-  return projectCtx.currentWorkspace ? (
+  return projectCtx.loadComplete ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
@@ -75,10 +75,7 @@ const Project = () => {
         <div>
           <StyledTabs
             value={configCtx.activeTab}
-            onChange={(_e: SyntheticEvent, newValue: number) => {
-              configCtx.setActiveTab(newValue);
-              localStorage.setItem('activeTab', JSON.stringify(newValue));
-            }}
+            onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
           >
             <StyledTab label="Welcome" />
             <StyledTab label="Code" />
@@ -97,13 +94,13 @@ const Project = () => {
               fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
               filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
               parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-              info={projectCtx.projectLoadComplete ? projectCtx.fileInfo : undefined}
+              info={projectCtx.fileInfo ?? undefined}
             />
             <ReactCodeMirror
               readOnly={true}
               extensions={[cpp()]}
               theme={theme === 'dark' ? githubDark : githubLight}
-              value={projectCtx.projectLoadComplete ? projectCtx.fileContent : ''}
+              value={projectCtx.fileContent ?? ''}
               width={'100%'}
               height={'100%'}
               minWidth={'calc(1460px - 280px)'}

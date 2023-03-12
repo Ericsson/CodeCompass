@@ -1,5 +1,5 @@
 import { Folder, DriveFolderUpload } from '@mui/icons-material';
-import { alpha, Box, CircularProgress, styled } from '@mui/material';
+import { alpha, styled } from '@mui/material';
 import { useContext } from 'react';
 import { FileInfo } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
@@ -47,7 +47,7 @@ const FolderUp = styled('div')(({ theme }) => ({
   },
 }));
 
-export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element => {
+export const FileManager = (): JSX.Element => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
 
@@ -56,9 +56,6 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
       projectCtx.setFolderPath('');
       projectCtx.setFiles(projectCtx.rootFiles);
       projectCtx.setExpandedFileTreeNodes([]);
-      localStorage.setItem('currentPath', '');
-      localStorage.setItem('currentFiles', JSON.stringify(projectCtx.rootFiles));
-      localStorage.setItem('expandedNodes', JSON.stringify([]));
       return;
     }
     const pathAsArray = projectCtx.folderPath.split('/');
@@ -72,9 +69,6 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
     projectCtx.setFolderPath(trimmedPath);
     projectCtx.setFiles(parentFiles);
     projectCtx.setExpandedFileTreeNodes(parents);
-    localStorage.setItem('currentPath', trimmedPath);
-    localStorage.setItem('currentFiles', JSON.stringify(parentFiles));
-    localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
   const handleFileClick = async (file: FileInfo) => {
@@ -84,9 +78,6 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
       projectCtx.setFiles(children);
       projectCtx.setFolderPath(file.path as string);
       projectCtx.setExpandedFileTreeNodes(parents);
-      localStorage.setItem('currentFiles', JSON.stringify(children));
-      localStorage.setItem('currentPath', file.path as string);
-      localStorage.setItem('expandedNodes', JSON.stringify(parents));
     } else {
       const parents = await getParents(projectCtx.folderPath);
       const fileContent = await getFileContent(file.id as string);
@@ -95,33 +86,10 @@ export const FileManager = ({ treeView }: { treeView: boolean }): JSX.Element =>
       projectCtx.setSelectedFile(file.id as string);
       projectCtx.setExpandedFileTreeNodes(parents);
       configCtx.setActiveTab(TabName.CODE);
-      localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
-      localStorage.setItem('currentFileContent', fileContent);
-      localStorage.setItem('currentFileInfo', JSON.stringify(file));
-      localStorage.setItem('currentSelectedFile', file.id as string);
-      localStorage.setItem('expandedNodes', JSON.stringify(parents));
     }
   };
 
-  if (!projectCtx.projectLoadComplete) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '1rem',
-          paddingTop: '10px',
-        }}
-      >
-        <div>{'Loading files...'}</div>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  return treeView ? (
+  return configCtx.treeViewOption ? (
     <FileTree />
   ) : (
     <>

@@ -109,10 +109,7 @@ export const SettingsMenu = ({
             return (
               <FormControlLabel
                 key={idx}
-                onClick={() => {
-                  searchCtx.setSearchCurrentOption(elem);
-                  localStorage.setItem('currentSearchOption', JSON.stringify(elem));
-                }}
+                onClick={() => searchCtx.setSearchCurrentOption(elem)}
                 value={elem.name}
                 control={<Radio />}
                 label={elem.name}

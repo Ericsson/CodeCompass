@@ -3,6 +3,7 @@ import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { WorkspaceContext } from 'global-context/workspace-context';
+import { removeStore } from 'utils/store';
 
 const OuterContainer = styled('div')({
   display: 'flex',
@@ -29,25 +30,25 @@ const Home = () => {
   const projectCtx = useContext(ProjectContext);
 
   const loadWorkspace = (workspace: string) => {
-    localStorage.removeItem('currentFiles');
-    localStorage.removeItem('currentPath');
-    localStorage.removeItem('currentFileContent');
-    localStorage.removeItem('currentFileInfo');
-    localStorage.removeItem('currentSelectedFile');
-    localStorage.removeItem('currentFileTree');
-    localStorage.removeItem('currentRootFiles');
-    localStorage.removeItem('expandedNodes');
-    localStorage.removeItem('expandedPathNodes');
-    localStorage.removeItem('expandedFileNodes');
-    localStorage.removeItem('searchResults');
-    localStorage.removeItem('currentSearchPage');
-    localStorage.removeItem('currentSearchSize');
-    localStorage.removeItem('currentSearchOption');
-    localStorage.removeItem('currentSearchQuery');
-    localStorage.removeItem('currentSearchFileFilterQuery');
-    localStorage.removeItem('currentSearchDirFilterQuery');
-    localStorage.removeItem('isFileSearch');
-    localStorage.setItem('currentWorkspace', workspace);
+    removeStore([
+      'storedFiles',
+      'storedFolderPath',
+      'storedFileContent',
+      'storedFileInfo',
+      'storedSelectedFile',
+      'storedFileTree',
+      'storedExpandedFileTreeNodes',
+      'storedSearchResults',
+      'storedSearchStart',
+      'storedSearchSize',
+      'storedSearchOption',
+      'storedSearchQuery',
+      'storedSearchFileFilterQuery',
+      'storedSearchDirFilterQuery',
+      'storedIsFileSearch',
+      'storedExpandedSearchFileNodes',
+      'storedExpandedSearchPathNodes',
+    ]);
     projectCtx.setCurrentWorkspace(workspace);
     router.push('/project');
   };

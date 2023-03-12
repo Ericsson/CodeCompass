@@ -11,6 +11,7 @@ import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
 import { getParents, getFileContent } from 'service/project-service';
 import { getSearchResults } from 'service/search-service';
+import { removeStore } from 'utils/store';
 import { getFileFolderPath } from 'utils/utils';
 
 type FileNodesType = {
@@ -73,7 +74,6 @@ export const SearchResults = (): JSX.Element => {
       } else {
         copyExpanded.splice(index, 1);
       }
-      localStorage.setItem('expandedPathNodes', JSON.stringify(copyExpanded));
       searchCtx.setExpandedPathNodes(copyExpanded);
     };
   };
@@ -90,7 +90,6 @@ export const SearchResults = (): JSX.Element => {
       }
       const expandedFileNodesCopy = { ...searchCtx.expandedFileNodes } as FileNodesType;
       expandedFileNodesCopy[pathIdx].expandedNodes = copyExpanded;
-      localStorage.setItem('expandedFileNodes', JSON.stringify({ ...expandedFileNodesCopy }));
       searchCtx.setExpandedFileNodes(expandedFileNodesCopy);
     };
   };
@@ -103,11 +102,6 @@ export const SearchResults = (): JSX.Element => {
     projectCtx.setSelectedFile(file.id as string);
     projectCtx.setExpandedFileTreeNodes(parents);
     configCtx.setActiveTab(TabName.CODE);
-    localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
-    localStorage.setItem('currentFileContent', fileContent);
-    localStorage.setItem('currentFileInfo', JSON.stringify(file));
-    localStorage.setItem('currentSelectedFile', file.id as string);
-    localStorage.setItem('expandedNodes', JSON.stringify(parents));
   };
 
   const updateSelectResults = async (newSearchSize: number) => {
@@ -125,11 +119,7 @@ export const SearchResults = (): JSX.Element => {
     searchCtx.setSearchSize(newSearchSize);
     searchCtx.setSearchResult(searchResults);
 
-    localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
-    localStorage.setItem('currentSearchStart', JSON.stringify(0));
-    localStorage.setItem('currentSearchSize', JSON.stringify(newSearchSize));
-    localStorage.removeItem('expandedPathNodes');
-    localStorage.removeItem('expandedFileNodes');
+    removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
   };
 
   const updatePageResults = async (direction: 'left' | 'right') => {
@@ -151,10 +141,7 @@ export const SearchResults = (): JSX.Element => {
     searchCtx.setSearchStart(start);
     searchCtx.setSearchResult(searchResults);
 
-    localStorage.setItem('searchResults', JSON.stringify(searchResults as SearchResult | FileSearchResult));
-    localStorage.setItem('currentSearchStart', JSON.stringify(start));
-    localStorage.removeItem('expandedPathNodes');
-    localStorage.removeItem('expandedFileNodes');
+    removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
   };
 
   return (

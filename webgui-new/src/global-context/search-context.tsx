@@ -3,6 +3,7 @@ import { createSearchClient, getSearchTypes } from 'service/search-service';
 import { FileInfo, FileSearchResult, SearchResult, SearchResultEntry, SearchType } from '@thrift-generated';
 import { ProjectContext } from './project-context';
 import { getFileFolderPath } from 'utils/utils';
+import { getStore, setStore } from 'utils/store';
 
 type FileNodesType = {
   [key: string]: {
@@ -69,16 +70,16 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
 
   const [searchOptions, setSearchOptions] = useState<SearchType[]>([]);
   const [searchCurrentOption, setSearchCurrentOption] = useState<SearchType | undefined>(undefined);
-  const [isFileSearch, setIsFileSearch] = useState<boolean>(false);
+  const [isFileSearch, setIsFileSearch] = useState<boolean | undefined>(undefined);
   const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string>('');
-  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string>('');
-  const [searchStart, setSearchStart] = useState<number>(0);
-  const [searchSize, setSearchSize] = useState<number>(10);
+  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
+  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
+  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
+  const [searchStart, setSearchStart] = useState<number | undefined>(undefined);
+  const [searchSize, setSearchSize] = useState<number | undefined>(undefined);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
-  const [expandedPathNodes, setExpandedPathNodes] = useState<string[]>([]);
-  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType>({});
+  const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
+  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType | undefined>(undefined);
 
   useEffect(() => {
     if (!projectCtx.currentWorkspace) {
@@ -90,29 +91,29 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       const searchTypes = await getSearchTypes();
       setSearchOptions(searchTypes);
 
-      const storedCurrentOption = localStorage.getItem('currentSearchOption');
-      setSearchCurrentOption(storedCurrentOption ? JSON.parse(storedCurrentOption) : searchTypes[0]);
+      const {
+        storedSearchOption,
+        storedIsFileSearch,
+        storedSearchResults,
+        storedSearchQuery,
+        storedSearchFileFilterQuery,
+        storedSearchDirFilterQuery,
+        storedSearchStart,
+        storedSearchSize,
+        storedExpandedSearchFileNodes,
+        storedExpandedSearchPathNodes,
+      } = getStore();
 
-      const storedIsFileSearch = localStorage.getItem('isFileSearch');
-      setIsFileSearch(storedIsFileSearch ? JSON.parse(storedIsFileSearch) : false);
-
-      const storedSearchResults = localStorage.getItem('searchResults');
-      setSearchResult(storedSearchResults ? JSON.parse(storedSearchResults) : undefined);
-
-      const storedSearchQuery = localStorage.getItem('currentSearchQuery');
-      setSearchQuery(storedSearchQuery ? storedSearchQuery : '');
-
-      const storedSearchFileFilterQuery = localStorage.getItem('currentSearchFileFilterQuery');
-      setSearchFileFilterQuery(storedSearchFileFilterQuery ? storedSearchFileFilterQuery : '');
-
-      const storedSearchDirFilterQuery = localStorage.getItem('currentSearchDirFilterQuery');
-      setSearchDirFilterQuery(storedSearchDirFilterQuery ? storedSearchDirFilterQuery : '');
-
-      const storedSearchStart = localStorage.getItem('currentSearchStart');
-      setSearchStart(storedSearchStart ? JSON.parse(storedSearchStart) : 0);
-
-      const storedSearchSize = localStorage.getItem('currentSearchSize');
-      setSearchSize(storedSearchSize ? JSON.parse(storedSearchSize) : 10);
+      setSearchCurrentOption(storedSearchOption ?? searchTypes[0]);
+      setIsFileSearch(storedIsFileSearch ?? false);
+      setSearchResult(storedSearchResults ?? undefined);
+      setSearchQuery(storedSearchQuery ?? '');
+      setSearchFileFilterQuery(storedSearchFileFilterQuery ?? '');
+      setSearchDirFilterQuery(storedSearchDirFilterQuery ?? '');
+      setSearchStart(storedSearchStart ?? 0);
+      setSearchSize(storedSearchSize ?? 10);
+      setExpandedPathNodes(storedExpandedSearchPathNodes ?? []);
+      setExpandedFileNodes(storedExpandedSearchFileNodes ?? {});
     };
     init();
   }, [projectCtx.currentWorkspace]);
@@ -129,11 +130,11 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       : new Set((searchResult?.results as FileInfo[])?.map((entry) => getFileFolderPath(entry.path)) as string[]);
     setResultPaths([...paths]);
 
-    const storedExpandedPathNodes = localStorage.getItem('expandedPathNodes');
-    const pathNodes = [...paths].map((_e, idx) => idx.toString());
-    setExpandedPathNodes(storedExpandedPathNodes ? JSON.parse(storedExpandedPathNodes) : pathNodes);
+    const { storedExpandedSearchPathNodes, storedExpandedSearchFileNodes } = getStore();
 
-    const storedExpandedFileNodes = localStorage.getItem('expandedFileNodes');
+    const pathNodes = [...paths].map((_e, idx) => idx.toString());
+    setExpandedPathNodes(storedExpandedSearchPathNodes ?? pathNodes);
+
     const expandedFileNodesMap: FileNodesType = {};
     let idx = 0;
     for (const path of paths) {
@@ -149,33 +150,59 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       };
       ++idx;
     }
-    setExpandedFileNodes(storedExpandedFileNodes ? JSON.parse(storedExpandedFileNodes) : expandedFileNodesMap);
+    setExpandedFileNodes(storedExpandedSearchFileNodes ?? expandedFileNodesMap);
   }, [searchResult, isFileSearch]);
+
+  useEffect(() => {
+    setStore({
+      storedSearchOption: searchCurrentOption,
+      storedIsFileSearch: isFileSearch,
+      storedSearchResults: searchResult,
+      storedSearchQuery: searchQuery,
+      storedSearchFileFilterQuery: searchFileFilterQuery,
+      storedSearchDirFilterQuery: searchDirFilterQuery,
+      storedSearchStart: searchStart,
+      storedSearchSize: searchSize,
+      storedExpandedSearchPathNodes: expandedPathNodes,
+      storedExpandedSearchFileNodes: expandedFileNodes,
+    });
+  }, [
+    searchCurrentOption,
+    isFileSearch,
+    searchResult,
+    searchQuery,
+    searchFileFilterQuery,
+    searchDirFilterQuery,
+    searchStart,
+    searchSize,
+    expandedPathNodes,
+    expandedFileNodes,
+  ]);
 
   const searchContext = {
     searchOptions,
-    setSearchOptions,
-    searchCurrentOption,
-    setSearchCurrentOption,
-    isFileSearch,
-    setIsFileSearch,
-    searchResult,
-    setSearchResult,
-    searchQuery,
-    setSearchQuery,
-    searchFileFilterQuery,
-    setSearchFileFilterQuery,
-    searchDirFilterQuery,
-    setSearchDirFilterQuery,
-    searchStart,
-    setSearchStart,
-    searchSize,
-    setSearchSize,
+    searchCurrentOption: searchCurrentOption as SearchType,
+    isFileSearch: isFileSearch as boolean,
+    searchResult: searchResult as SearchResult | FileSearchResult,
+    searchQuery: searchQuery as string,
+    searchFileFilterQuery: searchFileFilterQuery as string,
+    searchDirFilterQuery: searchDirFilterQuery as string,
+    searchStart: searchStart as number,
+    searchSize: searchSize as number,
+    expandedPathNodes: expandedPathNodes as string[],
+    expandedFileNodes: expandedFileNodes as FileNodesType,
     resultPaths,
+    setSearchOptions,
+    setSearchCurrentOption,
+    setIsFileSearch,
+    setSearchResult,
+    setSearchQuery,
+    setSearchFileFilterQuery,
+    setSearchDirFilterQuery,
+    setSearchStart,
+    setSearchSize,
     setResultPaths,
-    expandedPathNodes,
     setExpandedPathNodes,
-    expandedFileNodes,
     setExpandedFileNodes,
   };
 

@@ -13,6 +13,7 @@ import { SearchContext } from 'global-context/search-context';
 import { FileSearchResult, SearchResult } from '@thrift-generated';
 import { ConfigContext } from 'global-context/config-context';
 import { AccordionLabel } from 'enums/accordion-enum';
+import { removeStore } from 'utils/store';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -71,14 +72,7 @@ export const Header = (): JSX.Element => {
       searchCtx.setSearchResult(searchResults);
       searchCtx.setIsFileSearch(isFileSearch);
       configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
-      localStorage.setItem('activeAccordion', AccordionLabel.SEARCH_RESULTS);
-      localStorage.setItem('isFileSearch', JSON.stringify(isFileSearch));
-      localStorage.setItem('searchResults', JSON.stringify(searchResults));
-      localStorage.setItem('currentSearchQuery', searchCtx.searchQuery);
-      localStorage.setItem('currentSearchFileFilterQuery', searchCtx.searchFileFilterQuery);
-      localStorage.setItem('currentSearchDirFilterQuery', searchCtx.searchFileFilterQuery);
-      localStorage.removeItem('expandedPathNodes');
-      localStorage.removeItem('expandedFileNodes');
+      removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {
       return;
     }
@@ -250,12 +244,7 @@ export const Header = (): JSX.Element => {
             setAnchorEl={setSettingsAnchorEl}
           />
         </SettingsContainer>
-        <IconButton
-          onClick={() => {
-            localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
-            setTheme(theme === 'dark' ? 'light' : 'dark');
-          }}
-        >
+        <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? <LightMode /> : <DarkMode />}
         </IconButton>
       </HeaderContent>
