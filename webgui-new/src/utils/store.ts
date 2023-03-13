@@ -32,6 +32,7 @@ type StoreOptions = {
   storedSearchFileFilterQuery?: string;
   storedSearchDirFilterQuery?: string;
   storedSearchMatchingResult?: LineMatch;
+  storedSelectedSearchResult?: string;
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
   storedExpandedSearchFileNodes?: FileNodesType;
@@ -58,6 +59,7 @@ type StoreOptionKey =
   | 'storedSearchFileFilterQuery'
   | 'storedSearchDirFilterQuery'
   | 'storedSearchMatchingResult'
+  | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
   | 'storedExpandedSearchFileNodes';

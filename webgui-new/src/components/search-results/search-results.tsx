@@ -1,4 +1,4 @@
-import { FolderOpen, Folder, ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { FolderOpen, Folder, ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
 import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
@@ -21,14 +21,21 @@ type FileNodesType = {
 
 const StyledDiv = styled('div')({});
 
-const FileLine = styled('div')(({ theme }) => ({
-  fontSize: '0.85rem',
-  marginTop: '3px',
+const IconLabel = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '5px',
+  paddingLeft: '15px',
   cursor: 'pointer',
   ':hover': {
     backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
 }));
+
+const FileLine = styled('div')({
+  fontSize: '0.85rem',
+  marginTop: '3px',
+});
 
 const OuterContainer = styled('div')({
   padding: '15px 10px',
@@ -93,7 +100,7 @@ export const SearchResults = (): JSX.Element => {
     };
   };
 
-  const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch) => {
+  const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch, idx?: string) => {
     const parents = await getParents(projectCtx.folderPath);
     const fileContent = await getFileContent(file.id as string);
     projectCtx.setFileContent(fileContent);
@@ -101,6 +108,7 @@ export const SearchResults = (): JSX.Element => {
     projectCtx.setSelectedFile(file.id as string);
     projectCtx.setExpandedFileTreeNodes(parents);
     configCtx.setActiveTab(TabName.CODE);
+    searchCtx.setSelectedSearchResult(idx ?? (file.id as string));
     searchCtx.setMatchingResult(lineMatch);
   };
 
@@ -238,13 +246,33 @@ export const SearchResults = (): JSX.Element => {
                                       >
                                         {entry.matchingLines?.map((line, idx) => {
                                           return (
-                                            <FileLine
+                                            <IconLabel
                                               key={idx}
-                                              sx={{ fontSize: '0.85rem', marginTop: '3px', paddingLeft: '15px' }}
-                                              onClick={() => handleFileLineClick(entry.finfo as FileInfo, line)}
+                                              sx={{
+                                                backgroundColor: (theme) =>
+                                                  `${pathNodeIdx}-${idx}-${entry.finfo?.id}` ===
+                                                  searchCtx.selectedSearchResult
+                                                    ? alpha(theme.backgroundColors?.secondary as string, 0.3)
+                                                    : '',
+                                              }}
                                             >
-                                              {line.text}
-                                            </FileLine>
+                                              <Code />
+                                              <FileLine
+                                                sx={{
+                                                  fontSize: '0.85rem',
+                                                  marginTop: '3px',
+                                                }}
+                                                onClick={() =>
+                                                  handleFileLineClick(
+                                                    entry.finfo as FileInfo,
+                                                    line,
+                                                    `${pathNodeIdx}-${idx}-${entry.finfo?.id}`
+                                                  )
+                                                }
+                                              >
+                                                {line.text}
+                                              </FileLine>
+                                            </IconLabel>
                                           );
                                         })}
                                       </StyledTreeItem>
@@ -256,21 +284,30 @@ export const SearchResults = (): JSX.Element => {
                               ?.filter((result) => getFileFolderPath(result?.path) === path)
                               .map((entry, fileNodeIdx) => {
                                 return (
-                                  <FileLine
-                                    onClick={() => handleFileLineClick(entry)}
+                                  <IconLabel
                                     key={fileNodeIdx}
                                     sx={{
-                                      paddingLeft: '15px',
-                                      color: (theme) =>
-                                        entry.parseStatus === 3
-                                          ? theme.colors?.success
-                                          : entry.parseStatus === 2
-                                          ? theme.colors?.warning
-                                          : theme.colors?.primary,
+                                      backgroundColor: (theme) =>
+                                        entry?.id === searchCtx.selectedSearchResult
+                                          ? alpha(theme.backgroundColors?.secondary as string, 0.3)
+                                          : '',
                                     }}
                                   >
-                                    {entry.name}
-                                  </FileLine>
+                                    <FileIcon fileName={entry.name as string} />
+                                    <FileLine
+                                      onClick={() => handleFileLineClick(entry)}
+                                      sx={{
+                                        color: (theme) =>
+                                          entry.parseStatus === 3
+                                            ? theme.colors?.success
+                                            : entry.parseStatus === 2
+                                            ? theme.colors?.warning
+                                            : theme.colors?.primary,
+                                      }}
+                                    >
+                                      {entry.name}
+                                    </FileLine>
+                                  </IconLabel>
                                 );
                               })}
                       </StyledTreeItem>

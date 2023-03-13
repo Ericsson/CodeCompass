@@ -26,6 +26,7 @@ export const ProjectSelect = (): JSX.Element => {
       'storedSearchDirFilterQuery',
       'storedIsFileSearch',
       'storedSearchMatchingResult',
+      'storedSelectedSearchResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
     ]);
