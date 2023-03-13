@@ -8,7 +8,7 @@ import { ConfigContext } from 'global-context/config-context';
 import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
-import { getParents, getFileContent } from 'service/project-service';
+import { getParents, getFileContent, getChildFiles } from 'service/project-service';
 import { getSearchResults } from 'service/search-service';
 import { removeStore } from 'utils/store';
 import { getFileFolderPath } from 'utils/utils';
@@ -100,9 +100,12 @@ export const SearchResults = (): JSX.Element => {
     };
   };
 
-  const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch, idx?: string) => {
-    const parents = await getParents(projectCtx.folderPath);
+  const handleFileLineClick = async (file: FileInfo, path: string, lineMatch?: LineMatch, idx?: string) => {
+    const parents = await getParents(path);
+    const children = await getChildFiles(parents[0]);
     const fileContent = await getFileContent(file.id as string);
+    projectCtx.setFolderPath(path);
+    projectCtx.setFiles(children);
     projectCtx.setFileContent(fileContent);
     projectCtx.setFileInfo(file);
     projectCtx.setSelectedFile(file.id as string);
@@ -265,6 +268,7 @@ export const SearchResults = (): JSX.Element => {
                                                 onClick={() =>
                                                   handleFileLineClick(
                                                     entry.finfo as FileInfo,
+                                                    path,
                                                     line,
                                                     `${pathNodeIdx}-${idx}-${entry.finfo?.id}`
                                                   )
@@ -295,7 +299,7 @@ export const SearchResults = (): JSX.Element => {
                                   >
                                     <FileIcon fileName={entry.name as string} />
                                     <FileLine
-                                      onClick={() => handleFileLineClick(entry)}
+                                      onClick={() => handleFileLineClick(entry, path)}
                                       sx={{
                                         color: (theme) =>
                                           entry.parseStatus === 3
