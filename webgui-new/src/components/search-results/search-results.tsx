@@ -258,6 +258,14 @@ export const SearchResults = (): JSX.Element => {
                                                     ? alpha(theme.backgroundColors?.secondary as string, 0.3)
                                                     : '',
                                               }}
+                                              onClick={() =>
+                                                handleFileLineClick(
+                                                  entry.finfo as FileInfo,
+                                                  path,
+                                                  line,
+                                                  `${pathNodeIdx}-${idx}-${entry.finfo?.id}`
+                                                )
+                                              }
                                             >
                                               <Code />
                                               <FileLine
@@ -265,14 +273,6 @@ export const SearchResults = (): JSX.Element => {
                                                   fontSize: '0.85rem',
                                                   marginTop: '3px',
                                                 }}
-                                                onClick={() =>
-                                                  handleFileLineClick(
-                                                    entry.finfo as FileInfo,
-                                                    path,
-                                                    line,
-                                                    `${pathNodeIdx}-${idx}-${entry.finfo?.id}`
-                                                  )
-                                                }
                                               >
                                                 {line.text}
                                               </FileLine>
@@ -296,10 +296,10 @@ export const SearchResults = (): JSX.Element => {
                                           ? alpha(theme.backgroundColors?.secondary as string, 0.3)
                                           : '',
                                     }}
+                                    onClick={() => handleFileLineClick(entry, path)}
                                   >
                                     <FileIcon fileName={entry.name as string} />
                                     <FileLine
-                                      onClick={() => handleFileLineClick(entry, path)}
                                       sx={{
                                         color: (theme) =>
                                           entry.parseStatus === 3
