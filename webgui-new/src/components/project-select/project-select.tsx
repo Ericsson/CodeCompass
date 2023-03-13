@@ -2,21 +2,35 @@ import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@m
 import { ProjectContext } from 'global-context/project-context';
 import { WorkspaceContext } from 'global-context/workspace-context';
 import { useContext } from 'react';
+import { removeStore } from 'utils/store';
 
 export const ProjectSelect = (): JSX.Element => {
   const workspaces = useContext(WorkspaceContext);
   const projectCtx = useContext(ProjectContext);
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
-    localStorage.removeItem('currentFiles');
-    localStorage.removeItem('currentPath');
-    localStorage.removeItem('currentFileContent');
-    localStorage.removeItem('currentFileInfo');
-    localStorage.removeItem('currentSelectedFile');
-    localStorage.removeItem('currentFileTree');
-    localStorage.removeItem('currentRootFiles');
-    localStorage.removeItem('expandedNodes');
-    localStorage.setItem('currentWorkspace', e.target.value);
+    removeStore([
+      'storedFiles',
+      'storedFolderPath',
+      'storedFileContent',
+      'storedFileInfo',
+      'storedSelectedFile',
+      'storedFileTree',
+      'storedExpandedFileTreeNodes',
+      'storedSearchResults',
+      'storedSearchResultCount',
+      'storedSearchStart',
+      'storedSearchSize',
+      'storedSearchOption',
+      'storedSearchQuery',
+      'storedSearchFileFilterQuery',
+      'storedSearchDirFilterQuery',
+      'storedIsFileSearch',
+      'storedSearchMatchingResult',
+      'storedSelectedSearchResult',
+      'storedExpandedSearchFileNodes',
+      'storedExpandedSearchPathNodes',
+    ]);
     projectCtx.setCurrentWorkspace(e.target.value);
   };
 

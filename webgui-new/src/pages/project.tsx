@@ -1,8 +1,8 @@
 import { cpp } from '@codemirror/lang-cpp';
 import { ThemeContext } from 'global-context/theme-context';
-import ReactCodeMirror from '@uiw/react-codemirror';
+import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { SyntheticEvent, useContext } from 'react';
+import { SyntheticEvent, useContext, useEffect, useRef } from 'react';
 import { FileName } from 'components/file-name/file-name';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
@@ -11,6 +11,8 @@ import { ProjectContext } from 'global-context/project-context';
 import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
+import { SearchContext } from 'global-context/search-context';
+import { Position } from '@thrift-generated';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -66,8 +68,33 @@ const Project = () => {
   const { theme } = useContext(ThemeContext);
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
+  const searchCtx = useContext(SearchContext);
 
-  return projectCtx.currentWorkspace ? (
+  const editorRef = useRef<ReactCodeMirrorRef | null>(null);
+
+  useEffect(() => {
+    if (!searchCtx.matchingResult) return;
+
+    const { range } = searchCtx.matchingResult;
+    const { line: startLine, column: startCol } = range?.range?.startpos as Position;
+    const { line: endLine, column: endCol } = range?.range?.endpos as Position;
+
+    const editor = editorRef.current?.view;
+    if (editor) {
+      const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
+      const toPos = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+
+      editor.dispatch({
+        selection: {
+          anchor: fromPos,
+          head: toPos,
+        },
+        scrollIntoView: true,
+      });
+    }
+  }, [searchCtx.matchingResult, editorRef.current?.view]);
+
+  return projectCtx.loadComplete ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
@@ -75,10 +102,7 @@ const Project = () => {
         <div>
           <StyledTabs
             value={configCtx.activeTab}
-            onChange={(_e: SyntheticEvent, newValue: number) => {
-              configCtx.setActiveTab(newValue);
-              localStorage.setItem('activeTab', JSON.stringify(newValue));
-            }}
+            onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
           >
             <StyledTab label="Welcome" />
             <StyledTab label="Code" />
@@ -97,19 +121,21 @@ const Project = () => {
               fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
               filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
               parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-              info={projectCtx.projectLoadComplete ? projectCtx.fileInfo : undefined}
+              info={projectCtx.fileInfo ?? undefined}
             />
             <ReactCodeMirror
               readOnly={true}
               extensions={[cpp()]}
               theme={theme === 'dark' ? githubDark : githubLight}
-              value={projectCtx.projectLoadComplete ? projectCtx.fileContent : ''}
+              value={projectCtx.fileContent ?? ''}
               width={'100%'}
               height={'100%'}
               minWidth={'calc(1460px - 280px)'}
               maxWidth={'calc(100vw - 280px)'}
               maxHeight={'calc(100vh - 78px - 48px - 49px)'}
               style={{ fontSize: '0.8rem' }}
+              ref={editorRef}
+              onCreateEditor={(view, state) => (editorRef.current = { view, state })}
             />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>

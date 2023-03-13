@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { FileInfo } from '@thrift-generated';
 import { WorkspaceContext } from './workspace-context';
 import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
+import { getStore, setStore } from 'utils/store';
 
 type TreeNode = {
   info: FileInfo;
@@ -27,8 +28,8 @@ type ProjectContextType = {
   setFolderPath: (_val: string) => void;
   expandedFileTreeNodes: string[];
   setExpandedFileTreeNodes: (_val: string[]) => void;
-  projectLoadComplete: boolean;
-  setProjectLoadComplete: (_val: boolean) => void;
+  loadComplete: boolean;
+  setLoadComplete: (_val: boolean) => void;
 };
 
 export const ProjectContext = createContext<ProjectContextType>({
@@ -50,31 +51,31 @@ export const ProjectContext = createContext<ProjectContextType>({
   setFolderPath: (_val) => {},
   expandedFileTreeNodes: [],
   setExpandedFileTreeNodes: (_val) => {},
-  projectLoadComplete: false,
-  setProjectLoadComplete: (_val) => {},
+  loadComplete: false,
+  setLoadComplete: (_val) => {},
 });
 
 export const ProjectContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
   const workspaces = useContext(WorkspaceContext);
 
-  const [currentWorkspace, setCurrentWorkspace] = useState<string>('');
-  const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
-  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [currentWorkspace, setCurrentWorkspace] = useState<string | undefined>(undefined);
+  const [rootFiles, setRootFiles] = useState<FileInfo[] | undefined>(undefined);
+  const [files, setFiles] = useState<FileInfo[] | undefined>(undefined);
   const [fileTree, setFileTree] = useState<TreeNode | undefined>(undefined);
-  const [fileContent, setFileContent] = useState<string>('');
+  const [fileContent, setFileContent] = useState<string | undefined>(undefined);
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [selectedFile, setSelectedFile] = useState<string>('');
-  const [folderPath, setFolderPath] = useState<string>('');
-  const [expandedFileTreeNodes, setExpandedFileTreeNodes] = useState<string[]>([]);
-  const [projectLoadComplete, setProjectLoadComplete] = useState<boolean>(true);
+  const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined);
+  const [folderPath, setFolderPath] = useState<string | undefined>(undefined);
+  const [expandedFileTreeNodes, setExpandedFileTreeNodes] = useState<string[] | undefined>(undefined);
+  const [loadComplete, setLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
     if (!workspaces.length) {
       return;
     }
     const initWorkspace = async () => {
-      const storedCurrentWorkspace = localStorage.getItem('currentWorkspace');
-      setCurrentWorkspace(storedCurrentWorkspace ?? (workspaces[0].id as string));
+      const { storedWorkspace } = getStore();
+      setCurrentWorkspace(storedWorkspace ?? (workspaces[0].id as string));
     };
     initWorkspace();
   }, [workspaces]);
@@ -83,42 +84,41 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     if (!currentWorkspace) {
       return;
     }
-    setProjectLoadComplete(false);
+    setLoadComplete(false);
     const init = async () => {
       createProjectClient(currentWorkspace);
 
       const rootFileData = await getRootFiles();
       const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;
+      setRootFiles(rootFileData);
 
-      const storedRootFiles = localStorage.getItem('currentRootFiles');
-      setRootFiles(() => (storedRootFiles ? JSON.parse(storedRootFiles) : rootFileData));
+      const {
+        storedFiles,
+        storedFileTree,
+        storedSelectedFile,
+        storedFolderPath,
+        storedFileContent,
+        storedFileInfo,
+        storedExpandedFileTreeNodes,
+      } = getStore();
 
-      const storedCurrentFiles = localStorage.getItem('currentFiles');
-      setFiles(storedCurrentFiles ? JSON.parse(storedCurrentFiles) : rootFileData);
+      setFiles(storedFiles ?? rootFileData);
+      setFileTree(storedFileTree ?? { info: rootDirectory });
+      setSelectedFile(storedSelectedFile ?? '');
+      setFolderPath(storedFolderPath ?? '');
+      setFileContent(storedFileContent ?? '');
+      setFileInfo(storedFileInfo ?? undefined);
+      setExpandedFileTreeNodes(storedExpandedFileTreeNodes ?? []);
 
-      const storedFileTree = localStorage.getItem('currentFileTree');
-      setFileTree(storedFileTree ? JSON.parse(storedFileTree) : { info: rootDirectory });
-
-      const storedCurrentSelectedFile = localStorage.getItem('currentSelectedFile');
-      setSelectedFile(storedCurrentSelectedFile ?? '');
-
-      const storedCurrentPath = localStorage.getItem('currentPath');
-      setFolderPath(storedCurrentPath ?? '');
-
-      const storedCurrentFileContent = localStorage.getItem('currentFileContent');
-      setFileContent(storedCurrentFileContent ?? '');
-
-      const storedCurrentFileInfo = localStorage.getItem('currentFileInfo');
-      setFileInfo(storedCurrentFileInfo ? JSON.parse(storedCurrentFileInfo) : undefined);
-
-      const storedExpandedNodes = localStorage.getItem('expandedNodes');
-      setExpandedFileTreeNodes(storedExpandedNodes ? JSON.parse(storedExpandedNodes) : []);
+      setStore({
+        storedWorkspace: currentWorkspace,
+      });
     };
-    init().then(() => setProjectLoadComplete(true));
+    init().then(() => setLoadComplete(true));
   }, [currentWorkspace]);
 
   useEffect(() => {
-    if (!rootFiles.length) {
+    if (!rootFiles?.length) {
       return;
     }
     const findNodeById = (node: TreeNode, nodeId: string): TreeNode | null => {
@@ -138,7 +138,7 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     const getChildNodes = async (childFiles: FileInfo[]): Promise<TreeNode[]> => {
       const childNodes: TreeNode[] = [];
       for (const childFile of childFiles) {
-        if (childFile.isDirectory && expandedFileTreeNodes.includes(childFile.id as string)) {
+        if (childFile.isDirectory && expandedFileTreeNodes?.includes(childFile.id as string)) {
           const children = await getChildFiles(childFile.id as string);
           childNodes.push({ info: childFile, children: await getChildNodes(children) });
         } else {
@@ -160,34 +160,45 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
           return;
         }
         updatedNode.children = childTreeNodes;
-        localStorage.setItem('currentFileTree', JSON.stringify({ ...prevFileTree }));
         return { ...prevFileTree };
       });
     };
     updateTree();
   }, [rootFiles, expandedFileTreeNodes]);
 
+  useEffect(() => {
+    setStore({
+      storedFiles: files,
+      storedFileTree: fileTree,
+      storedFileInfo: fileInfo,
+      storedFileContent: fileContent,
+      storedSelectedFile: selectedFile,
+      storedFolderPath: folderPath,
+      storedExpandedFileTreeNodes: expandedFileTreeNodes,
+    });
+  }, [files, fileTree, fileContent, fileInfo, selectedFile, folderPath, expandedFileTreeNodes]);
+
   const projectContext = {
-    currentWorkspace,
+    currentWorkspace: currentWorkspace as string,
+    rootFiles: rootFiles as FileInfo[],
+    files: files as FileInfo[],
+    fileTree: fileTree as TreeNode,
+    fileContent: fileContent as string,
+    fileInfo: fileInfo as FileInfo,
+    selectedFile: selectedFile as string,
+    folderPath: folderPath as string,
+    expandedFileTreeNodes: expandedFileTreeNodes as string[],
+    loadComplete,
     setCurrentWorkspace,
-    rootFiles,
     setRootFiles,
-    files,
     setFiles,
-    fileTree,
     setFileTree,
-    fileContent,
     setFileContent,
-    fileInfo,
     setFileInfo,
-    selectedFile,
     setSelectedFile,
-    folderPath,
     setFolderPath,
-    expandedFileTreeNodes,
     setExpandedFileTreeNodes,
-    projectLoadComplete,
-    setProjectLoadComplete,
+    setLoadComplete,
   };
 
   return <ProjectContext.Provider value={projectContext}>{children}</ProjectContext.Provider>;

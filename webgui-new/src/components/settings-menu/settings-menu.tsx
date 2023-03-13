@@ -14,10 +14,11 @@ import {
   Tooltip,
   styled,
 } from '@mui/material';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypes } from 'enums/settings-enum';
-import { enumToArray, removeFromArray } from 'utils/array-utils';
+import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
+import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypes } from 'enums/search-enum';
+import { enumToArray, removeFromArray } from 'utils/utils';
 import { Info, Close } from '@mui/icons-material';
+import { SearchContext } from 'global-context/search-context';
 
 const Container = styled('div')(({ theme }) => ({
   padding: '10px',
@@ -53,8 +54,6 @@ const OtherLanguagesContainer = styled('div')(({ theme }) => ({
 }));
 
 export const SettingsMenu = ({
-  searchOption,
-  setSearchOption,
   searchLanguage,
   setSearchLanguage,
   selectedTypes,
@@ -62,8 +61,6 @@ export const SettingsMenu = ({
   anchorEl,
   setAnchorEl,
 }: {
-  searchOption: string;
-  setSearchOption: Dispatch<SetStateAction<string>>;
   searchLanguage: string;
   setSearchLanguage: Dispatch<SetStateAction<string>>;
   selectedTypes: string[];
@@ -71,7 +68,8 @@ export const SettingsMenu = ({
   anchorEl: null | HTMLElement;
   setAnchorEl: Dispatch<SetStateAction<null | HTMLElement>>;
 }): JSX.Element => {
-  const searchOptions = enumToArray(SearchOptions);
+  const searchCtx = useContext(SearchContext);
+
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchOtherLanguages = enumToArray(SearchOtherLanguages);
   const searchTypes = enumToArray(SearchTypes);
@@ -80,19 +78,21 @@ export const SettingsMenu = ({
   const [isOtherLanguage, setIsOtherLanguage] = useState<boolean>(false);
 
   const [searchLanguagesDisabled, setSearchLanguagesDisabled] = useState<boolean>(
-    searchOption !== SearchOptions.TEXT.toString() || searchOption !== SearchOptions.DEFINITION.toString()
+    searchCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() ||
+      searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
   );
 
   const [searchTypesDisabled, setSearchTypesDisabled] = useState<boolean>(
-    searchOption !== SearchOptions.DEFINITION.toString()
+    searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
   );
 
   useEffect(() => {
     setSearchLanguagesDisabled(
-      searchOption !== SearchOptions.TEXT.toString() && searchOption !== SearchOptions.DEFINITION.toString()
+      searchCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() &&
+        searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
     );
-    setSearchTypesDisabled(searchOption !== SearchOptions.DEFINITION.toString());
-  }, [searchOption]);
+    setSearchTypesDisabled(searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString());
+  }, [searchCtx.searchCurrentOption]);
 
   useEffect(() => {
     if (isOtherLanguage) {
@@ -104,15 +104,15 @@ export const SettingsMenu = ({
     return (
       <div>
         <FormLabel>{'Search options'}</FormLabel>
-        <RadioGroup value={searchOption ?? searchOptions[0]}>
-          {searchOptions.map((elem, idx) => {
+        <RadioGroup value={searchCtx.searchCurrentOption?.name ?? searchCtx.searchOptions[0].name}>
+          {searchCtx.searchOptions.map((elem, idx) => {
             return (
               <FormControlLabel
                 key={idx}
-                onClick={() => setSearchOption(elem)}
-                value={elem}
+                onClick={() => searchCtx.setSearchCurrentOption(elem)}
+                value={elem.name}
                 control={<Radio />}
-                label={elem}
+                label={elem.name}
               />
             );
           })}

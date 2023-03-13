@@ -114,8 +114,6 @@ export const FileTree = () => {
       const childFiles = await getChildFiles(info.id as string);
       projectCtx.setFiles(childFiles);
       projectCtx.setFolderPath(info.path as string);
-      localStorage.setItem('currentFiles', JSON.stringify(childFiles));
-      localStorage.setItem('currentPath', info.path as string);
     } else {
       const children = await getChildFiles(info.parent as string);
       const fileContent = await getFileContent(info.id as string);
@@ -124,11 +122,6 @@ export const FileTree = () => {
       projectCtx.setFileInfo(info);
       projectCtx.setSelectedFile(info.id as string);
       configCtx.setActiveTab(TabName.CODE);
-      localStorage.setItem('activeTab', JSON.stringify(TabName.CODE));
-      localStorage.setItem('currentFiles', JSON.stringify(children));
-      localStorage.setItem('currentFileContent', fileContent);
-      localStorage.setItem('currentFileInfo', JSON.stringify(info));
-      localStorage.setItem('currentSelectedFile', info.id as string);
     }
   };
 
@@ -159,7 +152,6 @@ export const FileTree = () => {
           copyExpanded.splice(index, 1);
         }
         projectCtx.setExpandedFileTreeNodes(copyExpanded);
-        localStorage.setItem('expandedNodes', JSON.stringify(copyExpanded));
       }}
     >
       {projectCtx.rootFiles.map((info) =>

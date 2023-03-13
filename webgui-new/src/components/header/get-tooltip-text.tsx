@@ -1,4 +1,4 @@
-import { SearchMethods } from 'enums/settings-enum';
+import { SearchMethods } from 'enums/search-enum';
 
 export const getTooltipText = (value: string): string | JSX.Element => {
   switch (value) {
