@@ -24,6 +24,7 @@ type StoreOptions = {
   storedFiles?: FileInfo[];
   storedFolderPath?: string;
   storedSearchResults?: SearchResult | FileSearchResult;
+  storedSearchResultCount?: number;
   storedIsFileSearch?: boolean;
   storedSearchOption?: SearchType;
   storedSearchStart?: number;
@@ -51,6 +52,7 @@ type StoreOptionKey =
   | 'storedFiles'
   | 'storedFolderPath'
   | 'storedSearchResults'
+  | 'storedSearchResultCount'
   | 'storedIsFileSearch'
   | 'storedSearchOption'
   | 'storedSearchStart'

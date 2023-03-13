@@ -8,7 +8,7 @@ import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
-import { getSearchResults } from 'service/search-service';
+import { getSearchResultCount, getSearchResults } from 'service/search-service';
 import { SearchContext } from 'global-context/search-context';
 import { FileSearchResult, SearchResult } from '@thrift-generated';
 import { ConfigContext } from 'global-context/config-context';
@@ -59,7 +59,15 @@ export const Header = (): JSX.Element => {
     if (e.key === 'Enter') {
       const query = createQueryString(searchCtx.searchQuery);
       if (query === '') return;
+
       const isFileSearch = searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
+      const searchResultCount = (await getSearchResultCount(
+        isFileSearch,
+        searchCtx.searchCurrentOption?.id as number,
+        query,
+        searchCtx.searchFileFilterQuery,
+        searchCtx.searchDirFilterQuery
+      )) as number;
       const searchResults = (await getSearchResults(
         isFileSearch,
         searchCtx.searchCurrentOption?.id as number,
@@ -69,6 +77,8 @@ export const Header = (): JSX.Element => {
         searchCtx.searchFileFilterQuery,
         searchCtx.searchDirFilterQuery
       )) as SearchResult | FileSearchResult;
+
+      searchCtx.setSearchResultCount(searchResultCount);
       searchCtx.setSearchResult(searchResults);
       searchCtx.setIsFileSearch(isFileSearch);
       configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);

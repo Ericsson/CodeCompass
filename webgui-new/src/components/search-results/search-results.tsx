@@ -178,7 +178,7 @@ export const SearchResults = (): JSX.Element => {
           </Select>
         </FormControl>
         <div>{`${Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1} of ${Math.ceil(
-          100 / searchCtx.searchSize
+          searchCtx.searchResultCount / searchCtx.searchSize
         )}`}</div>
         <StyledDiv>
           <IconButton onClick={() => updatePageResults('left')} disabled={searchCtx.searchStart === 0}>
@@ -188,7 +188,7 @@ export const SearchResults = (): JSX.Element => {
             onClick={() => updatePageResults('right')}
             disabled={
               Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1 ===
-              Math.ceil(100 / searchCtx.searchSize)
+                Math.ceil(searchCtx.searchResultCount / searchCtx.searchSize) || searchCtx.searchResultCount === 0
             }
           >
             <ChevronRight />

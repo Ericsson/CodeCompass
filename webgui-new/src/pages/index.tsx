@@ -39,6 +39,7 @@ const Home = () => {
       'storedFileTree',
       'storedExpandedFileTreeNodes',
       'storedSearchResults',
+      'storedSearchResultCount',
       'storedSearchStart',
       'storedSearchSize',
       'storedSearchOption',

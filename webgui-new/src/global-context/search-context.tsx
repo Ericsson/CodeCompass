@@ -20,6 +20,8 @@ type SearchContextType = {
   setIsFileSearch: (_val: boolean) => void;
   searchResult: SearchResult | FileSearchResult | undefined;
   setSearchResult: (_val: SearchResult | FileSearchResult | undefined) => void;
+  searchResultCount: number;
+  setSearchResultCount: (_val: number) => void;
   searchQuery: string;
   setSearchQuery: (_val: string) => void;
   searchFileFilterQuery: string;
@@ -51,6 +53,8 @@ export const SearchContext = createContext<SearchContextType>({
   setIsFileSearch: (_val) => {},
   searchResult: undefined,
   setSearchResult: (_val) => {},
+  searchResultCount: 0,
+  setSearchResultCount: (_val) => {},
   searchQuery: '',
   setSearchQuery: (_val) => {},
   searchFileFilterQuery: '',
@@ -80,6 +84,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [searchCurrentOption, setSearchCurrentOption] = useState<SearchType | undefined>(undefined);
   const [isFileSearch, setIsFileSearch] = useState<boolean | undefined>(undefined);
   const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
+  const [searchResultCount, setSearchResultCount] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
   const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
   const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
@@ -105,6 +110,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
         storedSearchOption,
         storedIsFileSearch,
         storedSearchResults,
+        storedSearchResultCount,
         storedSearchQuery,
         storedSearchFileFilterQuery,
         storedSearchDirFilterQuery,
@@ -119,6 +125,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       setSearchCurrentOption(storedSearchOption ?? searchTypes[0]);
       setIsFileSearch(storedIsFileSearch ?? false);
       setSearchResult(storedSearchResults ?? undefined);
+      setSearchResultCount(storedSearchResultCount ?? 0);
       setSearchQuery(storedSearchQuery ?? '');
       setSearchFileFilterQuery(storedSearchFileFilterQuery ?? '');
       setSearchDirFilterQuery(storedSearchDirFilterQuery ?? '');
@@ -172,6 +179,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       storedSearchOption: searchCurrentOption,
       storedIsFileSearch: isFileSearch,
       storedSearchResults: searchResult,
+      storedSearchResultCount: searchResultCount,
       storedSearchQuery: searchQuery,
       storedSearchFileFilterQuery: searchFileFilterQuery,
       storedSearchDirFilterQuery: searchDirFilterQuery,
@@ -186,6 +194,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     searchCurrentOption,
     isFileSearch,
     searchResult,
+    searchResultCount,
     searchQuery,
     searchFileFilterQuery,
     searchDirFilterQuery,
@@ -202,6 +211,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     searchCurrentOption: searchCurrentOption as SearchType,
     isFileSearch: isFileSearch as boolean,
     searchResult: searchResult as SearchResult | FileSearchResult,
+    searchResultCount: searchResultCount as number,
     searchQuery: searchQuery as string,
     searchFileFilterQuery: searchFileFilterQuery as string,
     searchDirFilterQuery: searchDirFilterQuery as string,
@@ -216,6 +226,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchCurrentOption,
     setIsFileSearch,
     setSearchResult,
+    setSearchResultCount,
     setSearchQuery,
     setSearchFileFilterQuery,
     setSearchDirFilterQuery,

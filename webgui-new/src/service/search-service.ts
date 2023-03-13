@@ -23,6 +23,34 @@ export const getSearchTypes = async () => {
   return searchTypes;
 };
 
+export const getSearchResultCount = async (
+  file: boolean,
+  options: number,
+  query: string,
+  fileFilter: string = '',
+  dirFilter: string = ''
+) => {
+  if (!client) {
+    return [];
+  }
+  const searchResults = file
+    ? await client.searchFile(
+        new SearchParams({
+          options,
+          query,
+          filter: new SearchFilter({ fileFilter, dirFilter }),
+        })
+      )
+    : await client.search(
+        new SearchParams({
+          options,
+          query,
+          filter: new SearchFilter({ fileFilter, dirFilter }),
+        })
+      );
+  return searchResults.results?.length;
+};
+
 export const getSearchResults = async (
   file: boolean,
   options: number,

@@ -18,6 +18,7 @@ export const ProjectSelect = (): JSX.Element => {
       'storedFileTree',
       'storedExpandedFileTreeNodes',
       'storedSearchResults',
+      'storedSearchResultCount',
       'storedSearchStart',
       'storedSearchSize',
       'storedSearchOption',
