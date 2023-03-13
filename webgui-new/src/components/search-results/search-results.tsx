@@ -1,9 +1,8 @@
 import { FolderOpen, Folder, ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
-import { FileInfo, FileSearchResult, SearchResult, SearchResultEntry } from '@thrift-generated';
+import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { SearchOptions } from 'enums/search-enum';
 import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { ProjectContext } from 'global-context/project-context';
@@ -94,7 +93,7 @@ export const SearchResults = (): JSX.Element => {
     };
   };
 
-  const handleFileLineClick = async (file: FileInfo) => {
+  const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch) => {
     const parents = await getParents(projectCtx.folderPath);
     const fileContent = await getFileContent(file.id as string);
     projectCtx.setFileContent(fileContent);
@@ -102,6 +101,7 @@ export const SearchResults = (): JSX.Element => {
     projectCtx.setSelectedFile(file.id as string);
     projectCtx.setExpandedFileTreeNodes(parents);
     configCtx.setActiveTab(TabName.CODE);
+    searchCtx.setMatchingResult(lineMatch);
   };
 
   const updateSelectResults = async (newSearchSize: number) => {
@@ -241,7 +241,7 @@ export const SearchResults = (): JSX.Element => {
                                             <FileLine
                                               key={idx}
                                               sx={{ fontSize: '0.85rem', marginTop: '3px', paddingLeft: '15px' }}
-                                              onClick={() => handleFileLineClick(entry.finfo as FileInfo)}
+                                              onClick={() => handleFileLineClick(entry.finfo as FileInfo, line)}
                                             >
                                               {line.text}
                                             </FileLine>

@@ -46,6 +46,7 @@ const Home = () => {
       'storedSearchFileFilterQuery',
       'storedSearchDirFilterQuery',
       'storedIsFileSearch',
+      'storedSearchMatchingResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
     ]);

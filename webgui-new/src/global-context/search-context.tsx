@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createSearchClient, getSearchTypes } from 'service/search-service';
-import { FileInfo, FileSearchResult, SearchResult, SearchResultEntry, SearchType } from '@thrift-generated';
+import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry, SearchType } from '@thrift-generated';
 import { ProjectContext } from './project-context';
 import { getFileFolderPath } from 'utils/utils';
 import { getStore, setStore } from 'utils/store';
@@ -32,6 +32,8 @@ type SearchContextType = {
   setSearchSize: (_val: number) => void;
   resultPaths: string[];
   setResultPaths: (_val: string[]) => void;
+  matchingResult: LineMatch | undefined;
+  setMatchingResult: (_val: LineMatch | undefined) => void;
   expandedPathNodes: string[];
   setExpandedPathNodes: (_val: string[]) => void;
   expandedFileNodes: FileNodesType;
@@ -59,6 +61,8 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchSize: (_val) => {},
   resultPaths: [],
   setResultPaths: (_val) => {},
+  matchingResult: undefined,
+  setMatchingResult: (_val) => {},
   expandedPathNodes: [],
   setExpandedPathNodes: (_val) => {},
   expandedFileNodes: {},
@@ -78,6 +82,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [searchStart, setSearchStart] = useState<number | undefined>(undefined);
   const [searchSize, setSearchSize] = useState<number | undefined>(undefined);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
+  const [matchingResult, setMatchingResult] = useState<LineMatch | undefined>(undefined);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType | undefined>(undefined);
 
@@ -100,6 +105,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
         storedSearchDirFilterQuery,
         storedSearchStart,
         storedSearchSize,
+        storedSearchMatchingResult,
         storedExpandedSearchFileNodes,
         storedExpandedSearchPathNodes,
       } = getStore();
@@ -112,6 +118,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       setSearchDirFilterQuery(storedSearchDirFilterQuery ?? '');
       setSearchStart(storedSearchStart ?? 0);
       setSearchSize(storedSearchSize ?? 10);
+      setMatchingResult(storedSearchMatchingResult ?? undefined);
       setExpandedPathNodes(storedExpandedSearchPathNodes ?? []);
       setExpandedFileNodes(storedExpandedSearchFileNodes ?? {});
     };
@@ -163,6 +170,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       storedSearchDirFilterQuery: searchDirFilterQuery,
       storedSearchStart: searchStart,
       storedSearchSize: searchSize,
+      storedSearchMatchingResult: matchingResult,
       storedExpandedSearchPathNodes: expandedPathNodes,
       storedExpandedSearchFileNodes: expandedFileNodes,
     });
@@ -175,6 +183,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     searchDirFilterQuery,
     searchStart,
     searchSize,
+    matchingResult,
     expandedPathNodes,
     expandedFileNodes,
   ]);
@@ -192,6 +201,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     expandedPathNodes: expandedPathNodes as string[],
     expandedFileNodes: expandedFileNodes as FileNodesType,
     resultPaths,
+    matchingResult,
     setSearchOptions,
     setSearchCurrentOption,
     setIsFileSearch,
@@ -202,6 +212,7 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchStart,
     setSearchSize,
     setResultPaths,
+    setMatchingResult,
     setExpandedPathNodes,
     setExpandedFileNodes,
   };

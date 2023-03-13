@@ -1,4 +1,4 @@
-import { FileInfo, FileSearchResult, SearchResult, SearchType } from '@thrift-generated';
+import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchType } from '@thrift-generated';
 
 type TreeNode = {
   info: FileInfo;
@@ -31,6 +31,7 @@ type StoreOptions = {
   storedSearchQuery?: string;
   storedSearchFileFilterQuery?: string;
   storedSearchDirFilterQuery?: string;
+  storedSearchMatchingResult?: LineMatch;
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
   storedExpandedSearchFileNodes?: FileNodesType;
@@ -56,6 +57,7 @@ type StoreOptionKey =
   | 'storedSearchQuery'
   | 'storedSearchFileFilterQuery'
   | 'storedSearchDirFilterQuery'
+  | 'storedSearchMatchingResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
   | 'storedExpandedSearchFileNodes';
