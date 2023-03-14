@@ -188,6 +188,16 @@ export const SettingsMenu = ({
                     }
                   }
                 }}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 200,
+                      width: 200,
+                      marginTop: '5px',
+                      border: '1px solid white',
+                    },
+                  },
+                }}
               >
                 {searchOtherLanguages.map((elem, idx) => {
                   return (
