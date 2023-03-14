@@ -32,6 +32,9 @@ type StoreOptions = {
   storedSearchQuery?: string;
   storedSearchFileFilterQuery?: string;
   storedSearchDirFilterQuery?: string;
+  storedSearchLanguage?: string;
+  storedSearchOtherLanguage?: string;
+  storedSelectedSearchTypes?: string[];
   storedSearchMatchingResult?: LineMatch;
   storedSelectedSearchResult?: string;
   storedExpandedFileTreeNodes?: string[];
@@ -60,6 +63,9 @@ type StoreOptionKey =
   | 'storedSearchQuery'
   | 'storedSearchFileFilterQuery'
   | 'storedSearchDirFilterQuery'
+  | 'storedSearchLanguage'
+  | 'storedSearchOtherLanguage'
+  | 'storedSelectedSearchTypes'
   | 'storedSearchMatchingResult'
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'

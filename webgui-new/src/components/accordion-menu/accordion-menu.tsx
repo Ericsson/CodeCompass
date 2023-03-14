@@ -124,7 +124,7 @@ export const AccordionMenu = () => {
             <Typography>{AccordionLabel.SEARCH_RESULTS}</Typography>
           </IconLabel>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails sx={{ height: 'unset', overflow: 'hidden' }}>
           <SearchResults />
         </AccordionDetails>
       </Accordion>

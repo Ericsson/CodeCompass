@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { createSearchClient, getSearchTypes } from 'service/search-service';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry, SearchType } from '@thrift-generated';
 import { ProjectContext } from './project-context';
-import { getFileFolderPath } from 'utils/utils';
+import { enumToArray, getFileFolderPath } from 'utils/utils';
 import { getStore, setStore } from 'utils/store';
+import { SearchTypes } from 'enums/search-enum';
 
 type FileNodesType = {
   [key: string]: {
@@ -28,6 +29,10 @@ type SearchContextType = {
   setSearchFileFilterQuery: (_val: string) => void;
   searchDirFilterQuery: string;
   setSearchDirFilterQuery: (_val: string) => void;
+  searchLanguage: string;
+  setSearchLanguage: (_val: string) => void;
+  selectedSearchTypes: string[];
+  setSelectedSearchTypes: (_val: string[]) => void;
   searchStart: number;
   setSearchStart: (_val: number) => void;
   searchSize: number;
@@ -61,6 +66,10 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchDirFilterQuery: (_val) => {},
   searchDirFilterQuery: '',
   setSearchFileFilterQuery: (_val) => {},
+  searchLanguage: '',
+  setSearchLanguage: (_val) => {},
+  selectedSearchTypes: [],
+  setSelectedSearchTypes: (_val) => {},
   searchStart: 0,
   setSearchStart: (_val) => {},
   searchSize: 5,
@@ -88,6 +97,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
   const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
   const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
+  const [searchLanguage, setSearchLanguage] = useState<string | undefined>(undefined);
+  const [selectedSearchTypes, setSelectedSearchTypes] = useState<string[] | undefined>(undefined);
   const [searchStart, setSearchStart] = useState<number | undefined>(undefined);
   const [searchSize, setSearchSize] = useState<number | undefined>(undefined);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
@@ -106,6 +117,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       const searchTypes = await getSearchTypes();
       setSearchOptions(searchTypes);
 
+      const searchTypeOptions = enumToArray(SearchTypes);
+
       const {
         storedSearchOption,
         storedIsFileSearch,
@@ -114,6 +127,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
         storedSearchQuery,
         storedSearchFileFilterQuery,
         storedSearchDirFilterQuery,
+        storedSearchLanguage,
+        storedSelectedSearchTypes,
         storedSearchStart,
         storedSearchSize,
         storedSearchMatchingResult,
@@ -129,6 +144,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       setSearchQuery(storedSearchQuery ?? '');
       setSearchFileFilterQuery(storedSearchFileFilterQuery ?? '');
       setSearchDirFilterQuery(storedSearchDirFilterQuery ?? '');
+      setSearchLanguage(storedSearchLanguage ?? 'Any');
+      setSelectedSearchTypes(storedSelectedSearchTypes ?? searchTypeOptions);
       setSearchStart(storedSearchStart ?? 0);
       setSearchSize(storedSearchSize ?? 10);
       setMatchingResult(storedSearchMatchingResult ?? undefined);
@@ -183,6 +200,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       storedSearchQuery: searchQuery,
       storedSearchFileFilterQuery: searchFileFilterQuery,
       storedSearchDirFilterQuery: searchDirFilterQuery,
+      storedSearchLanguage: searchLanguage,
+      storedSelectedSearchTypes: selectedSearchTypes,
       storedSearchStart: searchStart,
       storedSearchSize: searchSize,
       storedSearchMatchingResult: matchingResult,
@@ -198,6 +217,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     searchQuery,
     searchFileFilterQuery,
     searchDirFilterQuery,
+    searchLanguage,
+    selectedSearchTypes,
     searchStart,
     searchSize,
     matchingResult,
@@ -215,6 +236,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     searchQuery: searchQuery as string,
     searchFileFilterQuery: searchFileFilterQuery as string,
     searchDirFilterQuery: searchDirFilterQuery as string,
+    searchLanguage: searchLanguage as string,
+    selectedSearchTypes: selectedSearchTypes as string[],
     searchStart: searchStart as number,
     searchSize: searchSize as number,
     expandedPathNodes: expandedPathNodes as string[],
@@ -230,6 +253,8 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchQuery,
     setSearchFileFilterQuery,
     setSearchDirFilterQuery,
+    setSearchLanguage,
+    setSelectedSearchTypes,
     setSearchStart,
     setSearchSize,
     setResultPaths,

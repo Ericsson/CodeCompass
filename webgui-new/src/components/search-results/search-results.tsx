@@ -37,25 +37,24 @@ const FileLine = styled('div')({
   marginTop: '3px',
 });
 
-const OuterContainer = styled('div')({
-  padding: '15px 10px',
-});
-
-const PaginationContainer = styled('div')({
+const PaginationContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: '15px',
-  padding: '0',
-  marginBottom: '10px',
-  width: '280px',
-});
+  margin: '10px',
+  height: '50px',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+}));
 
-const ResultsContainer = styled('div')({});
+const ResultsContainer = styled('div')({
+  height: 'calc(100vh - 81px - 70px - 4 * 48px)',
+  overflow: 'scroll',
+});
 
 const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
   fontSize: '0.85rem',
 }));
 
@@ -156,7 +155,7 @@ export const SearchResults = (): JSX.Element => {
   };
 
   return (
-    <OuterContainer>
+    <div>
       <PaginationContainer>
         <FormControl>
           <InputLabel>{'Size'}</InputLabel>
@@ -322,9 +321,9 @@ export const SearchResults = (): JSX.Element => {
             </StyledDiv>
           </StyledTreeView>
         ) : (
-          <div>{'No results'}</div>
+          <StyledDiv sx={{ paddingLeft: '10px' }}>{'No results'}</StyledDiv>
         )}
       </ResultsContainer>
-    </OuterContainer>
+    </div>
   );
 };
