@@ -6,18 +6,21 @@ import { ProjectContextController } from 'global-context/project-context';
 import { ThemeContextController } from 'global-context/theme-context';
 import { ConfigContextController } from 'global-context/config-context';
 import { SearchContextController } from 'global-context/search-context';
+import { MetricsContextController } from 'global-context/metrics-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
     <WorkspaceContextController>
       <ProjectContextController>
         <SearchContextController>
-          <ConfigContextController>
-            <ThemeContextController>
-              <CssBaseline />
-              <Component {...pageProps} />
-            </ThemeContextController>
-          </ConfigContextController>
+          <MetricsContextController>
+            <ConfigContextController>
+              <ThemeContextController>
+                <CssBaseline />
+                <Component {...pageProps} />
+              </ThemeContextController>
+            </ConfigContextController>
+          </MetricsContextController>
         </SearchContextController>
       </ProjectContextController>
     </WorkspaceContextController>
