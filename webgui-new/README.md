@@ -38,13 +38,11 @@ chmod +x thrift-codegen.sh && ./thrift-codegen.sh --thrift-source ../
 ```
 
 You can specify the properties of the webserver by creating a `.env` file at the root of the project. This is only required for development.\
-**Important: you have to set the `DEV_ENV` variable to true to be able to use .env variables!**\
 The default values are: `localhost` for host, `8080` for port, `false` for https, and path will be an empty string.\
-Note: you need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver, the other properties are not that important considering you run a local webserver.\
+Note: you need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver, the other properties are not that important considering you run a local webserver.
 
 ```py
 # .env
-DEV_ENV=true
 WEBSERVER_HOST=
 WEBSERVER_PORT=
 WEBSERVER_HTTPS=
