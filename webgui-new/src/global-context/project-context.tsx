@@ -3,6 +3,7 @@ import { FileInfo } from '@thrift-generated';
 import { WorkspaceContext } from './workspace-context';
 import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
 import { getStore, setStore } from 'utils/store';
+import { createCppClient } from 'service/cpp-service';
 
 type TreeNode = {
   info: FileInfo;
@@ -87,6 +88,7 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     setLoadComplete(false);
     const init = async () => {
       createProjectClient(currentWorkspace);
+      createCppClient(currentWorkspace);
 
       const rootFileData = await getRootFiles();
       const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;

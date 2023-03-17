@@ -13,6 +13,7 @@ import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { SearchContext } from 'global-context/search-context';
 import { Position } from '@thrift-generated';
+import { Diagrams } from 'components/diagrams/diagrams';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -51,7 +52,7 @@ const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
+    <div role='tabpanel' hidden={value !== index} {...other}>
       {value === index && <>{children}</>}
     </div>
   );
@@ -104,14 +105,14 @@ const Project = () => {
             value={configCtx.activeTab}
             onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
           >
-            <StyledTab label="Welcome" />
-            <StyledTab label="Code" />
-            <StyledTab label="Metrics" />
-            <StyledTab label="Diagrams" />
-            <StyledTab label="Git blame" />
-            <StyledTab label="Git diff" />
-            <StyledTab label="User guide" />
-            <StyledTab label="Credits" />
+            <StyledTab label='Welcome' />
+            <StyledTab label='Code' />
+            <StyledTab label='Metrics' />
+            <StyledTab label='Diagrams' />
+            <StyledTab label='Git blame' />
+            <StyledTab label='Git diff' />
+            <StyledTab label='User guide' />
+            <StyledTab label='Credits' />
           </StyledTabs>
           <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
             {placeholder}
@@ -142,7 +143,7 @@ const Project = () => {
             {placeholder}
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.DIAGRAMS}>
-            {placeholder}
+            <Diagrams />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.GIT_BLAME}>
             {placeholder}
