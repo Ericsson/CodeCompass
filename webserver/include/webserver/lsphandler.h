@@ -77,9 +77,12 @@ int beginRequest(struct mg_connection *conn_) override
     std::regex_search(response, match, rgx);
     response = match[1];
 
-    // Remove whitespaces and escape characters
-    rgx = "\\s*|\\\\n|\\\\";
-    response = std::regex_replace(response, rgx, "");
+    // Remove escape characters
+    boost::replace_all(response, "\\\\n", "");
+    boost::replace_all(response, "\\n", "");
+    boost::replace_all(response, "\\\"", "\"");
+    boost::replace_all(response, "\\\\/", "/");
+    boost::replace_all(response, "\\\\\"", "\\\"");
 
     LOG(debug) << "[LSP] Response content:\n" << response << std::endl;
 
