@@ -1,4 +1,6 @@
+#include "LspService.h"
 #include <boost/program_options.hpp>
+#include <webserver/pluginhelper.h>
 #include <webserver/pluginhandler.h>
 #include <webserver/requesthandler.h>
 #include <webserver/lsphandler.h>
@@ -20,10 +22,11 @@ extern "C"
     const cc::webserver::ServerContext& context_,
     cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
   {
-    std::shared_ptr<cc::webserver::RequestHandler> handler(
-      new cc::webserver::LspHandler(context_));
-
-    pluginHandler_->registerImplementation("LspService", handler);
+    cc::webserver::registerLspPluginSimple(
+      context_,
+      pluginHandler_,
+      CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(Lsp, lsp),
+      "LspService");
   }
 }
 #pragma clang diagnostic pop

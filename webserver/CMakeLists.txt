@@ -9,8 +9,7 @@ add_executable(CodeCompass_webserver
   src/mainrequesthandler.cpp
   src/session.cpp
   src/sessionmanager.cpp
-  src/threadedmongoose.cpp
-  src/lsphandler.cpp)
+  src/threadedmongoose.cpp)
 
 set_target_properties(CodeCompass_webserver
   PROPERTIES ENABLE_EXPORTS 1)

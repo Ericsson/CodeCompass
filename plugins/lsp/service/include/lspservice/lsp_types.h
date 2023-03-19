@@ -145,7 +145,7 @@ struct Range : public Readable, public Writeable
 /**
  * Represents a location inside a resource, such as a line inside a text file.
  */
-struct Location : public Readable, public Writeable
+struct Location final : public Readable, public Writeable
 {
   DocumentUri uri;
   Range range;
@@ -217,7 +217,7 @@ struct DiagramParams : DiagramTypeParams
 /**
  * Represents a possible auto-complete or context menu item.
  */
-struct CompletionItem : public Readable, public Writeable
+struct CompletionItem final : public Readable, public Writeable
 {
   /**
    * The label of this completion item. By default

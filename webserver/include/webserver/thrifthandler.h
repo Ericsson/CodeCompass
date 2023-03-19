@@ -12,6 +12,7 @@
 #include <util/logutil.h>
 
 #include "mongoose.h"
+#include "webserver/requesthandler.h"
 
 namespace cc
 {
@@ -136,7 +137,7 @@ public:
     return MG_TRUE;
   }
 
-private:
+protected:
   LoggingProcessor _processor;
 };
 
