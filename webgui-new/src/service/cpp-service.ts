@@ -30,3 +30,10 @@ export const getCppFileDiagram = async (fileId: string, diagramId: number) => {
   }
   return await client.getFileDiagram(fileId, diagramId);
 };
+
+export const getCppFileDiagramLegend = async (diagramId: number) => {
+  if (!client) {
+    return '';
+  }
+  return await client.getFileDiagramLegend(diagramId);
+};

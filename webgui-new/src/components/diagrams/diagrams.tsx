@@ -2,63 +2,87 @@ import { Button, FormControl, InputLabel, MenuItem, Select, styled } from '@mui/
 import { FileName } from 'components/file-name/file-name';
 import { ProjectContext } from 'global-context/project-context';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { getCppFileDiagram, getCppFileDiagramTypes } from 'service/cpp-service';
+import { getCppFileDiagram, getCppFileDiagramLegend, getCppFileDiagramTypes } from 'service/cpp-service';
 
-const OuterContainer = styled('div')({
-  overflow: 'hidden',
-});
+const OuterContainer = styled('div')({});
 
 const InnerContainer = styled('div')({
-  padding: '10px',
+  width: 'calc(100vw - 280px)',
+  height: 'calc(100vh - 78px - 48px - 49px - 77px)',
 });
 
-const CppOptionsContainer = styled('div')({
+const StyledDiv = styled('div')({});
+
+const DiagramOptionsContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1rem',
-});
+  padding: '10px',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+}));
+
+const DiagramLegendContainer = styled('div')(({ theme }) => ({}));
 
 const DiagramContainer = styled('div')({
-  marginTop: '30px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
+  marginLeft: '50px',
 });
 
 export const Diagrams = (): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
 
+  const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [cppFileDiagramTypes, setCppFileDiagramTypes] = useState<Map<string, number>>(new Map());
-  const [currentCppFileDiagramType, setCurrentCppFileDiagramType] = useState<string>('');
+  const [fileDiagramTypes, setFileDiagramTypes] = useState<Map<string, number>>(new Map());
+  const [currentFileDiagramType, setCurrentFileDiagramType] = useState<string>('');
+  const [fileType, setFileType] = useState<string>('');
 
   useEffect(() => {
     if (!projectCtx.fileInfo) return;
 
     const init = async () => {
-      const fileDiagramTypesData = await getCppFileDiagramTypes(projectCtx.fileInfo?.id as string);
-      setCppFileDiagramTypes(fileDiagramTypesData);
-      setCurrentCppFileDiagramType(
-        fileDiagramTypesData ? Object.keys(Object.fromEntries(fileDiagramTypesData))[0] : ''
-      );
+      const fType = projectCtx.fileInfo?.type as string;
+      const fDiagramTypes =
+        fType === 'CPP' ? await getCppFileDiagramTypes(projectCtx.fileInfo?.id as string) : new Map();
+      setFileType(fType);
+      setFileDiagramTypes(fDiagramTypes);
+      setCurrentFileDiagramType(Object.keys(Object.fromEntries(fDiagramTypes))[0]);
     };
     init();
   }, [projectCtx.fileInfo]);
 
-  const generateCppFileDiagram = async () => {
-    if (!diagramContainerRef.current) return;
+  const generateFileDiagram = async (fileId: string) => {
+    if (!diagramContainerRef.current || !diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = cppFileDiagramTypes.get(currentCppFileDiagramType) as number;
-    const cppFileDiagramRes = await getCppFileDiagram(projectCtx.fileInfo?.id as string, currentDiagramId);
+    const currentDiagramId = fileDiagramTypes.get(currentFileDiagramType) as number;
+    const fileDiagramLegend = await getCppFileDiagramLegend(currentDiagramId);
+    const fileDiagram = await getCppFileDiagram(fileId, currentDiagramId);
 
     const parser = new DOMParser();
-    const parsedContents = parser.parseFromString(cppFileDiagramRes, 'text/xml');
-    const svgElement = parsedContents.getElementsByTagName('svg')[0];
-    (svgElement.style.height = '500px'), (svgElement.style.width = '800px');
 
+    const parsedFileDiagramLegend = parser.parseFromString(fileDiagramLegend, 'text/xml');
+    const parsedFileDiagram = parser.parseFromString(fileDiagram, 'text/xml');
+
+    const fileDiagramLegendSvg = parsedFileDiagramLegend.getElementsByTagName('svg')[0];
+    const fileDiagramSvg = parsedFileDiagram.getElementsByTagName('svg')[0];
+
+    fileDiagramLegendSvg.style.width = '300px';
+    fileDiagramLegendSvg.style.height = '90%';
+
+    fileDiagramSvg.style.width = '500px';
+    fileDiagramSvg.style.height = '90%';
+    fileDiagramSvg.style.cursor = 'pointer';
+
+    fileDiagramSvg.onclick = (e) => {
+      const parentNode = (e.target as HTMLElement)?.parentElement;
+      if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
+      generateFileDiagram(parentNode?.id as string);
+    };
+
+    diagramLegendContainerRef.current.innerHTML = '';
     diagramContainerRef.current.innerHTML = '';
-    diagramContainerRef.current.appendChild(svgElement);
+    diagramLegendContainerRef.current.appendChild(fileDiagramLegendSvg);
+    diagramContainerRef.current.appendChild(fileDiagramSvg);
   };
 
   return (
@@ -71,31 +95,37 @@ export const Diagrams = (): JSX.Element => {
       />
       {projectCtx.fileInfo ? (
         <InnerContainer>
-          {cppFileDiagramTypes.size !== 0 ? (
+          {fileDiagramTypes.size !== 0 ? (
             <>
-              <CppOptionsContainer>
+              <DiagramOptionsContainer>
                 <FormControl>
-                  <InputLabel>{'C++ Diagrams'}</InputLabel>
+                  <InputLabel>{`${fileType} Diagrams`}</InputLabel>
                   <Select
-                    value={currentCppFileDiagramType}
-                    label={'C++ Diagrams'}
-                    onChange={(e) => setCurrentCppFileDiagramType(e.target.value)}
+                    value={currentFileDiagramType}
+                    label={`${fileType} Diagrams`}
+                    onChange={(e) => setCurrentFileDiagramType(e.target.value)}
                   >
-                    {Object.keys(Object.fromEntries(cppFileDiagramTypes)).map((diagramType, idx) => (
+                    {Object.keys(Object.fromEntries(fileDiagramTypes)).map((diagramType, idx) => (
                       <MenuItem key={idx} value={diagramType}>
                         {diagramType}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
-                <Button onClick={() => generateCppFileDiagram()} sx={{ textTransform: 'none' }}>
-                  {'Generate C++ Diagram'}
+                <Button
+                  onClick={() => generateFileDiagram(projectCtx.fileInfo?.id as string)}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {`Generate ${fileType} diagram`}
                 </Button>
-              </CppOptionsContainer>
-              <DiagramContainer ref={diagramContainerRef} />
+              </DiagramOptionsContainer>
+              <StyledDiv sx={{ display: 'flex', height: '100%' }}>
+                <DiagramLegendContainer ref={diagramLegendContainerRef} />
+                <DiagramContainer ref={diagramContainerRef} />
+              </StyledDiv>
             </>
           ) : (
-            <div>{'No C++ diagrams available for this file.'}</div>
+            <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file.'}</StyledDiv>
           )}
         </InnerContainer>
       ) : (
