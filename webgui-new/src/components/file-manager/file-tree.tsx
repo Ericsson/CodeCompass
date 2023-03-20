@@ -3,11 +3,12 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { FileInfo } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { SyntheticEvent, useContext } from 'react';
+import { SyntheticEvent, useContext, useState } from 'react';
 import { getChildFiles, getFileContent } from 'service/project-service';
 import { ProjectContext } from 'global-context/project-context';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 
 type TreeNode = {
   info: FileInfo;
@@ -41,73 +42,28 @@ const FileLabel = styled('div')(({ theme }) => ({
 
 const StyledDiv = styled('div')({});
 
-const Directory = (
-  info: FileInfo,
-  handleClick: (info: FileInfo) => Promise<void>,
-  children?: JSX.Element[]
-): JSX.Element => {
-  return (
-    <StyledTreeItem
-      key={info.id}
-      nodeId={info.id as string}
-      label={<StyledDiv sx={{ fontSize: '0.8rem' }}>{info.name}</StyledDiv>}
-      onClick={() => handleClick(info)}
-    >
-      {children}
-    </StyledTreeItem>
-  );
-};
-
-const File = (info: FileInfo, selected: string, handleClick: (info: FileInfo) => Promise<void>): JSX.Element => {
-  return (
-    <FileLabel
-      key={info.id}
-      data-id={info.id}
-      onClick={() => handleClick(info)}
-      sx={{
-        backgroundColor: (theme) =>
-          info.id === selected ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
-      }}
-    >
-      <FileIcon fileName={info.name as string} />
-      <StyledDiv
-        sx={{
-          fontSize: '0.8rem',
-          color: (theme) =>
-            info.parseStatus === 3
-              ? theme.colors?.success
-              : info.parseStatus === 2
-              ? theme.colors?.warning
-              : theme.colors?.primary,
-        }}
-      >
-        {info.name}
-      </StyledDiv>
-    </FileLabel>
-  );
-};
-
-const Loading = (): JSX.Element => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '1rem',
-        paddingTop: '10px',
-      }}
-    >
-      <div>{'Loading files...'}</div>
-      <CircularProgress />
-    </Box>
-  );
-};
-
 export const FileTree = () => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
+
+  const [contextFileInfo, setContextFileInfo] = useState<FileInfo | undefined>(undefined);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+
+  const handleContextMenu = (event: React.MouseEvent, fileInfo: FileInfo) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null
+    );
+    setContextFileInfo(fileInfo);
+  };
 
   const handleClick = async (info: FileInfo) => {
     if (info.isDirectory) {
@@ -137,6 +93,72 @@ export const FileTree = () => {
       : [];
   };
 
+  const Directory = (
+    info: FileInfo,
+    handleClick: (info: FileInfo) => Promise<void>,
+    children?: JSX.Element[]
+  ): JSX.Element => {
+    return (
+      <StyledTreeItem
+        key={info.id}
+        nodeId={info.id as string}
+        label={<StyledDiv sx={{ fontSize: '0.8rem' }}>{info.name}</StyledDiv>}
+        onClick={() => handleClick(info)}
+        onContextMenu={(e) => handleContextMenu(e, info)}
+      >
+        {children}
+      </StyledTreeItem>
+    );
+  };
+
+  const File = (info: FileInfo, selected: string, handleClick: (info: FileInfo) => Promise<void>): JSX.Element => {
+    return (
+      <FileLabel
+        key={info.id}
+        data-id={info.id}
+        onClick={() => handleClick(info)}
+        onContextMenu={(e) => handleContextMenu(e, info)}
+        sx={{
+          backgroundColor: (theme) =>
+            info.id === selected ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+        }}
+      >
+        <FileIcon fileName={info.name as string} />
+        <StyledDiv
+          sx={{
+            fontSize: '0.8rem',
+            color: (theme) =>
+              info.parseStatus === 3
+                ? theme.colors?.success
+                : info.parseStatus === 2
+                ? theme.colors?.warning
+                : theme.colors?.primary,
+          }}
+        >
+          {info.name}
+        </StyledDiv>
+      </FileLabel>
+    );
+  };
+
+  const Loading = (): JSX.Element => {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '1rem',
+          paddingTop: '10px',
+        }}
+      >
+        <div>{'Loading files...'}</div>
+        <CircularProgress />
+      </Box>
+    );
+  };
+
   return projectCtx.fileTree ? (
     <StyledTreeView
       defaultCollapseIcon={<FolderOpen />}
@@ -159,6 +181,7 @@ export const FileTree = () => {
           ? Directory(info, () => handleClick(info), renderFileTree(projectCtx.fileTree))
           : File(info, projectCtx.selectedFile, () => handleClick(info))
       )}
+      <FileContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} fileInfo={contextFileInfo} />
     </StyledTreeView>
   ) : (
     <Loading />
