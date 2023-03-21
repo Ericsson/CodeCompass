@@ -100,7 +100,6 @@ export const AccordionMenu = () => {
               <TreeSetting
                 control={
                   <Checkbox
-                    defaultChecked={false}
                     checked={configCtx.treeViewOption}
                     onChange={() => configCtx.setTreeViewOption(!configCtx.treeViewOption)}
                     sx={{ padding: '0' }}

@@ -13,8 +13,7 @@ import {
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
 import { LanguageContext } from 'global-context/language-context';
-import { ProjectContext } from 'global-context/project-context';
-import { useContext, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
 
 const StyledDiv = styled('div')({});
@@ -61,7 +60,6 @@ const ZoomOptions = styled('div')({
 });
 
 export const Diagrams = (): JSX.Element => {
-  const projectCtx = useContext(ProjectContext);
   const languageCtx = useContext(LanguageContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
@@ -71,15 +69,17 @@ export const Diagrams = (): JSX.Element => {
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const generateFileDiagram = async (fileId: string, dir: boolean) => {
+  useEffect(() => {
+    if (!diagramContainerRef.current) return;
+    diagramContainerRef.current.innerHTML = '';
+  }, [languageCtx.diagramFileInfo]);
+
+  const generateFileDiagram = async (fileId: string) => {
     if (!diagramContainerRef.current) return;
 
     setDiagramSize(1);
 
-    const currentDiagramId = dir
-      ? (languageCtx.dirDiagramTypes.get(languageCtx.currentDirDiagramType) as number)
-      : (languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number);
-
+    const currentDiagramId = languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number;
     const fileDiagram = await getCppFileDiagram(fileId, currentDiagramId);
 
     const parser = new DOMParser();
@@ -92,19 +92,17 @@ export const Diagrams = (): JSX.Element => {
     fileDiagramSvg.onclick = (e) => {
       const parentNode = (e.target as HTMLElement)?.parentElement;
       if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
-      generateFileDiagram(parentNode?.id as string, dir);
+      generateFileDiagram(parentNode?.id as string);
     };
 
-    diagramContainerRef.current.innerHTML = '';
+    diagramContainerRef.current.replaceChildren('');
     diagramContainerRef.current.appendChild(fileDiagramSvg);
   };
 
-  const generateLegend = async (dir: boolean) => {
+  const generateLegend = async () => {
     if (!diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = dir
-      ? (languageCtx.dirDiagramTypes.get(languageCtx.currentDirDiagramType) as number)
-      : (languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number);
+    const currentDiagramId = languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number;
 
     const fileDiagramLegend = await getCppFileDiagramLegend(currentDiagramId);
 
@@ -162,126 +160,88 @@ export const Diagrams = (): JSX.Element => {
   return (
     <div>
       <FileName
-        fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
-        filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
-        parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-        info={projectCtx.fileInfo ?? undefined}
+        fileName={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.name as string) : ''}
+        filePath={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.path as string) : ''}
+        parseStatus={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.parseStatus as number) : 4}
+        info={languageCtx.diagramFileInfo ?? undefined}
       />
-      {projectCtx.fileInfo ? (
+      {languageCtx.fileDiagramTypes.size !== 0 ? (
         <>
-          {languageCtx.fileDiagramTypes.size !== 0 || languageCtx.dirDiagramTypes.size !== 0 ? (
-            <>
-              <GenerateOptionsContainer>
-                {languageCtx.fileDiagramTypes.size !== 0 ? (
-                  <>
-                    <FormControl>
-                      <InputLabel>{`${languageCtx.fileType} Diagrams`}</InputLabel>
-                      <Select
-                        value={languageCtx.currentFileDiagramType}
-                        label={`${languageCtx.fileType} Diagrams`}
-                        onChange={(e) => languageCtx.setCurrentFileDiagramType(e.target.value)}
-                      >
-                        {Object.keys(Object.fromEntries(languageCtx.fileDiagramTypes)).map((diagramType, idx) => (
-                          <MenuItem key={idx} value={diagramType}>
-                            {diagramType}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <Button
-                      onClick={() => generateFileDiagram(projectCtx.fileInfo?.id as string, false)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {`Generate ${languageCtx.fileType} diagram`}
-                    </Button>
-                  </>
-                ) : (
-                  ''
-                )}
-                {languageCtx.dirDiagramTypes.size !== 0 ? (
-                  <>
-                    <FormControl>
-                      <InputLabel>{`Dir Diagrams`}</InputLabel>
-                      <Select
-                        value={languageCtx.currentDirDiagramType}
-                        label={`Dir Diagrams`}
-                        onChange={(e) => languageCtx.setCurrentDirDiagramType(e.target.value)}
-                      >
-                        {Object.keys(Object.fromEntries(languageCtx.dirDiagramTypes)).map((diagramType, idx) => (
-                          <MenuItem key={idx} value={diagramType}>
-                            {diagramType}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <Button
-                      onClick={() => generateFileDiagram(projectCtx.fileInfo?.parent as string, true)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {`Generate diagram for dir: ${projectCtx.fileInfo.path?.split('/').reverse()[1]}`}
-                    </Button>
-                  </>
-                ) : (
-                  ''
-                )}
-              </GenerateOptionsContainer>
-              <DiagramContainer ref={diagramContainerRef} />
-              <DiagramOptionsContainer>
-                <ZoomOptions>
-                  <IconButton onClick={() => scaleSVG('zoomIn')}>
-                    <ZoomIn />
-                  </IconButton>
-                  <Button onClick={() => scaleSVG('reset')} sx={{ textTransform: 'none' }}>
-                    {'Reset'}
-                  </Button>
-                  <IconButton onClick={() => scaleSVG('zoomOut')}>
-                    <ZoomOut />
-                  </IconButton>
-                </ZoomOptions>
-                <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                  <Button onClick={() => generateLegend(false)} sx={{ textTransform: 'none' }}>
-                    {'Legend'}
-                  </Button>
-                  <Tooltip
-                    PopperProps={{
-                      disablePortal: true,
-                    }}
-                    onClose={() => setExportTooltipOpen(false)}
-                    open={exportTooltipOpen}
-                    disableFocusListener
-                    disableHoverListener
-                    disableTouchListener
-                    title='Copied to clipboard'
-                    arrow
-                  >
-                    <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
-                      {'Export SVG'}
-                    </Button>
-                  </Tooltip>
-                  <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
-                    {'Download image'}
-                  </Button>
-                </StyledDiv>
-                <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <DiagramLegendContainer ref={diagramLegendContainerRef} />
-                  </Box>
-                </Modal>
-              </DiagramOptionsContainer>
-            </>
-          ) : (
-            <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file.'}</StyledDiv>
-          )}
+          <GenerateOptionsContainer>
+            <FormControl>
+              <InputLabel>{`${languageCtx.fileType} Diagrams`}</InputLabel>
+              <Select
+                value={languageCtx.currentFileDiagramType}
+                label={`${languageCtx.fileType} Diagrams`}
+                onChange={(e) => languageCtx.setCurrentFileDiagramType(e.target.value)}
+              >
+                {Object.keys(Object.fromEntries(languageCtx.fileDiagramTypes)).map((diagramType, idx) => (
+                  <MenuItem key={idx} value={diagramType}>
+                    {diagramType}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              onClick={() => generateFileDiagram(languageCtx.diagramFileInfo?.id as string)}
+              sx={{ textTransform: 'none' }}
+            >
+              {`Generate ${languageCtx.fileType} diagram`}
+            </Button>
+          </GenerateOptionsContainer>
+          <DiagramContainer ref={diagramContainerRef} />
+          <DiagramOptionsContainer>
+            <ZoomOptions>
+              <IconButton onClick={() => scaleSVG('zoomIn')}>
+                <ZoomIn />
+              </IconButton>
+              <Button onClick={() => scaleSVG('reset')} sx={{ textTransform: 'none' }}>
+                {'Reset'}
+              </Button>
+              <IconButton onClick={() => scaleSVG('zoomOut')}>
+                <ZoomOut />
+              </IconButton>
+            </ZoomOptions>
+            <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
+                {'Legend'}
+              </Button>
+              <Tooltip
+                PopperProps={{
+                  disablePortal: true,
+                }}
+                onClose={() => setExportTooltipOpen(false)}
+                open={exportTooltipOpen}
+                disableFocusListener
+                disableHoverListener
+                disableTouchListener
+                title="Copied to clipboard"
+                arrow
+              >
+                <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
+                  {'Export SVG'}
+                </Button>
+              </Tooltip>
+              <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
+                {'Download image'}
+              </Button>
+            </StyledDiv>
+            <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <DiagramLegendContainer ref={diagramLegendContainerRef} />
+              </Box>
+            </Modal>
+          </DiagramOptionsContainer>
         </>
       ) : (
-        ''
+        <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file/directory.'}</StyledDiv>
       )}
     </div>
   );

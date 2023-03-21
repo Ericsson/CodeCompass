@@ -3,11 +3,12 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { FileInfo } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { SyntheticEvent, useContext } from 'react';
+import { SyntheticEvent, useContext, useState, MouseEvent } from 'react';
 import { getChildFiles, getFileContent } from 'service/project-service';
 import { ProjectContext } from 'global-context/project-context';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 
 type TreeNode = {
   info: FileInfo;
@@ -45,6 +46,25 @@ export const FileTree = () => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
 
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [fileInfoForDiagram, setFileInfoForDiagram] = useState<FileInfo | undefined>(undefined);
+
+  const handleContextMenu = (event: MouseEvent, fileInfo: FileInfo) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null
+    );
+    setFileInfoForDiagram(fileInfo);
+  };
+
   const handleClick = async (info: FileInfo) => {
     if (info.isDirectory) {
       const childFiles = await getChildFiles(info.id as string);
@@ -80,7 +100,11 @@ export const FileTree = () => {
       <StyledTreeItem
         key={info.id}
         nodeId={info.id as string}
-        label={<StyledDiv sx={{ fontSize: '0.8rem' }}>{info.name}</StyledDiv>}
+        label={
+          <StyledDiv onContextMenu={(e) => handleContextMenu(e, info)} sx={{ fontSize: '0.8rem' }}>
+            {info.name}
+          </StyledDiv>
+        }
         onClick={() => handleClick(info)}
       >
         {children}
@@ -94,6 +118,7 @@ export const FileTree = () => {
         key={info.id}
         data-id={info.id}
         onClick={() => handleClick(info)}
+        onContextMenu={(e) => handleContextMenu(e, info)}
         sx={{
           backgroundColor: (theme) =>
             info.id === projectCtx.selectedFile ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
@@ -161,6 +186,11 @@ export const FileTree = () => {
           <File key={idx} info={info} />
         )
       )}
+      <FileContextMenu
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        fileInfo={fileInfoForDiagram as FileInfo}
+      />
     </StyledTreeView>
   ) : (
     <Loading />

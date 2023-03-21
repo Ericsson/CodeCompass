@@ -20,7 +20,11 @@ export const getCppFileDiagramTypes = async (fileId: string) => {
   if (!client) {
     return resultMap;
   }
-  resultMap = await client.getFileDiagramTypes(fileId);
+  try {
+    resultMap = await client.getFileDiagramTypes(fileId);
+  } catch {
+    resultMap = new Map();
+  }
   return resultMap;
 };
 
@@ -28,12 +32,20 @@ export const getCppFileDiagram = async (fileId: string, diagramId: number) => {
   if (!client) {
     return '';
   }
-  return await client.getFileDiagram(fileId, diagramId);
+  try {
+    return await client.getFileDiagram(fileId, diagramId);
+  } catch {
+    return '';
+  }
 };
 
 export const getCppFileDiagramLegend = async (diagramId: number) => {
   if (!client) {
     return '';
   }
-  return await client.getFileDiagramLegend(diagramId);
+  try {
+    return await client.getFileDiagramLegend(diagramId);
+  } catch {
+    return '';
+  }
 };
