@@ -5,6 +5,7 @@ import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
 import { FileInfo } from '@thrift-generated';
 import { LanguageContext } from 'global-context/language-context';
+import { MetricsContext } from 'global-context/metrics-context';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -25,6 +26,7 @@ export const FileContextMenu = ({
 }) => {
   const configCtx = useContext(ConfigContext);
   const languageCtx = useContext(LanguageContext);
+  const metricsCtx = useContext(MetricsContext);
 
   return (
     <Menu
@@ -33,6 +35,15 @@ export const FileContextMenu = ({
       anchorReference="anchorPosition"
       anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
     >
+      <MenuItem
+        onClick={() => {
+          setContextMenu(null);
+          metricsCtx.setMetricsFileInfo(fileInfo);
+          configCtx.setActiveTab(TabName.METRICS);
+        }}
+      >
+        {'Metrics'}
+      </MenuItem>
       <MenuItem
         onClick={() => {
           setContextMenu(null);

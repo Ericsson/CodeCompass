@@ -157,7 +157,7 @@ export const Diagrams = (): JSX.Element => {
     }
   };
 
-  return (
+  return languageCtx.diagramFileInfo ? (
     <div>
       <FileName
         fileName={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.name as string) : ''}
@@ -244,5 +244,9 @@ export const Diagrams = (): JSX.Element => {
         <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file/directory.'}</StyledDiv>
       )}
     </div>
+  ) : (
+    <StyledDiv sx={{ padding: '10px' }}>
+      {'No file/directory selected. Right click on a file/directory in the file manager to generate Diagrams.'}
+    </StyledDiv>
   );
 };

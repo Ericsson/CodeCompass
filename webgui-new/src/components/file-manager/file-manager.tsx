@@ -58,7 +58,7 @@ export const FileManager = (): JSX.Element => {
   } | null>(null);
   const [fileInfoForDiagram, setFileInfoForDiagram] = useState<FileInfo | undefined>(undefined);
 
-  const handleContextMenu = (event: MouseEvent, fileInfo: FileInfo) => {
+  const handleContextMenu = async (event: MouseEvent, fileInfo: FileInfo) => {
     event.preventDefault();
     setContextMenu(
       contextMenu === null
@@ -69,6 +69,18 @@ export const FileManager = (): JSX.Element => {
         : null
     );
     setFileInfoForDiagram(fileInfo);
+    if (fileInfo.isDirectory) {
+      const childFiles = await getChildFiles(fileInfo.id as string);
+      projectCtx.setFiles(childFiles);
+      projectCtx.setFolderPath(fileInfo.path as string);
+    } else {
+      const children = await getChildFiles(fileInfo.parent as string);
+      const fileContent = await getFileContent(fileInfo.id as string);
+      projectCtx.setFiles(children);
+      projectCtx.setFileContent(fileContent);
+      projectCtx.setFileInfo(fileInfo);
+      projectCtx.setSelectedFile(fileInfo.id as string);
+    }
   };
 
   const navigateBack = async () => {

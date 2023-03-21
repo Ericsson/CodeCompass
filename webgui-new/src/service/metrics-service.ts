@@ -19,12 +19,20 @@ export const getMetricsTypeNames = async () => {
   if (!client) {
     return [];
   }
-  return await client.getMetricsTypeNames();
+  try {
+    return await client.getMetricsTypeNames();
+  } catch {
+    return [];
+  }
 };
 
 export const getMetrics = async (fileId: string, fileTypeFilter: string[], metricsType: MetricsType) => {
   if (!client) {
     return '';
   }
-  return await client.getMetrics(fileId, fileTypeFilter, metricsType);
+  try {
+    return await client.getMetrics(fileId, fileTypeFilter, metricsType);
+  } catch {
+    return '';
+  }
 };
