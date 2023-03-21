@@ -1,6 +1,6 @@
 import { Folder, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import { FileInfo } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
 import { getChildFiles, getFileContent, getParentFiles, getParents } from 'service/project-service';
@@ -8,7 +8,6 @@ import { FileIcon } from 'components/file-icon/file-icon';
 import { FileTree } from './file-tree';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
-import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 
 const Container = styled('div')({
   padding: '5px',
@@ -51,25 +50,6 @@ const FolderUp = styled('div')(({ theme }) => ({
 export const FileManager = (): JSX.Element => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
-
-  const [contextFileInfo, setContextFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [contextMenu, setContextMenu] = useState<{
-    mouseX: number;
-    mouseY: number;
-  } | null>(null);
-
-  const handleContextMenu = (event: React.MouseEvent, fileInfo: FileInfo) => {
-    event.preventDefault();
-    setContextMenu(
-      contextMenu === null
-        ? {
-            mouseX: event.clientX + 2,
-            mouseY: event.clientY - 6,
-          }
-        : null
-    );
-    setContextFileInfo(fileInfo);
-  };
 
   const navigateBack = async () => {
     if (projectCtx.folderPath === '/') {
@@ -132,7 +112,6 @@ export const FileManager = (): JSX.Element => {
             <IconLabel
               key={idx}
               data-id={file.id}
-              onContextMenu={(e) => handleContextMenu(e, file)}
               onClick={() => handleFileClick(file)}
               sx={{
                 backgroundColor: (theme) =>
@@ -159,7 +138,6 @@ export const FileManager = (): JSX.Element => {
             </IconLabel>
           );
         })}
-        <FileContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} fileInfo={contextFileInfo} />
       </Container>
     </>
   );

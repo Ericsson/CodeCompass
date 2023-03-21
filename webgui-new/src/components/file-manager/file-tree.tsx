@@ -3,12 +3,11 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { FileInfo } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { SyntheticEvent, useContext, useState } from 'react';
+import { SyntheticEvent, useContext } from 'react';
 import { getChildFiles, getFileContent } from 'service/project-service';
 import { ProjectContext } from 'global-context/project-context';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
-import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 
 type TreeNode = {
   info: FileInfo;
@@ -46,25 +45,6 @@ export const FileTree = () => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
 
-  const [contextFileInfo, setContextFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [contextMenu, setContextMenu] = useState<{
-    mouseX: number;
-    mouseY: number;
-  } | null>(null);
-
-  const handleContextMenu = (event: React.MouseEvent, fileInfo: FileInfo) => {
-    event.preventDefault();
-    setContextMenu(
-      contextMenu === null
-        ? {
-            mouseX: event.clientX + 2,
-            mouseY: event.clientY - 6,
-          }
-        : null
-    );
-    setContextFileInfo(fileInfo);
-  };
-
   const handleClick = async (info: FileInfo) => {
     if (info.isDirectory) {
       const childFiles = await getChildFiles(info.id as string);
@@ -83,44 +63,40 @@ export const FileTree = () => {
 
   const renderFileTree = (node: TreeNode | undefined): JSX.Element[] => {
     return node && node.children
-      ? node.children.map((childNode) => {
-          if (childNode.info.isDirectory) {
-            return Directory(childNode.info, () => handleClick(childNode.info), renderFileTree(childNode));
-          } else {
-            return File(childNode.info, projectCtx.selectedFile, () => handleClick(childNode.info));
-          }
+      ? node.children.map((childNode, idx) => {
+          return childNode.info.isDirectory ? (
+            <Directory key={idx} info={childNode.info}>
+              {renderFileTree(childNode)}
+            </Directory>
+          ) : (
+            <File key={idx} info={childNode.info} />
+          );
         })
       : [];
   };
 
-  const Directory = (
-    info: FileInfo,
-    handleClick: (info: FileInfo) => Promise<void>,
-    children?: JSX.Element[]
-  ): JSX.Element => {
+  const Directory = ({ info, children }: { info: FileInfo; children?: JSX.Element[] }): JSX.Element => {
     return (
       <StyledTreeItem
         key={info.id}
         nodeId={info.id as string}
         label={<StyledDiv sx={{ fontSize: '0.8rem' }}>{info.name}</StyledDiv>}
         onClick={() => handleClick(info)}
-        onContextMenu={(e) => handleContextMenu(e, info)}
       >
         {children}
       </StyledTreeItem>
     );
   };
 
-  const File = (info: FileInfo, selected: string, handleClick: (info: FileInfo) => Promise<void>): JSX.Element => {
+  const File = ({ info }: { info: FileInfo }): JSX.Element => {
     return (
       <FileLabel
         key={info.id}
         data-id={info.id}
         onClick={() => handleClick(info)}
-        onContextMenu={(e) => handleContextMenu(e, info)}
         sx={{
           backgroundColor: (theme) =>
-            info.id === selected ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+            info.id === projectCtx.selectedFile ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
         }}
       >
         <FileIcon fileName={info.name as string} />
@@ -176,12 +152,15 @@ export const FileTree = () => {
         projectCtx.setExpandedFileTreeNodes(copyExpanded);
       }}
     >
-      {projectCtx.rootFiles.map((info) =>
-        info.isDirectory
-          ? Directory(info, () => handleClick(info), renderFileTree(projectCtx.fileTree))
-          : File(info, projectCtx.selectedFile, () => handleClick(info))
+      {projectCtx.rootFiles.map((info, idx) =>
+        info.isDirectory ? (
+          <Directory key={idx} info={info}>
+            {renderFileTree(projectCtx.fileTree)}
+          </Directory>
+        ) : (
+          <File key={idx} info={info} />
+        )
       )}
-      <FileContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} fileInfo={contextFileInfo} />
     </StyledTreeView>
   ) : (
     <Loading />

@@ -1,8 +1,9 @@
 import { Button, FormControl, InputLabel, MenuItem, Select, styled } from '@mui/material';
 import { FileName } from 'components/file-name/file-name';
+import { LanguageContext } from 'global-context/language-context';
 import { ProjectContext } from 'global-context/project-context';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { getCppFileDiagram, getCppFileDiagramLegend, getCppFileDiagramTypes } from 'service/cpp-service';
+import { useContext, useRef } from 'react';
+import { getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
 
 const OuterContainer = styled('div')({});
 
@@ -29,32 +30,17 @@ const DiagramContainer = styled('div')({
 
 export const Diagrams = (): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
+  const languageCtx = useContext(LanguageContext);
 
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const [fileDiagramTypes, setFileDiagramTypes] = useState<Map<string, number>>(new Map());
-  const [currentFileDiagramType, setCurrentFileDiagramType] = useState<string>('');
-  const [fileType, setFileType] = useState<string>('');
-
-  useEffect(() => {
-    if (!projectCtx.fileInfo) return;
-
-    const init = async () => {
-      const fType = projectCtx.fileInfo?.type as string;
-      const fDiagramTypes =
-        fType === 'CPP' ? await getCppFileDiagramTypes(projectCtx.fileInfo?.id as string) : new Map();
-      setFileType(fType);
-      setFileDiagramTypes(fDiagramTypes);
-      setCurrentFileDiagramType(Object.keys(Object.fromEntries(fDiagramTypes))[0]);
-    };
-    init();
-  }, [projectCtx.fileInfo]);
-
-  const generateFileDiagram = async (fileId: string) => {
+  const generateFileDiagram = async (fileId: string, dir: boolean) => {
     if (!diagramContainerRef.current || !diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = fileDiagramTypes.get(currentFileDiagramType) as number;
+    const currentDiagramId = dir
+      ? (languageCtx.dirDiagramTypes.get(languageCtx.currentDirDiagramType) as number)
+      : (languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number);
     const fileDiagramLegend = await getCppFileDiagramLegend(currentDiagramId);
     const fileDiagram = await getCppFileDiagram(fileId, currentDiagramId);
 
@@ -76,7 +62,7 @@ export const Diagrams = (): JSX.Element => {
     fileDiagramSvg.onclick = (e) => {
       const parentNode = (e.target as HTMLElement)?.parentElement;
       if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
-      generateFileDiagram(parentNode?.id as string);
+      generateFileDiagram(parentNode?.id as string, dir);
     };
 
     diagramLegendContainerRef.current.innerHTML = '';
@@ -95,29 +81,61 @@ export const Diagrams = (): JSX.Element => {
       />
       {projectCtx.fileInfo ? (
         <InnerContainer>
-          {fileDiagramTypes.size !== 0 ? (
+          {languageCtx.fileDiagramTypes.size !== 0 || languageCtx.dirDiagramTypes.size !== 0 ? (
             <>
               <DiagramOptionsContainer>
-                <FormControl>
-                  <InputLabel>{`${fileType} Diagrams`}</InputLabel>
-                  <Select
-                    value={currentFileDiagramType}
-                    label={`${fileType} Diagrams`}
-                    onChange={(e) => setCurrentFileDiagramType(e.target.value)}
-                  >
-                    {Object.keys(Object.fromEntries(fileDiagramTypes)).map((diagramType, idx) => (
-                      <MenuItem key={idx} value={diagramType}>
-                        {diagramType}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <Button
-                  onClick={() => generateFileDiagram(projectCtx.fileInfo?.id as string)}
-                  sx={{ textTransform: 'none' }}
-                >
-                  {`Generate ${fileType} diagram`}
-                </Button>
+                {languageCtx.fileDiagramTypes.size !== 0 ? (
+                  <>
+                    <FormControl>
+                      <InputLabel>{`${languageCtx.fileType} Diagrams`}</InputLabel>
+                      <Select
+                        value={languageCtx.currentFileDiagramType}
+                        label={`${languageCtx.fileType} Diagrams`}
+                        onChange={(e) => languageCtx.setCurrentFileDiagramType(e.target.value)}
+                      >
+                        {Object.keys(Object.fromEntries(languageCtx.fileDiagramTypes)).map((diagramType, idx) => (
+                          <MenuItem key={idx} value={diagramType}>
+                            {diagramType}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Button
+                      onClick={() => generateFileDiagram(projectCtx.fileInfo?.id as string, false)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {`Generate ${languageCtx.fileType} diagram`}
+                    </Button>
+                  </>
+                ) : (
+                  ''
+                )}
+                {languageCtx.dirDiagramTypes.size !== 0 ? (
+                  <>
+                    <FormControl>
+                      <InputLabel>{`Dir Diagrams`}</InputLabel>
+                      <Select
+                        value={languageCtx.currentDirDiagramType}
+                        label={`Dir Diagrams`}
+                        onChange={(e) => languageCtx.setCurrentDirDiagramType(e.target.value)}
+                      >
+                        {Object.keys(Object.fromEntries(languageCtx.dirDiagramTypes)).map((diagramType, idx) => (
+                          <MenuItem key={idx} value={diagramType}>
+                            {diagramType}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <Button
+                      onClick={() => generateFileDiagram(projectCtx.fileInfo?.parent as string, true)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {`Generate diagram for dir: ${projectCtx.fileInfo.path?.split('/').reverse()[1]}`}
+                    </Button>
+                  </>
+                ) : (
+                  ''
+                )}
               </DiagramOptionsContainer>
               <StyledDiv sx={{ display: 'flex', height: '100%' }}>
                 <DiagramLegendContainer ref={diagramLegendContainerRef} />

@@ -88,7 +88,6 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     setLoadComplete(false);
     const init = async () => {
       createProjectClient(currentWorkspace);
-      createCppClient(currentWorkspace);
 
       const rootFileData = await getRootFiles();
       const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;
