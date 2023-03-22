@@ -5,7 +5,7 @@
 #include <webserver/requesthandler.h>
 #include <webserver/lsphandler.h>
 #include <webserver/servercontext.h>
-#include <lspservice/lspservice.h>
+#include <cpplspservice/cpplspservice.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
@@ -25,7 +25,7 @@ extern "C"
     cc::webserver::registerLspPluginSimple(
       context_,
       pluginHandler_,
-      CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(Lsp, lsp),
+      CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(CppLsp, lsp),
       "LspService");
   }
 }

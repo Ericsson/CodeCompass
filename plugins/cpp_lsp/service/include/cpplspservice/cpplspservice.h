@@ -1,5 +1,5 @@
-#ifndef CC_SERVICE_LSP_LSPSERVICE_H
-#define CC_SERVICE_LSP_LSPSERVICE_H
+#ifndef CC_SERVICE_LSP_CPPLSPSERVICE_H
+#define CC_SERVICE_LSP_CPPLSPSERVICE_H
 
 #include <memory>
 #include <vector>
@@ -8,9 +8,9 @@
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
 
-#include "LspService.h"
+#include "CppLspService.h"
 #include <service/cppservice.h>
-#include <lspservice/lsp_types.h>
+#include <cpplspservice/lsp_types.h>
 
 namespace cc
 { 
@@ -19,10 +19,10 @@ namespace service
 namespace lsp
 {
 
-class LspServiceHandler : virtual public LspServiceIf
+class CppLspServiceHandler : virtual public CppLspServiceIf
 {
 public:
-  LspServiceHandler(
+  CppLspServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
@@ -87,4 +87,4 @@ private:
 } // service
 } // cc
 
-#endif // CC_SERVICE_LSP_LSPSERVICE_H
+#endif // CC_SERVICE_LSP_CPPLSPSERVICE_H

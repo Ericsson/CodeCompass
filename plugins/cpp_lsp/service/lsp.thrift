@@ -1,7 +1,7 @@
 namespace cpp cc.service.lsp
 namespace java cc.service.lsp
 
-service LspService
+service CppLspService
 {
   string getLspResponse(1: string request)
 }

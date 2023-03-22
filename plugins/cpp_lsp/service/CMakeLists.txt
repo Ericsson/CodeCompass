@@ -21,8 +21,8 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/lsp_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/lsp_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/lsp_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/LspService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/LspService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppLspService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppLspService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp
@@ -43,17 +43,17 @@ target_compile_options(lspthrift PUBLIC -fPIC)
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-add_library(lspservice SHARED
-  src/lspservice.cpp
+add_library(cpplspservice SHARED
+  src/cpplspservice.cpp
   src/lsp_types.cpp
   src/plugin.cpp)
 
-target_link_libraries(lspservice
+target_link_libraries(cpplspservice
   util
   lspthrift
   ${THRIFT_LIBTHRIFT_LIBRARIES})
 
-add_dependencies(lspservice projectthrift)
-add_dependencies(lspservice languagethrift)
+add_dependencies(cpplspservice projectthrift)
+add_dependencies(cpplspservice languagethrift)
 
-install(TARGETS lspservice DESTINATION ${INSTALL_SERVICE_DIR})
+install(TARGETS cpplspservice DESTINATION ${INSTALL_SERVICE_DIR})

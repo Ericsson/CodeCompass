@@ -4,7 +4,7 @@
 
 #include <language_types.h>
 
-#include <lspservice/lspservice.h>
+#include <cpplspservice/cpplspservice.h>
 
 namespace cc
 { 
@@ -13,15 +13,15 @@ namespace service
 namespace lsp
 {
 
-std::unordered_map<std::string, LspServiceHandler::LspMethod> LspServiceHandler::_methodMap = {
-  { "textDocument/definition",     LspServiceHandler::LspMethod::Definition },
-  { "textDocument/implementation", LspServiceHandler::LspMethod::Implementation },
-  { "textDocument/references",     LspServiceHandler::LspMethod::References },
-  { "diagram/diagramTypes",        LspServiceHandler::LspMethod::DiagramTypes },
-  { "diagram/diagram",             LspServiceHandler::LspMethod::Diagram},
+std::unordered_map<std::string, CppLspServiceHandler::LspMethod> CppLspServiceHandler::_methodMap = {
+  { "textDocument/definition",     CppLspServiceHandler::LspMethod::Definition },
+  { "textDocument/implementation", CppLspServiceHandler::LspMethod::Implementation },
+  { "textDocument/references",     CppLspServiceHandler::LspMethod::References },
+  { "diagram/diagramTypes",        CppLspServiceHandler::LspMethod::DiagramTypes },
+  { "diagram/diagram",             CppLspServiceHandler::LspMethod::Diagram},
 };
 
-LspServiceHandler::LspServiceHandler(
+CppLspServiceHandler::CppLspServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
@@ -31,7 +31,7 @@ LspServiceHandler::LspServiceHandler(
 {
 }
 
-void LspServiceHandler::getLspResponse(std::string& _return, const std::string& request)
+void CppLspServiceHandler::getLspResponse(std::string& _return, const std::string& request)
 {
   pt::ptree responseTree;
   responseTree.put("jsonrpc", "2.0");
@@ -190,7 +190,7 @@ void LspServiceHandler::getLspResponse(std::string& _return, const std::string& 
   _return = responseStream.str();
 }
 
-std::vector<Location> LspServiceHandler::definition(
+std::vector<Location> CppLspServiceHandler::definition(
   const TextDocumentPositionParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -236,7 +236,7 @@ std::vector<Location> LspServiceHandler::definition(
   return definitionLocations;
 }
 
-std::vector<Location> LspServiceHandler::implementation(
+std::vector<Location> CppLspServiceHandler::implementation(
   const TextDocumentPositionParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -282,7 +282,7 @@ std::vector<Location> LspServiceHandler::implementation(
   return implementationLocations;
 }
 
-std::vector<Location> LspServiceHandler::references(
+std::vector<Location> CppLspServiceHandler::references(
   const ReferenceParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -364,7 +364,7 @@ std::vector<Location> LspServiceHandler::references(
   return usageLocations;
 }
 
-CompletionList LspServiceHandler::fileDiagramTypes(
+CompletionList CppLspServiceHandler::fileDiagramTypes(
   const DiagramTypeParams& params_)
 {
   model::FilePtr file = _transaction([&, this](){
@@ -395,7 +395,7 @@ CompletionList LspServiceHandler::fileDiagramTypes(
   return list;
 }
 
-CompletionList LspServiceHandler::nodeDiagramTypes(
+CompletionList CppLspServiceHandler::nodeDiagramTypes(
   const DiagramTypeParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -434,7 +434,7 @@ CompletionList LspServiceHandler::nodeDiagramTypes(
   return list;
 }
 
-Diagram LspServiceHandler::fileDiagram(
+Diagram CppLspServiceHandler::fileDiagram(
   const DiagramParams& params_)
 {
   model::FilePtr file = _transaction([&, this](){
@@ -457,7 +457,7 @@ Diagram LspServiceHandler::fileDiagram(
   return diagram;
 }
 
-Diagram LspServiceHandler::nodeDiagram(
+Diagram CppLspServiceHandler::nodeDiagram(
   const DiagramParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -490,7 +490,7 @@ Diagram LspServiceHandler::nodeDiagram(
   return diagram;
 }
 
-LspServiceHandler::LspMethod LspServiceHandler::parseMethod(const std::string& method)
+CppLspServiceHandler::LspMethod CppLspServiceHandler::parseMethod(const std::string& method)
 {
   auto it = _methodMap.find(method);
   if (it != _methodMap.end())
