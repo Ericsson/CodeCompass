@@ -8,8 +8,6 @@ type MetricsContextType = {
   setMetricsTypeNames: (_val: MetricsTypeName[]) => void;
   metricsFileInfo: FileInfo | undefined;
   setMetricsFileInfo: (_val: FileInfo | undefined) => void;
-  metrics: string;
-  setMetrics: (_val: string) => void;
 };
 
 export const MetricsContext = createContext<MetricsContextType>({
@@ -17,8 +15,6 @@ export const MetricsContext = createContext<MetricsContextType>({
   setMetricsTypeNames: (_val) => {},
   metricsFileInfo: undefined,
   setMetricsFileInfo: (_val) => {},
-  metrics: '',
-  setMetrics: (_val) => {},
 });
 
 export const MetricsContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
@@ -26,7 +22,6 @@ export const MetricsContextController = ({ children }: { children: JSX.Element |
 
   const [metricsTypeNames, setMetricsTypeNames] = useState<MetricsTypeName[]>([]);
   const [metricsFileInfo, setMetricsFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [metrics, setMetrics] = useState<string>('');
 
   useEffect(() => {
     if (!projectCtx.currentWorkspace) {
@@ -37,6 +32,8 @@ export const MetricsContextController = ({ children }: { children: JSX.Element |
 
       const metricsTypeNamesData = await getMetricsTypeNames();
       setMetricsTypeNames(metricsTypeNamesData);
+
+      setMetricsFileInfo(undefined);
     };
     init();
   }, [projectCtx.currentWorkspace]);
@@ -46,8 +43,6 @@ export const MetricsContextController = ({ children }: { children: JSX.Element |
     setMetricsTypeNames,
     metricsFileInfo,
     setMetricsFileInfo,
-    metrics,
-    setMetrics,
   };
 
   return <MetricsContext.Provider value={metricsContext}>{children}</MetricsContext.Provider>;
