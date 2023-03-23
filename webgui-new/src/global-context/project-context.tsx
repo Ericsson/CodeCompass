@@ -3,7 +3,6 @@ import { FileInfo } from '@thrift-generated';
 import { WorkspaceContext } from './workspace-context';
 import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
 import { getStore, setStore } from 'utils/store';
-import { createCppClient } from 'service/cpp-service';
 
 type TreeNode = {
   info: FileInfo;
