@@ -1,6 +1,6 @@
 import { Folder, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
-import { useContext } from 'react';
+import { useContext, useState, MouseEvent } from 'react';
 import { FileInfo } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
 import { getChildFiles, getFileContent, getParentFiles, getParents } from 'service/project-service';
@@ -8,6 +8,7 @@ import { FileIcon } from 'components/file-icon/file-icon';
 import { FileTree } from './file-tree';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 
 const Container = styled('div')({
   padding: '5px',
@@ -50,6 +51,37 @@ const FolderUp = styled('div')(({ theme }) => ({
 export const FileManager = (): JSX.Element => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
+
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
+  const [fileInfoForDiagram, setFileInfoForDiagram] = useState<FileInfo | undefined>(undefined);
+
+  const handleContextMenu = async (event: MouseEvent, fileInfo: FileInfo) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX + 2,
+            mouseY: event.clientY - 6,
+          }
+        : null
+    );
+    setFileInfoForDiagram(fileInfo);
+    if (fileInfo.isDirectory) {
+      const childFiles = await getChildFiles(fileInfo.id as string);
+      projectCtx.setFiles(childFiles);
+      projectCtx.setFolderPath(fileInfo.path as string);
+    } else {
+      const children = await getChildFiles(fileInfo.parent as string);
+      const fileContent = await getFileContent(fileInfo.id as string);
+      projectCtx.setFiles(children);
+      projectCtx.setFileContent(fileContent);
+      projectCtx.setFileInfo(fileInfo);
+      projectCtx.setSelectedFile(fileInfo.id as string);
+    }
+  };
 
   const navigateBack = async () => {
     if (projectCtx.folderPath === '/') {
@@ -113,6 +145,7 @@ export const FileManager = (): JSX.Element => {
               key={idx}
               data-id={file.id}
               onClick={() => handleFileClick(file)}
+              onContextMenu={(e) => handleContextMenu(e, file)}
               sx={{
                 backgroundColor: (theme) =>
                   file.id === projectCtx.selectedFile ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
@@ -138,6 +171,11 @@ export const FileManager = (): JSX.Element => {
             </IconLabel>
           );
         })}
+        <FileContextMenu
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          fileInfo={fileInfoForDiagram as FileInfo}
+        />
       </Container>
     </>
   );

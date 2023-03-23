@@ -13,6 +13,8 @@ import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { SearchContext } from 'global-context/search-context';
 import { Position } from '@thrift-generated';
+import { Diagrams } from 'components/diagrams/diagrams';
+import { Metrics } from 'components/metrics/metrics';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -139,10 +141,10 @@ const Project = () => {
             />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>
-            {placeholder}
+            <Metrics />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.DIAGRAMS}>
-            {placeholder}
+            <Diagrams />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.GIT_BLAME}>
             {placeholder}
