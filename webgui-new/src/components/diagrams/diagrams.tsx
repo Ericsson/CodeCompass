@@ -15,6 +15,7 @@ import { FileName } from 'components/file-name/file-name';
 import { LanguageContext } from 'global-context/language-context';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 
 const StyledDiv = styled('div')({});
 
@@ -46,28 +47,34 @@ const DiagramContainer = styled('div')({
 const DiagramOptionsContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
   gap: '1rem',
   padding: '10px',
   height: '50px',
   borderTop: `1px solid ${theme.colors?.primary}`,
 }));
 
-const ZoomOptions = styled('div')({
+const ZoomOptions = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '1rem',
-});
+  position: 'absolute',
+  right: 20,
+  bottom: 20,
+  zIndex: 10,
+  backgroundColor: theme.backgroundColors?.primary,
+  border: `1px solid ${theme.colors?.primary}`,
+  borderRadius: '15px',
+}));
 
 export const Diagrams = (): JSX.Element => {
   const languageCtx = useContext(LanguageContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
   const [exportTooltipOpen, setExportTooltipOpen] = useState<boolean>(false);
-  const [diagramSize, setDiagramSize] = useState<number>(1);
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
+  const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
     if (!diagramContainerRef.current) return;
@@ -75,9 +82,9 @@ export const Diagrams = (): JSX.Element => {
   }, [languageCtx.diagramFileInfo]);
 
   const generateFileDiagram = async (fileId: string) => {
-    if (!diagramContainerRef.current) return;
+    if (!diagramContainerRef.current || !transformComponentRef.current) return;
 
-    setDiagramSize(1);
+    transformComponentRef.current.resetTransform();
 
     const currentDiagramId = languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number;
     const fileDiagram = await getCppFileDiagram(fileId, currentDiagramId);
@@ -141,22 +148,6 @@ export const Diagrams = (): JSX.Element => {
     link.click();
   };
 
-  const scaleSVG = (option: 'zoomIn' | 'zoomOut' | 'reset') => {
-    const svgElement = diagramContainerRef.current?.querySelector('svg') as SVGSVGElement;
-    if (!svgElement) return;
-
-    if (option === 'zoomIn') {
-      svgElement.style.transform = `scale(${diagramSize + 0.1})`;
-      setDiagramSize((prevSize) => prevSize + 0.1);
-    } else if (option === 'zoomOut') {
-      svgElement.style.transform = `scale(${diagramSize - 0.1})`;
-      setDiagramSize((prevSize) => prevSize - 0.1);
-    } else {
-      svgElement.style.transform = 'scale(1)';
-      setDiagramSize(1);
-    }
-  };
-
   return languageCtx.diagramFileInfo ? (
     <div>
       <FileName
@@ -189,43 +180,49 @@ export const Diagrams = (): JSX.Element => {
               {`Generate ${languageCtx.fileType} diagram`}
             </Button>
           </GenerateOptionsContainer>
-          <DiagramContainer ref={diagramContainerRef} />
+          <TransformWrapper initialScale={1} initialPositionX={200} initialPositionY={100} ref={transformComponentRef}>
+            {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+              <StyledDiv sx={{ position: 'relative' }}>
+                <ZoomOptions>
+                  <IconButton onClick={() => zoomIn()}>
+                    <ZoomIn />
+                  </IconButton>
+                  <Button onClick={() => resetTransform()} sx={{ textTransform: 'none' }}>
+                    {'Reset'}
+                  </Button>
+                  <IconButton onClick={() => zoomOut()}>
+                    <ZoomOut />
+                  </IconButton>
+                </ZoomOptions>
+                <TransformComponent>
+                  <DiagramContainer ref={diagramContainerRef} />
+                </TransformComponent>
+              </StyledDiv>
+            )}
+          </TransformWrapper>
           <DiagramOptionsContainer>
-            <ZoomOptions>
-              <IconButton onClick={() => scaleSVG('zoomIn')}>
-                <ZoomIn />
-              </IconButton>
-              <Button onClick={() => scaleSVG('reset')} sx={{ textTransform: 'none' }}>
-                {'Reset'}
+            <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
+              {'Legend'}
+            </Button>
+            <Tooltip
+              PopperProps={{
+                disablePortal: true,
+              }}
+              onClose={() => setExportTooltipOpen(false)}
+              open={exportTooltipOpen}
+              disableFocusListener
+              disableHoverListener
+              disableTouchListener
+              title="Copied to clipboard"
+              arrow
+            >
+              <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
+                {'Export SVG'}
               </Button>
-              <IconButton onClick={() => scaleSVG('zoomOut')}>
-                <ZoomOut />
-              </IconButton>
-            </ZoomOptions>
-            <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-              <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
-                {'Legend'}
-              </Button>
-              <Tooltip
-                PopperProps={{
-                  disablePortal: true,
-                }}
-                onClose={() => setExportTooltipOpen(false)}
-                open={exportTooltipOpen}
-                disableFocusListener
-                disableHoverListener
-                disableTouchListener
-                title="Copied to clipboard"
-                arrow
-              >
-                <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
-                  {'Export SVG'}
-                </Button>
-              </Tooltip>
-              <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
-                {'Download image'}
-              </Button>
-            </StyledDiv>
+            </Tooltip>
+            <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
+              {'Download image'}
+            </Button>
             <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
               <Box
                 sx={{
