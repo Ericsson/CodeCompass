@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { ProjectContext } from './project-context';
 import { createCppClient, getCppFileDiagramTypes } from 'service/cpp-service';
-import { FileInfo } from '@thrift-generated';
+import { AstNodeInfo, FileInfo } from '@thrift-generated';
 
 type LanguageContextType = {
   diagramFileInfo: FileInfo | undefined;
@@ -12,6 +12,8 @@ type LanguageContextType = {
   setCurrentFileDiagramType: (_val: string) => void;
   fileType: string;
   setFileType: (_val: string) => void;
+  astNodeInfo: AstNodeInfo | undefined;
+  setAstNodeInfo: (_val: AstNodeInfo | undefined) => void;
 };
 
 export const LanguageContext = createContext<LanguageContextType>({
@@ -23,6 +25,8 @@ export const LanguageContext = createContext<LanguageContextType>({
   setCurrentFileDiagramType: (_val) => {},
   fileType: '',
   setFileType: (_val) => {},
+  astNodeInfo: undefined,
+  setAstNodeInfo: (_val) => {},
 });
 
 export const LanguageContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
@@ -32,6 +36,7 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
   const [fileDiagramTypes, setFileDiagramTypes] = useState<Map<string, number>>(new Map());
   const [currentFileDiagramType, setCurrentFileDiagramType] = useState<string>('');
   const [fileType, setFileType] = useState<string>('');
+  const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
 
   useEffect(() => {
     if (!projectCtx.currentWorkspace) return;
@@ -64,6 +69,8 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
     setCurrentFileDiagramType,
     fileType,
     setFileType,
+    astNodeInfo,
+    setAstNodeInfo,
   };
 
   return <LanguageContext.Provider value={languageContext}>{children}</LanguageContext.Provider>;

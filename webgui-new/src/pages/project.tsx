@@ -12,9 +12,12 @@ import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { SearchContext } from 'global-context/search-context';
-import { Position } from '@thrift-generated';
+import { FileRange } from '@thrift-generated';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
+import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
+import { LanguageContext } from 'global-context/language-context';
+import { AccordionLabel } from 'enums/accordion-enum';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -53,7 +56,7 @@ const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
+    <div role='tabpanel' hidden={value !== index} {...other}>
       {value === index && <>{children}</>}
     </div>
   );
@@ -71,6 +74,7 @@ const Project = () => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
   const searchCtx = useContext(SearchContext);
+  const languageCtx = useContext(LanguageContext);
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null);
 
@@ -78,8 +82,14 @@ const Project = () => {
     if (!searchCtx.matchingResult) return;
 
     const { range } = searchCtx.matchingResult;
-    const { line: startLine, column: startCol } = range?.range?.startpos as Position;
-    const { line: endLine, column: endCol } = range?.range?.endpos as Position;
+    dispatchSelection(range as FileRange);
+  }, [searchCtx.matchingResult, editorRef.current?.view]);
+
+  const dispatchSelection = (range: FileRange) => {
+    if (!range?.range?.startpos || !range?.range?.endpos) return;
+
+    const { line: startLine, column: startCol } = range?.range.startpos;
+    const { line: endLine, column: endCol } = range?.range.endpos;
 
     const editor = editorRef.current?.view;
     if (editor) {
@@ -94,7 +104,7 @@ const Project = () => {
         scrollIntoView: true,
       });
     }
-  }, [searchCtx.matchingResult, editorRef.current?.view]);
+  };
 
   return projectCtx.loadComplete ? (
     <OuterContainer>
@@ -106,14 +116,14 @@ const Project = () => {
             value={configCtx.activeTab}
             onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
           >
-            <StyledTab label="Welcome" />
-            <StyledTab label="Code" />
-            <StyledTab label="Metrics" />
-            <StyledTab label="Diagrams" />
-            <StyledTab label="Git blame" />
-            <StyledTab label="Git diff" />
-            <StyledTab label="User guide" />
-            <StyledTab label="Credits" />
+            <StyledTab label='Welcome' />
+            <StyledTab label='Code' />
+            <StyledTab label='Metrics' />
+            <StyledTab label='Diagrams' />
+            <StyledTab label='Git blame' />
+            <StyledTab label='Git diff' />
+            <StyledTab label='User guide' />
+            <StyledTab label='Credits' />
           </StyledTabs>
           <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
             {placeholder}
@@ -138,6 +148,26 @@ const Project = () => {
               style={{ fontSize: '0.8rem' }}
               ref={editorRef}
               onCreateEditor={(view, state) => (editorRef.current = { view, state })}
+              onClick={async () => {
+                if (!editorRef.current) return;
+
+                const view = editorRef.current.view;
+                if (!view) return;
+
+                const head = view.state.selection.main.head as number;
+                const line = view.state.doc.lineAt(head);
+                const column = view.state.selection.ranges[0].head - line.from;
+
+                const astNodeInfo = await getCppAstNodeInfoByPosition(
+                  projectCtx.fileInfo?.id as string,
+                  line.number,
+                  column
+                );
+
+                dispatchSelection(astNodeInfo?.range as FileRange);
+                languageCtx.setAstNodeInfo(astNodeInfo);
+                configCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
+              }}
             />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>
