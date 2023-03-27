@@ -223,7 +223,11 @@ export const SearchResults = (): JSX.Element => {
                                     <StyledTreeView
                                       defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
-                                      expanded={searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes}
+                                      expanded={
+                                        searchCtx.expandedFileNodes[pathNodeIdx.toString()]
+                                          ? searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes
+                                          : []
+                                      }
                                       onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
                                     >
                                       <StyledTreeItem
