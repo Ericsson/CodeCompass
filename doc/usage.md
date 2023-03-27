@@ -38,7 +38,7 @@ psql
 In the PostgreSQL command-line shell, type:
 
 ```sql
-CREATE USER compass WITH SUPERUSER LOGIN PASSWORD '<mypassword>';
+CREATE USER compass WITH CREATEDB LOGIN PASSWORD '<mypassword>';
 ```
 
 You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
@@ -47,9 +47,9 @@ with the given name and credentials is now created.
 This was the most basic way to set up access to the database. In case of a live,
 production, public server, certain other measures need to be taken to ensure
 secure access. For full documentation, see:
-- Read more about the [`CREATE USER`](https://www.postgresql.org/docs/9.5/static/sql-createuser.html)
+- Read more about the [`CREATE USER`](https://www.postgresql.org/docs/12/sql-createuser.html)
   command.
-- [PostgreSQL access configuration file](https://www.postgresql.org/docs/9.5/static/auth-pg-hba-conf.html)
+- [PostgreSQL access configuration file](https://www.postgresql.org/docs/12/auth-pg-hba-conf.html)
 
 The databases inside PostgreSQL instance will be created automatically by the
 CodeCompass parser, so the user needs rights for adding new database.
@@ -70,9 +70,9 @@ A manually started PostgreSQL server is automatically configured to your user,
 and your user only. No extra user creation or configuration needs to take place.
 
 For full documentation see:
-- [Initialize PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-initdb.html)
+- [Initialize PostgreSQL database](https://www.postgresql.org/docs/12/app-initdb.html)
   (`-E SQL_ASCII` flag is recommended!)
-- [Start PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-postgres.html)
+- [Start PostgreSQL database](https://www.postgresql.org/docs/12/app-postgres.html)
 
 ## 1. Generate compilation database
 If you want to parse a C++ project, you have to create a [compilation database
@@ -285,3 +285,10 @@ CodeCompass_webserver \
 
 The server will be available in a browser on
 [`http://localhost:6251`](http://localhost:6251).
+
+### Logging
+
+In both the parser and the webserver it is possible to write the logs to a given directory.
+This feature can be enabled by passing the `--logtarget` command line option with the full
+path to the directory to be used for storing the log files.
+If this argument is not specified, the logs will be written to the terminal only.

@@ -64,7 +64,8 @@ public:
     const std::string& indexDatabase_,
     const std::string& compassRoot_,
     OpenMode openMode_,
-    LockMode lockMode_ = LockMode::Simple);
+    LockMode lockMode_ = LockMode::Simple,
+    const std::string& logTarget_ = "");
   
   /**
    * Closes the I/O pipe so the child process will exit if it finished. Also

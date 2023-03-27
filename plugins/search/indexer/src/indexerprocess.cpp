@@ -30,7 +30,8 @@ IndexerProcess::IndexerProcess(
   const std::string& indexDatabase_,
   const std::string& compassRoot_,
   IndexerProcess::OpenMode openMode_,
-  IndexerProcess::LockMode lockMode_)
+  IndexerProcess::LockMode lockMode_,
+  const std::string& logTarget_)
 {
   openPipe(_pipeFd2[0], _pipeFd2[1]);
 
@@ -60,12 +61,13 @@ IndexerProcess::IndexerProcess(
       "java", JAVAMEMORYAMOUNT,
       "-classpath", classpath.c_str(),
       "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",
-      "-Djava.util.logging.SimpleFormatter.format=[%4$s] %5$s%6$s%n",
+      "-Djava.util.logging.SimpleFormatter.format=%1$tY-%1$tm-%1$td %1$tT [%4$s] %5$s%6$s%n",
       logLevelOpt.c_str(),
       "cc.search.indexer.app.Indexer",
       "-indexDB", indexDatabase_.c_str(),
       "-ipcInFd", inFd.c_str(),
-      "-ipcOutFd", outFd.c_str()
+      "-ipcOutFd", outFd.c_str(),
+      "-logTarget", logTarget_.c_str()
     };
 
     switch (openMode_)
