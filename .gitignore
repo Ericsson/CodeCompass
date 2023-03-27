@@ -6,3 +6,44 @@ nbproject/
 *.swp
 build/
 build_*/
+
+# Next.js project for webgui
+
+# dependencies
+webgui-new/node_modules
+webgui-new/.pnp
+webgui-new/.pnp.js
+
+# testing
+webgui-new/coverage
+
+# next.js
+webgui-new/.next/
+webgui-new/out/
+
+# production
+webgui-new/build
+
+# misc
+webgui-new/.DS_Store
+webgui-new/*.pem
+webgui-new/.env
+
+# debug
+webgui-new/npm-debug.log*
+webgui-new/yarn-debug.log*
+webgui-new/yarn-error.log*
+webgui-new/.pnpm-debug.log*
+
+# local env files
+webgui-new/.env*.local
+
+# vercel
+webgui-new/.vercel
+
+# typescript
+webgui-new/*.tsbuildinfo
+webgui-new/next-env.d.ts
+
+# thrift generated files
+webgui-new/generated/
