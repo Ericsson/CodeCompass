@@ -12,7 +12,7 @@ import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { SearchContext } from 'global-context/search-context';
-import { FileRange } from '@thrift-generated';
+import { Range } from '@thrift-generated';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
 import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
@@ -56,7 +56,7 @@ const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
   return (
-    <div role='tabpanel' hidden={value !== index} {...other}>
+    <div role={'tabpanel'} hidden={value !== index} {...other}>
       {value === index && <>{children}</>}
     </div>
   );
@@ -80,16 +80,21 @@ const Project = () => {
 
   useEffect(() => {
     if (!searchCtx.matchingResult) return;
-
     const { range } = searchCtx.matchingResult;
-    dispatchSelection(range as FileRange);
+    if (!range) return;
+    dispatchSelection(range.range as Range);
   }, [searchCtx.matchingResult, editorRef.current?.view]);
 
-  const dispatchSelection = (range: FileRange) => {
-    if (!range?.range?.startpos || !range?.range?.endpos) return;
+  useEffect(() => {
+    if (!languageCtx.nodeSelectionRange) return;
+    dispatchSelection(languageCtx.nodeSelectionRange);
+  }, [languageCtx.nodeSelectionRange, editorRef.current?.view]);
 
-    const { line: startLine, column: startCol } = range?.range.startpos;
-    const { line: endLine, column: endCol } = range?.range.endpos;
+  const dispatchSelection = (range: Range) => {
+    if (!range || !range.startpos || !range.endpos) return;
+
+    const { line: startLine, column: startCol } = range.startpos;
+    const { line: endLine, column: endCol } = range.endpos;
 
     const editor = editorRef.current?.view;
     if (editor) {
@@ -116,14 +121,14 @@ const Project = () => {
             value={configCtx.activeTab}
             onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
           >
-            <StyledTab label='Welcome' />
-            <StyledTab label='Code' />
-            <StyledTab label='Metrics' />
-            <StyledTab label='Diagrams' />
-            <StyledTab label='Git blame' />
-            <StyledTab label='Git diff' />
-            <StyledTab label='User guide' />
-            <StyledTab label='Credits' />
+            <StyledTab label={'Welcome'} />
+            <StyledTab label={'Code'} />
+            <StyledTab label={'Metrics'} />
+            <StyledTab label={'Diagrams'} />
+            <StyledTab label={'Git blame'} />
+            <StyledTab label={'Git diff'} />
+            <StyledTab label={'User guide'} />
+            <StyledTab label={'Credits'} />
           </StyledTabs>
           <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
             {placeholder}
@@ -164,7 +169,7 @@ const Project = () => {
                   column
                 );
 
-                dispatchSelection(astNodeInfo?.range as FileRange);
+                dispatchSelection(astNodeInfo?.range?.range as Range);
                 languageCtx.setAstNodeInfo(astNodeInfo);
                 configCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
               }}
