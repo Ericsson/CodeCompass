@@ -229,7 +229,6 @@ namespace CSharpParser
                     {
                         // If file was deleted by a separate application
                         Console.WriteLine(e.Message);
-                        continue;
                     }
                 }
             }
