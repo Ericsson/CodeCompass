@@ -15,15 +15,34 @@ namespace CSharpParser
     class Program
     {
         //private readonly CsharpDbContext _context;
-        private static string _rootDir = "";
+        private static List<string> _rootDir;
         private static string _buildDir = "";
         private static string _buildDirBase = "";
         private static string _connectionString = "";
 
         static int Main(string[] args)
         {
+            _rootDir = new List<string>();
             int threadNum = 4;
-            if (args.Length < 3)
+
+            try
+            {
+                _connectionString = args[0].Replace("'", "");
+                _buildDir = args[1].Replace("'", "");
+                _buildDirBase = args[2].Replace("'", "");
+                threadNum = int.Parse(args[3]);
+
+                for (int i = 4; i < args.Length; ++i)
+                {
+                    _rootDir.Add(args[i].Replace("'", ""));
+                }
+            }
+            catch (Exception e)
+            {
+                WriteLine("Error in parsing command!");
+                return 1;
+            }
+            /*if (args.Length < 3)
             {
                 WriteLine("Missing command-line arguments in CSharpParser!");                              
                 return 1;
@@ -60,7 +79,7 @@ namespace CSharpParser
             {
                 WriteLine("Too many command-line arguments in CSharpParser!");
                 return 1;
-            }
+            }*/
 
             //Converting the connectionstring into entiy framwork style connectionstring
             string csharpConnectionString = transformConnectionString();
@@ -72,7 +91,17 @@ namespace CSharpParser
             CsharpDbContext _context = new CsharpDbContext(options);
             _context.Database.Migrate();
 
-            IEnumerable<string> allFiles = GetSourceFilesFromDir(_rootDir, ".cs");
+            List<string> allFiles = new List<string>();
+            foreach (var p in _rootDir)
+            {
+                Console.WriteLine(p);
+                allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
+            }
+
+            foreach (var f in allFiles)
+            {
+                WriteLine(f);
+            }
             IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
             IEnumerable<string> assemblies_base = assemblies;
             if (args.Length == 5)
@@ -85,6 +114,7 @@ namespace CSharpParser
                 SyntaxTree tree = CSharpSyntaxTree.ParseText(programText, null, file);
                 trees.Add(tree);
             }
+            Write(trees.Count);
 
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
@@ -123,6 +153,7 @@ namespace CSharpParser
 
             var ParsingTasks = new List<Task<int>>();
             int maxThread = threadNum < trees.Count() ? threadNum : trees.Count();
+            WriteLine(threadNum);
             for (int i = 0; i < maxThread; i++)
             {                
                 ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i));
@@ -154,15 +185,16 @@ namespace CSharpParser
         private static async Task<int> ParseTree(CsharpDbContext context, 
             SyntaxTree tree, CSharpCompilation compilation, int index)
         {
-            var ParingTask = Task.Run(() =>
+            var ParsingTask = Task.Run(() =>
             {
+                WriteLine("ParallelRun " + tree.FilePath);
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(context, model, tree);
                 visitor.Visit(tree.GetCompilationUnitRoot());                
                 WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
                 return index;
             });
-            return await ParingTask;
+            return await ParsingTask;
         }
 
         public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)

@@ -14,6 +14,7 @@
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
 #include <util/threadpool.h>
+#include <util/filesystem.h>
 
 #include <memory>
 
@@ -26,10 +27,14 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   _threadNum = _ctx.options["jobs"].as<int>();
 }
-
+/*
 bool CsharpParser::acceptProjectBuildPath(const std::vector<std::string>& path_)
 {
   return path_.size() >= 2 && fs::is_directory(path_[0]) && fs::is_directory(path_[1]);
+}*/
+bool CsharpParser::acceptProjectBuildPath(const std::string& buildPath_)
+{
+  return fs::is_directory(buildPath_);
 }
 
 bool CsharpParser::parse()
@@ -37,12 +42,13 @@ bool CsharpParser::parse()
   bool success = true;
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
+  std::string buildPath = _ctx.options["build-dir"].as<std::string>();
   
-    if (acceptProjectBuildPath(paths))
+    if (acceptProjectBuildPath(buildPath))
     {
       LOG(debug) << "C# parser parse path: " << paths[0];
-      LOG(debug) << "Parsed csharp project build path: " << paths[1];
-      success = success && parseProjectBuildPath(paths);
+      LOG(debug) << "Parsed csharp project build path: " << buildPath;
+      success = success && parseProjectBuildPath(paths, buildPath);
     }
     else
     {
@@ -53,24 +59,43 @@ bool CsharpParser::parse()
   return success;
 }
 
-bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
+bool CsharpParser::parseProjectBuildPath(
+  const std::vector<std::string>& paths_,
+  const std::string& buildPath_)
 {
   namespace ch = std::chrono;
-  fs::path csharp_path = fs::system_complete("../lib/csharp/");
-
   std::future<std::string> log;
+  fs::path csharp_path = util::findCurrentExecutableDir() + "/../lib/csharp/";
 
+  /*
+   * Concatenate the command parameters to pass to the C# parser.
+   * 1) C# parser binary
+   * 2) Database connection string
+   * 3) Project build directory path
+   * 4) CC lib directory path
+   * 5) Thread number
+   * 6+) Source directories
+   */
   std::string command("./CSharpParser ");
   command.append("'");
   command.append(_ctx.options["database"].as<std::string>());
   command.append("' '");
-  command.append(paths_[0]);
-  command.append("' '");
-  command.append(paths_[1]);
+  command.append(buildPath_);
   command.append("' '");
   command.append(csharp_path.string());
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
+
+  for (auto p : paths_)
+  {
+    if (fs::is_directory(p))
+    {
+      command.append(" '");
+      command.append(p);
+      command.append("' ");
+    }
+  }
+
   LOG(debug) << "CSharpParser command: " << command;
 
   ch::steady_clock::time_point begin = ch::steady_clock::now();
@@ -83,6 +108,7 @@ bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_)
 
   std::string line;
   std::stringstream log_str(log.get());
+  //LOG(warning) << log_str.str();
   int countFull = 0, countPart = 0;
   
   while(std::getline(log_str, line, '\n'))
@@ -151,8 +177,8 @@ extern "C"
     boost::program_options::options_description description("C# Plugin");
 
     description.add_options()
-        ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),
-          "This argument will be used by the dummy parser.");
+        ("build-dir,b", po::value<std::string>()->default_value("Build directory"),
+          "The build directory of the parsed project.");
 
     return description;
   }
