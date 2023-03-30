@@ -98,16 +98,20 @@ const Project = () => {
 
     const editor = editorRef.current?.view;
     if (editor) {
-      const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
-      const toPos = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+      try {
+        const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
+        const toPos = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
 
-      editor.dispatch({
-        selection: {
-          anchor: fromPos,
-          head: toPos,
-        },
-        scrollIntoView: true,
-      });
+        editor.dispatch({
+          selection: {
+            anchor: fromPos,
+            head: toPos,
+          },
+          scrollIntoView: true,
+        });
+      } catch {
+        return;
+      }
     }
   };
 

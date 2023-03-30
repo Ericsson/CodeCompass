@@ -47,6 +47,7 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
     if (!projectCtx.currentWorkspace) return;
     const init = async () => {
       createCppClient(projectCtx.currentWorkspace);
+      setAstNodeInfo(undefined);
     };
     init();
   }, [projectCtx.currentWorkspace]);
