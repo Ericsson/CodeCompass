@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import { ConfigContext } from 'global-context/config-context';
 import { LanguageContext } from 'global-context/language-context';
-import { Box, Menu, MenuItem, Modal, styled } from '@mui/material';
+import { Box, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
 import { TabName } from 'enums/tab-enum';
 import { getCppDocumentation } from 'service/cpp-service';
 
@@ -39,6 +39,7 @@ export const EditorContextMenu = ({
 
   const [docsModalOpen, setDocsModalOpen] = useState<boolean>(false);
   const [docs, setDocs] = useState<string>('');
+  const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!languageCtx.astNodeInfo) return;
@@ -49,6 +50,16 @@ export const EditorContextMenu = ({
     setDocs(initDocs);
     setDocsModalOpen(true);
     setContextMenu(null);
+  };
+
+  // TODO: store selection in URL
+  const getSelectionLink = () => {
+    const selectionLink = window.location.href;
+    navigator.clipboard.writeText(selectionLink);
+    setSelectionTooltipOpen(true);
+    setTimeout(() => {
+      setSelectionTooltipOpen(false);
+    }, 2000);
   };
 
   return (
@@ -68,6 +79,22 @@ export const EditorContextMenu = ({
           }}
         >
           {'Diagrams'}
+        </MenuItem>
+        <MenuItem disabled onClick={() => getSelectionLink()}>
+          <Tooltip
+            PopperProps={{
+              disablePortal: true,
+            }}
+            onClose={() => setSelectionTooltipOpen(false)}
+            open={selectionTooltipOpen}
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            title="Copied to clipboard"
+            arrow
+          >
+            <div>{'Get permalink to selection'}</div>
+          </Tooltip>
         </MenuItem>
       </Menu>
       <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)}>

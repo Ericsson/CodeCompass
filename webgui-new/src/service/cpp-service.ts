@@ -229,12 +229,12 @@ export const getCppDocumentation = async (astNodeId: string) => {
   }
 };
 
-export const getCppAstNodeInfo = async (fileId: string) => {
+export const getCppAstNodeInfo = async (astNodeId: string) => {
   if (!client) {
     return;
   }
   try {
-    return await client.getAstNodeInfo(fileId);
+    return await client.getAstNodeInfo(astNodeId);
   } catch {
     return;
   }
