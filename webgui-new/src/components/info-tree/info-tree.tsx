@@ -9,6 +9,8 @@ import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
 import { getParents, getFileContent, getFileInfo } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
+import { ConfigContext } from 'global-context/config-context';
+import { TabName } from 'enums/tab-enum';
 
 const StyledDiv = styled('div')({});
 const StyledSpan = styled('span')({});
@@ -46,6 +48,7 @@ const Label = styled('div')(({ theme }) => ({
 }));
 
 export const InfoTree = (): JSX.Element => {
+  const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
   const languageCtx = useContext(LanguageContext);
 
@@ -106,6 +109,7 @@ export const InfoTree = (): JSX.Element => {
     projectCtx.setSelectedFile(fileId);
     projectCtx.setExpandedFileTreeNodes(parents);
     languageCtx.setNodeSelectionRange(astNodeInfo.range?.range as Range);
+    configCtx.setActiveTab(TabName.CODE);
   };
 
   return languageCtx.astNodeInfo ? (

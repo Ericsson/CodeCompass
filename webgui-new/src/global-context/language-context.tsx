@@ -1,17 +1,17 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { ProjectContext } from './project-context';
-import { createCppClient, getCppFileDiagramTypes } from 'service/cpp-service';
+import { createCppClient, getCppDiagramTypes, getCppFileDiagramTypes } from 'service/cpp-service';
 import { AstNodeInfo, FileInfo, FileRange, Range } from '@thrift-generated';
 
 type LanguageContextType = {
-  diagramFileInfo: FileInfo | undefined;
-  setDiagramFileInfo: (_val: FileInfo | undefined) => void;
-  fileDiagramTypes: Map<string, number>;
-  setFileDiagramTypes: (_val: Map<string, number>) => void;
-  currentFileDiagramType: string;
-  setCurrentFileDiagramType: (_val: string) => void;
-  fileType: string;
-  setFileType: (_val: string) => void;
+  diagramInfo: FileInfo | AstNodeInfo | undefined;
+  setDiagramInfo: (_val: FileInfo | AstNodeInfo | undefined) => void;
+  diagramTypes: Map<string, number>;
+  setDiagramTypes: (_val: Map<string, number>) => void;
+  currentDiagramType: string;
+  setCurrentDiagramType: (_val: string) => void;
+  entityType: string;
+  setEntityType: (_val: string) => void;
   astNodeInfo: AstNodeInfo | undefined;
   setAstNodeInfo: (_val: AstNodeInfo | undefined) => void;
   nodeSelectionRange: Range | undefined;
@@ -19,14 +19,14 @@ type LanguageContextType = {
 };
 
 export const LanguageContext = createContext<LanguageContextType>({
-  diagramFileInfo: undefined,
-  setDiagramFileInfo: (_val) => {},
-  fileDiagramTypes: new Map(),
-  setFileDiagramTypes: (_val) => {},
-  currentFileDiagramType: '',
-  setCurrentFileDiagramType: (_val) => {},
-  fileType: '',
-  setFileType: (_val) => {},
+  diagramInfo: undefined,
+  setDiagramInfo: (_val) => {},
+  diagramTypes: new Map(),
+  setDiagramTypes: (_val) => {},
+  currentDiagramType: '',
+  setCurrentDiagramType: (_val) => {},
+  entityType: '',
+  setEntityType: (_val) => {},
   astNodeInfo: undefined,
   setAstNodeInfo: (_val) => {},
   nodeSelectionRange: undefined,
@@ -36,10 +36,10 @@ export const LanguageContext = createContext<LanguageContextType>({
 export const LanguageContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
 
-  const [diagramFileInfo, setDiagramFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [fileDiagramTypes, setFileDiagramTypes] = useState<Map<string, number>>(new Map());
-  const [currentFileDiagramType, setCurrentFileDiagramType] = useState<string>('');
-  const [fileType, setFileType] = useState<string>('');
+  const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
+  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
+  const [currentDiagramType, setCurrentDiagramType] = useState<string>('');
+  const [entityType, setEntityType] = useState<string>('');
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [nodeSelectionRange, setNodeSelectionRange] = useState<FileRange | undefined>(undefined);
 
@@ -53,28 +53,36 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
   }, [projectCtx.currentWorkspace]);
 
   useEffect(() => {
-    if (!diagramFileInfo) return;
+    if (!diagramInfo) return;
 
     const init = async () => {
-      const fType = diagramFileInfo?.type as string;
-      const fileDiagramTypesRes = await getCppFileDiagramTypes(diagramFileInfo?.id as string);
+      let initEntityType = '';
+      let initDiagramTypes: typeof diagramTypes = new Map();
 
-      setFileType(fType);
-      setFileDiagramTypes(fileDiagramTypesRes);
-      setCurrentFileDiagramType(Object.keys(Object.fromEntries(fileDiagramTypesRes))[0]);
+      if (diagramInfo instanceof FileInfo) {
+        initEntityType = diagramInfo?.type as string;
+        initDiagramTypes = await getCppFileDiagramTypes(diagramInfo?.id as string);
+      } else if (diagramInfo instanceof AstNodeInfo) {
+        initEntityType = diagramInfo.astNodeType as string;
+        initDiagramTypes = await getCppDiagramTypes(diagramInfo?.id as string);
+      }
+
+      setEntityType(initEntityType);
+      setDiagramTypes(initDiagramTypes);
+      setCurrentDiagramType(Object.keys(Object.fromEntries(initDiagramTypes))[0]);
     };
     init();
-  }, [diagramFileInfo]);
+  }, [diagramInfo]);
 
   const languageContext = {
-    diagramFileInfo,
-    setDiagramFileInfo,
-    fileDiagramTypes,
-    setFileDiagramTypes,
-    currentFileDiagramType,
-    setCurrentFileDiagramType,
-    fileType,
-    setFileType,
+    diagramInfo,
+    setDiagramInfo,
+    diagramTypes,
+    setDiagramTypes,
+    currentDiagramType,
+    setCurrentDiagramType,
+    entityType,
+    setEntityType,
     astNodeInfo,
     setAstNodeInfo,
     nodeSelectionRange,
