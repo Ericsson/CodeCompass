@@ -8,6 +8,7 @@ import { getCppReferenceTypes, getCppReferences, getCppProperties, getCppReferen
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
 import { getParents, getFileContent, getFileInfo } from 'service/project-service';
+import { FileIcon } from 'components/file-icon/file-icon';
 
 const StyledDiv = styled('div')({});
 const StyledSpan = styled('span')({});
@@ -48,35 +49,49 @@ export const InfoTree = (): JSX.Element => {
   const projectCtx = useContext(ProjectContext);
   const languageCtx = useContext(LanguageContext);
 
-  const [referenceTypes, setReferenceTypes] = useState<Map<string, number>>(new Map());
-  const [referenceCounts, setReferenceCounts] = useState<Map<string, number>>(new Map());
-  const [references, setReferences] = useState<Map<string, AstNodeInfo[]>>(new Map());
-  const [properties, setProperties] = useState<Map<string, string>>(new Map());
+  const [props, setProps] = useState<Map<string, string>>(new Map());
+  const [refTypes, setRefTypes] = useState<Map<string, number>>(new Map());
+  const [refCounts, setRefCounts] = useState<Map<string, number>>(new Map());
+  const [refs, setRefs] = useState<Map<string, AstNodeInfo[]>>(new Map());
+  const [fileUsages, setFileUsages] = useState<Map<string, FileInfo[]>>(new Map());
   const [loadComplete, setLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
     if (!languageCtx.astNodeInfo) return;
     setLoadComplete(false);
-
     const init = async () => {
-      const astNodeId = languageCtx.astNodeInfo?.id as string;
-      const refTypes = await getCppReferenceTypes(astNodeId);
-      setReferenceTypes(refTypes);
+      const astNode = languageCtx.astNodeInfo as AstNodeInfo;
 
-      const refCounts: typeof referenceCounts = new Map();
-      const refs: typeof references = new Map();
-      for (const [key, value] of refTypes) {
-        const refCount = await getCppReferenceCount(astNodeId, value);
-        refCounts.set(key, refCount);
+      const initProps = await getCppProperties(astNode.id as string);
+      const initRefTypes = await getCppReferenceTypes(astNode.id as string);
+      const initRefCounts: typeof refCounts = new Map();
+      const initRefs: typeof refs = new Map();
+      const initFileUsages: typeof fileUsages = new Map();
 
-        const refsForType = await getCppReferences(astNodeId, value, []);
-        refs.set(key, refsForType);
+      for (const [rType, rId] of initRefTypes) {
+        const refCount = await getCppReferenceCount(astNode.id as string, rId);
+        initRefCounts.set(rType, refCount);
+
+        const refsForType = await getCppReferences(astNode.id as string, rId, astNode.tags ?? []);
+        initRefs.set(rType, refsForType);
+
+        if (rType === 'Caller' || rType === 'Usage') {
+          const fileInfos: FileInfo[] = [];
+          for (const fId of [...new Set(refsForType.map((aInfo) => aInfo.range?.file as string))]) {
+            const fInfo = await getFileInfo(fId);
+            fileInfos.push(fInfo as FileInfo);
+          }
+          initFileUsages.set(rType, [...new Set(fileInfos)]);
+        } else {
+          initFileUsages.set(rType, []);
+        }
       }
-      setReferenceCounts(refCounts);
-      setReferences(refs);
 
-      const props = await getCppProperties(astNodeId);
-      setProperties(props);
+      setProps(initProps);
+      setRefTypes(initRefTypes);
+      setRefCounts(initRefCounts);
+      setRefs(initRefs);
+      setFileUsages(initFileUsages);
     };
     init().then(() => setLoadComplete(true));
   }, [languageCtx.astNodeInfo]);
@@ -100,9 +115,9 @@ export const InfoTree = (): JSX.Element => {
           sx={{ fontWeight: 'bold' }}
         >{`${languageCtx.astNodeInfo.symbolType}: ${languageCtx.astNodeInfo.astNodeValue}`}</StyledDiv>
         <StyledDiv>
-          {Array.from(properties.keys()).map((name, idx) => (
+          {Array.from(props.keys()).map((name, idx) => (
             <StyledDiv key={idx}>
-              <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {properties.get(name)}
+              <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {props.get(name)}
             </StyledDiv>
           ))}
         </StyledDiv>
@@ -112,24 +127,48 @@ export const InfoTree = (): JSX.Element => {
           defaultCollapseIcon={<ExpandMore />}
           sx={{ width: 'max-content' }}
         >
-          {Array.from(referenceTypes.keys())
-            .filter((type) => referenceCounts.get(type) !== 0)
-            .map((type, idx) => (
+          {Array.from(refTypes.keys())
+            .filter((type) => refCounts.get(type) !== 0)
+            .map((type, refTypeIdx) => (
               <StyledTreeItem
-                nodeId={`${idx}`}
-                key={idx}
+                nodeId={`${refTypeIdx}`}
+                key={refTypeIdx}
                 label={
                   <StyledDiv sx={{ fontSize: '0.85rem' }}>
-                    {type} ({referenceCounts.get(type)})
+                    {type} ({refCounts.get(type)})
                   </StyledDiv>
                 }
               >
-                {references.get(type)?.map((ref) => (
-                  <Label key={ref.id} onClick={() => jumpToRef(ref)}>
-                    <Code sx={{ width: '20px', height: '20px' }} />
-                    <StyledDiv>{ref.astNodeValue}</StyledDiv>
-                  </Label>
-                ))}
+                {fileUsages.get(type)?.length
+                  ? fileUsages.get(type)?.map((fileInfo) => (
+                      <StyledTreeItem
+                        nodeId={`${fileInfo.id}:${refTypeIdx}`}
+                        key={fileInfo.id}
+                        icon={<FileIcon fileName={fileInfo.name as string} />}
+                        label={
+                          <StyledDiv sx={{ fontSize: '0.85rem' }}>
+                            {fileInfo.name} (
+                            {refs.get(type)?.filter((aInfo) => aInfo.range?.file === fileInfo.id).length})
+                          </StyledDiv>
+                        }
+                      >
+                        {refs
+                          .get(type)
+                          ?.filter((aInfo) => aInfo.range?.file === fileInfo.id)
+                          .map((aInfo) => (
+                            <Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
+                              <Code sx={{ width: '20px', height: '20px' }} />
+                              <StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</StyledDiv>
+                            </Label>
+                          ))}
+                      </StyledTreeItem>
+                    ))
+                  : refs.get(type)?.map((aInfo) => (
+                      <Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
+                        <Code sx={{ width: '20px', height: '20px' }} />
+                        <StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</StyledDiv>
+                      </Label>
+                    ))}
               </StyledTreeItem>
             ))}
         </StyledTreeView>
