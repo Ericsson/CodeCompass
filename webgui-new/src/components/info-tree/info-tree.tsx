@@ -112,7 +112,14 @@ export const InfoTree = (): JSX.Element => {
     loadComplete ? (
       <OuterContainer>
         <StyledDiv
-          sx={{ fontWeight: 'bold' }}
+          onClick={() => jumpToRef(languageCtx.astNodeInfo as AstNodeInfo)}
+          sx={{
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            ':hover': {
+              backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
+            },
+          }}
         >{`${languageCtx.astNodeInfo.symbolType}: ${languageCtx.astNodeInfo.astNodeValue}`}</StyledDiv>
         <StyledDiv>
           {Array.from(props.keys()).map((name, idx) => (
