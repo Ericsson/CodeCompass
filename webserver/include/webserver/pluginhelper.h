@@ -15,7 +15,7 @@
 #include <util/dbutil.h>
 #include <util/webserverutil.h>
 
-#include "requesthandler.h"
+#include "thrifthandler.h"
 #include "lsphandler.h"
 
 namespace cc
@@ -198,8 +198,8 @@ inline void registerLspPluginSimple(
      std::shared_ptr<std::string> datadir_, \
      const cc::webserver::ServerContext& ctx_) { \
     return new cc::webserver::LspHandler< \
-      cc::service::nspace::serviceName##ServiceProcessor>( \
-        new cc::service::nspace::serviceName##ServiceHandler( \
+      cc::service::nspace::serviceName##LspServiceHandler>( \
+        new cc::service::nspace::serviceName##LspServiceHandler( \
           db_, datadir_, ctx_)); \
   }
 

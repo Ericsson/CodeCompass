@@ -1,4 +1,3 @@
-#include "LspService.h"
 #include <boost/program_options.hpp>
 #include <webserver/pluginhelper.h>
 #include <webserver/pluginhandler.h>
@@ -25,7 +24,7 @@ extern "C"
     cc::webserver::registerLspPluginSimple(
       context_,
       pluginHandler_,
-      CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(CppLsp, lsp),
+      CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(Cpp, lsp),
       "LspService");
   }
 }

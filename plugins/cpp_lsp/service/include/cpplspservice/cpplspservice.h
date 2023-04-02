@@ -8,7 +8,6 @@
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
 
-#include "CppLspService.h"
 #include <service/cppservice.h>
 #include <cpplspservice/lsp_types.h>
 
@@ -19,7 +18,7 @@ namespace service
 namespace lsp
 {
 
-class CppLspServiceHandler : virtual public CppLspServiceIf
+class CppLspServiceHandler
 {
 public:
   CppLspServiceHandler(
@@ -27,7 +26,7 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  virtual void getLspResponse(std::string& _return, const std::string& request) override;
+  void getLspResponse(std::string& _return, const std::string& request);
 
   std::vector<Location> definition(
     const TextDocumentPositionParams& params_);

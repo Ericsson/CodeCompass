@@ -24,7 +24,6 @@ target_include_directories(CodeCompass_webserver PUBLIC
   include
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/service/lsp/include
   ${PROJECT_BINARY_DIR}/service/language/gen-cpp
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp
   ${PROJECT_SOURCE_DIR}/service/project/include
@@ -33,7 +32,6 @@ target_include_directories(CodeCompass_webserver PUBLIC
 
 target_link_libraries(CodeCompass_webserver
   util
-  lspservice
   cppservice
   mongoose
   ${Boost_LIBRARIES}

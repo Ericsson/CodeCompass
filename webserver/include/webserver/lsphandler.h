@@ -1,14 +1,14 @@
 #ifndef CC_WEBSERVER_LSPHANDLER_H
 #define CC_WEBSERVER_LSPHANDLER_H
 
+#include <memory>
 #include <regex>
 #include <unordered_map>
 
-//#include <lspservice/lspservice.h>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "webserver/thrifthandler.h"
+#include "webserver/requesthandler.h"
 
 #include <util/logutil.h>
 #include <util/dbutil.h>
@@ -18,8 +18,8 @@ namespace cc
 namespace webserver
 {
 
-template <class Processor>
-class LspHandler : public ThriftHandler<Processor>
+template <class LspServiceT>
+class LspHandler : public RequestHandler
 {
 public:
   std::string key() const override
@@ -27,62 +27,23 @@ public:
     return "LspHandler";
   }
 
-  template<class Handler>
-  LspHandler(Handler handler_)
-    : ThriftHandler<Processor>(handler_)
+  LspHandler(std::unique_ptr<LspServiceT>&& service_) : lspService(std::move(service_))
   {
   }
 
-  template<class Handler>
-  LspHandler(Handler *handler_)
-    : ThriftHandler<Processor>(handler_)
+  LspHandler(LspServiceT *service_) : lspService(service_)
   {
   }
 
 int beginRequest(struct mg_connection *conn_) override
 {
-  using namespace ::apache::thrift;
-  using namespace ::apache::thrift::transport;
-  using namespace ::apache::thrift::protocol;
-
   try
   {
-    std::string content = getContent(conn_);
-    LOG(debug) << "[LSP] Request content:\n" << content;
+    std::string request = getContent(conn_);
+    LOG(debug) << "[LSP] Request content:\n" << request;
 
-    // Place LSP message into thrift message
-    boost::replace_all(content, "\"", "\\\"");
-    std::string request = "[1,\"getLspResponse\",1,0,{\"1\":{\"str\":\"" + content + "\"}}]";
-
-    std::shared_ptr<TTransport> inputBuffer(
-      new TMemoryBuffer((std::uint8_t*)request.c_str(), request.length()));
-
-    std::shared_ptr<TTransport> outputBuffer(new TMemoryBuffer(4096));
-
-    std::shared_ptr<TProtocol> inputProtocol(
-      new TJSONProtocol(inputBuffer));
-    std::shared_ptr<TProtocol> outputProtocol(
-      new TJSONProtocol(outputBuffer));
-
-    typename LspHandler<Processor>::CallContext ctx{conn_, nullptr};
-    LspHandler<Processor>::_processor.process(inputProtocol, outputProtocol, &ctx);
-
-    TMemoryBuffer *mBuffer = dynamic_cast<TMemoryBuffer*>(outputBuffer.get());
-
-    std::string response = mBuffer->getBufferAsString();
-
-    // Get LSP response from thrift
-    std::regex rgx("\\[1,\"getLspResponse\",2,0,\\{\"0\":\\{\"str\":\"(.*)\"\\}\\}\\]");
-    std::smatch match;
-    std::regex_search(response, match, rgx);
-    response = match[1];
-
-    // Remove escape characters
-    boost::replace_all(response, "\\\\n", "");
-    boost::replace_all(response, "\\n", "");
-    boost::replace_all(response, "\\\"", "\"");
-    boost::replace_all(response, "\\\\/", "/");
-    boost::replace_all(response, "\\\\\"", "\\\"");
+    std::string response{};
+    lspService->getLspResponse(response, request);
 
     LOG(debug) << "[LSP] Response content:\n" << response << std::endl;
 
@@ -118,6 +79,8 @@ private:
   {
     return std::string(conn_->content, conn_->content + conn_->content_len);
   }
+
+  std::unique_ptr<LspServiceT> lspService;
 };
 
 } // webserver
