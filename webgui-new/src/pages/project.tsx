@@ -148,6 +148,7 @@ const Project = () => {
 
     dispatchSelection(astNodeInfo?.range?.range as Range);
     languageCtx.setAstNodeInfo(astNodeInfo);
+    if (!astNodeInfo) return;
     configCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
   };
 

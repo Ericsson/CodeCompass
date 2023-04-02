@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { ProjectContext } from './project-context';
 import { createCppClient, getCppDiagramTypes, getCppFileDiagramTypes } from 'service/cpp-service';
 import { AstNodeInfo, FileInfo, FileRange, Range } from '@thrift-generated';
+import { createCppReparseClient } from 'service/cpp-reparse-service';
 
 type LanguageContextType = {
   diagramInfo: FileInfo | AstNodeInfo | undefined;
@@ -47,6 +48,7 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
     if (!projectCtx.currentWorkspace) return;
     const init = async () => {
       createCppClient(projectCtx.currentWorkspace);
+      createCppReparseClient(projectCtx.currentWorkspace);
       setAstNodeInfo(undefined);
     };
     init();

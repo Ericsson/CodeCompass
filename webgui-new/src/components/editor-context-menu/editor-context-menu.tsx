@@ -1,21 +1,22 @@
-import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import { ConfigContext } from 'global-context/config-context';
 import { LanguageContext } from 'global-context/language-context';
-import { Box, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
+import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
+import { Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import { getCppDocumentation } from 'service/cpp-service';
+import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 
 const StyledDiv = styled('div')({});
 
-const DocsContainer = styled('div')(({ theme }) => ({
+const ModalContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   gap: '1rem',
   padding: '10px',
-  width: '500px',
-  height: '500px',
-  overflow: 'scroll',
+  width: '80vw',
+  height: '80vh',
   backgroundColor: theme.backgroundColors?.primary,
 }));
 
@@ -37,19 +38,44 @@ export const EditorContextMenu = ({
   const configCtx = useContext(ConfigContext);
   const languageCtx = useContext(LanguageContext);
 
-  const [docsModalOpen, setDocsModalOpen] = useState<boolean>(false);
-  const [docs, setDocs] = useState<string>('');
+  const astHTMLContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [docs, setDocs] = useState<string | undefined>(undefined);
   const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (!languageCtx.astNodeInfo) return;
   }, [languageCtx.astNodeInfo]);
 
+  const closeModal = () => {
+    setDocs(undefined);
+    setModalOpen(false);
+    if (!astHTMLContainerRef.current) return;
+    astHTMLContainerRef.current.innerHTML = '';
+  };
+
   const getDocs = async () => {
     const initDocs = await getCppDocumentation(languageCtx.astNodeInfo?.id as string);
     setDocs(initDocs);
-    setDocsModalOpen(true);
+    setModalOpen(true);
     setContextMenu(null);
+  };
+
+  const getAstHTML = async () => {
+    const initAstHTML = await getAsHTMLForNode(languageCtx.astNodeInfo?.id as string);
+    const parser = new DOMParser();
+    const parsedHTML = parser.parseFromString(initAstHTML, 'text/html');
+    setModalOpen(true);
+    setContextMenu(null);
+    if (!astHTMLContainerRef.current) return;
+    if (initAstHTML !== '') {
+      astHTMLContainerRef.current.appendChild(parsedHTML.body);
+    } else {
+      const placeHolder = document.createElement('div');
+      placeHolder.innerHTML = 'No AST HTML available for this node';
+      astHTMLContainerRef.current.appendChild(placeHolder);
+    }
   };
 
   // TODO: store selection in URL
@@ -62,12 +88,12 @@ export const EditorContextMenu = ({
     }, 2000);
   };
 
-  return (
+  return languageCtx.astNodeInfo ? (
     <>
       <Menu
         open={contextMenu !== null}
         onClose={() => setContextMenu(null)}
-        anchorReference="anchorPosition"
+        anchorReference={'anchorPosition'}
         anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
       >
         <MenuItem onClick={() => getDocs()}>{'Documentation'}</MenuItem>
@@ -80,6 +106,7 @@ export const EditorContextMenu = ({
         >
           {'Diagrams'}
         </MenuItem>
+        <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
         <MenuItem disabled onClick={() => getSelectionLink()}>
           <Tooltip
             PopperProps={{
@@ -90,14 +117,14 @@ export const EditorContextMenu = ({
             disableFocusListener
             disableHoverListener
             disableTouchListener
-            title="Copied to clipboard"
+            title={'Copied to clipboard'}
             arrow
           >
             <div>{'Get permalink to selection'}</div>
           </Tooltip>
         </MenuItem>
       </Menu>
-      <Modal open={docsModalOpen} onClose={() => setDocsModalOpen(false)}>
+      <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
         <Box
           sx={{
             position: 'absolute',
@@ -106,14 +133,24 @@ export const EditorContextMenu = ({
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <DocsContainer>
-            <StyledDiv
-              sx={{ fontWeight: 'bold' }}
-            >{`${languageCtx.astNodeInfo?.astNodeType}: ${languageCtx.astNodeInfo?.astNodeValue}`}</StyledDiv>
-            <div>{docs ? docs : 'No documentation available for this node.'}</div>
-          </DocsContainer>
+          <ModalContainer>
+            <StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <StyledDiv sx={{ fontWeight: 'bold' }}>
+                {`${languageCtx.astNodeInfo?.astNodeType}: ${languageCtx.astNodeInfo?.astNodeValue}`}
+              </StyledDiv>
+              <IconButton onClick={() => closeModal()}>
+                <Close />
+              </IconButton>
+            </StyledDiv>
+            <StyledDiv sx={{ padding: '10px', width: '100%', overflow: 'scroll' }}>
+              {docs !== undefined ? (docs === '' ? 'No documentation available for this node.' : docs) : ''}
+              <div ref={astHTMLContainerRef}></div>
+            </StyledDiv>
+          </ModalContainer>
         </Box>
       </Modal>
     </>
+  ) : (
+    <></>
   );
 };
