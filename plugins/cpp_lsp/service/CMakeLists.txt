@@ -17,9 +17,7 @@ add_library(cpplspservice SHARED
   src/plugin.cpp)
 
 target_link_libraries(cpplspservice
+  cppservice
   util)
-
-add_dependencies(cpplspservice projectthrift)
-add_dependencies(cpplspservice languagethrift)
 
 install(TARGETS cpplspservice DESTINATION ${INSTALL_SERVICE_DIR})

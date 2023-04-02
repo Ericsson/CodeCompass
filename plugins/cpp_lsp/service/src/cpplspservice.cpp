@@ -2,8 +2,6 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <iterator>
 
-#include <language_types.h>
-
 #include <cpplspservice/cpplspservice.h>
 
 namespace cc
