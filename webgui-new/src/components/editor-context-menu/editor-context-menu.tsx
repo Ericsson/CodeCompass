@@ -4,8 +4,11 @@ import { LanguageContext } from 'global-context/language-context';
 import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { getCppDocumentation } from 'service/cpp-service';
+import { getCppDocumentation, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
+import { ProjectContext } from 'global-context/project-context';
+import { getFileInfo, getParents, getFileContent } from 'service/project-service';
+import { FileInfo, Range } from '@thrift-generated';
 
 const StyledDiv = styled('div')({});
 
@@ -36,6 +39,7 @@ export const EditorContextMenu = ({
   >;
 }): JSX.Element => {
   const configCtx = useContext(ConfigContext);
+  const projectCtx = useContext(ProjectContext);
   const languageCtx = useContext(LanguageContext);
 
   const astHTMLContainerRef = useRef<HTMLDivElement | null>(null);
@@ -78,6 +82,36 @@ export const EditorContextMenu = ({
     }
   };
 
+  const jumpToDef = async () => {
+    if (!languageCtx.astNodeInfo) return;
+
+    const refTypes = await getCppReferenceTypes(languageCtx.astNodeInfo.id as string);
+    const defRefs = await getCppReferences(
+      languageCtx.astNodeInfo.id as string,
+      refTypes.get('Definition') as number,
+      languageCtx.astNodeInfo.tags ?? []
+    );
+    const def = defRefs[0];
+    if (!def) {
+      setContextMenu(null);
+      return;
+    }
+
+    const fileId = def.range?.file as string;
+    const fileInfo = (await getFileInfo(fileId)) as FileInfo;
+    const parents = await getParents(fileInfo.path as string);
+    const fileContent = await getFileContent(fileId);
+
+    projectCtx.setFileContent(fileContent);
+    projectCtx.setFileInfo(fileInfo);
+    projectCtx.setSelectedFile(fileId);
+    projectCtx.setExpandedFileTreeNodes(parents);
+
+    languageCtx.setNodeSelectionRange(def.range?.range as Range);
+    configCtx.setActiveTab(TabName.CODE);
+    setContextMenu(null);
+  };
+
   // TODO: store selection in URL
   const getSelectionLink = () => {
     const selectionLink = window.location.href;
@@ -96,6 +130,7 @@ export const EditorContextMenu = ({
         anchorReference={'anchorPosition'}
         anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
       >
+        <MenuItem onClick={() => jumpToDef()}>{'Jump to definiton'}</MenuItem>
         <MenuItem onClick={() => getDocs()}>{'Documentation'}</MenuItem>
         <MenuItem
           onClick={() => {
