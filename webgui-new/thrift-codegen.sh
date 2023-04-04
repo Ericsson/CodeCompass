@@ -25,6 +25,7 @@ for file in $(find "$THRIFT_SOURCE" -type f -name '*.thrift'); do
   fi
 done
 
+# Fix include paths
 for file in $(find ./thrift -type f -name '*.thrift'); do
   sed -i 's/include "\(.*\)\/\([^\/]*\)"/include "\2"/g' "$file"
 done
@@ -36,4 +37,8 @@ rm -rf ./thrift
 for file in $(find ./generated -type f -name '*.ts'); do
   sed -i 's/import Int64 = require("node-int64");/import Int64 from "node-int64";/' "$file"
 done
+
+# Resolve conflicting import in SearchService.ts
+sed -i 's/import \* as SearchResult from "\.\/SearchResult";/import \* as SearchRes from "\.\/SearchResult";/g' ./generated/SearchService.ts
+sed -i 's/SearchResult\.SearchResult/SearchRes.SearchResult/g' ./generated/SearchService.ts
 

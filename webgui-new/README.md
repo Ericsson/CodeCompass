@@ -1,5 +1,10 @@
 # New Next.js (React) based webgui for CodeCompass
 
+## Prerequisites
+
+Make sure you are using at least version 18 of [Node.js](https://nodejs.org/en/).\
+You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install` at the root of the project to use the specified Node version (18.13.0).
+
 ## Development
 
 For easier development, first run the webserver (CodeCompass_webserver), then run the development server.\
@@ -32,10 +37,9 @@ Generate TypeScript files from Thrift by running the following command:
 chmod +x thrift-codegen.sh && ./thrift-codegen.sh --thrift-source ../
 ```
 
-You can specify the properties of the webserver by creating a `.env` file at the root of the project.\
-Without a `.env` file, the default values are: `localhost` for host, `8080` for port, `false` for https, and path will be an empty string.\
-For development, you may only need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver.\
-For production, you need to set these variables with the correct properties of the actual webserver.
+You can specify the properties of the webserver by creating a `.env` file at the root of the project. This is only required for development.\
+The default values are: `localhost` for host, `8080` for port, `false` for https, and path will be an empty string.\
+Note: you need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver, the other properties are not that important considering you run a local webserver.
 
 ```py
 # .env

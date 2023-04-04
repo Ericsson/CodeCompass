@@ -1,9 +1,10 @@
 import thrift from 'thrift';
-import { ProjectService } from '@thrift-generated/cc/service/core';
+import { ProjectService } from '@thrift-generated';
 import { config } from './config';
 
 let client: ProjectService.Client | undefined;
 export const createProjectClient = (workspace: string) => {
+  if (!config) return;
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
@@ -63,4 +64,11 @@ export const getFileContent = async (fileId: string) => {
   }
   const fileContent = await client.getFileContent(fileId);
   return fileContent;
+};
+
+export const getFileInfo = async (fileId: string) => {
+  if (!client) {
+    return;
+  }
+  return await client.getFileInfo(fileId);
 };

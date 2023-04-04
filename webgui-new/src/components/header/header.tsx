@@ -1,13 +1,19 @@
-import { IconButton, InputAdornment, Menu, MenuItem, TextField, Tooltip, styled } from '@mui/material';
-import { ProjectSelect } from '../project-select/project-select';
-import { Search, Settings, MoreVert, LightMode, DarkMode, Info } from '@mui/icons-material';
-import { useContext, useState } from 'react';
-import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from '../../enums/settings-enum';
-import { enumToArray } from '../../utils/array-utils';
-import { ThemeContext } from '../../global-context/theme-context';
+import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/material';
+import { ProjectSelect } from 'components/project-select/project-select';
+import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
+import { KeyboardEvent, useContext, useState } from 'react';
+import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/search-enum';
+import { enumToArray } from 'utils/utils';
+import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
-import { SettingsMenu } from '../settings-menu/settings-menu';
+import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
+import { getSearchResultCount, getSearchResults } from 'service/search-service';
+import { SearchContext } from 'global-context/search-context';
+import { FileSearchResult, SearchResult } from '@thrift-generated';
+import { ConfigContext } from 'global-context/config-context';
+import { AccordionLabel } from 'enums/accordion-enum';
+import { removeStore } from 'utils/store';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -39,35 +45,129 @@ const SettingsContainer = styled('div')({
   gap: '1rem',
 });
 
-const MenuContainer = styled('div')({
-  display: 'flex',
-  gap: '1rem',
-});
-
 export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
+  const configCtx = useContext(ConfigContext);
+  const searchCtx = useContext(SearchContext);
 
-  const searchOptions = enumToArray(SearchOptions);
-  const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchTypes = enumToArray(SearchTypes);
-
-  const [searchOption, setSearchOption] = useState<string>(searchOptions[0]);
-  const [searchLanguage, setSearchLanguage] = useState<string>(searchMainLanguages[0]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(searchTypes);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setMenuAnchorEl(e.currentTarget);
+  const handleSearch = async (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter') {
+      const query = createQueryString(searchCtx.searchQuery);
+      if (query === '') return;
+
+      const isFileSearch = searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
+      const searchResultCount = (await getSearchResultCount(
+        isFileSearch,
+        searchCtx.searchCurrentOption?.id as number,
+        query,
+        searchCtx.searchFileFilterQuery,
+        searchCtx.searchDirFilterQuery
+      )) as number;
+      const searchResults = (await getSearchResults(
+        isFileSearch,
+        searchCtx.searchCurrentOption?.id as number,
+        query,
+        0,
+        10,
+        searchCtx.searchFileFilterQuery,
+        searchCtx.searchDirFilterQuery
+      )) as SearchResult | FileSearchResult;
+
+      searchCtx.setSearchStart(0);
+      searchCtx.setSearchSize(10);
+      searchCtx.setSearchResultCount(searchResultCount);
+      searchCtx.setSearchResult(searchResults);
+      searchCtx.setIsFileSearch(isFileSearch);
+      configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
+      removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
+    } else {
+      return;
+    }
   };
 
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
+  const getSearchTypeQuery = (searchType: string): string => {
+    if (searchType === SearchTypes.TYPE) {
+      return 'type';
+    } else if (searchType === SearchTypes.FUNCTION) {
+      return 'func';
+    } else if (searchType === SearchTypes.CONSTANT) {
+      return 'const';
+    } else if (searchType === SearchTypes.VARIABLE) {
+      return 'var';
+    } else if (searchType === SearchTypes.FIELD) {
+      return 'field';
+    } else if (searchType === SearchTypes.LABEL) {
+      return 'label';
+    } else if (searchType === SearchTypes.MACRO) {
+      return 'macro';
+    } else if (searchType === SearchTypes.MODULE) {
+      return 'module';
+    } else {
+      return '';
+    }
   };
 
-  const changeTheme = () => {
-    localStorage.setItem('theme', theme === 'dark' ? 'light' : 'dark');
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+  const getSearchLangQuery = (language: string): string => {
+    if (language === SearchMainLanguages.C_CPP) {
+      return '(mime:("text/x-c") OR mime:("text/x-c++"))';
+    } else if (language === SearchMainLanguages.JAVA) {
+      return '(mime:("text/x-java") OR mime:("text/x-java-source"))';
+    } else if (language === SearchMainLanguages.JAVASCRIPT) {
+      return '(mime:("text/x-javascript") OR mime:("application/javascript"))';
+    } else if (language === SearchMainLanguages.SHELLSCRIPT) {
+      return '(mime:("text/x-shellscript") OR mime:("application/x-shellscript"))';
+    } else if (language === SearchMainLanguages.PEARL) {
+      return '(mime:("text/x-perl"))';
+    } else if (language === SearchMainLanguages.PYTHON) {
+      return '(mime:("text/x-python"))';
+    } else if (language === 'Any') {
+      return '';
+    } else {
+      return `(mime:("${language}"))`;
+    }
+  };
+
+  const createQueryString = (queryString: string): string => {
+    let modifiedQueryString: string = '';
+    const textSearch = searchCtx.searchCurrentOption?.name === SearchOptions.TEXT.toString();
+    const definitionSearch = searchCtx.searchCurrentOption?.name === SearchOptions.DEFINITION.toString();
+    const allTypesSelected = searchTypes.every((t) => searchCtx.selectedSearchTypes.includes(t));
+    const anyLanguage = searchCtx.searchLanguage === 'Any';
+
+    if (definitionSearch) {
+      modifiedQueryString = queryString === '' ? '' : `defs:(${queryString})`;
+      if (!allTypesSelected) {
+        modifiedQueryString += queryString === '' ? '' : ' AND ';
+        modifiedQueryString += `(${getSearchTypeQuery(searchCtx.selectedSearchTypes[0])}:(${queryString})`;
+        if (searchCtx.selectedSearchTypes.length > 1) {
+          for (let i = 1; i < searchCtx.selectedSearchTypes.length; ++i) {
+            modifiedQueryString += ` OR ${getSearchTypeQuery(searchCtx.selectedSearchTypes[i])}:(${queryString})`;
+          }
+        }
+        modifiedQueryString += ')';
+      }
+      if (!anyLanguage) {
+        modifiedQueryString +=
+          queryString === '' && modifiedQueryString === ''
+            ? `${getSearchLangQuery(searchCtx.searchLanguage)}`
+            : ` AND ${getSearchLangQuery(searchCtx.searchLanguage)}`;
+      }
+    } else if (textSearch) {
+      if (!anyLanguage) {
+        modifiedQueryString =
+          queryString === ''
+            ? `${getSearchLangQuery(searchCtx.searchLanguage)}`
+            : `${queryString} AND ${getSearchLangQuery(searchCtx.searchLanguage)}`;
+      } else {
+        modifiedQueryString = queryString;
+      }
+    } else {
+      modifiedQueryString = queryString;
+    }
+    return modifiedQueryString;
   };
 
   return (
@@ -77,10 +177,13 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect />
           <TextField
+            value={searchCtx.searchQuery}
+            onChange={(e) => searchCtx.setSearchQuery(e.target.value)}
+            onKeyDown={(e) => handleSearch(e)}
             placeholder={
-              searchOption === SearchOptions.FILE_NAME
+              searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME
                 ? 'File name regex'
-                : searchOption === SearchOptions.LOG
+                : searchCtx.searchCurrentOption?.name === SearchOptions.LOG
                 ? 'Arbitrary log message'
                 : 'Search by expression'
             }
@@ -103,6 +206,9 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
+            value={searchCtx.searchFileFilterQuery}
+            onChange={(e) => searchCtx.setSearchFileFilterQuery(e.target.value)}
+            onKeyDown={(e) => handleSearch(e)}
             placeholder={'File name filter regex'}
             InputProps={{
               startAdornment: (
@@ -120,6 +226,9 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
+            value={searchCtx.searchDirFilterQuery}
+            onChange={(e) => searchCtx.setSearchDirFilterQuery(e.target.value)}
+            onKeyDown={(e) => handleSearch(e)}
             placeholder={'Path filter regex'}
             InputProps={{
               startAdornment: (
@@ -136,29 +245,11 @@ export const Header = (): JSX.Element => {
               ),
             }}
           />
-          <SettingsMenu
-            searchOption={searchOption}
-            setSearchOption={setSearchOption}
-            searchLanguage={searchLanguage}
-            setSearchLanguage={setSearchLanguage}
-            selectedTypes={selectedTypes}
-            setSelectedTypes={setSelectedTypes}
-            anchorEl={settingsAnchorEl}
-            setAnchorEl={setSettingsAnchorEl}
-          />
+          <SettingsMenu anchorEl={settingsAnchorEl} setAnchorEl={setSettingsAnchorEl} />
         </SettingsContainer>
-        <MenuContainer>
-          <IconButton onClick={() => changeTheme()}>{theme === 'dark' ? <LightMode /> : <DarkMode />}</IconButton>
-          <IconButton onClick={(e) => handleMenuOpen(e)}>
-            <MoreVert />
-          </IconButton>
-          <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
-            <MenuItem onClick={handleMenuClose}>{'About'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'User guide'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'Report a bug here'}</MenuItem>
-            <MenuItem onClick={handleMenuClose}>{'Credits'}</MenuItem>
-          </Menu>
-        </MenuContainer>
+        <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? <LightMode /> : <DarkMode />}
+        </IconButton>
       </HeaderContent>
     </StyledHeader>
   );
