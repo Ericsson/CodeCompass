@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { createGitClient, getBranchList, getRepositories } from 'service/git-service';
+import { createGitClient, getBranchList, getRepositoryList } from 'service/git-service';
 import { ProjectContext } from './project-context';
 
 type GitContextType = {
@@ -28,7 +28,7 @@ export const GitContextController = ({ children }: { children: JSX.Element | JSX
     const init = async () => {
       createGitClient(projectCtx.currentWorkspace);
 
-      const repositories = await getRepositories();
+      const repositories = await getRepositoryList();
       if (!repositories.length) {
         return;
       }
