@@ -47,7 +47,7 @@ export const FileContextMenu = ({
       <MenuItem
         onClick={() => {
           setContextMenu(null);
-          languageCtx.setDiagramFileInfo(fileInfo);
+          languageCtx.setDiagramInfo(fileInfo);
           configCtx.setActiveTab(TabName.DIAGRAMS);
         }}
       >

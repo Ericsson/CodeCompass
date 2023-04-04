@@ -14,8 +14,9 @@ import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
 import { LanguageContext } from 'global-context/language-context';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
+import { getCppDiagram, getCppDiagramLegend, getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
+import { FileInfo, AstNodeInfo } from '@thrift-generated';
 
 const StyledDiv = styled('div')({});
 
@@ -38,7 +39,6 @@ const DiagramContainer = styled('div')({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '10px',
   overflow: 'scroll',
   width: 'calc(100vw - 280px)',
   height: 'calc(100vh - 78px - 48px - 49px - 77px - 50px)',
@@ -79,48 +79,58 @@ export const Diagrams = (): JSX.Element => {
   useEffect(() => {
     if (!diagramContainerRef.current) return;
     diagramContainerRef.current.innerHTML = '';
-  }, [languageCtx.diagramFileInfo]);
+  }, [languageCtx.diagramInfo]);
 
-  const generateFileDiagram = async (fileId: string) => {
+  const generateDiagram = async (id: string) => {
     if (!diagramContainerRef.current || !transformComponentRef.current) return;
 
     transformComponentRef.current.resetTransform();
 
-    const currentDiagramId = languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number;
-    const fileDiagram = await getCppFileDiagram(fileId, currentDiagramId);
+    const currentDiagramId = languageCtx.diagramTypes.get(languageCtx.currentDiagramType) as number;
+    const diagram =
+      languageCtx.diagramInfo instanceof FileInfo
+        ? await getCppFileDiagram(id, currentDiagramId)
+        : languageCtx.diagramInfo instanceof AstNodeInfo
+        ? await getCppDiagram(id, currentDiagramId)
+        : '';
 
     const parser = new DOMParser();
-    const parsedFileDiagram = parser.parseFromString(fileDiagram, 'text/xml');
-    const fileDiagramSvg = parsedFileDiagram.getElementsByTagName('svg')[0];
+    const parsedDiagram = parser.parseFromString(diagram, 'text/xml');
+    const diagramSvg = parsedDiagram.getElementsByTagName('svg')[0];
 
-    fileDiagramSvg.style.height = '100%';
-    fileDiagramSvg.style.cursor = 'pointer';
+    diagramSvg.style.height = '100%';
+    diagramSvg.style.cursor = 'pointer';
 
-    fileDiagramSvg.onclick = (e) => {
+    diagramSvg.onclick = (e) => {
       const parentNode = (e.target as HTMLElement)?.parentElement;
       if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
-      generateFileDiagram(parentNode?.id as string);
+      generateDiagram(parentNode?.id as string);
     };
 
     diagramContainerRef.current.replaceChildren('');
-    diagramContainerRef.current.appendChild(fileDiagramSvg);
+    diagramContainerRef.current.appendChild(diagramSvg);
   };
 
   const generateLegend = async () => {
     if (!diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = languageCtx.fileDiagramTypes.get(languageCtx.currentFileDiagramType) as number;
+    const currentDiagramId = languageCtx.diagramTypes.get(languageCtx.currentDiagramType) as number;
 
-    const fileDiagramLegend = await getCppFileDiagramLegend(currentDiagramId);
+    const diagramLegend =
+      languageCtx.diagramInfo instanceof FileInfo
+        ? await getCppFileDiagramLegend(currentDiagramId)
+        : languageCtx.diagramInfo instanceof AstNodeInfo
+        ? await getCppDiagramLegend(currentDiagramId)
+        : '';
 
     const parser = new DOMParser();
-    const parsedFileDiagramLegend = parser.parseFromString(fileDiagramLegend, 'text/xml');
-    const fileDiagramLegendSvg = parsedFileDiagramLegend.getElementsByTagName('svg')[0];
+    const parsedDiagramLegend = parser.parseFromString(diagramLegend, 'text/xml');
+    const diagramLegendSvg = parsedDiagramLegend.getElementsByTagName('svg')[0];
 
-    fileDiagramLegendSvg.style.height = '100%';
+    diagramLegendSvg.style.height = '100%';
 
     diagramLegendContainerRef.current.innerHTML = '';
-    diagramLegendContainerRef.current.appendChild(fileDiagramLegendSvg);
+    diagramLegendContainerRef.current.appendChild(diagramLegendSvg);
 
     setLegendModalOpen(true);
   };
@@ -148,25 +158,40 @@ export const Diagrams = (): JSX.Element => {
     link.click();
   };
 
-  return languageCtx.diagramFileInfo ? (
+  return languageCtx.diagramInfo ? (
     <div>
-      <FileName
-        fileName={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.name as string) : ''}
-        filePath={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.path as string) : ''}
-        parseStatus={languageCtx.diagramFileInfo ? (languageCtx.diagramFileInfo.parseStatus as number) : 4}
-        info={languageCtx.diagramFileInfo ?? undefined}
-      />
-      {languageCtx.fileDiagramTypes.size !== 0 ? (
+      {languageCtx.diagramInfo instanceof FileInfo ? (
+        <FileName
+          fileName={languageCtx.diagramInfo ? (languageCtx.diagramInfo.name as string) : ''}
+          filePath={languageCtx.diagramInfo ? (languageCtx.diagramInfo.path as string) : ''}
+          parseStatus={languageCtx.diagramInfo ? (languageCtx.diagramInfo.parseStatus as number) : 4}
+          info={languageCtx.diagramInfo ?? undefined}
+        />
+      ) : languageCtx.diagramInfo instanceof AstNodeInfo ? (
+        <StyledDiv
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 15px',
+            minHeight: '49px',
+            borderBottom: (theme) => `1px solid ${theme.colors?.primary}`,
+            fontSize: '0.85rem',
+          }}
+        >{`${languageCtx.diagramInfo.astNodeType}: ${languageCtx.diagramInfo.astNodeValue}`}</StyledDiv>
+      ) : (
+        <></>
+      )}
+      {languageCtx.diagramTypes.size !== 0 ? (
         <>
           <GenerateOptionsContainer>
             <FormControl>
-              <InputLabel>{`${languageCtx.fileType} Diagrams`}</InputLabel>
+              <InputLabel>{`${languageCtx.entityType} Diagrams`}</InputLabel>
               <Select
-                value={languageCtx.currentFileDiagramType}
-                label={`${languageCtx.fileType} Diagrams`}
-                onChange={(e) => languageCtx.setCurrentFileDiagramType(e.target.value)}
+                value={languageCtx.currentDiagramType}
+                label={`${languageCtx.entityType} Diagrams`}
+                onChange={(e) => languageCtx.setCurrentDiagramType(e.target.value)}
               >
-                {Object.keys(Object.fromEntries(languageCtx.fileDiagramTypes)).map((diagramType, idx) => (
+                {Object.keys(Object.fromEntries(languageCtx.diagramTypes)).map((diagramType, idx) => (
                   <MenuItem key={idx} value={diagramType}>
                     {diagramType}
                   </MenuItem>
@@ -174,13 +199,13 @@ export const Diagrams = (): JSX.Element => {
               </Select>
             </FormControl>
             <Button
-              onClick={() => generateFileDiagram(languageCtx.diagramFileInfo?.id as string)}
+              onClick={() => generateDiagram(languageCtx.diagramInfo?.id as string)}
               sx={{ textTransform: 'none' }}
             >
-              {`Generate ${languageCtx.fileType} diagram`}
+              {`Generate ${languageCtx.entityType} diagram`}
             </Button>
           </GenerateOptionsContainer>
-          <TransformWrapper initialScale={1} initialPositionX={200} initialPositionY={100} ref={transformComponentRef}>
+          <TransformWrapper ref={transformComponentRef}>
             {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
               <StyledDiv sx={{ position: 'relative' }}>
                 <ZoomOptions>
@@ -238,12 +263,14 @@ export const Diagrams = (): JSX.Element => {
           </DiagramOptionsContainer>
         </>
       ) : (
-        <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file/directory.'}</StyledDiv>
+        <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file/directory/node.'}</StyledDiv>
       )}
     </div>
   ) : (
     <StyledDiv sx={{ padding: '10px' }}>
-      {'No file/directory selected. Right click on a file/directory in the file manager to generate Diagrams.'}
+      {
+        'No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate Diagrams.'
+      }
     </StyledDiv>
   );
 };
