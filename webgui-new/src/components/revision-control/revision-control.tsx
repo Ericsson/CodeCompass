@@ -3,6 +3,7 @@ import { useState, useContext, useEffect } from 'react';
 import { CommitListFilteredResult, GitCommit, GitRepository, ReferenceTopObjectResult } from '@thrift-generated';
 import {
   getBranchList,
+  getCommitDiffAsString,
   getCommitListFiltered,
   getReferenceTopObject,
   getRepositoryList,
@@ -12,6 +13,8 @@ import { Tooltip, alpha, styled } from '@mui/material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { ChevronRight, ExpandMore, Commit, MoreHoriz } from '@mui/icons-material';
 import { formatDate } from 'utils/utils';
+import { ConfigContext } from 'global-context/config-context';
+import { TabName } from 'enums/tab-enum';
 
 type RepoId = string;
 type Branch = string;
@@ -54,7 +57,8 @@ const Label = styled('div')(({ theme }) => ({
 }));
 
 export const RevisionControl = (): JSX.Element => {
-  const gitContext = useContext(GitContext);
+  const configCtx = useContext(ConfigContext);
+  const gitCtx = useContext(GitContext);
 
   const DISPLAYED_COMMIT_CNT: number = 15;
 
@@ -154,11 +158,44 @@ export const RevisionControl = (): JSX.Element => {
     setCommitOffsets(newCommitOffsets);
   };
 
-  const RenderedCommits = ({ commitResults }: { commitResults: GitCommit[] }): JSX.Element => {
+  const getCommitDiff = async (repoId: string, commit: GitCommit) => {
+    const gitDiffs: string[] = [];
+
+    const initialDiff = await getCommitDiffAsString(repoId, commit.oid as string, true, 3);
+    const lines = initialDiff.split(/\r?\n/);
+
+    const diffLines = lines.filter((line) => line.startsWith('diff --git'));
+
+    for (const diffLine of diffLines) {
+      const diffFiles = diffLine
+        .split(' ')
+        .slice(2, 4)
+        .map((fname) => fname.split('/')[1]);
+      const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
+      const diff = await getCommitDiffAsString(repoId, commit.oid as string, false, 3, [fileName]);
+      gitDiffs.push(diff);
+    }
+
+    // const diffFiles = lines
+    //   .find((line) => line.startsWith('diff --git'))
+    //   ?.split(' ')
+    //   .slice(2, 4)
+    //   .map((fname) => fname.split('/')[1]) as string[];
+
+    // const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
+
+    // const diff = await getCommitDiffAsString(repoId, commit.oid as string, false, 3, [fileName]);
+    gitCtx.setDiffs(gitDiffs);
+    gitCtx.setCommit(commit);
+
+    configCtx.setActiveTab(TabName.GIT_DIFF);
+  };
+
+  const RenderedCommits = ({ commitResults, repoId }: { commitResults: GitCommit[]; repoId: string }): JSX.Element => {
     return (
       <>
         {commitResults.map((commit) => (
-          <Label key={commit.oid}>
+          <Label key={commit.oid} onClick={() => getCommitDiff(repoId, commit)}>
             <Tooltip
               title={
                 <StyledDiv sx={{ width: 'max-content' }}>
@@ -220,6 +257,7 @@ export const RevisionControl = (): JSX.Element => {
                 >
                   <RenderedCommits
                     commitResults={commits.get(branch) ? (commits.get(branch)?.result as GitCommit[]) : []}
+                    repoId={repo.id as string}
                   />
                   <Label
                     hidden={!commits.get(branch)?.hasRemaining}
@@ -238,7 +276,10 @@ export const RevisionControl = (): JSX.Element => {
                   key={tag}
                   label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
                 >
-                  <RenderedCommits commitResults={commits.get(tag) ? (commits.get(tag)?.result as GitCommit[]) : []} />
+                  <RenderedCommits
+                    commitResults={commits.get(tag) ? (commits.get(tag)?.result as GitCommit[]) : []}
+                    repoId={tag}
+                  />
                   <Label
                     hidden={!commits.get(tag)?.hasRemaining}
                     onClick={() => loadMoreCommits(repo.id as string, tag)}

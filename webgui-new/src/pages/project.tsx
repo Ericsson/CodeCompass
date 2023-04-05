@@ -19,6 +19,7 @@ import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
 import { LanguageContext } from 'global-context/language-context';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
+import { GitDiff } from 'components/git-diff/git-diff';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -209,7 +210,7 @@ const Project = () => {
             {placeholder}
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.GIT_DIFF}>
-            {placeholder}
+            <GitDiff />
           </TabPanel>
           <TabPanel value={configCtx.activeTab} index={TabName.USER_GUIDE}>
             {placeholder}
