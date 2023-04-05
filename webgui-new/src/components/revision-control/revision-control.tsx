@@ -176,15 +176,6 @@ export const RevisionControl = (): JSX.Element => {
       gitDiffs.push(diff);
     }
 
-    // const diffFiles = lines
-    //   .find((line) => line.startsWith('diff --git'))
-    //   ?.split(' ')
-    //   .slice(2, 4)
-    //   .map((fname) => fname.split('/')[1]) as string[];
-
-    // const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
-
-    // const diff = await getCommitDiffAsString(repoId, commit.oid as string, false, 3, [fileName]);
     gitCtx.setDiffs(gitDiffs);
     gitCtx.setCommit(commit);
 
