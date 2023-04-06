@@ -83,6 +83,15 @@ export const lightTheme = createTheme({
         },
       },
     },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          color: colors.light.text.primary,
+          backgroundColor: colors.light.background.primary,
+          border: `1px solid ${colors.light.text.primary}`,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -129,6 +138,15 @@ export const darkTheme = createTheme({
         root: {
           color: colors.dark.text.primary,
           backgroundColor: colors.dark.background.primary,
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          color: colors.dark.text.primary,
+          backgroundColor: colors.dark.background.primary,
+          border: `1px solid ${colors.dark.text.primary}`,
         },
       },
     },

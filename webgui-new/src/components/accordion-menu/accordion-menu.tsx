@@ -11,6 +11,7 @@ import { AccordionLabel } from 'enums/accordion-enum';
 import { ConfigContext } from 'global-context/config-context';
 import { SearchResults } from 'components/search-results/search-results';
 import { InfoTree } from 'components/info-tree/info-tree';
+import { RevisionControl } from 'components/revision-control/revision-control';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -153,7 +154,9 @@ export const AccordionMenu = () => {
             <Typography>{AccordionLabel.REVISION_CONTROL_NAVIGATOR}</Typography>
           </IconLabel>
         </AccordionSummary>
-        <AccordionDetails>{placeholder}</AccordionDetails>
+        <AccordionDetails>
+          <RevisionControl />
+        </AccordionDetails>
       </Accordion>
     </Container>
   );
