@@ -1,11 +1,14 @@
 import { TextSnippet } from '@mui/icons-material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { ToggleButton, ToggleButtonGroup, alpha, styled } from '@mui/material';
-import { GitContext } from 'global-context/git-context';
 import { ThemeContext } from 'global-context/theme-context';
+import { useRouter } from 'next/router';
 import { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
+import { getCommit, getCommitDiffAsString } from 'service/git-service';
+import { RouterQueryType } from 'utils/types';
 import { formatDate } from 'utils/utils';
+import { GitCommit } from '@thrift-generated';
 
 const CommitSummary = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -63,24 +66,45 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 export const GitDiff = (): JSX.Element => {
-  const themeCtx = useContext(ThemeContext);
-  const gitCtx = useContext(GitContext);
+  const router = useRouter();
+  const routerQuery = router.query as RouterQueryType;
 
-  const [splitView, setSplitView] = useState<boolean>(true);
+  const themeCtx = useContext(ThemeContext);
+
+  const [splitView, setSplitView] = useState<boolean>(false);
+  const [commit, setCommit] = useState<GitCommit | undefined>(undefined);
   const [oldValues, setOldValues] = useState<Map<string, Map<string, string>>>(new Map());
   const [newValues, setNewValues] = useState<Map<string, Map<string, string>>>(new Map());
   const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!gitCtx.diffs.length) return;
-
+    if (!router.isReady) return;
     const init = async () => {
+      if (!routerQuery.gitRepoId || !routerQuery.gitCommitId) return;
+
       const initOldValues: typeof oldValues = new Map();
       const initNewValues: typeof newValues = new Map();
       const initExpandedFiles: string[] = [];
 
+      const initCommit = await getCommit(routerQuery.gitRepoId, routerQuery.gitCommitId);
+      const initialDiff = await getCommitDiffAsString(routerQuery.gitRepoId, routerQuery.gitCommitId, true, 3);
+
+      const lines = initialDiff.split(/\r?\n/);
+      const diffLines = lines.filter((line) => line.startsWith('diff --git'));
+
+      const gitDiffs: string[] = [];
+      for (const diffLine of diffLines) {
+        const diffFiles = diffLine
+          .split(' ')
+          .slice(2, 4)
+          .map((fname) => fname.split('/')[1]);
+        const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
+        const diff = await getCommitDiffAsString(routerQuery.gitRepoId, routerQuery.gitCommitId, false, 3, [fileName]);
+        gitDiffs.push(diff);
+      }
+
       let fIdx = 0;
-      for (const diff of gitCtx.diffs) {
+      for (const diff of gitDiffs) {
         const fileName = (
           diff
             .split('\n')
@@ -101,23 +125,23 @@ export const GitDiff = (): JSX.Element => {
         const newChanges: Map<string, string> = new Map();
 
         for (const changeLine of changeLines) {
-          const oldValues: string[] = [];
-          const newValues: string[] = [];
+          const oldLineValues: string[] = [];
+          const newLineValues: string[] = [];
 
           let i = 0;
           for (const changeByLine of changesByLine[i].split('\n').slice(1)) {
             if (changeByLine.startsWith('-')) {
-              oldValues.push(changeByLine.slice(1));
+              oldLineValues.push(changeByLine.slice(1));
             } else if (changeByLine.startsWith('+')) {
-              newValues.push(changeByLine.slice(1));
+              newLineValues.push(changeByLine.slice(1));
             } else {
-              oldValues.push(changeByLine);
-              newValues.push(changeByLine);
+              oldLineValues.push(changeByLine);
+              newLineValues.push(changeByLine);
             }
           }
 
-          oldChanges.set(changeLine, oldValues.join('\n'));
-          newChanges.set(changeLine, newValues.join('\n'));
+          oldChanges.set(changeLine, oldLineValues.join('\n'));
+          newChanges.set(changeLine, newLineValues.join('\n'));
           ++i;
         }
 
@@ -127,29 +151,30 @@ export const GitDiff = (): JSX.Element => {
         ++fIdx;
       }
 
+      setCommit(initCommit);
       setOldValues(initOldValues);
       setNewValues(initNewValues);
       setExpandedFiles(initExpandedFiles);
     };
     init();
-  }, [gitCtx.diffs]);
+  }, [router.isReady, routerQuery]);
 
   const getLineOffset = (change: string): number => {
-    const changeLine = change.split(' ')[1];
-    return parseInt(changeLine.slice(1, changeLine.indexOf(',')));
+    const offset = parseInt(change.split(' ')[1].slice(1, change.split(' ')[1].indexOf(',')));
+    return offset === 0 ? 1 : offset - 1;
   };
 
-  return gitCtx.commit ? (
+  return commit ? (
     <div>
       <CommitSummary>
-        <div>{gitCtx.commit.message}</div>
+        <div>{commit.message}</div>
         <div>
-          <div>{`${gitCtx.commit.author?.name} (${gitCtx.commit.author?.email}), Commited on ${formatDate(
-            new Date((gitCtx.commit.time as unknown as number) * 1000)
+          <div>{`${commit.author?.name} (${commit.author?.email}), Commited on ${formatDate(
+            new Date((commit.time as unknown as number) * 1000)
           )}`}</div>
-          <div>{`${gitCtx.commit.parentOids?.length} parent(s) ${gitCtx.commit.parentOids?.map((id) =>
+          <div>{`${commit.parentOids?.length} parent(s) ${commit.parentOids?.map((id) =>
             id.substring(0, 8)
-          )} commit ${gitCtx.commit.oid?.substring(0, 8)}`}</div>
+          )} commit ${commit.oid?.substring(0, 8)}`}</div>
         </div>
       </CommitSummary>
       <DiffViewOptions>
@@ -193,7 +218,7 @@ export const GitDiff = (): JSX.Element => {
                     newValue={newValues.get(fileName)?.get(change)}
                     splitView={splitView}
                     useDarkTheme={themeCtx.theme === 'dark'}
-                    linesOffset={getLineOffset(change) - 1}
+                    linesOffset={getLineOffset(change)}
                   />
                 </div>
               ))}

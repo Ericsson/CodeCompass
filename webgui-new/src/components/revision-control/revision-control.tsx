@@ -1,9 +1,7 @@
-import { GitContext } from 'global-context/git-context';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, SyntheticEvent } from 'react';
 import { CommitListFilteredResult, GitCommit, GitRepository, ReferenceTopObjectResult } from '@thrift-generated';
 import {
   getBranchList,
-  getCommitDiffAsString,
   getCommitListFiltered,
   getReferenceTopObject,
   getRepositoryList,
@@ -15,6 +13,8 @@ import { ChevronRight, ExpandMore, Commit, MoreHoriz } from '@mui/icons-material
 import { formatDate } from 'utils/utils';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 type RepoId = string;
 type Branch = string;
@@ -57,8 +57,10 @@ const Label = styled('div')(({ theme }) => ({
 }));
 
 export const RevisionControl = (): JSX.Element => {
+  const router = useRouter();
+  const routerQuery = router.query as RouterQueryType;
+
   const configCtx = useContext(ConfigContext);
-  const gitCtx = useContext(GitContext);
 
   const DISPLAYED_COMMIT_CNT: number = 15;
 
@@ -69,66 +71,77 @@ export const RevisionControl = (): JSX.Element => {
   const [commits, setCommits] = useState<Map<Branch, CommitListFilteredResult>>(new Map());
   const [commitOffsets, setCommitOffsets] = useState<Map<Branch, number>>(new Map());
 
+  const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>([]);
+
   useEffect(() => {
     const init = async () => {
       const initRepos = await getRepositoryList();
-      const initBranches: typeof branches = new Map();
-      const initTags: typeof tags = new Map();
-      const initTopCommits: typeof topCommits = new Map();
-      const initCommits: typeof commits = new Map();
-      const initCommitOffsets: typeof commitOffsets = new Map();
+      const initExpandedTreeNodes: typeof expandedTreeNodes = [];
 
       for (const repo of initRepos) {
-        const repoBranches = await getBranchList(repo.id as string);
-        const repoTags = await getTagList(repo.id as string);
-
-        for (const branch of repoBranches) {
-          const topCommit = (await getReferenceTopObject(repo.id as string, branch)) as ReferenceTopObjectResult;
-          initTopCommits.set(branch, topCommit);
-
-          const commitList = (await getCommitListFiltered(
-            repo.id as string,
-            topCommit.oid as string,
-            DISPLAYED_COMMIT_CNT,
-            0,
-            ''
-          )) as CommitListFilteredResult;
-
-          initCommits.set(branch, commitList);
-          initCommitOffsets.set(branch, 0);
-        }
-
-        for (const tag of repoTags) {
-          const topCommit = (await getReferenceTopObject(repo.id as string, tag)) as ReferenceTopObjectResult;
-          initTopCommits.set(tag, topCommit);
-
-          const commitList = (await getCommitListFiltered(
-            repo.id as string,
-            topCommit.oid as string,
-            DISPLAYED_COMMIT_CNT,
-            0,
-            ''
-          )) as CommitListFilteredResult;
-
-          initCommits.set(tag, commitList);
-          initCommitOffsets.set(tag, 0);
-        }
-
-        initBranches.set(repo.id as string, repoBranches);
-        initTags.set(repo.id as string, repoTags);
+        initExpandedTreeNodes.push(repo.id as string);
       }
 
       setRepos(initRepos);
-      setBranches(initBranches);
-      setTags(initTags);
-      setTopCommits(initTopCommits);
-      setCommits(initCommits);
-      setCommitOffsets(initCommitOffsets);
+      setExpandedTreeNodes(initExpandedTreeNodes);
     };
     init();
   }, []);
 
-  const loadMoreCommits = async (repoId: string, branch: string) => {
+  const loadBranches = async (repoId: string) => {
+    if (branches.get(repoId)) return;
+
+    const initBranches: typeof branches = new Map();
+    const initCommitOffsets: typeof commitOffsets = new Map(commitOffsets);
+
+    const repoBranches = await getBranchList(repoId);
+    for (const repoBranch of repoBranches) {
+      initCommitOffsets.set(repoBranch, 0);
+    }
+    initBranches.set(repoId, repoBranches);
+
+    setBranches(initBranches);
+    setCommitOffsets(initCommitOffsets);
+  };
+
+  const loadTags = async (repoId: string) => {
+    if (tags.get(repoId)) return;
+
+    const initTags: typeof tags = new Map();
+    const initCommitOffsets: typeof commitOffsets = new Map(commitOffsets);
+
+    const repoTags = await getTagList(repoId);
+    for (const repoTag of repoTags) {
+      initCommitOffsets.set(repoTag, 0);
+    }
+    initTags.set(repoId, repoTags);
+
+    setTags(initTags);
+    setCommitOffsets(initCommitOffsets);
+  };
+
+  const loadInitialCommits = async (repoId: string, branch: string) => {
+    if (commits.get(branch)) return;
+
+    const initTopCommits: typeof topCommits = new Map(topCommits);
+    const initCommits: typeof commits = new Map(commits);
+
+    const topCommit = (await getReferenceTopObject(repoId, branch)) as ReferenceTopObjectResult;
+    initTopCommits.set(branch, topCommit);
+    const commitList = (await getCommitListFiltered(
+      repoId,
+      topCommit.oid as string,
+      DISPLAYED_COMMIT_CNT,
+      0,
+      ''
+    )) as CommitListFilteredResult;
+    initCommits.set(branch, commitList);
+
+    setTopCommits(initTopCommits);
+    setCommits(initCommits);
+  };
+
+  const loadCommits = async (repoId: string, branch: string) => {
     const currentOffset = commitOffsets.get(branch) as number;
     const topCommitId = topCommits.get(branch)?.oid as string;
     const moreCommits = (await getCommitListFiltered(
@@ -158,35 +171,31 @@ export const RevisionControl = (): JSX.Element => {
     setCommitOffsets(newCommitOffsets);
   };
 
-  const getCommitDiff = async (repoId: string, commit: GitCommit) => {
-    const gitDiffs: string[] = [];
-
-    const initialDiff = await getCommitDiffAsString(repoId, commit.oid as string, true, 3);
-    const lines = initialDiff.split(/\r?\n/);
-
-    const diffLines = lines.filter((line) => line.startsWith('diff --git'));
-
-    for (const diffLine of diffLines) {
-      const diffFiles = diffLine
-        .split(' ')
-        .slice(2, 4)
-        .map((fname) => fname.split('/')[1]);
-      const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
-      const diff = await getCommitDiffAsString(repoId, commit.oid as string, false, 3, [fileName]);
-      gitDiffs.push(diff);
-    }
-
-    gitCtx.setDiffs(gitDiffs);
-    gitCtx.setCommit(commit);
-
+  const getCommitDiff = async (repoId: string, branch: string, commitId: string) => {
+    router.push(`/project/?gitRepoId=${repoId}&?gitBranch=${branch}&gitCommitId=${commitId}`);
     configCtx.setActiveTab(TabName.GIT_DIFF);
   };
 
-  const RenderedCommits = ({ commitResults, repoId }: { commitResults: GitCommit[]; repoId: string }): JSX.Element => {
+  const RenderedCommits = ({
+    commitResults,
+    repoId,
+    branch,
+  }: {
+    commitResults: GitCommit[];
+    repoId: string;
+    branch: string;
+  }): JSX.Element => {
     return (
       <>
         {commitResults.map((commit) => (
-          <Label key={commit.oid} onClick={() => getCommitDiff(repoId, commit)}>
+          <Label
+            key={commit.oid}
+            onClick={() => getCommitDiff(repoId, branch, commit.oid as string)}
+            sx={{
+              backgroundColor: (theme) =>
+                commit.oid === routerQuery.gitCommitId ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+            }}
+          >
             <Tooltip
               title={
                 <StyledDiv sx={{ width: 'max-content' }}>
@@ -229,57 +238,82 @@ export const RevisionControl = (): JSX.Element => {
         defaultEndIcon={<ChevronRight />}
         defaultCollapseIcon={<ExpandMore />}
         sx={{ width: 'max-content' }}
+        expanded={expandedTreeNodes}
+        onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+          const index = expandedTreeNodes.indexOf(nodeId) as number;
+          const copyExpanded = [...expandedTreeNodes];
+          if (index === -1) {
+            copyExpanded.push(nodeId);
+          } else {
+            copyExpanded.splice(index, 1);
+          }
+          setExpandedTreeNodes(copyExpanded);
+        }}
       >
-        {repos.map((repo, idx) => (
+        {repos.map((repo) => (
           <StyledTreeItem
-            nodeId={`${idx}`}
-            key={idx}
+            nodeId={`${repo.id as string}`}
+            key={repo.id as string}
             label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</StyledDiv>}
           >
             <StyledTreeItem
-              nodeId={`${idx}-branches`}
+              nodeId={`${repo.id as string}-branches`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</StyledDiv>}
+              onClick={() => loadBranches(repo.id as string)}
             >
-              {branches.get(repo.id as string)?.map((branch, idx) => (
-                <StyledTreeItem
-                  nodeId={`${idx}-${branch}`}
-                  key={branch}
-                  label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
-                >
-                  <RenderedCommits
-                    commitResults={commits.get(branch) ? (commits.get(branch)?.result as GitCommit[]) : []}
-                    repoId={repo.id as string}
-                  />
-                  <Label
-                    hidden={!commits.get(branch)?.hasRemaining}
-                    onClick={() => loadMoreCommits(repo.id as string, branch)}
+              {branches.get(repo.id as string)?.length ? (
+                branches.get(repo.id as string)?.map((branch) => (
+                  <StyledTreeItem
+                    nodeId={`${repo.id as string}-${branch}`}
+                    key={`${repo.id as string}-${branch}`}
+                    label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
+                    onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
-                    <MoreHoriz />
-                    <StyledDiv>{'Load more'}</StyledDiv>
-                  </Label>
-                </StyledTreeItem>
-              ))}
+                    <RenderedCommits
+                      commitResults={commits.get(branch) ? (commits.get(branch)?.result as GitCommit[]) : []}
+                      repoId={repo.id as string}
+                      branch={branch}
+                    />
+                    <Label
+                      hidden={!commits.get(branch)?.hasRemaining}
+                      onClick={() => loadCommits(repo.id as string, branch)}
+                    >
+                      <MoreHoriz />
+                      <StyledDiv>{'Load more'}</StyledDiv>
+                    </Label>
+                  </StyledTreeItem>
+                ))
+              ) : (
+                <div>{'Loading'}</div>
+              )}
             </StyledTreeItem>
-            <StyledTreeItem nodeId={`${idx}-tags`} label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}>
-              {tags.get(repo.id as string)?.map((tag) => (
-                <StyledTreeItem
-                  nodeId={`${idx}-${tag}`}
-                  key={tag}
-                  label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
-                >
-                  <RenderedCommits
-                    commitResults={commits.get(tag) ? (commits.get(tag)?.result as GitCommit[]) : []}
-                    repoId={tag}
-                  />
-                  <Label
-                    hidden={!commits.get(tag)?.hasRemaining}
-                    onClick={() => loadMoreCommits(repo.id as string, tag)}
+            <StyledTreeItem
+              nodeId={`${repo.id as string}-tags`}
+              label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}
+              onClick={() => loadTags(repo.id as string)}
+            >
+              {tags.get(repo.id as string)?.length ? (
+                tags.get(repo.id as string)?.map((tag) => (
+                  <StyledTreeItem
+                    nodeId={`${repo.id as string}-${tag}`}
+                    key={`${repo.id as string}-${tag}`}
+                    label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
+                    onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
-                    <MoreHoriz />
-                    <StyledDiv>{'Load more'}</StyledDiv>
-                  </Label>
-                </StyledTreeItem>
-              ))}
+                    <RenderedCommits
+                      commitResults={commits.get(tag) ? (commits.get(tag)?.result as GitCommit[]) : []}
+                      repoId={tag}
+                      branch={tag}
+                    />
+                    <Label hidden={!commits.get(tag)?.hasRemaining} onClick={() => loadCommits(repo.id as string, tag)}>
+                      <MoreHoriz />
+                      <StyledDiv>{'Load more'}</StyledDiv>
+                    </Label>
+                  </StyledTreeItem>
+                ))
+              ) : (
+                <div>{'Loading'}</div>
+              )}
             </StyledTreeItem>
           </StyledTreeItem>
         ))}
