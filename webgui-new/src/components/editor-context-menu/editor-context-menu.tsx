@@ -9,6 +9,7 @@ import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { ProjectContext } from 'global-context/project-context';
 import { getFileInfo, getParents, getFileContent } from 'service/project-service';
 import { FileInfo, Range } from '@thrift-generated';
+import { updateUrlWithParams } from 'utils/utils';
 
 const StyledDiv = styled('div')({});
 
@@ -112,14 +113,26 @@ export const EditorContextMenu = ({
     setContextMenu(null);
   };
 
-  // TODO: store selection in URL
   const getSelectionLink = () => {
-    const selectionLink = window.location.href;
+    const currentSelectionRange = languageCtx.nodeSelectionRange;
+    if (!currentSelectionRange || !currentSelectionRange.startpos || !currentSelectionRange.endpos) return;
+
+    const { line: startLine, column: startCol } = currentSelectionRange.startpos;
+    const { line: endLine, column: endCol } = currentSelectionRange.endpos;
+    const selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
+
+    const selectionLink = updateUrlWithParams({
+      wsId: projectCtx.currentWorkspace,
+      projFileId: projectCtx.fileInfo?.id,
+      selection: selection,
+    });
+
     navigator.clipboard.writeText(selectionLink);
     setSelectionTooltipOpen(true);
     setTimeout(() => {
       setSelectionTooltipOpen(false);
     }, 2000);
+    setContextMenu(null);
   };
 
   return languageCtx.astNodeInfo ? (
@@ -142,7 +155,7 @@ export const EditorContextMenu = ({
           {'Diagrams'}
         </MenuItem>
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
-        <MenuItem disabled onClick={() => getSelectionLink()}>
+        <MenuItem onClick={() => getSelectionLink()}>
           <Tooltip
             PopperProps={{
               disablePortal: true,

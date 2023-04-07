@@ -1,8 +1,10 @@
 import { AccordionLabel } from 'enums/accordion-enum';
 import { TabName } from 'enums/tab-enum';
+import { useRouter } from 'next/router';
 import { createContext, useEffect, useState } from 'react';
 import { createConfig } from 'service/config';
 import { getStore, setStore } from 'utils/store';
+import { RouterQueryType } from 'utils/types';
 
 type ConfigContextType = {
   activeAccordion: string;
@@ -23,6 +25,9 @@ export const ConfigContext = createContext<ConfigContextType>({
 });
 
 export const ConfigContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
+  const router = useRouter();
+  const routerQuery = router.query as RouterQueryType;
+
   const [activeAccordion, setActiveAccordion] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<number | undefined>(undefined);
   const [treeViewOption, setTreeViewOption] = useState<boolean | undefined>(undefined);
@@ -45,6 +50,12 @@ export const ConfigContextController = ({ children }: { children: JSX.Element | 
     setActiveTab(storedActiveTab ?? TabName.WELCOME);
     setTreeViewOption(storedTreeViewOption ?? false);
   }, []);
+
+  useEffect(() => {
+    if (!routerQuery.projFileId) return;
+    setActiveAccordion(AccordionLabel.FILE_MANAGER);
+    setActiveTab(TabName.CODE);
+  }, [routerQuery.projFileId]);
 
   useEffect(() => {
     setStore({

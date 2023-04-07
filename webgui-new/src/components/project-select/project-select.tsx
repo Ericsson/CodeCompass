@@ -1,10 +1,13 @@
 import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { ProjectContext } from 'global-context/project-context';
 import { WorkspaceContext } from 'global-context/workspace-context';
+import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { removeStore } from 'utils/store';
 
 export const ProjectSelect = (): JSX.Element => {
+  const router = useRouter();
+
   const workspaces = useContext(WorkspaceContext);
   const projectCtx = useContext(ProjectContext);
 
@@ -26,11 +29,14 @@ export const ProjectSelect = (): JSX.Element => {
       'storedSearchFileFilterQuery',
       'storedSearchDirFilterQuery',
       'storedIsFileSearch',
-      'storedSearchMatchingResult',
       'storedSelectedSearchResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
     ]);
+    router.replace({
+      pathname: router.pathname,
+      query: {},
+    });
     projectCtx.setCurrentWorkspace(e.target.value);
   };
 

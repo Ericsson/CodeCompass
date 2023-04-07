@@ -35,7 +35,6 @@ type StoreOptions = {
   storedSearchLanguage?: string;
   storedSearchOtherLanguage?: string;
   storedSelectedSearchTypes?: string[];
-  storedSearchMatchingResult?: LineMatch;
   storedSelectedSearchResult?: string;
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
@@ -69,7 +68,6 @@ type StoreOptionKey =
   | 'storedSearchLanguage'
   | 'storedSearchOtherLanguage'
   | 'storedSelectedSearchTypes'
-  | 'storedSearchMatchingResult'
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'

@@ -1,5 +1,5 @@
 export type RouterQueryType = {
-  gitRepoId?: string;
-  gitBranch?: string;
-  gitCommitId?: string;
+  wsId?: string;
+  projFileId?: string;
+  selection?: string;
 };

@@ -1,8 +1,17 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { FileInfo } from '@thrift-generated';
 import { WorkspaceContext } from './workspace-context';
-import { createProjectClient, getChildFiles, getRootFiles } from 'service/project-service';
+import {
+  createProjectClient,
+  getChildFiles,
+  getFileContent,
+  getFileInfo,
+  getParents,
+  getRootFiles,
+} from 'service/project-service';
 import { getStore, setStore } from 'utils/store';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 type TreeNode = {
   info: FileInfo;
@@ -56,6 +65,9 @@ export const ProjectContext = createContext<ProjectContextType>({
 });
 
 export const ProjectContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
+  const router = useRouter();
+  const routerQuery = router.query as RouterQueryType;
+
   const workspaces = useContext(WorkspaceContext);
 
   const [currentWorkspace, setCurrentWorkspace] = useState<string | undefined>(undefined);
@@ -79,6 +91,11 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
     };
     initWorkspace();
   }, [workspaces]);
+
+  useEffect(() => {
+    if (!routerQuery.wsId) return;
+    setCurrentWorkspace(routerQuery.wsId);
+  }, [routerQuery.wsId]);
 
   useEffect(() => {
     if (!currentWorkspace) {
@@ -110,12 +127,27 @@ export const ProjectContextController = ({ children }: { children: JSX.Element |
       setFileInfo(storedFileInfo ?? undefined);
       setExpandedFileTreeNodes(storedExpandedFileTreeNodes ?? []);
 
+      if (routerQuery.projFileId) {
+        try {
+          const initFileInfo = await getFileInfo(routerQuery.projFileId);
+          const fileContent = await getFileContent(routerQuery.projFileId);
+          const children = await getChildFiles(initFileInfo?.parent as string);
+          const parents = await getParents(initFileInfo?.path as string);
+
+          setFileContent(fileContent);
+          setFileInfo(initFileInfo);
+          setFiles(children);
+          setSelectedFile(routerQuery.projFileId);
+          setExpandedFileTreeNodes(parents);
+        } catch {}
+      }
+
       setStore({
         storedWorkspace: currentWorkspace,
       });
     };
     init().then(() => setLoadComplete(true));
-  }, [currentWorkspace]);
+  }, [currentWorkspace, routerQuery.projFileId]);
 
   useEffect(() => {
     if (!rootFiles?.length) {

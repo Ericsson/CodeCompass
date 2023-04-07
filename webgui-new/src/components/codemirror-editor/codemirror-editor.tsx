@@ -4,7 +4,6 @@ import { ThemeContext } from 'global-context/theme-context';
 import { ConfigContext } from 'global-context/config-context';
 import { LanguageContext } from 'global-context/language-context';
 import { ProjectContext } from 'global-context/project-context';
-import { SearchContext } from 'global-context/search-context';
 import { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
 import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
 import { Range } from '@thrift-generated';
@@ -22,7 +21,6 @@ export const CodeMirrorEditor = (): JSX.Element => {
   const { theme } = useContext(ThemeContext);
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
-  const searchCtx = useContext(SearchContext);
   const languageCtx = useContext(LanguageContext);
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null);
@@ -31,13 +29,6 @@ export const CodeMirrorEditor = (): JSX.Element => {
     mouseX: number;
     mouseY: number;
   } | null>(null);
-
-  useEffect(() => {
-    if (!searchCtx.matchingResult) return;
-    const { range } = searchCtx.matchingResult;
-    if (!range) return;
-    dispatchSelection(range.range as Range);
-  }, [searchCtx.matchingResult, editorRef.current?.view]);
 
   useEffect(() => {
     if (!languageCtx.nodeSelectionRange) return;
@@ -95,6 +86,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const astNodeInfo = await getCppAstNodeInfoByPosition(projectCtx.fileInfo?.id as string, line.number, column);
 
     dispatchSelection(astNodeInfo?.range?.range as Range);
+    languageCtx.setNodeSelectionRange(astNodeInfo?.range?.range);
     languageCtx.setAstNodeInfo(astNodeInfo);
     if (!astNodeInfo) return;
     configCtx.setActiveAccordion(AccordionLabel.INFO_TREE);

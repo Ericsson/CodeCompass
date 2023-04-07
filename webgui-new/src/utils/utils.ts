@@ -1,3 +1,5 @@
+import { RouterQueryType } from './types';
+
 export const enumToArray = <T>(enumToConvert: { [s: string]: T }): T[] => {
   return Array.from(Object.values(enumToConvert));
 };
@@ -27,4 +29,25 @@ export const formatDate = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, '0');
   const formattedDate = `${year}. ${month}. ${day}`;
   return formattedDate;
+};
+
+export const updateUrlWithParams = (params: RouterQueryType) => {
+  const url = new URL(window.location.href);
+  const searchParams = new URLSearchParams(url.search);
+
+  Object.entries(params).forEach(([key, value]) => {
+    const existingValue = searchParams.get(key);
+    const valueString = String(value);
+
+    if (existingValue !== valueString) {
+      if (existingValue) {
+        searchParams.set(key, valueString);
+      } else {
+        searchParams.append(key, valueString);
+      }
+    }
+  });
+
+  url.search = searchParams.toString();
+  return url.toString();
 };

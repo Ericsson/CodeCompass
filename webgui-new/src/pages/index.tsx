@@ -47,13 +47,15 @@ const Home = () => {
       'storedSearchFileFilterQuery',
       'storedSearchDirFilterQuery',
       'storedIsFileSearch',
-      'storedSearchMatchingResult',
       'storedSelectedSearchResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
     ]);
+    router.replace({
+      pathname: '/project',
+      query: {},
+    });
     projectCtx.setCurrentWorkspace(workspace);
-    router.push('/project');
   };
 
   return (

@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { ProjectContext } from './project-context';
 import { createCppClient, getCppDiagramTypes, getCppFileDiagramTypes } from 'service/cpp-service';
-import { AstNodeInfo, FileInfo, FileRange, Range } from '@thrift-generated';
+import { AstNodeInfo, FileInfo, FileRange, Position, Range } from '@thrift-generated';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 type LanguageContextType = {
   diagramInfo: FileInfo | AstNodeInfo | undefined;
@@ -35,6 +37,9 @@ export const LanguageContext = createContext<LanguageContextType>({
 });
 
 export const LanguageContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
+  const router = useRouter();
+  const routerQuery = router.query as RouterQueryType;
+
   const projectCtx = useContext(ProjectContext);
 
   const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
@@ -75,6 +80,31 @@ export const LanguageContextController = ({ children }: { children: JSX.Element 
     };
     init();
   }, [diagramInfo]);
+
+  useEffect(() => {
+    if (!routerQuery.selection) return;
+
+    const selection = routerQuery.selection.split('|');
+    const startLine = parseInt(selection[0]);
+    const startCol = parseInt(selection[1]);
+    const endLine = parseInt(selection[2]);
+    const endCol = parseInt(selection[3]);
+
+    const startpos = new Position({
+      line: startLine,
+      column: startCol,
+    });
+    const endpos = new Position({
+      line: endLine,
+      column: endCol,
+    });
+    const range = new Range({
+      startpos,
+      endpos,
+    });
+
+    setNodeSelectionRange(range);
+  }, [routerQuery.selection]);
 
   const languageContext = {
     diagramInfo,

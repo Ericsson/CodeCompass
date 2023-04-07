@@ -5,6 +5,7 @@ import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry 
 import { FileIcon } from 'components/file-icon/file-icon';
 import { TabName } from 'enums/tab-enum';
 import { ConfigContext } from 'global-context/config-context';
+import { LanguageContext } from 'global-context/language-context';
 import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
@@ -69,6 +70,7 @@ export const SearchResults = (): JSX.Element => {
   const configCtx = useContext(ConfigContext);
   const projectCtx = useContext(ProjectContext);
   const searchCtx = useContext(SearchContext);
+  const languageCtx = useContext(LanguageContext);
 
   const handleDirNodeSelect = () => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
@@ -111,7 +113,7 @@ export const SearchResults = (): JSX.Element => {
     projectCtx.setExpandedFileTreeNodes(parents);
     configCtx.setActiveTab(TabName.CODE);
     searchCtx.setSelectedSearchResult(idx ?? (file.id as string));
-    searchCtx.setMatchingResult(lineMatch);
+    languageCtx.setNodeSelectionRange(lineMatch?.range?.range);
   };
 
   const updateSelectResults = async (newSearchSize: number) => {

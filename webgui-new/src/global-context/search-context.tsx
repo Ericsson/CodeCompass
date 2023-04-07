@@ -39,8 +39,6 @@ type SearchContextType = {
   setSearchSize: (_val: number) => void;
   resultPaths: string[];
   setResultPaths: (_val: string[]) => void;
-  matchingResult: LineMatch | undefined;
-  setMatchingResult: (_val: LineMatch | undefined) => void;
   selectedSearchResult: string;
   setSelectedSearchResult: (_val: string) => void;
   expandedPathNodes: string[];
@@ -76,8 +74,6 @@ export const SearchContext = createContext<SearchContextType>({
   setSearchSize: (_val) => {},
   resultPaths: [],
   setResultPaths: (_val) => {},
-  matchingResult: undefined,
-  setMatchingResult: (_val) => {},
   selectedSearchResult: '',
   setSelectedSearchResult: (_val) => {},
   expandedPathNodes: [],
@@ -102,7 +98,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
   const [searchStart, setSearchStart] = useState<number | undefined>(undefined);
   const [searchSize, setSearchSize] = useState<number | undefined>(undefined);
   const [resultPaths, setResultPaths] = useState<string[]>([]);
-  const [matchingResult, setMatchingResult] = useState<LineMatch | undefined>(undefined);
   const [selectedSearchResult, setSelectedSearchResult] = useState<string | undefined>(undefined);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNodesType | undefined>(undefined);
@@ -131,7 +126,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
         storedSelectedSearchTypes,
         storedSearchStart,
         storedSearchSize,
-        storedSearchMatchingResult,
         storedSelectedSearchResult,
         storedExpandedSearchFileNodes,
         storedExpandedSearchPathNodes,
@@ -148,7 +142,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       setSelectedSearchTypes(storedSelectedSearchTypes ?? searchTypeOptions);
       setSearchStart(storedSearchStart ?? 0);
       setSearchSize(storedSearchSize ?? 10);
-      setMatchingResult(storedSearchMatchingResult ?? undefined);
       setSelectedSearchResult(storedSelectedSearchResult ?? '');
       setExpandedPathNodes(storedExpandedSearchPathNodes ?? []);
       setExpandedFileNodes(storedExpandedSearchFileNodes ?? {});
@@ -204,7 +197,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
       storedSelectedSearchTypes: selectedSearchTypes,
       storedSearchStart: searchStart,
       storedSearchSize: searchSize,
-      storedSearchMatchingResult: matchingResult,
       storedSelectedSearchResult: selectedSearchResult,
       storedExpandedSearchPathNodes: expandedPathNodes,
       storedExpandedSearchFileNodes: expandedFileNodes,
@@ -221,7 +213,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     selectedSearchTypes,
     searchStart,
     searchSize,
-    matchingResult,
     selectedSearchResult,
     expandedPathNodes,
     expandedFileNodes,
@@ -243,7 +234,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     expandedPathNodes: expandedPathNodes as string[],
     expandedFileNodes: expandedFileNodes as FileNodesType,
     resultPaths,
-    matchingResult,
     selectedSearchResult: selectedSearchResult as string,
     setSearchOptions,
     setSearchCurrentOption,
@@ -258,7 +248,6 @@ export const SearchContextController = ({ children }: { children: JSX.Element | 
     setSearchStart,
     setSearchSize,
     setResultPaths,
-    setMatchingResult,
     setSelectedSearchResult,
     setExpandedPathNodes,
     setExpandedFileNodes,
