@@ -11,11 +11,6 @@ import { cpp } from '@codemirror/lang-cpp';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
 import { FileName } from 'components/file-name/file-name';
-import { styled } from '@mui/material';
-
-const CodeMirrorContainer = styled('div')({
-  display: 'flex',
-});
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const { theme } = useContext(ThemeContext);
@@ -100,21 +95,23 @@ export const CodeMirrorEditor = (): JSX.Element => {
         parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
         info={projectCtx.fileInfo ?? undefined}
       />
-      <CodeMirrorContainer>
-        <ReactCodeMirror
-          readOnly={true}
-          extensions={[cpp()]}
-          theme={theme === 'dark' ? githubDark : githubLight}
-          style={{ fontSize: '0.8rem', flexGrow: '1' }}
-          maxHeight={'calc(100vh - 78px - 48px - 49px)'}
-          value={projectCtx.fileContent ?? ''}
-          ref={editorRef}
-          onCreateEditor={(view, state) => (editorRef.current = { view, state })}
-          onClick={() => handleAstNodeSelect()}
-          onContextMenu={(e) => handleContextMenu(e)}
-        />
-        <EditorContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} />
-      </CodeMirrorContainer>
+      <ReactCodeMirror
+        readOnly={true}
+        extensions={[cpp()]}
+        theme={theme === 'dark' ? githubDark : githubLight}
+        style={{ fontSize: '0.8rem' }}
+        width={'100%'}
+        height={'100%'}
+        minWidth={'calc(1460px - 280px)'}
+        maxWidth={'calc(100vw - 280px)'}
+        maxHeight={'calc(100vh - 78px - 48px - 49px)'}
+        value={projectCtx.fileContent ?? ''}
+        ref={editorRef}
+        onCreateEditor={(view, state) => (editorRef.current = { view, state })}
+        onClick={() => handleAstNodeSelect()}
+        onContextMenu={(e) => handleContextMenu(e)}
+      />
+      <EditorContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} />
     </>
   );
 };
