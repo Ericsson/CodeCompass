@@ -9,7 +9,7 @@ import { LanguageContext } from 'global-context/language-context';
 import { ProjectContext } from 'global-context/project-context';
 import { SearchContext } from 'global-context/search-context';
 import { SyntheticEvent, useContext } from 'react';
-import { getParents, getFileContent, getChildFiles } from 'service/project-service';
+import { getFileContent } from 'service/project-service';
 import { getSearchResults } from 'service/search-service';
 import { removeStore } from 'utils/store';
 import { getFileFolderPath } from 'utils/utils';
@@ -102,15 +102,9 @@ export const SearchResults = (): JSX.Element => {
   };
 
   const handleFileLineClick = async (file: FileInfo, path: string, lineMatch?: LineMatch, idx?: string) => {
-    const parents = await getParents(path);
-    const children = await getChildFiles(parents[0]);
     const fileContent = await getFileContent(file.id as string);
-    projectCtx.setFolderPath(path);
-    projectCtx.setFiles(children);
-    projectCtx.setFileContent(fileContent);
     projectCtx.setFileInfo(file);
-    projectCtx.setSelectedFile(file.id as string);
-    projectCtx.setExpandedFileTreeNodes(parents);
+    projectCtx.setFileContent(fileContent);
     configCtx.setActiveTab(TabName.CODE);
     searchCtx.setSelectedSearchResult(idx ?? (file.id as string));
     languageCtx.setNodeSelectionRange(lineMatch?.range?.range);

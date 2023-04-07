@@ -7,7 +7,7 @@ import { TabName } from 'enums/tab-enum';
 import { getCppDocumentation, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { ProjectContext } from 'global-context/project-context';
-import { getFileInfo, getParents, getFileContent } from 'service/project-service';
+import { getFileInfo, getFileContent } from 'service/project-service';
 import { FileInfo, Range } from '@thrift-generated';
 import { updateUrlWithParams } from 'utils/utils';
 
@@ -100,13 +100,10 @@ export const EditorContextMenu = ({
 
     const fileId = def.range?.file as string;
     const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const parents = await getParents(fileInfo.path as string);
     const fileContent = await getFileContent(fileId);
 
-    projectCtx.setFileContent(fileContent);
     projectCtx.setFileInfo(fileInfo);
-    projectCtx.setSelectedFile(fileId);
-    projectCtx.setExpandedFileTreeNodes(parents);
+    projectCtx.setFileContent(fileContent);
 
     languageCtx.setNodeSelectionRange(def.range?.range as Range);
     configCtx.setActiveTab(TabName.CODE);

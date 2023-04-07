@@ -4,7 +4,7 @@ import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { useContext, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
-import { getFileInfo, getParents, getFileContent } from 'service/project-service';
+import { getFileInfo, getFileContent } from 'service/project-service';
 import { LanguageContext } from 'global-context/language-context';
 import { ProjectContext } from 'global-context/project-context';
 import { ConfigContext } from 'global-context/config-context';
@@ -126,12 +126,9 @@ export const FileName = ({
   const jumpToRef = async (astNodeInfo: AstNodeInfo) => {
     const fileId = astNodeInfo.range?.file as string;
     const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const parents = await getParents(fileInfo.path as string);
     const fileContent = await getFileContent(fileId);
-    projectCtx.setFileContent(fileContent);
     projectCtx.setFileInfo(fileInfo);
-    projectCtx.setSelectedFile(fileId);
-    projectCtx.setExpandedFileTreeNodes(parents);
+    projectCtx.setFileContent(fileContent);
     languageCtx.setNodeSelectionRange(astNodeInfo.range?.range as Range);
     configCtx.setActiveTab(TabName.CODE);
   };

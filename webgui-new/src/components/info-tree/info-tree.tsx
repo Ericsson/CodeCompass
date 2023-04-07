@@ -7,7 +7,7 @@ import { useContext, useEffect, useState } from 'react';
 import { getCppReferenceTypes, getCppReferences, getCppProperties, getCppReferenceCount } from 'service/cpp-service';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { ProjectContext } from 'global-context/project-context';
-import { getParents, getFileContent, getFileInfo } from 'service/project-service';
+import { getFileContent, getFileInfo } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
@@ -102,12 +102,9 @@ export const InfoTree = (): JSX.Element => {
   const jumpToRef = async (astNodeInfo: AstNodeInfo) => {
     const fileId = astNodeInfo.range?.file as string;
     const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const parents = await getParents(fileInfo.path as string);
     const fileContent = await getFileContent(fileId);
     projectCtx.setFileContent(fileContent);
     projectCtx.setFileInfo(fileInfo);
-    projectCtx.setSelectedFile(fileId);
-    projectCtx.setExpandedFileTreeNodes(parents);
     languageCtx.setNodeSelectionRange(astNodeInfo.range?.range as Range);
     configCtx.setActiveTab(TabName.CODE);
   };
