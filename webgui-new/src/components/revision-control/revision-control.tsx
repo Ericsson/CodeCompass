@@ -13,8 +13,7 @@ import { ChevronRight, ExpandMore, Commit, MoreHoriz } from '@mui/icons-material
 import { formatDate } from 'utils/utils';
 import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
-import { useRouter } from 'next/router';
-import { RouterQueryType } from 'utils/types';
+import { GitContext } from 'global-context/git-context';
 
 type RepoId = string;
 type Branch = string;
@@ -57,10 +56,8 @@ const Label = styled('div')(({ theme }) => ({
 }));
 
 export const RevisionControl = (): JSX.Element => {
-  const router = useRouter();
-  const routerQuery = router.query as RouterQueryType;
-
   const configCtx = useContext(ConfigContext);
+  const gitCtx = useContext(GitContext);
 
   const DISPLAYED_COMMIT_CNT: number = 15;
 
@@ -172,7 +169,9 @@ export const RevisionControl = (): JSX.Element => {
   };
 
   const getCommitDiff = async (repoId: string, branch: string, commitId: string) => {
-    router.push(`/project/?gitRepoId=${repoId}&?gitBranch=${branch}&gitCommitId=${commitId}`);
+    gitCtx.setRepoId(repoId);
+    gitCtx.setCommitId(commitId);
+    gitCtx.setBranch(branch);
     configCtx.setActiveTab(TabName.GIT_DIFF);
   };
 
@@ -193,7 +192,7 @@ export const RevisionControl = (): JSX.Element => {
             onClick={() => getCommitDiff(repoId, branch, commit.oid as string)}
             sx={{
               backgroundColor: (theme) =>
-                commit.oid === routerQuery.gitCommitId ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+                commit.oid === gitCtx.commitId ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
             }}
           >
             <Tooltip

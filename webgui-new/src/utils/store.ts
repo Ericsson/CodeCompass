@@ -40,6 +40,9 @@ type StoreOptions = {
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
   storedExpandedSearchFileNodes?: FileNodesType;
+  storedGitRepoId?: string;
+  storedGitCommitId?: string;
+  storedGitBranch?: string;
 };
 
 type StoreOptionKey =
@@ -70,7 +73,10 @@ type StoreOptionKey =
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
-  | 'storedExpandedSearchFileNodes';
+  | 'storedExpandedSearchFileNodes'
+  | 'storedGitRepoId'
+  | 'storedGitCommitId'
+  | 'storedGitBranch';
 
 type StoreOptionValue =
   | string

@@ -2,13 +2,12 @@ import { TextSnippet } from '@mui/icons-material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { ToggleButton, ToggleButtonGroup, alpha, styled } from '@mui/material';
 import { ThemeContext } from 'global-context/theme-context';
-import { useRouter } from 'next/router';
 import { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import { getCommit, getCommitDiffAsString } from 'service/git-service';
-import { RouterQueryType } from 'utils/types';
 import { formatDate } from 'utils/utils';
 import { GitCommit } from '@thrift-generated';
+import { GitContext } from 'global-context/git-context';
 
 const CommitSummary = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -66,10 +65,8 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 export const GitDiff = (): JSX.Element => {
-  const router = useRouter();
-  const routerQuery = router.query as RouterQueryType;
-
   const themeCtx = useContext(ThemeContext);
+  const gitCtx = useContext(GitContext);
 
   const [splitView, setSplitView] = useState<boolean>(false);
   const [commit, setCommit] = useState<GitCommit | undefined>(undefined);
@@ -78,16 +75,15 @@ export const GitDiff = (): JSX.Element => {
   const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!router.isReady) return;
-    const init = async () => {
-      if (!routerQuery.gitRepoId || !routerQuery.gitCommitId) return;
+    if (!gitCtx.repoId || !gitCtx.commitId) return;
 
+    const init = async () => {
       const initOldValues: typeof oldValues = new Map();
       const initNewValues: typeof newValues = new Map();
       const initExpandedFiles: string[] = [];
 
-      const initCommit = await getCommit(routerQuery.gitRepoId, routerQuery.gitCommitId);
-      const initialDiff = await getCommitDiffAsString(routerQuery.gitRepoId, routerQuery.gitCommitId, true, 3);
+      const initCommit = await getCommit(gitCtx.repoId, gitCtx.commitId);
+      const initialDiff = await getCommitDiffAsString(gitCtx.repoId, gitCtx.commitId, true, 3);
 
       const lines = initialDiff.split(/\r?\n/);
       const diffLines = lines.filter((line) => line.startsWith('diff --git'));
@@ -99,7 +95,7 @@ export const GitDiff = (): JSX.Element => {
           .slice(2, 4)
           .map((fname) => fname.split('/')[1]);
         const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
-        const diff = await getCommitDiffAsString(routerQuery.gitRepoId, routerQuery.gitCommitId, false, 3, [fileName]);
+        const diff = await getCommitDiffAsString(gitCtx.repoId, gitCtx.commitId, false, 3, [fileName]);
         gitDiffs.push(diff);
       }
 
@@ -157,7 +153,7 @@ export const GitDiff = (): JSX.Element => {
       setExpandedFiles(initExpandedFiles);
     };
     init();
-  }, [router.isReady, routerQuery]);
+  }, [gitCtx.repoId, gitCtx.commitId]);
 
   const getLineOffset = (change: string): number => {
     const offset = parseInt(change.split(' ')[1].slice(1, change.split(' ')[1].indexOf(',')));
