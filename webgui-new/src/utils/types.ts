@@ -16,3 +16,14 @@ export type FileNode = {
     expandedNodes: string[];
   };
 };
+
+export type SearchProps = {
+  initialQuery: string;
+  fileSearch: boolean;
+  type: number;
+  query: string;
+  fileFilter: string;
+  dirFilter: string;
+  start: number;
+  size: number;
+};

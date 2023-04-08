@@ -1,26 +1,15 @@
 import { createContext, useEffect, useState } from 'react';
-import {
-  FileInfo,
-  FileSearchResult,
-  Position,
-  Range,
-  SearchResult,
-  SearchResultEntry,
-  SearchType,
-  WorkspaceInfo,
-} from '@thrift-generated';
+import { Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
 import { createProjectClient } from 'service/project-service';
-import { createSearchClient, getSearchTypes } from 'service/search-service';
+import { createSearchClient } from 'service/search-service';
 import { createCppClient } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
 import { createMetricsClient } from 'service/metrics-service';
 import { createGitClient } from 'service/git-service';
 import { createConfig } from 'service/config';
 import { getStore, setStore } from 'utils/store';
-import { FileNode, RouterQueryType } from 'utils/types';
-import { SearchTypes } from 'enums/search-enum';
-import { enumToArray, getFileFolderPath } from 'utils/utils';
+import { RouterQueryType, SearchProps } from 'utils/types';
 import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
@@ -32,6 +21,8 @@ type AppContextProps = {
   setWorkspaceId: (_val: string) => void;
   projectFileId: string;
   setProjectFileId: (_val: string) => void;
+  searchProps: SearchProps | undefined;
+  setSearchProps: (_val: SearchProps | undefined) => void;
   metricsGenId: string;
   setMetricsGenId: (_val: string) => void;
   diagramGenId: string;
@@ -54,38 +45,6 @@ type AppContextProps = {
   setTreeViewOption: (_val: boolean) => void;
   loadComplete: boolean;
   setLoadComplete: (_val: boolean) => void;
-  searchOptions: SearchType[];
-  setSearchOptions: (_val: SearchType[]) => void;
-  searchCurrentOption: SearchType | undefined;
-  setSearchCurrentOption: (_val: SearchType | undefined) => void;
-  isFileSearch: boolean;
-  setIsFileSearch: (_val: boolean) => void;
-  searchResult: SearchResult | FileSearchResult | undefined;
-  setSearchResult: (_val: SearchResult | FileSearchResult | undefined) => void;
-  searchResultCount: number;
-  setSearchResultCount: (_val: number) => void;
-  searchQuery: string;
-  setSearchQuery: (_val: string) => void;
-  searchFileFilterQuery: string;
-  setSearchFileFilterQuery: (_val: string) => void;
-  searchDirFilterQuery: string;
-  setSearchDirFilterQuery: (_val: string) => void;
-  searchLanguage: string;
-  setSearchLanguage: (_val: string) => void;
-  selectedSearchTypes: string[];
-  setSelectedSearchTypes: (_val: string[]) => void;
-  searchStart: number;
-  setSearchStart: (_val: number) => void;
-  searchSize: number;
-  setSearchSize: (_val: number) => void;
-  resultPaths: string[];
-  setResultPaths: (_val: string[]) => void;
-  selectedSearchResult: string;
-  setSelectedSearchResult: (_val: string) => void;
-  expandedPathNodes: string[];
-  setExpandedPathNodes: (_val: string[]) => void;
-  expandedFileNodes: FileNode;
-  setExpandedFileNodes: (_val: FileNode) => void;
 };
 
 export const AppContext = createContext<AppContextProps>({
@@ -95,6 +54,8 @@ export const AppContext = createContext<AppContextProps>({
   setWorkspaceId: (_val) => {},
   projectFileId: '',
   setProjectFileId: (_val) => {},
+  searchProps: undefined,
+  setSearchProps: (_val) => {},
   metricsGenId: '',
   setMetricsGenId: (_val) => {},
   diagramGenId: '',
@@ -117,38 +78,6 @@ export const AppContext = createContext<AppContextProps>({
   setTreeViewOption: (_val) => {},
   loadComplete: false,
   setLoadComplete: (_val) => {},
-  searchOptions: [],
-  setSearchOptions: (_val) => {},
-  searchCurrentOption: undefined,
-  setSearchCurrentOption: (_val) => {},
-  isFileSearch: false,
-  setIsFileSearch: (_val) => {},
-  searchResult: undefined,
-  setSearchResult: (_val) => {},
-  searchResultCount: 0,
-  setSearchResultCount: (_val) => {},
-  searchQuery: '',
-  setSearchQuery: (_val) => {},
-  searchFileFilterQuery: '',
-  setSearchDirFilterQuery: (_val) => {},
-  searchDirFilterQuery: '',
-  setSearchFileFilterQuery: (_val) => {},
-  searchLanguage: '',
-  setSearchLanguage: (_val) => {},
-  selectedSearchTypes: [],
-  setSelectedSearchTypes: (_val) => {},
-  searchStart: 0,
-  setSearchStart: (_val) => {},
-  searchSize: 5,
-  setSearchSize: (_val) => {},
-  resultPaths: [],
-  setResultPaths: (_val) => {},
-  selectedSearchResult: '',
-  setSelectedSearchResult: (_val) => {},
-  expandedPathNodes: [],
-  setExpandedPathNodes: (_val) => {},
-  expandedFileNodes: {},
-  setExpandedFileNodes: (_val) => {},
 });
 
 export const AppContextController = ({ children }: { children: JSX.Element }): JSX.Element => {
@@ -158,6 +87,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
   const [projectFileId, setProjectFileId] = useState<string | undefined>(undefined);
+  const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
   const [metricsGenId, setMetricsGenId] = useState<string | undefined>(undefined);
   const [diagramGenId, setDiagramGenId] = useState<string | undefined>(undefined);
   const [languageNodeId, setLanguageNodeId] = useState<string | undefined>(undefined);
@@ -169,23 +99,6 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const [activeTab, setActiveTab] = useState<number | undefined>(undefined);
   const [treeViewOption, setTreeViewOption] = useState<boolean | undefined>(undefined);
   const [loadComplete, setLoadComplete] = useState<boolean>(false);
-
-  const [searchOptions, setSearchOptions] = useState<SearchType[]>([]);
-  const [searchCurrentOption, setSearchCurrentOption] = useState<SearchType | undefined>(undefined);
-  const [isFileSearch, setIsFileSearch] = useState<boolean | undefined>(undefined);
-  const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
-  const [searchResultCount, setSearchResultCount] = useState<number | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
-  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
-  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
-  const [searchLanguage, setSearchLanguage] = useState<string | undefined>(undefined);
-  const [selectedSearchTypes, setSelectedSearchTypes] = useState<string[] | undefined>(undefined);
-  const [searchStart, setSearchStart] = useState<number | undefined>(undefined);
-  const [searchSize, setSearchSize] = useState<number | undefined>(undefined);
-  const [resultPaths, setResultPaths] = useState<string[]>([]);
-  const [selectedSearchResult, setSelectedSearchResult] = useState<string | undefined>(undefined);
-  const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
-  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNode | undefined>(undefined);
 
   useEffect(() => {
     const init = async () => {
@@ -232,6 +145,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
       const {
         storedProjectFileId,
+        storedSearchProps,
         storedMetricsGenId,
         storedDiagramGenId,
         storedLanguageNodeId,
@@ -242,23 +156,10 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         storedActiveAccordion,
         storedActiveTab,
         storedTreeViewOption,
-        storedSearchOption,
-        storedIsFileSearch,
-        storedSearchResults,
-        storedSearchResultCount,
-        storedSearchQuery,
-        storedSearchFileFilterQuery,
-        storedSearchDirFilterQuery,
-        storedSearchLanguage,
-        storedSelectedSearchTypes,
-        storedSearchStart,
-        storedSearchSize,
-        storedSelectedSearchResult,
-        storedExpandedSearchFileNodes,
-        storedExpandedSearchPathNodes,
       } = getStore();
 
       setProjectFileId(storedProjectFileId);
+      setSearchProps(storedSearchProps ?? undefined);
       setMetricsGenId(storedMetricsGenId);
       setDiagramGenId(storedDiagramGenId);
       setLanguageNodeId(storedLanguageNodeId);
@@ -269,26 +170,6 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setActiveAccordion(storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
       setActiveTab(storedActiveTab ?? 0);
       setTreeViewOption(storedTreeViewOption ?? false);
-
-      const searchTypes = await getSearchTypes();
-      setSearchOptions(searchTypes);
-
-      const searchTypeOptions = enumToArray(SearchTypes);
-
-      setSearchCurrentOption(storedSearchOption ?? searchTypes[0]);
-      setIsFileSearch(storedIsFileSearch ?? false);
-      setSearchResult(storedSearchResults ?? undefined);
-      setSearchResultCount(storedSearchResultCount ?? 0);
-      setSearchQuery(storedSearchQuery ?? '');
-      setSearchFileFilterQuery(storedSearchFileFilterQuery ?? '');
-      setSearchDirFilterQuery(storedSearchDirFilterQuery ?? '');
-      setSearchLanguage(storedSearchLanguage ?? 'Any');
-      setSelectedSearchTypes(storedSelectedSearchTypes ?? searchTypeOptions);
-      setSearchStart(storedSearchStart ?? 0);
-      setSearchSize(storedSearchSize ?? 10);
-      setSelectedSearchResult(storedSelectedSearchResult ?? '');
-      setExpandedPathNodes(storedExpandedSearchPathNodes ?? []);
-      setExpandedFileNodes(storedExpandedSearchFileNodes ?? {});
 
       setStore({
         storedWorkspaceId: workspaceId,
@@ -327,43 +208,9 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   }, [workspaceId, routerQuery]);
 
   useEffect(() => {
-    if (!searchResult || !searchResult.results) return;
-
-    const paths = !isFileSearch
-      ? new Set(
-          (searchResult?.results as SearchResultEntry[])?.map((entry) =>
-            getFileFolderPath(entry.finfo?.path)
-          ) as string[]
-        )
-      : new Set((searchResult?.results as FileInfo[])?.map((entry) => getFileFolderPath(entry.path)) as string[]);
-    setResultPaths([...paths]);
-
-    const { storedExpandedSearchPathNodes, storedExpandedSearchFileNodes } = getStore();
-
-    const pathNodes = [...paths].map((_e, idx) => idx.toString());
-    setExpandedPathNodes(storedExpandedSearchPathNodes ?? pathNodes);
-
-    const expandedFileNodesMap: FileNode = {};
-    let idx = 0;
-    for (const path of paths) {
-      const fileIds = !isFileSearch
-        ? ((searchResult?.results as SearchResultEntry[])
-            ?.filter((entry) => getFileFolderPath(entry.finfo?.path) === path)
-            .map((entry) => entry.finfo?.id) as string[])
-        : ((searchResult?.results as FileInfo[])
-            ?.filter((entry) => getFileFolderPath(entry.path) === path)
-            .map((entry) => entry.id) as string[]);
-      expandedFileNodesMap[idx.toString()] = {
-        expandedNodes: fileIds,
-      };
-      ++idx;
-    }
-    setExpandedFileNodes(storedExpandedSearchFileNodes ?? expandedFileNodesMap);
-  }, [searchResult, isFileSearch]);
-
-  useEffect(() => {
     setStore({
       storedProjectFileId: projectFileId,
+      storedSearchProps: searchProps,
       storedMetricsGenId: metricsGenId,
       storedDiagramGenId: diagramGenId,
       storedLanguageNodeId: languageNodeId,
@@ -374,23 +221,10 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       storedActiveAccordion: activeAccordion,
       storedActiveTab: activeTab,
       storedTreeViewOption: treeViewOption,
-      storedSearchOption: searchCurrentOption,
-      storedIsFileSearch: isFileSearch,
-      storedSearchResults: searchResult,
-      storedSearchResultCount: searchResultCount,
-      storedSearchQuery: searchQuery,
-      storedSearchFileFilterQuery: searchFileFilterQuery,
-      storedSearchDirFilterQuery: searchDirFilterQuery,
-      storedSearchLanguage: searchLanguage,
-      storedSelectedSearchTypes: selectedSearchTypes,
-      storedSearchStart: searchStart,
-      storedSearchSize: searchSize,
-      storedSelectedSearchResult: selectedSearchResult,
-      storedExpandedSearchPathNodes: expandedPathNodes,
-      storedExpandedSearchFileNodes: expandedFileNodes,
     });
   }, [
     projectFileId,
+    searchProps,
     metricsGenId,
     diagramGenId,
     languageNodeId,
@@ -401,26 +235,13 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     activeAccordion,
     activeTab,
     treeViewOption,
-    searchCurrentOption,
-    isFileSearch,
-    searchResult,
-    searchResultCount,
-    searchQuery,
-    searchFileFilterQuery,
-    searchDirFilterQuery,
-    searchLanguage,
-    selectedSearchTypes,
-    searchStart,
-    searchSize,
-    selectedSearchResult,
-    expandedPathNodes,
-    expandedFileNodes,
   ]);
 
   const appContext = {
     workspaces: workspaces as WorkspaceInfo[],
     workspaceId: workspaceId as string,
     projectFileId: projectFileId as string,
+    searchProps: searchProps,
     metricsGenId: metricsGenId as string,
     diagramGenId: diagramGenId as string,
     languageNodeId: languageNodeId as string,
@@ -435,6 +256,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     setWorkspaces,
     setWorkspaceId,
     setProjectFileId,
+    setSearchProps,
     setMetricsGenId,
     setDiagramGenId,
     setLanguageNodeId,
@@ -446,38 +268,6 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     setActiveTab,
     setTreeViewOption,
     setLoadComplete,
-    searchOptions,
-    searchCurrentOption: searchCurrentOption as SearchType,
-    isFileSearch: isFileSearch as boolean,
-    searchResult: searchResult as SearchResult | FileSearchResult,
-    searchResultCount: searchResultCount as number,
-    searchQuery: searchQuery as string,
-    searchFileFilterQuery: searchFileFilterQuery as string,
-    searchDirFilterQuery: searchDirFilterQuery as string,
-    searchLanguage: searchLanguage as string,
-    selectedSearchTypes: selectedSearchTypes as string[],
-    searchStart: searchStart as number,
-    searchSize: searchSize as number,
-    expandedPathNodes: expandedPathNodes as string[],
-    expandedFileNodes: expandedFileNodes as FileNode,
-    resultPaths,
-    selectedSearchResult: selectedSearchResult as string,
-    setSearchOptions,
-    setSearchCurrentOption,
-    setIsFileSearch,
-    setSearchResult,
-    setSearchResultCount,
-    setSearchQuery,
-    setSearchFileFilterQuery,
-    setSearchDirFilterQuery,
-    setSearchLanguage,
-    setSelectedSearchTypes,
-    setSearchStart,
-    setSearchSize,
-    setResultPaths,
-    setSelectedSearchResult,
-    setExpandedPathNodes,
-    setExpandedFileNodes,
   };
 
   return <AppContext.Provider value={appContext}>{children}</AppContext.Provider>;

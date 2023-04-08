@@ -50,7 +50,7 @@ export enum SearchOtherLanguages {
   X_TEXINFO = 'text/x-texinfo',
 }
 
-export enum SearchTypes {
+export enum SearchTypeOptions {
   TYPE = 'Type',
   FUNCTION = 'Function',
   CONSTANT = 'Constant',

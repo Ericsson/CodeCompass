@@ -12,6 +12,7 @@ export const ProjectSelect = (): JSX.Element => {
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     removeStore([
       'storedProjectFileId',
+      'storedSearchProps',
       'storedDiagramGenId',
       'storedMetricsGenId',
       'storedLanguageNodeId',
@@ -24,13 +25,7 @@ export const ProjectSelect = (): JSX.Element => {
       'storedGitBranch',
       'storedSearchResults',
       'storedSearchResultCount',
-      'storedSearchStart',
-      'storedSearchSize',
-      'storedSearchOption',
-      'storedSearchQuery',
-      'storedSearchFileFilterQuery',
-      'storedSearchDirFilterQuery',
-      'storedIsFileSearch',
+      'storedFileSearch',
       'storedSelectedSearchResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',

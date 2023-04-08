@@ -1,17 +1,17 @@
 import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
-import { KeyboardEvent, useContext, useState } from 'react';
-import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypes } from 'enums/search-enum';
+import { KeyboardEvent, useContext, useEffect, useState } from 'react';
+import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypeOptions } from 'enums/search-enum';
 import { enumToArray } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
 import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
-import { getSearchResultCount, getSearchResults } from 'service/search-service';
-import { FileSearchResult, SearchResult } from '@thrift-generated';
+import { getSearchTypes } from 'service/search-service';
+import { SearchType } from '@thrift-generated';
 import { AccordionLabel } from 'enums/accordion-enum';
-import { removeStore } from 'utils/store';
+import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
@@ -48,37 +48,67 @@ export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
   const appCtx = useContext(AppContext);
 
-  const searchTypes = enumToArray(SearchTypes);
+  const searchTypeOptions = enumToArray(SearchTypeOptions);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
+  const [searchLanguage, setSearchLanguage] = useState<string | undefined>(undefined);
+  const [searchType, setSearchType] = useState<SearchType | undefined>(undefined);
+  const [searchTypes, setSearchTypes] = useState<SearchType[]>([]);
+  const [selectedSearchTypeOptions, setSelectedSearchTypeOptions] = useState<string[] | undefined>(undefined);
+
+  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
+  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
+  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const init = async () => {
+      const initSearchTypes = await getSearchTypes();
+      const initSearchTypeOptions = enumToArray(SearchTypeOptions);
+      const initSearchLanguage = enumToArray(SearchMainLanguages)[0];
+
+      const { storedSearchLanguage, storedSearchType, storedSelectedSearchTypeOptions, storedSearchProps } = getStore();
+      setSearchLanguage(storedSearchLanguage ?? initSearchLanguage);
+      setSearchType(storedSearchType ?? initSearchTypes[0]);
+      setSearchTypes(initSearchTypes);
+      setSelectedSearchTypeOptions(storedSelectedSearchTypeOptions ?? initSearchTypeOptions);
+
+      if (storedSearchProps) {
+        setSearchQuery(storedSearchProps.initialQuery);
+        setSearchFileFilterQuery(storedSearchProps.fileFilter);
+        setSearchDirFilterQuery(storedSearchProps.dirFilter);
+      }
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    setStore({
+      storedSearchType: searchType,
+      storedSearchLanguage: searchLanguage,
+      storedSelectedSearchTypeOptions: selectedSearchTypeOptions,
+    });
+  }, [searchType, searchLanguage, selectedSearchTypeOptions]);
 
   const handleSearch = async (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
-      const query = createQueryString(appCtx.searchQuery);
+      if (!searchQuery) return;
+
+      const query = createQueryString(searchQuery);
       if (query === '') return;
 
-      const isFileSearch = appCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
-      const searchResultCount = (await getSearchResultCount(
-        isFileSearch,
-        appCtx.searchCurrentOption?.id as number,
-        query,
-        appCtx.searchFileFilterQuery,
-        appCtx.searchDirFilterQuery
-      )) as number;
-      const searchResults = (await getSearchResults(
-        isFileSearch,
-        appCtx.searchCurrentOption?.id as number,
-        query,
-        0,
-        10,
-        appCtx.searchFileFilterQuery,
-        appCtx.searchDirFilterQuery
-      )) as SearchResult | FileSearchResult;
+      const fileSearch = searchType?.name === SearchOptions.FILE_NAME.toString();
+      const initSearchProps = {
+        initialQuery: searchQuery,
+        fileSearch: fileSearch,
+        type: searchType?.id as number,
+        query: query,
+        fileFilter: searchFileFilterQuery ?? '',
+        dirFilter: searchDirFilterQuery ?? '',
+        start: 0,
+        size: 10,
+      };
 
-      appCtx.setSearchStart(0);
-      appCtx.setSearchSize(10);
-      appCtx.setSearchResultCount(searchResultCount);
-      appCtx.setSearchResult(searchResults);
-      appCtx.setIsFileSearch(isFileSearch);
+      appCtx.setSearchProps(initSearchProps);
+
       appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
       removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {
@@ -86,29 +116,29 @@ export const Header = (): JSX.Element => {
     }
   };
 
-  const getSearchTypeQuery = (searchType: string): string => {
-    if (searchType === SearchTypes.TYPE) {
+  const getSearchTypeOptionQuery = (searchType: string): string => {
+    if (searchType === SearchTypeOptions.TYPE) {
       return 'type';
-    } else if (searchType === SearchTypes.FUNCTION) {
+    } else if (searchType === SearchTypeOptions.FUNCTION) {
       return 'func';
-    } else if (searchType === SearchTypes.CONSTANT) {
+    } else if (searchType === SearchTypeOptions.CONSTANT) {
       return 'const';
-    } else if (searchType === SearchTypes.VARIABLE) {
+    } else if (searchType === SearchTypeOptions.VARIABLE) {
       return 'var';
-    } else if (searchType === SearchTypes.FIELD) {
+    } else if (searchType === SearchTypeOptions.FIELD) {
       return 'field';
-    } else if (searchType === SearchTypes.LABEL) {
+    } else if (searchType === SearchTypeOptions.LABEL) {
       return 'label';
-    } else if (searchType === SearchTypes.MACRO) {
+    } else if (searchType === SearchTypeOptions.MACRO) {
       return 'macro';
-    } else if (searchType === SearchTypes.MODULE) {
+    } else if (searchType === SearchTypeOptions.MODULE) {
       return 'module';
     } else {
       return '';
     }
   };
 
-  const getSearchLangQuery = (language: string): string => {
+  const getSearchLanguageQuery = (language: string): string => {
     if (language === SearchMainLanguages.C_CPP) {
       return '(mime:("text/x-c") OR mime:("text/x-c++"))';
     } else if (language === SearchMainLanguages.JAVA) {
@@ -129,20 +159,22 @@ export const Header = (): JSX.Element => {
   };
 
   const createQueryString = (queryString: string): string => {
+    if (!searchLanguage || !selectedSearchTypeOptions) return '';
+
     let modifiedQueryString: string = '';
-    const textSearch = appCtx.searchCurrentOption?.name === SearchOptions.TEXT.toString();
-    const definitionSearch = appCtx.searchCurrentOption?.name === SearchOptions.DEFINITION.toString();
-    const allTypesSelected = searchTypes.every((t) => appCtx.selectedSearchTypes.includes(t));
-    const anyLanguage = appCtx.searchLanguage === 'Any';
+    const textSearch = searchType?.name === SearchOptions.TEXT.toString();
+    const definitionSearch = searchType?.name === SearchOptions.DEFINITION.toString();
+    const allTypesSelected = searchTypeOptions.every((t) => selectedSearchTypeOptions.includes(t));
+    const anyLanguage = searchLanguage === 'Any';
 
     if (definitionSearch) {
       modifiedQueryString = queryString === '' ? '' : `defs:(${queryString})`;
       if (!allTypesSelected) {
         modifiedQueryString += queryString === '' ? '' : ' AND ';
-        modifiedQueryString += `(${getSearchTypeQuery(appCtx.selectedSearchTypes[0])}:(${queryString})`;
-        if (appCtx.selectedSearchTypes.length > 1) {
-          for (let i = 1; i < appCtx.selectedSearchTypes.length; ++i) {
-            modifiedQueryString += ` OR ${getSearchTypeQuery(appCtx.selectedSearchTypes[i])}:(${queryString})`;
+        modifiedQueryString += `(${getSearchTypeOptionQuery(selectedSearchTypeOptions[0])}:(${queryString})`;
+        if (selectedSearchTypeOptions.length > 1) {
+          for (let i = 1; i < selectedSearchTypeOptions.length; ++i) {
+            modifiedQueryString += ` OR ${getSearchTypeOptionQuery(selectedSearchTypeOptions[i])}:(${queryString})`;
           }
         }
         modifiedQueryString += ')';
@@ -150,15 +182,15 @@ export const Header = (): JSX.Element => {
       if (!anyLanguage) {
         modifiedQueryString +=
           queryString === '' && modifiedQueryString === ''
-            ? `${getSearchLangQuery(appCtx.searchLanguage)}`
-            : ` AND ${getSearchLangQuery(appCtx.searchLanguage)}`;
+            ? `${getSearchLanguageQuery(searchLanguage)}`
+            : ` AND ${getSearchLanguageQuery(searchLanguage)}`;
       }
     } else if (textSearch) {
       if (!anyLanguage) {
         modifiedQueryString =
           queryString === ''
-            ? `${getSearchLangQuery(appCtx.searchLanguage)}`
-            : `${queryString} AND ${getSearchLangQuery(appCtx.searchLanguage)}`;
+            ? `${getSearchLanguageQuery(searchLanguage)}`
+            : `${queryString} AND ${getSearchLanguageQuery(searchLanguage)}`;
       } else {
         modifiedQueryString = queryString;
       }
@@ -175,13 +207,13 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect />
           <TextField
-            value={appCtx.searchQuery}
-            onChange={(e) => appCtx.setSearchQuery(e.target.value)}
+            value={searchQuery ?? ''}
+            onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={
-              appCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME
+              searchType?.name === SearchOptions.FILE_NAME
                 ? 'File name regex'
-                : appCtx.searchCurrentOption?.name === SearchOptions.LOG
+                : searchType?.name === SearchOptions.LOG
                 ? 'Arbitrary log message'
                 : 'Search by expression'
             }
@@ -204,8 +236,8 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
-            value={appCtx.searchFileFilterQuery}
-            onChange={(e) => appCtx.setSearchFileFilterQuery(e.target.value)}
+            value={searchFileFilterQuery ?? ''}
+            onChange={(e) => setSearchFileFilterQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={'File name filter regex'}
             InputProps={{
@@ -224,8 +256,8 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
-            value={appCtx.searchDirFilterQuery}
-            onChange={(e) => appCtx.setSearchDirFilterQuery(e.target.value)}
+            value={searchDirFilterQuery ?? ''}
+            onChange={(e) => setSearchDirFilterQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={'Path filter regex'}
             InputProps={{
@@ -243,7 +275,17 @@ export const Header = (): JSX.Element => {
               ),
             }}
           />
-          <SettingsMenu anchorEl={settingsAnchorEl} setAnchorEl={setSettingsAnchorEl} />
+          <SettingsMenu
+            anchorEl={settingsAnchorEl}
+            setAnchorEl={setSettingsAnchorEl}
+            searchTypes={searchTypes}
+            searchType={searchType as SearchType}
+            setSearchType={setSearchType}
+            searchLanguage={searchLanguage as string}
+            setSearchLanguage={setSearchLanguage}
+            selectedSearchTypeOptions={selectedSearchTypeOptions as string[]}
+            setSelectedSearchTypeOptions={setSelectedSearchTypeOptions}
+          />
         </SettingsContainer>
         <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? <LightMode /> : <DarkMode />}

@@ -30,6 +30,7 @@ const Home = () => {
   const loadWorkspace = (workspace: string) => {
     removeStore([
       'storedProjectFileId',
+      'storedSearchProps',
       'storedDiagramGenId',
       'storedMetricsGenId',
       'storedLanguageNodeId',
@@ -42,13 +43,7 @@ const Home = () => {
       'storedGitBranch',
       'storedSearchResults',
       'storedSearchResultCount',
-      'storedSearchStart',
-      'storedSearchSize',
-      'storedSearchOption',
-      'storedSearchQuery',
-      'storedSearchFileFilterQuery',
-      'storedSearchDirFilterQuery',
-      'storedIsFileSearch',
+      'storedFileSearch',
       'storedSelectedSearchResult',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',

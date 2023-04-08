@@ -1,15 +1,5 @@
 import { FileInfo, FileSearchResult, Range, SearchResult, SearchType } from '@thrift-generated';
-
-type TreeNode = {
-  info: FileInfo;
-  children?: TreeNode[];
-};
-
-type FileNodesType = {
-  [key: string]: {
-    expandedNodes: string[];
-  };
-};
+import { FileNode, SearchProps, TreeNode } from './types';
 
 type StoreOptions = {
   storedTheme?: 'light' | 'dark';
@@ -21,25 +11,21 @@ type StoreOptions = {
   storedFolderPath?: string;
   storedSearchResults?: SearchResult | FileSearchResult;
   storedSearchResultCount?: number;
-  storedIsFileSearch?: boolean;
-  storedSearchOption?: SearchType;
-  storedSearchStart?: number;
-  storedSearchSize?: number;
-  storedSearchQuery?: string;
-  storedSearchFileFilterQuery?: string;
-  storedSearchDirFilterQuery?: string;
+  storedFileSearch?: boolean;
+  storedSearchType?: SearchType;
   storedSearchLanguage?: string;
   storedSearchOtherLanguage?: string;
-  storedSelectedSearchTypes?: string[];
+  storedSelectedSearchTypeOptions?: string[];
   storedSelectedSearchResult?: string;
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
-  storedExpandedSearchFileNodes?: FileNodesType;
+  storedExpandedSearchFileNodes?: FileNode;
   storedGitRepoId?: string;
   storedGitCommitId?: string;
   storedGitBranch?: string;
   storedWorkspaceId?: string;
   storedProjectFileId?: string;
+  storedSearchProps?: SearchProps;
   storedMetricsGenId?: string;
   storedDiagramGenId?: string;
   storedLanguageNodeId?: string;
@@ -53,6 +39,7 @@ type StoreOptionKey =
   | 'storedTreeViewOption'
   | 'storedWorkspaceId'
   | 'storedProjectFileId'
+  | 'storedSearchProps'
   | 'storedMetricsGenId'
   | 'storedDiagramGenId'
   | 'storedLanguageNodeId'
@@ -62,16 +49,11 @@ type StoreOptionKey =
   | 'storedFolderPath'
   | 'storedSearchResults'
   | 'storedSearchResultCount'
-  | 'storedIsFileSearch'
-  | 'storedSearchOption'
-  | 'storedSearchStart'
-  | 'storedSearchSize'
-  | 'storedSearchQuery'
-  | 'storedSearchFileFilterQuery'
-  | 'storedSearchDirFilterQuery'
+  | 'storedFileSearch'
+  | 'storedSearchType'
   | 'storedSearchLanguage'
   | 'storedSearchOtherLanguage'
-  | 'storedSelectedSearchTypes'
+  | 'storedSelectedSearchTypeOptions'
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
@@ -91,7 +73,8 @@ type StoreOptionValue =
   | SearchResult
   | FileSearchResult
   | SearchType
-  | FileNodesType;
+  | SearchProps
+  | FileNode;
 
 type StoreObject = { [key in keyof StoreOptions]?: StoreOptionValue };
 
