@@ -9,7 +9,7 @@
 #include <webserver/servercontext.h>
 
 #include <service/cppservice.h>
-#include <cpplspservice/lsp_types.h>
+#include <lspservice/lspservice.h>
 
 namespace cc
 { 
@@ -18,7 +18,7 @@ namespace service
 namespace lsp
 {
 
-class CppLspServiceHandler
+class CppLspServiceHandler : public LspServiceHandler
 {
 public:
   CppLspServiceHandler(
@@ -26,8 +26,13 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void getLspResponse(std::string& _return, const std::string& request);
+  void getDefinition(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getImplementation(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getReferences(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getDiagram(pt::ptree& responseTree_, const pt::ptree& params_) override final;
 
+private:
   std::vector<Location> definition(
     const TextDocumentPositionParams& params_);
 
@@ -49,37 +54,10 @@ public:
   Diagram nodeDiagram(
     const DiagramParams& params_);
 
-private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
   language::CppServiceHandler _cppService;
-
-
-  /**
-   * Support methods of the Language Server Protocol.
-   */
-  enum class LspMethod
-  {
-    Unknown = 0,
-    Definition,
-    Implementation,
-    References,
-    DiagramTypes,
-    Diagram
-  };
-
-  /**
-   * Maps a JSON RPC method (string) to inner representation (LspMethod).
-   * @param method The method as JSON RPC method string.
-   * @return The matching LspMethod value.
-   */
-  LspMethod parseMethod(const std::string& method);
-
-  /**
-   * A mapping from JSON RPC method (string) to inner representation (LspMethod).
-   */
-  static std::unordered_map<std::string, LspMethod> _methodMap;
 };
 
 } // lsp

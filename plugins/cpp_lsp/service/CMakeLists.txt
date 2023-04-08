@@ -9,15 +9,16 @@ include_directories(
   ${CMAKE_BINARY_DIR}/model/include
   ${CMAKE_BINARY_DIR}/plugins/cpp/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/webserver/include)
+  ${PROJECT_SOURCE_DIR}/webserver/include
+  ${PROJECT_SOURCE_DIR}/service/lsp/include)
 
 add_library(cpplspservice SHARED
   src/cpplspservice.cpp
-  src/lsp_types.cpp
   src/plugin.cpp)
 
 target_link_libraries(cpplspservice
   cppservice
+  lspservice
   util)
 
 install(TARGETS cpplspservice DESTINATION ${INSTALL_SERVICE_DIR})

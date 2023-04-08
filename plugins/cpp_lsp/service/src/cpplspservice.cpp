@@ -11,14 +11,6 @@ namespace service
 namespace lsp
 {
 
-std::unordered_map<std::string, CppLspServiceHandler::LspMethod> CppLspServiceHandler::_methodMap = {
-  { "textDocument/definition",     CppLspServiceHandler::LspMethod::Definition },
-  { "textDocument/implementation", CppLspServiceHandler::LspMethod::Implementation },
-  { "textDocument/references",     CppLspServiceHandler::LspMethod::References },
-  { "diagram/diagramTypes",        CppLspServiceHandler::LspMethod::DiagramTypes },
-  { "diagram/diagram",             CppLspServiceHandler::LspMethod::Diagram},
-};
-
 CppLspServiceHandler::CppLspServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
@@ -29,163 +21,27 @@ CppLspServiceHandler::CppLspServiceHandler(
 {
 }
 
-void CppLspServiceHandler::getLspResponse(std::string& _return, const std::string& request)
+void CppLspServiceHandler::getDefinition(pt::ptree& responseTree_, const pt::ptree& params_)
 {
-  pt::ptree responseTree;
-  responseTree.put("jsonrpc", "2.0");
+  TextDocumentPositionParams gotoDefParams;
+  gotoDefParams.readNode(params_);
 
-  try
+  std::vector<Location> gotoDefLocations =
+    definition(gotoDefParams);
+
+  if (gotoDefLocations.size() == 1)
   {
-    pt::ptree requestTree;
-    std::stringstream requestStream(request);
-    pt::read_json(requestStream, requestTree);
-
-    std::string requestId = requestTree.get<std::string>("id");
-    responseTree.put("id", requestId);
-
-    std::string method = requestTree.get<std::string>("method");
-    pt::ptree& params = requestTree.get_child("params");
-
-    switch (parseMethod(method))
+    responseTree_.put_child("result", gotoDefLocations[0].createNode());
+  }
+  else if (gotoDefLocations.size() > 1)
+  {
+    pt::ptree resultNode;
+    for (const Location &location : gotoDefLocations)
     {
-      case LspMethod::Definition:
-      {
-        TextDocumentPositionParams gotoDefParams;
-        gotoDefParams.readNode(params);
-
-        std::vector<Location> gotoDefLocations =
-          definition(gotoDefParams);
-
-        if (gotoDefLocations.size() == 1)
-        {
-          responseTree.put_child("result", gotoDefLocations[0].createNode());
-        }
-        else if (gotoDefLocations.size() > 1)
-        {
-          pt::ptree resultNode;
-          for (const Location &location : gotoDefLocations)
-          {
-            resultNode.push_back(std::make_pair("", location.createNode()));
-          }
-          responseTree.put_child("result", resultNode);
-        }
-        break;
-      }
-      case LspMethod::Implementation:
-      {
-        TextDocumentPositionParams implementationParams;
-        implementationParams.readNode(params);
-
-        std::vector<Location> implementationLocations =
-          implementation(implementationParams);
-
-        if (implementationLocations.size() == 1)
-        {
-          responseTree.put_child("result", implementationLocations[0].createNode());
-        }
-        else if (implementationLocations.size() > 1)
-        {
-          pt::ptree resultNode;
-          for (const Location &location : implementationLocations)
-          {
-            resultNode.push_back(std::make_pair("", location.createNode()));
-          }
-          responseTree.put_child("result", resultNode);
-        }
-        break;
-      }
-      case LspMethod::References:
-      {
-        ReferenceParams refParams;
-        refParams.readNode(params);
-
-        std::vector<Location> refLocations = references(refParams);
-
-        pt::ptree resultNode;
-        for (const Location& location : refLocations)
-        {
-          resultNode.push_back(std::make_pair("", location.createNode()));
-        }
-        responseTree.put_child("result", resultNode);
-        break;
-      }
-      case LspMethod::DiagramTypes:
-      {
-        DiagramTypeParams diagramTypeParams;
-        diagramTypeParams.readNode(params);
-
-        CompletionList diagramTypesResult;
-        if (!diagramTypeParams.position)
-        {
-          diagramTypesResult = fileDiagramTypes(diagramTypeParams);
-        }
-        else
-        {
-          diagramTypesResult = nodeDiagramTypes(diagramTypeParams);
-        }
-
-        responseTree.put_child("result", diagramTypesResult.createNode());
-        break;
-      }
-      case LspMethod::Diagram:
-      {
-        DiagramParams diagramParams;
-        diagramParams.readNode(params);
-
-        Diagram diagramResult;
-        if (!diagramParams.position)
-        {
-          diagramResult = fileDiagram(diagramParams);
-        }
-        else
-        {
-          diagramResult = nodeDiagram(diagramParams);
-        }
-
-        responseTree.put("result", diagramResult);
-        break;
-      }
-      default:
-      {
-        LOG(warning) << "[LSP] Unsupported method: '" << method << "'";
-
-        ResponseError error;
-        error.code = ErrorCode::MethodNotFound;
-        error.message = std::string("Unsupported method: ").append(method);
-        responseTree.put_child("error", error.createNode());
-      }
+      resultNode.push_back(std::make_pair("", location.createNode()));
     }
+    responseTree_.put_child("result", resultNode);
   }
-  catch (const pt::ptree_error& ex)
-  {
-    LOG(warning) << ex.what();
-
-    ResponseError error;
-    error.code = ErrorCode::ParseError;
-    error.message = std::string("JSON RPC parsing error: ").append(ex.what());
-    responseTree.put_child("error", error.createNode());
-  }
-  catch (const std::exception& ex)
-  {
-    LOG(warning) << ex.what();
-
-    ResponseError error;
-    error.code = ErrorCode::InternalError;
-    error.message = ex.what();
-    responseTree.put_child("error", error.createNode());
-  }
-  catch (...)
-  {
-    LOG(warning) << "Unknown exception has been caught";
-
-    ResponseError error;
-    error.code = ErrorCode::UnknownError;
-    responseTree.put_child("error", error.createNode());
-  }
-
-  std::stringstream responseStream;
-  pt::write_json(responseStream, responseTree);
-  _return = responseStream.str();
 }
 
 std::vector<Location> CppLspServiceHandler::definition(
@@ -234,6 +90,29 @@ std::vector<Location> CppLspServiceHandler::definition(
   return definitionLocations;
 }
 
+void CppLspServiceHandler::getImplementation(pt::ptree& responseTree_, const pt::ptree& params_)
+{
+  TextDocumentPositionParams implementationParams;
+  implementationParams.readNode(params_);
+
+  std::vector<Location> implementationLocations =
+    implementation(implementationParams);
+
+  if (implementationLocations.size() == 1)
+  {
+    responseTree_.put_child("result", implementationLocations[0].createNode());
+  }
+  else if (implementationLocations.size() > 1)
+  {
+    pt::ptree resultNode;
+    for (const Location &location : implementationLocations)
+    {
+      resultNode.push_back(std::make_pair("", location.createNode()));
+    }
+    responseTree_.put_child("result", resultNode);
+  }
+}
+
 std::vector<Location> CppLspServiceHandler::implementation(
   const TextDocumentPositionParams& params_)
 {
@@ -278,6 +157,21 @@ std::vector<Location> CppLspServiceHandler::implementation(
     });
 
   return implementationLocations;
+}
+
+void CppLspServiceHandler::getReferences(pt::ptree& responseTree_, const pt::ptree& params_)
+{
+  ReferenceParams refParams;
+  refParams.readNode(params_);
+
+  std::vector<Location> refLocations = references(refParams);
+
+  pt::ptree resultNode;
+  for (const Location& location : refLocations)
+  {
+    resultNode.push_back(std::make_pair("", location.createNode()));
+  }
+  responseTree_.put_child("result", resultNode);
 }
 
 std::vector<Location> CppLspServiceHandler::references(
@@ -362,6 +256,24 @@ std::vector<Location> CppLspServiceHandler::references(
   return usageLocations;
 }
 
+void CppLspServiceHandler::getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_)
+{
+  DiagramTypeParams diagramTypeParams;
+  diagramTypeParams.readNode(params_);
+
+  CompletionList diagramTypesResult;
+  if (!diagramTypeParams.position)
+  {
+    diagramTypesResult = fileDiagramTypes(diagramTypeParams);
+  }
+  else
+  {
+    diagramTypesResult = nodeDiagramTypes(diagramTypeParams);
+  }
+
+  responseTree_.put_child("result", diagramTypesResult.createNode());
+}
+
 CompletionList CppLspServiceHandler::fileDiagramTypes(
   const DiagramTypeParams& params_)
 {
@@ -432,6 +344,24 @@ CompletionList CppLspServiceHandler::nodeDiagramTypes(
   return list;
 }
 
+void CppLspServiceHandler::getDiagram(pt::ptree& responseTree_, const pt::ptree& params_)
+{
+  DiagramParams diagramParams;
+  diagramParams.readNode(params_);
+
+  Diagram diagramResult;
+  if (!diagramParams.position)
+  {
+    diagramResult = fileDiagram(diagramParams);
+  }
+  else
+  {
+    diagramResult = nodeDiagram(diagramParams);
+  }
+
+  responseTree_.put("result", diagramResult);
+}
+
 Diagram CppLspServiceHandler::fileDiagram(
   const DiagramParams& params_)
 {
@@ -486,14 +416,6 @@ Diagram CppLspServiceHandler::nodeDiagram(
   _cppService.getDiagram(diagram, astNodeInfo.id, diagramTypeIt->second);
 
   return diagram;
-}
-
-CppLspServiceHandler::LspMethod CppLspServiceHandler::parseMethod(const std::string& method)
-{
-  auto it = _methodMap.find(method);
-  if (it != _methodMap.end())
-    return it->second;
-  return LspMethod::Unknown;
 }
 
 } // lsp

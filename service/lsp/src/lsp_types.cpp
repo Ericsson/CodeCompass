@@ -1,4 +1,4 @@
-#include <cpplspservice/lsp_types.h>
+#include <lspservice/lsp_types.h>
 
 namespace cc
 {
