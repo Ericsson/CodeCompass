@@ -20,6 +20,7 @@ import { enumToArray, removeFromArray } from 'utils/utils';
 import { Info, Close } from '@mui/icons-material';
 import { SearchContext } from 'global-context/search-context';
 import { getStore, setStore } from 'utils/store';
+import { AppContext } from 'global-context/app-context';
 
 const Container = styled('div')(({ theme }) => ({
   padding: '10px',
@@ -61,7 +62,7 @@ export const SettingsMenu = ({
   anchorEl: null | HTMLElement;
   setAnchorEl: Dispatch<SetStateAction<null | HTMLElement>>;
 }): JSX.Element => {
-  const searchCtx = useContext(SearchContext);
+  const appCtx = useContext(AppContext);
 
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchOtherLanguages = enumToArray(SearchOtherLanguages) as string[];
@@ -70,12 +71,12 @@ export const SettingsMenu = ({
   const [searchOtherLanguage, setSearchOtherLanguage] = useState<string | undefined>(undefined);
 
   const [searchLanguagesDisabled, setSearchLanguagesDisabled] = useState<boolean>(
-    searchCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() ||
-      searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
+    appCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() ||
+      appCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
   );
 
   const [searchTypesDisabled, setSearchTypesDisabled] = useState<boolean>(
-    searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
+    appCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
   );
 
   useEffect(() => {
@@ -85,11 +86,11 @@ export const SettingsMenu = ({
 
   useEffect(() => {
     setSearchLanguagesDisabled(
-      searchCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() &&
-        searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
+      appCtx.searchCurrentOption?.name !== SearchOptions.TEXT.toString() &&
+        appCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString()
     );
-    setSearchTypesDisabled(searchCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString());
-  }, [searchCtx.searchCurrentOption]);
+    setSearchTypesDisabled(appCtx.searchCurrentOption?.name !== SearchOptions.DEFINITION.toString());
+  }, [appCtx.searchCurrentOption]);
 
   useEffect(() => {
     setStore({
@@ -101,12 +102,12 @@ export const SettingsMenu = ({
     return (
       <div>
         <FormLabel>{'Search options'}</FormLabel>
-        <RadioGroup value={searchCtx.searchCurrentOption?.name ?? searchCtx.searchOptions[0].name}>
-          {searchCtx.searchOptions.map((elem, idx) => {
+        <RadioGroup value={appCtx.searchCurrentOption?.name ?? appCtx.searchOptions[0].name}>
+          {appCtx.searchOptions.map((elem, idx) => {
             return (
               <FormControlLabel
                 key={idx}
-                onClick={() => searchCtx.setSearchCurrentOption(elem)}
+                onClick={() => appCtx.setSearchCurrentOption(elem)}
                 value={elem.name}
                 control={<Radio />}
                 label={elem.name}
@@ -122,7 +123,7 @@ export const SettingsMenu = ({
     return (
       <div>
         <FormLabel>{'Languages'}</FormLabel>
-        <RadioGroup value={searchCtx.searchLanguage ?? searchMainLanguages[0]}>
+        <RadioGroup value={appCtx.searchLanguage ?? searchMainLanguages[0]}>
           {searchMainLanguages.map((elem, idx) => {
             return (
               <FormControlLabel
@@ -130,7 +131,7 @@ export const SettingsMenu = ({
                 key={idx}
                 onClick={() => {
                   if (searchLanguagesDisabled) return;
-                  searchCtx.setSearchLanguage(elem);
+                  appCtx.setSearchLanguage(elem);
                 }}
                 value={elem}
                 control={<Radio />}
@@ -143,7 +144,7 @@ export const SettingsMenu = ({
               disabled={searchLanguagesDisabled}
               onClick={() => {
                 if (!searchLanguagesDisabled) {
-                  searchCtx.setSearchLanguage('Any');
+                  appCtx.setSearchLanguage('Any');
                 }
               }}
               value={'Any'}
@@ -165,13 +166,13 @@ export const SettingsMenu = ({
               disabled={searchLanguagesDisabled}
               onClick={() => {
                 if (!searchLanguagesDisabled) {
-                  searchCtx.setSearchLanguage(searchOtherLanguage as string);
+                  appCtx.setSearchLanguage(searchOtherLanguage as string);
                 }
               }}
               value={''}
               control={<Radio />}
               label={''}
-              checked={searchOtherLanguages.includes(searchCtx.searchLanguage)}
+              checked={searchOtherLanguages.includes(appCtx.searchLanguage)}
             />
             <FormControl>
               <InputLabel>{'Other'}</InputLabel>
@@ -183,8 +184,8 @@ export const SettingsMenu = ({
                   if (!searchLanguagesDisabled) {
                     setSearchOtherLanguage(e.target.value);
 
-                    if (searchOtherLanguages.includes(searchCtx.searchLanguage)) {
-                      searchCtx.setSearchLanguage(e.target.value);
+                    if (searchOtherLanguages.includes(appCtx.searchLanguage)) {
+                      appCtx.setSearchLanguage(e.target.value);
                     }
                   }
                 }}
@@ -227,14 +228,14 @@ export const SettingsMenu = ({
                 <Checkbox
                   onChange={(e) =>
                     !searchTypesDisabled
-                      ? searchCtx.setSelectedSearchTypes(
+                      ? appCtx.setSelectedSearchTypes(
                           e.currentTarget.checked
-                            ? [...searchCtx.selectedSearchTypes, elem]
-                            : removeFromArray(searchCtx.selectedSearchTypes, elem)
+                            ? [...appCtx.selectedSearchTypes, elem]
+                            : removeFromArray(appCtx.selectedSearchTypes, elem)
                         )
                       : ''
                   }
-                  checked={searchCtx.selectedSearchTypes.includes(elem)}
+                  checked={appCtx.selectedSearchTypes.includes(elem)}
                 />
               }
               label={elem}
@@ -246,9 +247,9 @@ export const SettingsMenu = ({
           control={
             <Checkbox
               onChange={(e) =>
-                !searchTypesDisabled ? searchCtx.setSelectedSearchTypes(e.currentTarget.checked ? searchTypes : []) : ''
+                !searchTypesDisabled ? appCtx.setSelectedSearchTypes(e.currentTarget.checked ? searchTypes : []) : ''
               }
-              checked={searchTypes.every((t) => searchCtx.selectedSearchTypes.includes(t))}
+              checked={searchTypes.every((t) => appCtx.selectedSearchTypes.includes(t))}
             />
           }
           label={'All'}

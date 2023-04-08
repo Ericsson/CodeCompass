@@ -12,11 +12,20 @@ import {
 } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
-import { LanguageContext } from 'global-context/language-context';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { getCppDiagram, getCppDiagramLegend, getCppFileDiagram, getCppFileDiagramLegend } from 'service/cpp-service';
+import {
+  getCppAstNodeInfo,
+  getCppDiagram,
+  getCppDiagramLegend,
+  getCppDiagramTypes,
+  getCppFileDiagram,
+  getCppFileDiagramLegend,
+  getCppFileDiagramTypes,
+} from 'service/cpp-service';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { FileInfo, AstNodeInfo } from '@thrift-generated';
+import { AppContext } from 'global-context/app-context';
+import { getFileInfo } from 'service/project-service';
 
 const StyledDiv = styled('div')({});
 
@@ -67,30 +76,62 @@ const ZoomOptions = styled('div')(({ theme }) => ({
 }));
 
 export const Diagrams = (): JSX.Element => {
-  const languageCtx = useContext(LanguageContext);
+  const appCtx = useContext(AppContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
   const [exportTooltipOpen, setExportTooltipOpen] = useState<boolean>(false);
+
+  const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
+  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
+  const [currentDiagramType, setCurrentDiagramType] = useState<string>('');
+  const [entityType, setEntityType] = useState<string>('');
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
   const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
+    if (!appCtx.diagramGenId) return;
+
+    const init = async () => {
+      const initDiagramInfo =
+        (await getFileInfo(appCtx.diagramGenId)) ?? (await getCppAstNodeInfo(appCtx.diagramGenId));
+      if (!initDiagramInfo) return;
+
+      let initEntityType = '';
+      let initDiagramTypes: typeof diagramTypes = new Map();
+
+      if (initDiagramInfo instanceof FileInfo) {
+        initEntityType = initDiagramInfo?.type as string;
+        initDiagramTypes = await getCppFileDiagramTypes(initDiagramInfo?.id as string);
+      } else if (initDiagramInfo instanceof AstNodeInfo) {
+        initEntityType = initDiagramInfo?.astNodeType as string;
+        initDiagramTypes = await getCppDiagramTypes(initDiagramInfo?.id as string);
+      }
+
+      setDiagramInfo(initDiagramInfo);
+      setDiagramTypes(initDiagramTypes);
+      setCurrentDiagramType(Object.keys(Object.fromEntries(initDiagramTypes))[0]);
+      setEntityType(initEntityType);
+    };
+    init();
+  }, [appCtx.diagramGenId]);
+
+  useEffect(() => {
     if (!diagramContainerRef.current) return;
     diagramContainerRef.current.innerHTML = '';
-  }, [languageCtx.diagramInfo]);
+  }, [currentDiagramType]);
 
   const generateDiagram = async (id: string) => {
     if (!diagramContainerRef.current || !transformComponentRef.current) return;
 
     transformComponentRef.current.resetTransform();
 
-    const currentDiagramId = languageCtx.diagramTypes.get(languageCtx.currentDiagramType) as number;
+    const currentDiagramId = diagramTypes.get(currentDiagramType) as number;
     const diagram =
-      languageCtx.diagramInfo instanceof FileInfo
+      diagramInfo instanceof FileInfo
         ? await getCppFileDiagram(id, currentDiagramId)
-        : languageCtx.diagramInfo instanceof AstNodeInfo
+        : diagramInfo instanceof AstNodeInfo
         ? await getCppDiagram(id, currentDiagramId)
         : '';
 
@@ -114,12 +155,12 @@ export const Diagrams = (): JSX.Element => {
   const generateLegend = async () => {
     if (!diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = languageCtx.diagramTypes.get(languageCtx.currentDiagramType) as number;
+    const currentDiagramId = diagramTypes.get(currentDiagramType) as number;
 
     const diagramLegend =
-      languageCtx.diagramInfo instanceof FileInfo
+      diagramInfo instanceof FileInfo
         ? await getCppFileDiagramLegend(currentDiagramId)
-        : languageCtx.diagramInfo instanceof AstNodeInfo
+        : diagramInfo instanceof AstNodeInfo
         ? await getCppDiagramLegend(currentDiagramId)
         : '';
 
@@ -158,16 +199,16 @@ export const Diagrams = (): JSX.Element => {
     link.click();
   };
 
-  return languageCtx.diagramInfo ? (
+  return appCtx.diagramGenId ? (
     <div>
-      {languageCtx.diagramInfo instanceof FileInfo ? (
+      {diagramInfo instanceof FileInfo ? (
         <FileName
-          fileName={languageCtx.diagramInfo ? (languageCtx.diagramInfo.name as string) : ''}
-          filePath={languageCtx.diagramInfo ? (languageCtx.diagramInfo.path as string) : ''}
-          parseStatus={languageCtx.diagramInfo ? (languageCtx.diagramInfo.parseStatus as number) : 4}
-          info={languageCtx.diagramInfo ?? undefined}
+          fileName={diagramInfo ? (diagramInfo.name as string) : ''}
+          filePath={diagramInfo ? (diagramInfo.path as string) : ''}
+          parseStatus={diagramInfo ? (diagramInfo.parseStatus as number) : 4}
+          info={diagramInfo ?? undefined}
         />
-      ) : languageCtx.diagramInfo instanceof AstNodeInfo ? (
+      ) : diagramInfo instanceof AstNodeInfo ? (
         <StyledDiv
           sx={{
             display: 'flex',
@@ -177,32 +218,29 @@ export const Diagrams = (): JSX.Element => {
             borderBottom: (theme) => `1px solid ${theme.colors?.primary}`,
             fontSize: '0.85rem',
           }}
-        >{`${languageCtx.diagramInfo.astNodeType}: ${languageCtx.diagramInfo.astNodeValue}`}</StyledDiv>
+        >{`${diagramInfo.astNodeType}: ${diagramInfo.astNodeValue}`}</StyledDiv>
       ) : (
         <></>
       )}
-      {languageCtx.diagramTypes.size !== 0 ? (
+      {diagramTypes.size !== 0 ? (
         <>
           <GenerateOptionsContainer>
             <FormControl>
-              <InputLabel>{`${languageCtx.entityType} Diagrams`}</InputLabel>
+              <InputLabel>{`${entityType} Diagrams`}</InputLabel>
               <Select
-                value={languageCtx.currentDiagramType}
-                label={`${languageCtx.entityType} Diagrams`}
-                onChange={(e) => languageCtx.setCurrentDiagramType(e.target.value)}
+                value={currentDiagramType}
+                label={`${entityType} Diagrams`}
+                onChange={(e) => setCurrentDiagramType(e.target.value)}
               >
-                {Object.keys(Object.fromEntries(languageCtx.diagramTypes)).map((diagramType, idx) => (
+                {Object.keys(Object.fromEntries(diagramTypes)).map((diagramType, idx) => (
                   <MenuItem key={idx} value={diagramType}>
                     {diagramType}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <Button
-              onClick={() => generateDiagram(languageCtx.diagramInfo?.id as string)}
-              sx={{ textTransform: 'none' }}
-            >
-              {`Generate ${languageCtx.entityType} diagram`}
+            <Button onClick={() => generateDiagram(diagramInfo?.id as string)} sx={{ textTransform: 'none' }}>
+              {`Generate ${entityType} diagram`}
             </Button>
           </GenerateOptionsContainer>
           <TransformWrapper ref={transformComponentRef}>

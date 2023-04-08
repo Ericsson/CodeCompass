@@ -9,11 +9,10 @@ import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
 import { getSearchResultCount, getSearchResults } from 'service/search-service';
-import { SearchContext } from 'global-context/search-context';
 import { FileSearchResult, SearchResult } from '@thrift-generated';
-import { ConfigContext } from 'global-context/config-context';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { removeStore } from 'utils/store';
+import { AppContext } from 'global-context/app-context';
 
 const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',
@@ -47,41 +46,40 @@ const SettingsContainer = styled('div')({
 
 export const Header = (): JSX.Element => {
   const { theme, setTheme } = useContext(ThemeContext);
-  const configCtx = useContext(ConfigContext);
-  const searchCtx = useContext(SearchContext);
+  const appCtx = useContext(AppContext);
 
   const searchTypes = enumToArray(SearchTypes);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleSearch = async (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
-      const query = createQueryString(searchCtx.searchQuery);
+      const query = createQueryString(appCtx.searchQuery);
       if (query === '') return;
 
-      const isFileSearch = searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
+      const isFileSearch = appCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME.toString();
       const searchResultCount = (await getSearchResultCount(
         isFileSearch,
-        searchCtx.searchCurrentOption?.id as number,
+        appCtx.searchCurrentOption?.id as number,
         query,
-        searchCtx.searchFileFilterQuery,
-        searchCtx.searchDirFilterQuery
+        appCtx.searchFileFilterQuery,
+        appCtx.searchDirFilterQuery
       )) as number;
       const searchResults = (await getSearchResults(
         isFileSearch,
-        searchCtx.searchCurrentOption?.id as number,
+        appCtx.searchCurrentOption?.id as number,
         query,
         0,
         10,
-        searchCtx.searchFileFilterQuery,
-        searchCtx.searchDirFilterQuery
+        appCtx.searchFileFilterQuery,
+        appCtx.searchDirFilterQuery
       )) as SearchResult | FileSearchResult;
 
-      searchCtx.setSearchStart(0);
-      searchCtx.setSearchSize(10);
-      searchCtx.setSearchResultCount(searchResultCount);
-      searchCtx.setSearchResult(searchResults);
-      searchCtx.setIsFileSearch(isFileSearch);
-      configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
+      appCtx.setSearchStart(0);
+      appCtx.setSearchSize(10);
+      appCtx.setSearchResultCount(searchResultCount);
+      appCtx.setSearchResult(searchResults);
+      appCtx.setIsFileSearch(isFileSearch);
+      appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
       removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {
       return;
@@ -132,19 +130,19 @@ export const Header = (): JSX.Element => {
 
   const createQueryString = (queryString: string): string => {
     let modifiedQueryString: string = '';
-    const textSearch = searchCtx.searchCurrentOption?.name === SearchOptions.TEXT.toString();
-    const definitionSearch = searchCtx.searchCurrentOption?.name === SearchOptions.DEFINITION.toString();
-    const allTypesSelected = searchTypes.every((t) => searchCtx.selectedSearchTypes.includes(t));
-    const anyLanguage = searchCtx.searchLanguage === 'Any';
+    const textSearch = appCtx.searchCurrentOption?.name === SearchOptions.TEXT.toString();
+    const definitionSearch = appCtx.searchCurrentOption?.name === SearchOptions.DEFINITION.toString();
+    const allTypesSelected = searchTypes.every((t) => appCtx.selectedSearchTypes.includes(t));
+    const anyLanguage = appCtx.searchLanguage === 'Any';
 
     if (definitionSearch) {
       modifiedQueryString = queryString === '' ? '' : `defs:(${queryString})`;
       if (!allTypesSelected) {
         modifiedQueryString += queryString === '' ? '' : ' AND ';
-        modifiedQueryString += `(${getSearchTypeQuery(searchCtx.selectedSearchTypes[0])}:(${queryString})`;
-        if (searchCtx.selectedSearchTypes.length > 1) {
-          for (let i = 1; i < searchCtx.selectedSearchTypes.length; ++i) {
-            modifiedQueryString += ` OR ${getSearchTypeQuery(searchCtx.selectedSearchTypes[i])}:(${queryString})`;
+        modifiedQueryString += `(${getSearchTypeQuery(appCtx.selectedSearchTypes[0])}:(${queryString})`;
+        if (appCtx.selectedSearchTypes.length > 1) {
+          for (let i = 1; i < appCtx.selectedSearchTypes.length; ++i) {
+            modifiedQueryString += ` OR ${getSearchTypeQuery(appCtx.selectedSearchTypes[i])}:(${queryString})`;
           }
         }
         modifiedQueryString += ')';
@@ -152,15 +150,15 @@ export const Header = (): JSX.Element => {
       if (!anyLanguage) {
         modifiedQueryString +=
           queryString === '' && modifiedQueryString === ''
-            ? `${getSearchLangQuery(searchCtx.searchLanguage)}`
-            : ` AND ${getSearchLangQuery(searchCtx.searchLanguage)}`;
+            ? `${getSearchLangQuery(appCtx.searchLanguage)}`
+            : ` AND ${getSearchLangQuery(appCtx.searchLanguage)}`;
       }
     } else if (textSearch) {
       if (!anyLanguage) {
         modifiedQueryString =
           queryString === ''
-            ? `${getSearchLangQuery(searchCtx.searchLanguage)}`
-            : `${queryString} AND ${getSearchLangQuery(searchCtx.searchLanguage)}`;
+            ? `${getSearchLangQuery(appCtx.searchLanguage)}`
+            : `${queryString} AND ${getSearchLangQuery(appCtx.searchLanguage)}`;
       } else {
         modifiedQueryString = queryString;
       }
@@ -177,13 +175,13 @@ export const Header = (): JSX.Element => {
         <SettingsContainer>
           <ProjectSelect />
           <TextField
-            value={searchCtx.searchQuery}
-            onChange={(e) => searchCtx.setSearchQuery(e.target.value)}
+            value={appCtx.searchQuery}
+            onChange={(e) => appCtx.setSearchQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={
-              searchCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME
+              appCtx.searchCurrentOption?.name === SearchOptions.FILE_NAME
                 ? 'File name regex'
-                : searchCtx.searchCurrentOption?.name === SearchOptions.LOG
+                : appCtx.searchCurrentOption?.name === SearchOptions.LOG
                 ? 'Arbitrary log message'
                 : 'Search by expression'
             }
@@ -206,8 +204,8 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
-            value={searchCtx.searchFileFilterQuery}
-            onChange={(e) => searchCtx.setSearchFileFilterQuery(e.target.value)}
+            value={appCtx.searchFileFilterQuery}
+            onChange={(e) => appCtx.setSearchFileFilterQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={'File name filter regex'}
             InputProps={{
@@ -226,8 +224,8 @@ export const Header = (): JSX.Element => {
             }}
           />
           <TextField
-            value={searchCtx.searchDirFilterQuery}
-            onChange={(e) => searchCtx.setSearchDirFilterQuery(e.target.value)}
+            value={appCtx.searchDirFilterQuery}
+            onChange={(e) => appCtx.setSearchDirFilterQuery(e.target.value)}
             onKeyDown={(e) => handleSearch(e)}
             placeholder={'Path filter regex'}
             InputProps={{

@@ -2,17 +2,8 @@ import { Folder, DriveFolderUpload, FolderOpen } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
 import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo } from '@thrift-generated';
-import { ProjectContext } from 'global-context/project-context';
-import {
-  getChildFiles,
-  getFileContent,
-  getFileInfo,
-  getParentFiles,
-  getParents,
-  getRootFiles,
-} from 'service/project-service';
+import { getChildFiles, getFileInfo, getParentFiles, getParents, getRootFiles } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 import { RouterQueryType, TreeNode } from 'utils/types';
@@ -20,6 +11,7 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { getStore, setStore } from 'utils/store';
 import { useRouter } from 'next/router';
 import { getFileFolderPath } from 'utils/utils';
+import { AppContext } from 'global-context/app-context';
 
 const StyledDiv = styled('div')({});
 
@@ -70,8 +62,7 @@ export const FileManager = (): JSX.Element => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
+  const appCtx = useContext(AppContext);
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
 
@@ -87,7 +78,7 @@ export const FileManager = (): JSX.Element => {
   const [fileInfoForDiagram, setFileInfoForDiagram] = useState<FileInfo | undefined>(undefined);
 
   useEffect(() => {
-    if (!projectCtx.currentWorkspace) return;
+    if (!appCtx.workspaceId) return;
 
     const init = async () => {
       const rootFileData = await getRootFiles();
@@ -114,13 +105,14 @@ export const FileManager = (): JSX.Element => {
     };
 
     init();
-  }, [projectCtx.currentWorkspace, routerQuery.projFileId]);
+  }, [appCtx.workspaceId, routerQuery.projFileId]);
 
   useEffect(() => {
-    if (!projectCtx.fileInfo) return;
+    if (!appCtx.projectFileId) return;
 
     const init = async () => {
-      const initFolderPath = getFileFolderPath(projectCtx.fileInfo?.path as string);
+      const initFileInfo = await getFileInfo(appCtx.projectFileId);
+      const initFolderPath = getFileFolderPath(initFileInfo?.path as string);
       const parents = await getParents(initFolderPath);
       const children = await getChildFiles(parents[0]);
 
@@ -133,7 +125,7 @@ export const FileManager = (): JSX.Element => {
     };
 
     init();
-  }, [projectCtx.fileInfo]);
+  }, [appCtx.projectFileId]);
 
   useEffect(() => {
     if (!rootFiles?.length) return;
@@ -233,7 +225,7 @@ export const FileManager = (): JSX.Element => {
     if (fInfo.isDirectory) {
       const childFiles = await getChildFiles(fInfo.id as string);
 
-      if (!configCtx.treeViewOption) {
+      if (!appCtx.treeViewOption) {
         const parents = await getParents(fInfo.path as string);
         setExpandedFileTreeNodes(parents);
       }
@@ -241,9 +233,7 @@ export const FileManager = (): JSX.Element => {
       setFiles(childFiles);
       setFolderPath(fInfo.path as string);
     } else {
-      const fileContent = await getFileContent(fInfo.id as string);
-
-      if (configCtx.treeViewOption) {
+      if (appCtx.treeViewOption) {
         const children = await getChildFiles(fInfo.parent as string);
         setFiles(children);
       } else {
@@ -251,9 +241,8 @@ export const FileManager = (): JSX.Element => {
         setExpandedFileTreeNodes(parents);
       }
 
-      projectCtx.setFileInfo(fInfo);
-      projectCtx.setFileContent(fileContent);
-      configCtx.setActiveTab(TabName.CODE);
+      appCtx.setProjectFileId(fInfo.id as string);
+      appCtx.setActiveTab(TabName.CODE);
     }
   };
 
@@ -311,7 +300,7 @@ export const FileManager = (): JSX.Element => {
         onContextMenu={(e) => handleContextMenu(e, fInfo)}
         sx={{
           backgroundColor: (theme) =>
-            fInfo.id === projectCtx.fileInfo?.id ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
+            fInfo.id === appCtx.projectFileId ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
         }}
       >
         {fInfo.isDirectory ? (
@@ -338,7 +327,7 @@ export const FileManager = (): JSX.Element => {
 
   return (
     <>
-      {configCtx.treeViewOption ? (
+      {appCtx.treeViewOption ? (
         <StyledTreeView
           defaultCollapseIcon={<FolderOpen />}
           defaultExpandIcon={<Folder />}

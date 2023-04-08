@@ -2,14 +2,13 @@ import { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';
-import { ProjectContext } from 'global-context/project-context';
 import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { ConfigContext } from 'global-context/config-context';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
 import { GitDiff } from 'components/git-diff/git-diff';
 import { CodeMirrorEditor } from 'components/codemirror-editor/codemirror-editor';
+import { AppContext } from 'global-context/app-context';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -62,18 +61,17 @@ const placeholder = (
 );
 
 const Project = () => {
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
+  const appCtx = useContext(AppContext);
 
-  return projectCtx.loadComplete ? (
+  return appCtx.loadComplete ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
         <AccordionMenu />
         <div>
           <StyledTabs
-            value={configCtx.activeTab}
-            onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
+            value={appCtx.activeTab}
+            onChange={(_e: SyntheticEvent, newValue: number) => appCtx.setActiveTab(newValue)}
           >
             <StyledTab label={'Welcome'} />
             <StyledTab label={'Code'} />
@@ -83,25 +81,25 @@ const Project = () => {
             <StyledTab label={'User guide'} />
             <StyledTab label={'Credits'} />
           </StyledTabs>
-          <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
+          <TabPanel value={appCtx.activeTab} index={TabName.WELCOME}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.CODE}>
+          <TabPanel value={appCtx.activeTab} index={TabName.CODE}>
             <CodeMirrorEditor />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>
+          <TabPanel value={appCtx.activeTab} index={TabName.METRICS}>
             <Metrics />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.DIAGRAMS}>
+          <TabPanel value={appCtx.activeTab} index={TabName.DIAGRAMS}>
             <Diagrams />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.GIT_DIFF}>
+          <TabPanel value={appCtx.activeTab} index={TabName.GIT_DIFF}>
             <GitDiff />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.USER_GUIDE}>
+          <TabPanel value={appCtx.activeTab} index={TabName.USER_GUIDE}>
             {placeholder}
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.CREDITS}>
+          <TabPanel value={appCtx.activeTab} index={TabName.CREDITS}>
             {placeholder}
           </TabPanel>
         </div>

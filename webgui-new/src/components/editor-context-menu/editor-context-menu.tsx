@@ -1,15 +1,12 @@
 import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
-import { ConfigContext } from 'global-context/config-context';
-import { LanguageContext } from 'global-context/language-context';
 import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { getCppDocumentation, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
+import { getCppAstNodeInfo, getCppDocumentation, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
-import { ProjectContext } from 'global-context/project-context';
-import { getFileInfo, getFileContent } from 'service/project-service';
-import { FileInfo, Range } from '@thrift-generated';
+import { AstNodeInfo, Range } from '@thrift-generated';
 import { updateUrlWithParams } from 'utils/utils';
+import { AppContext } from 'global-context/app-context';
 
 const StyledDiv = styled('div')({});
 
@@ -39,19 +36,23 @@ export const EditorContextMenu = ({
     } | null>
   >;
 }): JSX.Element => {
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const languageCtx = useContext(LanguageContext);
+  const appCtx = useContext(AppContext);
 
   const astHTMLContainerRef = useRef<HTMLDivElement | null>(null);
 
+  const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [docs, setDocs] = useState<string | undefined>(undefined);
   const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!languageCtx.astNodeInfo) return;
-  }, [languageCtx.astNodeInfo]);
+    if (!appCtx.languageNodeId) return;
+    const init = async () => {
+      const initAstNodeInfo = await getCppAstNodeInfo(appCtx.languageNodeId);
+      setAstNodeInfo(initAstNodeInfo);
+    };
+    init();
+  }, [appCtx.languageNodeId]);
 
   const closeModal = () => {
     setDocs(undefined);
@@ -61,14 +62,14 @@ export const EditorContextMenu = ({
   };
 
   const getDocs = async () => {
-    const initDocs = await getCppDocumentation(languageCtx.astNodeInfo?.id as string);
+    const initDocs = await getCppDocumentation(astNodeInfo?.id as string);
     setDocs(initDocs);
     setModalOpen(true);
     setContextMenu(null);
   };
 
   const getAstHTML = async () => {
-    const initAstHTML = await getAsHTMLForNode(languageCtx.astNodeInfo?.id as string);
+    const initAstHTML = await getAsHTMLForNode(astNodeInfo?.id as string);
     const parser = new DOMParser();
     const parsedHTML = parser.parseFromString(initAstHTML, 'text/html');
     setModalOpen(true);
@@ -84,13 +85,13 @@ export const EditorContextMenu = ({
   };
 
   const jumpToDef = async () => {
-    if (!languageCtx.astNodeInfo) return;
+    if (!astNodeInfo) return;
 
-    const refTypes = await getCppReferenceTypes(languageCtx.astNodeInfo.id as string);
+    const refTypes = await getCppReferenceTypes(astNodeInfo.id as string);
     const defRefs = await getCppReferences(
-      languageCtx.astNodeInfo.id as string,
+      astNodeInfo.id as string,
       refTypes.get('Definition') as number,
-      languageCtx.astNodeInfo.tags ?? []
+      astNodeInfo.tags ?? []
     );
     const def = defRefs[0];
     if (!def) {
@@ -99,19 +100,14 @@ export const EditorContextMenu = ({
     }
 
     const fileId = def.range?.file as string;
-    const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const fileContent = await getFileContent(fileId);
-
-    projectCtx.setFileInfo(fileInfo);
-    projectCtx.setFileContent(fileContent);
-
-    languageCtx.setNodeSelectionRange(def.range?.range as Range);
-    configCtx.setActiveTab(TabName.CODE);
+    appCtx.setProjectFileId(fileId);
+    appCtx.setEditorSelection(def.range?.range as Range);
+    appCtx.setActiveTab(TabName.CODE);
     setContextMenu(null);
   };
 
   const getSelectionLink = () => {
-    const currentSelectionRange = languageCtx.nodeSelectionRange;
+    const currentSelectionRange = appCtx.editorSelection;
     if (!currentSelectionRange || !currentSelectionRange.startpos || !currentSelectionRange.endpos) return;
 
     const { line: startLine, column: startCol } = currentSelectionRange.startpos;
@@ -119,8 +115,8 @@ export const EditorContextMenu = ({
     const selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
 
     const selectionLink = updateUrlWithParams({
-      wsId: projectCtx.currentWorkspace,
-      projFileId: projectCtx.fileInfo?.id,
+      wsId: appCtx.workspaceId,
+      projFileId: appCtx.projectFileId,
       selection: selection,
     });
 
@@ -132,7 +128,7 @@ export const EditorContextMenu = ({
     setContextMenu(null);
   };
 
-  return languageCtx.astNodeInfo ? (
+  return appCtx.languageNodeId ? (
     <>
       <Menu
         open={contextMenu !== null}
@@ -145,8 +141,8 @@ export const EditorContextMenu = ({
         <MenuItem
           onClick={() => {
             setContextMenu(null);
-            languageCtx.setDiagramInfo(languageCtx.astNodeInfo);
-            configCtx.setActiveTab(TabName.DIAGRAMS);
+            appCtx.setDiagramGenId(astNodeInfo?.id as string);
+            appCtx.setActiveTab(TabName.DIAGRAMS);
           }}
         >
           {'Diagrams'}
@@ -181,7 +177,7 @@ export const EditorContextMenu = ({
           <ModalContainer>
             <StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <StyledDiv sx={{ fontWeight: 'bold' }}>
-                {`${languageCtx.astNodeInfo?.astNodeType}: ${languageCtx.astNodeInfo?.astNodeValue}`}
+                {`${astNodeInfo?.astNodeType}: ${astNodeInfo?.astNodeValue}`}
               </StyledDiv>
               <IconButton onClick={() => closeModal()}>
                 <Close />

@@ -62,13 +62,20 @@ export const getFileContent = async (fileId: string) => {
   if (!client) {
     return '';
   }
-  const fileContent = await client.getFileContent(fileId);
-  return fileContent;
+  try {
+    return await client.getFileContent(fileId);
+  } catch {
+    return '';
+  }
 };
 
 export const getFileInfo = async (fileId: string) => {
   if (!client) {
     return;
   }
-  return await client.getFileInfo(fileId);
+  try {
+    return await client.getFileInfo(fileId);
+  } catch {
+    return;
+  }
 };

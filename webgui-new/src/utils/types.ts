@@ -10,3 +10,9 @@ export type TreeNode = {
   info: FileInfo;
   children?: TreeNode[];
 };
+
+export type FileNode = {
+  [key: string]: {
+    expandedNodes: string[];
+  };
+};

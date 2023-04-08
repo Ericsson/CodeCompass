@@ -2,15 +2,19 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { Code } from '@mui/icons-material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
-import { LanguageContext } from 'global-context/language-context';
 import { useContext, useEffect, useState } from 'react';
-import { getCppReferenceTypes, getCppReferences, getCppProperties, getCppReferenceCount } from 'service/cpp-service';
+import {
+  getCppReferenceTypes,
+  getCppReferences,
+  getCppProperties,
+  getCppReferenceCount,
+  getCppAstNodeInfo,
+} from 'service/cpp-service';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
-import { ProjectContext } from 'global-context/project-context';
-import { getFileContent, getFileInfo } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
-import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { AppContext } from 'global-context/app-context';
+import { getFileInfo } from 'service/project-service';
 
 const StyledDiv = styled('div')({});
 const StyledSpan = styled('span')({});
@@ -48,10 +52,9 @@ const Label = styled('div')(({ theme }) => ({
 }));
 
 export const InfoTree = (): JSX.Element => {
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const languageCtx = useContext(LanguageContext);
+  const appCtx = useContext(AppContext);
 
+  const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [props, setProps] = useState<Map<string, string>>(new Map());
   const [refTypes, setRefTypes] = useState<Map<string, number>>(new Map());
   const [refCounts, setRefCounts] = useState<Map<string, number>>(new Map());
@@ -60,22 +63,23 @@ export const InfoTree = (): JSX.Element => {
   const [loadComplete, setLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!languageCtx.astNodeInfo) return;
+    if (!appCtx.languageNodeId) return;
     setLoadComplete(false);
     const init = async () => {
-      const astNode = languageCtx.astNodeInfo as AstNodeInfo;
+      const initAstNodeInfo = await getCppAstNodeInfo(appCtx.languageNodeId as string);
+      if (!initAstNodeInfo) return;
 
-      const initProps = await getCppProperties(astNode.id as string);
-      const initRefTypes = await getCppReferenceTypes(astNode.id as string);
+      const initProps = await getCppProperties(initAstNodeInfo.id as string);
+      const initRefTypes = await getCppReferenceTypes(initAstNodeInfo.id as string);
       const initRefCounts: typeof refCounts = new Map();
       const initRefs: typeof refs = new Map();
       const initFileUsages: typeof fileUsages = new Map();
 
       for (const [rType, rId] of initRefTypes) {
-        const refCount = await getCppReferenceCount(astNode.id as string, rId);
+        const refCount = await getCppReferenceCount(initAstNodeInfo.id as string, rId);
         initRefCounts.set(rType, refCount);
 
-        const refsForType = await getCppReferences(astNode.id as string, rId, astNode.tags ?? []);
+        const refsForType = await getCppReferences(initAstNodeInfo.id as string, rId, initAstNodeInfo.tags ?? []);
         initRefs.set(rType, refsForType);
 
         if (rType === 'Caller' || rType === 'Usage') {
@@ -90,6 +94,7 @@ export const InfoTree = (): JSX.Element => {
         }
       }
 
+      setAstNodeInfo(initAstNodeInfo);
       setProps(initProps);
       setRefTypes(initRefTypes);
       setRefCounts(initRefCounts);
@@ -97,23 +102,20 @@ export const InfoTree = (): JSX.Element => {
       setFileUsages(initFileUsages);
     };
     init().then(() => setLoadComplete(true));
-  }, [languageCtx.astNodeInfo]);
+  }, [appCtx.languageNodeId]);
 
   const jumpToRef = async (astNodeInfo: AstNodeInfo) => {
     const fileId = astNodeInfo.range?.file as string;
-    const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const fileContent = await getFileContent(fileId);
-    projectCtx.setFileContent(fileContent);
-    projectCtx.setFileInfo(fileInfo);
-    languageCtx.setNodeSelectionRange(astNodeInfo.range?.range as Range);
-    configCtx.setActiveTab(TabName.CODE);
+    appCtx.setProjectFileId(fileId);
+    appCtx.setEditorSelection(astNodeInfo.range?.range as Range);
+    appCtx.setActiveTab(TabName.CODE);
   };
 
-  return languageCtx.astNodeInfo ? (
+  return astNodeInfo ? (
     loadComplete ? (
       <OuterContainer>
         <StyledDiv
-          onClick={() => jumpToRef(languageCtx.astNodeInfo as AstNodeInfo)}
+          onClick={() => jumpToRef(astNodeInfo)}
           sx={{
             fontWeight: 'bold',
             cursor: 'pointer',
@@ -121,7 +123,7 @@ export const InfoTree = (): JSX.Element => {
               backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
             },
           }}
-        >{`${languageCtx.astNodeInfo.symbolType}: ${languageCtx.astNodeInfo.astNodeValue}`}</StyledDiv>
+        >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</StyledDiv>
         <StyledDiv>
           {Array.from(props.keys()).map((name, idx) => (
             <StyledDiv key={idx}>

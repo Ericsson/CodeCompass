@@ -4,11 +4,8 @@ import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { useContext, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
-import { getFileInfo, getFileContent } from 'service/project-service';
-import { LanguageContext } from 'global-context/language-context';
-import { ProjectContext } from 'global-context/project-context';
-import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
+import { AppContext } from 'global-context/app-context';
 
 const Container = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -74,9 +71,7 @@ export const FileName = ({
   parseStatus: number;
   info: FileInfo | undefined;
 }): JSX.Element => {
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const languageCtx = useContext(LanguageContext);
+  const appCtx = useContext(AppContext);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [references, setReferences] = useState<JSX.Element[]>([]);
@@ -101,6 +96,7 @@ export const FileName = ({
 
       elements.push(
         <StyledTreeItem
+          key={value}
           nodeId={`${value}`}
           label={
             <StyledDiv sx={{ fontSize: '0.85rem' }}>
@@ -125,12 +121,9 @@ export const FileName = ({
 
   const jumpToRef = async (astNodeInfo: AstNodeInfo) => {
     const fileId = astNodeInfo.range?.file as string;
-    const fileInfo = (await getFileInfo(fileId)) as FileInfo;
-    const fileContent = await getFileContent(fileId);
-    projectCtx.setFileInfo(fileInfo);
-    projectCtx.setFileContent(fileContent);
-    languageCtx.setNodeSelectionRange(astNodeInfo.range?.range as Range);
-    configCtx.setActiveTab(TabName.CODE);
+    appCtx.setProjectFileId(fileId);
+    appCtx.setEditorSelection(astNodeInfo.range?.range as Range);
+    appCtx.setActiveTab(TabName.CODE);
   };
 
   return (
