@@ -1,24 +1,24 @@
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { ThemeContext } from 'global-context/theme-context';
-import { ConfigContext } from 'global-context/config-context';
-import { LanguageContext } from 'global-context/language-context';
-import { ProjectContext } from 'global-context/project-context';
 import { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
 import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
-import { Range } from '@thrift-generated';
+import { FileInfo, Range } from '@thrift-generated';
 import { cpp } from '@codemirror/lang-cpp';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
 import { FileName } from 'components/file-name/file-name';
+import { AppContext } from 'global-context/app-context';
+import { getFileContent, getFileInfo } from 'service/project-service';
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const { theme } = useContext(ThemeContext);
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const languageCtx = useContext(LanguageContext);
+  const appCtx = useContext(AppContext);
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null);
+
+  const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
+  const [fileContent, setFileContent] = useState<string>('');
 
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
@@ -26,9 +26,26 @@ export const CodeMirrorEditor = (): JSX.Element => {
   } | null>(null);
 
   useEffect(() => {
-    if (!languageCtx.nodeSelectionRange) return;
-    dispatchSelection(languageCtx.nodeSelectionRange);
-  }, [languageCtx.nodeSelectionRange, editorRef.current?.view]);
+    if (!appCtx.workspaceId) return;
+    setFileInfo(undefined);
+    setFileContent('');
+  }, [appCtx.workspaceId]);
+
+  useEffect(() => {
+    if (!appCtx.projectFileId) return;
+    const init = async () => {
+      const initFileInfo = await getFileInfo(appCtx.projectFileId);
+      const initFileContent = await getFileContent(appCtx.projectFileId);
+      setFileInfo(initFileInfo);
+      setFileContent(initFileContent);
+    };
+    init();
+  }, [appCtx.projectFileId]);
+
+  useEffect(() => {
+    if (!appCtx.editorSelection) return;
+    dispatchSelection(appCtx.editorSelection);
+  }, [appCtx.editorSelection, editorRef.current?.view]);
 
   const dispatchSelection = (range: Range) => {
     if (!range || !range.startpos || !range.endpos) return;
@@ -78,22 +95,23 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const line = view.state.doc.lineAt(head);
     const column = view.state.selection.ranges[0].head - line.from;
 
-    const astNodeInfo = await getCppAstNodeInfoByPosition(projectCtx.fileInfo?.id as string, line.number, column);
+    const astNodeInfo = await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
 
     dispatchSelection(astNodeInfo?.range?.range as Range);
-    languageCtx.setNodeSelectionRange(astNodeInfo?.range?.range);
-    languageCtx.setAstNodeInfo(astNodeInfo);
+    appCtx.setEditorSelection(astNodeInfo?.range?.range);
+    appCtx.setLanguageNodeId(astNodeInfo?.id as string);
+
     if (!astNodeInfo) return;
-    configCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
+    appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
   };
 
   return (
     <>
       <FileName
-        fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
-        filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
-        parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-        info={projectCtx.fileInfo ?? undefined}
+        fileName={fileInfo ? (fileInfo.name as string) : ''}
+        filePath={fileInfo ? (fileInfo.path as string) : ''}
+        parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
+        info={fileInfo ?? undefined}
       />
       <ReactCodeMirror
         readOnly={true}
@@ -105,7 +123,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
         minWidth={'calc(1460px - 280px)'}
         maxWidth={'calc(100vw - 280px)'}
         maxHeight={'calc(100vh - 78px - 48px - 49px)'}
-        value={projectCtx.fileContent ?? ''}
+        value={fileContent ?? ''}
         ref={editorRef}
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleAstNodeSelect()}

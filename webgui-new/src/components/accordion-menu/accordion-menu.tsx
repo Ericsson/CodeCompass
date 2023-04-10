@@ -1,5 +1,5 @@
 import { styled } from '@mui/material/styles';
-import { ArrowForwardIosSharp, Folder, Search, Info, GitHub, Construction } from '@mui/icons-material';
+import { ArrowForwardIosSharp, Folder, Search, Info, GitHub } from '@mui/icons-material';
 import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
@@ -8,10 +8,10 @@ import { useContext } from 'react';
 import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { AccordionLabel } from 'enums/accordion-enum';
-import { ConfigContext } from 'global-context/config-context';
 import { SearchResults } from 'components/search-results/search-results';
 import { InfoTree } from 'components/info-tree/info-tree';
 import { RevisionControl } from 'components/revision-control/revision-control';
+import { AppContext } from 'global-context/app-context';
 
 const Container = styled('div')({
   minWidth: '280px',
@@ -79,20 +79,13 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 }));
 
 export const AccordionMenu = () => {
-  const configCtx = useContext(ConfigContext);
-
-  const placeholder = (
-    <IconLabel sx={{ padding: '20px' }}>
-      <Construction />
-      <div>{'Under construction'}</div>
-    </IconLabel>
-  );
+  const appCtx = useContext(AppContext);
 
   return (
     <Container>
       <Accordion
-        expanded={configCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
-        onChange={() => configCtx.setActiveAccordion(AccordionLabel.FILE_MANAGER)}
+        expanded={appCtx.activeAccordion === AccordionLabel.FILE_MANAGER}
+        onChange={() => appCtx.setActiveAccordion(AccordionLabel.FILE_MANAGER)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -102,8 +95,8 @@ export const AccordionMenu = () => {
               <TreeSetting
                 control={
                   <Checkbox
-                    checked={configCtx.treeViewOption}
-                    onChange={() => configCtx.setTreeViewOption(!configCtx.treeViewOption)}
+                    checked={appCtx.treeViewOption}
+                    onChange={() => appCtx.setTreeViewOption(!appCtx.treeViewOption)}
                     sx={{ padding: '0' }}
                   />
                 }
@@ -117,8 +110,8 @@ export const AccordionMenu = () => {
         </AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={configCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
-        onChange={() => configCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS)}
+        expanded={appCtx.activeAccordion === AccordionLabel.SEARCH_RESULTS}
+        onChange={() => appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -131,8 +124,8 @@ export const AccordionMenu = () => {
         </AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={configCtx.activeAccordion === AccordionLabel.INFO_TREE}
-        onChange={() => configCtx.setActiveAccordion(AccordionLabel.INFO_TREE)}
+        expanded={appCtx.activeAccordion === AccordionLabel.INFO_TREE}
+        onChange={() => appCtx.setActiveAccordion(AccordionLabel.INFO_TREE)}
       >
         <AccordionSummary>
           <IconLabel>
@@ -145,8 +138,8 @@ export const AccordionMenu = () => {
         </AccordionDetails>
       </Accordion>
       <Accordion
-        expanded={configCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
-        onChange={() => configCtx.setActiveAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
+        expanded={appCtx.activeAccordion === AccordionLabel.REVISION_CONTROL_NAVIGATOR}
+        onChange={() => appCtx.setActiveAccordion(AccordionLabel.REVISION_CONTROL_NAVIGATOR)}
       >
         <AccordionSummary>
           <IconLabel>

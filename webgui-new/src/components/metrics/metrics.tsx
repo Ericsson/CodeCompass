@@ -12,12 +12,12 @@ import {
   Tooltip,
 } from '@mui/material';
 import { FileName } from 'components/file-name/file-name';
-import { MetricsContext } from 'global-context/metrics-context';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { getMetrics } from 'service/metrics-service';
-import { MetricsType, MetricsTypeName } from '@thrift-generated';
+import { getMetrics, getMetricsTypeNames } from 'service/metrics-service';
+import { FileInfo, MetricsType, MetricsTypeName } from '@thrift-generated';
 import { Treemap } from 'recharts';
-import { ProjectContext } from 'global-context/project-context';
+import { AppContext } from 'global-context/app-context';
+import { getFileInfo } from 'service/project-service';
 
 type RespType = {
   [key: string]: {
@@ -113,26 +113,43 @@ const CustomizedContent = (props: CustomTreeNodeProps) => {
 };
 
 export const Metrics = (): JSX.Element => {
-  const projectCtx = useContext(ProjectContext);
-  const metricsCtx = useContext(MetricsContext);
+  const appCtx = useContext(AppContext);
 
   const fileTypeOptions = ['Unknown', 'Dir', 'Binary', 'CPP'];
 
+  const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
   const [data, setData] = useState<DataType[] | undefined>(undefined);
   const [currentDataFolder, setCurrentDataFolder] = useState<string>('');
   const [selectedFileTypeOptions, setSelectedFileTypeOptions] = useState<string[]>(fileTypeOptions);
-  const [sizeDimension, setSizeDimension] = useState<MetricsTypeName>(metricsCtx.metricsTypeNames[0]);
+  const [sizeDimension, setSizeDimension] = useState<MetricsTypeName | undefined>(undefined);
+
+  const [metricsTypeNames, setMetricsTypeNames] = useState<MetricsTypeName[]>([]);
 
   useEffect(() => {
-    setCurrentDataFolder('');
-    setData(undefined);
-  }, [metricsCtx.metricsFileInfo, projectCtx.currentWorkspace]);
+    if (!appCtx.workspaceId) return;
+    const init = async () => {
+      const initMetricsTypeNames = await getMetricsTypeNames();
+      setMetricsTypeNames(initMetricsTypeNames);
+      setSizeDimension(initMetricsTypeNames[0]);
+    };
+    init();
+  }, [appCtx.workspaceId]);
+
+  useEffect(() => {
+    const init = async () => {
+      const initFileInfo = await getFileInfo(appCtx.metricsGenId);
+      setFileInfo(initFileInfo);
+      setCurrentDataFolder('');
+      setData(undefined);
+    };
+    init();
+  }, [appCtx.metricsGenId, appCtx.workspaceId]);
 
   const generateMetrics = async () => {
     const metricsRes = await getMetrics(
-      metricsCtx.metricsFileInfo?.id as string,
+      fileInfo?.id as string,
       selectedFileTypeOptions,
-      sizeDimension.type as MetricsType
+      sizeDimension?.type as MetricsType
     );
     setCurrentDataFolder('');
     setData(convertResObject(JSON.parse(metricsRes)).children);
@@ -180,13 +197,13 @@ export const Metrics = (): JSX.Element => {
     );
   }, [data]);
 
-  return metricsCtx.metricsFileInfo ? (
+  return appCtx.metricsGenId && fileInfo && sizeDimension ? (
     <div>
       <FileName
-        fileName={metricsCtx.metricsFileInfo ? (metricsCtx.metricsFileInfo.name as string) : ''}
-        filePath={metricsCtx.metricsFileInfo ? (metricsCtx.metricsFileInfo.path as string) : ''}
-        parseStatus={metricsCtx.metricsFileInfo ? (metricsCtx.metricsFileInfo.parseStatus as number) : 4}
-        info={metricsCtx.metricsFileInfo ?? undefined}
+        fileName={fileInfo ? (fileInfo.name as string) : ''}
+        filePath={fileInfo ? (fileInfo.path as string) : ''}
+        parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
+        info={fileInfo ?? undefined}
       />
       <MetricsOptionsContainer>
         <FormControl sx={{ width: 300 }}>
@@ -217,12 +234,10 @@ export const Metrics = (): JSX.Element => {
             value={sizeDimension.name}
             label="Size dimension"
             onChange={(e) =>
-              setSizeDimension(
-                metricsCtx.metricsTypeNames.find((typeName) => typeName.name === e.target.value) as MetricsTypeName
-              )
+              setSizeDimension(metricsTypeNames.find((typeName) => typeName.name === e.target.value) as MetricsTypeName)
             }
           >
-            {metricsCtx.metricsTypeNames.map((option, idx) => (
+            {metricsTypeNames.map((option, idx) => (
               <MenuItem key={idx} value={option.name}>
                 {option.name}
               </MenuItem>

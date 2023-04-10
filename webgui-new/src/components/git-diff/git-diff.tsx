@@ -7,7 +7,8 @@ import ReactDiffViewer from 'react-diff-viewer-continued';
 import { getCommit, getCommitDiffAsString } from 'service/git-service';
 import { formatDate } from 'utils/utils';
 import { GitCommit } from '@thrift-generated';
-import { GitContext } from 'global-context/git-context';
+import { AppContext } from 'global-context/app-context';
+import { diffViewerTheme } from 'themes/theme';
 
 const CommitSummary = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -33,8 +34,8 @@ const FileNameContainer = styled('div')(({ theme }) => ({
 
 const ChangeLine = styled('div')(({ theme }) => ({
   padding: '10px',
-  color: theme.palette.common.white,
-  backgroundColor: theme.palette.grey[400],
+  color: theme.colors?.primary,
+  backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.2),
 }));
 
 const DiffViewOptions = styled('div')({
@@ -65,8 +66,8 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 export const GitDiff = (): JSX.Element => {
+  const appCtx = useContext(AppContext);
   const themeCtx = useContext(ThemeContext);
-  const gitCtx = useContext(GitContext);
 
   const [splitView, setSplitView] = useState<boolean>(false);
   const [commit, setCommit] = useState<GitCommit | undefined>(undefined);
@@ -75,15 +76,22 @@ export const GitDiff = (): JSX.Element => {
   const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!gitCtx.repoId || !gitCtx.commitId) return;
+    if (!appCtx.gitRepoId || !appCtx.gitCommitId) {
+      setSplitView(false);
+      setCommit(undefined);
+      setOldValues(new Map());
+      setNewValues(new Map());
+      setExpandedFiles([]);
+      return;
+    }
 
     const init = async () => {
       const initOldValues: typeof oldValues = new Map();
       const initNewValues: typeof newValues = new Map();
       const initExpandedFiles: string[] = [];
 
-      const initCommit = await getCommit(gitCtx.repoId, gitCtx.commitId);
-      const initialDiff = await getCommitDiffAsString(gitCtx.repoId, gitCtx.commitId, true, 3);
+      const initCommit = await getCommit(appCtx.gitRepoId, appCtx.gitCommitId);
+      const initialDiff = await getCommitDiffAsString(appCtx.gitRepoId, appCtx.gitCommitId, true, 3);
 
       const lines = initialDiff.split(/\r?\n/);
       const diffLines = lines.filter((line) => line.startsWith('diff --git'));
@@ -95,7 +103,7 @@ export const GitDiff = (): JSX.Element => {
           .slice(2, 4)
           .map((fname) => fname.split('/')[1]);
         const fileName = diffFiles[0] === diffFiles[1] ? diffFiles[0] : `${diffFiles[0]} => ${diffFiles[1]}`;
-        const diff = await getCommitDiffAsString(gitCtx.repoId, gitCtx.commitId, false, 3, [fileName]);
+        const diff = await getCommitDiffAsString(appCtx.gitRepoId, appCtx.gitCommitId, false, 3, [fileName]);
         gitDiffs.push(diff);
       }
 
@@ -153,7 +161,7 @@ export const GitDiff = (): JSX.Element => {
       setExpandedFiles(initExpandedFiles);
     };
     init();
-  }, [gitCtx.repoId, gitCtx.commitId]);
+  }, [appCtx.gitRepoId, appCtx.gitCommitId]);
 
   const getLineOffset = (change: string): number => {
     const offset = parseInt(change.split(' ')[1].slice(1, change.split(' ')[1].indexOf(',')));
@@ -210,6 +218,7 @@ export const GitDiff = (): JSX.Element => {
                 <div key={cIdx}>
                   <ChangeLine>{change}</ChangeLine>
                   <ReactDiffViewer
+                    styles={diffViewerTheme}
                     oldValue={oldValues.get(fileName)?.get(change)}
                     newValue={newValues.get(fileName)?.get(change)}
                     splitView={splitView}
