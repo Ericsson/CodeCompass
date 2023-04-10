@@ -197,7 +197,7 @@ export const Metrics = (): JSX.Element => {
     );
   }, [data]);
 
-  return fileInfo && sizeDimension ? (
+  return appCtx.metricsGenId && fileInfo && sizeDimension ? (
     <div>
       <FileName
         fileName={fileInfo ? (fileInfo.name as string) : ''}

@@ -119,9 +119,10 @@ export const FileManager = (): JSX.Element => {
       if (children.length) {
         setFiles(children);
         setFolderPath(initFolderPath);
+        setExpandedFileTreeNodes((prevNodes) =>
+          prevNodes && prevNodes.length ? [...prevNodes.filter((node) => !parents.includes(node)), ...parents] : parents
+        );
       }
-
-      setExpandedFileTreeNodes((prevNodes) => (prevNodes ? [...prevNodes, ...parents] : parents));
     };
 
     init();

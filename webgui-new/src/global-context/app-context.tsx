@@ -135,7 +135,9 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   useEffect(() => {
     if (!workspaceId) return;
     setLoadComplete(false);
-    const init = async () => {
+    const initializeApp = async () => {
+      await new Promise((resolve) => resolve(''));
+
       createProjectClient(workspaceId);
       createSearchClient(workspaceId);
       createCppClient(workspaceId);
@@ -204,7 +206,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         setEditorSelection(range);
       }
     };
-    init().then(() => setLoadComplete(true));
+    initializeApp().then(() => setLoadComplete(true));
   }, [workspaceId, routerQuery]);
 
   useEffect(() => {

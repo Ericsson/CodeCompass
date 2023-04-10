@@ -26,6 +26,12 @@ export const CodeMirrorEditor = (): JSX.Element => {
   } | null>(null);
 
   useEffect(() => {
+    if (!appCtx.workspaceId) return;
+    setFileInfo(undefined);
+    setFileContent('');
+  }, [appCtx.workspaceId]);
+
+  useEffect(() => {
     if (!appCtx.projectFileId) return;
     const init = async () => {
       const initFileInfo = await getFileInfo(appCtx.projectFileId);

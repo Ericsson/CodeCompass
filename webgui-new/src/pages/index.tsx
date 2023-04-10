@@ -45,6 +45,7 @@ const Home = () => {
       'storedSearchResultCount',
       'storedFileSearch',
       'storedSelectedSearchResult',
+      'storedEditorSelection',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
     ]);

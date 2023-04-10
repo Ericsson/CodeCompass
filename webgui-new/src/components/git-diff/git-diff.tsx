@@ -8,6 +8,7 @@ import { getCommit, getCommitDiffAsString } from 'service/git-service';
 import { formatDate } from 'utils/utils';
 import { GitCommit } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
+import { diffViewerTheme } from 'themes/theme';
 
 const CommitSummary = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -33,8 +34,8 @@ const FileNameContainer = styled('div')(({ theme }) => ({
 
 const ChangeLine = styled('div')(({ theme }) => ({
   padding: '10px',
-  color: theme.palette.common.white,
-  backgroundColor: theme.palette.grey[400],
+  color: theme.colors?.primary,
+  backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.2),
 }));
 
 const DiffViewOptions = styled('div')({
@@ -75,7 +76,14 @@ export const GitDiff = (): JSX.Element => {
   const [expandedFiles, setExpandedFiles] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!appCtx.gitRepoId || !appCtx.gitCommitId) return;
+    if (!appCtx.gitRepoId || !appCtx.gitCommitId) {
+      setSplitView(false);
+      setCommit(undefined);
+      setOldValues(new Map());
+      setNewValues(new Map());
+      setExpandedFiles([]);
+      return;
+    }
 
     const init = async () => {
       const initOldValues: typeof oldValues = new Map();
@@ -210,6 +218,7 @@ export const GitDiff = (): JSX.Element => {
                 <div key={cIdx}>
                   <ChangeLine>{change}</ChangeLine>
                   <ReactDiffViewer
+                    styles={diffViewerTheme}
                     oldValue={oldValues.get(fileName)?.get(change)}
                     newValue={newValues.get(fileName)?.get(change)}
                     splitView={splitView}

@@ -286,7 +286,7 @@ export const SearchResults = (): JSX.Element => {
         </StyledDiv>
       </PaginationContainer>
       <ResultsContainer>
-        {searchResult?.results?.length ? (
+        {appCtx.searchProps && searchResult?.results?.length ? (
           <StyledTreeView
             defaultCollapseIcon={<FolderOpen />}
             defaultExpandIcon={<Folder />}

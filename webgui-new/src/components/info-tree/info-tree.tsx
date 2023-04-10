@@ -111,7 +111,7 @@ export const InfoTree = (): JSX.Element => {
     appCtx.setActiveTab(TabName.CODE);
   };
 
-  return astNodeInfo ? (
+  return appCtx.languageNodeId && astNodeInfo ? (
     loadComplete ? (
       <OuterContainer>
         <StyledDiv

@@ -6,6 +6,7 @@ import {
   getReferenceTopObject,
   getRepositoryList,
   getTagList,
+  isRepositoryAvailable,
 } from 'service/git-service';
 import { Tooltip, alpha, styled } from '@mui/material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
@@ -13,6 +14,7 @@ import { ChevronRight, ExpandMore, Commit, MoreHoriz } from '@mui/icons-material
 import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
+import { getStore } from 'utils/store';
 
 type RepoId = string;
 type Branch = string;
@@ -69,7 +71,12 @@ export const RevisionControl = (): JSX.Element => {
   const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!appCtx.workspaceId) return;
+
     const init = async () => {
+      const isGitRepo = await isRepositoryAvailable();
+      if (!isGitRepo) return;
+
       const initRepos = await getRepositoryList();
       const initExpandedTreeNodes: typeof expandedTreeNodes = [];
 
@@ -77,11 +84,46 @@ export const RevisionControl = (): JSX.Element => {
         initExpandedTreeNodes.push(repo.id as string);
       }
 
+      const { storedGitRepoId, storedGitBranch } = getStore();
+
+      if (storedGitRepoId && storedGitBranch) {
+        const initBranches: typeof branches = new Map();
+        const initCommitOffsets: typeof commitOffsets = new Map();
+
+        const repoBranches = await getBranchList(storedGitRepoId);
+        for (const repoBranch of repoBranches) {
+          initCommitOffsets.set(repoBranch, 0);
+        }
+        initBranches.set(storedGitRepoId, repoBranches);
+        initExpandedTreeNodes.push(`${storedGitRepoId}-${storedGitBranch}`);
+        initExpandedTreeNodes.push(`${storedGitRepoId}-branches`);
+
+        const initTopCommits: typeof topCommits = new Map();
+        const initCommits: typeof commits = new Map();
+
+        const topCommit = (await getReferenceTopObject(storedGitRepoId, storedGitBranch)) as ReferenceTopObjectResult;
+        initTopCommits.set(storedGitBranch, topCommit);
+        const commitList = (await getCommitListFiltered(
+          storedGitRepoId,
+          topCommit.oid as string,
+          DISPLAYED_COMMIT_CNT,
+          0,
+          ''
+        )) as CommitListFilteredResult;
+        initCommits.set(storedGitBranch, commitList);
+
+        setTopCommits(initTopCommits);
+        setCommits(initCommits);
+
+        setBranches(initBranches);
+        setCommitOffsets(initCommitOffsets);
+      }
+
       setRepos(initRepos);
       setExpandedTreeNodes(initExpandedTreeNodes);
     };
     init();
-  }, []);
+  }, [appCtx.workspaceId]);
 
   const loadBranches = async (repoId: string) => {
     if (branches.get(repoId)) return;
@@ -227,7 +269,7 @@ export const RevisionControl = (): JSX.Element => {
     );
   };
 
-  return (
+  return repos.length ? (
     <OuterContainer>
       <div>{'List of repositories'}</div>
       <StyledTreeView
@@ -316,5 +358,7 @@ export const RevisionControl = (): JSX.Element => {
         ))}
       </StyledTreeView>
     </OuterContainer>
+  ) : (
+    <StyledDiv>{'No repositories available.'}</StyledDiv>
   );
 };
