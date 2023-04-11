@@ -72,20 +72,16 @@ const CustomizedContent = (props: CustomTreeNodeProps) => {
     name: string;
   };
 
-  const mapColors = (size: number) => {
-    if (size >= 1000) {
-      return 'rgb(0, 0, 25)';
-    } else if (size >= 800 && size < 1000) {
-      return 'rgb(0, 0, 50)';
-    } else if (size >= 600 && size < 800) {
-      return 'rgb(0, 0, 100)';
-    } else if (size >= 400 && size < 600) {
-      return 'rgb(0, 0, 150)';
-    } else if (size >= 200 && size < 400) {
-      return 'rgb(0, 0, 200)';
-    } else {
-      return 'rgb(0, 0, 255)';
-    }
+  const getDarkenedRGBCode = (value: number): string => {
+    const normalizedValue = Math.min(Math.max(value, 0), 255);
+
+    const red = Math.max(Math.round((1 - normalizedValue / 255) * 80), 10);
+    const green = Math.max(Math.round((1 - normalizedValue / 255) * 120), 10);
+    const blue = Math.max(Math.round((1 - normalizedValue / 255) * 255), 80);
+
+    const rgbCode = `rgb(${red}, ${green}, ${blue})`;
+
+    return rgbCode;
   };
 
   return (
@@ -97,7 +93,7 @@ const CustomizedContent = (props: CustomTreeNodeProps) => {
           width={width}
           height={height}
           sx={{
-            fill: mapColors(size),
+            fill: getDarkenedRGBCode(size),
             ':hover': {
               cursor: 'pointer',
               fill: alpha('#ddd', 0.3),
@@ -179,8 +175,8 @@ export const Metrics = (): JSX.Element => {
   const renderTreeMap: JSX.Element = useMemo(() => {
     return data ? (
       <StyledTreemap
-        width={2250}
-        height={980}
+        width={900}
+        height={900}
         data={data}
         dataKey="size"
         aspectRatio={16 / 9}
