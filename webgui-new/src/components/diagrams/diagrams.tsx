@@ -150,6 +150,15 @@ export const Diagrams = (): JSX.Element => {
 
     diagramContainerRef.current.replaceChildren('');
     diagramContainerRef.current.appendChild(diagramSvg);
+
+    if (diagramInfo instanceof FileInfo) {
+      appCtx.setProjectFileId(id);
+    } else if (diagramInfo instanceof AstNodeInfo) {
+      const astNodeInfo = await getCppAstNodeInfo(id);
+      appCtx.setProjectFileId(astNodeInfo?.range?.file as string);
+      appCtx.setEditorSelection(astNodeInfo?.range?.range);
+      appCtx.setLanguageNodeId(id);
+    }
   };
 
   const generateLegend = async () => {
