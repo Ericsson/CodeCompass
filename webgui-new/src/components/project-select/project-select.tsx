@@ -11,6 +11,8 @@ export const ProjectSelect = (): JSX.Element => {
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     removeStore([
+      'storedActiveAccordion',
+      'storedActiveTab',
       'storedProjectFileId',
       'storedSearchProps',
       'storedDiagramGenId',
@@ -19,17 +21,14 @@ export const ProjectSelect = (): JSX.Element => {
       'storedFiles',
       'storedFileTree',
       'storedFolderPath',
+      'storedEditorSelection',
+      'storedSelectedSearchResult',
       'storedExpandedFileTreeNodes',
+      'storedExpandedSearchFileNodes',
+      'storedExpandedSearchPathNodes',
       'storedGitRepoId',
       'storedGitCommitId',
       'storedGitBranch',
-      'storedSearchResults',
-      'storedSearchResultCount',
-      'storedFileSearch',
-      'storedSelectedSearchResult',
-      'storedEditorSelection',
-      'storedExpandedSearchFileNodes',
-      'storedExpandedSearchPathNodes',
     ]);
     router.replace({
       pathname: router.pathname,

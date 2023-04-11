@@ -29,6 +29,8 @@ const Home = () => {
 
   const loadWorkspace = (workspace: string) => {
     removeStore([
+      'storedActiveAccordion',
+      'storedActiveTab',
       'storedProjectFileId',
       'storedSearchProps',
       'storedDiagramGenId',
@@ -37,17 +39,14 @@ const Home = () => {
       'storedFiles',
       'storedFileTree',
       'storedFolderPath',
+      'storedEditorSelection',
+      'storedSelectedSearchResult',
       'storedExpandedFileTreeNodes',
+      'storedExpandedSearchFileNodes',
+      'storedExpandedSearchPathNodes',
       'storedGitRepoId',
       'storedGitCommitId',
       'storedGitBranch',
-      'storedSearchResults',
-      'storedSearchResultCount',
-      'storedFileSearch',
-      'storedSelectedSearchResult',
-      'storedEditorSelection',
-      'storedExpandedSearchFileNodes',
-      'storedExpandedSearchPathNodes',
     ]);
     router.replace({
       pathname: '/project',

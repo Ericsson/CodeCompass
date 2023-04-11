@@ -6,12 +6,16 @@ type StoreOptions = {
   storedActiveAccordion?: string;
   storedActiveTab?: number;
   storedTreeViewOption?: boolean;
-  storedFileTree?: TreeNode;
+  storedWorkspaceId?: string;
+  storedProjectFileId?: string;
+  storedSearchProps?: SearchProps;
+  storedMetricsGenId?: string;
+  storedDiagramGenId?: string;
+  storedLanguageNodeId?: string;
+  storedEditorSelection?: Range;
   storedFiles?: FileInfo[];
+  storedFileTree?: TreeNode;
   storedFolderPath?: string;
-  storedSearchResults?: SearchResult | FileSearchResult;
-  storedSearchResultCount?: number;
-  storedFileSearch?: boolean;
   storedSearchType?: SearchType;
   storedSearchLanguage?: string;
   storedSearchOtherLanguage?: string;
@@ -23,13 +27,6 @@ type StoreOptions = {
   storedGitRepoId?: string;
   storedGitCommitId?: string;
   storedGitBranch?: string;
-  storedWorkspaceId?: string;
-  storedProjectFileId?: string;
-  storedSearchProps?: SearchProps;
-  storedMetricsGenId?: string;
-  storedDiagramGenId?: string;
-  storedLanguageNodeId?: string;
-  storedEditorSelection?: Range;
 };
 
 type StoreOptionKey =
@@ -47,9 +44,6 @@ type StoreOptionKey =
   | 'storedFiles'
   | 'storedFileTree'
   | 'storedFolderPath'
-  | 'storedSearchResults'
-  | 'storedSearchResultCount'
-  | 'storedFileSearch'
   | 'storedSearchType'
   | 'storedSearchLanguage'
   | 'storedSearchOtherLanguage'

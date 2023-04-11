@@ -177,6 +177,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         storedWorkspaceId: workspaceId,
       });
 
+      const routerQuery = router.query as RouterQueryType;
       if (routerQuery) {
         if (!routerQuery.projFileId) return;
         setProjectFileId(routerQuery.projFileId);
@@ -204,10 +205,15 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         });
 
         setEditorSelection(range);
+
+        router.replace({
+          pathname: '/project',
+          query: {},
+        });
       }
     };
     initializeApp().then(() => setLoadComplete(true));
-  }, [workspaceId, routerQuery]);
+  }, [workspaceId, router]);
 
   useEffect(() => {
     setStore({

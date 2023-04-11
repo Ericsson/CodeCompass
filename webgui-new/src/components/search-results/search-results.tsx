@@ -78,12 +78,14 @@ export const SearchResults = (): JSX.Element => {
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNode | undefined>(undefined);
 
   useEffect(() => {
-    const { storedSearchResults, storedSearchResultCount, storedFileSearch, storedSelectedSearchResult } = getStore();
-    setFileSearch(storedFileSearch ?? false);
-    setSearchResult(storedSearchResults);
-    setSearchResultCount(storedSearchResultCount ?? 0);
+    const { storedSelectedSearchResult } = getStore();
     setSelectedSearchResult(storedSelectedSearchResult ?? '');
   }, []);
+
+  useEffect(() => {
+    setSearchResult(undefined);
+    setSearchResultCount(undefined);
+  }, [appCtx.workspaceId]);
 
   useEffect(() => {
     const init = async () => {
@@ -117,10 +119,6 @@ export const SearchResults = (): JSX.Element => {
       setSearchStart(props.start);
       setSearchSize(props.size);
       setFileSearch(props.fileSearch);
-
-      setStore({
-        storedFileSearch: props.fileSearch,
-      });
     };
     init();
   }, [appCtx.searchProps]);
