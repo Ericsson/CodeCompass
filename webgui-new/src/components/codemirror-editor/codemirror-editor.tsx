@@ -45,7 +45,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
   useEffect(() => {
     if (!appCtx.editorSelection) return;
     dispatchSelection(appCtx.editorSelection);
-  }, [appCtx.editorSelection, editorRef.current?.view]);
+  }, [appCtx.editorSelection, fileContent]);
 
   const dispatchSelection = (range: Range) => {
     if (!range || !range.startpos || !range.endpos) return;

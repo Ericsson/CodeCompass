@@ -1,7 +1,7 @@
 import { Folder, DriveFolderUpload, FolderOpen } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
 import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
-import { FileInfo } from '@thrift-generated';
+import { FileInfo, Position, Range } from '@thrift-generated';
 import { getChildFiles, getFileInfo, getParentFiles, getParents, getRootFiles } from 'service/project-service';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { TabName } from 'enums/tab-enum';
@@ -243,6 +243,12 @@ export const FileManager = (): JSX.Element => {
       }
 
       appCtx.setProjectFileId(fInfo.id as string);
+      appCtx.setEditorSelection(
+        new Range({
+          startpos: new Position({ line: 1, column: 1 }),
+          endpos: new Position({ line: 1, column: 1 }),
+        })
+      );
       appCtx.setActiveTab(TabName.CODE);
     }
   };
