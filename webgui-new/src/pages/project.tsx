@@ -2,13 +2,15 @@ import { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';
-import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
 import { GitDiff } from 'components/git-diff/git-diff';
 import { CodeMirrorEditor } from 'components/codemirror-editor/codemirror-editor';
 import { AppContext } from 'global-context/app-context';
+import { Credits } from 'components/credits/credits';
+import { Welcome } from 'components/welcome/welcome';
+import { UserGuide } from 'components/user-guide/user-guide';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -53,13 +55,6 @@ const TabPanel = (props: TabPanelProps) => {
   );
 };
 
-const placeholder = (
-  <IconLabel sx={{ padding: '20px' }}>
-    <Construction />
-    <div>{'Under construction'}</div>
-  </IconLabel>
-);
-
 const Project = () => {
   const appCtx = useContext(AppContext);
 
@@ -82,7 +77,7 @@ const Project = () => {
             <StyledTab label={'Credits'} />
           </StyledTabs>
           <TabPanel value={appCtx.activeTab} index={TabName.WELCOME}>
-            {placeholder}
+            <Welcome />
           </TabPanel>
           <TabPanel value={appCtx.activeTab} index={TabName.CODE}>
             <CodeMirrorEditor />
@@ -97,10 +92,10 @@ const Project = () => {
             <GitDiff />
           </TabPanel>
           <TabPanel value={appCtx.activeTab} index={TabName.USER_GUIDE}>
-            {placeholder}
+            <UserGuide />
           </TabPanel>
           <TabPanel value={appCtx.activeTab} index={TabName.CREDITS}>
-            {placeholder}
+            <Credits />
           </TabPanel>
         </div>
       </InnerContainer>
