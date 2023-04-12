@@ -84,7 +84,6 @@ export const Diagrams = (): JSX.Element => {
   const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
   const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
   const [currentDiagramType, setCurrentDiagramType] = useState<string>('');
-  const [entityType, setEntityType] = useState<string>('');
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
@@ -98,21 +97,16 @@ export const Diagrams = (): JSX.Element => {
         (await getFileInfo(appCtx.diagramGenId)) ?? (await getCppAstNodeInfo(appCtx.diagramGenId));
       if (!initDiagramInfo) return;
 
-      let initEntityType = '';
-      let initDiagramTypes: typeof diagramTypes = new Map();
-
-      if (initDiagramInfo instanceof FileInfo) {
-        initEntityType = initDiagramInfo?.type as string;
-        initDiagramTypes = await getCppFileDiagramTypes(initDiagramInfo?.id as string);
-      } else if (initDiagramInfo instanceof AstNodeInfo) {
-        initEntityType = initDiagramInfo?.astNodeType as string;
-        initDiagramTypes = await getCppDiagramTypes(initDiagramInfo?.id as string);
-      }
+      const initDiagramTypes: typeof diagramTypes =
+        initDiagramInfo instanceof FileInfo
+          ? await getCppFileDiagramTypes(initDiagramInfo?.id as string)
+          : initDiagramInfo instanceof AstNodeInfo
+          ? await getCppDiagramTypes(initDiagramInfo?.id as string)
+          : new Map();
 
       setDiagramInfo(initDiagramInfo);
       setDiagramTypes(initDiagramTypes);
       setCurrentDiagramType(Object.keys(Object.fromEntries(initDiagramTypes))[0]);
-      setEntityType(initEntityType);
     };
     init();
   }, [appCtx.diagramGenId]);
@@ -235,10 +229,10 @@ export const Diagrams = (): JSX.Element => {
         <>
           <GenerateOptionsContainer>
             <FormControl>
-              <InputLabel>{`${entityType} Diagrams`}</InputLabel>
+              <InputLabel>{'Diagrams'}</InputLabel>
               <Select
                 value={currentDiagramType}
-                label={`${entityType} Diagrams`}
+                label={'Diagrams'}
                 onChange={(e) => setCurrentDiagramType(e.target.value)}
               >
                 {Object.keys(Object.fromEntries(diagramTypes)).map((diagramType, idx) => (
@@ -249,7 +243,7 @@ export const Diagrams = (): JSX.Element => {
               </Select>
             </FormControl>
             <Button onClick={() => generateDiagram(diagramInfo?.id as string)} sx={{ textTransform: 'none' }}>
-              {`Generate ${entityType} diagram`}
+              {'Generate diagram'}
             </Button>
           </GenerateOptionsContainer>
           <TransformWrapper ref={transformComponentRef}>
