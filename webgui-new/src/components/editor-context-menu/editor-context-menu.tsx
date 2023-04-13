@@ -38,11 +38,11 @@ export const EditorContextMenu = ({
 }): JSX.Element => {
   const appCtx = useContext(AppContext);
 
+  const docsContainerRef = useRef<HTMLDivElement | null>(null);
   const astHTMLContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [docs, setDocs] = useState<string | undefined>(undefined);
   const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -55,17 +55,26 @@ export const EditorContextMenu = ({
   }, [appCtx.languageNodeId]);
 
   const closeModal = () => {
-    setDocs(undefined);
     setModalOpen(false);
-    if (!astHTMLContainerRef.current) return;
+    if (!docsContainerRef.current || !astHTMLContainerRef.current) return;
+    docsContainerRef.current.innerHTML = '';
     astHTMLContainerRef.current.innerHTML = '';
   };
 
   const getDocs = async () => {
     const initDocs = await getCppDocumentation(astNodeInfo?.id as string);
-    setDocs(initDocs);
+    const parser = new DOMParser();
+    const parsedHTML = parser.parseFromString(initDocs, 'text/html');
     setModalOpen(true);
     setContextMenu(null);
+    if (!docsContainerRef.current) return;
+    if (initDocs !== '') {
+      docsContainerRef.current.appendChild(parsedHTML.body);
+    } else {
+      const placeHolder = document.createElement('div');
+      placeHolder.innerHTML = 'No documentation available for this node';
+      docsContainerRef.current.appendChild(placeHolder);
+    }
   };
 
   const getAstHTML = async () => {
@@ -184,8 +193,8 @@ export const EditorContextMenu = ({
               </IconButton>
             </StyledDiv>
             <StyledDiv sx={{ padding: '10px', width: '100%', overflow: 'scroll' }}>
-              {docs !== undefined ? (docs === '' ? 'No documentation available for this node.' : docs) : ''}
-              <div ref={astHTMLContainerRef}></div>
+              <div ref={docsContainerRef} />
+              <div ref={astHTMLContainerRef} />
             </StyledDiv>
           </ModalContainer>
         </Box>
