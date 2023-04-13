@@ -9,28 +9,34 @@ import { formatDate } from 'utils/utils';
 import { GitCommit } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { diffViewerTheme } from 'themes/theme';
+import { blue, red } from '@mui/material/colors';
+
+const StyledSpan = styled('span')({});
 
 const CommitSummary = styled('div')(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
   borderBottom: `1px solid ${theme.colors?.primary}`,
-  padding: '5px',
   fontSize: '0.85rem',
-  height: '65px',
-  overflow: 'scroll',
+  height: '87px',
+
+  '& > div:nth-of-type(1)': {
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
+    padding: '10px',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+  },
 
   '& > div:nth-of-type(2)': {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: '10px',
   },
 }));
 
-const FileNameContainer = styled('div')(({ theme }) => ({
+const FileNameContainer = styled('div')({
   padding: '10px',
   fontSize: '0.85rem',
-}));
+});
 
 const ChangeLine = styled('div')(({ theme }) => ({
   padding: '10px',
@@ -47,7 +53,7 @@ const DiffViewOptions = styled('div')({
 
 const DiffViewContainer = styled('div')({
   width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 70px - 65px)',
+  height: 'calc(100vh - 78px - 48px - 87px - 60px)',
   overflow: 'scroll',
 });
 
@@ -173,12 +179,20 @@ export const GitDiff = (): JSX.Element => {
       <CommitSummary>
         <div>{commit.message}</div>
         <div>
-          <div>{`${commit.author?.name} (${commit.author?.email}), Commited on ${formatDate(
-            new Date((commit.time as unknown as number) * 1000)
-          )}`}</div>
-          <div>{`${commit.parentOids?.length} parent(s) ${commit.parentOids?.map((id) =>
-            id.substring(0, 8)
-          )} commit ${commit.oid?.substring(0, 8)}`}</div>
+          <div>
+            <span style={{ fontWeight: 'bold' }}>{`${commit.author?.name} (${commit.author?.email})`}</span>
+            {`, Commited on ${formatDate(new Date((commit.time as unknown as number) * 1000))}`}
+          </div>
+          <div>
+            <span>{`${commit.parentOids?.length} parent(s)`}</span>{' '}
+            {commit.parentOids?.map((id) => (
+              <StyledSpan key={id} sx={{ color: blue[800] }}>
+                {`#${id.substring(0, 8)} `}
+              </StyledSpan>
+            ))}
+            <span>{`commit `}</span>
+            <StyledSpan sx={{ color: red[800] }}>{`#${commit.oid?.substring(0, 8)}`}</StyledSpan>
+          </div>
         </div>
       </CommitSummary>
       <DiffViewOptions>
@@ -233,6 +247,6 @@ export const GitDiff = (): JSX.Element => {
       </DiffViewContainer>
     </div>
   ) : (
-    <div>{'No commit selected'}</div>
+    <div style={{ padding: '10px' }}>{'No commit selected'}</div>
   );
 };
