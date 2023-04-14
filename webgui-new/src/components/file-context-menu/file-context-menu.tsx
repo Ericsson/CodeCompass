@@ -54,31 +54,35 @@ export const FileContextMenu = ({
       >
         {'Metrics'}
       </MenuItem>
-      <Tooltip
-        title={
-          <>
-            {Array.from(diagramTypes.keys()).map((type) => (
-              <MenuItem
-                key={diagramTypes.get(type)}
-                onClick={() => {
-                  setContextMenu(null);
-                  appCtx.setDiagramGenId(fileInfo.id as string);
-                  appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
-                  appCtx.setActiveTab(TabName.DIAGRAMS);
-                }}
-              >
-                {type}
-              </MenuItem>
-            ))}
-          </>
-        }
-        placement={'right-start'}
-      >
-        <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div>{'Diagrams'}</div>
-          <ChevronRight />
-        </MenuItem>
-      </Tooltip>
+      {diagramTypes.size !== 0 ? (
+        <Tooltip
+          title={
+            <>
+              {Array.from(diagramTypes.keys()).map((type) => (
+                <MenuItem
+                  key={diagramTypes.get(type)}
+                  onClick={() => {
+                    setContextMenu(null);
+                    appCtx.setDiagramGenId(fileInfo.id as string);
+                    appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                  }}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </>
+          }
+          placement={'right-start'}
+        >
+          <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div>{'Diagrams'}</div>
+            <ChevronRight />
+          </MenuItem>
+        </Tooltip>
+      ) : (
+        ''
+      )}
     </Menu>
   );
 };
