@@ -1,8 +1,14 @@
 import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
-import { Close } from '@mui/icons-material';
+import { ChevronRight, Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { getCppAstNodeInfo, getCppDocumentation, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
+import {
+  getCppAstNodeInfo,
+  getCppDiagramTypes,
+  getCppDocumentation,
+  getCppReferenceTypes,
+  getCppReferences,
+} from 'service/cpp-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { AstNodeInfo, Range } from '@thrift-generated';
 import { updateUrlWithParams } from 'utils/utils';
@@ -44,12 +50,16 @@ export const EditorContextMenu = ({
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
+  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!appCtx.languageNodeId) return;
     const init = async () => {
       const initAstNodeInfo = await getCppAstNodeInfo(appCtx.languageNodeId);
       setAstNodeInfo(initAstNodeInfo);
+
+      const initDiagramTypes = await getCppDiagramTypes(appCtx.languageNodeId);
+      setDiagramTypes(initDiagramTypes);
     };
     init();
   }, [appCtx.languageNodeId]);
@@ -147,15 +157,31 @@ export const EditorContextMenu = ({
       >
         <MenuItem onClick={() => jumpToDef()}>{'Jump to definiton'}</MenuItem>
         <MenuItem onClick={() => getDocs()}>{'Documentation'}</MenuItem>
-        <MenuItem
-          onClick={() => {
-            setContextMenu(null);
-            appCtx.setDiagramGenId(astNodeInfo?.id as string);
-            appCtx.setActiveTab(TabName.DIAGRAMS);
-          }}
+        <Tooltip
+          title={
+            <>
+              {Array.from(diagramTypes.keys()).map((type) => (
+                <MenuItem
+                  key={diagramTypes.get(type)}
+                  onClick={() => {
+                    setContextMenu(null);
+                    appCtx.setDiagramGenId(astNodeInfo?.id as string);
+                    appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                  }}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </>
+          }
+          placement={'right-start'}
         >
-          {'Diagrams'}
-        </MenuItem>
+          <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div>{'Diagrams'}</div>
+            <ChevronRight />
+          </MenuItem>
+        </Tooltip>
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
         <MenuItem onClick={() => getSelectionLink()}>
           <Tooltip

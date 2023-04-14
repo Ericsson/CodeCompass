@@ -1,9 +1,9 @@
 import { createContext, useEffect, useState } from 'react';
-import { Position, Range, WorkspaceInfo } from '@thrift-generated';
+import { AstNodeInfo, FileInfo, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient } from 'service/project-service';
+import { createProjectClient, getFileInfo } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
-import { createCppClient } from 'service/cpp-service';
+import { createCppClient, getCppAstNodeInfo } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
 import { createMetricsClient } from 'service/metrics-service';
 import { createGitClient } from 'service/git-service';
@@ -27,6 +27,8 @@ type AppContextProps = {
   setMetricsGenId: (_val: string) => void;
   diagramGenId: string;
   setDiagramGenId: (_val: string) => void;
+  diagramTypeId: number;
+  setDiagramTypeId: (_val: number) => void;
   languageNodeId: string;
   setLanguageNodeId: (_val: string) => void;
   editorSelection: Range | undefined;
@@ -60,6 +62,8 @@ export const AppContext = createContext<AppContextProps>({
   setMetricsGenId: (_val) => {},
   diagramGenId: '',
   setDiagramGenId: (_val) => {},
+  diagramTypeId: -1,
+  setDiagramTypeId: (_val) => {},
   languageNodeId: '',
   setLanguageNodeId: (_val) => {},
   editorSelection: undefined,
@@ -90,6 +94,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
   const [metricsGenId, setMetricsGenId] = useState<string | undefined>(undefined);
   const [diagramGenId, setDiagramGenId] = useState<string | undefined>(undefined);
+  const [diagramTypeId, setDiagramTypeId] = useState<number | undefined>(undefined);
   const [languageNodeId, setLanguageNodeId] = useState<string | undefined>(undefined);
   const [editorSelection, setEditorSelection] = useState<Range | undefined>(undefined);
   const [gitRepoId, setGitRepoId] = useState<string | undefined>(undefined);
@@ -150,6 +155,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         storedSearchProps,
         storedMetricsGenId,
         storedDiagramGenId,
+        storedDiagramTypeId,
         storedLanguageNodeId,
         storedEditorSelection,
         storedGitRepoId,
@@ -164,6 +170,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setSearchProps(storedSearchProps ?? undefined);
       setMetricsGenId(storedMetricsGenId);
       setDiagramGenId(storedDiagramGenId);
+      setDiagramTypeId(storedDiagramTypeId);
       setLanguageNodeId(storedLanguageNodeId);
       setEditorSelection(storedEditorSelection);
       setGitRepoId(storedGitRepoId);
@@ -176,44 +183,64 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setStore({
         storedWorkspaceId: workspaceId,
       });
-
-      const routerQuery = router.query as RouterQueryType;
-      if (routerQuery) {
-        if (!routerQuery.projFileId) return;
-        setProjectFileId(routerQuery.projFileId);
-        setActiveAccordion(AccordionLabel.FILE_MANAGER);
-        setActiveTab(TabName.CODE);
-
-        if (!routerQuery.selection) return;
-        const selection = routerQuery.selection.split('|');
-        const startLine = parseInt(selection[0]);
-        const startCol = parseInt(selection[1]);
-        const endLine = parseInt(selection[2]);
-        const endCol = parseInt(selection[3]);
-
-        const startpos = new Position({
-          line: startLine,
-          column: startCol,
-        });
-        const endpos = new Position({
-          line: endLine,
-          column: endCol,
-        });
-        const range = new Range({
-          startpos,
-          endpos,
-        });
-
-        setEditorSelection(range);
-
-        router.replace({
-          pathname: '/project',
-          query: {},
-        });
-      }
     };
     initializeApp().then(() => setLoadComplete(true));
-  }, [workspaceId, router]);
+  }, [workspaceId]);
+
+  useEffect(() => {
+    const routerQuery = router.query as RouterQueryType;
+    if (routerQuery) {
+      if (!routerQuery.projFileId) return;
+      setProjectFileId(routerQuery.projFileId);
+      setActiveAccordion(AccordionLabel.FILE_MANAGER);
+      setActiveTab(TabName.CODE);
+
+      if (!routerQuery.selection) return;
+      const selection = routerQuery.selection.split('|');
+      const startLine = parseInt(selection[0]);
+      const startCol = parseInt(selection[1]);
+      const endLine = parseInt(selection[2]);
+      const endCol = parseInt(selection[3]);
+
+      const startpos = new Position({
+        line: startLine,
+        column: startCol,
+      });
+      const endpos = new Position({
+        line: endLine,
+        column: endCol,
+      });
+      const range = new Range({
+        startpos,
+        endpos,
+      });
+
+      setEditorSelection(range);
+
+      router.replace({
+        pathname: '/project',
+        query: {},
+      });
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!diagramGenId) return;
+    const init = async () => {
+      const initDiagramInfo = (await getFileInfo(diagramGenId)) ?? (await getCppAstNodeInfo(diagramGenId));
+      if (!initDiagramInfo) return;
+
+      if (initDiagramInfo instanceof FileInfo) {
+        setProjectFileId(diagramGenId);
+      } else if (initDiagramInfo instanceof AstNodeInfo) {
+        const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
+        setProjectFileId(astNodeInfo?.range?.file as string);
+        setEditorSelection(astNodeInfo?.range?.range);
+        setLanguageNodeId(diagramGenId);
+      }
+    };
+    init();
+  }, [diagramGenId]);
 
   useEffect(() => {
     setStore({
@@ -221,6 +248,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       storedSearchProps: searchProps,
       storedMetricsGenId: metricsGenId,
       storedDiagramGenId: diagramGenId,
+      storedDiagramTypeId: diagramTypeId,
       storedLanguageNodeId: languageNodeId,
       storedEditorSelection: editorSelection,
       storedGitRepoId: gitRepoId,
@@ -235,6 +263,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     searchProps,
     metricsGenId,
     diagramGenId,
+    diagramTypeId,
     languageNodeId,
     editorSelection,
     gitRepoId,
@@ -252,6 +281,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     searchProps: searchProps,
     metricsGenId: metricsGenId as string,
     diagramGenId: diagramGenId as string,
+    diagramTypeId: diagramTypeId as number,
     languageNodeId: languageNodeId as string,
     editorSelection: editorSelection as Range,
     gitRepoId: gitRepoId as string,
@@ -267,6 +297,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     setSearchProps,
     setMetricsGenId,
     setDiagramGenId,
+    setDiagramTypeId,
     setLanguageNodeId,
     setEditorSelection,
     setGitRepoId,

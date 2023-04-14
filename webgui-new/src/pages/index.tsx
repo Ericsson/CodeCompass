@@ -34,6 +34,7 @@ const Home = () => {
       'storedProjectFileId',
       'storedSearchProps',
       'storedDiagramGenId',
+      'storedDiagramTypeId',
       'storedMetricsGenId',
       'storedLanguageNodeId',
       'storedFiles',

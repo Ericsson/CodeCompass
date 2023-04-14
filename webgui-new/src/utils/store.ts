@@ -11,6 +11,7 @@ type StoreOptions = {
   storedSearchProps?: SearchProps;
   storedMetricsGenId?: string;
   storedDiagramGenId?: string;
+  storedDiagramTypeId?: number;
   storedLanguageNodeId?: string;
   storedEditorSelection?: Range;
   storedFiles?: FileInfo[];
@@ -39,6 +40,7 @@ type StoreOptionKey =
   | 'storedSearchProps'
   | 'storedMetricsGenId'
   | 'storedDiagramGenId'
+  | 'storedDiagramTypeId'
   | 'storedLanguageNodeId'
   | 'storedEditorSelection'
   | 'storedFiles'

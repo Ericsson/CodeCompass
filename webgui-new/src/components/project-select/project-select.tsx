@@ -16,6 +16,7 @@ export const ProjectSelect = (): JSX.Element => {
       'storedProjectFileId',
       'storedSearchProps',
       'storedDiagramGenId',
+      'storedDiagramTypeId',
       'storedMetricsGenId',
       'storedLanguageNodeId',
       'storedFiles',

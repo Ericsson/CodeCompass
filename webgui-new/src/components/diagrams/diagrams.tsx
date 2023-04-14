@@ -1,26 +1,13 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Modal,
-  Select,
-  Tooltip,
-  styled,
-} from '@mui/material';
+import { Box, Button, IconButton, Modal, Tooltip, styled } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
 import {
   getCppAstNodeInfo,
   getCppDiagram,
   getCppDiagramLegend,
-  getCppDiagramTypes,
   getCppFileDiagram,
   getCppFileDiagramLegend,
-  getCppFileDiagramTypes,
 } from 'service/cpp-service';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { FileInfo, AstNodeInfo } from '@thrift-generated';
@@ -28,14 +15,6 @@ import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
 
 const StyledDiv = styled('div')({});
-
-const GenerateOptionsContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '10px',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-}));
 
 const DiagramLegendContainer = styled('div')({
   display: 'flex',
@@ -50,7 +29,7 @@ const DiagramContainer = styled('div')({
   justifyContent: 'center',
   overflow: 'scroll',
   width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 49px - 77px - 50px)',
+  height: 'calc(100vh - 78px - 48px - 49px - 50px)',
 });
 
 const DiagramOptionsContainer = styled('div')(({ theme }) => ({
@@ -80,91 +59,55 @@ export const Diagrams = (): JSX.Element => {
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
   const [exportTooltipOpen, setExportTooltipOpen] = useState<boolean>(false);
-
   const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
-  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
-  const [currentDiagramType, setCurrentDiagramType] = useState<string>('');
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
   const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
-    if (!appCtx.diagramGenId) return;
-
+    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === -1) return;
     const init = async () => {
       const initDiagramInfo =
         (await getFileInfo(appCtx.diagramGenId)) ?? (await getCppAstNodeInfo(appCtx.diagramGenId));
       if (!initDiagramInfo) return;
 
-      const initDiagramTypes: typeof diagramTypes =
+      const diagram =
         initDiagramInfo instanceof FileInfo
-          ? await getCppFileDiagramTypes(initDiagramInfo?.id as string)
+          ? await getCppFileDiagram(appCtx.diagramGenId, appCtx.diagramTypeId)
           : initDiagramInfo instanceof AstNodeInfo
-          ? await getCppDiagramTypes(initDiagramInfo?.id as string)
-          : new Map();
+          ? await getCppDiagram(appCtx.diagramGenId, appCtx.diagramTypeId)
+          : '';
+
+      const parser = new DOMParser();
+      const parsedDiagram = parser.parseFromString(diagram, 'text/xml');
+      const diagramSvg = parsedDiagram.getElementsByTagName('svg')[0];
+
+      diagramSvg.style.height = '100%';
+      diagramSvg.style.cursor = 'pointer';
+
+      transformComponentRef?.current?.resetTransform();
+      diagramContainerRef?.current?.replaceChildren(diagramSvg);
 
       setDiagramInfo(initDiagramInfo);
-      setDiagramTypes(initDiagramTypes);
-      setCurrentDiagramType(Object.keys(Object.fromEntries(initDiagramTypes))[0]);
     };
     init();
-  }, [appCtx.diagramGenId]);
+  }, [appCtx.diagramGenId, appCtx.diagramTypeId]);
 
-  useEffect(() => {
-    if (!diagramContainerRef.current) return;
-    diagramContainerRef.current.innerHTML = '';
-  }, [currentDiagramType]);
-
-  const generateDiagram = async (id: string) => {
-    if (!diagramContainerRef.current || !transformComponentRef.current) return;
-
-    transformComponentRef.current.resetTransform();
-
-    const currentDiagramId = diagramTypes.get(currentDiagramType) as number;
-    const diagram =
-      diagramInfo instanceof FileInfo
-        ? await getCppFileDiagram(id, currentDiagramId)
-        : diagramInfo instanceof AstNodeInfo
-        ? await getCppDiagram(id, currentDiagramId)
-        : '';
-
-    const parser = new DOMParser();
-    const parsedDiagram = parser.parseFromString(diagram, 'text/xml');
-    const diagramSvg = parsedDiagram.getElementsByTagName('svg')[0];
-
-    diagramSvg.style.height = '100%';
-    diagramSvg.style.cursor = 'pointer';
-
-    diagramSvg.onclick = (e) => {
-      const parentNode = (e.target as HTMLElement)?.parentElement;
-      if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
-      generateDiagram(parentNode?.id as string);
-    };
-
-    diagramContainerRef.current.replaceChildren('');
-    diagramContainerRef.current.appendChild(diagramSvg);
-
-    if (diagramInfo instanceof FileInfo) {
-      appCtx.setProjectFileId(id);
-    } else if (diagramInfo instanceof AstNodeInfo) {
-      const astNodeInfo = await getCppAstNodeInfo(id);
-      appCtx.setProjectFileId(astNodeInfo?.range?.file as string);
-      appCtx.setEditorSelection(astNodeInfo?.range?.range);
-      appCtx.setLanguageNodeId(id);
-    }
+  const generateDiagram = (e: MouseEvent) => {
+    const parentNode = (e.target as HTMLElement)?.parentElement;
+    if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
+    appCtx.setDiagramGenId(parentNode?.id as string);
   };
 
   const generateLegend = async () => {
     if (!diagramLegendContainerRef.current) return;
 
-    const currentDiagramId = diagramTypes.get(currentDiagramType) as number;
-
     const diagramLegend =
       diagramInfo instanceof FileInfo
-        ? await getCppFileDiagramLegend(currentDiagramId)
+        ? await getCppFileDiagramLegend(appCtx.diagramTypeId)
         : diagramInfo instanceof AstNodeInfo
-        ? await getCppDiagramLegend(currentDiagramId)
+        ? await getCppDiagramLegend(appCtx.diagramTypeId)
         : '';
 
     const parser = new DOMParser();
@@ -225,87 +168,64 @@ export const Diagrams = (): JSX.Element => {
       ) : (
         <></>
       )}
-      {diagramTypes.size !== 0 ? (
-        <>
-          <GenerateOptionsContainer>
-            <FormControl>
-              <InputLabel>{'Diagrams'}</InputLabel>
-              <Select
-                value={currentDiagramType}
-                label={'Diagrams'}
-                onChange={(e) => setCurrentDiagramType(e.target.value)}
-              >
-                {Object.keys(Object.fromEntries(diagramTypes)).map((diagramType, idx) => (
-                  <MenuItem key={idx} value={diagramType}>
-                    {diagramType}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button onClick={() => generateDiagram(diagramInfo?.id as string)} sx={{ textTransform: 'none' }}>
-              {'Generate diagram'}
+      <>
+        <TransformWrapper ref={transformComponentRef}>
+          {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+            <StyledDiv sx={{ position: 'relative' }}>
+              <ZoomOptions>
+                <IconButton onClick={() => zoomIn()}>
+                  <ZoomIn />
+                </IconButton>
+                <Button onClick={() => resetTransform()} sx={{ textTransform: 'none' }}>
+                  {'Reset'}
+                </Button>
+                <IconButton onClick={() => zoomOut()}>
+                  <ZoomOut />
+                </IconButton>
+              </ZoomOptions>
+              <TransformComponent>
+                <DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
+              </TransformComponent>
+            </StyledDiv>
+          )}
+        </TransformWrapper>
+        <DiagramOptionsContainer>
+          <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
+            {'Legend'}
+          </Button>
+          <Tooltip
+            PopperProps={{
+              disablePortal: true,
+            }}
+            onClose={() => setExportTooltipOpen(false)}
+            open={exportTooltipOpen}
+            disableFocusListener
+            disableHoverListener
+            disableTouchListener
+            title="Copied to clipboard"
+            arrow
+          >
+            <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
+              {'Export SVG'}
             </Button>
-          </GenerateOptionsContainer>
-          <TransformWrapper ref={transformComponentRef}>
-            {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-              <StyledDiv sx={{ position: 'relative' }}>
-                <ZoomOptions>
-                  <IconButton onClick={() => zoomIn()}>
-                    <ZoomIn />
-                  </IconButton>
-                  <Button onClick={() => resetTransform()} sx={{ textTransform: 'none' }}>
-                    {'Reset'}
-                  </Button>
-                  <IconButton onClick={() => zoomOut()}>
-                    <ZoomOut />
-                  </IconButton>
-                </ZoomOptions>
-                <TransformComponent>
-                  <DiagramContainer ref={diagramContainerRef} />
-                </TransformComponent>
-              </StyledDiv>
-            )}
-          </TransformWrapper>
-          <DiagramOptionsContainer>
-            <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
-              {'Legend'}
-            </Button>
-            <Tooltip
-              PopperProps={{
-                disablePortal: true,
+          </Tooltip>
+          <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
+            {'Download image'}
+          </Button>
+          <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
               }}
-              onClose={() => setExportTooltipOpen(false)}
-              open={exportTooltipOpen}
-              disableFocusListener
-              disableHoverListener
-              disableTouchListener
-              title="Copied to clipboard"
-              arrow
             >
-              <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
-                {'Export SVG'}
-              </Button>
-            </Tooltip>
-            <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
-              {'Download image'}
-            </Button>
-            <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <DiagramLegendContainer ref={diagramLegendContainerRef} />
-              </Box>
-            </Modal>
-          </DiagramOptionsContainer>
-        </>
-      ) : (
-        <StyledDiv sx={{ padding: '30px' }}>{'No diagrams available for this file/directory/node.'}</StyledDiv>
-      )}
+              <DiagramLegendContainer ref={diagramLegendContainerRef} />
+            </Box>
+          </Modal>
+        </DiagramOptionsContainer>
+      </>
     </div>
   ) : (
     <StyledDiv sx={{ padding: '10px' }}>
