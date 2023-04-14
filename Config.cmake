@@ -48,9 +48,6 @@ set(INSTALL_SCRIPTS_DIR "${INSTALL_WEBROOT_DIR}/scripts/codecompass")
 # Installation directory of generated Thrift API stubs
 set(INSTALL_GEN_DIR "${INSTALL_SCRIPTS_DIR}/generated")
 
-# Installation directory of generated Thrift API stubs for the new React-based web GUI
-set(INSTALL_GEN_REACT_DIR "${INSTALL_WEBROOT_REACT_DIR}/generated")
-
 # Installation directory for Java libraries
 set(INSTALL_JAVA_LIB_DIR "${INSTALL_LIB_DIR}/java")
 

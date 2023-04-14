@@ -20,7 +20,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js/AuthenticationService.js
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js:jquery --gen js:ts
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js:jquery
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/authentication.thrift
   DEPENDS
