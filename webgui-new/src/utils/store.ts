@@ -1,76 +1,62 @@
-import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchType } from '@thrift-generated';
-
-type TreeNode = {
-  info: FileInfo;
-  children?: TreeNode[];
-};
-
-type FileNodesType = {
-  [key: string]: {
-    expandedNodes: string[];
-  };
-};
+import { FileInfo, FileSearchResult, Range, SearchResult, SearchType } from '@thrift-generated';
+import { FileNode, SearchProps, TreeNode } from './types';
 
 type StoreOptions = {
-  storedWorkspace?: string;
   storedTheme?: 'light' | 'dark';
   storedActiveAccordion?: string;
   storedActiveTab?: number;
   storedTreeViewOption?: boolean;
-  storedSelectedFile?: string;
-  storedFileInfo?: FileInfo;
-  storedFileContent?: string;
-  storedFileTree?: TreeNode;
+  storedWorkspaceId?: string;
+  storedProjectFileId?: string;
+  storedSearchProps?: SearchProps;
+  storedMetricsGenId?: string;
+  storedDiagramGenId?: string;
+  storedDiagramTypeId?: number;
+  storedLanguageNodeId?: string;
+  storedEditorSelection?: Range;
   storedFiles?: FileInfo[];
+  storedFileTree?: TreeNode;
   storedFolderPath?: string;
-  storedSearchResults?: SearchResult | FileSearchResult;
-  storedSearchResultCount?: number;
-  storedIsFileSearch?: boolean;
-  storedSearchOption?: SearchType;
-  storedSearchStart?: number;
-  storedSearchSize?: number;
-  storedSearchQuery?: string;
-  storedSearchFileFilterQuery?: string;
-  storedSearchDirFilterQuery?: string;
+  storedSearchType?: SearchType;
   storedSearchLanguage?: string;
   storedSearchOtherLanguage?: string;
-  storedSelectedSearchTypes?: string[];
-  storedSearchMatchingResult?: LineMatch;
+  storedSelectedSearchTypeOptions?: string[];
   storedSelectedSearchResult?: string;
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
-  storedExpandedSearchFileNodes?: FileNodesType;
+  storedExpandedSearchFileNodes?: FileNode;
+  storedGitRepoId?: string;
+  storedGitCommitId?: string;
+  storedGitBranch?: string;
 };
 
 type StoreOptionKey =
-  | 'storedWorkspace'
   | 'storedTheme'
   | 'storedActiveAccordion'
   | 'storedActiveTab'
   | 'storedTreeViewOption'
-  | 'storedSelectedFile'
-  | 'storedFileInfo'
-  | 'storedFileContent'
-  | 'storedFileTree'
+  | 'storedWorkspaceId'
+  | 'storedProjectFileId'
+  | 'storedSearchProps'
+  | 'storedMetricsGenId'
+  | 'storedDiagramGenId'
+  | 'storedDiagramTypeId'
+  | 'storedLanguageNodeId'
+  | 'storedEditorSelection'
   | 'storedFiles'
+  | 'storedFileTree'
   | 'storedFolderPath'
-  | 'storedSearchResults'
-  | 'storedSearchResultCount'
-  | 'storedIsFileSearch'
-  | 'storedSearchOption'
-  | 'storedSearchStart'
-  | 'storedSearchSize'
-  | 'storedSearchQuery'
-  | 'storedSearchFileFilterQuery'
-  | 'storedSearchDirFilterQuery'
+  | 'storedSearchType'
   | 'storedSearchLanguage'
   | 'storedSearchOtherLanguage'
-  | 'storedSelectedSearchTypes'
-  | 'storedSearchMatchingResult'
+  | 'storedSelectedSearchTypeOptions'
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
-  | 'storedExpandedSearchFileNodes';
+  | 'storedExpandedSearchFileNodes'
+  | 'storedGitRepoId'
+  | 'storedGitCommitId'
+  | 'storedGitBranch';
 
 type StoreOptionValue =
   | string
@@ -83,7 +69,8 @@ type StoreOptionValue =
   | SearchResult
   | FileSearchResult
   | SearchType
-  | FileNodesType;
+  | SearchProps
+  | FileNode;
 
 type StoreObject = { [key in keyof StoreOptions]?: StoreOptionValue };
 

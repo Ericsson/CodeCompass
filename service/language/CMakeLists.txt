@@ -15,7 +15,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen js:ts
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
   DEPENDS

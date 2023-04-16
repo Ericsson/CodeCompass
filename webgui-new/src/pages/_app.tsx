@@ -1,32 +1,17 @@
 import 'themes/globals.scss';
 import type { AppProps } from 'next/app';
 import { CssBaseline } from '@mui/material';
-import { WorkspaceContextController } from 'global-context/workspace-context';
-import { ProjectContextController } from 'global-context/project-context';
+import { AppContextController } from 'global-context/app-context';
 import { ThemeContextController } from 'global-context/theme-context';
-import { ConfigContextController } from 'global-context/config-context';
-import { SearchContextController } from 'global-context/search-context';
-import { MetricsContextController } from 'global-context/metrics-context';
-import { LanguageContextController } from 'global-context/language-context';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <WorkspaceContextController>
-      <ProjectContextController>
-        <SearchContextController>
-          <LanguageContextController>
-            <MetricsContextController>
-              <ConfigContextController>
-                <ThemeContextController>
-                  <CssBaseline />
-                  <Component {...pageProps} />
-                </ThemeContextController>
-              </ConfigContextController>
-            </MetricsContextController>
-          </LanguageContextController>
-        </SearchContextController>
-      </ProjectContextController>
-    </WorkspaceContextController>
+    <AppContextController>
+      <ThemeContextController>
+        <CssBaseline />
+        <Component {...pageProps} />
+      </ThemeContextController>
+    </AppContextController>
   );
 };
 

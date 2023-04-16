@@ -1,4 +1,5 @@
 import { alpha, createTheme } from '@mui/material/styles';
+import { ReactDiffViewerStylesOverride } from 'react-diff-viewer-continued/lib/styles';
 
 declare module '@mui/material/styles' {
   export interface Theme {
@@ -83,6 +84,15 @@ export const lightTheme = createTheme({
         },
       },
     },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          color: colors.light.text.primary,
+          backgroundColor: colors.light.background.primary,
+          border: `1px solid ${colors.light.text.primary}`,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -132,6 +142,15 @@ export const darkTheme = createTheme({
         },
       },
     },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          color: colors.dark.text.primary,
+          backgroundColor: colors.dark.background.primary,
+          border: `1px solid ${colors.dark.text.primary}`,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -151,3 +170,24 @@ export const darkTheme = createTheme({
     },
   },
 });
+
+export const diffViewerTheme: ReactDiffViewerStylesOverride = {
+  variables: {
+    light: {
+      diffViewerBackground: colors.light.background.primary,
+      diffViewerColor: colors.light.text.primary,
+      gutterBackground: colors.light.background.primary,
+      gutterColor: colors.light.text.primary,
+      addedBackground: alpha(colors.light.text.success, 0.3),
+      removedBackground: alpha(colors.light.text.error, 0.3),
+    },
+    dark: {
+      diffViewerBackground: colors.dark.background.primary,
+      diffViewerColor: colors.dark.text.primary,
+      gutterBackground: colors.dark.background.primary,
+      gutterColor: colors.dark.text.primary,
+      addedBackground: alpha(colors.dark.text.success, 0.3),
+      removedBackground: alpha(colors.dark.text.error, 0.3),
+    },
+  },
+};

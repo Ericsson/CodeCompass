@@ -1,11 +1,12 @@
-import { Dispatch, SetStateAction, useContext } from 'react';
+import { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { ConfigContext } from 'global-context/config-context';
 import { TabName } from 'enums/tab-enum';
 import { FileInfo } from '@thrift-generated';
-import { LanguageContext } from 'global-context/language-context';
-import { MetricsContext } from 'global-context/metrics-context';
+import { AppContext } from 'global-context/app-context';
+import { getCppFileDiagramTypes } from 'service/cpp-service';
+import { Tooltip } from '@mui/material';
+import { ChevronRight } from '@mui/icons-material';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -24,9 +25,18 @@ export const FileContextMenu = ({
   >;
   fileInfo: FileInfo;
 }) => {
-  const configCtx = useContext(ConfigContext);
-  const languageCtx = useContext(LanguageContext);
-  const metricsCtx = useContext(MetricsContext);
+  const appCtx = useContext(AppContext);
+
+  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    if (!fileInfo) return;
+    const init = async () => {
+      const initDiagramTypes = await getCppFileDiagramTypes(fileInfo.id as string);
+      setDiagramTypes(initDiagramTypes);
+    };
+    init();
+  }, [fileInfo]);
 
   return (
     <Menu
@@ -38,21 +48,41 @@ export const FileContextMenu = ({
       <MenuItem
         onClick={() => {
           setContextMenu(null);
-          metricsCtx.setMetricsFileInfo(fileInfo);
-          configCtx.setActiveTab(TabName.METRICS);
+          appCtx.setMetricsGenId(fileInfo.id as string);
+          appCtx.setActiveTab(TabName.METRICS);
         }}
       >
         {'Metrics'}
       </MenuItem>
-      <MenuItem
-        onClick={() => {
-          setContextMenu(null);
-          languageCtx.setDiagramFileInfo(fileInfo);
-          configCtx.setActiveTab(TabName.DIAGRAMS);
-        }}
-      >
-        {'Diagrams'}
-      </MenuItem>
+      {diagramTypes.size !== 0 ? (
+        <Tooltip
+          title={
+            <>
+              {Array.from(diagramTypes.keys()).map((type) => (
+                <MenuItem
+                  key={diagramTypes.get(type)}
+                  onClick={() => {
+                    setContextMenu(null);
+                    appCtx.setDiagramGenId(fileInfo.id as string);
+                    appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                  }}
+                >
+                  {type}
+                </MenuItem>
+              ))}
+            </>
+          }
+          placement={'right-start'}
+        >
+          <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div>{'Diagrams'}</div>
+            <ChevronRight />
+          </MenuItem>
+        </Tooltip>
+      ) : (
+        ''
+      )}
     </Menu>
   );
 };

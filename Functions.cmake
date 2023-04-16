@@ -64,7 +64,7 @@ function(install_sql)
     PATTERN "CMakeFiles" EXCLUDE)
 endfunction(install_sql)
 
-# This function can be used to install the thrift generated .js and .ts files to a
+# This function can be used to install the thrift generated .js files to a
 # specific directory. These files will be used at the gui.
 function(install_js_thrift)
   install(
@@ -73,15 +73,6 @@ function(install_js_thrift)
     FILES_MATCHING PATTERN "*.js")
   install(
     CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/scripts/remover.sh WORKING_DIRECTORY ${INSTALL_GEN_DIR})")
-
-  install(
-    DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-js/
-    DESTINATION ${INSTALL_GEN_REACT_DIR}
-    FILES_MATCHING
-      PATTERN "*.js"
-      PATTERN "*.ts")
-  install(
-    CODE "execute_process(COMMAND ${CMAKE_SOURCE_DIR}/scripts/remover.sh WORKING_DIRECTORY ${INSTALL_GEN_REACT_DIR})")
 endfunction(install_js_thrift)
 
 # Install plugins webgui

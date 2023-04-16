@@ -1,49 +1,55 @@
 import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
-import { ProjectContext } from 'global-context/project-context';
-import { WorkspaceContext } from 'global-context/workspace-context';
+import { AppContext } from 'global-context/app-context';
+import { useRouter } from 'next/router';
 import { useContext } from 'react';
 import { removeStore } from 'utils/store';
 
 export const ProjectSelect = (): JSX.Element => {
-  const workspaces = useContext(WorkspaceContext);
-  const projectCtx = useContext(ProjectContext);
+  const router = useRouter();
+
+  const appCtx = useContext(AppContext);
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     removeStore([
+      'storedActiveAccordion',
+      'storedActiveTab',
+      'storedProjectFileId',
+      'storedSearchProps',
+      'storedDiagramGenId',
+      'storedDiagramTypeId',
+      'storedMetricsGenId',
+      'storedLanguageNodeId',
       'storedFiles',
-      'storedFolderPath',
-      'storedFileContent',
-      'storedFileInfo',
-      'storedSelectedFile',
       'storedFileTree',
-      'storedExpandedFileTreeNodes',
-      'storedSearchResults',
-      'storedSearchResultCount',
-      'storedSearchStart',
-      'storedSearchSize',
-      'storedSearchOption',
-      'storedSearchQuery',
-      'storedSearchFileFilterQuery',
-      'storedSearchDirFilterQuery',
-      'storedIsFileSearch',
-      'storedSearchMatchingResult',
+      'storedFolderPath',
+      'storedEditorSelection',
       'storedSelectedSearchResult',
+      'storedExpandedFileTreeNodes',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
+      'storedGitRepoId',
+      'storedGitCommitId',
+      'storedGitBranch',
     ]);
-    projectCtx.setCurrentWorkspace(e.target.value);
+    router.replace({
+      pathname: router.pathname,
+      query: {},
+    });
+    appCtx.setWorkspaceId(e.target.value);
   };
 
-  return (
+  return appCtx.workspaces ? (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
-      <Select value={projectCtx.currentWorkspace} label={'Project'} onChange={(e) => loadWorkspace(e)}>
-        {workspaces.map((workspace) => (
+      <Select value={appCtx.workspaceId} label={'Project'} onChange={(e) => loadWorkspace(e)}>
+        {appCtx.workspaces.map((workspace) => (
           <MenuItem key={workspace.id} value={workspace.id}>
             {workspace.id}
           </MenuItem>
         ))}
       </Select>
     </FormControl>
+  ) : (
+    <></>
   );
 };

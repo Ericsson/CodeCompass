@@ -4,20 +4,12 @@ import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } 
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
 import { FileIcon } from 'components/file-icon/file-icon';
 import { TabName } from 'enums/tab-enum';
-import { ConfigContext } from 'global-context/config-context';
-import { ProjectContext } from 'global-context/project-context';
-import { SearchContext } from 'global-context/search-context';
-import { SyntheticEvent, useContext } from 'react';
-import { getParents, getFileContent, getChildFiles } from 'service/project-service';
-import { getSearchResults } from 'service/search-service';
-import { removeStore } from 'utils/store';
+import { AppContext } from 'global-context/app-context';
+import { SyntheticEvent, useContext, useEffect, useState } from 'react';
+import { getSearchResultCount, getSearchResults } from 'service/search-service';
+import { getStore, removeStore, setStore } from 'utils/store';
+import { FileNode } from 'utils/types';
 import { getFileFolderPath } from 'utils/utils';
-
-type FileNodesType = {
-  [key: string]: {
-    expandedNodes: string[];
-  };
-};
 
 const StyledDiv = styled('div')({});
 
@@ -66,26 +58,127 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
 }));
 
 export const SearchResults = (): JSX.Element => {
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const searchCtx = useContext(SearchContext);
+  const appCtx = useContext(AppContext);
+
+  const [searchType, setSearchType] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string>('');
+  const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string>('');
+  const [fileSearch, setFileSearch] = useState<boolean>(false);
+  const [searchStart, setSearchStart] = useState<number>(0);
+  const [searchSize, setSearchSize] = useState<number>(10);
+
+  const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
+  const [searchResultCount, setSearchResultCount] = useState<number | undefined>(undefined);
+
+  const [resultPaths, setResultPaths] = useState<string[]>([]);
+
+  const [selectedSearchResult, setSelectedSearchResult] = useState<string | undefined>(undefined);
+  const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
+  const [expandedFileNodes, setExpandedFileNodes] = useState<FileNode | undefined>(undefined);
+
+  useEffect(() => {
+    const { storedSelectedSearchResult } = getStore();
+    setSelectedSearchResult(storedSelectedSearchResult ?? '');
+  }, []);
+
+  useEffect(() => {
+    setSearchResult(undefined);
+    setSearchResultCount(undefined);
+  }, [appCtx.workspaceId]);
+
+  useEffect(() => {
+    const init = async () => {
+      const props = appCtx.searchProps;
+      if (!props) return;
+
+      const initSearchResult = (await getSearchResults(
+        props.fileSearch,
+        props.type,
+        props.query,
+        props.start,
+        props.size,
+        props.fileFilter,
+        props.dirFilter
+      )) as SearchResult | FileSearchResult;
+
+      const initSearchResultCount = (await getSearchResultCount(
+        props.fileSearch,
+        props.type,
+        props.query,
+        props.fileFilter,
+        props.dirFilter
+      )) as number;
+
+      setSearchResult(initSearchResult);
+      setSearchResultCount(initSearchResultCount);
+      setSearchType(props.type);
+      setSearchQuery(props.query);
+      setSearchFileFilterQuery(props.fileFilter);
+      setSearchDirFilterQuery(props.dirFilter);
+      setSearchStart(props.start);
+      setSearchSize(props.size);
+      setFileSearch(props.fileSearch);
+    };
+    init();
+  }, [appCtx.searchProps]);
+
+  useEffect(() => {
+    if (!searchResult || !searchResult.results) return;
+
+    const paths = !fileSearch
+      ? new Set(
+          (searchResult?.results as SearchResultEntry[])?.map((entry) =>
+            getFileFolderPath(entry.finfo?.path)
+          ) as string[]
+        )
+      : new Set((searchResult?.results as FileInfo[])?.map((entry) => getFileFolderPath(entry.path)) as string[]);
+    setResultPaths([...paths]);
+
+    const { storedExpandedSearchPathNodes, storedExpandedSearchFileNodes } = getStore();
+
+    const pathNodes = [...paths].map((_e, idx) => idx.toString());
+    setExpandedPathNodes(storedExpandedSearchPathNodes ?? pathNodes);
+
+    const expandedFileNodesMap: FileNode = {};
+    let idx = 0;
+    for (const path of paths) {
+      const fileIds = !fileSearch
+        ? ((searchResult?.results as SearchResultEntry[])
+            ?.filter((entry) => getFileFolderPath(entry.finfo?.path) === path)
+            .map((entry) => entry.finfo?.id) as string[])
+        : ((searchResult?.results as FileInfo[])
+            ?.filter((entry) => getFileFolderPath(entry.path) === path)
+            .map((entry) => entry.id) as string[]);
+      expandedFileNodesMap[idx.toString()] = {
+        expandedNodes: fileIds,
+      };
+      ++idx;
+    }
+    setExpandedFileNodes(storedExpandedSearchFileNodes ?? expandedFileNodesMap);
+  }, [searchResult, fileSearch]);
 
   const handleDirNodeSelect = () => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-      const index = searchCtx.expandedPathNodes.indexOf(nodeId);
-      const copyExpanded = [...searchCtx.expandedPathNodes];
+      if (!expandedPathNodes) return;
+      const index = expandedPathNodes.indexOf(nodeId);
+      const copyExpanded = [...expandedPathNodes];
       if (index === -1) {
         copyExpanded.push(nodeId);
       } else {
         copyExpanded.splice(index, 1);
       }
-      searchCtx.setExpandedPathNodes(copyExpanded);
+      setExpandedPathNodes(copyExpanded);
+      setStore({
+        storedExpandedSearchPathNodes: copyExpanded,
+      });
     };
   };
 
   const handleFileNodeSelect = (pathIdx: string) => {
     return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-      const expandedNodes = searchCtx.expandedFileNodes[pathIdx].expandedNodes;
+      if (!expandedFileNodes) return;
+      const expandedNodes = expandedFileNodes[pathIdx].expandedNodes;
       const index = expandedNodes.indexOf(nodeId);
       const copyExpanded = [...expandedNodes];
       if (index === -1) {
@@ -93,63 +186,59 @@ export const SearchResults = (): JSX.Element => {
       } else {
         copyExpanded.splice(index, 1);
       }
-      const expandedFileNodesCopy = { ...searchCtx.expandedFileNodes } as FileNodesType;
+      const expandedFileNodesCopy = { ...expandedFileNodes } as FileNode;
       expandedFileNodesCopy[pathIdx].expandedNodes = copyExpanded;
-      searchCtx.setExpandedFileNodes(expandedFileNodesCopy);
+      setExpandedFileNodes(expandedFileNodesCopy);
+      setStore({
+        storedExpandedSearchFileNodes: expandedFileNodesCopy,
+      });
     };
   };
 
-  const handleFileLineClick = async (file: FileInfo, path: string, lineMatch?: LineMatch, idx?: string) => {
-    const parents = await getParents(path);
-    const children = await getChildFiles(parents[0]);
-    const fileContent = await getFileContent(file.id as string);
-    projectCtx.setFolderPath(path);
-    projectCtx.setFiles(children);
-    projectCtx.setFileContent(fileContent);
-    projectCtx.setFileInfo(file);
-    projectCtx.setSelectedFile(file.id as string);
-    projectCtx.setExpandedFileTreeNodes(parents);
-    configCtx.setActiveTab(TabName.CODE);
-    searchCtx.setSelectedSearchResult(idx ?? (file.id as string));
-    searchCtx.setMatchingResult(lineMatch);
+  const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch, idx?: string) => {
+    appCtx.setActiveTab(TabName.CODE);
+    appCtx.setProjectFileId(file.id as string);
+    appCtx.setEditorSelection(lineMatch?.range?.range);
+
+    setSelectedSearchResult(idx ?? (file.id as string));
+    setStore({
+      storedSelectedSearchResult: idx ?? (file.id as string),
+    });
   };
 
   const updateSelectResults = async (newSearchSize: number) => {
-    const searchResults = (await getSearchResults(
-      searchCtx.isFileSearch,
-      searchCtx.searchCurrentOption?.id as number,
-      searchCtx.searchQuery ?? '',
+    const newSearchResult = (await getSearchResults(
+      fileSearch,
+      searchType,
+      searchQuery,
       0,
       newSearchSize,
-      searchCtx.searchFileFilterQuery,
-      searchCtx.searchDirFilterQuery
+      searchFileFilterQuery,
+      searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
 
-    searchCtx.setSearchStart(0);
-    searchCtx.setSearchSize(newSearchSize);
-    searchCtx.setSearchResult(searchResults);
+    setSearchStart(0);
+    setSearchSize(newSearchSize);
+    setSearchResult(newSearchResult);
 
     removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
   };
 
   const updatePageResults = async (direction: 'left' | 'right') => {
-    const start =
-      direction === 'left'
-        ? searchCtx.searchStart - searchCtx.searchSize
-        : searchCtx.searchStart + searchCtx.searchSize;
+    const start = direction === 'left' ? searchStart - searchSize : searchStart + searchSize;
 
-    const searchResults = (await getSearchResults(
-      searchCtx.isFileSearch,
-      searchCtx.searchCurrentOption?.id as number,
-      searchCtx.searchQuery ?? '',
+    const newSearchResult = (await getSearchResults(
+      fileSearch,
+      searchType,
+      searchQuery,
       start,
-      searchCtx.searchSize,
-      searchCtx.searchFileFilterQuery,
-      searchCtx.searchDirFilterQuery
+      searchSize,
+      searchFileFilterQuery,
+      searchDirFilterQuery
     )) as SearchResult | FileSearchResult;
 
-    searchCtx.setSearchStart(start);
-    searchCtx.setSearchResult(searchResults);
+    setSearchStart(start);
+    setSearchResult(newSearchResult);
 
     removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
   };
@@ -160,11 +249,11 @@ export const SearchResults = (): JSX.Element => {
         <FormControl>
           <InputLabel>{'Size'}</InputLabel>
           <Select
-            value={searchCtx.searchSize}
+            value={searchSize}
             label={'Size'}
             onChange={(e) => {
-              searchCtx.setSearchStart(0);
-              searchCtx.setSearchSize(e.target.value as number);
+              setSearchStart(0);
+              setSearchSize(e.target.value as number);
               updateSelectResults(e.target.value as number);
             }}
             sx={{ height: '40px' }}
@@ -176,18 +265,18 @@ export const SearchResults = (): JSX.Element => {
             ))}
           </Select>
         </FormControl>
-        <div>{`${Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1} of ${Math.ceil(
-          searchCtx.searchResultCount / searchCtx.searchSize
+        <div>{`${Math.ceil(searchStart / 10 / (searchSize / 10)) + 1} of ${Math.ceil(
+          (searchResultCount ?? 0) / searchSize
         )}`}</div>
         <StyledDiv>
-          <IconButton onClick={() => updatePageResults('left')} disabled={searchCtx.searchStart === 0}>
+          <IconButton onClick={() => updatePageResults('left')} disabled={searchStart === 0}>
             <ChevronLeft />
           </IconButton>
           <IconButton
             onClick={() => updatePageResults('right')}
             disabled={
-              Math.ceil(searchCtx.searchStart / 10 / (searchCtx.searchSize / 10)) + 1 ===
-                Math.ceil(searchCtx.searchResultCount / searchCtx.searchSize) || searchCtx.searchResultCount === 0
+              Math.ceil(searchStart / 10 / (searchSize / 10)) + 1 ===
+                Math.ceil((searchResultCount ?? 0) / searchSize) || searchResultCount === 0
             }
           >
             <ChevronRight />
@@ -195,18 +284,18 @@ export const SearchResults = (): JSX.Element => {
         </StyledDiv>
       </PaginationContainer>
       <ResultsContainer>
-        {searchCtx.searchResult?.results?.length ? (
+        {appCtx.searchProps && searchResult?.results?.length ? (
           <StyledTreeView
             defaultCollapseIcon={<FolderOpen />}
             defaultExpandIcon={<Folder />}
-            expanded={searchCtx.expandedPathNodes}
+            expanded={expandedPathNodes ?? []}
             onNodeSelect={handleDirNodeSelect()}
             sx={{ width: 'fit-content' }}
           >
             <StyledDiv>
               <StyledDiv>
-                {searchCtx.resultPaths.map((path, pathNodeIdx) => {
-                  if (!searchCtx.searchResult || !searchCtx.searchResult.results) return;
+                {resultPaths.map((path, pathNodeIdx) => {
+                  if (!searchResult || !searchResult.results) return;
                   return (
                     <div key={pathNodeIdx}>
                       <StyledTreeItem
@@ -214,8 +303,8 @@ export const SearchResults = (): JSX.Element => {
                         label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
                         sx={{ marginTop: '3px' }}
                       >
-                        {!searchCtx.isFileSearch
-                          ? (searchCtx.searchResult?.results as SearchResultEntry[])
+                        {!fileSearch
+                          ? (searchResult?.results as SearchResultEntry[])
                               ?.filter((result) => getFileFolderPath(result.finfo?.path) === path)
                               .map((entry, fileNodeIdx) => {
                                 return (
@@ -224,8 +313,8 @@ export const SearchResults = (): JSX.Element => {
                                       defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       expanded={
-                                        searchCtx.expandedFileNodes[pathNodeIdx.toString()]
-                                          ? searchCtx.expandedFileNodes[pathNodeIdx.toString()].expandedNodes
+                                        expandedFileNodes && expandedFileNodes[pathNodeIdx.toString()]
+                                          ? expandedFileNodes[pathNodeIdx.toString()].expandedNodes
                                           : []
                                       }
                                       onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
@@ -256,15 +345,13 @@ export const SearchResults = (): JSX.Element => {
                                               key={idx}
                                               sx={{
                                                 backgroundColor: (theme) =>
-                                                  `${pathNodeIdx}-${idx}-${entry.finfo?.id}` ===
-                                                  searchCtx.selectedSearchResult
+                                                  `${pathNodeIdx}-${idx}-${entry.finfo?.id}` === selectedSearchResult
                                                     ? alpha(theme.backgroundColors?.secondary as string, 0.3)
                                                     : '',
                                               }}
                                               onClick={() =>
                                                 handleFileLineClick(
                                                   entry.finfo as FileInfo,
-                                                  path,
                                                   line,
                                                   `${pathNodeIdx}-${idx}-${entry.finfo?.id}`
                                                 )
@@ -287,7 +374,7 @@ export const SearchResults = (): JSX.Element => {
                                   </div>
                                 );
                               })
-                          : (searchCtx.searchResult?.results as FileInfo[])
+                          : (searchResult?.results as FileInfo[])
                               ?.filter((result) => getFileFolderPath(result?.path) === path)
                               .map((entry, fileNodeIdx) => {
                                 return (
@@ -295,11 +382,11 @@ export const SearchResults = (): JSX.Element => {
                                     key={fileNodeIdx}
                                     sx={{
                                       backgroundColor: (theme) =>
-                                        entry?.id === searchCtx.selectedSearchResult
+                                        entry?.id === selectedSearchResult
                                           ? alpha(theme.backgroundColors?.secondary as string, 0.3)
                                           : '',
                                     }}
-                                    onClick={() => handleFileLineClick(entry, path)}
+                                    onClick={() => handleFileLineClick(entry)}
                                   >
                                     <FileIcon fileName={entry.name as string} />
                                     <FileLine

@@ -1,9 +1,8 @@
 import { Button, styled } from '@mui/material';
-import { ProjectContext } from 'global-context/project-context';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
-import { WorkspaceContext } from 'global-context/workspace-context';
 import { removeStore } from 'utils/store';
+import { AppContext } from 'global-context/app-context';
 
 const OuterContainer = styled('div')({
   display: 'flex',
@@ -26,45 +25,48 @@ const Title = styled('div')({
 
 const Home = () => {
   const router = useRouter();
-  const workspaces = useContext(WorkspaceContext);
-  const projectCtx = useContext(ProjectContext);
+  const appCtx = useContext(AppContext);
 
   const loadWorkspace = (workspace: string) => {
     removeStore([
+      'storedActiveAccordion',
+      'storedActiveTab',
+      'storedProjectFileId',
+      'storedSearchProps',
+      'storedDiagramGenId',
+      'storedDiagramTypeId',
+      'storedMetricsGenId',
+      'storedLanguageNodeId',
       'storedFiles',
-      'storedFolderPath',
-      'storedFileContent',
-      'storedFileInfo',
-      'storedSelectedFile',
       'storedFileTree',
-      'storedExpandedFileTreeNodes',
-      'storedSearchResults',
-      'storedSearchResultCount',
-      'storedSearchStart',
-      'storedSearchSize',
-      'storedSearchOption',
-      'storedSearchQuery',
-      'storedSearchFileFilterQuery',
-      'storedSearchDirFilterQuery',
-      'storedIsFileSearch',
-      'storedSearchMatchingResult',
+      'storedFolderPath',
+      'storedEditorSelection',
       'storedSelectedSearchResult',
+      'storedExpandedFileTreeNodes',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
+      'storedGitRepoId',
+      'storedGitCommitId',
+      'storedGitBranch',
     ]);
-    projectCtx.setCurrentWorkspace(workspace);
-    router.push('/project');
+    router.replace({
+      pathname: '/project',
+      query: {},
+    });
+    appCtx.setWorkspaceId(workspace);
   };
 
   return (
     <OuterContainer>
       <InnerContainer>
         <Title>{'Click on a project to start using CodeCompass!'}</Title>
-        {workspaces.map((ws) => (
-          <Button sx={{ textTransform: 'none' }} key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
-            {ws.id}
-          </Button>
-        ))}
+        {appCtx.workspaces
+          ? appCtx.workspaces.map((ws) => (
+              <Button sx={{ textTransform: 'none' }} key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
+                {ws.id}
+              </Button>
+            ))
+          : ''}
       </InnerContainer>
     </OuterContainer>
   );

@@ -39,7 +39,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.h
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen js:ts --gen java
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
   DEPENDS

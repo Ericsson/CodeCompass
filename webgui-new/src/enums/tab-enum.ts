@@ -3,7 +3,6 @@ export enum TabName {
   CODE,
   METRICS,
   DIAGRAMS,
-  GIT_BLAME,
   GIT_DIFF,
   USER_GUIDE,
   CREDITS,

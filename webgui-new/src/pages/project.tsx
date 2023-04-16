@@ -1,20 +1,16 @@
-import { cpp } from '@codemirror/lang-cpp';
-import { ThemeContext } from 'global-context/theme-context';
-import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
-import { SyntheticEvent, useContext, useEffect, useRef } from 'react';
-import { FileName } from 'components/file-name/file-name';
+import { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';
-import { ProjectContext } from 'global-context/project-context';
-import { Construction } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
-import { ConfigContext } from 'global-context/config-context';
-import { SearchContext } from 'global-context/search-context';
-import { Position } from '@thrift-generated';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
+import { GitDiff } from 'components/git-diff/git-diff';
+import { CodeMirrorEditor } from 'components/codemirror-editor/codemirror-editor';
+import { AppContext } from 'global-context/app-context';
+import { Credits } from 'components/credits/credits';
+import { Welcome } from 'components/welcome/welcome';
+import { UserGuide } from 'components/user-guide/user-guide';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -53,110 +49,53 @@ const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
 
   return (
-    <div role="tabpanel" hidden={value !== index} {...other}>
+    <div role={'tabpanel'} hidden={value !== index} {...other}>
       {value === index && <>{children}</>}
     </div>
   );
 };
 
-const placeholder = (
-  <IconLabel sx={{ padding: '20px' }}>
-    <Construction />
-    <div>{'Under construction'}</div>
-  </IconLabel>
-);
-
 const Project = () => {
-  const { theme } = useContext(ThemeContext);
-  const configCtx = useContext(ConfigContext);
-  const projectCtx = useContext(ProjectContext);
-  const searchCtx = useContext(SearchContext);
+  const appCtx = useContext(AppContext);
 
-  const editorRef = useRef<ReactCodeMirrorRef | null>(null);
-
-  useEffect(() => {
-    if (!searchCtx.matchingResult) return;
-
-    const { range } = searchCtx.matchingResult;
-    const { line: startLine, column: startCol } = range?.range?.startpos as Position;
-    const { line: endLine, column: endCol } = range?.range?.endpos as Position;
-
-    const editor = editorRef.current?.view;
-    if (editor) {
-      const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
-      const toPos = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
-
-      editor.dispatch({
-        selection: {
-          anchor: fromPos,
-          head: toPos,
-        },
-        scrollIntoView: true,
-      });
-    }
-  }, [searchCtx.matchingResult, editorRef.current?.view]);
-
-  return projectCtx.loadComplete ? (
+  return appCtx.loadComplete ? (
     <OuterContainer>
       <Header />
       <InnerContainer>
         <AccordionMenu />
         <div>
           <StyledTabs
-            value={configCtx.activeTab}
-            onChange={(_e: SyntheticEvent, newValue: number) => configCtx.setActiveTab(newValue)}
+            value={appCtx.activeTab}
+            onChange={(_e: SyntheticEvent, newValue: number) => appCtx.setActiveTab(newValue)}
           >
-            <StyledTab label="Welcome" />
-            <StyledTab label="Code" />
-            <StyledTab label="Metrics" />
-            <StyledTab label="Diagrams" />
-            <StyledTab label="Git blame" />
-            <StyledTab label="Git diff" />
-            <StyledTab label="User guide" />
-            <StyledTab label="Credits" />
+            <StyledTab label={'Welcome'} />
+            <StyledTab label={'Code'} />
+            <StyledTab label={'Metrics'} />
+            <StyledTab label={'Diagrams'} />
+            <StyledTab label={'Git diff'} />
+            <StyledTab label={'User guide'} />
+            <StyledTab label={'Credits'} />
           </StyledTabs>
-          <TabPanel value={configCtx.activeTab} index={TabName.WELCOME}>
-            {placeholder}
+          <TabPanel value={appCtx.activeTab} index={TabName.WELCOME}>
+            <Welcome />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.CODE}>
-            <FileName
-              fileName={projectCtx.fileInfo ? (projectCtx.fileInfo.name as string) : ''}
-              filePath={projectCtx.fileInfo ? (projectCtx.fileInfo.path as string) : ''}
-              parseStatus={projectCtx.fileInfo ? (projectCtx.fileInfo.parseStatus as number) : 4}
-              info={projectCtx.fileInfo ?? undefined}
-            />
-            <ReactCodeMirror
-              readOnly={true}
-              extensions={[cpp()]}
-              theme={theme === 'dark' ? githubDark : githubLight}
-              value={projectCtx.fileContent ?? ''}
-              width={'100%'}
-              height={'100%'}
-              minWidth={'calc(1460px - 280px)'}
-              maxWidth={'calc(100vw - 280px)'}
-              maxHeight={'calc(100vh - 78px - 48px - 49px)'}
-              style={{ fontSize: '0.8rem' }}
-              ref={editorRef}
-              onCreateEditor={(view, state) => (editorRef.current = { view, state })}
-            />
+          <TabPanel value={appCtx.activeTab} index={TabName.CODE}>
+            <CodeMirrorEditor />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.METRICS}>
+          <TabPanel value={appCtx.activeTab} index={TabName.METRICS}>
             <Metrics />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.DIAGRAMS}>
+          <TabPanel value={appCtx.activeTab} index={TabName.DIAGRAMS}>
             <Diagrams />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.GIT_BLAME}>
-            {placeholder}
+          <TabPanel value={appCtx.activeTab} index={TabName.GIT_DIFF}>
+            <GitDiff />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.GIT_DIFF}>
-            {placeholder}
+          <TabPanel value={appCtx.activeTab} index={TabName.USER_GUIDE}>
+            <UserGuide />
           </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.USER_GUIDE}>
-            {placeholder}
-          </TabPanel>
-          <TabPanel value={configCtx.activeTab} index={TabName.CREDITS}>
-            {placeholder}
+          <TabPanel value={appCtx.activeTab} index={TabName.CREDITS}>
+            <Credits />
           </TabPanel>
         </div>
       </InnerContainer>
