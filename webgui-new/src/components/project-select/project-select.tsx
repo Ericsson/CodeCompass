@@ -38,7 +38,7 @@ export const ProjectSelect = (): JSX.Element => {
     appCtx.setWorkspaceId(e.target.value);
   };
 
-  return (
+  return appCtx.workspaces ? (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
       <Select value={appCtx.workspaceId} label={'Project'} onChange={(e) => loadWorkspace(e)}>
@@ -49,5 +49,7 @@ export const ProjectSelect = (): JSX.Element => {
         ))}
       </Select>
     </FormControl>
+  ) : (
+    <></>
   );
 };
