@@ -11,7 +11,7 @@ import {
   getCppAstNodeInfo,
 } from 'service/cpp-service';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
-import { FileIcon } from 'components/file-icon/file-icon';
+import { FileIcon, RefIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
@@ -143,6 +143,7 @@ export const InfoTree = (): JSX.Element => {
               <StyledTreeItem
                 nodeId={`${refTypeIdx}`}
                 key={refTypeIdx}
+                icon={<RefIcon refName={type} />}
                 label={
                   <StyledDiv sx={{ fontSize: '0.85rem' }}>
                     {type} ({refCounts.get(type)})

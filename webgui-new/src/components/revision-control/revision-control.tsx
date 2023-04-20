@@ -15,6 +15,7 @@ import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { getStore } from 'utils/store';
+import { GitIcon } from 'components/custom-icon/custom-icon';
 
 type RepoId = string;
 type Branch = string;
@@ -257,7 +258,7 @@ export const RevisionControl = (): JSX.Element => {
                 },
               }}
             >
-              <Commit sx={{ width: '20px', height: '20px' }} />
+              <GitIcon name={'commit'} />
             </Tooltip>
             <StyledDiv sx={{ display: 'flex', flexDirection: 'column' }}>
               <StyledDiv>{`${commit.message} (${commit.time})`}</StyledDiv>
@@ -294,10 +295,12 @@ export const RevisionControl = (): JSX.Element => {
             nodeId={`${repo.id as string}`}
             key={repo.id as string}
             label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</StyledDiv>}
+            icon={<GitIcon name={'repository'} />}
           >
             <StyledTreeItem
               nodeId={`${repo.id as string}-branches`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</StyledDiv>}
+              icon={<GitIcon name={'branch'} />}
               onClick={() => loadBranches(repo.id as string)}
             >
               {branches.get(repo.id as string)?.length ? (
@@ -306,6 +309,7 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${branch}`}
                     key={`${repo.id as string}-${branch}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
+                    icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
                     <RenderedCommits
@@ -329,6 +333,7 @@ export const RevisionControl = (): JSX.Element => {
             <StyledTreeItem
               nodeId={`${repo.id as string}-tags`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}
+              icon={<GitIcon name={'tag'} />}
               onClick={() => loadTags(repo.id as string)}
             >
               {tags.get(repo.id as string)?.length ? (
@@ -337,6 +342,7 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${tag}`}
                     key={`${repo.id as string}-${tag}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
+                    icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
                     <RenderedCommits

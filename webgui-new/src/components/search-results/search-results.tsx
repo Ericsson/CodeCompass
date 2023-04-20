@@ -2,7 +2,7 @@ import { FolderOpen, Folder, ChevronLeft, ChevronRight, Code } from '@mui/icons-
 import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
-import { FileIcon } from 'components/file-icon/file-icon';
+import { FileIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { SyntheticEvent, useContext, useEffect, useState } from 'react';

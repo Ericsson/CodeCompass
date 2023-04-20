@@ -3,7 +3,7 @@ import { alpha, styled } from '@mui/material';
 import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo, Position, Range } from '@thrift-generated';
 import { getChildFiles, getFileInfo, getParentFiles, getParents, getRootFiles } from 'service/project-service';
-import { FileIcon } from 'components/file-icon/file-icon';
+import { FileIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 import { RouterQueryType, TreeNode } from 'utils/types';
