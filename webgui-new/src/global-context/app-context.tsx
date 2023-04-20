@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from 'react';
 import { AstNodeInfo, FileInfo, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient, getFileInfo } from 'service/project-service';
+import { createProjectClient, getFileInfo, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
 import { createCppClient, getCppAstNodeInfo } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
@@ -17,6 +17,8 @@ import { AccordionLabel } from 'enums/accordion-enum';
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
+  labels: Map<string, string>;
+  setLabels: (_val: Map<string, string>) => void;
   workspaceId: string;
   setWorkspaceId: (_val: string) => void;
   projectFileId: string;
@@ -52,6 +54,8 @@ type AppContextProps = {
 export const AppContext = createContext<AppContextProps>({
   workspaces: [],
   setWorkspaces: (_val) => {},
+  labels: new Map(),
+  setLabels: (_val) => {},
   workspaceId: '',
   setWorkspaceId: (_val) => {},
   projectFileId: '',
@@ -89,6 +93,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const routerQuery = router.query as RouterQueryType;
 
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
+  const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
   const [projectFileId, setProjectFileId] = useState<string | undefined>(undefined);
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
@@ -150,6 +155,8 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       createMetricsClient(workspaceId);
       createGitClient(workspaceId);
 
+      const initLabels = (await getLabels()) ?? new Map();
+
       const {
         storedProjectFileId,
         storedSearchProps,
@@ -166,6 +173,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         storedTreeViewOption,
       } = getStore();
 
+      setLabels(initLabels);
       setProjectFileId(storedProjectFileId);
       setSearchProps(storedSearchProps ?? undefined);
       setMetricsGenId(storedMetricsGenId);
@@ -290,6 +298,8 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     activeAccordion: activeAccordion as string,
     activeTab: activeTab as number,
     treeViewOption: treeViewOption as boolean,
+    labels,
+    setLabels,
     loadComplete,
     setWorkspaces,
     setWorkspaceId,

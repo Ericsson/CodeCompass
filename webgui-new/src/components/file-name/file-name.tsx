@@ -29,7 +29,7 @@ const StyledMenu = styled(Menu)(({ theme }) => ({
   '.MuiMenu-list': {
     border: `1px solid ${theme.colors?.primary}`,
     width: '500px',
-    height: '800px',
+    maxHeight: '500px',
     overflow: 'scroll',
   },
 }));
@@ -131,32 +131,34 @@ export const FileName = ({
       {info ? (
         <>
           <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <ParseStatus
-              sx={{
-                color: (theme) =>
-                  parseStatus === 2
-                    ? theme.backgroundColors?.primary
-                    : parseStatus === 3
-                    ? theme.backgroundColors?.primary
-                    : '#FFFFFF',
-                backgroundColor: (theme) =>
-                  parseStatus === 2
-                    ? theme.colors?.warning
-                    : parseStatus === 3
-                    ? theme.colors?.success
-                    : theme.colors?.error,
-                border: (theme) =>
-                  `1px solid ${
+            {!info.isDirectory && (
+              <ParseStatus
+                sx={{
+                  color: (theme) =>
+                    parseStatus === 2
+                      ? theme.backgroundColors?.primary
+                      : parseStatus === 3
+                      ? theme.backgroundColors?.primary
+                      : '#FFFFFF',
+                  backgroundColor: (theme) =>
                     parseStatus === 2
                       ? theme.colors?.warning
                       : parseStatus === 3
                       ? theme.colors?.success
-                      : theme.colors?.error
-                  }`,
-              }}
-            >
-              {getParseStatusText(parseStatus)}
-            </ParseStatus>
+                      : theme.colors?.error,
+                  border: (theme) =>
+                    `1px solid ${
+                      parseStatus === 2
+                        ? theme.colors?.warning
+                        : parseStatus === 3
+                        ? theme.colors?.success
+                        : theme.colors?.error
+                    }`,
+                }}
+              >
+                {getParseStatusText(parseStatus)}
+              </ParseStatus>
+            )}
             <div>{fileName}</div>
             <div>{'::'}</div>
             <div>{filePath}</div>
