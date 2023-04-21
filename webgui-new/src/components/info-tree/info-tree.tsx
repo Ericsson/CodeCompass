@@ -2,7 +2,7 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { Code } from '@mui/icons-material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
-import { useContext, useEffect, useState } from 'react';
+import { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import {
   getCppReferenceTypes,
   getCppReferences,
@@ -61,6 +61,7 @@ export const InfoTree = (): JSX.Element => {
   const [refs, setRefs] = useState<Map<string, AstNodeInfo[]>>(new Map());
   const [fileUsages, setFileUsages] = useState<Map<string, FileInfo[]>>(new Map());
   const [loadComplete, setLoadComplete] = useState<boolean>(false);
+  const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!appCtx.languageNodeId) return;
@@ -114,20 +115,26 @@ export const InfoTree = (): JSX.Element => {
   return appCtx.languageNodeId && astNodeInfo ? (
     loadComplete ? (
       <OuterContainer>
-        <StyledDiv
-          onClick={() => jumpToRef(astNodeInfo)}
-          sx={{
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            ':hover': {
-              backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
-            },
-          }}
-        >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</StyledDiv>
+        <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+          <RefIcon refName={astNodeInfo.symbolType as string} />
+          <StyledDiv
+            onClick={() => jumpToRef(astNodeInfo)}
+            sx={{
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              ':hover': {
+                backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
+              },
+            }}
+          >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</StyledDiv>
+        </StyledDiv>
         <StyledDiv>
           {Array.from(props.keys()).map((name, idx) => (
-            <StyledDiv key={idx}>
-              <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {props.get(name)}
+            <StyledDiv key={idx} sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <RefIcon refName={name} />
+              <StyledDiv>
+                <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {props.get(name)}
+              </StyledDiv>
             </StyledDiv>
           ))}
         </StyledDiv>
@@ -135,7 +142,18 @@ export const InfoTree = (): JSX.Element => {
           defaultExpandIcon={<ChevronRight />}
           defaultEndIcon={<ChevronRight />}
           defaultCollapseIcon={<ExpandMore />}
-          sx={{ width: 'max-content' }}
+          sx={{ width: 'max-content', marginTop: '5px' }}
+          expanded={expandedTreeNodes}
+          onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+            const index = expandedTreeNodes.indexOf(nodeId) as number;
+            const copyExpanded = [...expandedTreeNodes];
+            if (index === -1) {
+              copyExpanded.push(nodeId);
+            } else {
+              copyExpanded.splice(index, 1);
+            }
+            setExpandedTreeNodes(copyExpanded);
+          }}
         >
           {Array.from(refTypes.keys())
             .filter((type) => refCounts.get(type) !== 0)
@@ -143,7 +161,7 @@ export const InfoTree = (): JSX.Element => {
               <StyledTreeItem
                 nodeId={`${refTypeIdx}`}
                 key={refTypeIdx}
-                icon={<RefIcon refName={type} />}
+                icon={<RefIcon refName={type} outlined={expandedTreeNodes.includes(`${refTypeIdx}`)} />}
                 label={
                   <StyledDiv sx={{ fontSize: '0.85rem' }}>
                     {type} ({refCounts.get(type)})
@@ -155,7 +173,12 @@ export const InfoTree = (): JSX.Element => {
                       <StyledTreeItem
                         nodeId={`${fileInfo.id}:${refTypeIdx}`}
                         key={fileInfo.id}
-                        icon={<FileIcon fileName={fileInfo.name as string} />}
+                        icon={
+                          <FileIcon
+                            fileName={fileInfo.name as string}
+                            outlined={expandedTreeNodes.includes(`${fileInfo.id}:${refTypeIdx}`)}
+                          />
+                        }
                         label={
                           <StyledDiv sx={{ fontSize: '0.85rem' }}>
                             {fileInfo.name} (

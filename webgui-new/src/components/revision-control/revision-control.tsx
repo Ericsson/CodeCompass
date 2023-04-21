@@ -295,12 +295,12 @@ export const RevisionControl = (): JSX.Element => {
             nodeId={`${repo.id as string}`}
             key={repo.id as string}
             label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</StyledDiv>}
-            icon={<GitIcon name={'repository'} />}
+            icon={<GitIcon name={'repository'} outlined={expandedTreeNodes.includes(`${repo.id as string}`)} />}
           >
             <StyledTreeItem
               nodeId={`${repo.id as string}-branches`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</StyledDiv>}
-              icon={<GitIcon name={'branch'} />}
+              icon={<GitIcon name={'branch'} outlined={expandedTreeNodes.includes(`${repo.id as string}-branches`)} />}
               onClick={() => loadBranches(repo.id as string)}
             >
               {branches.get(repo.id as string)?.length ? (
@@ -309,7 +309,12 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${branch}`}
                     key={`${repo.id as string}-${branch}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
-                    icon={<GitIcon name={'commit'} />}
+                    icon={
+                      <GitIcon
+                        name={'commit'}
+                        outlined={expandedTreeNodes.includes(`${repo.id as string}-${branch}`)}
+                      />
+                    }
                     onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
                     <RenderedCommits
@@ -333,7 +338,7 @@ export const RevisionControl = (): JSX.Element => {
             <StyledTreeItem
               nodeId={`${repo.id as string}-tags`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}
-              icon={<GitIcon name={'tag'} />}
+              icon={<GitIcon name={'tag'} outlined={expandedTreeNodes.includes(`${repo.id as string}-tags`)} />}
               onClick={() => loadTags(repo.id as string)}
             >
               {tags.get(repo.id as string)?.length ? (
@@ -342,7 +347,9 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${tag}`}
                     key={`${repo.id as string}-${tag}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
-                    icon={<GitIcon name={'commit'} />}
+                    icon={
+                      <GitIcon name={'commit'} outlined={expandedTreeNodes.includes(`${repo.id as string}-${tag}`)} />
+                    }
                     onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
                     <RenderedCommits

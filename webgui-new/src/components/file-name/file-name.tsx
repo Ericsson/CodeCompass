@@ -6,6 +6,7 @@ import { useContext, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
+import { RefIcon } from 'components/custom-icon/custom-icon';
 
 const Container = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -103,6 +104,7 @@ export const FileName = ({
               {key} ({refCountForType})
             </StyledDiv>
           }
+          icon={<RefIcon refName={key} />}
         >
           {refsForType.map((info) => {
             return (

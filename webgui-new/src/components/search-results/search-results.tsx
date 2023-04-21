@@ -310,7 +310,7 @@ export const SearchResults = (): JSX.Element => {
                                 return (
                                   <div key={fileNodeIdx}>
                                     <StyledTreeView
-                                      defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
+                                      defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} outlined />}
                                       defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       expanded={
                                         expandedFileNodes && expandedFileNodes[pathNodeIdx.toString()]

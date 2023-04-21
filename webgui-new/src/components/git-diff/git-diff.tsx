@@ -10,6 +10,7 @@ import { GitCommit } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { diffViewerTheme } from 'themes/theme';
 import { blue, red } from '@mui/material/colors';
+import { FileIcon } from 'components/custom-icon/custom-icon';
 
 const StyledSpan = styled('span')({});
 
@@ -227,7 +228,12 @@ export const GitDiff = (): JSX.Element => {
           }}
         >
           {Array.from(oldValues.keys()).map((fileName, idx) => (
-            <StyledTreeItem key={idx} nodeId={`${idx}`} label={<FileNameContainer>{fileName}</FileNameContainer>}>
+            <StyledTreeItem
+              key={idx}
+              nodeId={`${idx}`}
+              label={<FileNameContainer>{fileName}</FileNameContainer>}
+              icon={<FileIcon fileName={fileName} outlined={expandedFiles.includes(`${idx}`)} />}
+            >
               {Array.from(oldValues.get(fileName)?.keys() ?? []).map((change, cIdx) => (
                 <div key={cIdx}>
                   <ChangeLine>{change}</ChangeLine>
