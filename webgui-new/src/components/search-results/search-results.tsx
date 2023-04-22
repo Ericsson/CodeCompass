@@ -1,8 +1,8 @@
-import { FolderOpen, Folder, ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
 import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
-import { FileIcon } from 'components/custom-icon/custom-icon';
+import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { SyntheticEvent, useContext, useEffect, useState } from 'react';
@@ -286,8 +286,8 @@ export const SearchResults = (): JSX.Element => {
       <ResultsContainer>
         {appCtx.searchProps && searchResult?.results?.length ? (
           <StyledTreeView
-            defaultCollapseIcon={<FolderOpen />}
-            defaultExpandIcon={<Folder />}
+            defaultCollapseIcon={<FolderIcon open />}
+            defaultExpandIcon={<FolderIcon />}
             expanded={expandedPathNodes ?? []}
             onNodeSelect={handleDirNodeSelect()}
             sx={{ width: 'fit-content' }}
@@ -310,7 +310,7 @@ export const SearchResults = (): JSX.Element => {
                                 return (
                                   <div key={fileNodeIdx}>
                                     <StyledTreeView
-                                      defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} outlined />}
+                                      defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       expanded={
                                         expandedFileNodes && expandedFileNodes[pathNodeIdx.toString()]

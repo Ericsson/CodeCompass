@@ -1,38 +1,69 @@
 import {
   Storage,
-  AccountTree,
   Sell,
   Commit,
   Call,
-  WifiCalling,
+  WifiCalling3,
   PhoneCallback,
+  PhoneForwarded,
+  PhoneMissed,
   DataObject,
-  LocalActivity,
   MenuBook,
   Edit,
-  AccountTreeOutlined,
-  CommitOutlined,
-  SellOutlined,
-  StorageOutlined,
   TextSnippet,
   TextSnippetOutlined,
-  CallOutlined,
   Badge,
   Person,
   DriveFileRenameOutline,
   People,
-  PeopleOutlined,
   DataUsage,
-  DataUsageOutlined,
+  FolderOpen,
+  Folder,
 } from '@mui/icons-material';
-import { TbMathFunction, TbMacro } from 'react-icons/tb';
-import { HiVariable, HiHashtag } from 'react-icons/hi';
+import { TbMathFunction, TbMacro, TbTableAlias } from 'react-icons/tb';
+import { HiArrowsExpand, HiHashtag } from 'react-icons/hi';
 import { FiType } from 'react-icons/fi';
+import { GrInherit } from 'react-icons/gr';
+import {
+  VscRepo,
+  VscSourceControl,
+  VscJson,
+  VscSymbolEnum,
+  VscSymbolEnumMember,
+  VscSymbolVariable,
+  VscVariableGroup,
+  VscSymbolParameter,
+  VscSymbolField,
+  VscSymbolMethod,
+} from 'react-icons/vsc';
 import * as Devicon from 'devicons-react';
+import { styled } from '@mui/material';
+import React from 'react';
 
-export const FileIcon = ({ fileName, outlined }: { fileName: string; outlined?: boolean }): JSX.Element => {
+export const FolderIcon = ({ open }: { open?: boolean }): JSX.Element => {
+  const icon: React.FunctionComponent = open ? FolderOpen : Folder;
+
+  const IconWithStyles = styled(icon)(({ theme }) => ({
+    width: '20px',
+    height: '20px',
+    color: theme.iconColors?.folder,
+  }));
+
+  return <IconWithStyles />;
+};
+
+export const FileIcon = ({ fileName }: { fileName: string }): JSX.Element => {
+  let icon: React.FunctionComponent;
+
   if (fileName.startsWith('.git')) {
-    return <Devicon.GitOriginal />;
+    icon = Devicon.GitOriginal;
+
+    const IconWithStyles = styled(icon)({
+      width: '20px',
+      height: '20px',
+    });
+
+    return <IconWithStyles />;
   }
 
   const fileExtension = fileName.split('.').reverse()[0];
@@ -40,140 +71,216 @@ export const FileIcon = ({ fileName, outlined }: { fileName: string; outlined?: 
   switch (fileExtension) {
     case 'h':
     case 'c':
-      return <Devicon.COriginal />;
+      icon = Devicon.COriginal;
+      break;
     case 'hpp':
     case 'cpp':
-      return <Devicon.CplusplusOriginal />;
+      icon = Devicon.CplusplusOriginal;
+      break;
     case 'cmake':
-      return <Devicon.CmakeOriginal />;
+      icon = Devicon.CmakeOriginal;
+      break;
     case 'cs':
-      return <Devicon.CsharpOriginal />;
+      icon = Devicon.CsharpOriginal;
+      break;
     case 'jar':
     case 'java':
-      return <Devicon.JavaOriginal />;
+      icon = Devicon.JavaOriginal;
+      break;
     case 'js':
-      return <Devicon.JavascriptOriginal />;
+      icon = Devicon.JavascriptOriginal;
+      break;
     case 'json':
-      return <DataObject sx={{ width: '20px', height: '20px' }} />;
+      icon = VscJson;
+      break;
     case 'ts':
-      return <Devicon.TypescriptOriginal />;
+      icon = Devicon.TypescriptOriginal;
+      break;
     case 'html':
-      return <Devicon.Html5Original />;
+      icon = Devicon.Html5Original;
+      break;
     case 'css':
-      return <Devicon.Css3Original />;
+      icon = Devicon.Css3Original;
+      break;
     case 'sh':
-      return <Devicon.BashOriginal />;
+      icon = Devicon.BashOriginal;
+      break;
     case 'php':
-      return <Devicon.PhpOriginal />;
+      icon = Devicon.PhpOriginal;
+      break;
     case 'py':
-      return <Devicon.PythonOriginal />;
+      icon = Devicon.PythonOriginal;
+      break;
     case 'pl':
-      return <Devicon.PerlOriginal />;
+      icon = Devicon.PerlOriginal;
+      break;
     case 'lua':
-      return <Devicon.LuaOriginal />;
+      icon = Devicon.LuaOriginal;
+      break;
     case 'rb':
-      return <Devicon.RubyOriginal />;
+      icon = Devicon.RubyOriginal;
+      break;
     case 'md':
-      return <Devicon.MarkdownOriginal />;
+      icon = Devicon.MarkdownOriginal;
+      break;
     default:
-      return outlined ? (
-        <TextSnippetOutlined sx={{ width: '20px', height: '20px' }} />
-      ) : (
-        <TextSnippet sx={{ width: '20px', height: '20px' }} />
-      );
+      icon = TextSnippetOutlined;
+      break;
   }
+
+  const IconWithStyles = styled(icon)({
+    width: '20px',
+    height: '20px',
+  });
+
+  return <IconWithStyles />;
 };
 
-export const RefIcon = ({ refName, outlined }: { refName: string; outlined?: boolean }): JSX.Element => {
+export const RefIcon = ({ refName }: { refName: string }): JSX.Element => {
+  let icon: React.FunctionComponent;
+
   switch (refName) {
     case 'Functions':
     case 'Function':
-      return <TbMathFunction style={{ width: '20px', height: '20px' }} />;
+      icon = TbMathFunction;
+      break;
     case 'Variable':
-      return <HiVariable style={{ width: '20px', height: '20px' }} />;
+      icon = VscSymbolVariable;
+      break;
     case 'Types':
     case 'Type':
+    case 'Underlying type':
+    case 'Return type':
     case 'Typedef':
-      return <FiType style={{ width: '20px', height: '20px' }} />;
+      icon = FiType;
+      break;
     case 'Enum':
-      return <TextSnippet sx={{ width: '20px', height: '20px' }} />;
+      icon = VscSymbolEnum;
+      break;
     case 'Macros':
     case 'Macro':
-      return <TbMacro style={{ width: '20px', height: '20px' }} />;
+      icon = TbMacro;
+      break;
     case 'Includes':
-      return <HiHashtag style={{ width: '20px', height: '20px' }} />;
+      icon = HiHashtag;
+      break;
     case 'Name':
-      return <Badge sx={{ width: '20px', height: '20px' }} />;
+      icon = Badge;
+      break;
     case 'Qualified name':
-      return <Person sx={{ width: '20px', height: '20px' }} />;
+      icon = Person;
+      break;
     case 'Signature':
-      return <DriveFileRenameOutline sx={{ width: '20px', height: '20px' }} />;
+      icon = DriveFileRenameOutline;
+      break;
     case 'Callee':
-      return <WifiCalling />;
+      icon = PhoneForwarded;
+      break;
     case 'Caller':
-      return outlined ? <CallOutlined /> : <Call />;
+      icon = Call;
+      break;
     case 'Declaration':
-      return <DataObject />;
+      icon = DataObject;
+      break;
     case 'Definition':
-      return <TextSnippet />;
-    case 'Function pointer call':
-      return <TextSnippet />;
-    case 'Local variables':
-      return <LocalActivity />;
-    case 'Overridden by':
-      return <TextSnippet />;
-    case 'Overrides':
-      return <TextSnippet />;
-    case 'Parameters':
-      return <TextSnippet />;
-    case 'Return type':
-      return <TextSnippet />;
-    case 'This calls':
-      return <PhoneCallback />;
-    case 'Usage':
-      return <TextSnippet />;
-    case 'Virtual call':
-      return <TextSnippet />;
-    case 'Reads':
-      return <MenuBook />;
-    case 'Writes':
-      return <Edit />;
-    case 'Aliases':
-      return <TextSnippet />;
-    case 'Inherits from':
-      return <TextSnippet />;
-    case 'Inherited by':
-      return <TextSnippet />;
-    case 'Data member':
-      return outlined ? <DataUsageOutlined /> : <DataUsage />;
-    case 'Method':
-      return <TextSnippet />;
-    case 'Friends':
-      return outlined ? <PeopleOutlined /> : <People />;
-    case 'Underlying type':
-      return <TextSnippet />;
-    case 'Enum constants':
-      return <TextSnippet />;
-    case 'Expansions':
-      return <TextSnippet />;
     case 'Undefinitions':
-      return <TextSnippet />;
+      icon = VscSymbolField;
+      break;
+    case 'Function pointer call':
+      icon = PhoneMissed;
+      break;
+    case 'Local variables':
+      icon = VscVariableGroup;
+      break;
+    case 'Overridden by':
+    case 'Overrides':
+      icon = TbMathFunction;
+      break;
+    case 'Parameters':
+      icon = VscSymbolParameter;
+      break;
+    case 'This calls':
+      icon = PhoneCallback;
+      break;
+    case 'Usage':
+      icon = DataUsage;
+      break;
+    case 'Virtual call':
+      icon = WifiCalling3;
+      break;
+    case 'Reads':
+      icon = MenuBook;
+      break;
+    case 'Writes':
+      icon = Edit;
+      break;
+    case 'Aliases':
+      icon = TbTableAlias;
+      break;
+    case 'Inherits from':
+      icon = GrInherit;
+      break;
+    case 'Inherited by':
+      icon = GrInherit;
+      break;
+    case 'Data member':
+      icon = DataUsage;
+      break;
+    case 'Method':
+      icon = VscSymbolMethod;
+      break;
+    case 'Friends':
+      icon = People;
+      break;
+    case 'Enum constants':
+      icon = VscSymbolEnumMember;
+      break;
+    case 'Expansions':
+      icon = HiArrowsExpand;
+      break;
     default:
-      return <TextSnippet />;
+      icon = TextSnippet;
+      break;
   }
+
+  const IconWithStyles = styled(icon)(({ theme }) => ({
+    width: '20px',
+    height: '20px',
+    color: theme.iconColors?.ref,
+  }));
+
+  return <IconWithStyles />;
 };
 
-export const GitIcon = ({ name, outlined }: { name: string; outlined?: boolean }): JSX.Element => {
+export const GitIcon = ({ name }: { name: string }): JSX.Element => {
+  let icon: React.FunctionComponent;
+
   switch (name) {
     case 'repository':
-      return outlined ? <StorageOutlined /> : <Storage />;
+      icon = VscRepo;
+      break;
     case 'branch':
-      return outlined ? <AccountTreeOutlined /> : <AccountTree />;
+      icon = VscSourceControl;
+      break;
     case 'tag':
-      return outlined ? <SellOutlined /> : <Sell />;
+      icon = Sell;
+      break;
     case 'commit':
-      return outlined ? <CommitOutlined /> : <Commit />;
+      icon = Commit;
+      break;
+    case 'repolist':
+      icon = Storage;
+      break;
     default:
-      return outlined ? <TextSnippetOutlined /> : <TextSnippet />;
+      icon = TextSnippet;
+      break;
   }
+
+  const IconWithStyles = styled(icon)(({ theme }) => ({
+    width: '20px',
+    height: '20px',
+    color: theme.iconColors?.git,
+  }));
+
+  return <IconWithStyles />;
 };

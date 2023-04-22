@@ -258,7 +258,9 @@ export const RevisionControl = (): JSX.Element => {
                 },
               }}
             >
-              <GitIcon name={'commit'} />
+              <StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <GitIcon name={'commit'} />
+              </StyledDiv>
             </Tooltip>
             <StyledDiv sx={{ display: 'flex', flexDirection: 'column' }}>
               <StyledDiv>{`${commit.message} (${commit.time})`}</StyledDiv>
@@ -272,7 +274,10 @@ export const RevisionControl = (): JSX.Element => {
 
   return repos.length ? (
     <OuterContainer>
-      <div>{'List of repositories'}</div>
+      <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <GitIcon name={'repolist'} />
+        <div>{'List of repositories'}</div>
+      </StyledDiv>
       <StyledTreeView
         defaultExpandIcon={<ChevronRight />}
         defaultEndIcon={<ChevronRight />}
@@ -295,12 +300,12 @@ export const RevisionControl = (): JSX.Element => {
             nodeId={`${repo.id as string}`}
             key={repo.id as string}
             label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</StyledDiv>}
-            icon={<GitIcon name={'repository'} outlined={expandedTreeNodes.includes(`${repo.id as string}`)} />}
+            icon={<GitIcon name={'repository'} />}
           >
             <StyledTreeItem
               nodeId={`${repo.id as string}-branches`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</StyledDiv>}
-              icon={<GitIcon name={'branch'} outlined={expandedTreeNodes.includes(`${repo.id as string}-branches`)} />}
+              icon={<GitIcon name={'branch'} />}
               onClick={() => loadBranches(repo.id as string)}
             >
               {branches.get(repo.id as string)?.length ? (
@@ -309,12 +314,7 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${branch}`}
                     key={`${repo.id as string}-${branch}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
-                    icon={
-                      <GitIcon
-                        name={'commit'}
-                        outlined={expandedTreeNodes.includes(`${repo.id as string}-${branch}`)}
-                      />
-                    }
+                    icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
                     <RenderedCommits
@@ -338,7 +338,7 @@ export const RevisionControl = (): JSX.Element => {
             <StyledTreeItem
               nodeId={`${repo.id as string}-tags`}
               label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}
-              icon={<GitIcon name={'tag'} outlined={expandedTreeNodes.includes(`${repo.id as string}-tags`)} />}
+              icon={<GitIcon name={'tag'} />}
               onClick={() => loadTags(repo.id as string)}
             >
               {tags.get(repo.id as string)?.length ? (
@@ -347,9 +347,7 @@ export const RevisionControl = (): JSX.Element => {
                     nodeId={`${repo.id as string}-${tag}`}
                     key={`${repo.id as string}-${tag}`}
                     label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
-                    icon={
-                      <GitIcon name={'commit'} outlined={expandedTreeNodes.includes(`${repo.id as string}-${tag}`)} />
-                    }
+                    icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
                     <RenderedCommits
@@ -372,6 +370,6 @@ export const RevisionControl = (): JSX.Element => {
       </StyledTreeView>
     </OuterContainer>
   ) : (
-    <StyledDiv>{'No repositories available.'}</StyledDiv>
+    <StyledDiv sx={{ padding: '10px' }}>{'No repositories available.'}</StyledDiv>
   );
 };

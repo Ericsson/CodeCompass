@@ -175,7 +175,7 @@ export const GitDiff = (): JSX.Element => {
     return offset === 0 ? 1 : offset - 1;
   };
 
-  return commit ? (
+  return commit && commit.repoId ? (
     <div>
       <CommitSummary>
         <div>{commit.message}</div>
@@ -232,7 +232,7 @@ export const GitDiff = (): JSX.Element => {
               key={idx}
               nodeId={`${idx}`}
               label={<FileNameContainer>{fileName}</FileNameContainer>}
-              icon={<FileIcon fileName={fileName} outlined={expandedFiles.includes(`${idx}`)} />}
+              icon={<FileIcon fileName={fileName} />}
             >
               {Array.from(oldValues.get(fileName)?.keys() ?? []).map((change, cIdx) => (
                 <div key={cIdx}>

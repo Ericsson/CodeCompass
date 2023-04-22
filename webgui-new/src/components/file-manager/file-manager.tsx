@@ -1,9 +1,9 @@
-import { Folder, DriveFolderUpload, FolderOpen } from '@mui/icons-material';
+import { DriveFolderUpload } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
 import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo, Position, Range } from '@thrift-generated';
 import { getChildFiles, getFileInfo, getParentFiles, getParents, getRootFiles } from 'service/project-service';
-import { FileIcon } from 'components/custom-icon/custom-icon';
+import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 import { RouterQueryType, TreeNode } from 'utils/types';
@@ -310,11 +310,7 @@ export const FileManager = (): JSX.Element => {
             fInfo.id === appCtx.projectFileId ? alpha(theme.backgroundColors?.secondary as string, 0.3) : '',
         }}
       >
-        {fInfo.isDirectory ? (
-          <Folder sx={{ width: '20px', height: '20px' }} />
-        ) : (
-          <FileIcon fileName={fInfo.name as string} />
-        )}
+        {fInfo.isDirectory ? <FolderIcon /> : <FileIcon fileName={fInfo.name as string} />}
         <StyledDiv
           sx={{
             fontSize: '0.8rem',
@@ -336,9 +332,9 @@ export const FileManager = (): JSX.Element => {
     <>
       {appCtx.treeViewOption ? (
         <StyledTreeView
-          defaultCollapseIcon={<FolderOpen />}
-          defaultExpandIcon={<Folder />}
-          defaultEndIcon={<Folder />}
+          defaultCollapseIcon={<FolderIcon open />}
+          defaultExpandIcon={<FolderIcon />}
+          defaultEndIcon={<FolderIcon />}
           expanded={expandedFileTreeNodes ?? []}
           onNodeSelect={handleTreeNodeSelect()}
         >

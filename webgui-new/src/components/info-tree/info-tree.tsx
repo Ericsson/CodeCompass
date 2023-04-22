@@ -161,7 +161,7 @@ export const InfoTree = (): JSX.Element => {
               <StyledTreeItem
                 nodeId={`${refTypeIdx}`}
                 key={refTypeIdx}
-                icon={<RefIcon refName={type} outlined={expandedTreeNodes.includes(`${refTypeIdx}`)} />}
+                icon={<RefIcon refName={type} />}
                 label={
                   <StyledDiv sx={{ fontSize: '0.85rem' }}>
                     {type} ({refCounts.get(type)})
@@ -173,12 +173,7 @@ export const InfoTree = (): JSX.Element => {
                       <StyledTreeItem
                         nodeId={`${fileInfo.id}:${refTypeIdx}`}
                         key={fileInfo.id}
-                        icon={
-                          <FileIcon
-                            fileName={fileInfo.name as string}
-                            outlined={expandedTreeNodes.includes(`${fileInfo.id}:${refTypeIdx}`)}
-                          />
-                        }
+                        icon={<FileIcon fileName={fileInfo.name as string} />}
                         label={
                           <StyledDiv sx={{ fontSize: '0.85rem' }}>
                             {fileInfo.name} (
