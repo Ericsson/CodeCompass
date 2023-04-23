@@ -17,12 +17,6 @@ import { AppContext } from 'global-context/app-context';
 import { getStore } from 'utils/store';
 import { GitIcon } from 'components/custom-icon/custom-icon';
 
-type RepoId = string;
-type Branch = string;
-type Branches = string[];
-type Tags = string[];
-type Commit = string;
-
 const StyledDiv = styled('div')({});
 
 const OuterContainer = styled('div')({
@@ -57,18 +51,21 @@ const Label = styled('div')(({ theme }) => ({
   },
 }));
 
+const Placeholder = styled('div')({
+  padding: '10px',
+});
+
 export const RevisionControl = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const DISPLAYED_COMMIT_CNT: number = 15;
 
   const [repos, setRepos] = useState<GitRepository[]>([]);
-  const [branches, setBranches] = useState<Map<RepoId, Branches>>(new Map());
-  const [tags, setTags] = useState<Map<RepoId, Tags>>(new Map());
-  const [topCommits, setTopCommits] = useState<Map<Branch, ReferenceTopObjectResult>>(new Map());
-  const [commits, setCommits] = useState<Map<Branch, CommitListFilteredResult>>(new Map());
-  const [commitOffsets, setCommitOffsets] = useState<Map<Branch, number>>(new Map());
-
+  const [branches, setBranches] = useState<Map<string, string[]>>(new Map());
+  const [tags, setTags] = useState<Map<string, string[]>>(new Map());
+  const [topCommits, setTopCommits] = useState<Map<string, ReferenceTopObjectResult>>(new Map());
+  const [commits, setCommits] = useState<Map<string, CommitListFilteredResult>>(new Map());
+  const [commitOffsets, setCommitOffsets] = useState<Map<string, number>>(new Map());
   const [expandedTreeNodes, setExpandedTreeNodes] = useState<string[]>([]);
 
   useEffect(() => {
@@ -370,6 +367,6 @@ export const RevisionControl = (): JSX.Element => {
       </StyledTreeView>
     </OuterContainer>
   ) : (
-    <StyledDiv sx={{ padding: '10px' }}>{'No repositories available.'}</StyledDiv>
+    <Placeholder>{'No repositories available.'}</Placeholder>
   );
 };

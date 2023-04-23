@@ -146,8 +146,6 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     if (!workspaceId) return;
     setLoadComplete(false);
     const initializeApp = async () => {
-      await new Promise((resolve) => resolve(''));
-
       createProjectClient(workspaceId);
       createSearchClient(workspaceId);
       createCppClient(workspaceId);

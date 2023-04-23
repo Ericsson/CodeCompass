@@ -65,12 +65,10 @@ export const FileManager = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
-
   const [files, setFiles] = useState<FileInfo[] | undefined>(undefined);
   const [fileTree, setFileTree] = useState<TreeNode | undefined>(undefined);
   const [folderPath, setFolderPath] = useState<string | undefined>(undefined);
   const [expandedFileTreeNodes, setExpandedFileTreeNodes] = useState<string[] | undefined>(undefined);
-
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;

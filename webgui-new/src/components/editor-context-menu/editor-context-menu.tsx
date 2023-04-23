@@ -14,7 +14,29 @@ import { AstNodeInfo, Range } from '@thrift-generated';
 import { updateUrlWithParams } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
 
-const StyledDiv = styled('div')({});
+const AstNodeInfoHeader = styled('div')({
+  fontWeight: 'bold',
+});
+
+const ModalHeader = styled('div')({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
+});
+
+const ModalContent = styled('div')({
+  padding: '10px',
+  width: '100%',
+  overflow: 'scroll',
+});
+
+const ModalBox = styled(Box)({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+});
 
 const ModalContainer = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -157,7 +179,7 @@ export const EditorContextMenu = ({
       >
         <MenuItem onClick={() => jumpToDef()}>{'Jump to definiton'}</MenuItem>
         <MenuItem onClick={() => getDocs()}>{'Documentation'}</MenuItem>
-        {diagramTypes.size !== 0 ? (
+        {diagramTypes.size !== 0 && (
           <Tooltip
             title={
               <>
@@ -183,8 +205,6 @@ export const EditorContextMenu = ({
               <ChevronRight />
             </MenuItem>
           </Tooltip>
-        ) : (
-          ''
         )}
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
         <MenuItem onClick={() => getSelectionLink()}>
@@ -205,29 +225,20 @@ export const EditorContextMenu = ({
         </MenuItem>
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
+        <ModalBox>
           <ModalContainer>
-            <StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-              <StyledDiv sx={{ fontWeight: 'bold' }}>
-                {`${astNodeInfo?.astNodeType}: ${astNodeInfo?.astNodeValue}`}
-              </StyledDiv>
+            <ModalHeader>
+              <AstNodeInfoHeader>{`${astNodeInfo?.astNodeType}: ${astNodeInfo?.astNodeValue}`}</AstNodeInfoHeader>
               <IconButton onClick={() => closeModal()}>
                 <Close />
               </IconButton>
-            </StyledDiv>
-            <StyledDiv sx={{ padding: '10px', width: '100%', overflow: 'scroll' }}>
+            </ModalHeader>
+            <ModalContent>
               <div ref={docsContainerRef} />
               <div ref={astHTMLContainerRef} />
-            </StyledDiv>
+            </ModalContent>
           </ModalContainer>
-        </Box>
+        </ModalBox>
       </Modal>
     </>
   ) : (

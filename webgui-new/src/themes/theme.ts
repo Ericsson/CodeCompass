@@ -1,4 +1,4 @@
-import { blue, orange, yellow } from '@mui/material/colors';
+import { blue } from '@mui/material/colors';
 import { alpha, createTheme } from '@mui/material/styles';
 import { ReactDiffViewerStylesOverride } from 'react-diff-viewer-continued/lib/styles';
 
@@ -119,6 +119,13 @@ export const lightTheme = createTheme({
         },
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
@@ -179,6 +186,13 @@ export const darkTheme = createTheme({
           color: colors.dark.text.primary,
           backgroundColor: colors.dark.background.primary,
           border: `1px solid ${colors.dark.text.primary}`,
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
         },
       },
     },

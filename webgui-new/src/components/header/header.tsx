@@ -45,8 +45,8 @@ const SettingsContainer = styled('div')({
 });
 
 export const Header = (): JSX.Element => {
-  const { theme, setTheme } = useContext(ThemeContext);
   const appCtx = useContext(AppContext);
+  const { theme, setTheme } = useContext(ThemeContext);
 
   const searchTypeOptions = enumToArray(SearchTypeOptions);
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(null);
@@ -54,7 +54,6 @@ export const Header = (): JSX.Element => {
   const [searchType, setSearchType] = useState<SearchType | undefined>(undefined);
   const [searchTypes, setSearchTypes] = useState<SearchType[]>([]);
   const [selectedSearchTypeOptions, setSelectedSearchTypeOptions] = useState<string[] | undefined>(undefined);
-
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
   const [searchFileFilterQuery, setSearchFileFilterQuery] = useState<string | undefined>(undefined);
   const [searchDirFilterQuery, setSearchDirFilterQuery] = useState<string | undefined>(undefined);
@@ -108,7 +107,6 @@ export const Header = (): JSX.Element => {
       };
 
       appCtx.setSearchProps(initSearchProps);
-
       appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
       removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {

@@ -10,7 +10,6 @@ import {
   Select,
   styled,
   Tooltip,
-  Typography,
 } from '@mui/material';
 import { FileName } from 'components/file-name/file-name';
 import { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react';
@@ -49,6 +48,12 @@ const StyledDiv = styled('div')({});
 
 const StyledRect = styled('rect')({});
 
+const OuterContainer = styled('div')({
+  width: 'calc(100vw - 280px)',
+  height: 'calc(100vh - 78px - 48px - 49px)',
+  overflow: 'scroll',
+});
+
 const MetricsOptionsContainer = styled('div')({
   display: 'flex',
   alignItems: 'center',
@@ -58,6 +63,18 @@ const MetricsOptionsContainer = styled('div')({
 
 const MetricsContainer = styled('div')({
   overflow: 'scroll',
+  padding: '10px',
+});
+
+const StyledBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
+  padding: '5px',
+  margin: '10px',
+  border: `1px solid ${theme.colors?.primary}`,
+  borderRadius: '5px',
+  width: 'max-content',
+}));
+
+const Placeholder = styled('div')({
   padding: '10px',
 });
 
@@ -244,13 +261,7 @@ export const Metrics = (): JSX.Element => {
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
       />
-      <StyledDiv
-        sx={{
-          width: 'calc(100vw - 280px)',
-          height: 'calc(100vh - 78px - 48px - 49px)',
-          overflow: 'scroll',
-        }}
-      >
+      <OuterContainer>
         <MetricsOptionsContainer>
           <FormControl sx={{ width: 300 }}>
             <InputLabel>{'File type'}</InputLabel>
@@ -292,21 +303,11 @@ export const Metrics = (): JSX.Element => {
               ))}
             </Select>
           </FormControl>
-          <Button onClick={() => generateMetrics()} sx={{ textTransform: 'none' }}>
-            {'Draw metrics'}
-          </Button>
+          <Button onClick={() => generateMetrics()}>{'Draw metrics'}</Button>
         </MetricsOptionsContainer>
-        <Breadcrumbs
-          sx={{
-            padding: '5px',
-            margin: '10px',
-            border: (theme) => `1px solid ${theme.colors?.primary}`,
-            borderRadius: '5px',
-            width: 'max-content',
-          }}
-        >
+        <StyledBreadcrumbs>
           {fileInfo.path?.split('/').map((p, idx) => (
-            <Typography
+            <StyledDiv
               key={idx}
               sx={{
                 cursor: idx !== (fileInfo.path?.split('/').length as number) - 1 && idx !== 1 ? 'pointer' : '',
@@ -327,15 +328,15 @@ export const Metrics = (): JSX.Element => {
               }}
             >
               <div>{p}</div>
-            </Typography>
+            </StyledDiv>
           ))}
-        </Breadcrumbs>
+        </StyledBreadcrumbs>
         <MetricsContainer>{renderTreeMap}</MetricsContainer>
-      </StyledDiv>
+      </OuterContainer>
     </>
   ) : (
-    <StyledDiv sx={{ padding: '10px' }}>
+    <Placeholder>
       {'No directory selected. Right click on a directory in the file manager to generate Metrics.'}
-    </StyledDiv>
+    </Placeholder>
   );
 };

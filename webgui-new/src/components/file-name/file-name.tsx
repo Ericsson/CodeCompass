@@ -8,6 +8,8 @@ import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { RefIcon } from 'components/custom-icon/custom-icon';
 
+const StyledDiv = styled('div')({});
+
 const Container = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -23,8 +25,6 @@ const ParseStatus = styled('div')({
   borderRadius: '5px',
   padding: '5px',
 });
-
-const StyledDiv = styled('div')({});
 
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '.MuiMenu-list': {
@@ -165,10 +165,9 @@ export const FileName = ({
             <div>{'::'}</div>
             <div>{filePath}</div>
           </StyledDiv>
-          {!info.isDirectory ? (
+          {!info.isDirectory && (
             <>
               <Button
-                sx={{ textTransform: 'none' }}
                 onClick={(e) => {
                   setAnchorEl(e.currentTarget);
                   renderFileReferences();
@@ -187,8 +186,6 @@ export const FileName = ({
                 </StyledTreeView>
               </StyledMenu>
             </>
-          ) : (
-            ''
           )}
         </>
       ) : (

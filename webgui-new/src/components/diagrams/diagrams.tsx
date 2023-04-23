@@ -14,8 +14,6 @@ import { FileInfo, AstNodeInfo } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
 
-const StyledDiv = styled('div')({});
-
 const DiagramLegendContainer = styled('div')({
   display: 'flex',
   alignItems: 'center',
@@ -41,6 +39,19 @@ const DiagramOptionsContainer = styled('div')(({ theme }) => ({
   borderTop: `1px solid ${theme.colors?.primary}`,
 }));
 
+const AstNodeInfoHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: '0 15px',
+  minHeight: '49px',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  fontSize: '0.85rem',
+}));
+
+const TransformContainer = styled('div')({
+  position: 'relative',
+});
+
 const ZoomOptions = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -53,6 +64,17 @@ const ZoomOptions = styled('div')(({ theme }) => ({
   border: `1px solid ${theme.colors?.primary}`,
   borderRadius: '15px',
 }));
+
+const ModalBox = styled(Box)({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+});
+
+const Placeholder = styled('div')({
+  padding: '10px',
+});
 
 export const Diagrams = (): JSX.Element => {
   const appCtx = useContext(AppContext);
@@ -115,9 +137,7 @@ export const Diagrams = (): JSX.Element => {
     const diagramLegendSvg = parsedDiagramLegend.getElementsByTagName('svg')[0];
 
     diagramLegendSvg.style.height = '100%';
-
-    diagramLegendContainerRef.current.innerHTML = '';
-    diagramLegendContainerRef.current.appendChild(diagramLegendSvg);
+    diagramLegendContainerRef.current.replaceChildren(diagramLegendSvg);
 
     setLegendModalOpen(true);
   };
@@ -146,7 +166,7 @@ export const Diagrams = (): JSX.Element => {
   };
 
   return appCtx.diagramGenId ? (
-    <div>
+    <>
       {diagramInfo instanceof FileInfo ? (
         <FileName
           fileName={diagramInfo ? (diagramInfo.name as string) : ''}
@@ -155,30 +175,19 @@ export const Diagrams = (): JSX.Element => {
           info={diagramInfo ?? undefined}
         />
       ) : diagramInfo instanceof AstNodeInfo ? (
-        <StyledDiv
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 15px',
-            minHeight: '49px',
-            borderBottom: (theme) => `1px solid ${theme.colors?.primary}`,
-            fontSize: '0.85rem',
-          }}
-        >{`${diagramInfo.astNodeType}: ${diagramInfo.astNodeValue}`}</StyledDiv>
+        <AstNodeInfoHeader>{`${diagramInfo.symbolType}: ${diagramInfo.astNodeValue}`}</AstNodeInfoHeader>
       ) : (
         <></>
       )}
       <>
         <TransformWrapper ref={transformComponentRef}>
           {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-            <StyledDiv sx={{ position: 'relative' }}>
+            <TransformContainer>
               <ZoomOptions>
                 <IconButton onClick={() => zoomIn()}>
                   <ZoomIn />
                 </IconButton>
-                <Button onClick={() => resetTransform()} sx={{ textTransform: 'none' }}>
-                  {'Reset'}
-                </Button>
+                <Button onClick={() => resetTransform()}>{'Reset'}</Button>
                 <IconButton onClick={() => zoomOut()}>
                   <ZoomOut />
                 </IconButton>
@@ -186,13 +195,11 @@ export const Diagrams = (): JSX.Element => {
               <TransformComponent>
                 <DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
               </TransformComponent>
-            </StyledDiv>
+            </TransformContainer>
           )}
         </TransformWrapper>
         <DiagramOptionsContainer>
-          <Button onClick={() => generateLegend()} sx={{ textTransform: 'none' }}>
-            {'Legend'}
-          </Button>
+          <Button onClick={() => generateLegend()}>{'Legend'}</Button>
           <Tooltip
             PopperProps={{
               disablePortal: true,
@@ -205,33 +212,22 @@ export const Diagrams = (): JSX.Element => {
             title="Copied to clipboard"
             arrow
           >
-            <Button onClick={() => exportDiagramSVG()} sx={{ textTransform: 'none' }}>
-              {'Export SVG'}
-            </Button>
+            <Button onClick={() => exportDiagramSVG()}>{'Export SVG'}</Button>
           </Tooltip>
-          <Button onClick={() => downloadSVG()} sx={{ textTransform: 'none' }}>
-            {'Download image'}
-          </Button>
+          <Button onClick={() => downloadSVG()}>{'Download image'}</Button>
           <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
+            <ModalBox>
               <DiagramLegendContainer ref={diagramLegendContainerRef} />
-            </Box>
+            </ModalBox>
           </Modal>
         </DiagramOptionsContainer>
       </>
-    </div>
+    </>
   ) : (
-    <StyledDiv sx={{ padding: '10px' }}>
+    <Placeholder>
       {
-        'No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate Diagrams.'
+        'No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate diagrams.'
       }
-    </StyledDiv>
+    </Placeholder>
   );
 };

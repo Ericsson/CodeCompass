@@ -57,6 +57,10 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
   },
 }));
 
+const Placeholder = styled('div')({
+  padding: '10px',
+});
+
 export const SearchResults = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
@@ -67,12 +71,9 @@ export const SearchResults = (): JSX.Element => {
   const [fileSearch, setFileSearch] = useState<boolean>(false);
   const [searchStart, setSearchStart] = useState<number>(0);
   const [searchSize, setSearchSize] = useState<number>(10);
-
   const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
   const [searchResultCount, setSearchResultCount] = useState<number | undefined>(undefined);
-
   const [resultPaths, setResultPaths] = useState<string[]>([]);
-
   const [selectedSearchResult, setSelectedSearchResult] = useState<string | undefined>(undefined);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNode | undefined>(undefined);
@@ -244,7 +245,7 @@ export const SearchResults = (): JSX.Element => {
   };
 
   return (
-    <div>
+    <>
       <PaginationContainer>
         <FormControl>
           <InputLabel>{'Size'}</InputLabel>
@@ -412,9 +413,9 @@ export const SearchResults = (): JSX.Element => {
             </StyledDiv>
           </StyledTreeView>
         ) : (
-          <StyledDiv sx={{ paddingLeft: '10px' }}>{'No results'}</StyledDiv>
+          <Placeholder>{'No results'}</Placeholder>
         )}
       </ResultsContainer>
-    </div>
+    </>
   );
 };

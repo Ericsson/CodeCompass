@@ -18,6 +18,7 @@ const CommitSummary = styled('div')(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
   fontSize: '0.85rem',
   height: '87px',
+  overflow: 'scroll',
 
   '& > div:nth-of-type(1)': {
     backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
@@ -71,6 +72,10 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
   },
 }));
+
+const Placeholder = styled('div')({
+  padding: '10px',
+});
 
 export const GitDiff = (): JSX.Element => {
   const appCtx = useContext(AppContext);
@@ -176,7 +181,7 @@ export const GitDiff = (): JSX.Element => {
   };
 
   return commit && commit.repoId ? (
-    <div>
+    <>
       <CommitSummary>
         <div>{commit.message}</div>
         <div>
@@ -251,8 +256,8 @@ export const GitDiff = (): JSX.Element => {
           ))}
         </StyledTreeView>
       </DiffViewContainer>
-    </div>
+    </>
   ) : (
-    <div style={{ padding: '10px' }}>{'No commit selected'}</div>
+    <Placeholder>{'No commit selected or commit information could not be loaded.'}</Placeholder>
   );
 };
