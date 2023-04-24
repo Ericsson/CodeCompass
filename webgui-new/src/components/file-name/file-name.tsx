@@ -66,11 +66,13 @@ export const FileName = ({
   filePath,
   parseStatus,
   info,
+  hideFileRefMenu,
 }: {
   fileName: string;
   filePath: string;
   parseStatus: number;
   info: FileInfo | undefined;
+  hideFileRefMenu?: boolean;
 }): JSX.Element => {
   const appCtx = useContext(AppContext);
 
@@ -165,7 +167,7 @@ export const FileName = ({
             <div>{'::'}</div>
             <div>{filePath}</div>
           </StyledDiv>
-          {!info.isDirectory && (
+          {!info.isDirectory && !hideFileRefMenu && (
             <>
               <Button
                 onClick={(e) => {

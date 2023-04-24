@@ -37,6 +37,7 @@
     "react-dom": "18.2.0",
     "react-icons": "^4.8.0",
     "react-zoom-pan-pinch": "^3.0.5",
+    "reactflow": "^11.7.0",
     "recharts": "^2.5.0",
     "sass": "^1.57.1",
     "thrift": "0.13.0-hotfix.1"
