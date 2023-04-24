@@ -56,7 +56,9 @@ export const CodeMirrorEditor = (): JSX.Element => {
     if (editor) {
       try {
         const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
-        const toPos = editor.state.doc.line(startLine as number).to;
+        const codeSnippetEnd = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+        const startLineEnd = editor.state.doc.line(startLine as number).to;
+        const toPos = Math.min(codeSnippetEnd, startLineEnd);
 
         editor.dispatch({
           selection: {
