@@ -12,6 +12,11 @@ void LspServiceHandler::getDefinition(pt::ptree& responseTree_, const pt::ptree&
   getMethodNotFound(responseTree_, "textDocument/definition");
 }
 
+void LspServiceHandler::getDeclaration(pt::ptree& responseTree_, const pt::ptree&)
+{
+  getMethodNotFound(responseTree_, "textDocument/declaration");
+}
+
 void LspServiceHandler::getImplementation(pt::ptree& responseTree_, const pt::ptree&)
 {
   getMethodNotFound(responseTree_, "textDocument/implementation");

@@ -27,6 +27,7 @@ public:
     const cc::webserver::ServerContext& context_);
 
   void getDefinition(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getDeclaration(pt::ptree& responseTree_, const pt::ptree& params_) override final;
   void getImplementation(pt::ptree& responseTree_, const pt::ptree& params_) override final;
   void getReferences(pt::ptree& responseTree_, const pt::ptree& params_) override final;
   void getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_) override final;
@@ -34,6 +35,9 @@ public:
 
 private:
   std::vector<Location> definition(
+    const TextDocumentPositionParams& params_);
+
+  std::vector<Location> declaration(
     const TextDocumentPositionParams& params_);
 
   std::vector<Location> references(

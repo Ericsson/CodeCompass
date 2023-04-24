@@ -20,6 +20,7 @@ public:
   virtual ~LspServiceHandler() = default;
 
   void virtual getDefinition(pt::ptree& responseTree_, const pt::ptree& params_);
+  void virtual getDeclaration(pt::ptree& responseTree_, const pt::ptree& params_);
   void virtual getImplementation(pt::ptree& responseTree_, const pt::ptree& params_);
   void virtual getReferences(pt::ptree& responseTree_, const pt::ptree& params_);
   void virtual getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_);

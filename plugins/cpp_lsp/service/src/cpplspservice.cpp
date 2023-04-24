@@ -90,6 +90,79 @@ std::vector<Location> CppLspServiceHandler::definition(
   return definitionLocations;
 }
 
+void CppLspServiceHandler::getDeclaration(pt::ptree& responseTree_, const pt::ptree& params_)
+{
+  TextDocumentPositionParams declarationParams;
+  declarationParams.readNode(params_);
+
+  std::vector<Location> declarationLocations = declaration(declarationParams);
+
+  if (declarationLocations.size() == 1)
+  {
+    responseTree_.put_child("result", declarationLocations[0].createNode());
+  }
+  else if (declarationLocations.size() > 1)
+  {
+    pt::ptree resultNode;
+    for (const Location &location : declarationLocations)
+    {
+      resultNode.push_back(std::make_pair("", location.createNode()));
+    }
+    responseTree_.put_child("result", resultNode);
+  }
+}
+
+std::vector<Location> CppLspServiceHandler::declaration(const TextDocumentPositionParams& params_)
+{
+
+  language::AstNodeInfo astNodeInfo;
+  core::FilePosition cppPosition;
+
+  model::FilePtr file = _transaction([&, this]()
+  {
+    return _db->query_one<model::File>(
+      odb::query<model::File>::path == params_.textDocument.uri);
+  });
+
+  if (!file)
+  {
+    return {};
+  }
+
+  cppPosition.file = std::to_string(file->id);
+  cppPosition.pos.line = params_.position.line;
+  cppPosition.pos.column = params_.position.character;
+
+  _cppService.getAstNodeInfoByPosition(astNodeInfo, cppPosition);
+
+  std::vector<language::AstNodeInfo> declarationInfo;
+  _cppService.getReferences(declarationInfo, astNodeInfo.id, language::CppServiceHandler::DECLARATION, {});
+
+  std::vector<Location> declarationLocations(declarationInfo.size());
+  std::transform(
+    declarationInfo.begin(), declarationInfo.end(),
+    declarationLocations.begin(),
+    [&, this](const language::AstNodeInfo &declaration)
+    {
+      std::string path = _transaction([&, this]()
+                                      {
+                                        return _db->load<model::File>(std::stoull(declaration.range.file))->path;
+                                      });
+
+      Location location;
+      location.uri = path;
+      location.range.start.line = declaration.range.range.startpos.line;
+      location.range.start.character = declaration.range.range.startpos.column;
+      location.range.end.line = declaration.range.range.endpos.line;
+      location.range.end.character = declaration.range.range.endpos.column;
+
+      return location;
+    }
+  );
+
+  return declarationLocations;
+}
+
 void CppLspServiceHandler::getImplementation(pt::ptree& responseTree_, const pt::ptree& params_)
 {
   TextDocumentPositionParams implementationParams;
