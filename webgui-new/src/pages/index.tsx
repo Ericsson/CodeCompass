@@ -62,7 +62,7 @@ const Home = () => {
         <Title>{'Click on a project to start using CodeCompass!'}</Title>
         {appCtx.workspaces
           ? appCtx.workspaces.map((ws) => (
-              <Button sx={{ textTransform: 'none' }} key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
+              <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
                 {ws.id}
               </Button>
             ))

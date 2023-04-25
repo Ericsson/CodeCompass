@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from 'react';
 import { AstNodeInfo, FileInfo, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient, getFileInfo } from 'service/project-service';
+import { createProjectClient, getFileInfo, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
 import { createCppClient, getCppAstNodeInfo } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
@@ -13,10 +13,17 @@ import { RouterQueryType, SearchProps } from 'utils/types';
 import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const isDevEnvironment = publicRuntimeConfig.DEV_ENV as boolean;
+const backendUrl = publicRuntimeConfig.BACKEND_URL as string;
 
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
+  labels: Map<string, string>;
+  setLabels: (_val: Map<string, string>) => void;
   workspaceId: string;
   setWorkspaceId: (_val: string) => void;
   projectFileId: string;
@@ -52,6 +59,8 @@ type AppContextProps = {
 export const AppContext = createContext<AppContextProps>({
   workspaces: [],
   setWorkspaces: (_val) => {},
+  labels: new Map(),
+  setLabels: (_val) => {},
   workspaceId: '',
   setWorkspaceId: (_val) => {},
   projectFileId: '',
@@ -89,6 +98,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const routerQuery = router.query as RouterQueryType;
 
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
+  const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
   const [projectFileId, setProjectFileId] = useState<string | undefined>(undefined);
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
@@ -107,16 +117,18 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
   useEffect(() => {
     const init = async () => {
-      const wHost = window.location.hostname;
-      const wPort = window.location.port;
-      const wHTTPS = window.location.protocol === 'https:';
-      const wPath = window.location.pathname;
+      const url = isDevEnvironment ? new URL(backendUrl) : window.location;
+
+      const wHost = url.hostname;
+      const wPort = url.port;
+      const wHTTPS = url.protocol === 'https:';
+      const wPath = url.pathname;
 
       createConfig({
         webserver_host: wHost,
         webserver_port: wHTTPS && !wPort ? 443 : parseInt(wPort),
         webserver_https: wHTTPS,
-        webserver_path: wPath === '/new' ? '' : wPath.slice(0, wPath.lastIndexOf('/new')),
+        webserver_path: wPath.includes('/new') ? wPath.slice(0, wPath.lastIndexOf('/new')) : wPath,
       });
 
       createWorkspaceClient();
@@ -141,14 +153,14 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     if (!workspaceId) return;
     setLoadComplete(false);
     const initializeApp = async () => {
-      await new Promise((resolve) => resolve(''));
-
       createProjectClient(workspaceId);
       createSearchClient(workspaceId);
       createCppClient(workspaceId);
       createCppReparseClient(workspaceId);
       createMetricsClient(workspaceId);
       createGitClient(workspaceId);
+
+      const initLabels = (await getLabels()) ?? new Map();
 
       const {
         storedProjectFileId,
@@ -166,6 +178,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
         storedTreeViewOption,
       } = getStore();
 
+      setLabels(initLabels);
       setProjectFileId(storedProjectFileId);
       setSearchProps(storedSearchProps ?? undefined);
       setMetricsGenId(storedMetricsGenId);
@@ -290,6 +303,8 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     activeAccordion: activeAccordion as string,
     activeTab: activeTab as number,
     treeViewOption: treeViewOption as boolean,
+    labels,
+    setLabels,
     loadComplete,
     setWorkspaces,
     setWorkspaceId,

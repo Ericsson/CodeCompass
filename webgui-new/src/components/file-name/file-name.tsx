@@ -6,6 +6,9 @@ import { useContext, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
+import { RefIcon } from 'components/custom-icon/custom-icon';
+
+const StyledDiv = styled('div')({});
 
 const Container = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -23,13 +26,11 @@ const ParseStatus = styled('div')({
   padding: '5px',
 });
 
-const StyledDiv = styled('div')({});
-
 const StyledMenu = styled(Menu)(({ theme }) => ({
   '.MuiMenu-list': {
     border: `1px solid ${theme.colors?.primary}`,
     width: '500px',
-    height: '800px',
+    maxHeight: '500px',
     overflow: 'scroll',
   },
 }));
@@ -103,6 +104,7 @@ export const FileName = ({
               {key} ({refCountForType})
             </StyledDiv>
           }
+          icon={<RefIcon refName={key} />}
         >
           {refsForType.map((info) => {
             return (
@@ -131,40 +133,41 @@ export const FileName = ({
       {info ? (
         <>
           <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <ParseStatus
-              sx={{
-                color: (theme) =>
-                  parseStatus === 2
-                    ? theme.backgroundColors?.primary
-                    : parseStatus === 3
-                    ? theme.backgroundColors?.primary
-                    : '#FFFFFF',
-                backgroundColor: (theme) =>
-                  parseStatus === 2
-                    ? theme.colors?.warning
-                    : parseStatus === 3
-                    ? theme.colors?.success
-                    : theme.colors?.error,
-                border: (theme) =>
-                  `1px solid ${
+            {!info.isDirectory && (
+              <ParseStatus
+                sx={{
+                  color: (theme) =>
+                    parseStatus === 2
+                      ? theme.backgroundColors?.primary
+                      : parseStatus === 3
+                      ? theme.backgroundColors?.primary
+                      : '#FFFFFF',
+                  backgroundColor: (theme) =>
                     parseStatus === 2
                       ? theme.colors?.warning
                       : parseStatus === 3
                       ? theme.colors?.success
-                      : theme.colors?.error
-                  }`,
-              }}
-            >
-              {getParseStatusText(parseStatus)}
-            </ParseStatus>
+                      : theme.colors?.error,
+                  border: (theme) =>
+                    `1px solid ${
+                      parseStatus === 2
+                        ? theme.colors?.warning
+                        : parseStatus === 3
+                        ? theme.colors?.success
+                        : theme.colors?.error
+                    }`,
+                }}
+              >
+                {getParseStatusText(parseStatus)}
+              </ParseStatus>
+            )}
             <div>{fileName}</div>
             <div>{'::'}</div>
             <div>{filePath}</div>
           </StyledDiv>
-          {!info.isDirectory ? (
+          {!info.isDirectory && (
             <>
               <Button
-                sx={{ textTransform: 'none' }}
                 onClick={(e) => {
                   setAnchorEl(e.currentTarget);
                   renderFileReferences();
@@ -183,8 +186,6 @@ export const FileName = ({
                 </StyledTreeView>
               </StyledMenu>
             </>
-          ) : (
-            ''
           )}
         </>
       ) : (

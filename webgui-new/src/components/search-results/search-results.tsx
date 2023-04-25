@@ -1,8 +1,8 @@
-import { FolderOpen, Folder, ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
 import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
 import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
-import { FileIcon } from 'components/file-icon/file-icon';
+import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { SyntheticEvent, useContext, useEffect, useState } from 'react';
@@ -57,6 +57,10 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
   },
 }));
 
+const Placeholder = styled('div')({
+  padding: '10px',
+});
+
 export const SearchResults = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
@@ -67,12 +71,9 @@ export const SearchResults = (): JSX.Element => {
   const [fileSearch, setFileSearch] = useState<boolean>(false);
   const [searchStart, setSearchStart] = useState<number>(0);
   const [searchSize, setSearchSize] = useState<number>(10);
-
   const [searchResult, setSearchResult] = useState<SearchResult | FileSearchResult | undefined>(undefined);
   const [searchResultCount, setSearchResultCount] = useState<number | undefined>(undefined);
-
   const [resultPaths, setResultPaths] = useState<string[]>([]);
-
   const [selectedSearchResult, setSelectedSearchResult] = useState<string | undefined>(undefined);
   const [expandedPathNodes, setExpandedPathNodes] = useState<string[] | undefined>(undefined);
   const [expandedFileNodes, setExpandedFileNodes] = useState<FileNode | undefined>(undefined);
@@ -244,7 +245,7 @@ export const SearchResults = (): JSX.Element => {
   };
 
   return (
-    <div>
+    <>
       <PaginationContainer>
         <FormControl>
           <InputLabel>{'Size'}</InputLabel>
@@ -286,8 +287,8 @@ export const SearchResults = (): JSX.Element => {
       <ResultsContainer>
         {appCtx.searchProps && searchResult?.results?.length ? (
           <StyledTreeView
-            defaultCollapseIcon={<FolderOpen />}
-            defaultExpandIcon={<Folder />}
+            defaultCollapseIcon={<FolderIcon open />}
+            defaultExpandIcon={<FolderIcon />}
             expanded={expandedPathNodes ?? []}
             onNodeSelect={handleDirNodeSelect()}
             sx={{ width: 'fit-content' }}
@@ -412,9 +413,9 @@ export const SearchResults = (): JSX.Element => {
             </StyledDiv>
           </StyledTreeView>
         ) : (
-          <StyledDiv sx={{ paddingLeft: '10px' }}>{'No results'}</StyledDiv>
+          <Placeholder>{'No results'}</Placeholder>
         )}
       </ResultsContainer>
-    </div>
+    </>
   );
 };

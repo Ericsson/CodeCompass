@@ -17,7 +17,7 @@ message("Installation of npm packages are finished.")
 
 # Generate TypeScript from Thrift
 execute_process(
-  COMMAND /bin/sh -c "chmod +x thrift-codegen.sh"
+  COMMAND bash -c "chmod +x thrift-codegen.sh"
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 execute_process(
@@ -31,9 +31,8 @@ execute_process(
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
 
 # Move build directory out of application directory
-execute_process(
-  COMMAND /bin/sh -c "rm -rf ../out && mv -f ./out ../"
-  WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
+file(REMOVE_RECURSE ${INSTALL_WEBROOT_REACT_DIR}/out)
+file(RENAME ${INSTALL_WEBROOT_REACT_DIR}/app/out ${INSTALL_WEBROOT_REACT_DIR}/out)
 
 # Create symbolic link
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${INSTALL_WEBROOT_REACT_DIR}/out ${INSTALL_WEBROOT_DIR}/new)

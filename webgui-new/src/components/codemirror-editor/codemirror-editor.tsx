@@ -12,14 +12,13 @@ import { AppContext } from 'global-context/app-context';
 import { getFileContent, getFileInfo } from 'service/project-service';
 
 export const CodeMirrorEditor = (): JSX.Element => {
-  const { theme } = useContext(ThemeContext);
   const appCtx = useContext(AppContext);
+  const { theme } = useContext(ThemeContext);
 
   const editorRef = useRef<ReactCodeMirrorRef | null>(null);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
   const [fileContent, setFileContent] = useState<string>('');
-
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -57,7 +56,9 @@ export const CodeMirrorEditor = (): JSX.Element => {
     if (editor) {
       try {
         const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
-        const toPos = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+        const codeSnippetEnd = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+        const startLineEnd = editor.state.doc.line(startLine as number).to;
+        const toPos = Math.min(codeSnippetEnd, startLineEnd);
 
         editor.dispatch({
           selection: {
@@ -96,12 +97,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const column = view.state.selection.ranges[0].head - line.from;
 
     const astNodeInfo = await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+    if (!astNodeInfo) return;
 
     dispatchSelection(astNodeInfo?.range?.range as Range);
     appCtx.setEditorSelection(astNodeInfo?.range?.range);
     appCtx.setLanguageNodeId(astNodeInfo?.id as string);
-
-    if (!astNodeInfo) return;
     appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
   };
 

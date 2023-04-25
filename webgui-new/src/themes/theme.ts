@@ -1,3 +1,4 @@
+import { blue } from '@mui/material/colors';
 import { alpha, createTheme } from '@mui/material/styles';
 import { ReactDiffViewerStylesOverride } from 'react-diff-viewer-continued/lib/styles';
 
@@ -13,6 +14,11 @@ declare module '@mui/material/styles' {
       warning?: string;
       success?: string;
     };
+    iconColors?: {
+      folder?: string;
+      ref?: string;
+      git?: string;
+    };
   }
   export interface ThemeOptions {
     backgroundColors?: {
@@ -24,6 +30,11 @@ declare module '@mui/material/styles' {
       error?: React.CSSProperties['color'];
       warning?: React.CSSProperties['color'];
       success?: React.CSSProperties['color'];
+    };
+    iconColors?: {
+      folder?: React.CSSProperties['color'];
+      ref?: React.CSSProperties['color'];
+      git?: React.CSSProperties['color'];
     };
   }
 }
@@ -40,6 +51,11 @@ const colors = {
       warning: '#FF6E3D',
       success: '#0BB662',
     },
+    icon: {
+      folder: blue[900],
+      ref: blue[900],
+      git: blue[900],
+    },
   },
   dark: {
     background: {
@@ -51,6 +67,11 @@ const colors = {
       error: '#D03547',
       warning: '#EC7A54',
       success: '#3EE993',
+    },
+    icon: {
+      folder: blue[400],
+      ref: blue[400],
+      git: blue[400],
     },
   },
 };
@@ -75,6 +96,11 @@ export const lightTheme = createTheme({
     warning: colors.light.text.warning,
     success: colors.light.text.success,
   },
+  iconColors: {
+    folder: colors.light.icon.folder,
+    ref: colors.light.icon.ref,
+    git: colors.light.icon.git,
+  },
   components: {
     MuiList: {
       styleOverrides: {
@@ -90,6 +116,13 @@ export const lightTheme = createTheme({
           color: colors.light.text.primary,
           backgroundColor: colors.light.background.primary,
           border: `1px solid ${colors.light.text.primary}`,
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
         },
       },
     },
@@ -133,6 +166,11 @@ export const darkTheme = createTheme({
     warning: colors.dark.text.warning,
     success: colors.dark.text.success,
   },
+  iconColors: {
+    folder: colors.dark.icon.folder,
+    ref: colors.dark.icon.ref,
+    git: colors.dark.icon.git,
+  },
   components: {
     MuiList: {
       styleOverrides: {
@@ -148,6 +186,13 @@ export const darkTheme = createTheme({
           color: colors.dark.text.primary,
           backgroundColor: colors.dark.background.primary,
           border: `1px solid ${colors.dark.text.primary}`,
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
         },
       },
     },

@@ -31,12 +31,6 @@ const InnerContainer = styled('div')({
   gridTemplateRows: '1fr',
 });
 
-const IconLabel = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-});
-
 const StyledTabs = styled(Tabs)(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
 }));

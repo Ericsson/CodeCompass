@@ -10,6 +10,7 @@ import { GitCommit } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { diffViewerTheme } from 'themes/theme';
 import { blue, red } from '@mui/material/colors';
+import { FileIcon } from 'components/custom-icon/custom-icon';
 
 const StyledSpan = styled('span')({});
 
@@ -17,6 +18,7 @@ const CommitSummary = styled('div')(({ theme }) => ({
   borderBottom: `1px solid ${theme.colors?.primary}`,
   fontSize: '0.85rem',
   height: '87px',
+  overflow: 'scroll',
 
   '& > div:nth-of-type(1)': {
     backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
@@ -70,6 +72,10 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
   },
 }));
+
+const Placeholder = styled('div')({
+  padding: '10px',
+});
 
 export const GitDiff = (): JSX.Element => {
   const appCtx = useContext(AppContext);
@@ -174,8 +180,8 @@ export const GitDiff = (): JSX.Element => {
     return offset === 0 ? 1 : offset - 1;
   };
 
-  return commit ? (
-    <div>
+  return commit && commit.repoId ? (
+    <>
       <CommitSummary>
         <div>{commit.message}</div>
         <div>
@@ -227,7 +233,12 @@ export const GitDiff = (): JSX.Element => {
           }}
         >
           {Array.from(oldValues.keys()).map((fileName, idx) => (
-            <StyledTreeItem key={idx} nodeId={`${idx}`} label={<FileNameContainer>{fileName}</FileNameContainer>}>
+            <StyledTreeItem
+              key={idx}
+              nodeId={`${idx}`}
+              label={<FileNameContainer>{fileName}</FileNameContainer>}
+              icon={<FileIcon fileName={fileName} />}
+            >
               {Array.from(oldValues.get(fileName)?.keys() ?? []).map((change, cIdx) => (
                 <div key={cIdx}>
                   <ChangeLine>{change}</ChangeLine>
@@ -245,8 +256,8 @@ export const GitDiff = (): JSX.Element => {
           ))}
         </StyledTreeView>
       </DiffViewContainer>
-    </div>
+    </>
   ) : (
-    <div style={{ padding: '10px' }}>{'No commit selected'}</div>
+    <Placeholder>{'No commit selected or commit information could not be loaded.'}</Placeholder>
   );
 };

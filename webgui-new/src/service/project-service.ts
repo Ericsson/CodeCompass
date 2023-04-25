@@ -79,3 +79,25 @@ export const getFileInfo = async (fileId: string) => {
     return;
   }
 };
+
+export const getFileInfoByPath = async (filePath: string) => {
+  if (!client) {
+    return;
+  }
+  try {
+    return await client.getFileInfoByPath(filePath);
+  } catch {
+    return;
+  }
+};
+
+export const getLabels = async () => {
+  if (!client) {
+    return;
+  }
+  try {
+    return await client.getLabels();
+  } catch {
+    return;
+  }
+};

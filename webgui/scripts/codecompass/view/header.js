@@ -54,6 +54,14 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
         }
       }));
 
+      menu.addChild(new MenuItem({
+        label     : 'New Web GUI',
+        onClick   : function () {
+          window.open(
+            `${window.location.origin}/new`);
+        }
+      }));
+
       try {
         if (model.authentication.isRequiringAuthentication()) {
           menu.addChild(new MenuItem({

@@ -1,4 +1,4 @@
-# New Next.js (React) based webgui for CodeCompass
+# New Web GUI development guide
 
 ## Prerequisites
 
@@ -9,13 +9,6 @@ You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install
 
 For easier development, first run the webserver (CodeCompass_webserver), then run the development server.\
 Since the webserver and development server are different origins, you have to use the [CORS extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf?hl=en) to resolve CORS issues.
-
-Alternatively, you could add this change to the `MainRequestHandler::begin_request_handler(struct mg_connection* conn_)` method in `mainrequesthandler.cpp`, then build the webserver again.\
-(Note: Do not commit this change, as it is unnecessary in production.)
-
-```c
-mg_send_header(conn_, "Access-Control-Allow-Origin", "http://localhost:3000");
-```
 
 Learn more about CORS [here](https://www.moesif.com/blog/technical/cors/Authoritative-Guide-to-CORS-Cross-Origin-Resource-Sharing-for-REST-APIs/).
 

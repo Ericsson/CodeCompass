@@ -7,6 +7,7 @@ import { AppContext } from 'global-context/app-context';
 import { getCppFileDiagramTypes } from 'service/cpp-service';
 import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
+import { getFileInfoByPath } from 'service/project-service';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -45,15 +46,19 @@ export const FileContextMenu = ({
       anchorReference="anchorPosition"
       anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
     >
-      <MenuItem
-        onClick={() => {
-          setContextMenu(null);
-          appCtx.setMetricsGenId(fileInfo.id as string);
-          appCtx.setActiveTab(TabName.METRICS);
-        }}
-      >
-        {'Metrics'}
-      </MenuItem>
+      {fileInfo && fileInfo.isDirectory && (
+        <MenuItem
+          onClick={async () => {
+            setContextMenu(null);
+            const sourceFolder = appCtx.labels.get('src') as string;
+            const fInfo = fileInfo.path?.includes(sourceFolder) ? fileInfo : await getFileInfoByPath(sourceFolder);
+            appCtx.setMetricsGenId(fInfo?.id as string);
+            appCtx.setActiveTab(TabName.METRICS);
+          }}
+        >
+          {'Metrics'}
+        </MenuItem>
+      )}
       {diagramTypes.size !== 0 ? (
         <Tooltip
           title={
