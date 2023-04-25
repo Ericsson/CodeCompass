@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, FormControlLabel, IconButton, Modal, Tooltip, styled } from '@mui/material';
+import { Box, Button, IconButton, Modal, Tooltip, styled } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
 import { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
@@ -8,6 +8,8 @@ import {
   getCppDiagramLegend,
   getCppFileDiagram,
   getCppFileDiagramLegend,
+  getCppReferenceTypes,
+  getCppReferences,
 } from 'service/cpp-service';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { FileInfo, AstNodeInfo } from '@thrift-generated';
@@ -97,7 +99,14 @@ export const Diagrams = (): JSX.Element => {
       if (!initDiagramInfo) return;
 
       if (appCtx.diagramTypeId === 999) {
-        setDiagramInfo(initDiagramInfo);
+        const refTypes = await getCppReferenceTypes(initDiagramInfo.id as string);
+        if (refTypes.get('Definition') === undefined) return;
+
+        const astNodeDef = (
+          await getCppReferences(initDiagramInfo.id as string, refTypes.get('Definition') as number, [])
+        )[0];
+
+        setDiagramInfo(astNodeDef);
         setCodeBitesDisplayed(true);
         return;
       }
@@ -222,7 +231,7 @@ export const Diagrams = (): JSX.Element => {
                 disableFocusListener
                 disableHoverListener
                 disableTouchListener
-                title='Copied to clipboard'
+                title={'Copied to clipboard'}
                 arrow
               >
                 <Button onClick={() => exportDiagramSVG()}>{'Export SVG'}</Button>
