@@ -84,6 +84,7 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
         newAstNodeInfo.tags ?? []
       )
     )[0];
+    if (!newAstNodeDef) return;
 
     if (data.elements.map((elem) => elem.astNodeInfo.id).includes(newAstNodeDef.id)) return;
     data.setElements((prevNodes) => [...prevNodes, { astNodeInfo: newAstNodeDef, rowNum: data.rowNum }]);
