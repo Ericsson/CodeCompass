@@ -25,7 +25,7 @@
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@mui/icons-material": "^5.11.0",
-    "@mui/lab": "^5.0.0-alpha.116",
+    "@mui/lab": "5.0.0-alpha.116",
     "@mui/material": "^5.11.4",
     "@next/font": "13.1.1",
     "@uiw/codemirror-theme-github": "^4.19.8",

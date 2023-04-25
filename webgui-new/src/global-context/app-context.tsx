@@ -13,6 +13,11 @@ import { RouterQueryType, SearchProps } from 'utils/types';
 import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
+import getConfig from 'next/config';
+
+const { publicRuntimeConfig } = getConfig();
+const isDevEnvironment = publicRuntimeConfig.DEV_ENV as boolean;
+const backendUrl = publicRuntimeConfig.BACKEND_URL as string;
 
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
@@ -112,16 +117,18 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
   useEffect(() => {
     const init = async () => {
-      const wHost = window.location.hostname;
-      const wPort = window.location.port;
-      const wHTTPS = window.location.protocol === 'https:';
-      const wPath = window.location.pathname;
+      const url = isDevEnvironment ? new URL(backendUrl) : window.location;
+
+      const wHost = url.hostname;
+      const wPort = url.port;
+      const wHTTPS = url.protocol === 'https:';
+      const wPath = url.pathname;
 
       createConfig({
         webserver_host: wHost,
         webserver_port: wHTTPS && !wPort ? 443 : parseInt(wPort),
         webserver_https: wHTTPS,
-        webserver_path: wPath === '/new' ? '' : wPath.slice(0, wPath.lastIndexOf('/new')),
+        webserver_path: wPath.includes('/new') ? wPath.slice(0, wPath.lastIndexOf('/new')) : wPath,
       });
 
       createWorkspaceClient();
