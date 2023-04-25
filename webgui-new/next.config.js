@@ -10,10 +10,7 @@ const nextConfig = {
   },
   publicRuntimeConfig: {
     DEV_ENV: process.env.NODE_ENV !== 'production',
-    WEBSERVER_HOST: process.env.WEBSERVER_HOST || 'localhost',
-    WEBSERVER_PORT: process.env.WEBSERVER_PORT || 8080,
-    WEBSERVER_HTTPS: process.env.WEBSERVER_HTTPS || false,
-    WEBSERVER_PATH: process.env.WEBSERVER_PATH || '',
+    BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8080',
   },
   trailingSlash: true,
   ...(process.env.NODE_ENV === 'production' && {
