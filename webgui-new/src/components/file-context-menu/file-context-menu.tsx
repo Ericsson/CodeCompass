@@ -8,6 +8,7 @@ import { getCppFileDiagramTypes } from 'service/cpp-service';
 import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
 import { getFileInfoByPath } from 'service/project-service';
+import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -57,6 +58,26 @@ export const FileContextMenu = ({
           }}
         >
           {'Metrics'}
+        </MenuItem>
+      )}
+      {fileInfo && !fileInfo.isDirectory && (
+        <MenuItem
+          disabled
+          onClick={async () => {
+            setContextMenu(null);
+            const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
+            const fileName = fileInfo.path?.split('/').reverse()[0];
+            const blameInfo = await getBlameInfo(
+              currentRepo?.repoId as string,
+              currentRepo?.commitId as string,
+              fileName as string,
+              fileInfo.id as string
+            );
+            appCtx.setGitBlameInfo(blameInfo);
+            appCtx.setActiveTab(TabName.CODE);
+          }}
+        >
+          {'Git blame'}
         </MenuItem>
       )}
       {diagramTypes.size !== 0 ? (

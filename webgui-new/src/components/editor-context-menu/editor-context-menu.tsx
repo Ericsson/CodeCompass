@@ -13,6 +13,8 @@ import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { AstNodeInfo, Range } from '@thrift-generated';
 import { updateUrlWithParams } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
+import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
+import { getFileInfo } from 'service/project-service';
 
 const AstNodeInfoHeader = styled('div')({
   fontWeight: 'bold',
@@ -233,6 +235,27 @@ export const EditorContextMenu = ({
             <div>{'Get permalink to selection'}</div>
           </Tooltip>
         </MenuItem>
+        {appCtx.languageNodeId && (
+          <MenuItem
+            disabled
+            onClick={async () => {
+              setContextMenu(null);
+              const fileInfo = await getFileInfo(appCtx.projectFileId as string);
+              const currentRepo = await getRepositoryByProjectPath(fileInfo?.path as string);
+              const fileName = fileInfo?.path?.split('/').reverse()[0];
+              const blameInfo = await getBlameInfo(
+                currentRepo?.repoId as string,
+                currentRepo?.commitId as string,
+                fileName as string,
+                fileInfo?.id as string
+              );
+              appCtx.setGitBlameInfo(blameInfo);
+              appCtx.setActiveTab(TabName.CODE);
+            }}
+          >
+            {'Git blame'}
+          </MenuItem>
+        )}
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
         <ModalBox>
