@@ -1,5 +1,5 @@
 import { createContext, useEffect, useState } from 'react';
-import { AstNodeInfo, FileInfo, Position, Range, WorkspaceInfo } from '@thrift-generated';
+import { AstNodeInfo, FileInfo, GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
 import { createProjectClient, getFileInfo, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
@@ -13,11 +13,9 @@ import { RouterQueryType, SearchProps } from 'utils/types';
 import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
-import getConfig from 'next/config';
 
-const { publicRuntimeConfig } = getConfig();
-const isDevEnvironment = publicRuntimeConfig.DEV_ENV as boolean;
-const backendUrl = publicRuntimeConfig.BACKEND_URL as string;
+const isDevEnvironment = process.env.NEXT_PUBLIC_DEV_ENV === 'true';
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
 
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
@@ -46,6 +44,8 @@ type AppContextProps = {
   setGitBranch: (_val: string) => void;
   gitCommitId: string;
   setGitCommitId: (_val: string) => void;
+  gitBlameInfo: GitBlameHunk[];
+  setGitBlameInfo: (_val: GitBlameHunk[]) => void;
   activeAccordion: string;
   setActiveAccordion: (_val: string) => void;
   activeTab: number;
@@ -83,6 +83,8 @@ export const AppContext = createContext<AppContextProps>({
   setGitBranch: (_val) => {},
   gitCommitId: '',
   setGitCommitId: (_val) => {},
+  gitBlameInfo: [],
+  setGitBlameInfo: (_val) => {},
   activeAccordion: '',
   setActiveAccordion: (_val) => {},
   activeTab: 0,
@@ -110,6 +112,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   const [gitRepoId, setGitRepoId] = useState<string | undefined>(undefined);
   const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
   const [gitCommitId, setGitCommitId] = useState<string | undefined>(undefined);
+  const [gitBlameInfo, setGitBlameInfo] = useState<GitBlameHunk[]>([]);
   const [activeAccordion, setActiveAccordion] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<number | undefined>(undefined);
   const [treeViewOption, setTreeViewOption] = useState<boolean | undefined>(undefined);
@@ -189,6 +192,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setGitRepoId(storedGitRepoId);
       setGitBranch(storedGitBranch);
       setGitCommitId(storedGitCommitId);
+      setGitBlameInfo([]);
       setActiveAccordion(storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
       setActiveTab(storedActiveTab ?? 0);
       setTreeViewOption(storedTreeViewOption ?? false);
@@ -300,6 +304,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     gitRepoId: gitRepoId as string,
     gitBranch: gitBranch as string,
     gitCommitId: gitCommitId as string,
+    gitBlameInfo,
     activeAccordion: activeAccordion as string,
     activeTab: activeTab as number,
     treeViewOption: treeViewOption as boolean,
@@ -318,6 +323,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
     setGitRepoId,
     setGitBranch,
     setGitCommitId,
+    setGitBlameInfo,
     setActiveAccordion,
     setActiveTab,
     setTreeViewOption,
