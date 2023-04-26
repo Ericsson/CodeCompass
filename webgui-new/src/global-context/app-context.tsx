@@ -13,11 +13,9 @@ import { RouterQueryType, SearchProps } from 'utils/types';
 import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
-import getConfig from 'next/config';
 
-const { publicRuntimeConfig } = getConfig();
-const isDevEnvironment = publicRuntimeConfig.DEV_ENV as boolean;
-const backendUrl = publicRuntimeConfig.BACKEND_URL as string;
+const isDevEnvironment = process.env.NEXT_PUBLIC_DEV_ENV === 'true';
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
 
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
