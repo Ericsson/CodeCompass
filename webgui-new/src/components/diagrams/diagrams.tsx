@@ -8,11 +8,14 @@ import {
   getCppDiagramLegend,
   getCppFileDiagram,
   getCppFileDiagramLegend,
+  getCppReferenceTypes,
+  getCppReferences,
 } from 'service/cpp-service';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { FileInfo, AstNodeInfo } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
+import { CodeBites } from 'components/codebites/codebites';
 
 const DiagramLegendContainer = styled('div')({
   display: 'flex',
@@ -82,6 +85,7 @@ export const Diagrams = (): JSX.Element => {
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
   const [exportTooltipOpen, setExportTooltipOpen] = useState<boolean>(false);
   const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
+  const [codeBitesDisplayed, setCodeBitesDisplayed] = useState<boolean>(false);
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
   const diagramLegendContainerRef = useRef<HTMLDivElement | null>(null);
@@ -93,6 +97,19 @@ export const Diagrams = (): JSX.Element => {
       const initDiagramInfo =
         (await getFileInfo(appCtx.diagramGenId)) ?? (await getCppAstNodeInfo(appCtx.diagramGenId));
       if (!initDiagramInfo) return;
+
+      if (appCtx.diagramTypeId === 999) {
+        const refTypes = await getCppReferenceTypes(initDiagramInfo.id as string);
+        if (refTypes.get('Definition') === undefined) return;
+
+        const astNodeDef = (
+          await getCppReferences(initDiagramInfo.id as string, refTypes.get('Definition') as number, [])
+        )[0];
+
+        setDiagramInfo(astNodeDef);
+        setCodeBitesDisplayed(true);
+        return;
+      }
 
       const diagram =
         initDiagramInfo instanceof FileInfo
@@ -180,47 +197,54 @@ export const Diagrams = (): JSX.Element => {
         <></>
       )}
       <>
-        <TransformWrapper ref={transformComponentRef}>
-          {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
-            <TransformContainer>
-              <ZoomOptions>
-                <IconButton onClick={() => zoomIn()}>
-                  <ZoomIn />
-                </IconButton>
-                <Button onClick={() => resetTransform()}>{'Reset'}</Button>
-                <IconButton onClick={() => zoomOut()}>
-                  <ZoomOut />
-                </IconButton>
-              </ZoomOptions>
-              <TransformComponent>
-                <DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
-              </TransformComponent>
-            </TransformContainer>
-          )}
-        </TransformWrapper>
-        <DiagramOptionsContainer>
-          <Button onClick={() => generateLegend()}>{'Legend'}</Button>
-          <Tooltip
-            PopperProps={{
-              disablePortal: true,
-            }}
-            onClose={() => setExportTooltipOpen(false)}
-            open={exportTooltipOpen}
-            disableFocusListener
-            disableHoverListener
-            disableTouchListener
-            title="Copied to clipboard"
-            arrow
-          >
-            <Button onClick={() => exportDiagramSVG()}>{'Export SVG'}</Button>
-          </Tooltip>
-          <Button onClick={() => downloadSVG()}>{'Download image'}</Button>
-          <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
-            <ModalBox>
-              <DiagramLegendContainer ref={diagramLegendContainerRef} />
-            </ModalBox>
-          </Modal>
-        </DiagramOptionsContainer>
+        {codeBitesDisplayed ? (
+          <CodeBites astNodeInfo={diagramInfo as AstNodeInfo} />
+        ) : (
+          <>
+            <TransformWrapper ref={transformComponentRef}>
+              {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+                <TransformContainer>
+                  <ZoomOptions>
+                    <IconButton onClick={() => zoomIn()}>
+                      <ZoomIn />
+                    </IconButton>
+                    <Button onClick={() => resetTransform()}>{'Reset'}</Button>
+                    <IconButton onClick={() => zoomOut()}>
+                      <ZoomOut />
+                    </IconButton>
+                  </ZoomOptions>
+                  <TransformComponent>
+                    <DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
+                  </TransformComponent>
+                </TransformContainer>
+              )}
+            </TransformWrapper>
+
+            <DiagramOptionsContainer>
+              <Button onClick={() => generateLegend()}>{'Legend'}</Button>
+              <Tooltip
+                PopperProps={{
+                  disablePortal: true,
+                }}
+                onClose={() => setExportTooltipOpen(false)}
+                open={exportTooltipOpen}
+                disableFocusListener
+                disableHoverListener
+                disableTouchListener
+                title={'Copied to clipboard'}
+                arrow
+              >
+                <Button onClick={() => exportDiagramSVG()}>{'Export SVG'}</Button>
+              </Tooltip>
+              <Button onClick={() => downloadSVG()}>{'Download image'}</Button>
+              <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
+                <ModalBox>
+                  <DiagramLegendContainer ref={diagramLegendContainerRef} />
+                </ModalBox>
+              </Modal>
+            </DiagramOptionsContainer>
+          </>
+        )}
       </>
     </>
   ) : (

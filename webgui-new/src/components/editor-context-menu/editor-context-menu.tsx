@@ -196,6 +196,16 @@ export const EditorContextMenu = ({
                     {type}
                   </MenuItem>
                 ))}
+                <MenuItem
+                  onClick={() => {
+                    setContextMenu(null);
+                    appCtx.setDiagramGenId(astNodeInfo?.id as string);
+                    appCtx.setDiagramTypeId(999);
+                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                  }}
+                >
+                  {'CodeBites'}
+                </MenuItem>
               </>
             }
             placement={'right-start'}
