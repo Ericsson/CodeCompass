@@ -237,7 +237,6 @@ export const EditorContextMenu = ({
         </MenuItem>
         {appCtx.languageNodeId && (
           <MenuItem
-            disabled
             onClick={async () => {
               setContextMenu(null);
               const fileInfo = await getFileInfo(appCtx.projectFileId as string);

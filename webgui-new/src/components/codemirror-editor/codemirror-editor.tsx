@@ -10,6 +10,61 @@ import { EditorContextMenu } from 'components/editor-context-menu/editor-context
 import { FileName } from 'components/file-name/file-name';
 import { AppContext } from 'global-context/app-context';
 import { getFileContent, getFileInfo } from 'service/project-service';
+import { EditorView, gutter, GutterMarker } from '@codemirror/view';
+import { formatDate } from 'utils/utils';
+import { TabName } from 'enums/tab-enum';
+import { getRepositoryByProjectPath } from 'service/git-service';
+
+class GitBlameGutterMarker extends GutterMarker {
+  number: string;
+  commitMessage: string;
+  commitDate: string;
+
+  constructor(number: string, commitMessage: string, commitDate: string) {
+    super();
+    this.number = number;
+    this.commitMessage = commitMessage;
+    this.commitDate = commitDate;
+  }
+
+  eq(other: GitBlameGutterMarker) {
+    return this.number === other.number;
+  }
+
+  toDOM(_view: EditorView) {
+    const outerDiv = document.createElement('div');
+    outerDiv.style.display = 'flex';
+    outerDiv.style.alignItems = 'center';
+    outerDiv.style.justifyContent = 'space-between';
+    outerDiv.style.width = '400px';
+    outerDiv.style.cursor = 'pointer';
+
+    const commitDiv = document.createElement('div');
+    commitDiv.style.display = 'flex';
+    commitDiv.style.alignItems = 'center';
+    commitDiv.style.justifyContent = 'space-between';
+    commitDiv.style.flexGrow = '1';
+    commitDiv.style.gap = '5px';
+
+    const commitMessageDiv = document.createElement('div');
+    commitMessageDiv.innerHTML = this.commitMessage;
+
+    const commitDateDiv = document.createElement('div');
+    commitDateDiv.innerHTML = this.commitDate !== '' ? `on ${this.commitDate}` : '';
+
+    commitDiv.appendChild(commitMessageDiv);
+    commitDiv.appendChild(commitDateDiv);
+
+    const lineNumberDiv = document.createElement('div');
+    lineNumberDiv.innerHTML = this.number;
+    lineNumberDiv.style.padding = '0 10px';
+
+    outerDiv.appendChild(commitDiv);
+    outerDiv.appendChild(lineNumberDiv);
+
+    return outerDiv;
+  }
+}
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const appCtx = useContext(AppContext);
@@ -105,6 +160,41 @@ export const CodeMirrorEditor = (): JSX.Element => {
     appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
   };
 
+  const gitBlameGutter = gutter({
+    class: 'customGutter',
+    renderEmptyElements: false,
+    lineMarker(view, line, others) {
+      if (others.some((m) => m.toDOM)) return null;
+
+      const number = view.state.doc.lineAt(line.from).number;
+      const info = appCtx.gitBlameInfo.find((info) => info.finalStartLineNumber === number);
+
+      if (!info || !info.finalCommitMessage) return new GitBlameGutterMarker(number.toString(), '', '');
+
+      const trimmedMessage =
+        info?.finalCommitMessage?.length > 27
+          ? `${info.finalCommitMessage.split('').slice(0, 27).join('')}...`
+          : info?.finalCommitMessage;
+      const date = formatDate(new Date((info.finalSignature?.time as unknown as number) * 1000));
+
+      return new GitBlameGutterMarker(number.toString(), trimmedMessage, date);
+    },
+    domEventHandlers: {
+      click(view, line, _event) {
+        const info = appCtx.gitBlameInfo.find(
+          (info) => info.finalStartLineNumber === view.state.doc.lineAt(line.from).number
+        );
+        if (!info) return true;
+        getRepositoryByProjectPath(fileInfo?.path as string).then((result) => {
+          appCtx.setGitRepoId(result?.repoId as string);
+          appCtx.setGitCommitId(info.finalCommitId as string);
+          appCtx.setActiveTab(TabName.GIT_DIFF);
+        });
+        return true;
+      },
+    },
+  });
+
   return (
     <>
       <FileName
@@ -112,10 +202,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
         filePath={fileInfo ? (fileInfo.path as string) : ''}
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
+        gitBlameEnabled={appCtx.gitBlameInfo.length !== 0}
       />
       <ReactCodeMirror
         readOnly={true}
-        extensions={[cpp()]}
+        extensions={appCtx.gitBlameInfo.length !== 0 ? [gitBlameGutter, cpp()] : [cpp()]}
         theme={theme === 'dark' ? githubDark : githubLight}
         style={{ fontSize: '0.8rem' }}
         width={'100%'}
@@ -128,6 +219,9 @@ export const CodeMirrorEditor = (): JSX.Element => {
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleAstNodeSelect()}
         onContextMenu={(e) => handleContextMenu(e)}
+        basicSetup={{
+          lineNumbers: appCtx.gitBlameInfo.length === 0,
+        }}
       />
       <EditorContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} />
     </>
