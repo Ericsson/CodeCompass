@@ -62,7 +62,6 @@ export const FileContextMenu = ({
       )}
       {fileInfo && !fileInfo.isDirectory && (
         <MenuItem
-          disabled
           onClick={async () => {
             setContextMenu(null);
             const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);

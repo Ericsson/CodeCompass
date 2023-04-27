@@ -67,12 +67,14 @@ export const FileName = ({
   parseStatus,
   info,
   hideFileRefMenu,
+  gitBlameEnabled,
 }: {
   fileName: string;
   filePath: string;
   parseStatus: number;
   info: FileInfo | undefined;
   hideFileRefMenu?: boolean;
+  gitBlameEnabled?: boolean;
 }): JSX.Element => {
   const appCtx = useContext(AppContext);
 
@@ -166,6 +168,7 @@ export const FileName = ({
             <div>{fileName}</div>
             <div>{'::'}</div>
             <div>{filePath}</div>
+            {gitBlameEnabled && <Button onClick={() => appCtx.setGitBlameInfo([])}>{'Hide Git blame'}</Button>}
           </StyledDiv>
           {!info.isDirectory && !hideFileRefMenu && (
             <>
