@@ -14,9 +14,6 @@ import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
 
-const isDevEnvironment = process.env.NEXT_PUBLIC_DEV_ENV === 'true';
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL as string;
-
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
@@ -120,7 +117,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
   useEffect(() => {
     const init = async () => {
-      const url = isDevEnvironment ? new URL(backendUrl) : window.location;
+      const url = window.location;
 
       const wHost = url.hostname;
       const wPort = url.port;

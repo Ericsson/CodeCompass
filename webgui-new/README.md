@@ -7,11 +7,6 @@ You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install
 
 ## Development
 
-For easier development, first run the webserver (CodeCompass_webserver), then run the development server.\
-Since the webserver and development server are different origins, you have to use the [CORS extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf?hl=en) to resolve CORS issues.
-
-Learn more about CORS [here](https://www.moesif.com/blog/technical/cors/Authoritative-Guide-to-CORS-Cross-Origin-Resource-Sharing-for-REST-APIs/).
-
 Run the webserver with:
 
 ```bash
@@ -30,16 +25,13 @@ Generate TypeScript files from Thrift by running the following command:
 chmod +x thrift-codegen.sh && ./thrift-codegen.sh --thrift-source ../
 ```
 
-You can specify the properties of the webserver by creating a `.env` file at the root of the project. This is only required for development.\
-The default values are: `localhost` for host, `8080` for port, `false` for https, and path will be an empty string.\
-Note: you need to set the `WEBSERVER_PORT`, if you choose to use another port for the webserver, the other properties are not that important considering you run a local webserver.
+You can set the URL of the webserver (`BACKEND_URL`) and the port of the development server (`DEVSERVER_PORT`) by creating a `.env.local` file at the root of the project. This will override the variables in the `.env` file.\
+The default value is `http://localhost:8080` for the webserver URL and `3000` for the port of the development server, as seen in the `.env` file.
 
 ```py
-# .env
-WEBSERVER_HOST=
-WEBSERVER_PORT=
-WEBSERVER_HTTPS=
-WEBSERVER_PATH=
+# .env.local
+BACKEND_URL=
+DEVSERVER_PORT=
 ```
 
 After this, you can run the development server with:
@@ -48,7 +40,8 @@ After this, you can run the development server with:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.\
+(Make sure to open the URL with the correct port if you chose to override the port for the devserver.)
 
 ## Learn More
 
