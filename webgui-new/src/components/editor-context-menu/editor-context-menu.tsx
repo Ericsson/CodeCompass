@@ -237,16 +237,17 @@ export const EditorContextMenu = ({
         </MenuItem>
         {appCtx.languageNodeId && (
           <MenuItem
-            disabled
             onClick={async () => {
               setContextMenu(null);
               const fileInfo = await getFileInfo(appCtx.projectFileId as string);
               const currentRepo = await getRepositoryByProjectPath(fileInfo?.path as string);
-              const fileName = fileInfo?.path?.split('/').reverse()[0];
+              const srcPath = appCtx.labels.get('src');
+              const filePath = fileInfo?.path as string;
+              const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
               const blameInfo = await getBlameInfo(
                 currentRepo?.repoId as string,
                 currentRepo?.commitId as string,
-                fileName as string,
+                path as string,
                 fileInfo?.id as string
               );
               appCtx.setGitBlameInfo(blameInfo);
