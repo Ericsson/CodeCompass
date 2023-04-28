@@ -14,8 +14,12 @@ const main = async () => {
   const nextHandler = nextApp.getRequestHandler();
 
   const proxyHandler = createProxyMiddleware({
-    target: process.env.NEXT_PUBLIC_BACKEND_URL,
+    target: process.env.BACKEND_URL,
     changeOrigin: true,
+    pathFilter: '**/*Service',
+    pathRewrite: {
+      '^/[^/]+/(.+Service)$': '/$1',
+    },
   });
 
   app.use('/', proxyHandler);
