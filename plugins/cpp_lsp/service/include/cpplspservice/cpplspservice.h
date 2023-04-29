@@ -12,7 +12,7 @@
 #include <lspservice/lspservice.h>
 
 namespace cc
-{ 
+{
 namespace service
 {
 namespace lsp
@@ -26,25 +26,39 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void getDefinition(pt::ptree& responseTree_, const pt::ptree& params_) override final;
-  void getDeclaration(pt::ptree& responseTree_, const pt::ptree& params_) override final;
-  void getImplementation(pt::ptree& responseTree_, const pt::ptree& params_) override final;
-  void getReferences(pt::ptree& responseTree_, const pt::ptree& params_) override final;
-  void getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_) override final;
-  void getDiagram(pt::ptree& responseTree_, const pt::ptree& params_) override final;
+  void getDefinition(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getDeclaration(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getImplementation(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getReferences(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getDiagramTypes(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
 
 private:
-  std::vector<Location> definition(
-    const TextDocumentPositionParams& params_);
+  void fillResponseTree(pt::ptree& responseTree_,
+    const pt::ptree& params_,
+    language::CppServiceHandler::ReferenceType refType_,
+    bool canBeSingle_ = true);
 
-  std::vector<Location> declaration(
-    const TextDocumentPositionParams& params_);
-
-  std::vector<Location> references(
-    const ReferenceParams& params_);
-
-  std::vector<Location> implementation(
-    const TextDocumentPositionParams& params_);
+  std::vector<Location> responseLocations(
+    const TextDocumentPositionParams& params_,
+    language::CppServiceHandler::ReferenceType refType_);
 
   CompletionList fileDiagramTypes(
     const DiagramTypeParams& params_);

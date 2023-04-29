@@ -6,7 +6,7 @@
 #include <lspservice/lsp_types.h>
 
 namespace cc
-{ 
+{
 namespace service
 {
 namespace lsp
@@ -19,12 +19,29 @@ class LspServiceHandler
 public:
   virtual ~LspServiceHandler() = default;
 
-  void virtual getDefinition(pt::ptree& responseTree_, const pt::ptree& params_);
-  void virtual getDeclaration(pt::ptree& responseTree_, const pt::ptree& params_);
-  void virtual getImplementation(pt::ptree& responseTree_, const pt::ptree& params_);
-  void virtual getReferences(pt::ptree& responseTree_, const pt::ptree& params_);
-  void virtual getDiagramTypes(pt::ptree& responseTree_, const pt::ptree& params_);
-  void virtual getDiagram(pt::ptree& responseTree_, const pt::ptree& params_);
+  void virtual getDefinition(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
+  void virtual getDeclaration(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
+  void virtual getImplementation(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
+  void virtual getReferences(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
+  void virtual getDiagramTypes(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
+  void virtual getDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
 
   void getMethodNotFound(pt::ptree& responseTree_, const std::string& method_);
   void getParseError(pt::ptree& responseTree_, const std::exception& ex_);

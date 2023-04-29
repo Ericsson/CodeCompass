@@ -43,7 +43,8 @@ public:
     return "LspHandler";
   }
 
-  LspHandler(std::unique_ptr<LspServiceT>&& service_) : lspService(std::move(service_))
+  LspHandler(std::unique_ptr<LspServiceT>&& service_)
+    : lspService(std::move(service_))
   {
   }
 
