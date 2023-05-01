@@ -32,6 +32,7 @@ enum class LspMethod
   References,
   DiagramTypes,
   Diagram,
+  ModuleDiagram,
   Parameters,
   LocalVariables,
   ReturnType,
@@ -127,6 +128,11 @@ public:
           case LspMethod::Diagram:
           {
             lspService->getDiagram(responseTree, params);
+            break;
+          }
+          case LspMethod::ModuleDiagram:
+          {
+            lspService->getModuleDiagram(responseTree, params);
             break;
           }
           case LspMethod::Parameters:
@@ -311,8 +317,9 @@ private:
       { "textDocument/declaration",         LspMethod::Declaration },
       { "textDocument/implementation",      LspMethod::Implementation },
       { "textDocument/references",          LspMethod::References },
-      { "diagram/diagramTypes",             LspMethod::DiagramTypes },
-      { "diagram/diagram",                  LspMethod::Diagram},
+      { "textDocument/diagramTypes",        LspMethod::DiagramTypes },
+      { "textDocument/diagram",             LspMethod::Diagram},
+      { "directory/diagram",                LspMethod::ModuleDiagram},
       { "textDocument/parameters",          LspMethod::Parameters},
       { "textDocument/localVariables",      LspMethod::LocalVariables},
       { "textDocument/returnType",          LspMethod::ReturnType},

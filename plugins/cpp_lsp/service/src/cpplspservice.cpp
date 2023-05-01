@@ -474,6 +474,13 @@ void CppLspServiceHandler::getDiagram(
   responseTree_.put("result", diagramResult);
 }
 
+void CppLspServiceHandler::getModuleDiagram(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  getDiagram(responseTree_, params_);
+}
+
 Diagram CppLspServiceHandler::fileDiagram(
   const DiagramParams& params_)
 {

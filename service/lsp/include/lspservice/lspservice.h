@@ -45,6 +45,10 @@ public:
     pt::ptree& responseTree_,
     const pt::ptree& params_);
 
+  void virtual getModuleDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
   void virtual getParameters(
     pt::ptree& responseTree_,
     const pt::ptree& params_);

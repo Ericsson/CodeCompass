@@ -43,14 +43,21 @@ void LspServiceHandler::getDiagramTypes(
   pt::ptree& responseTree_,
   const pt::ptree&)
 {
-  getMethodNotFound(responseTree_, "diagram/diagramTypes");
+  getMethodNotFound(responseTree_, "textDocument/diagramTypes");
 }
 
 void LspServiceHandler::getDiagram(
   pt::ptree& responseTree_,
   const pt::ptree&)
 {
-  getMethodNotFound(responseTree_, "diagram/diagram");
+  getMethodNotFound(responseTree_, "textDocument/diagram");
+}
+
+void LspServiceHandler::getModuleDiagram(
+  pt::ptree& responseTree_,
+  const pt::ptree&)
+{
+  getMethodNotFound(responseTree_, "directory/diagram");
 }
 
 void LspServiceHandler::getParameters(

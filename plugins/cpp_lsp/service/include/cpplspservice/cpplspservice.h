@@ -54,6 +54,10 @@ public:
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 
+  void getModuleDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
   void getParameters(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
