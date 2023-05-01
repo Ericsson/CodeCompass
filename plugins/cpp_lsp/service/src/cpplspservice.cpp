@@ -134,6 +134,236 @@ void CppLspServiceHandler::getReferences(
     false); // the result must always be a vector
 }
 
+void CppLspServiceHandler::getParameters(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::PARAMETER);
+}
+
+void CppLspServiceHandler::getLocalVariables(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::LOCAL_VAR);
+}
+
+void CppLspServiceHandler::getReturnType(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::RETURN_TYPE);
+}
+
+void CppLspServiceHandler::getOverridden(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::OVERRIDE);
+}
+
+void CppLspServiceHandler::getOverrider(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::OVERRIDDEN_BY);
+}
+
+void CppLspServiceHandler::getRead(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::READ);
+}
+
+void CppLspServiceHandler::getWrite(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::WRITE);
+}
+
+void CppLspServiceHandler::getMethods(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::METHOD);
+}
+
+void CppLspServiceHandler::getFriends(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::FRIEND);
+}
+
+void CppLspServiceHandler::getEnumConstants(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::ENUM_CONSTANTS);
+}
+
+void CppLspServiceHandler::getExpansion(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::EXPANSION);
+}
+
+void CppLspServiceHandler::getUndefinition(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::UNDEFINITION);
+}
+
+void CppLspServiceHandler::getThisCalls(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::THIS_CALLS);
+}
+
+void CppLspServiceHandler::getCallsOfThis(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::CALLS_OF_THIS);
+}
+
+void CppLspServiceHandler::getCallee(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::CALLEE);
+}
+
+void CppLspServiceHandler::getCaller(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::CALLER);
+}
+
+void CppLspServiceHandler::getVirtualCall(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::VIRTUAL_CALL);
+}
+
+void CppLspServiceHandler::getFunctionPointerCall(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::FUNC_PTR_CALL);
+}
+
+void CppLspServiceHandler::getType(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::TYPE);
+}
+
+void CppLspServiceHandler::getAlias(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::ALIAS);
+}
+
+void CppLspServiceHandler::getImplements(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::INHERIT_FROM);
+}
+
+void CppLspServiceHandler::getDataMember(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::DATA_MEMBER);
+}
+
+void CppLspServiceHandler::getUnderlyingType(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  fillResponseTree(
+    responseTree_,
+    params_,
+    language::CppServiceHandler::UNDERLYING_TYPE);
+}
+
 void CppLspServiceHandler::getDiagramTypes(
   pt::ptree& responseTree_,
   const pt::ptree& params_)

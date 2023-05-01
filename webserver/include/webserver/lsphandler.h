@@ -31,7 +31,30 @@ enum class LspMethod
   Implementation,
   References,
   DiagramTypes,
-  Diagram
+  Diagram,
+  Parameters,
+  LocalVariables,
+  ReturnType,
+  Overridden,
+  Overriders,
+  Read,
+  Write,
+  Methods,
+  Friends,
+  EnumConstants,
+  Expansion,
+  Undefinition,
+  ThisCalls,
+  CallsOfThis,
+  Callee,
+  Caller,
+  VirtualCall,
+  FunctionPointerCall,
+  Type,
+  Alias,
+  Implements,
+  DataMember,
+  UnderlyingType,
 };
 
 template <class LspServiceT>
@@ -106,6 +129,121 @@ public:
             lspService->getDiagram(responseTree, params);
             break;
           }
+          case LspMethod::Parameters:
+          {
+            lspService->getParameters(responseTree, params);
+            break;
+          }
+          case LspMethod::LocalVariables:
+          {
+            lspService->getLocalVariables(responseTree, params);
+            break;
+          }
+          case LspMethod::ReturnType:
+          {
+            lspService->getReturnType(responseTree, params);
+            break;
+          }
+          case LspMethod::Overridden:
+          {
+            lspService->getOverridden(responseTree, params);
+            break;
+          }
+          case LspMethod::Overriders:
+          {
+            lspService->getOverrider(responseTree, params);
+            break;
+          }
+          case LspMethod::Read:
+          {
+            lspService->getRead(responseTree, params);
+            break;
+          }
+          case LspMethod::Write:
+          {
+            lspService->getWrite(responseTree, params);
+            break;
+          }
+          case LspMethod::Methods:
+          {
+            lspService->getMethods(responseTree, params);
+            break;
+          }
+          case LspMethod::Friends:
+          {
+            lspService->getFriends(responseTree, params);
+            break;
+          }
+          case LspMethod::EnumConstants:
+          {
+            lspService->getEnumConstants(responseTree, params);
+            break;
+          }
+          case LspMethod::Expansion:
+          {
+            lspService->getExpansion(responseTree, params);
+            break;
+          }
+          case LspMethod::Undefinition:
+          {
+            lspService->getUndefinition(responseTree, params);
+            break;
+          }
+          case LspMethod::ThisCalls:
+          {
+            lspService->getThisCalls(responseTree, params);
+            break;
+          }
+          case LspMethod::  CallsOfThis:
+          {
+            lspService->getCallsOfThis(responseTree, params);
+            break;
+          }
+          case LspMethod::Callee:
+          {
+            lspService->getCallee(responseTree, params);
+            break;
+          }
+          case LspMethod::Caller:
+          {
+            lspService->getCaller(responseTree, params);
+            break;
+          }
+          case LspMethod::VirtualCall:
+          {
+            lspService->getVirtualCall(responseTree, params);
+            break;
+          }
+          case LspMethod::FunctionPointerCall:
+          {
+            lspService->getFunctionPointerCall(responseTree, params);
+            break;
+          }
+          case LspMethod::Type:
+          {
+            lspService->getType(responseTree, params);
+            break;
+          }
+          case LspMethod::Alias:
+          {
+            lspService->getAlias(responseTree, params);
+            break;
+          }
+          case LspMethod::Implements:
+          {
+            lspService->getImplements(responseTree, params);
+            break;
+          }
+          case LspMethod::DataMember:
+          {
+            lspService->getDataMember(responseTree, params);
+            break;
+          }
+          case LspMethod::UnderlyingType:
+          {
+            lspService->getUnderlyingType(responseTree, params);
+            break;
+          }
           default:
           {
             LOG(warning) << "[LSP] Unsupported method: '" << method << "'";
@@ -169,12 +307,35 @@ private:
   LspMethod parseMethod(const std::string& method)
   {
     static std::unordered_map<std::string, LspMethod> methodMap = {
-      { "textDocument/definition",     LspMethod::Definition },
-      { "textDocument/declaration",    LspMethod::Declaration },
-      { "textDocument/implementation", LspMethod::Implementation },
-      { "textDocument/references",     LspMethod::References },
-      { "diagram/diagramTypes",        LspMethod::DiagramTypes },
-      { "diagram/diagram",             LspMethod::Diagram},
+      { "textDocument/definition",          LspMethod::Definition },
+      { "textDocument/declaration",         LspMethod::Declaration },
+      { "textDocument/implementation",      LspMethod::Implementation },
+      { "textDocument/references",          LspMethod::References },
+      { "diagram/diagramTypes",             LspMethod::DiagramTypes },
+      { "diagram/diagram",                  LspMethod::Diagram},
+      { "textDocument/parameters",          LspMethod::Parameters},
+      { "textDocument/localVariables",      LspMethod::LocalVariables},
+      { "textDocument/returnType",          LspMethod::ReturnType},
+      { "textDocument/overridden",          LspMethod::Overridden},
+      { "textDocument/overriders",          LspMethod::Overriders},
+      { "textDocument/read",                LspMethod::Read},
+      { "textDocument/write",               LspMethod::Write},
+      { "textDocument/methods",             LspMethod::Methods},
+      { "textDocument/friends",             LspMethod::Friends},
+      { "textDocument/enumConstants",       LspMethod::EnumConstants},
+      { "textDocument/expansion",           LspMethod::Expansion},
+      { "textDocument/undefinition",        LspMethod::Undefinition},
+      { "textDocument/thisCalls",           LspMethod::ThisCalls},
+      { "textDocument/callsOfThis",         LspMethod::CallsOfThis},
+      { "textDocument/callee",              LspMethod::Callee},
+      { "textDocument/caller",              LspMethod::Caller},
+      { "textDocument/virtualCall",         LspMethod::VirtualCall},
+      { "textDocument/functionPointerCall", LspMethod::FunctionPointerCall},
+      { "textDocument/type",                LspMethod::Type},
+      { "textDocument/alias",               LspMethod::Alias},
+      { "textDocument/implements",          LspMethod::Implements},
+      { "textDocument/dataMember",          LspMethod::DataMember},
+      { "textDocument/underlyingType",      LspMethod::UnderlyingType},
     };
 
     auto it = methodMap.find(method);

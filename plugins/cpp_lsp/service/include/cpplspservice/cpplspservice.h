@@ -26,6 +26,8 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
+  // Standard LSP methods
+
   void getDefinition(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
@@ -42,11 +44,105 @@ public:
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 
+  // Extended LSP methods
+
   void getDiagramTypes(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 
   void getDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getParameters(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getLocalVariables(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getReturnType(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getOverridden(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getOverrider(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getRead(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getWrite(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getMethods(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getFriends(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getEnumConstants(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getExpansion(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getUndefinition(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getThisCalls(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getCallsOfThis(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getCallee(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getCaller(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getVirtualCall(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getFunctionPointerCall(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getType(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getAlias(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getImplements(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getDataMember(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getUnderlyingType(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 
