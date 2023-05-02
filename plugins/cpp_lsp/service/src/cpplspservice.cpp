@@ -492,8 +492,16 @@ Diagram CppLspServiceHandler::fileDiagram(
   if (!file)
     return std::string();
 
-  std::map<std::string, std::int32_t> diagramTypes;
-  _cppService.getFileDiagramTypes(diagramTypes, std::to_string(file->id));
+  const static std::map<std::string, std::int32_t> diagramTypes = {
+    {"Internal architecture of this module",
+      language::CppServiceHandler::SUBSYSTEM_DEPENDENCY},
+    {"This module depends on",
+      language::CppServiceHandler::EXTERNAL_DEPENDENCY},
+    {"Users of this module", language::CppServiceHandler::EXTERNAL_USERS},
+    {"Include Dependency", language::CppServiceHandler::INCLUDE_DEPENDENCY},
+    {"Component Users", language::CppServiceHandler::COMPONENT_USERS},
+    {"Interface Diagram", language::CppServiceHandler::INTERFACE},
+  };
 
   auto diagramTypeIt = diagramTypes.find(params_.diagramType);
   if(diagramTypeIt == diagramTypes.end())
