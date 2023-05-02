@@ -280,7 +280,7 @@ void CppServiceHandler::getProperties(
       {
         VarResult variables = _db->query<model::CppVariable>(
           VarQuery::entityHash == node.entityHash);
-        
+
         if (!variables.empty())
         {
           model::CppVariable variable = *variables.begin();
@@ -355,7 +355,7 @@ void CppServiceHandler::getProperties(
         else
           LOG(warning) << "Database query result was not expected to be empty. "
                        << __FILE__ << ", line #" << __LINE__;
-         
+
         break;
       }
 
@@ -1266,6 +1266,16 @@ void CppServiceHandler::getDiagram(
   const core::AstNodeId& astNodeId_,
   const std::int32_t diagramId_)
 {
+  util::Graph graph = returnDiagram(astNodeId_, diagramId_);
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+}
+
+util::Graph CppServiceHandler::returnDiagram(
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t diagramId_)
+{
   Diagram diagram(_db, _datadir, _context);
   util::Graph graph;
 
@@ -1284,8 +1294,7 @@ void CppServiceHandler::getDiagram(
       break;
   }
 
-  if (graph.nodeCount() != 0)
-    return_ = graph.output(util::Graph::SVG);
+  return graph;
 }
 
 void CppServiceHandler::getDiagramLegend(
@@ -1341,6 +1350,16 @@ void CppServiceHandler::getFileDiagram(
   const core::FileId& fileId_,
   const int32_t diagramId_)
 {
+  util::Graph graph = returnFileDiagram(fileId_, diagramId_);
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+}
+
+util::Graph CppServiceHandler::returnFileDiagram(
+  const core::FileId& fileId_,
+  const int32_t diagramId_)
+{
   FileDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
   graph.setAttribute("rankdir", "LR");
@@ -1372,8 +1391,7 @@ void CppServiceHandler::getFileDiagram(
       break;
   }
 
-  if (graph.nodeCount() != 0)
-    return_ = graph.output(util::Graph::SVG);
+  return graph;
 }
 
 void CppServiceHandler::getFileDiagramLegend(

@@ -11,9 +11,9 @@
 
 #include <util/logutil.h>
 
-namespace cc 
+namespace cc
 {
-namespace util 
+namespace util
 {
 
 struct GraphPimpl;
@@ -45,6 +45,8 @@ public:
     const std::string name_ = "",
     bool directed_ = true,
     bool strict_ = false);
+
+  Graph(Graph&& other) noexcept;
 
   ~Graph();
 
@@ -246,7 +248,7 @@ private:
   std::unordered_set<std::string> _ids;
   std::string _currentId;
 
-  GraphPimpl* _graphPimpl;
+  GraphPimpl* _graphPimpl = nullptr;
 
   bool _directed;
   bool _strict;

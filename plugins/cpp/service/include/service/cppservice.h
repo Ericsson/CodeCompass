@@ -1,6 +1,7 @@
 #ifndef CC_SERVICE_LANGUAGE_CPPSERVICE_H
 #define CC_SERVICE_LANGUAGE_CPPSERVICE_H
 
+#include "util/graph.h"
 #include <memory>
 #include <vector>
 #include <map>
@@ -69,6 +70,10 @@ public:
     const core::AstNodeId& astNodeId_,
     const std::int32_t diagramId_) override;
 
+  util::Graph returnDiagram(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t diagramId_);
+
   void getDiagramLegend(
     std::string& return_,
     const std::int32_t diagramId_) override;
@@ -81,6 +86,10 @@ public:
     std::string& return_,
     const core::FileId& fileId_,
     const int32_t diagramId_) override;
+
+  util::Graph returnFileDiagram(
+    const core::FileId& fileId_,
+    const int32_t diagramId_);
 
   void getFileDiagramLegend(
     std::string& return_,
