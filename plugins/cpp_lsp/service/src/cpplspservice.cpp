@@ -543,8 +543,12 @@ Diagram CppLspServiceHandler::nodeDiagram(
 
   _cppService.getAstNodeInfoByPosition(astNodeInfo, cppPosition);
 
-  std::map<std::string, std::int32_t> diagramTypes;
-  _cppService.getDiagramTypes(diagramTypes, astNodeInfo.id);
+  const static std::map<std::string, std::int32_t> diagramTypes = {
+    {"Function call diagram", language::CppServiceHandler::FUNCTION_CALL},
+    {"Detailed class diagram", language::CppServiceHandler::DETAILED_CLASS},
+    {"Class collaboration diagram",
+      language::CppServiceHandler::CLASS_COLLABORATION},
+  };
 
   auto diagramTypeIt = diagramTypes.find(params_.diagramType);
   if(diagramTypeIt == diagramTypes.end())
