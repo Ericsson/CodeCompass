@@ -58,7 +58,7 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
         label     : 'New Web GUI',
         onClick   : function () {
           window.open(
-            `${window.location.origin}/new`);
+            `${window.location.pathname}/new`);
         }
       }));
 
