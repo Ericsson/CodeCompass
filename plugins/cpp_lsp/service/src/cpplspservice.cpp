@@ -1,8 +1,11 @@
 #include <algorithm>
-#include <boost/property_tree/json_parser.hpp>
 #include <iterator>
+#include <stack>
+#include <string>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <cpplspservice/cpplspservice.h>
+#include "language_types.h"
 
 namespace cc
 {
@@ -17,7 +20,8 @@ CppLspServiceHandler::CppLspServiceHandler(
   const cc::webserver::ServerContext& context_)
   : _db(db_),
     _transaction(db_),
-    _cppService(db_, datadir_, context_)
+    _cppService(db_, datadir_, context_),
+    _projectHandler(db_, datadir_, context_)
 {
 }
 
@@ -507,12 +511,16 @@ Diagram CppLspServiceHandler::fileDiagram(
   if(diagramTypeIt == diagramTypes.end())
     return std::string();
 
-  Diagram diagram;
-  _cppService.getFileDiagram(
-    diagram,
+  auto graph = _cppService.returnFileDiagram(
     std::to_string(file->id),
     diagramTypeIt->second);
-  return diagram;
+
+  if (graph.nodeCount() != 0)
+  {
+    addPathToIdInFileDiagram(graph, std::to_string(file->id));
+    return graph.output(util::Graph::SVG);
+  }
+  return std::string();
 }
 
 Diagram CppLspServiceHandler::nodeDiagram(
@@ -542,10 +550,101 @@ Diagram CppLspServiceHandler::nodeDiagram(
   if(diagramTypeIt == diagramTypes.end())
     return std::string();
 
-  Diagram diagram;
-  _cppService.getDiagram(diagram, astNodeInfo.id, diagramTypeIt->second);
+  auto graph = _cppService.returnDiagram(astNodeInfo.id, diagramTypeIt->second);
 
-  return diagram;
+  if (graph.nodeCount() != 0)
+  {
+    addLocationToIdInDiagram(graph, astNodeInfo.id);
+    return graph.output(util::Graph::SVG);
+  }
+  return std::string();
+}
+
+void CppLspServiceHandler::addLocationToIdInDiagram(
+  util::Graph& graph_,
+  const std::string& root_)
+{
+  std::stack<std::string> unvisited;
+  std::map<std::string, bool> visited;
+  unvisited.push(root_);
+
+  while (!unvisited.empty())
+  {
+    std::string current = unvisited.top();
+    unvisited.pop();
+    std::vector<language::AstNodeInfo> nodes;
+    _cppService.getReferences(
+      nodes, current, language::CppServiceHandler::DEFINITION, {});
+    language::AstNodeInfo& nodeInfo = nodes.front();
+    if (visited.find(nodeInfo.id) == visited.end() || !visited[nodeInfo.id])
+    {
+      visited[nodeInfo.id] = true;
+      for (auto& child : graph_.getChildren(nodeInfo.id))
+      {
+        if(visited.find(child) == visited.end())
+        {
+          unvisited.push(child);
+          visited[child] = false;
+        }
+      }
+      for (auto& parent : graph_.getParents(nodeInfo.id))
+      {
+        if(visited.find(parent) == visited.end())
+        {
+          unvisited.push(parent);
+          visited[parent] = false;
+        }
+      }
+
+      std::stringstream ss;
+      ss<<_transaction([&, this](){
+          return _db->load<model::File>(std::stoull(nodeInfo.range.file))->path;
+        })
+        <<';'
+        <<nodeInfo.range.range.startpos.line
+        <<';'
+        <<nodeInfo.range.range.startpos.column;
+      graph_.setNodeAttribute(nodeInfo.id, "id", ss.str(), true);
+    }
+  }
+}
+
+void CppLspServiceHandler::addPathToIdInFileDiagram(
+  util::Graph& graph_,
+  const std::string& root_)
+{
+  std::stack<std::string> unvisited;
+  std::map<std::string, bool> visited;
+  unvisited.push(root_);
+
+  while (!unvisited.empty())
+  {
+    std::string current = unvisited.top();
+    unvisited.pop();
+    core::FileInfo fileInfo;
+    _projectHandler.getFileInfo(fileInfo, current);
+    if (visited.find(fileInfo.id) == visited.end() || !visited[fileInfo.id])
+    {
+      visited[fileInfo.id] = true;
+      for (auto& child : graph_.getChildren(fileInfo.id))
+      {
+        if(visited.find(child) == visited.end())
+        {
+          unvisited.push(child);
+          visited[child] = false;
+        }
+      }
+      for (auto& parent : graph_.getParents(fileInfo.id))
+      {
+        if(visited.find(parent) == visited.end())
+        {
+          unvisited.push(parent);
+          visited[parent] = false;
+        }
+      }
+      graph_.setNodeAttribute(fileInfo.id, "id", fileInfo.path, true);
+    }
+  }
 }
 
 } // lsp

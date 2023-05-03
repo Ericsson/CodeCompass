@@ -700,7 +700,6 @@ util::Graph::Node FileDiagram::addNode(
 {
   util::Graph::Node node = graph_.getOrCreateNode(fileInfo_.id);
   graph_.setNodeAttribute(node, "label", getLastNParts(fileInfo_.path, 3));
-  graph_.setNodeAttribute(node, "tooltip", fileInfo_.path, true);
 
   if (fileInfo_.type == model::File::DIRECTORY_TYPE)
   {

@@ -1,6 +1,8 @@
 #ifndef CC_SERVICE_LSP_CPPLSPSERVICE_H
 #define CC_SERVICE_LSP_CPPLSPSERVICE_H
 
+#include "projectservice/projectservice.h"
+#include "util/graph.h"
 #include <memory>
 #include <vector>
 
@@ -172,10 +174,14 @@ private:
   Diagram nodeDiagram(
     const DiagramParams& params_);
 
+  void addLocationToIdInDiagram(util::Graph& graph_, const std::string& root_);
+  void addPathToIdInFileDiagram(util::Graph& graph_, const std::string& root_);
+
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
   language::CppServiceHandler _cppService;
+  core::ProjectServiceHandler _projectHandler;
 };
 
 } // lsp

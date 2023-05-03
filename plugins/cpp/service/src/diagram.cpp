@@ -427,17 +427,6 @@ util::Graph::Node Diagram::addNode(
 
   graph_.setNodeAttribute(node, "label", nodeInfo_.astNodeValue);
 
-  std::stringstream ss;
-  ss<<_cppHandler._transaction([&, this](){
-        return _cppHandler._db->load<model::File>(std::stoull(nodeInfo_.range.file))->path;
-      })
-    <<';'
-    <<nodeInfo_.range.range.startpos.line
-    <<';'
-    <<nodeInfo_.range.range.startpos.column;
-
-  graph_.setNodeAttribute(node, "tooltip", ss.str(), true);
-
   return node;
 }
 
