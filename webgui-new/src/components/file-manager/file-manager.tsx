@@ -1,8 +1,15 @@
-import { DriveFolderUpload } from '@mui/icons-material';
+import { Code, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
 import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo, Position, Range } from '@thrift-generated';
-import { getChildFiles, getFileInfo, getParentFiles, getParents, getRootFiles } from 'service/project-service';
+import {
+  getChildFiles,
+  getFileInfo,
+  getFileInfoByPath,
+  getParentFiles,
+  getParents,
+  getRootFiles,
+} from 'service/project-service';
 import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
@@ -200,6 +207,20 @@ export const FileManager = (): JSX.Element => {
     setFileInfoForDiagram(fileInfo);
   };
 
+  const jumpToSource = async () => {
+    const sourcePath = appCtx.labels.get('src') as string;
+    const fInfo = await getFileInfoByPath(sourcePath);
+
+    if (!fInfo) return;
+
+    const childFiles = await getChildFiles(fInfo.id as string);
+    const parents = await getParents(fInfo.path as string);
+
+    setExpandedFileTreeNodes(parents);
+    setFiles(childFiles);
+    setFolderPath(fInfo.path as string);
+  };
+
   const navigateBack = async () => {
     if (folderPath === '/') {
       setFolderPath('');
@@ -351,10 +372,17 @@ export const FileManager = (): JSX.Element => {
       ) : (
         <>
           {folderPath !== undefined && folderPath === '' ? (
-            ''
+            <FileLabel onClick={() => jumpToSource()} sx={{ padding: '5px' }}>
+              <Code sx={{ width: '20px', height: '20px' }} />
+              <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
+            </FileLabel>
           ) : (
             <>
               <FolderName>{folderPath === '/' ? '/' : '../' + folderPath?.split('/').reverse()[0]}</FolderName>
+              <FileLabel onClick={() => jumpToSource()} sx={{ padding: '5px' }}>
+                <Code sx={{ width: '20px', height: '20px' }} />
+                <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
+              </FileLabel>
               <FolderUp onClick={() => navigateBack()}>
                 <DriveFolderUpload sx={{ width: '20px', height: '20px' }} />
                 <div>{'..'}</div>
