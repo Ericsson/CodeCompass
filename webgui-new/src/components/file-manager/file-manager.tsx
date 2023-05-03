@@ -207,9 +207,9 @@ export const FileManager = (): JSX.Element => {
     setFileInfoForDiagram(fileInfo);
   };
 
-  const jumpToSource = async () => {
+  const jumpToFolder = async (path: 'root' | 'src') => {
     const sourcePath = appCtx.labels.get('src') as string;
-    const fInfo = await getFileInfoByPath(sourcePath);
+    const fInfo = await getFileInfoByPath(path === 'src' ? sourcePath : path === 'root' ? '/' : '/');
 
     if (!fInfo) return;
 
@@ -372,14 +372,18 @@ export const FileManager = (): JSX.Element => {
       ) : (
         <>
           {folderPath !== undefined && folderPath === '' ? (
-            <FileLabel onClick={() => jumpToSource()} sx={{ padding: '5px' }}>
+            <FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
               <Code sx={{ width: '20px', height: '20px' }} />
               <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
             </FileLabel>
           ) : (
             <>
               <FolderName>{folderPath === '/' ? '/' : '../' + folderPath?.split('/').reverse()[0]}</FolderName>
-              <FileLabel onClick={() => jumpToSource()} sx={{ padding: '5px' }}>
+              <FileLabel onClick={() => jumpToFolder('root')} sx={{ padding: '5px' }}>
+                <Code sx={{ width: '20px', height: '20px' }} />
+                <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to root'}</StyledDiv>
+              </FileLabel>
+              <FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
                 <Code sx={{ width: '20px', height: '20px' }} />
                 <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
               </FileLabel>
