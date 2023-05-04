@@ -4,7 +4,7 @@ import MuiAccordion, { AccordionProps } from '@mui/material/Accordion';
 import MuiAccordionSummary, { AccordionSummaryProps } from '@mui/material/AccordionSummary';
 import MuiAccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import { FileManager } from 'components/file-manager/file-manager';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { AccordionLabel } from 'enums/accordion-enum';
@@ -30,9 +30,9 @@ const FileManagerHeader = styled('div')({
   gap: '0.5rem',
 });
 
-const TreeSetting = styled(FormControlLabel)(({ theme }) => ({
+const TreeSetting = styled(FormControlLabel)({
   marginLeft: '5px',
-}));
+});
 
 const Accordion = styled((props: AccordionProps) => <MuiAccordion disableGutters elevation={0} square {...props} />)(
   ({ theme }) => ({

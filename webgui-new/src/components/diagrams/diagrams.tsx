@@ -1,7 +1,7 @@
 import { Box, Button, IconButton, Modal, Tooltip, styled } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
-import { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
+import React, { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
 import {
   getCppAstNodeInfo,
   getCppDiagram,
@@ -79,7 +79,7 @@ const Placeholder = styled('div')({
   padding: '10px',
 });
 
-export const Diagrams = (): JSX.Element => {
+export const Diagrams = () => {
   const appCtx = useContext(AppContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
@@ -217,7 +217,7 @@ export const Diagrams = (): JSX.Element => {
         ) : (
           <>
             <TransformWrapper ref={transformComponentRef}>
-              {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
+              {({ zoomIn, zoomOut, resetTransform }) => (
                 <TransformContainer>
                   <ZoomOptions>
                     <IconButton onClick={() => zoomIn()}>

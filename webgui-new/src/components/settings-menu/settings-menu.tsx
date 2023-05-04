@@ -14,7 +14,7 @@ import {
   Tooltip,
   styled,
 } from '@mui/material';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypeOptions } from 'enums/search-enum';
 import { enumToArray, removeFromArray } from 'utils/utils';
 import { Info, Close } from '@mui/icons-material';
@@ -74,7 +74,7 @@ export const SettingsMenu = ({
   setSearchLanguage: Dispatch<SetStateAction<string | undefined>>;
   selectedSearchTypeOptions: string[];
   setSelectedSearchTypeOptions: Dispatch<SetStateAction<string[] | undefined>>;
-}): JSX.Element => {
+}) => {
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchOtherLanguages = enumToArray(SearchOtherLanguages) as string[];
   const searchTypeOptions = enumToArray(SearchTypeOptions);
@@ -106,7 +106,7 @@ export const SettingsMenu = ({
     });
   }, [searchOtherLanguage]);
 
-  const Options = (): JSX.Element => {
+  const Options = () => {
     return (
       <div>
         <FormLabel>{'Search options'}</FormLabel>
@@ -127,7 +127,7 @@ export const SettingsMenu = ({
     );
   };
 
-  const Languages = (): JSX.Element => {
+  const Languages = () => {
     return (
       <div>
         <FormLabel>{'Languages'}</FormLabel>
@@ -223,7 +223,7 @@ export const SettingsMenu = ({
     );
   };
 
-  const Types = (): JSX.Element => {
+  const Types = () => {
     return (
       <FormGroup>
         <FormLabel>{'Types'}</FormLabel>

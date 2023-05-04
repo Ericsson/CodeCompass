@@ -5,7 +5,7 @@ import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry 
 import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
-import { SyntheticEvent, useContext, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import { getSearchResultCount, getSearchResults } from 'service/search-service';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { FileNode } from 'utils/types';
@@ -61,7 +61,7 @@ const Placeholder = styled('div')({
   padding: '10px',
 });
 
-export const SearchResults = (): JSX.Element => {
+export const SearchResults = () => {
   const appCtx = useContext(AppContext);
 
   const [searchType, setSearchType] = useState<number>(0);
@@ -90,36 +90,36 @@ export const SearchResults = (): JSX.Element => {
 
   useEffect(() => {
     const init = async () => {
-      const props = appCtx.searchProps;
-      if (!props) return;
+      const searchProps = appCtx.searchProps;
+      if (!searchProps) return;
 
       const initSearchResult = (await getSearchResults(
-        props.fileSearch,
-        props.type,
-        props.query,
-        props.start,
-        props.size,
-        props.fileFilter,
-        props.dirFilter
+        searchProps.fileSearch,
+        searchProps.type,
+        searchProps.query,
+        searchProps.start,
+        searchProps.size,
+        searchProps.fileFilter,
+        searchProps.dirFilter
       )) as SearchResult | FileSearchResult;
 
       const initSearchResultCount = (await getSearchResultCount(
-        props.fileSearch,
-        props.type,
-        props.query,
-        props.fileFilter,
-        props.dirFilter
+        searchProps.fileSearch,
+        searchProps.type,
+        searchProps.query,
+        searchProps.fileFilter,
+        searchProps.dirFilter
       )) as number;
 
       setSearchResult(initSearchResult);
       setSearchResultCount(initSearchResultCount);
-      setSearchType(props.type);
-      setSearchQuery(props.query);
-      setSearchFileFilterQuery(props.fileFilter);
-      setSearchDirFilterQuery(props.dirFilter);
-      setSearchStart(props.start);
-      setSearchSize(props.size);
-      setFileSearch(props.fileSearch);
+      setSearchType(searchProps.type);
+      setSearchQuery(searchProps.query);
+      setSearchFileFilterQuery(searchProps.fileFilter);
+      setSearchDirFilterQuery(searchProps.dirFilter);
+      setSearchStart(searchProps.start);
+      setSearchSize(searchProps.size);
+      setFileSearch(searchProps.fileSearch);
     };
     init();
   }, [appCtx.searchProps]);

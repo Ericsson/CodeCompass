@@ -1,4 +1,4 @@
-import { SyntheticEvent, useContext } from 'react';
+import React, { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
 import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';

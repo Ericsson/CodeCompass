@@ -2,7 +2,7 @@ import { TextSnippet } from '@mui/icons-material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { ToggleButton, ToggleButtonGroup, alpha, styled } from '@mui/material';
 import { ThemeContext } from 'global-context/theme-context';
-import { SyntheticEvent, useContext, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import { getCommit, getCommitDiffAsString } from 'service/git-service';
 import { formatDate } from 'utils/utils';
@@ -77,7 +77,7 @@ const Placeholder = styled('div')({
   padding: '10px',
 });
 
-export const GitDiff = (): JSX.Element => {
+export const GitDiff = () => {
   const appCtx = useContext(AppContext);
   const themeCtx = useContext(ThemeContext);
 

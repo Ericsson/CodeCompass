@@ -1,3 +1,4 @@
+import React from 'react';
 import { styled } from '@mui/material';
 
 const OuterContainer = styled('div')({
@@ -20,7 +21,7 @@ const StyledHeading2 = styled('h2')({
   marginBottom: '10px',
 });
 
-export const Credits = (): JSX.Element => {
+export const Credits = () => {
   return (
     <OuterContainer>
       <StyledHeading2>{'Project members'}</StyledHeading2>

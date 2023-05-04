@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export enum AccordionLabel {
   FILE_MANAGER = 'File manager',
   SEARCH_RESULTS = 'Search results',

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
 import { createProjectClient, getLabels } from 'service/project-service';
@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
 
+/* eslint-disable no-unused-vars */
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
@@ -91,8 +92,9 @@ export const AppContext = createContext<AppContextProps>({
   loadComplete: false,
   setLoadComplete: (_val) => {},
 });
+/* eslint-enable no-unused-vars */
 
-export const AppContextController = ({ children }: { children: JSX.Element }): JSX.Element => {
+export const AppContextController = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 

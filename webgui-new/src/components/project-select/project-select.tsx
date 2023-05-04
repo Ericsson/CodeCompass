@@ -1,10 +1,10 @@
 import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { AppContext } from 'global-context/app-context';
 import { useRouter } from 'next/router';
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
 
-export const ProjectSelect = (): JSX.Element => {
+export const ProjectSelect = () => {
   const router = useRouter();
 
   const appCtx = useContext(AppContext);

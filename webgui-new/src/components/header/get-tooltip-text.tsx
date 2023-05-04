@@ -1,6 +1,7 @@
 import { SearchMethods } from 'enums/search-enum';
+import React from 'react';
 
-export const getTooltipText = (value: string): string | JSX.Element => {
+export const getTooltipText = (value: string): string | React.ReactNode => {
   switch (value) {
     case SearchMethods.FILE_REGEX:
       return (

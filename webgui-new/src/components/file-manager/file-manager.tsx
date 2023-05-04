@@ -1,6 +1,6 @@
 import { Code, DriveFolderUpload } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material';
-import { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
+import React, { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo, Position, Range } from '@thrift-generated';
 import {
   getChildFiles,
@@ -65,7 +65,7 @@ const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
   },
 }));
 
-export const FileManager = (): JSX.Element => {
+export const FileManager = () => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 
@@ -105,7 +105,9 @@ export const FileManager = (): JSX.Element => {
 
           setFiles(children);
           setExpandedFileTreeNodes(parents);
-        } catch {}
+        } catch {
+          return;
+        }
       }
     };
 
@@ -287,7 +289,7 @@ export const FileManager = (): JSX.Element => {
     };
   };
 
-  const renderFileTree = (node: TreeNode | undefined): JSX.Element[] => {
+  const renderFileTree = (node: TreeNode | undefined) => {
     return node && node.children
       ? node.children.map((childNode) => {
           return childNode.info.isDirectory ? (
@@ -303,7 +305,7 @@ export const FileManager = (): JSX.Element => {
       : [];
   };
 
-  const Directory = ({ fInfo, children }: { fInfo: FileInfo; children?: JSX.Element[] }): JSX.Element => {
+  const Directory = ({ fInfo, children }: { fInfo: FileInfo; children?: React.ReactNode[] }) => {
     return (
       <StyledTreeItem
         nodeId={fInfo.id as string}
@@ -319,7 +321,7 @@ export const FileManager = (): JSX.Element => {
     );
   };
 
-  const File = ({ fInfo }: { fInfo: FileInfo }): JSX.Element => {
+  const File = ({ fInfo }: { fInfo: FileInfo }) => {
     return (
       <FileLabel
         onClick={() => handleFileClick(fInfo)}

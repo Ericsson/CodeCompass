@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { FileName } from 'components/file-name/file-name';
-import { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react';
+import React, { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react';
 import { getMetrics, getMetricsTypeNames } from 'service/metrics-service';
 import { FileInfo, MetricsType, MetricsTypeName } from '@thrift-generated';
 import { Treemap } from 'recharts';
@@ -195,7 +195,7 @@ const convertResObject = (res: RespType): DataItem => {
   return { name, size: 0, children };
 };
 
-export const Metrics = (): JSX.Element => {
+export const Metrics = () => {
   const appCtx = useContext(AppContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
@@ -237,7 +237,7 @@ export const Metrics = (): JSX.Element => {
     setData(findChildren(convertedObject));
   };
 
-  const renderTreeMap: JSX.Element = useMemo(() => {
+  const renderTreeMap = useMemo(() => {
     return data && fileInfo ? (
       <Treemap
         width={900}
