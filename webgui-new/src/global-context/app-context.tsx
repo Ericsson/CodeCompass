@@ -1,9 +1,9 @@
 import { createContext, useEffect, useState } from 'react';
-import { AstNodeInfo, FileInfo, GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
+import { GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient, getFileInfo, getLabels } from 'service/project-service';
+import { createProjectClient, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
-import { createCppClient, getCppAstNodeInfo } from 'service/cpp-service';
+import { createCppClient } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
 import { createMetricsClient } from 'service/metrics-service';
 import { createGitClient } from 'service/git-service';
@@ -237,24 +237,6 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       });
     }
   }, [router]);
-
-  useEffect(() => {
-    if (!diagramGenId) return;
-    const init = async () => {
-      const initDiagramInfo = (await getFileInfo(diagramGenId)) ?? (await getCppAstNodeInfo(diagramGenId));
-      if (!initDiagramInfo) return;
-
-      if (initDiagramInfo instanceof FileInfo) {
-        setProjectFileId(diagramGenId);
-      } else if (initDiagramInfo instanceof AstNodeInfo) {
-        const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
-        setProjectFileId(astNodeInfo?.range?.file as string);
-        setEditorSelection(astNodeInfo?.range?.range);
-        setLanguageNodeId(diagramGenId);
-      }
-    };
-    init();
-  }, [diagramGenId]);
 
   useEffect(() => {
     setStore({

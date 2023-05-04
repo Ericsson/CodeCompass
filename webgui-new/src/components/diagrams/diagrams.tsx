@@ -133,10 +133,25 @@ export const Diagrams = (): JSX.Element => {
     init();
   }, [appCtx.diagramGenId, appCtx.diagramTypeId]);
 
-  const generateDiagram = (e: MouseEvent) => {
+  const generateDiagram = async (e: MouseEvent) => {
     const parentNode = (e.target as HTMLElement)?.parentElement;
     if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
-    appCtx.setDiagramGenId(parentNode?.id as string);
+
+    const diagramGenId = parentNode?.id as string;
+
+    const initDiagramInfo = (await getFileInfo(diagramGenId)) ?? (await getCppAstNodeInfo(diagramGenId));
+    if (!initDiagramInfo) return;
+
+    if (initDiagramInfo instanceof FileInfo) {
+      appCtx.setProjectFileId(diagramGenId);
+    } else if (initDiagramInfo instanceof AstNodeInfo) {
+      const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
+      appCtx.setProjectFileId(astNodeInfo?.range?.file as string);
+      appCtx.setEditorSelection(astNodeInfo?.range?.range);
+      appCtx.setLanguageNodeId(diagramGenId);
+    }
+
+    appCtx.setDiagramGenId(diagramGenId);
   };
 
   const generateLegend = async () => {
