@@ -2,7 +2,7 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Box, CircularProgress, styled } from '@mui/material';
 import { Code } from '@mui/icons-material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
-import { SyntheticEvent, useContext, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import {
   getCppReferenceTypes,
   getCppReferences,
@@ -51,11 +51,11 @@ const Label = styled('div')(({ theme }) => ({
   },
 }));
 
-export const InfoTree = (): JSX.Element => {
+export const InfoTree = () => {
   const appCtx = useContext(AppContext);
 
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
-  const [props, setProps] = useState<Map<string, string>>(new Map());
+  const [properties, setProperties] = useState<Map<string, string>>(new Map());
   const [refTypes, setRefTypes] = useState<Map<string, number>>(new Map());
   const [refCounts, setRefCounts] = useState<Map<string, number>>(new Map());
   const [refs, setRefs] = useState<Map<string, AstNodeInfo[]>>(new Map());
@@ -96,7 +96,7 @@ export const InfoTree = (): JSX.Element => {
       }
 
       setAstNodeInfo(initAstNodeInfo);
-      setProps(initProps);
+      setProperties(initProps);
       setRefTypes(initRefTypes);
       setRefCounts(initRefCounts);
       setRefs(initRefs);
@@ -129,11 +129,11 @@ export const InfoTree = (): JSX.Element => {
           >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</StyledDiv>
         </StyledDiv>
         <StyledDiv>
-          {Array.from(props.keys()).map((name, idx) => (
+          {Array.from(properties.keys()).map((name, idx) => (
             <StyledDiv key={idx} sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <RefIcon refName={name} />
               <StyledDiv>
-                <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {props.get(name)}
+                <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {properties.get(name)}
               </StyledDiv>
             </StyledDiv>
           ))}

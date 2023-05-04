@@ -72,6 +72,7 @@ type StoreOptionValue =
   | SearchProps
   | FileNode;
 
+// eslint-disable-next-line no-unused-vars
 type StoreObject = { [key in keyof StoreOptions]?: StoreOptionValue };
 
 export const setStore = (options: StoreOptions) => {

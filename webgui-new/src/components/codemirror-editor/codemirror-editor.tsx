@@ -1,7 +1,7 @@
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { ThemeContext } from 'global-context/theme-context';
-import { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
+import React, { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
 import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
 import { FileInfo, Range } from '@thrift-generated';
 import { cpp } from '@codemirror/lang-cpp';
@@ -10,7 +10,7 @@ import { EditorContextMenu } from 'components/editor-context-menu/editor-context
 import { FileName } from 'components/file-name/file-name';
 import { AppContext } from 'global-context/app-context';
 import { getFileContent, getFileInfo } from 'service/project-service';
-import { EditorView, gutter, GutterMarker } from '@codemirror/view';
+import { gutter, GutterMarker } from '@codemirror/view';
 import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { getRepositoryByProjectPath } from 'service/git-service';
@@ -31,7 +31,7 @@ class GitBlameGutterMarker extends GutterMarker {
     return this.number === other.number;
   }
 
-  toDOM(_view: EditorView) {
+  toDOM() {
     const outerDiv = document.createElement('div');
     outerDiv.style.display = 'flex';
     outerDiv.style.alignItems = 'center';
@@ -66,7 +66,7 @@ class GitBlameGutterMarker extends GutterMarker {
   }
 }
 
-export const CodeMirrorEditor = (): JSX.Element => {
+export const CodeMirrorEditor = () => {
   const appCtx = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
 
@@ -180,7 +180,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
       return new GitBlameGutterMarker(number.toString(), trimmedMessage, date);
     },
     domEventHandlers: {
-      click(view, line, _event) {
+      click(view, line) {
         const info = appCtx.gitBlameInfo.find(
           (info) => info.finalStartLineNumber === view.state.doc.lineAt(line.from).number
         );

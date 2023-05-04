@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
+import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
 import { ChevronRight, Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
@@ -65,7 +65,7 @@ export const EditorContextMenu = ({
       mouseY: number;
     } | null>
   >;
-}): JSX.Element => {
+}) => {
   const appCtx = useContext(AppContext);
 
   const docsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -158,9 +158,9 @@ export const EditorContextMenu = ({
     const selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
 
     const selectionLink = updateUrlWithParams({
-      wsId: appCtx.workspaceId,
-      projFileId: appCtx.projectFileId,
-      selection: selection,
+      workspaceId: appCtx.workspaceId,
+      projectFileId: appCtx.projectFileId,
+      editorSelection: selection,
     });
 
     navigator.clipboard.writeText(selectionLink);

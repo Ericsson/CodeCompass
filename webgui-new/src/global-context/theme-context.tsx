@@ -1,8 +1,9 @@
 import { ThemeProvider } from '@mui/material';
-import { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { darkTheme, lightTheme } from 'themes/theme';
 import { getStore, setStore } from 'utils/store';
 
+/* eslint-disable no-unused-vars */
 type ThemeContextType = {
   theme: 'light' | 'dark';
   setTheme: (_val: 'light' | 'dark') => void;
@@ -12,8 +13,9 @@ export const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
   setTheme: (_val) => {},
 });
+/* eslint-enable no-unused-vars */
 
-export const ThemeContextController = ({ children }: { children: JSX.Element | JSX.Element[] }): JSX.Element => {
+export const ThemeContextController = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<'light' | 'dark' | undefined>(undefined);
 
   useEffect(() => {

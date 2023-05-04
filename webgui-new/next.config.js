@@ -10,8 +10,8 @@ const nextConfig = {
   },
   trailingSlash: true,
   ...(process.env.NODE_ENV === 'production' && {
-    assetPrefix: '/new',
-    basePath: '/new',
+    assetPrefix: `${process.env.PUBLIC_URL || ''}/new`,
+    basePath: `${process.env.PUBLIC_URL || ''}/new`,
   }),
 };
 

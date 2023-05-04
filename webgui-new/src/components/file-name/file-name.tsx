@@ -2,7 +2,7 @@ import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { alpha, Button, Menu, styled } from '@mui/material';
 import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
-import { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
@@ -75,11 +75,11 @@ export const FileName = ({
   info: FileInfo | undefined;
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
-}): JSX.Element => {
+}) => {
   const appCtx = useContext(AppContext);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [references, setReferences] = useState<JSX.Element[]>([]);
+  const [references, setReferences] = useState<React.ReactNode[]>([]);
 
   const getParseStatusText = (status: number): string => {
     if (status === 2) {
@@ -94,7 +94,7 @@ export const FileName = ({
   const renderFileReferences = async () => {
     const fileRefTypes = await getCppFileReferenceTypes(info?.id as string);
 
-    const elements: JSX.Element[] = [];
+    const elements: React.ReactNode[] = [];
     for (const [key, value] of fileRefTypes) {
       const refCountForType = await getCppFileReferenceCount(info?.id as string, value);
       const refsForType = await getCppFileReferences(info?.id as string, value);

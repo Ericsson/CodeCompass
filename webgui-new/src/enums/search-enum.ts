@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export enum SearchMethods {
   EXPRESSION = 'Search by expression',
   FILE_REGEX = 'File name filter regex',
