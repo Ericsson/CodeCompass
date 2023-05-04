@@ -1,9 +1,19 @@
 import { FileInfo } from '@thrift-generated';
 
 export type RouterQueryType = {
-  wsId?: string;
-  projFileId?: string;
-  selection?: string;
+  workspaceId?: string;
+  projectFileId?: string;
+  editorSelection?: string;
+  metricsGenId?: string;
+  diagramGenId?: string;
+  diagramTypeId?: string;
+  languageNodeId?: string;
+  gitRepoId?: string;
+  gitBranch?: string;
+  gitCommitId?: string;
+  activeAccordion?: string;
+  activeTab?: string;
+  treeViewOption?: boolean;
 };
 
 export type TreeNode = {

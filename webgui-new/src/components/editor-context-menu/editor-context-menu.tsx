@@ -158,9 +158,9 @@ export const EditorContextMenu = ({
     const selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
 
     const selectionLink = updateUrlWithParams({
-      wsId: appCtx.workspaceId,
-      projFileId: appCtx.projectFileId,
-      selection: selection,
+      workspaceId: appCtx.workspaceId,
+      projectFileId: appCtx.projectFileId,
+      editorSelection: selection,
     });
 
     navigator.clipboard.writeText(selectionLink);

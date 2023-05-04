@@ -141,13 +141,8 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   useEffect(() => {
     if (!workspaces) return;
     const { storedWorkspaceId } = getStore();
-    setWorkspaceId(storedWorkspaceId ?? (workspaces[0].id as string));
-  }, [workspaces]);
-
-  useEffect(() => {
-    if (!routerQuery.wsId) return;
-    setWorkspaceId(routerQuery.wsId);
-  }, [routerQuery.wsId]);
+    setWorkspaceId(routerQuery.workspaceId ?? storedWorkspaceId ?? (workspaces[0].id as string));
+  }, [workspaces, routerQuery.workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -180,7 +175,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
       setLabels(initLabels);
       setProjectFileId(storedProjectFileId);
-      setSearchProps(storedSearchProps ?? undefined);
+      setSearchProps(storedSearchProps);
       setMetricsGenId(storedMetricsGenId);
       setDiagramGenId(storedDiagramGenId);
       setDiagramTypeId(storedDiagramTypeId);
@@ -191,52 +186,48 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setGitCommitId(storedGitCommitId);
       setGitBlameInfo([]);
       setActiveAccordion(storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
-      setActiveTab(storedActiveTab ?? 0);
+      setActiveTab(storedActiveTab ?? TabName.WELCOME);
       setTreeViewOption(storedTreeViewOption ?? false);
 
       setStore({
         storedWorkspaceId: workspaceId,
       });
+
+      if (routerQuery.projectFileId && routerQuery.editorSelection) {
+        const selection = routerQuery.editorSelection.split('|');
+        const startLine = parseInt(selection[0]);
+        const startCol = parseInt(selection[1]);
+        const endLine = parseInt(selection[2]);
+        const endCol = parseInt(selection[3]);
+
+        const startpos = new Position({
+          line: startLine,
+          column: startCol,
+        });
+        const endpos = new Position({
+          line: endLine,
+          column: endCol,
+        });
+        const range = new Range({
+          startpos,
+          endpos,
+        });
+
+        setActiveAccordion(AccordionLabel.FILE_MANAGER);
+        setActiveTab(TabName.CODE);
+        setProjectFileId(routerQuery.projectFileId);
+        setEditorSelection(range);
+
+        router.replace({
+          pathname: '/project',
+          query: {},
+        });
+      }
     };
     initializeApp().then(() => setLoadComplete(true));
+    // This is required so the 'router' does not need to be passed as a dependecy, because it would cause an infinite loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
-
-  useEffect(() => {
-    const routerQuery = router.query as RouterQueryType;
-    if (routerQuery) {
-      if (!routerQuery.projFileId) return;
-      setProjectFileId(routerQuery.projFileId);
-      setActiveAccordion(AccordionLabel.FILE_MANAGER);
-      setActiveTab(TabName.CODE);
-
-      if (!routerQuery.selection) return;
-      const selection = routerQuery.selection.split('|');
-      const startLine = parseInt(selection[0]);
-      const startCol = parseInt(selection[1]);
-      const endLine = parseInt(selection[2]);
-      const endCol = parseInt(selection[3]);
-
-      const startpos = new Position({
-        line: startLine,
-        column: startCol,
-      });
-      const endpos = new Position({
-        line: endLine,
-        column: endCol,
-      });
-      const range = new Range({
-        startpos,
-        endpos,
-      });
-
-      setEditorSelection(range);
-
-      router.replace({
-        pathname: '/project',
-        query: {},
-      });
-    }
-  }, [router]);
 
   useEffect(() => {
     setStore({

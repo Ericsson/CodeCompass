@@ -97,9 +97,9 @@ export const FileManager = (): JSX.Element => {
       setFolderPath(storedFolderPath ?? '');
       setExpandedFileTreeNodes(storedExpandedFileTreeNodes ?? []);
 
-      if (routerQuery.projFileId) {
+      if (routerQuery.projectFileId) {
         try {
-          const initFileInfo = await getFileInfo(routerQuery.projFileId);
+          const initFileInfo = await getFileInfo(routerQuery.projectFileId);
           const children = await getChildFiles(initFileInfo?.parent as string);
           const parents = await getParents(initFileInfo?.path as string);
 
@@ -110,7 +110,7 @@ export const FileManager = (): JSX.Element => {
     };
 
     init();
-  }, [appCtx.workspaceId, routerQuery.projFileId]);
+  }, [appCtx.workspaceId, routerQuery.projectFileId]);
 
   useEffect(() => {
     if (!appCtx.projectFileId) return;
