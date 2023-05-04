@@ -32,9 +32,13 @@ RUN set -x && apt-get update -qq \
     # To switch user and exec command.
     gosu \
     tini \
+    curl \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
+
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 ARG CC_GID=960
 ARG CC_UID=960
