@@ -5,7 +5,7 @@ import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { FileName } from 'components/file-name/file-name';
 import { ThemeContext } from 'global-context/theme-context';
-import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
+import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import {
   getCppAstNodeInfoByPosition,
   getCppReferenceTypes,
@@ -37,7 +37,7 @@ type DataProps = {
   rowNum: number;
 };
 
-export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
+export const CodeBitesNode = ({ data }: NodeProps<DataProps>) => {
   const { theme } = useContext(ThemeContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);

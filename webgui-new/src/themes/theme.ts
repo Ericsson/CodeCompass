@@ -1,6 +1,7 @@
 import { blue } from '@mui/material/colors';
 import { alpha, createTheme } from '@mui/material/styles';
 import { ReactDiffViewerStylesOverride } from 'react-diff-viewer-continued/lib/styles';
+import React from 'react';
 
 declare module '@mui/material/styles' {
   export interface Theme {

@@ -1,6 +1,6 @@
 import { Button, styled } from '@mui/material';
 import { useRouter } from 'next/router';
-import { useContext } from 'react';
+import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 

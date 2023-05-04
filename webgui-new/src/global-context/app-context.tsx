@@ -1,9 +1,9 @@
-import { createContext, useEffect, useState } from 'react';
-import { AstNodeInfo, FileInfo, GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
+import React, { createContext, useEffect, useState } from 'react';
+import { GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient, getFileInfo, getLabels } from 'service/project-service';
+import { createProjectClient, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
-import { createCppClient, getCppAstNodeInfo } from 'service/cpp-service';
+import { createCppClient } from 'service/cpp-service';
 import { createCppReparseClient } from 'service/cpp-reparse-service';
 import { createMetricsClient } from 'service/metrics-service';
 import { createGitClient } from 'service/git-service';
@@ -14,6 +14,7 @@ import { useRouter } from 'next/router';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
 
+/* eslint-disable no-unused-vars */
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
@@ -91,8 +92,9 @@ export const AppContext = createContext<AppContextProps>({
   loadComplete: false,
   setLoadComplete: (_val) => {},
 });
+/* eslint-enable no-unused-vars */
 
-export const AppContextController = ({ children }: { children: JSX.Element }): JSX.Element => {
+export const AppContextController = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 
@@ -141,13 +143,8 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
   useEffect(() => {
     if (!workspaces) return;
     const { storedWorkspaceId } = getStore();
-    setWorkspaceId(storedWorkspaceId ?? (workspaces[0].id as string));
-  }, [workspaces]);
-
-  useEffect(() => {
-    if (!routerQuery.wsId) return;
-    setWorkspaceId(routerQuery.wsId);
-  }, [routerQuery.wsId]);
+    setWorkspaceId(routerQuery.workspaceId ?? storedWorkspaceId ?? (workspaces[0].id as string));
+  }, [workspaces, routerQuery.workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -180,7 +177,7 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
 
       setLabels(initLabels);
       setProjectFileId(storedProjectFileId);
-      setSearchProps(storedSearchProps ?? undefined);
+      setSearchProps(storedSearchProps);
       setMetricsGenId(storedMetricsGenId);
       setDiagramGenId(storedDiagramGenId);
       setDiagramTypeId(storedDiagramTypeId);
@@ -191,70 +188,48 @@ export const AppContextController = ({ children }: { children: JSX.Element }): J
       setGitCommitId(storedGitCommitId);
       setGitBlameInfo([]);
       setActiveAccordion(storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
-      setActiveTab(storedActiveTab ?? 0);
+      setActiveTab(storedActiveTab ?? TabName.WELCOME);
       setTreeViewOption(storedTreeViewOption ?? false);
 
       setStore({
         storedWorkspaceId: workspaceId,
       });
-    };
-    initializeApp().then(() => setLoadComplete(true));
-  }, [workspaceId]);
 
-  useEffect(() => {
-    const routerQuery = router.query as RouterQueryType;
-    if (routerQuery) {
-      if (!routerQuery.projFileId) return;
-      setProjectFileId(routerQuery.projFileId);
-      setActiveAccordion(AccordionLabel.FILE_MANAGER);
-      setActiveTab(TabName.CODE);
+      if (routerQuery.projectFileId && routerQuery.editorSelection) {
+        const selection = routerQuery.editorSelection.split('|');
+        const startLine = parseInt(selection[0]);
+        const startCol = parseInt(selection[1]);
+        const endLine = parseInt(selection[2]);
+        const endCol = parseInt(selection[3]);
 
-      if (!routerQuery.selection) return;
-      const selection = routerQuery.selection.split('|');
-      const startLine = parseInt(selection[0]);
-      const startCol = parseInt(selection[1]);
-      const endLine = parseInt(selection[2]);
-      const endCol = parseInt(selection[3]);
+        const startpos = new Position({
+          line: startLine,
+          column: startCol,
+        });
+        const endpos = new Position({
+          line: endLine,
+          column: endCol,
+        });
+        const range = new Range({
+          startpos,
+          endpos,
+        });
 
-      const startpos = new Position({
-        line: startLine,
-        column: startCol,
-      });
-      const endpos = new Position({
-        line: endLine,
-        column: endCol,
-      });
-      const range = new Range({
-        startpos,
-        endpos,
-      });
+        setActiveAccordion(AccordionLabel.FILE_MANAGER);
+        setActiveTab(TabName.CODE);
+        setProjectFileId(routerQuery.projectFileId);
+        setEditorSelection(range);
 
-      setEditorSelection(range);
-
-      router.replace({
-        pathname: '/project',
-        query: {},
-      });
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (!diagramGenId) return;
-    const init = async () => {
-      const initDiagramInfo = (await getFileInfo(diagramGenId)) ?? (await getCppAstNodeInfo(diagramGenId));
-      if (!initDiagramInfo) return;
-
-      if (initDiagramInfo instanceof FileInfo) {
-        setProjectFileId(diagramGenId);
-      } else if (initDiagramInfo instanceof AstNodeInfo) {
-        const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
-        setProjectFileId(astNodeInfo?.range?.file as string);
-        setEditorSelection(astNodeInfo?.range?.range);
-        setLanguageNodeId(diagramGenId);
+        router.replace({
+          pathname: '/project',
+          query: {},
+        });
       }
     };
-    init();
-  }, [diagramGenId]);
+    initializeApp().then(() => setLoadComplete(true));
+    // This is required so the 'router' does not need to be passed as a dependecy, because it would cause an infinite loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId]);
 
   useEffect(() => {
     setStore({

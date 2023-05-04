@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, SyntheticEvent } from 'react';
+import React, { useState, useContext, useEffect, SyntheticEvent } from 'react';
 import { CommitListFilteredResult, GitCommit, GitRepository, ReferenceTopObjectResult } from '@thrift-generated';
 import {
   getBranchList,
@@ -10,7 +10,7 @@ import {
 } from 'service/git-service';
 import { Tooltip, alpha, styled } from '@mui/material';
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
-import { ChevronRight, ExpandMore, Commit, MoreHoriz } from '@mui/icons-material';
+import { ChevronRight, ExpandMore, MoreHoriz } from '@mui/icons-material';
 import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
@@ -55,7 +55,7 @@ const Placeholder = styled('div')({
   padding: '10px',
 });
 
-export const RevisionControl = (): JSX.Element => {
+export const RevisionControl = () => {
   const appCtx = useContext(AppContext);
 
   const DISPLAYED_COMMIT_CNT: number = 15;
@@ -221,7 +221,7 @@ export const RevisionControl = (): JSX.Element => {
     commitResults: GitCommit[];
     repoId: string;
     branch: string;
-  }): JSX.Element => {
+  }) => {
     return (
       <>
         {commitResults.map((commit) => (

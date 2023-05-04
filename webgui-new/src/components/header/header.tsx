@@ -1,7 +1,7 @@
 import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
-import { KeyboardEvent, useContext, useEffect, useState } from 'react';
+import React, { KeyboardEvent, useContext, useEffect, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypeOptions } from 'enums/search-enum';
 import { enumToArray } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
@@ -44,7 +44,7 @@ const SettingsContainer = styled('div')({
   gap: '1rem',
 });
 
-export const Header = (): JSX.Element => {
+export const Header = () => {
   const appCtx = useContext(AppContext);
   const { theme, setTheme } = useContext(ThemeContext);
 

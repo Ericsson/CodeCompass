@@ -1,7 +1,7 @@
 import { styled } from '@mui/material';
 import { AstNodeInfo } from '@thrift-generated';
 import { CodeBitesNode } from './codebites-node';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -43,7 +43,7 @@ const nodeTypes: NodeTypes = {
   codeBitesNode: CodeBitesNode,
 };
 
-export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }): JSX.Element => {
+export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }) => {
   const [elements, setElements] = useState<CodeBitesElement[]>([{ astNodeInfo, rowNum: 1 }]);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
