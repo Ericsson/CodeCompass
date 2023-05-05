@@ -1,7 +1,7 @@
 import React from 'react';
 import * as SC from './styled-components';
 
-export const Welcome = () => {
+export const Welcome = (): JSX.Element => {
   return (
     <SC.OuterContainer>
       <SC.StyledHeading1>{'CodeCompass'}</SC.StyledHeading1>

@@ -39,7 +39,7 @@ export const getParents = async (filePath: string) => {
   const parents: string[] = [];
   let currentPath = filePath;
   while (currentPath) {
-    let parent = await client.getFileInfoByPath(currentPath);
+    const parent = await client.getFileInfoByPath(currentPath);
     parents.push(parent.id as string);
     const pathAsArray = currentPath.split('/');
     pathAsArray.pop();

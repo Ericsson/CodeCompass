@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
 
-export const ProjectSelect = () => {
+export const ProjectSelect = (): JSX.Element => {
   const router = useRouter();
 
   const appCtx = useContext(AppContext);

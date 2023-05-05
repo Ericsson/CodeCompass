@@ -28,7 +28,7 @@ const TabPanel = (props: TabPanelProps) => {
   );
 };
 
-const Project = () => {
+const Project = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   return appCtx.loadComplete ? (

@@ -31,7 +31,7 @@ export const EditorContextMenu = ({
       mouseY: number;
     } | null>
   >;
-}) => {
+}): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const docsContainerRef = useRef<HTMLDivElement | null>(null);

@@ -10,7 +10,7 @@ import { RevisionControl } from 'components/revision-control/revision-control';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
 
-export const AccordionMenu = () => {
+export const AccordionMenu = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   return (

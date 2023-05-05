@@ -5,7 +5,7 @@ import { removeStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from 'themes/index-styles';
 
-const Home = () => {
+const Home = (): JSX.Element => {
   const router = useRouter();
   const appCtx = useContext(AppContext);
 

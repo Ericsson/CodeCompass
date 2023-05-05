@@ -14,7 +14,7 @@ import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
 
-export const Header = () => {
+export const Header = (): JSX.Element => {
   const appCtx = useContext(AppContext);
   const { theme, setTheme } = useContext(ThemeContext);
 
@@ -129,7 +129,7 @@ export const Header = () => {
   const createQueryString = (queryString: string): string => {
     if (!searchLanguage || !selectedSearchTypeOptions) return '';
 
-    let modifiedQueryString: string = '';
+    let modifiedQueryString = '';
     const textSearch = searchType?.name === SearchOptions.TEXT.toString();
     const definitionSearch = searchType?.name === SearchOptions.DEFINITION.toString();
     const allTypesSelected = searchTypeOptions.every((t) => selectedSearchTypeOptions.includes(t));

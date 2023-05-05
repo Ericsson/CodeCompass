@@ -4,6 +4,8 @@ import { darkTheme, lightTheme } from 'themes/theme';
 import { getStore, setStore } from 'utils/store';
 
 /* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 type ThemeContextType = {
   theme: 'light' | 'dark';
   setTheme: (_val: 'light' | 'dark') => void;
@@ -14,8 +16,10 @@ export const ThemeContext = createContext<ThemeContextType>({
   setTheme: (_val) => {},
 });
 /* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-empty-function */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
-export const ThemeContextController = ({ children }: { children: React.ReactNode }) => {
+export const ThemeContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const [theme, setTheme] = useState<'light' | 'dark' | undefined>(undefined);
 
   useEffect(() => {

@@ -26,7 +26,7 @@ export const FileContextMenu = ({
     } | null>
   >;
   fileInfo: FileInfo;
-}) => {
+}): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());

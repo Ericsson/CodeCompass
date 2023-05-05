@@ -20,7 +20,7 @@ import { getFileFolderPath } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
 
-export const FileManager = () => {
+export const FileManager = (): JSX.Element => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 
