@@ -1,5 +1,5 @@
 import { Code, DriveFolderUpload } from '@mui/icons-material';
-import { alpha, styled } from '@mui/material';
+import { alpha } from '@mui/material';
 import React, { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
 import { FileInfo, Position, Range } from '@thrift-generated';
 import {
@@ -14,56 +14,11 @@ import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 import { RouterQueryType, TreeNode } from 'utils/types';
-import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
 import { getStore, setStore } from 'utils/store';
 import { useRouter } from 'next/router';
 import { getFileFolderPath } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
-
-const StyledDiv = styled('div')({});
-
-const FolderName = styled('div')(({ theme }) => ({
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-  padding: '5px 10px',
-  fontSize: '0.85rem',
-  width: '100%',
-}));
-
-const FolderUp = styled('div')(({ theme }) => ({
-  padding: '5px',
-  display: 'flex',
-  alignItems: 'center',
-  fontSize: '0.8rem',
-  gap: '0.5rem',
-  cursor: 'pointer',
-  ':hover': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
-}));
-
-const FileLabel = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  cursor: 'pointer',
-  ':hover': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
-}));
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-}));
+import * as SC from './styled-components';
 
 export const FileManager = () => {
   const router = useRouter();
@@ -297,9 +252,9 @@ export const FileManager = () => {
               {renderFileTree(childNode)}
             </Directory>
           ) : (
-            <StyledDiv key={childNode.info.id} sx={{ paddingLeft: '5px' }}>
+            <SC.StyledDiv key={childNode.info.id} sx={{ paddingLeft: '5px' }}>
               <File fInfo={childNode.info} />
-            </StyledDiv>
+            </SC.StyledDiv>
           );
         })
       : [];
@@ -307,23 +262,23 @@ export const FileManager = () => {
 
   const Directory = ({ fInfo, children }: { fInfo: FileInfo; children?: React.ReactNode[] }) => {
     return (
-      <StyledTreeItem
+      <SC.StyledTreeItem
         nodeId={fInfo.id as string}
         label={
-          <StyledDiv onContextMenu={(e) => handleContextMenu(e, fInfo)} sx={{ fontSize: '0.8rem' }}>
+          <SC.StyledDiv onContextMenu={(e) => handleContextMenu(e, fInfo)} sx={{ fontSize: '0.8rem' }}>
             {fInfo.name}
-          </StyledDiv>
+          </SC.StyledDiv>
         }
         onClick={() => handleFileClick(fInfo)}
       >
         {children}
-      </StyledTreeItem>
+      </SC.StyledTreeItem>
     );
   };
 
   const File = ({ fInfo }: { fInfo: FileInfo }) => {
     return (
-      <FileLabel
+      <SC.FileLabel
         onClick={() => handleFileClick(fInfo)}
         onContextMenu={(e) => handleContextMenu(e, fInfo)}
         sx={{
@@ -332,7 +287,7 @@ export const FileManager = () => {
         }}
       >
         {fInfo.isDirectory ? <FolderIcon /> : <FileIcon fileName={fInfo.name as string} />}
-        <StyledDiv
+        <SC.StyledDiv
           sx={{
             fontSize: '0.8rem',
             color: (theme) =>
@@ -344,15 +299,15 @@ export const FileManager = () => {
           }}
         >
           {fInfo.name}
-        </StyledDiv>
-      </FileLabel>
+        </SC.StyledDiv>
+      </SC.FileLabel>
     );
   };
 
   return (
     <>
       {appCtx.treeViewOption ? (
-        <StyledTreeView
+        <SC.StyledTreeView
           defaultCollapseIcon={<FolderIcon open />}
           defaultExpandIcon={<FolderIcon />}
           defaultEndIcon={<FolderIcon />}
@@ -370,34 +325,34 @@ export const FileManager = () => {
                 )
               )
             : ''}
-        </StyledTreeView>
+        </SC.StyledTreeView>
       ) : (
         <>
           {folderPath !== undefined && folderPath === '' ? (
-            <FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
+            <SC.FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
               <Code sx={{ width: '20px', height: '20px' }} />
-              <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
-            </FileLabel>
+              <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</SC.StyledDiv>
+            </SC.FileLabel>
           ) : (
             <>
-              <FolderName>{folderPath === '/' ? '/' : '../' + folderPath?.split('/').reverse()[0]}</FolderName>
-              <FileLabel onClick={() => jumpToFolder('root')} sx={{ padding: '5px' }}>
+              <SC.FolderName>{folderPath === '/' ? '/' : '../' + folderPath?.split('/').reverse()[0]}</SC.FolderName>
+              <SC.FileLabel onClick={() => jumpToFolder('root')} sx={{ padding: '5px' }}>
                 <Code sx={{ width: '20px', height: '20px' }} />
-                <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to root'}</StyledDiv>
-              </FileLabel>
-              <FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
+                <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to root'}</SC.StyledDiv>
+              </SC.FileLabel>
+              <SC.FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
                 <Code sx={{ width: '20px', height: '20px' }} />
-                <StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</StyledDiv>
-              </FileLabel>
-              <FolderUp onClick={() => navigateBack()}>
+                <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</SC.StyledDiv>
+              </SC.FileLabel>
+              <SC.FolderUp onClick={() => navigateBack()}>
                 <DriveFolderUpload sx={{ width: '20px', height: '20px' }} />
                 <div>{'..'}</div>
-              </FolderUp>
+              </SC.FolderUp>
             </>
           )}
-          <StyledDiv sx={{ padding: '5px', fontSize: '0.85rem' }}>
+          <SC.StyledDiv sx={{ padding: '5px', fontSize: '0.85rem' }}>
             {files ? files.map((file) => <File key={file.id} fInfo={file} />) : ''}
-          </StyledDiv>
+          </SC.StyledDiv>
         </>
       )}
       <FileContextMenu

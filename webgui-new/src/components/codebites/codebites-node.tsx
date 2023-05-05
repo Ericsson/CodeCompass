@@ -1,5 +1,4 @@
 import { cpp } from '@codemirror/lang-cpp';
-import { styled } from '@mui/material';
 import { AstNodeInfo, FileInfo } from '@thrift-generated';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
@@ -14,16 +13,7 @@ import {
 } from 'service/cpp-service';
 import { getFileInfo } from 'service/project-service';
 import { NodeProps, Handle, Position } from 'reactflow';
-
-const OuterContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '500px',
-  height: '349px',
-  border: `1px solid ${theme.colors?.primary}`,
-}));
+import * as SC from './styled-components';
 
 type CodeBitesElement = {
   astNodeInfo: AstNodeInfo;
@@ -91,7 +81,7 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>) => {
   };
 
   return (
-    <OuterContainer>
+    <SC.NodeOuterContainer>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
       <FileName
@@ -112,6 +102,6 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>) => {
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleClick()}
       />
-    </OuterContainer>
+    </SC.NodeOuterContainer>
   );
 };

@@ -1,5 +1,4 @@
 import {
-  Breadcrumbs,
   Button,
   Checkbox,
   FormControl,
@@ -8,7 +7,6 @@ import {
   MenuItem,
   OutlinedInput,
   Select,
-  styled,
   Tooltip,
 } from '@mui/material';
 import { FileName } from 'components/file-name/file-name';
@@ -18,6 +16,7 @@ import { FileInfo, MetricsType, MetricsTypeName } from '@thrift-generated';
 import { Treemap } from 'recharts';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo, getFileInfoByPath } from 'service/project-service';
+import * as SC from './styled-components';
 
 type RespType = {
   [key: string]: {
@@ -43,40 +42,6 @@ type CustomTreeNodeProps = {
   name?: string;
   children?: CustomTreeNodeProps[];
 };
-
-const StyledDiv = styled('div')({});
-
-const StyledRect = styled('rect')({});
-
-const OuterContainer = styled('div')({
-  width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 49px)',
-  overflow: 'scroll',
-});
-
-const MetricsOptionsContainer = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '10px',
-});
-
-const MetricsContainer = styled('div')({
-  overflow: 'scroll',
-  padding: '10px',
-});
-
-const StyledBreadcrumbs = styled(Breadcrumbs)(({ theme }) => ({
-  padding: '5px',
-  margin: '10px',
-  border: `1px solid ${theme.colors?.primary}`,
-  borderRadius: '5px',
-  width: 'max-content',
-}));
-
-const Placeholder = styled('div')({
-  padding: '10px',
-});
 
 const CustomizedContent = (
   props: CustomTreeNodeProps & {
@@ -127,7 +92,7 @@ const CustomizedContent = (
   return depth === 1 ? (
     <Tooltip title={size}>
       <g onClick={() => updateTreemap()}>
-        <StyledRect
+        <SC.StyledRect
           x={x}
           y={y}
           width={width}
@@ -261,8 +226,8 @@ export const Metrics = () => {
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
       />
-      <OuterContainer>
-        <MetricsOptionsContainer>
+      <SC.OuterContainer>
+        <SC.MetricsOptionsContainer>
           <FormControl sx={{ width: 300 }}>
             <InputLabel>{'File type'}</InputLabel>
             <Select
@@ -304,10 +269,10 @@ export const Metrics = () => {
             </Select>
           </FormControl>
           <Button onClick={() => generateMetrics()}>{'Draw metrics'}</Button>
-        </MetricsOptionsContainer>
-        <StyledBreadcrumbs>
+        </SC.MetricsOptionsContainer>
+        <SC.StyledBreadcrumbs>
           {fileInfo.path?.split('/').map((p, idx) => (
-            <StyledDiv
+            <SC.StyledDiv
               key={idx}
               sx={{
                 cursor: idx !== (fileInfo.path?.split('/').length as number) - 1 && idx !== 1 ? 'pointer' : '',
@@ -328,15 +293,15 @@ export const Metrics = () => {
               }}
             >
               <div>{p}</div>
-            </StyledDiv>
+            </SC.StyledDiv>
           ))}
-        </StyledBreadcrumbs>
-        <MetricsContainer>{renderTreeMap}</MetricsContainer>
-      </OuterContainer>
+        </SC.StyledBreadcrumbs>
+        <SC.MetricsContainer>{renderTreeMap}</SC.MetricsContainer>
+      </SC.OuterContainer>
     </>
   ) : (
-    <Placeholder>
+    <SC.Placeholder>
       {'No directory selected. Right click on a directory in the file manager to generate Metrics.'}
-    </Placeholder>
+    </SC.Placeholder>
   );
 };

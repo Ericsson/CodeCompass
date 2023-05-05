@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
-import { Box, IconButton, Menu, MenuItem, Modal, Tooltip, styled } from '@mui/material';
+import { IconButton, Menu, MenuItem, Modal, Tooltip } from '@mui/material';
 import { ChevronRight, Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import {
@@ -15,41 +15,7 @@ import { updateUrlWithParams } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { getFileInfo } from 'service/project-service';
-
-const AstNodeInfoHeader = styled('div')({
-  fontWeight: 'bold',
-});
-
-const ModalHeader = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-});
-
-const ModalContent = styled('div')({
-  padding: '10px',
-  width: '100%',
-  overflow: 'scroll',
-});
-
-const ModalBox = styled(Box)({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-});
-
-const ModalContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '10px',
-  width: '80vw',
-  height: '80vh',
-  backgroundColor: theme.backgroundColors?.primary,
-}));
+import * as SC from './styled-components';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -259,20 +225,20 @@ export const EditorContextMenu = ({
         )}
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
-        <ModalBox>
-          <ModalContainer>
-            <ModalHeader>
-              <AstNodeInfoHeader>{`${astNodeInfo?.astNodeType}: ${astNodeInfo?.astNodeValue}`}</AstNodeInfoHeader>
+        <SC.ModalBox>
+          <SC.ModalContainer>
+            <SC.ModalHeader>
+              <SC.AstNodeInfoHeader>{`${astNodeInfo?.astNodeType}: ${astNodeInfo?.astNodeValue}`}</SC.AstNodeInfoHeader>
               <IconButton onClick={() => closeModal()}>
                 <Close />
               </IconButton>
-            </ModalHeader>
-            <ModalContent>
+            </SC.ModalHeader>
+            <SC.ModalContent>
               <div ref={docsContainerRef} />
               <div ref={astHTMLContainerRef} />
-            </ModalContent>
-          </ModalContainer>
-        </ModalBox>
+            </SC.ModalContent>
+          </SC.ModalContainer>
+        </SC.ModalBox>
       </Modal>
     </>
   ) : (

@@ -1,27 +1,9 @@
-import { Button, styled } from '@mui/material';
+import { Button } from '@mui/material';
 import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
-
-const OuterContainer = styled('div')({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginTop: '150px',
-});
-
-const InnerContainer = styled('div')({
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-});
-
-const Title = styled('div')({
-  fontSize: '1.2rem',
-  marginBottom: '10px',
-});
+import * as SC from 'themes/index-styles';
 
 const Home = () => {
   const router = useRouter();
@@ -57,9 +39,9 @@ const Home = () => {
   };
 
   return (
-    <OuterContainer>
-      <InnerContainer>
-        <Title>{'Click on a project to start using CodeCompass!'}</Title>
+    <SC.OuterContainer>
+      <SC.InnerContainer>
+        <SC.Title>{'Click on a project to start using CodeCompass!'}</SC.Title>
         {appCtx.workspaces
           ? appCtx.workspaces.map((ws) => (
               <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
@@ -67,8 +49,8 @@ const Home = () => {
               </Button>
             ))
           : ''}
-      </InnerContainer>
-    </OuterContainer>
+      </SC.InnerContainer>
+    </SC.OuterContainer>
   );
 };
 

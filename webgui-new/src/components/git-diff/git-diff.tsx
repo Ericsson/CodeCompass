@@ -1,6 +1,5 @@
 import { TextSnippet } from '@mui/icons-material';
-import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
-import { ToggleButton, ToggleButtonGroup, alpha, styled } from '@mui/material';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
@@ -11,71 +10,7 @@ import { AppContext } from 'global-context/app-context';
 import { diffViewerTheme } from 'themes/theme';
 import { blue, red } from '@mui/material/colors';
 import { FileIcon } from 'components/custom-icon/custom-icon';
-
-const StyledSpan = styled('span')({});
-
-const CommitSummary = styled('div')(({ theme }) => ({
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-  fontSize: '0.85rem',
-  height: '87px',
-  overflow: 'scroll',
-
-  '& > div:nth-of-type(1)': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-    padding: '10px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-  },
-
-  '& > div:nth-of-type(2)': {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px',
-  },
-}));
-
-const FileNameContainer = styled('div')({
-  padding: '10px',
-  fontSize: '0.85rem',
-});
-
-const ChangeLine = styled('div')(({ theme }) => ({
-  padding: '10px',
-  color: theme.colors?.primary,
-  backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.2),
-}));
-
-const DiffViewOptions = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  height: '60px',
-  padding: '10px',
-});
-
-const DiffViewContainer = styled('div')({
-  width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 87px - 60px)',
-  overflow: 'scroll',
-});
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-}));
-
-const Placeholder = styled('div')({
-  padding: '10px',
-});
+import * as SC from './styled-components';
 
 export const GitDiff = () => {
   const appCtx = useContext(AppContext);
@@ -182,7 +117,7 @@ export const GitDiff = () => {
 
   return commit && commit.repoId ? (
     <>
-      <CommitSummary>
+      <SC.CommitSummary>
         <div>{commit.message}</div>
         <div>
           <div>
@@ -192,16 +127,16 @@ export const GitDiff = () => {
           <div>
             <span>{`${commit.parentOids?.length} parent(s)`}</span>{' '}
             {commit.parentOids?.map((id) => (
-              <StyledSpan key={id} sx={{ color: blue[800] }}>
+              <SC.StyledSpan key={id} sx={{ color: blue[800] }}>
                 {`#${id.substring(0, 8)} `}
-              </StyledSpan>
+              </SC.StyledSpan>
             ))}
             <span>{`commit `}</span>
-            <StyledSpan sx={{ color: red[800] }}>{`#${commit.oid?.substring(0, 8)}`}</StyledSpan>
+            <SC.StyledSpan sx={{ color: red[800] }}>{`#${commit.oid?.substring(0, 8)}`}</SC.StyledSpan>
           </div>
         </div>
-      </CommitSummary>
-      <DiffViewOptions>
+      </SC.CommitSummary>
+      <SC.DiffViewOptions>
         <ToggleButtonGroup
           color={'primary'}
           value={splitView ? 'Side-by-side' : 'Inline'}
@@ -215,9 +150,9 @@ export const GitDiff = () => {
             {'Side-by-side'}
           </ToggleButton>
         </ToggleButtonGroup>
-      </DiffViewOptions>
-      <DiffViewContainer>
-        <StyledTreeView
+      </SC.DiffViewOptions>
+      <SC.DiffViewContainer>
+        <SC.StyledTreeView
           defaultCollapseIcon={<TextSnippet />}
           defaultExpandIcon={<TextSnippet />}
           expanded={expandedFiles}
@@ -233,15 +168,15 @@ export const GitDiff = () => {
           }}
         >
           {Array.from(oldValues.keys()).map((fileName, idx) => (
-            <StyledTreeItem
+            <SC.StyledTreeItem
               key={idx}
               nodeId={`${idx}`}
-              label={<FileNameContainer>{fileName}</FileNameContainer>}
+              label={<SC.FileNameContainer>{fileName}</SC.FileNameContainer>}
               icon={<FileIcon fileName={fileName} />}
             >
               {Array.from(oldValues.get(fileName)?.keys() ?? []).map((change, cIdx) => (
                 <div key={cIdx}>
-                  <ChangeLine>{change}</ChangeLine>
+                  <SC.ChangeLine>{change}</SC.ChangeLine>
                   <ReactDiffViewer
                     styles={diffViewerTheme}
                     oldValue={oldValues.get(fileName)?.get(change)}
@@ -252,12 +187,12 @@ export const GitDiff = () => {
                   />
                 </div>
               ))}
-            </StyledTreeItem>
+            </SC.StyledTreeItem>
           ))}
-        </StyledTreeView>
-      </DiffViewContainer>
+        </SC.StyledTreeView>
+      </SC.DiffViewContainer>
     </>
   ) : (
-    <Placeholder>{'No commit selected or commit information could not be loaded.'}</Placeholder>
+    <SC.Placeholder>{'No commit selected or commit information could not be loaded.'}</SC.Placeholder>
   );
 };

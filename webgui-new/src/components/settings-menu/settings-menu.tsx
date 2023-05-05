@@ -6,13 +6,11 @@ import {
   FormLabel,
   IconButton,
   InputLabel,
-  Menu,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   Tooltip,
-  styled,
 } from '@mui/material';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { SearchMainLanguages, SearchOptions, SearchOtherLanguages, SearchTypeOptions } from 'enums/search-enum';
@@ -20,39 +18,7 @@ import { enumToArray, removeFromArray } from 'utils/utils';
 import { Info, Close } from '@mui/icons-material';
 import { getStore, setStore } from 'utils/store';
 import { SearchType } from '@thrift-generated';
-
-const Container = styled('div')(({ theme }) => ({
-  padding: '10px',
-  border: `1px solid ${theme.colors?.primary}`,
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  borderRadius: '5px',
-}));
-
-const StyledMenu = styled(Menu)({
-  '& ul': {
-    padding: '0',
-  },
-});
-
-const RadioWithInfo = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-});
-
-const ExpressionSearchSettings = styled('div')({
-  display: 'flex',
-  justifyContent: 'space-between',
-  gap: '2rem',
-});
-
-const OtherLanguagesContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  marginTop: '10px',
-  paddingTop: '20px',
-  borderTop: `1px solid ${theme.colors?.primary}`,
-}));
+import * as SC from './styled-components';
 
 export const SettingsMenu = ({
   anchorEl,
@@ -147,7 +113,7 @@ export const SettingsMenu = ({
               />
             );
           })}
-          <RadioWithInfo>
+          <SC.RadioWithInfo>
             <FormControlLabel
               disabled={searchLanguagesDisabled}
               onClick={() => {
@@ -168,8 +134,8 @@ export const SettingsMenu = ({
             >
               <Info />
             </Tooltip>
-          </RadioWithInfo>
-          <OtherLanguagesContainer>
+          </SC.RadioWithInfo>
+          <SC.OtherLanguagesContainer>
             <FormControlLabel
               disabled={searchLanguagesDisabled}
               onClick={() => {
@@ -217,7 +183,7 @@ export const SettingsMenu = ({
                 })}
               </Select>
             </FormControl>
-          </OtherLanguagesContainer>
+          </SC.OtherLanguagesContainer>
         </RadioGroup>
       </div>
     );
@@ -269,19 +235,19 @@ export const SettingsMenu = ({
   };
 
   return (
-    <StyledMenu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-      <Container>
+    <SC.StyledMenu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <SC.Container>
         <FormControl>
-          <ExpressionSearchSettings>
+          <SC.ExpressionSearchSettings>
             <Options />
             <Languages />
             <Types />
-          </ExpressionSearchSettings>
+          </SC.ExpressionSearchSettings>
         </FormControl>
         <IconButton onClick={() => setAnchorEl(null)}>
           <Close />
         </IconButton>
-      </Container>
-    </StyledMenu>
+      </SC.Container>
+    </SC.StyledMenu>
   );
 };

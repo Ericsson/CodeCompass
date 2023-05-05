@@ -1,5 +1,4 @@
-import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
-import { alpha, Box, CircularProgress, styled } from '@mui/material';
+import { alpha, Box, CircularProgress } from '@mui/material';
 import { Code } from '@mui/icons-material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
 import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
@@ -15,41 +14,7 @@ import { FileIcon, RefIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
-
-const StyledDiv = styled('div')({});
-const StyledSpan = styled('span')({});
-
-const OuterContainer = styled('div')({
-  padding: '10px',
-  fontSize: '0.85rem',
-  width: 'max-content',
-});
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-}));
-
-const Label = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  marginLeft: '5px',
-  paddingLeft: '20px',
-  cursor: 'pointer',
-  ':hover': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
-}));
+import * as SC from './styled-components';
 
 export const InfoTree = () => {
   const appCtx = useContext(AppContext);
@@ -114,10 +79,10 @@ export const InfoTree = () => {
 
   return appCtx.languageNodeId && astNodeInfo ? (
     loadComplete ? (
-      <OuterContainer>
-        <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
+      <SC.OuterContainer>
+        <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
           <RefIcon refName={astNodeInfo.symbolType as string} />
-          <StyledDiv
+          <SC.StyledDiv
             onClick={() => jumpToRef(astNodeInfo)}
             sx={{
               fontWeight: 'bold',
@@ -126,19 +91,19 @@ export const InfoTree = () => {
                 backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
               },
             }}
-          >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</StyledDiv>
-        </StyledDiv>
-        <StyledDiv>
+          >{`${astNodeInfo.symbolType}: ${astNodeInfo.astNodeValue}`}</SC.StyledDiv>
+        </SC.StyledDiv>
+        <SC.StyledDiv>
           {Array.from(properties.keys()).map((name, idx) => (
-            <StyledDiv key={idx} sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <SC.StyledDiv key={idx} sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <RefIcon refName={name} />
-              <StyledDiv>
-                <StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</StyledSpan> {properties.get(name)}
-              </StyledDiv>
-            </StyledDiv>
+              <SC.StyledDiv>
+                <SC.StyledSpan sx={{ textDecoration: 'underline' }}>{name}:</SC.StyledSpan> {properties.get(name)}
+              </SC.StyledDiv>
+            </SC.StyledDiv>
           ))}
-        </StyledDiv>
-        <StyledTreeView
+        </SC.StyledDiv>
+        <SC.StyledTreeView
           defaultExpandIcon={<ChevronRight />}
           defaultEndIcon={<ChevronRight />}
           defaultCollapseIcon={<ExpandMore />}
@@ -158,58 +123,58 @@ export const InfoTree = () => {
           {Array.from(refTypes.keys())
             .filter((type) => refCounts.get(type) !== 0)
             .map((type, refTypeIdx) => (
-              <StyledTreeItem
+              <SC.StyledTreeItem
                 nodeId={`${refTypeIdx}`}
                 key={refTypeIdx}
                 icon={<RefIcon refName={type} />}
                 label={
-                  <StyledDiv sx={{ fontSize: '0.85rem' }}>
+                  <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
                     {type} ({refCounts.get(type)})
-                  </StyledDiv>
+                  </SC.StyledDiv>
                 }
               >
                 {fileUsages.get(type)?.length
                   ? fileUsages.get(type)?.map((fileInfo) => (
-                      <StyledTreeItem
+                      <SC.StyledTreeItem
                         nodeId={`${fileInfo.id}:${refTypeIdx}`}
                         key={fileInfo.id}
                         icon={<FileIcon fileName={fileInfo.name as string} />}
                         label={
-                          <StyledDiv sx={{ fontSize: '0.85rem' }}>
+                          <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
                             {fileInfo.name} (
                             {refs.get(type)?.filter((aInfo) => aInfo.range?.file === fileInfo.id).length})
-                          </StyledDiv>
+                          </SC.StyledDiv>
                         }
                       >
                         {refs
                           .get(type)
                           ?.filter((aInfo) => aInfo.range?.file === fileInfo.id)
                           .map((aInfo) => (
-                            <Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
+                            <SC.Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
                               <Code sx={{ width: '20px', height: '20px' }} />
-                              <StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</StyledDiv>
-                            </Label>
+                              <SC.StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</SC.StyledDiv>
+                            </SC.Label>
                           ))}
-                      </StyledTreeItem>
+                      </SC.StyledTreeItem>
                     ))
                   : refs.get(type)?.map((aInfo) => (
-                      <Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
+                      <SC.Label key={aInfo.id} onClick={() => jumpToRef(aInfo)}>
                         <Code sx={{ width: '20px', height: '20px' }} />
-                        <StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</StyledDiv>
-                      </Label>
+                        <SC.StyledDiv>{`${aInfo.range?.range?.startpos?.line}:${aInfo.range?.range?.startpos?.column}: ${aInfo.astNodeValue}`}</SC.StyledDiv>
+                      </SC.Label>
                     ))}
-              </StyledTreeItem>
+              </SC.StyledTreeItem>
             ))}
-        </StyledTreeView>
-      </OuterContainer>
+        </SC.StyledTreeView>
+      </SC.OuterContainer>
     ) : (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '100px' }}>
         <CircularProgress />
       </Box>
     )
   ) : (
-    <StyledDiv sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
+    <SC.StyledDiv sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
       {'No node selected'}
-    </StyledDiv>
+    </SC.StyledDiv>
   );
 };

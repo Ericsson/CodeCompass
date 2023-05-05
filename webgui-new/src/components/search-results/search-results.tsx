@@ -1,6 +1,5 @@
 import { ChevronLeft, ChevronRight, Code } from '@mui/icons-material';
-import { TreeItem, treeItemClasses, TreeView } from '@mui/lab';
-import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select, styled } from '@mui/material';
+import { alpha, FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material';
 import { FileInfo, FileSearchResult, LineMatch, SearchResult, SearchResultEntry } from '@thrift-generated';
 import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
@@ -10,56 +9,7 @@ import { getSearchResultCount, getSearchResults } from 'service/search-service';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { FileNode } from 'utils/types';
 import { getFileFolderPath } from 'utils/utils';
-
-const StyledDiv = styled('div')({});
-
-const IconLabel = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '5px',
-  paddingLeft: '15px',
-  cursor: 'pointer',
-  ':hover': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
-}));
-
-const FileLine = styled('div')({
-  fontSize: '0.85rem',
-  marginTop: '3px',
-});
-
-const PaginationContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '15px',
-  margin: '10px',
-  height: '50px',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-}));
-
-const ResultsContainer = styled('div')({
-  height: 'calc(100vh - 81px - 70px - 4 * 48px)',
-  overflow: 'scroll',
-});
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-}));
-
-const Placeholder = styled('div')({
-  padding: '10px',
-});
+import * as SC from './styled-components';
 
 export const SearchResults = () => {
   const appCtx = useContext(AppContext);
@@ -246,7 +196,7 @@ export const SearchResults = () => {
 
   return (
     <>
-      <PaginationContainer>
+      <SC.PaginationContainer>
         <FormControl>
           <InputLabel>{'Size'}</InputLabel>
           <Select
@@ -269,7 +219,7 @@ export const SearchResults = () => {
         <div>{`${Math.ceil(searchStart / 10 / (searchSize / 10)) + 1} of ${Math.ceil(
           (searchResultCount ?? 0) / searchSize
         )}`}</div>
-        <StyledDiv>
+        <SC.StyledDiv>
           <IconButton onClick={() => updatePageResults('left')} disabled={searchStart === 0}>
             <ChevronLeft />
           </IconButton>
@@ -282,26 +232,26 @@ export const SearchResults = () => {
           >
             <ChevronRight />
           </IconButton>
-        </StyledDiv>
-      </PaginationContainer>
-      <ResultsContainer>
+        </SC.StyledDiv>
+      </SC.PaginationContainer>
+      <SC.ResultsContainer>
         {appCtx.searchProps && searchResult?.results?.length ? (
-          <StyledTreeView
+          <SC.StyledTreeView
             defaultCollapseIcon={<FolderIcon open />}
             defaultExpandIcon={<FolderIcon />}
             expanded={expandedPathNodes ?? []}
             onNodeSelect={handleDirNodeSelect()}
             sx={{ width: 'fit-content' }}
           >
-            <StyledDiv>
-              <StyledDiv>
+            <SC.StyledDiv>
+              <SC.StyledDiv>
                 {resultPaths.map((path, pathNodeIdx) => {
                   if (!searchResult || !searchResult.results) return;
                   return (
                     <div key={pathNodeIdx}>
-                      <StyledTreeItem
+                      <SC.StyledTreeItem
                         nodeId={`${pathNodeIdx}`}
-                        label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</StyledDiv>}
+                        label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{path}</SC.StyledDiv>}
                         sx={{ marginTop: '3px' }}
                       >
                         {!fileSearch
@@ -310,7 +260,7 @@ export const SearchResults = () => {
                               .map((entry, fileNodeIdx) => {
                                 return (
                                   <div key={fileNodeIdx}>
-                                    <StyledTreeView
+                                    <SC.StyledTreeView
                                       defaultCollapseIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       defaultExpandIcon={<FileIcon fileName={entry.finfo?.name as string} />}
                                       expanded={
@@ -320,10 +270,10 @@ export const SearchResults = () => {
                                       }
                                       onNodeSelect={handleFileNodeSelect(pathNodeIdx.toString())}
                                     >
-                                      <StyledTreeItem
+                                      <SC.StyledTreeItem
                                         nodeId={`${entry.finfo?.id as string}`}
                                         label={
-                                          <StyledDiv
+                                          <SC.StyledDiv
                                             sx={{
                                               fontSize: '0.85rem',
                                               marginTop: '3px',
@@ -337,12 +287,12 @@ export const SearchResults = () => {
                                             }}
                                           >
                                             {entry.finfo?.name}
-                                          </StyledDiv>
+                                          </SC.StyledDiv>
                                         }
                                       >
                                         {entry.matchingLines?.map((line, idx) => {
                                           return (
-                                            <IconLabel
+                                            <SC.IconLabel
                                               key={idx}
                                               sx={{
                                                 backgroundColor: (theme) =>
@@ -359,19 +309,19 @@ export const SearchResults = () => {
                                               }
                                             >
                                               <Code />
-                                              <FileLine
+                                              <SC.FileLine
                                                 sx={{
                                                   fontSize: '0.85rem',
                                                   marginTop: '3px',
                                                 }}
                                               >
                                                 {line.text}
-                                              </FileLine>
-                                            </IconLabel>
+                                              </SC.FileLine>
+                                            </SC.IconLabel>
                                           );
                                         })}
-                                      </StyledTreeItem>
-                                    </StyledTreeView>
+                                      </SC.StyledTreeItem>
+                                    </SC.StyledTreeView>
                                   </div>
                                 );
                               })
@@ -379,7 +329,7 @@ export const SearchResults = () => {
                               ?.filter((result) => getFileFolderPath(result?.path) === path)
                               .map((entry, fileNodeIdx) => {
                                 return (
-                                  <IconLabel
+                                  <SC.IconLabel
                                     key={fileNodeIdx}
                                     sx={{
                                       backgroundColor: (theme) =>
@@ -390,7 +340,7 @@ export const SearchResults = () => {
                                     onClick={() => handleFileLineClick(entry)}
                                   >
                                     <FileIcon fileName={entry.name as string} />
-                                    <FileLine
+                                    <SC.FileLine
                                       sx={{
                                         color: (theme) =>
                                           entry.parseStatus === 3
@@ -401,21 +351,21 @@ export const SearchResults = () => {
                                       }}
                                     >
                                       {entry.name}
-                                    </FileLine>
-                                  </IconLabel>
+                                    </SC.FileLine>
+                                  </SC.IconLabel>
                                 );
                               })}
-                      </StyledTreeItem>
+                      </SC.StyledTreeItem>
                     </div>
                   );
                 })}
-              </StyledDiv>
-            </StyledDiv>
-          </StyledTreeView>
+              </SC.StyledDiv>
+            </SC.StyledDiv>
+          </SC.StyledTreeView>
         ) : (
-          <Placeholder>{'No results'}</Placeholder>
+          <SC.Placeholder>{'No results'}</SC.Placeholder>
         )}
-      </ResultsContainer>
+      </SC.ResultsContainer>
     </>
   );
 };

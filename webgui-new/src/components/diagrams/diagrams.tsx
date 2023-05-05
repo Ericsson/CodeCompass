@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Modal, Tooltip, styled } from '@mui/material';
+import { Button, IconButton, Modal, Tooltip } from '@mui/material';
 import { ZoomIn, ZoomOut } from '@mui/icons-material';
 import { FileName } from 'components/file-name/file-name';
 import React, { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
@@ -16,68 +16,7 @@ import { FileInfo, AstNodeInfo } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
 import { CodeBites } from 'components/codebites/codebites';
-
-const DiagramLegendContainer = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '10px',
-});
-
-const DiagramContainer = styled('div')({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  overflow: 'scroll',
-  width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 49px - 50px)',
-});
-
-const DiagramOptionsContainer = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '10px',
-  height: '50px',
-  borderTop: `1px solid ${theme.colors?.primary}`,
-}));
-
-const AstNodeInfoHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: '0 15px',
-  minHeight: '49px',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-  fontSize: '0.85rem',
-}));
-
-const TransformContainer = styled('div')({
-  position: 'relative',
-});
-
-const ZoomOptions = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  position: 'absolute',
-  right: 20,
-  bottom: 20,
-  zIndex: 10,
-  backgroundColor: theme.backgroundColors?.primary,
-  border: `1px solid ${theme.colors?.primary}`,
-  borderRadius: '15px',
-}));
-
-const ModalBox = styled(Box)({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-});
-
-const Placeholder = styled('div')({
-  padding: '10px',
-});
+import * as SC from './styled-components';
 
 export const Diagrams = () => {
   const appCtx = useContext(AppContext);
@@ -207,7 +146,7 @@ export const Diagrams = () => {
           info={diagramInfo ?? undefined}
         />
       ) : diagramInfo instanceof AstNodeInfo ? (
-        <AstNodeInfoHeader>{`${diagramInfo.symbolType}: ${diagramInfo.astNodeValue}`}</AstNodeInfoHeader>
+        <SC.AstNodeInfoHeader>{`${diagramInfo.symbolType}: ${diagramInfo.astNodeValue}`}</SC.AstNodeInfoHeader>
       ) : (
         <></>
       )}
@@ -218,8 +157,8 @@ export const Diagrams = () => {
           <>
             <TransformWrapper ref={transformComponentRef}>
               {({ zoomIn, zoomOut, resetTransform }) => (
-                <TransformContainer>
-                  <ZoomOptions>
+                <SC.TransformContainer>
+                  <SC.ZoomOptions>
                     <IconButton onClick={() => zoomIn()}>
                       <ZoomIn />
                     </IconButton>
@@ -227,15 +166,15 @@ export const Diagrams = () => {
                     <IconButton onClick={() => zoomOut()}>
                       <ZoomOut />
                     </IconButton>
-                  </ZoomOptions>
+                  </SC.ZoomOptions>
                   <TransformComponent>
-                    <DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
+                    <SC.DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
                   </TransformComponent>
-                </TransformContainer>
+                </SC.TransformContainer>
               )}
             </TransformWrapper>
 
-            <DiagramOptionsContainer>
+            <SC.DiagramOptionsContainer>
               <Button onClick={() => generateLegend()}>{'Legend'}</Button>
               <Tooltip
                 PopperProps={{
@@ -253,20 +192,20 @@ export const Diagrams = () => {
               </Tooltip>
               <Button onClick={() => downloadSVG()}>{'Download image'}</Button>
               <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
-                <ModalBox>
-                  <DiagramLegendContainer ref={diagramLegendContainerRef} />
-                </ModalBox>
+                <SC.ModalBox>
+                  <SC.DiagramLegendContainer ref={diagramLegendContainerRef} />
+                </SC.ModalBox>
               </Modal>
-            </DiagramOptionsContainer>
+            </SC.DiagramOptionsContainer>
           </>
         )}
       </>
     </>
   ) : (
-    <Placeholder>
+    <SC.Placeholder>
       {
         'No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate diagrams.'
       }
-    </Placeholder>
+    </SC.Placeholder>
   );
 };
