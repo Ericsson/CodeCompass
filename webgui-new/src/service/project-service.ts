@@ -19,8 +19,12 @@ export const getRootFiles = async () => {
   if (!client) {
     return [];
   }
-  const files = await client.getRootFiles();
-  return files;
+  try {
+    return await client.getRootFiles();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 };
 
 export const getParentFiles = async (filePath: string) => {
@@ -54,8 +58,12 @@ export const getChildFiles = async (fileId: string) => {
   if (!client) {
     return [];
   }
-  const files = await client.getChildFiles(fileId);
-  return files;
+  try {
+    return await client.getChildFiles(fileId);
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 };
 
 export const getFileContent = async (fileId: string) => {
@@ -64,7 +72,8 @@ export const getFileContent = async (fileId: string) => {
   }
   try {
     return await client.getFileContent(fileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -75,7 +84,8 @@ export const getFileInfo = async (fileId: string) => {
   }
   try {
     return await client.getFileInfo(fileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -86,7 +96,8 @@ export const getFileInfoByPath = async (filePath: string) => {
   }
   try {
     return await client.getFileInfoByPath(filePath);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -97,7 +108,8 @@ export const getLabels = async () => {
   }
   try {
     return await client.getLabels();
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };

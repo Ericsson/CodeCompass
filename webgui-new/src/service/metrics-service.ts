@@ -21,7 +21,8 @@ export const getMetricsTypeNames = async () => {
   }
   try {
     return await client.getMetricsTypeNames();
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -32,7 +33,8 @@ export const getMetrics = async (fileId: string, fileTypeFilter: string[], metri
   }
   try {
     return await client.getMetrics(fileId, fileTypeFilter, metricsType);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };

@@ -21,7 +21,8 @@ export const isRepositoryAvailable = async () => {
   }
   try {
     return await client.isRepositoryAvailable();
-  } catch {
+  } catch (e) {
+    console.error(e);
     return false;
   }
 };
@@ -32,7 +33,8 @@ export const getRepositoryList = async () => {
   }
   try {
     return await client.getRepositoryList();
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -43,7 +45,8 @@ export const getRepositoryByProjectPath = async (path: string) => {
   }
   try {
     return await client.getRepositoryByProjectPath(path);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -54,7 +57,8 @@ export const getReferenceTopObject = async (repoId: string, branchName: string) 
   }
   try {
     return await client.getReferenceTopObject(repoId, branchName);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -65,7 +69,8 @@ export const getReferenceList = async (repoId: string) => {
   }
   try {
     return await client.getReferenceList(repoId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -76,7 +81,8 @@ export const getBranchList = async (repoId: string) => {
   }
   try {
     return await client.getBranchList(repoId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -87,7 +93,8 @@ export const getTagList = async (repoId: string) => {
   }
   try {
     return await client.getTagList(repoId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -98,7 +105,8 @@ export const getTag = async (repoId: string, hexId: string) => {
   }
   try {
     return await client.getTag(repoId, hexId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -109,7 +117,8 @@ export const getBlameInfo = async (repoId: string, hexId: string, path: string, 
   }
   try {
     return await client.getBlameInfo(repoId, hexId, path, localModsFileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -120,7 +129,8 @@ export const getBlobContent = async (repoId: string, hexId: string) => {
   }
   try {
     return await client.getBlobContent(repoId, hexId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -131,7 +141,8 @@ export const getBlobOidByPath = async (repoId: string, hexId: string, path: stri
   }
   try {
     return await client.getBlobOidByPath(repoId, hexId, path);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -142,7 +153,8 @@ export const getCommit = async (repoId: string, hexId: string) => {
   }
   try {
     return await client.getCommit(repoId, hexId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -165,7 +177,8 @@ export const getCommitDiffAsString = async (
       new GitDiffOptions({ contextLines, pathspec, fromCommit }),
       isCompact
     );
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -182,7 +195,8 @@ export const getCommitListFiltered = async (
   }
   try {
     return await client.getCommitListFiltered(repoId, hexId, count, offset, filter);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };

@@ -21,7 +21,8 @@ export const getAsHTML = async (fileId: string) => {
   }
   try {
     return await client.getAsHTML(fileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -32,7 +33,8 @@ export const getAsHTMLForNode = async (nodeId: string) => {
   }
   try {
     return await client.getAsHTMLForNode(nodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
