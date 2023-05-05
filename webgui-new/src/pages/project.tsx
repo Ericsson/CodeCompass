@@ -1,7 +1,7 @@
 import React, { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
-import { Box, CircularProgress, styled, Tab, Tabs } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { TabName } from 'enums/tab-enum';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
@@ -11,33 +11,12 @@ import { AppContext } from 'global-context/app-context';
 import { Credits } from 'components/credits/credits';
 import { Welcome } from 'components/welcome/welcome';
 import { UserGuide } from 'components/user-guide/user-guide';
-
+import * as SC from 'themes/project-styles';
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
 }
-
-const OuterContainer = styled('div')({
-  display: 'grid',
-  gridTemplateColumns: '1fr',
-  gridTemplateRows: '76px 1fr',
-  height: '100vh',
-});
-
-const InnerContainer = styled('div')({
-  display: 'grid',
-  gridTemplateColumns: '280px 1fr',
-  gridTemplateRows: '1fr',
-});
-
-const StyledTabs = styled(Tabs)(({ theme }) => ({
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-}));
-
-const StyledTab = styled(Tab)({
-  textTransform: 'none',
-});
 
 const TabPanel = (props: TabPanelProps) => {
   const { children, value, index, ...other } = props;
@@ -53,23 +32,23 @@ const Project = () => {
   const appCtx = useContext(AppContext);
 
   return appCtx.loadComplete ? (
-    <OuterContainer>
+    <SC.OuterContainer>
       <Header />
-      <InnerContainer>
+      <SC.InnerContainer>
         <AccordionMenu />
         <div>
-          <StyledTabs
+          <SC.StyledTabs
             value={appCtx.activeTab}
             onChange={(_e: SyntheticEvent, newValue: number) => appCtx.setActiveTab(newValue)}
           >
-            <StyledTab label={'Welcome'} />
-            <StyledTab label={'Code'} />
-            <StyledTab label={'Metrics'} />
-            <StyledTab label={'Diagrams'} />
-            <StyledTab label={'Git diff'} />
-            <StyledTab label={'User guide'} />
-            <StyledTab label={'Credits'} />
-          </StyledTabs>
+            <SC.StyledTab label={'Welcome'} />
+            <SC.StyledTab label={'Code'} />
+            <SC.StyledTab label={'Metrics'} />
+            <SC.StyledTab label={'Diagrams'} />
+            <SC.StyledTab label={'Git diff'} />
+            <SC.StyledTab label={'User guide'} />
+            <SC.StyledTab label={'Credits'} />
+          </SC.StyledTabs>
           <TabPanel value={appCtx.activeTab} index={TabName.WELCOME}>
             <Welcome />
           </TabPanel>
@@ -92,8 +71,8 @@ const Project = () => {
             <Credits />
           </TabPanel>
         </div>
-      </InnerContainer>
-    </OuterContainer>
+      </SC.InnerContainer>
+    </SC.OuterContainer>
   ) : (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <CircularProgress />

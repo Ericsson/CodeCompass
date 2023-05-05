@@ -1,20 +1,11 @@
 import React from 'react';
-import { styled } from '@mui/material';
-
-const OuterContainer = styled('div')({
-  padding: '10px',
-});
-
-const StyledHeading1 = styled('h1')({
-  fontSize: '1.5rem',
-  marginBottom: '20px',
-});
+import * as SC from './styled-components';
 
 export const Welcome = () => {
   return (
-    <OuterContainer>
-      <StyledHeading1>{'CodeCompass'}</StyledHeading1>
+    <SC.OuterContainer>
+      <SC.StyledHeading1>{'CodeCompass'}</SC.StyledHeading1>
       <div>{'CodeCompass is a pluginable code comprehension tool which helps you to understand large code bases.'}</div>
-    </OuterContainer>
+    </SC.OuterContainer>
   );
 };

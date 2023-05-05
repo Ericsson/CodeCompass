@@ -8,52 +8,14 @@ import {
   getTagList,
   isRepositoryAvailable,
 } from 'service/git-service';
-import { Tooltip, alpha, styled } from '@mui/material';
-import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
+import { Tooltip, alpha } from '@mui/material';
 import { ChevronRight, ExpandMore, MoreHoriz } from '@mui/icons-material';
 import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { getStore } from 'utils/store';
 import { GitIcon } from 'components/custom-icon/custom-icon';
-
-const StyledDiv = styled('div')({});
-
-const OuterContainer = styled('div')({
-  padding: '10px',
-  fontSize: '0.85rem',
-  width: 'max-content',
-});
-
-const StyledTreeView = styled(TreeView)(({ theme }) => ({
-  color: theme.colors?.primary,
-  backgroundColor: theme.backgroundColors?.primary,
-  padding: '5px',
-  fontSize: '0.85rem',
-}));
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`& .${treeItemClasses.group}`]: {
-    marginLeft: '10px',
-    borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
-  },
-}));
-
-const Label = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  marginLeft: '5px',
-  paddingLeft: '20px',
-  cursor: 'pointer',
-  ':hover': {
-    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
-  },
-}));
-
-const Placeholder = styled('div')({
-  padding: '10px',
-});
+import * as SC from './styled-components';
 
 export const RevisionControl = () => {
   const appCtx = useContext(AppContext);
@@ -225,7 +187,7 @@ export const RevisionControl = () => {
     return (
       <>
         {commitResults.map((commit) => (
-          <Label
+          <SC.Label
             key={commit.oid}
             onClick={() => getCommitDiff(repoId, branch, commit.oid as string)}
             sx={{
@@ -235,12 +197,12 @@ export const RevisionControl = () => {
           >
             <Tooltip
               title={
-                <StyledDiv sx={{ width: 'max-content' }}>
+                <SC.StyledDiv sx={{ width: 'max-content' }}>
                   <div>{`#${commit.oid?.substring(0, 8)}`}</div>
                   <div>{commit.message}</div>
                   <div>{`${commit.author?.name} (${commit.author?.email})`}</div>
                   <div>{`Commited on ${formatDate(new Date((commit.time as unknown as number) * 1000))}`}</div>
-                </StyledDiv>
+                </SC.StyledDiv>
               }
               placement={'top-start'}
               componentsProps={{
@@ -255,27 +217,27 @@ export const RevisionControl = () => {
                 },
               }}
             >
-              <StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <GitIcon name={'commit'} />
-              </StyledDiv>
+              </SC.StyledDiv>
             </Tooltip>
-            <StyledDiv sx={{ display: 'flex', flexDirection: 'column' }}>
-              <StyledDiv>{`${commit.message} (${commit.time})`}</StyledDiv>
-              <StyledDiv>{`${commit.author?.name} (${commit.author?.email})`}</StyledDiv>
-            </StyledDiv>
-          </Label>
+            <SC.StyledDiv sx={{ display: 'flex', flexDirection: 'column' }}>
+              <SC.StyledDiv>{`${commit.message} (${commit.time})`}</SC.StyledDiv>
+              <SC.StyledDiv>{`${commit.author?.name} (${commit.author?.email})`}</SC.StyledDiv>
+            </SC.StyledDiv>
+          </SC.Label>
         ))}
       </>
     );
   };
 
   return repos.length ? (
-    <OuterContainer>
-      <StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+    <SC.OuterContainer>
+      <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
         <GitIcon name={'repolist'} />
         <div>{'List of repositories'}</div>
-      </StyledDiv>
-      <StyledTreeView
+      </SC.StyledDiv>
+      <SC.StyledTreeView
         defaultExpandIcon={<ChevronRight />}
         defaultEndIcon={<ChevronRight />}
         defaultCollapseIcon={<ExpandMore />}
@@ -293,24 +255,26 @@ export const RevisionControl = () => {
         }}
       >
         {repos.map((repo) => (
-          <StyledTreeItem
+          <SC.StyledTreeItem
             nodeId={`${repo.id as string}`}
             key={repo.id as string}
-            label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</StyledDiv>}
+            label={
+              <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</SC.StyledDiv>
+            }
             icon={<GitIcon name={'repository'} />}
           >
-            <StyledTreeItem
+            <SC.StyledTreeItem
               nodeId={`${repo.id as string}-branches`}
-              label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</StyledDiv>}
+              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</SC.StyledDiv>}
               icon={<GitIcon name={'branch'} />}
               onClick={() => loadBranches(repo.id as string)}
             >
               {branches.get(repo.id as string)?.length ? (
                 branches.get(repo.id as string)?.map((branch) => (
-                  <StyledTreeItem
+                  <SC.StyledTreeItem
                     nodeId={`${repo.id as string}-${branch}`}
                     key={`${repo.id as string}-${branch}`}
-                    label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</StyledDiv>}
+                    label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</SC.StyledDiv>}
                     icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
@@ -319,31 +283,31 @@ export const RevisionControl = () => {
                       repoId={repo.id as string}
                       branch={branch}
                     />
-                    <Label
+                    <SC.Label
                       hidden={!commits.get(branch)?.hasRemaining}
                       onClick={() => loadCommits(repo.id as string, branch)}
                     >
                       <MoreHoriz />
-                      <StyledDiv>{'Load more'}</StyledDiv>
-                    </Label>
-                  </StyledTreeItem>
+                      <SC.StyledDiv>{'Load more'}</SC.StyledDiv>
+                    </SC.Label>
+                  </SC.StyledTreeItem>
                 ))
               ) : (
                 <div>{'Loading'}</div>
               )}
-            </StyledTreeItem>
-            <StyledTreeItem
+            </SC.StyledTreeItem>
+            <SC.StyledTreeItem
               nodeId={`${repo.id as string}-tags`}
-              label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</StyledDiv>}
+              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</SC.StyledDiv>}
               icon={<GitIcon name={'tag'} />}
               onClick={() => loadTags(repo.id as string)}
             >
               {tags.get(repo.id as string)?.length ? (
                 tags.get(repo.id as string)?.map((tag) => (
-                  <StyledTreeItem
+                  <SC.StyledTreeItem
                     nodeId={`${repo.id as string}-${tag}`}
                     key={`${repo.id as string}-${tag}`}
-                    label={<StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</StyledDiv>}
+                    label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</SC.StyledDiv>}
                     icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
@@ -352,21 +316,24 @@ export const RevisionControl = () => {
                       repoId={tag}
                       branch={tag}
                     />
-                    <Label hidden={!commits.get(tag)?.hasRemaining} onClick={() => loadCommits(repo.id as string, tag)}>
+                    <SC.Label
+                      hidden={!commits.get(tag)?.hasRemaining}
+                      onClick={() => loadCommits(repo.id as string, tag)}
+                    >
                       <MoreHoriz />
-                      <StyledDiv>{'Load more'}</StyledDiv>
-                    </Label>
-                  </StyledTreeItem>
+                      <SC.StyledDiv>{'Load more'}</SC.StyledDiv>
+                    </SC.Label>
+                  </SC.StyledTreeItem>
                 ))
               ) : (
                 <div>{'Loading'}</div>
               )}
-            </StyledTreeItem>
-          </StyledTreeItem>
+            </SC.StyledTreeItem>
+          </SC.StyledTreeItem>
         ))}
-      </StyledTreeView>
-    </OuterContainer>
+      </SC.StyledTreeView>
+    </SC.OuterContainer>
   ) : (
-    <Placeholder>{'No repositories available.'}</Placeholder>
+    <SC.Placeholder>{'No repositories available.'}</SC.Placeholder>
   );
 };

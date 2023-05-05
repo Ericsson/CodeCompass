@@ -1,11 +1,10 @@
-import { IconButton, InputAdornment, TextField, Tooltip, styled } from '@mui/material';
+import { IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import React, { KeyboardEvent, useContext, useEffect, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypeOptions } from 'enums/search-enum';
 import { enumToArray } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
-import Logo from '../../../public/logo.png';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
 import { getSearchTypes } from 'service/search-service';
@@ -13,36 +12,7 @@ import { SearchType } from '@thrift-generated';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
-
-const StyledHeader = styled('header')(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: '280px 1fr',
-  gridTemplateRows: '1fr',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-  minWidth: '1460px',
-}));
-
-const HeaderLogo = styled('div')(({ theme }) => ({
-  height: '75px',
-  backgroundImage: `url('${Logo.src}')`,
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: '90%',
-  backgroundPosition: 'center center',
-  borderRight: `1px solid ${theme.colors?.primary}`,
-}));
-
-const HeaderContent = styled('div')({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexGrow: '1',
-  padding: '10px 10px 10px 15px',
-});
-
-const SettingsContainer = styled('div')({
-  display: 'flex',
-  gap: '1rem',
-});
+import * as SC from './styled-components';
 
 export const Header = () => {
   const appCtx = useContext(AppContext);
@@ -199,10 +169,10 @@ export const Header = () => {
   };
 
   return (
-    <StyledHeader>
-      <HeaderLogo />
-      <HeaderContent>
-        <SettingsContainer>
+    <SC.StyledHeader>
+      <SC.HeaderLogo />
+      <SC.HeaderContent>
+        <SC.SettingsContainer>
           <ProjectSelect />
           <TextField
             value={searchQuery ?? ''}
@@ -284,11 +254,11 @@ export const Header = () => {
             selectedSearchTypeOptions={selectedSearchTypeOptions as string[]}
             setSelectedSearchTypeOptions={setSelectedSearchTypeOptions}
           />
-        </SettingsContainer>
+        </SC.SettingsContainer>
         <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? <LightMode /> : <DarkMode />}
         </IconButton>
-      </HeaderContent>
-    </StyledHeader>
+      </SC.HeaderContent>
+    </SC.StyledHeader>
   );
 };

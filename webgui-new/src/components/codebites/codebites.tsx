@@ -1,4 +1,3 @@
-import { styled } from '@mui/material';
 import { AstNodeInfo } from '@thrift-generated';
 import { CodeBitesNode } from './codebites-node';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,13 +17,7 @@ import ReactFlow, {
   OnConnect,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-
-const OuterContainer = styled('div')({
-  padding: '10px',
-  overflow: 'scroll',
-  width: 'calc(100vw - 280px)',
-  height: 'calc(100vh - 78px - 48px - 49px)',
-});
+import * as SC from './styled-components';
 
 type CodeBitesElement = {
   astNodeInfo: AstNodeInfo;
@@ -82,7 +75,7 @@ export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }) => {
   const onConnect: OnConnect = useCallback((connection) => setEdges((eds) => addEdge(connection, eds)), [setEdges]);
 
   return (
-    <OuterContainer>
+    <SC.DiagramOuterContainer>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -97,6 +90,6 @@ export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }) => {
         <Background />
         <Controls />
       </ReactFlow>
-    </OuterContainer>
+    </SC.DiagramOuterContainer>
   );
 };
