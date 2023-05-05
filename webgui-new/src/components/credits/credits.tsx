@@ -1,7 +1,7 @@
 import React from 'react';
 import * as SC from './styled-components';
 
-export const Credits = () => {
+export const Credits = (): JSX.Element => {
   return (
     <SC.OuterContainer>
       <SC.StyledHeading2>{'Project members'}</SC.StyledHeading2>

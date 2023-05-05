@@ -16,7 +16,7 @@ import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
 import * as SC from './styled-components';
 
-export const InfoTree = () => {
+export const InfoTree = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);

@@ -18,7 +18,7 @@ import { getFileInfo } from 'service/project-service';
 import { CodeBites } from 'components/codebites/codebites';
 import * as SC from './styled-components';
 
-export const Diagrams = () => {
+export const Diagrams = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);

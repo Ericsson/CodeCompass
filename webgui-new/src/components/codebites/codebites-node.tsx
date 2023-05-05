@@ -27,7 +27,7 @@ type DataProps = {
   rowNum: number;
 };
 
-export const CodeBitesNode = ({ data }: NodeProps<DataProps>) => {
+export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
   const { theme } = useContext(ThemeContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);

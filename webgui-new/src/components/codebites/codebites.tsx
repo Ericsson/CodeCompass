@@ -36,7 +36,7 @@ const nodeTypes: NodeTypes = {
   codeBitesNode: CodeBitesNode,
 };
 
-export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }) => {
+export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }): JSX.Element => {
   const [elements, setElements] = useState<CodeBitesElement[]>([{ astNodeInfo, rowNum: 1 }]);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);

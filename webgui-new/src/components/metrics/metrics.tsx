@@ -49,7 +49,7 @@ const CustomizedContent = (
     fileInfo: FileInfo;
     setFileInfo: Dispatch<SetStateAction<FileInfo | undefined>>;
   }
-) => {
+): JSX.Element => {
   const { x, y, width, height, depth, size, name, children } = props as {
     x: number;
     y: number;
@@ -144,7 +144,7 @@ const convertResObject = (res: RespType): DataItem => {
   const obj = res[name];
   const children = [];
 
-  for (let key in obj) {
+  for (const key in obj) {
     const value = obj[key];
 
     if (typeof value === 'object') {
@@ -160,7 +160,7 @@ const convertResObject = (res: RespType): DataItem => {
   return { name, size: 0, children };
 };
 
-export const Metrics = () => {
+export const Metrics = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);

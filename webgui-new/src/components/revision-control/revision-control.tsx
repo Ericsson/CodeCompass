@@ -17,10 +17,10 @@ import { getStore } from 'utils/store';
 import { GitIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
 
-export const RevisionControl = () => {
+export const RevisionControl = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
-  const DISPLAYED_COMMIT_CNT: number = 15;
+  const DISPLAYED_COMMIT_CNT = 15;
 
   const [repos, setRepos] = useState<GitRepository[]>([]);
   const [branches, setBranches] = useState<Map<string, string[]>>(new Map());

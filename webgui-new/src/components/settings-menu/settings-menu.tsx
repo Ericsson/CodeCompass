@@ -40,7 +40,7 @@ export const SettingsMenu = ({
   setSearchLanguage: Dispatch<SetStateAction<string | undefined>>;
   selectedSearchTypeOptions: string[];
   setSelectedSearchTypeOptions: Dispatch<SetStateAction<string[] | undefined>>;
-}) => {
+}): JSX.Element => {
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchOtherLanguages = enumToArray(SearchOtherLanguages) as string[];
   const searchTypeOptions = enumToArray(SearchTypeOptions);

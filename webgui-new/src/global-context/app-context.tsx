@@ -15,6 +15,8 @@ import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
 
 /* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 type AppContextProps = {
   workspaces: WorkspaceInfo[];
   setWorkspaces: (_val: WorkspaceInfo[]) => void;
@@ -93,8 +95,10 @@ export const AppContext = createContext<AppContextProps>({
   setLoadComplete: (_val) => {},
 });
 /* eslint-enable no-unused-vars */
+/* eslint-enable @typescript-eslint/no-empty-function */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
-export const AppContextController = ({ children }: { children: React.ReactNode }) => {
+export const AppContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const router = useRouter();
   const routerQuery = router.query as RouterQueryType;
 

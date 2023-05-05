@@ -40,7 +40,7 @@ import * as Devicon from 'devicons-react';
 import { styled } from '@mui/material';
 import React from 'react';
 
-export const FolderIcon = ({ open }: { open?: boolean }) => {
+export const FolderIcon = ({ open }: { open?: boolean }): JSX.Element => {
   const icon: React.FunctionComponent = open ? FolderOpen : Folder;
 
   const IconWithStyles = styled(icon)(({ theme }) => ({
@@ -52,7 +52,7 @@ export const FolderIcon = ({ open }: { open?: boolean }) => {
   return <IconWithStyles />;
 };
 
-export const FileIcon = ({ fileName }: { fileName: string }) => {
+export const FileIcon = ({ fileName }: { fileName: string }): JSX.Element => {
   let icon: React.FunctionComponent;
 
   if (fileName.startsWith('.git')) {
@@ -136,7 +136,7 @@ export const FileIcon = ({ fileName }: { fileName: string }) => {
   return <IconWithStyles />;
 };
 
-export const RefIcon = ({ refName }: { refName: string }) => {
+export const RefIcon = ({ refName }: { refName: string }): JSX.Element => {
   let icon: React.FunctionComponent;
 
   switch (refName) {
@@ -252,7 +252,7 @@ export const RefIcon = ({ refName }: { refName: string }) => {
   return <IconWithStyles />;
 };
 
-export const GitIcon = ({ name }: { name: string }) => {
+export const GitIcon = ({ name }: { name: string }): JSX.Element => {
   let icon: React.FunctionComponent;
 
   switch (name) {

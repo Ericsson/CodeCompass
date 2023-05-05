@@ -22,7 +22,7 @@ export const FileName = ({
   info: FileInfo | undefined;
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
-}) => {
+}): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);

@@ -27,8 +27,8 @@ export const getSearchResultCount = async (
   file: boolean,
   options: number,
   query: string,
-  fileFilter: string = '',
-  dirFilter: string = ''
+  fileFilter = '',
+  dirFilter = ''
 ) => {
   if (!client) {
     return [];
@@ -57,8 +57,8 @@ export const getSearchResults = async (
   query: string,
   start: number,
   maxSize: number,
-  fileFilter: string = '',
-  dirFilter: string = ''
+  fileFilter = '',
+  dirFilter = ''
 ) => {
   if (!client) {
     return [];

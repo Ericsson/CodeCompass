@@ -66,7 +66,7 @@ class GitBlameGutterMarker extends GutterMarker {
   }
 }
 
-export const CodeMirrorEditor = () => {
+export const CodeMirrorEditor = (): JSX.Element => {
   const appCtx = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
 

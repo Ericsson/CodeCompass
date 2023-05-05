@@ -11,7 +11,7 @@ import { FileNode } from 'utils/types';
 import { getFileFolderPath } from 'utils/utils';
 import * as SC from './styled-components';
 
-export const SearchResults = () => {
+export const SearchResults = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [searchType, setSearchType] = useState<number>(0);

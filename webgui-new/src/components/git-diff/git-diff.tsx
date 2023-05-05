@@ -12,7 +12,7 @@ import { blue, red } from '@mui/material/colors';
 import { FileIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
 
-export const GitDiff = () => {
+export const GitDiff = (): JSX.Element => {
   const appCtx = useContext(AppContext);
   const themeCtx = useContext(ThemeContext);
 
