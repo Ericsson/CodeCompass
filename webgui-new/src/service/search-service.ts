@@ -19,8 +19,12 @@ export const getSearchTypes = async () => {
   if (!client) {
     return [];
   }
-  const searchTypes = await client.getSearchTypes();
-  return searchTypes;
+  try {
+    return await client.getSearchTypes();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 };
 
 export const getSearchResultCount = async (
@@ -33,22 +37,27 @@ export const getSearchResultCount = async (
   if (!client) {
     return [];
   }
-  const searchResults = file
-    ? await client.searchFile(
-        new SearchParams({
-          options,
-          query,
-          filter: new SearchFilter({ fileFilter, dirFilter }),
-        })
-      )
-    : await client.search(
-        new SearchParams({
-          options,
-          query,
-          filter: new SearchFilter({ fileFilter, dirFilter }),
-        })
-      );
-  return searchResults.results?.length;
+  try {
+    const searchResults = file
+      ? await client.searchFile(
+          new SearchParams({
+            options,
+            query,
+            filter: new SearchFilter({ fileFilter, dirFilter }),
+          })
+        )
+      : await client.search(
+          new SearchParams({
+            options,
+            query,
+            filter: new SearchFilter({ fileFilter, dirFilter }),
+          })
+        );
+    return searchResults.results?.length;
+  } catch (e) {
+    console.error(e);
+    return 0;
+  }
 };
 
 export const getSearchResults = async (
@@ -63,23 +72,26 @@ export const getSearchResults = async (
   if (!client) {
     return [];
   }
-
-  const searchResults = file
-    ? await client.searchFile(
-        new SearchParams({
-          options,
-          query,
-          range: new SearchRange({ start, maxSize }),
-          filter: new SearchFilter({ fileFilter, dirFilter }),
-        })
-      )
-    : await client.search(
-        new SearchParams({
-          options,
-          query,
-          range: new SearchRange({ start, maxSize }),
-          filter: new SearchFilter({ fileFilter, dirFilter }),
-        })
-      );
-  return searchResults;
+  try {
+    return file
+      ? await client.searchFile(
+          new SearchParams({
+            options,
+            query,
+            range: new SearchRange({ start, maxSize }),
+            filter: new SearchFilter({ fileFilter, dirFilter }),
+          })
+        )
+      : await client.search(
+          new SearchParams({
+            options,
+            query,
+            range: new SearchRange({ start, maxSize }),
+            filter: new SearchFilter({ fileFilter, dirFilter }),
+          })
+        );
+  } catch (e) {
+    console.error(e);
+    return;
+  }
 };

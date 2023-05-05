@@ -19,5 +19,10 @@ export const getWorkspaces = async () => {
   if (!client) {
     return [];
   }
-  return await client.getWorkspaces();
+  try {
+    return await client.getWorkspaces();
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
 };

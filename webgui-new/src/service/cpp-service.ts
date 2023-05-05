@@ -29,7 +29,8 @@ export const getCppFileDiagramTypes = async (fileId: string) => {
   }
   try {
     resultMap = await client.getFileDiagramTypes(fileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     resultMap = new Map();
   }
   return resultMap;
@@ -41,7 +42,8 @@ export const getCppFileDiagram = async (fileId: string, diagramId: number) => {
   }
   try {
     return await client.getFileDiagram(fileId, diagramId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -52,7 +54,8 @@ export const getCppFileDiagramLegend = async (diagramId: number) => {
   }
   try {
     return await client.getFileDiagramLegend(diagramId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -64,7 +67,8 @@ export const getCppDiagramTypes = async (astNodeId: string) => {
   }
   try {
     resultMap = await client.getDiagramTypes(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     resultMap = new Map();
   }
   return resultMap;
@@ -76,7 +80,8 @@ export const getCppDiagram = async (astNodeId: string, diagramId: number) => {
   }
   try {
     return await client.getDiagram(astNodeId, diagramId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -87,7 +92,8 @@ export const getCppDiagramLegend = async (diagramId: number) => {
   }
   try {
     return await client.getDiagramLegend(diagramId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -99,7 +105,8 @@ export const getCppFileReferenceTypes = async (fileId: string) => {
   }
   try {
     resultMap = await client.getFileReferenceTypes(fileId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     resultMap = new Map();
   }
   return resultMap;
@@ -111,7 +118,8 @@ export const getCppFileReferences = async (fileId: string, referenceId: number) 
   }
   try {
     return await client.getFileReferences(fileId, referenceId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -122,7 +130,8 @@ export const getCppFileReferenceCount = async (fileId: string, referenceId: numb
   }
   try {
     return await client.getFileReferenceCount(fileId, referenceId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return 0;
   }
 };
@@ -134,7 +143,8 @@ export const getCppReferenceTypes = async (astNodeId: string) => {
   }
   try {
     resultMap = await client.getReferenceTypes(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     resultMap = new Map();
   }
   return resultMap;
@@ -146,7 +156,8 @@ export const getCppReferences = async (astNodeId: string, referenceId: number, t
   }
   try {
     return await client.getReferences(astNodeId, referenceId, tags);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -157,7 +168,8 @@ export const getCppReferenceCount = async (astNodeId: string, referenceId: numbe
   }
   try {
     return await client.getReferenceCount(astNodeId, referenceId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return 0;
   }
 };
@@ -173,7 +185,8 @@ export const getCppReferencesInFile = async (
   }
   try {
     return await client.getReferencesInFile(astNodeId, referenceId, fileId, tags);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -189,7 +202,8 @@ export const getCppReferencesPage = async (
   }
   try {
     return await client.getReferencesPage(astNodeId, referenceId, pageSize, pageNo);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return [];
   }
 };
@@ -200,7 +214,8 @@ export const getCppSourceText = async (astNodeId: string) => {
   }
   try {
     return await client.getSourceText(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -212,7 +227,8 @@ export const getCppProperties = async (astNodeId: string) => {
   }
   try {
     resultMap = await client.getProperties(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     resultMap = new Map();
   }
   return resultMap;
@@ -224,7 +240,8 @@ export const getCppDocumentation = async (astNodeId: string) => {
   }
   try {
     return await client.getDocumentation(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return '';
   }
 };
@@ -235,7 +252,8 @@ export const getCppAstNodeInfo = async (astNodeId: string) => {
   }
   try {
     return await client.getAstNodeInfo(astNodeId);
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
@@ -254,7 +272,8 @@ export const getCppAstNodeInfoByPosition = async (fileId: string, line: number, 
         }),
       })
     );
-  } catch {
+  } catch (e) {
+    console.error(e);
     return;
   }
 };
