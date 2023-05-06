@@ -16,6 +16,7 @@ import { AppContext } from 'global-context/app-context';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { getFileInfo } from 'service/project-service';
 import * as SC from './styled-components';
+import { toast } from 'react-toastify';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -39,7 +40,6 @@ export const EditorContextMenu = ({
 
   const [astNodeInfo, setAstNodeInfo] = useState<AstNodeInfo | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [selectionTooltipOpen, setSelectionTooltipOpen] = useState<boolean>(false);
   const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -130,10 +130,7 @@ export const EditorContextMenu = ({
     });
 
     navigator.clipboard.writeText(selectionLink);
-    setSelectionTooltipOpen(true);
-    setTimeout(() => {
-      setSelectionTooltipOpen(false);
-    }, 2000);
+    toast.success('Selection link copied to clipboard!');
     setContextMenu(null);
   };
 
@@ -185,22 +182,7 @@ export const EditorContextMenu = ({
           </Tooltip>
         )}
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
-        <MenuItem onClick={() => getSelectionLink()}>
-          <Tooltip
-            PopperProps={{
-              disablePortal: true,
-            }}
-            onClose={() => setSelectionTooltipOpen(false)}
-            open={selectionTooltipOpen}
-            disableFocusListener
-            disableHoverListener
-            disableTouchListener
-            title={'Copied to clipboard'}
-            arrow
-          >
-            <div>{'Get permalink to selection'}</div>
-          </Tooltip>
-        </MenuItem>
+        <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
         {appCtx.languageNodeId && (
           <MenuItem
             onClick={async () => {
