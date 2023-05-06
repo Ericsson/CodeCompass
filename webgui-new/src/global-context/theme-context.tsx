@@ -2,6 +2,8 @@ import { ThemeProvider } from '@mui/material';
 import React, { createContext, useEffect, useState } from 'react';
 import { darkTheme, lightTheme } from 'themes/theme';
 import { getStore, setStore } from 'utils/store';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
@@ -35,7 +37,10 @@ export const ThemeContextController = ({ children }: { children: React.ReactNode
 
   return (
     <ThemeContext.Provider value={{ theme: theme as 'light' | 'dark', setTheme }}>
-      <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>{children}</ThemeProvider>
+      <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
+        <>{children}</>
+        <ToastContainer theme={theme} position={'top-right'} />
+      </ThemeProvider>
     </ThemeContext.Provider>
   );
 };
