@@ -30,6 +30,10 @@ public:
 
   // Standard LSP methods
 
+  void getSignature(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
   void getDefinition(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
@@ -65,10 +69,6 @@ public:
     const pt::ptree& params_) override final;
 
   void getLocalVariables(
-    pt::ptree& responseTree_,
-    const pt::ptree& params_) override final;
-
-  void getReturnType(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 
@@ -129,10 +129,6 @@ public:
     const pt::ptree& params_) override final;
 
   void getFunctionPointerCall(
-    pt::ptree& responseTree_,
-    const pt::ptree& params_) override final;
-
-  void getType(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 

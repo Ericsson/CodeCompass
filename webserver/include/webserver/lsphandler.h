@@ -26,6 +26,7 @@ namespace pt = boost::property_tree;
 enum class LspMethod
 {
   Unknown = 0,
+  Signature,
   Definition,
   Declaration,
   Implementation,
@@ -35,7 +36,6 @@ enum class LspMethod
   ModuleDiagram,
   Parameters,
   LocalVariables,
-  ReturnType,
   Overridden,
   Overriders,
   Read,
@@ -51,7 +51,6 @@ enum class LspMethod
   Caller,
   VirtualCall,
   FunctionPointerCall,
-  Type,
   Alias,
   Implements,
   DataMember,
@@ -100,6 +99,11 @@ public:
 
         switch (parseMethod(method))
         {
+          case LspMethod::Signature:
+          {
+            lspService->getSignature(responseTree, params);
+            break;
+          }
           case LspMethod::Definition:
           {
             lspService->getDefinition(responseTree, params);
@@ -143,11 +147,6 @@ public:
           case LspMethod::LocalVariables:
           {
             lspService->getLocalVariables(responseTree, params);
-            break;
-          }
-          case LspMethod::ReturnType:
-          {
-            lspService->getReturnType(responseTree, params);
             break;
           }
           case LspMethod::Overridden:
@@ -223,11 +222,6 @@ public:
           case LspMethod::FunctionPointerCall:
           {
             lspService->getFunctionPointerCall(responseTree, params);
-            break;
-          }
-          case LspMethod::Type:
-          {
-            lspService->getType(responseTree, params);
             break;
           }
           case LspMethod::Alias:
@@ -313,6 +307,7 @@ private:
   LspMethod parseMethod(const std::string& method)
   {
     static std::unordered_map<std::string, LspMethod> methodMap = {
+      { "textDocument/signature",           LspMethod::Signature },
       { "textDocument/definition",          LspMethod::Definition },
       { "textDocument/declaration",         LspMethod::Declaration },
       { "textDocument/implementation",      LspMethod::Implementation },
@@ -322,7 +317,6 @@ private:
       { "directory/diagram",                LspMethod::ModuleDiagram},
       { "textDocument/parameters",          LspMethod::Parameters},
       { "textDocument/localVariables",      LspMethod::LocalVariables},
-      { "textDocument/returnType",          LspMethod::ReturnType},
       { "textDocument/overridden",          LspMethod::Overridden},
       { "textDocument/overriders",          LspMethod::Overriders},
       { "textDocument/read",                LspMethod::Read},
@@ -338,7 +332,6 @@ private:
       { "textDocument/caller",              LspMethod::Caller},
       { "textDocument/virtualCall",         LspMethod::VirtualCall},
       { "textDocument/functionPointerCall", LspMethod::FunctionPointerCall},
-      { "textDocument/type",                LspMethod::Type},
       { "textDocument/alias",               LspMethod::Alias},
       { "textDocument/implements",          LspMethod::Implements},
       { "textDocument/dataMember",          LspMethod::DataMember},

@@ -20,6 +20,10 @@ public:
   virtual ~LspServiceHandler() = default;
 
   // Standard LSP methods
+  void virtual getSignature(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_);
+
   void virtual getDefinition(
     pt::ptree& responseTree_,
     const pt::ptree& params_);
@@ -54,10 +58,6 @@ public:
     const pt::ptree& params_);
 
   void virtual getLocalVariables(
-    pt::ptree& responseTree_,
-    const pt::ptree& params_);
-
-  void virtual getReturnType(
     pt::ptree& responseTree_,
     const pt::ptree& params_);
 
@@ -118,10 +118,6 @@ public:
     const pt::ptree& params_);
 
   void virtual getFunctionPointerCall(
-    pt::ptree& responseTree_,
-    const pt::ptree& params_);
-
-  void virtual getType(
     pt::ptree& responseTree_,
     const pt::ptree& params_);
 

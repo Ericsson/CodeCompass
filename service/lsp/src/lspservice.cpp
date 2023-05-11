@@ -9,6 +9,13 @@ namespace lsp
 
 // Standard LSP methods
 
+void LspServiceHandler::getSignature(
+  pt::ptree& responseTree_,
+  const pt::ptree&)
+{
+  getMethodNotFound(responseTree_, "textDocument/signature");
+}
+
 void LspServiceHandler::getDefinition(
   pt::ptree& responseTree_,
   const pt::ptree&)
@@ -72,13 +79,6 @@ void LspServiceHandler::getLocalVariables(
   const pt::ptree&)
 {
   getMethodNotFound(responseTree_, "textDocument/localVariables");
-}
-
-void LspServiceHandler::getReturnType(
-  pt::ptree& responseTree_,
-  const pt::ptree&)
-{
-  getMethodNotFound(responseTree_, "textDocument/returnType");
 }
 
 void LspServiceHandler::getOverridden(
@@ -184,13 +184,6 @@ void LspServiceHandler::getFunctionPointerCall(
   const pt::ptree&)
 {
   getMethodNotFound(responseTree_, "textDocument/functionPointerCall");
-}
-
-void LspServiceHandler::getType(
-  pt::ptree& responseTree_,
-  const pt::ptree&)
-{
-  getMethodNotFound(responseTree_, "textDocument/type");
 }
 
 void LspServiceHandler::getAlias(

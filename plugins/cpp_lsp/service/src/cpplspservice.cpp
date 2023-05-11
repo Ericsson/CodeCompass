@@ -97,6 +97,33 @@ std::vector<Location> CppLspServiceHandler::responseLocations(
   return locations;
 }
 
+void CppLspServiceHandler::getSignature(
+  pt::ptree& responseTree_,
+  const pt::ptree& params_)
+{
+  TextDocumentPositionParams positionParams;
+  positionParams.readNode(params_);
+
+  language::AstNodeInfo astNodeInfo;
+  core::FilePosition cppPosition;
+
+  model::FilePtr file = _transaction([&, this](){
+    return _db->query_one<model::File>(
+      odb::query<model::File>::path == positionParams.textDocument.uri);
+  });
+
+  if (file)
+  {
+    cppPosition.file = std::to_string(file->id);
+    cppPosition.pos.line = positionParams.position.line;
+    cppPosition.pos.column = positionParams.position.character;
+
+    _cppService.getAstNodeInfoByPosition(astNodeInfo, cppPosition);
+
+    responseTree_.put("result", astNodeInfo.astNodeValue);
+  }
+}
+
 void CppLspServiceHandler::getDefinition(
   pt::ptree& responseTree_,
   const pt::ptree& params_)
@@ -156,16 +183,6 @@ void CppLspServiceHandler::getLocalVariables(
     responseTree_,
     params_,
     language::CppServiceHandler::LOCAL_VAR);
-}
-
-void CppLspServiceHandler::getReturnType(
-  pt::ptree& responseTree_,
-  const pt::ptree& params_)
-{
-  fillResponseTree(
-    responseTree_,
-    params_,
-    language::CppServiceHandler::RETURN_TYPE);
 }
 
 void CppLspServiceHandler::getOverridden(
@@ -316,16 +333,6 @@ void CppLspServiceHandler::getFunctionPointerCall(
     responseTree_,
     params_,
     language::CppServiceHandler::FUNC_PTR_CALL);
-}
-
-void CppLspServiceHandler::getType(
-  pt::ptree& responseTree_,
-  const pt::ptree& params_)
-{
-  fillResponseTree(
-    responseTree_,
-    params_,
-    language::CppServiceHandler::TYPE);
 }
 
 void CppLspServiceHandler::getAlias(
