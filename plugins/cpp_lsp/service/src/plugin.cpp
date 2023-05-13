@@ -21,11 +21,11 @@ extern "C"
     const cc::webserver::ServerContext& context_,
     cc::webserver::PluginHandler<cc::webserver::RequestHandler>* pluginHandler_)
   {
-    cc::webserver::registerLspPluginSimple(
+    cc::webserver::registerPluginSimple(
       context_,
       pluginHandler_,
       CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(Cpp, lsp),
-      "LspService");
+      "CppLspService");
   }
 }
 #pragma clang diagnostic pop

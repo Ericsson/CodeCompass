@@ -31,7 +31,6 @@ inline void registerPluginSimple(
   const std::string& serviceName_)
 {
   namespace fs = boost::filesystem;
-  namespace po = boost::program_options;
   namespace pt = boost::property_tree;
 
   for (fs::directory_iterator it(ctx_.options["workspace"].as<std::string>());
@@ -91,84 +90,6 @@ inline void registerPluginSimple(
 
       // Register implementation
       pluginHandler_->registerImplementation(key, servicePtr);
-    }
-    catch (const util::ServiceNotAvailException& ex)
-    {
-      LOG(warning)
-        << "Exception: " << ex.what()
-        << " in workspace " << project;
-    }
-  }
-
-  if (pluginHandler_->getImplementationMap().empty())
-    throw std::runtime_error(
-      "There are no parsed projects in the given workspace directory.");
-}
-
-template <typename RequestHandlerT, typename ServiceFactoryT>
-inline void registerLspPluginSimple(
-  const ServerContext& ctx_,
-  PluginHandler<RequestHandlerT>* pluginHandler_,
-  ServiceFactoryT serviceFactory_,
-  const std::string& serviceName_)
-{
-  namespace fs = boost::filesystem;
-  namespace pt = boost::property_tree;
-
-  for (fs::directory_iterator it(ctx_.options["workspace"].as<std::string>());
-    it != fs::directory_iterator();
-    ++it)
-  {
-    std::string project = it->path().filename().native();
-
-    fs::path projectInfo = it->path();
-    if ( fs::is_regular_file( projectInfo) )
-      continue;
-
-    projectInfo += "/project_info.json";
-    if (!fs::exists(projectInfo.native()))
-    {
-      LOG(error)
-        << "Skip project '" << project << "', because no project info file "
-        << "can be found at: " << projectInfo;
-      continue;
-    }
-
-    pt::ptree root;
-    pt::read_json(projectInfo.native(), root);
-
-    std::string connStr = root.get<std::string>("database", "");
-    if (connStr.empty()) {
-      LOG(error)
-        << "Skip project '" << project << "', because no database "
-        << "connection string can be found for it in the '"
-        << projectInfo << "' file!";
-      continue;
-    }
-
-    std::shared_ptr<odb::database> db = util::connectDatabase(connStr);
-
-    if (!db)
-    {
-      LOG(error)
-        << "Wrong connection string: '" << connStr << "' "
-        << "for project: '" << project << "' "
-        << "for service: '" << serviceName_ << "'";
-
-      continue;
-    }
-
-    try
-    {
-      // Create handler
-      std::shared_ptr<RequestHandlerT> servicePtr(
-        serviceFactory_(
-          db,
-          std::make_shared<std::string>(fs::canonical(it->path()).native()),
-          ctx_));
-
-      // Register implementation
-      pluginHandler_->registerImplementation(serviceName_, servicePtr);
     }
     catch (const util::ServiceNotAvailException& ex)
     {
