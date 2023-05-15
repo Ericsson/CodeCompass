@@ -1,7 +1,6 @@
 #ifndef CC_SERVICE_LANGUAGE_CPPSERVICE_H
 #define CC_SERVICE_LANGUAGE_CPPSERVICE_H
 
-#include "util/graph.h"
 #include <memory>
 #include <vector>
 #include <map>
@@ -20,6 +19,7 @@
 #include <model/cpprelation-odb.hxx>
 
 #include <util/odbtransaction.h>
+#include "util/graph.h"
 #include <webserver/servercontext.h>
 
 namespace cc

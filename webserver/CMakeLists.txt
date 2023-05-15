@@ -23,25 +23,15 @@ target_link_libraries(mongoose PRIVATE ssl)
 target_include_directories(CodeCompass_webserver PUBLIC
   include
   ${PROJECT_SOURCE_DIR}/model/include
-  ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_BINARY_DIR}/service/language/gen-cpp
-  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
-  ${PROJECT_SOURCE_DIR}/service/project/include
-  ${PROJECT_SOURCE_DIR}/plugins/cpp/service/include
-  ${PROJECT_SOURCE_DIR}/plugins/cpp/model/include)
+  ${PROJECT_SOURCE_DIR}/util/include)
 
 target_link_libraries(CodeCompass_webserver
   util
-  cppservice
   mongoose
   ${Boost_LIBRARIES}
   ${ODB_LIBRARIES}
-  ${THRIFT_LIBTHRIFT_LIBRARIES}
   pthread
   dl)
-
-add_dependencies(CodeCompass_webserver projectthrift)
-add_dependencies(CodeCompass_webserver languagethrift)
 
 install(TARGETS CodeCompass_webserver
   RUNTIME DESTINATION ${INSTALL_BIN_DIR}

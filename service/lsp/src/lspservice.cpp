@@ -9,13 +9,6 @@ namespace lsp
 
 // Standard LSP methods
 
-void LspServiceHandler::getSignature(
-  pt::ptree& responseTree_,
-  const pt::ptree&)
-{
-  getMethodNotFound(responseTree_, "textDocument/signature");
-}
-
 void LspServiceHandler::getDefinition(
   pt::ptree& responseTree_,
   const pt::ptree&)
@@ -65,6 +58,13 @@ void LspServiceHandler::getModuleDiagram(
   const pt::ptree&)
 {
   getMethodNotFound(responseTree_, "directory/diagram");
+}
+
+void LspServiceHandler::getSignature(
+  pt::ptree& responseTree_,
+  const pt::ptree&)
+{
+  getMethodNotFound(responseTree_, "textDocument/signature");
 }
 
 void LspServiceHandler::getParameters(

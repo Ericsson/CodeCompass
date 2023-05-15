@@ -1,17 +1,17 @@
 #ifndef CC_SERVICE_LSP_CPPLSPSERVICE_H
 #define CC_SERVICE_LSP_CPPLSPSERVICE_H
 
-#include "projectservice/projectservice.h"
-#include "util/graph.h"
 #include <memory>
 #include <vector>
 
 #include <odb/database.hxx>
+
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
-
 #include <service/cppservice.h>
 #include <lspservice/lspservice.h>
+#include "projectservice/projectservice.h"
+#include "util/graph.h"
 
 namespace cc
 {
@@ -29,10 +29,6 @@ public:
     const cc::webserver::ServerContext& context_);
 
   // Standard LSP methods
-
-  void getSignature(
-    pt::ptree& responseTree_,
-    const pt::ptree& params_) override final;
 
   void getDefinition(
     pt::ptree& responseTree_,
@@ -61,6 +57,10 @@ public:
     const pt::ptree& params_) override final;
 
   void getModuleDiagram(
+    pt::ptree& responseTree_,
+    const pt::ptree& params_) override final;
+
+  void getSignature(
     pt::ptree& responseTree_,
     const pt::ptree& params_) override final;
 

@@ -137,7 +137,7 @@ public:
     return MG_TRUE;
   }
 
-protected:
+private:
   LoggingProcessor _processor;
 };
 

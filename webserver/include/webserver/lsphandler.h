@@ -2,16 +2,14 @@
 #define CC_WEBSERVER_LSPHANDLER_H
 
 #include <memory>
-#include <regex>
 #include <unordered_map>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include "webserver/requesthandler.h"
-
 #include <util/logutil.h>
-#include <util/dbutil.h>
+
+#include "webserver/requesthandler.h"
 
 namespace cc
 {
@@ -304,9 +302,9 @@ private:
     return std::string(conn_->content, conn_->content + conn_->content_len);
   }
 
-  LspMethod parseMethod(const std::string& method)
+  LspMethod parseMethod(const std::string& method) const
   {
-    static std::unordered_map<std::string, LspMethod> methodMap = {
+    const static std::unordered_map<std::string, LspMethod> methodMap = {
       { "textDocument/signature",           LspMethod::Signature },
       { "textDocument/definition",          LspMethod::Definition },
       { "textDocument/declaration",         LspMethod::Declaration },
