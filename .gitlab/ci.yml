@@ -58,7 +58,8 @@ variables:
     echo "GLIBC version: $GLIBC_VERSION"
     echo "GLIBCXX versions: $GLIBCXX_VERSIONS"
 
-tarball suse-15:
+# Temporarily disabled job
+.tarball suse-15:
     extends: .tarball
     image: opensuse/leap:15
     cache:
@@ -70,7 +71,7 @@ tarball suse-15:
         - zypper refresh
         - zypper update -y
         # download tools
-        - zypper install -y curl wget bzip2 unzip ca-certificates
+        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
@@ -81,7 +82,9 @@ tarball suse-15:
         # show GLIBC verison
         - *show-glibc-version
 
-tarball suse-42.1:
+# Permanently disabled job
+# (Distribution package repository metadata not available anymore.)
+.tarball suse-42.1:
     extends: .tarball
     image: opensuse/archive:42.1
     cache:
@@ -93,7 +96,7 @@ tarball suse-42.1:
         - zypper refresh
         - zypper update -y
         # download tools
-        - zypper install -y curl wget bzip2 unzip ca-certificates
+        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - zypper install -y -t pattern devel_basis
         - zypper install -y binutils gcc-c++ gmp-devel
@@ -118,7 +121,7 @@ tarball ubuntu-16.04:
     before_script:
         - apt-get update -yqq
         # download tools
-        - apt-get install -yqq curl wget bzip2 unzip ca-certificates
+        - apt-get install -yqq curl wget gzip bzip2 unzip ca-certificates
         # build tools for CodeCompass
         - apt-get install -yqq build-essential libgmp-dev zlib1g-dev
         # build tools for ctags
@@ -143,21 +146,22 @@ tarball ubuntu-16.04:
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
     script:
         - ssh-add <(echo "$CD_PRIVATE_KEY")
-        - 'BRANCH_SUFFIX=${CI_COMMIT_REF_SLUG#"release-"}'
-        - 'BRANCH_SUFFIX=${BRANCH_SUFFIX#"feature-"}'
-        - "echo Branch suffix: $BRANCH_SUFFIX"
-        - FILENAME=codecompass-$BRANCH_SUFFIX-$ARCH_SUFFIX.tar.gz
+        - "echo Branch name: $CI_COMMIT_REF_SLUG"
+        - FILENAME=codecompass-$CI_COMMIT_REF_SLUG-$ARCH_SUFFIX.tar.gz
         - "echo Filename: $FILENAME"
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
-upload suse-15:
+# Temporarily disabled job
+.upload suse-15:
     extends: .upload
     variables:
         ARCH_SUFFIX: suse-15
     needs: ["tarball suse-15"]
 
-upload suse-42.1:
+# Permanently disabled job
+# (Distribution package repository metadata not available anymore.)
+.upload suse-42.1:
     extends: .upload
     variables:
         ARCH_SUFFIX: suse-42.1

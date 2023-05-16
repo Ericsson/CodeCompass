@@ -392,6 +392,8 @@ private:
 
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;
+
+  std::string toShortDiagnosticString(const model::CppAstNode& node) const;
 };
 
 }

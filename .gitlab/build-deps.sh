@@ -35,14 +35,15 @@ export CC=$DEPS_INSTALL_BUILD_DIR/gcc-install/bin/gcc
 # CMake #
 #########
 
-cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-Linux-x86_64.tar.gz
-tar -xf cmake-3.19.0-Linux-x86_64.tar.gz -C $DEPS_INSTALL_BUILD_DIR
-rm -rf cmake-3.19.0-Linux-x86_64.tar.gz
+if [ ! -f $DEPS_INSTALL_BUILD_DIR/cmake-install/bin/cmake ]; then
+  cd $PACKAGES_DIR
+  wget --no-verbose --no-clobber https://github.com/Kitware/CMake/releases/download/v3.19.0/cmake-3.19.0-Linux-x86_64.tar.gz
+  tar -xf cmake-3.19.0-Linux-x86_64.tar.gz -C $DEPS_INSTALL_BUILD_DIR
+  rm -rf cmake-3.19.0-Linux-x86_64.tar.gz
 
-cd $DEPS_INSTALL_BUILD_DIR
-mv cmake-3.19.0-Linux-x86_64 cmake-install
-
+  cd $DEPS_INSTALL_BUILD_DIR
+  mv cmake-3.19.0-Linux-x86_64 cmake-install
+fi
 export PATH=$DEPS_INSTALL_BUILD_DIR/cmake-install/bin:$PATH
 
 ######
@@ -161,6 +162,7 @@ if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/odb-install/bin/odb ]; then
     bpkg install --all --recursive --quiet --jobs $(nproc)
 
     rm -f $PACKAGES_DIR/build2-toolchain-0.15.0.tar.xz
+    rm -f $PACKAGES_DIR/build2-install-0.15.0.sh
   elif [[ $ODB_VERSION == "2.4.0" ]]; then
     # odb
     cd $PACKAGES_DIR

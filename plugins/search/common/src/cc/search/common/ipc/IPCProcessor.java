@@ -22,8 +22,7 @@ public class IPCProcessor implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(
-    IPCProcessor.class.getName());
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Processor for thrift messages.
    */

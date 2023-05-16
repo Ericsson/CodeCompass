@@ -289,8 +289,10 @@ void CppServiceHandler::getProperties(
           return_["Type"] = variable.qualifiedType;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying properties "
+               "of C++ variable: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -310,8 +312,10 @@ void CppServiceHandler::getProperties(
           return_["Signature"] = function.name;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying properties "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -334,8 +338,10 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = type.qualifiedName;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying properties "
+               "of C++ type: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -353,9 +359,11 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = type.qualifiedName;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
-
+          LOG(warning)
+            << "Unexpected empty result when querying properties "
+               "of C++ typedef: "
+            << toShortDiagnosticString(node);
+         
         break;
       }
 
@@ -373,8 +381,10 @@ void CppServiceHandler::getProperties(
           return_["Value"] = std::to_string(enumConst.value);
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying properties "
+               "of C++ enum constant: "
+            << toShortDiagnosticString(node);
       }
     }
   });
@@ -492,8 +502,10 @@ std::int32_t CppServiceHandler::getReferenceCount(
             TypeQuery::entityHash == function.typeHash).count;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when counting return types "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         return 0;
       }
@@ -526,8 +538,10 @@ std::int32_t CppServiceHandler::getReferenceCount(
             TypeQuery::entityHash == variable.typeHash).count;
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when counting types "
+               "of C++ variable: "
+            << toShortDiagnosticString(node);
 
         return 0;
       }
@@ -774,8 +788,10 @@ void CppServiceHandler::getReferences(
               std::to_string(var.load()->astNodeId)));
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying parameters "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -795,8 +811,10 @@ void CppServiceHandler::getReferences(
               std::to_string(var.load()->astNodeId)));
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying local variables "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -822,8 +840,10 @@ void CppServiceHandler::getReferences(
           }
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying return type "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -884,8 +904,10 @@ void CppServiceHandler::getReferences(
           }
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying type "
+               "of C++ variable: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -983,8 +1005,10 @@ void CppServiceHandler::getReferences(
           nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying underlying type "
+               "of C++ typedef: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -1009,8 +1033,10 @@ void CppServiceHandler::getReferences(
             });
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying enum constants "
+               "of C++ enum: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -1629,14 +1655,22 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(visibility);
         }
 
-        //--- Virtual Tag ---//
+        //--- Other Tags ---//
 
         FuncResult funcNodes = _db->query<cc::model::CppFunction>(
           FuncQuery::entityHash == defNode.entityHash);
-        const model::CppFunction& funcNode = *funcNodes.begin();
+        if (!funcNodes.empty())
+        {
+          const model::CppFunction& funcNode = *funcNodes.begin();
 
-        for (const model::Tag& tag : funcNode.tags)
-          tags[node.id].push_back(model::tagToString(tag));
+          for (const model::Tag& tag : funcNode.tags)
+            tags[node.id].push_back(model::tagToString(tag));
+        }
+        else
+          LOG(warning) 
+            << "Unexpected empty result when querying tags "
+               "of C++ function: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -1668,8 +1702,10 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(model::tagToString(tag));
         }
         else
-          LOG(warning) << "Database query result was not expected to be empty. "
-                       << __FILE__ << ", line #" << __LINE__;
+          LOG(warning) 
+            << "Unexpected empty result when querying tags "
+               "of C++ variable: "
+            << toShortDiagnosticString(node);
 
         break;
       }
@@ -1714,6 +1750,23 @@ std::size_t CppServiceHandler::queryCallsCount(
   model::CppAstNode node = nodes.front();
 
   return _db->query_value<model::CppAstCount>(astCallsQuery(node)).count;
+}
+
+inline std::string
+CppServiceHandler::toShortDiagnosticString(const model::CppAstNode& node) const
+{
+  return std::string(node.astValue)
+    .append("\n    AST node #").append(std::to_string(node.id))
+    .append("\n    in file ").append(node.location.file.load()->path)
+    .append(" (")
+    .append(std::to_string(
+      static_cast<signed>(node.location.range.start.line))).append(":")
+    .append(std::to_string(
+      static_cast<signed>(node.location.range.start.column))).append(" - ")
+    .append(std::to_string(
+      static_cast<signed>(node.location.range.end.line))).append(":")
+    .append(std::to_string(
+      static_cast<signed>(node.location.range.end.column))).append(")");
 }
 
 } // language
