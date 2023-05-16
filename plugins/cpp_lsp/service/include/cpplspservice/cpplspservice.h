@@ -158,10 +158,10 @@ private:
     const TextDocumentPositionParams& params_,
     language::CppServiceHandler::ReferenceType refType_);
 
-  CompletionList fileDiagramTypes(
+  std::vector<std::string> fileDiagramTypes(
     const DiagramTypeParams& params_);
 
-  CompletionList nodeDiagramTypes(
+  std::vector<std::string> nodeDiagramTypes(
     const DiagramTypeParams& params_);
 
   Diagram fileDiagram(

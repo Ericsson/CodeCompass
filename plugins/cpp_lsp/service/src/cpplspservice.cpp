@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <boost/property_tree/ptree_fwd.hpp>
 #include <iterator>
 #include <stack>
 #include <string>
@@ -383,7 +384,7 @@ void CppLspServiceHandler::getDiagramTypes(
   DiagramTypeParams diagramTypeParams;
   diagramTypeParams.readNode(params_);
 
-  CompletionList diagramTypesResult;
+  std::vector<std::string> diagramTypesResult;
   if (!diagramTypeParams.position)
   {
     diagramTypesResult = fileDiagramTypes(diagramTypeParams);
@@ -393,10 +394,15 @@ void CppLspServiceHandler::getDiagramTypes(
     diagramTypesResult = nodeDiagramTypes(diagramTypeParams);
   }
 
-  responseTree_.put_child("result", diagramTypesResult.createNode());
+  pt::ptree resultNode;
+  for (const std::string& diagramType : diagramTypesResult)
+  {
+    resultNode.push_back(std::make_pair("", pt::ptree(diagramType)));
+  }
+  responseTree_.put_child("result", resultNode);
 }
 
-CompletionList CppLspServiceHandler::fileDiagramTypes(
+std::vector<std::string> CppLspServiceHandler::fileDiagramTypes(
   const DiagramTypeParams& params_)
 {
   model::FilePtr file = _transaction([&, this](){
@@ -405,29 +411,23 @@ CompletionList CppLspServiceHandler::fileDiagramTypes(
   });
 
   if (!file)
-    return CompletionList();
+    return {};
 
   std::map<std::string, std::int32_t> result;
   _cppService.getFileDiagramTypes(result, std::to_string(file->id));
 
-  std::vector<CompletionItem> diagramTypes(result.size());
+  std::vector<std::string> diagramTypes(result.size());
   std::transform(result.begin(), result.end(), diagramTypes.begin(),
     [](std::pair<std::string, std::int32_t> item)
     {
-      CompletionItem ci;
-      ci.label = item.first;
-      ci.data = std::to_string(item.second);
-      return ci;
+      return item.first;
     }
   );
 
-  CompletionList list;
-  list.isIncomplete = false;
-  list.items = diagramTypes;
-  return list;
+  return diagramTypes;
 }
 
-CompletionList CppLspServiceHandler::nodeDiagramTypes(
+std::vector<std::string> CppLspServiceHandler::nodeDiagramTypes(
   const DiagramTypeParams& params_)
 {
   language::AstNodeInfo astNodeInfo;
@@ -439,7 +439,7 @@ CompletionList CppLspServiceHandler::nodeDiagramTypes(
   });
 
   if (!file)
-    return CompletionList();
+    return {};
 
   cppPosition.file = std::to_string(file->id);
   cppPosition.pos.line = params_.position->line;
@@ -449,21 +449,15 @@ CompletionList CppLspServiceHandler::nodeDiagramTypes(
   std::map<std::string, std::int32_t> result;
   _cppService.getDiagramTypes(result, astNodeInfo.id);
 
-  std::vector<CompletionItem> diagramTypes(result.size());
+  std::vector<std::string> diagramTypes(result.size());
   std::transform(result.begin(), result.end(), diagramTypes.begin(),
     [](std::pair<std::string, std::int32_t> item)
     {
-      CompletionItem ci;
-      ci.label = item.first;
-      ci.data = std::to_string(item.second);
-      return ci;
+      return item.first;
     }
   );
 
-  CompletionList list;
-  list.isIncomplete = false;
-  list.items = diagramTypes;
-  return list;
+  return diagramTypes;
 }
 
 void CppLspServiceHandler::getDiagram(
