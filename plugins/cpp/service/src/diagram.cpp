@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include <model/cppvariable.h>
 #include <model/cppvariable-odb.hxx>
 #include <model/cpprecord.h>

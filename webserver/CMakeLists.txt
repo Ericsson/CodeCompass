@@ -1,6 +1,3 @@
-include_directories(SYSTEM
-  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
-
 add_subdirectory(authenticators)
 
 add_executable(CodeCompass_webserver

@@ -67,12 +67,12 @@ struct Writeable
 struct ResponseError : public Writeable
 {
   /**
-	 * A number indicating the error type that occurred.
-	 */
+   * A number indicating the error type that occurred.
+   */
   ErrorCode code;
   /**
-	 * A string providing a short description of the error.
-	 */
+   * A string providing a short description of the error.
+   */
   std::string message;
 
   void writeNode(pt::ptree& node) const override;
@@ -86,8 +86,8 @@ struct ResponseError : public Writeable
 struct TextDocumentIdentifier : public Readable, public Writeable
 {
   /**
-	 * The text document's URI.
-	 */
+   * The text document's URI.
+   */
   DocumentUri uri;
 
   void readNode(const pt::ptree& node) override;
@@ -105,17 +105,17 @@ struct TextDocumentIdentifier : public Readable, public Writeable
 struct Position : public Readable, public Writeable
 {
   /**
-	 * Line position in a document (zero-based).
-	 */
+   * Line position in a document (zero-based).
+   */
   int line;
   /**
-	 * Character offset on a line in a document (zero-based). Assuming that the
+   * Character offset on a line in a document (zero-based). Assuming that the
    * line is represented as a string, the `character` value represents the gap
    * between the `character` and `character + 1`.
-	 *
-	 * If the character value is greater than the line length it defaults back to
-	 * the line length.
-	 */
+   *
+   * If the character value is greater than the line length it defaults back to
+   * the line length.
+   */
   int character;
 
   void readNode(const pt::ptree& node) override;
@@ -133,12 +133,12 @@ struct Position : public Readable, public Writeable
 struct Range : public Readable, public Writeable
 {
   /**
-	 * The range's start position.
-	 */
+   * The range's start position.
+   */
   Position start;
   /**
-	 * The range's end position.
-	 */
+   * The range's end position.
+   */
   Position end;
 
   void readNode(const pt::ptree& node) override;
@@ -229,23 +229,23 @@ struct CompletionItem final : public Readable, public Writeable
    */
   std::string label;
   /**
-	 * The kind of this completion item. Based of the kind
+   * The kind of this completion item. Based of the kind
    * an icon is chosen by the editor.
-	 */
+   */
   boost::optional<int> kind;
   /**
-	 * A human-readable string with additional information
-	 * about this item, like type or symbol information.
-	 */
+   * A human-readable string with additional information
+   * about this item, like type or symbol information.
+   */
   boost::optional<std::string> detail;
   /**
-	 * A human-readable string that represents a doc-comment.
-	 */
+   * A human-readable string that represents a doc-comment.
+   */
   boost::optional<std::string> documentation;
   /**
-	 * A data entry field that is preserved on a completion item between
-	 * a completion and a completion resolve request.
-	 */
+   * A data entry field that is preserved on a completion item between
+   * a completion and a completion resolve request.
+   */
   boost::optional<std::string> data;
 
   void readNode(const pt::ptree& node) override;
@@ -258,13 +258,13 @@ struct CompletionItem final : public Readable, public Writeable
 struct CompletionList : public Writeable
 {
   /**
-	 * This list it not complete. Further typing should result in recomputing
-	 * this list.
-	 */
+   * This list it not complete. Further typing should result in recomputing
+   * this list.
+   */
   bool isIncomplete;
   /**
-	 * The completion items.
-	 */
+   * The completion items.
+   */
   std::vector<CompletionItem> items;
 
   void writeNode(pt::ptree& node) const override;

@@ -19,7 +19,7 @@
 #include <model/cpprelation-odb.hxx>
 
 #include <util/odbtransaction.h>
-#include "util/graph.h"
+#include <util/graph.h>
 #include <webserver/servercontext.h>
 
 namespace cc
