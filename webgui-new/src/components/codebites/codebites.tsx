@@ -58,7 +58,7 @@ export const CodeBites = ({ astNodeInfo }: { astNodeInfo: AstNodeInfo }): JSX.El
           id: `e${elem.rowNum ?? 1}-${idx + 2}`,
           source: `${elem.rowNum}`,
           target: `${idx + 2}`,
-          label: `${elem.astNodeInfo.astNodeValue}`,
+          label: `${elem.astNodeInfo.astNodeValue?.split('\n')[0]}`,
         };
       })
     );

@@ -13,6 +13,7 @@ import {
 } from 'service/cpp-service';
 import { getFileInfo } from 'service/project-service';
 import { NodeProps, Handle, Position } from 'reactflow';
+import { gutter, GutterMarker } from '@codemirror/view';
 import * as SC from './styled-components';
 
 type CodeBitesElement = {
@@ -26,6 +27,25 @@ type DataProps = {
   setElements: Dispatch<SetStateAction<CodeBitesElement[]>>;
   rowNum: number;
 };
+
+class CustomOffsetGutterMarker extends GutterMarker {
+  number: string;
+
+  constructor(number: string) {
+    super();
+    this.number = number;
+  }
+
+  eq(other: CustomOffsetGutterMarker) {
+    return this.number === other.number;
+  }
+
+  toDOM() {
+    const div = document.createElement('div');
+    div.innerHTML = this.number;
+    return div;
+  }
+}
 
 export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
   const { theme } = useContext(ThemeContext);
@@ -80,6 +100,18 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
     data.setElements((prevNodes) => [...prevNodes, { astNodeInfo: newAstNodeDef, rowNum: data.rowNum }]);
   };
 
+  const customOffsetGutter = gutter({
+    class: 'customGutter',
+    renderEmptyElements: false,
+    lineMarker(view, line, others) {
+      if (others.some((m) => m.toDOM)) return null;
+
+      const number = view.state.doc.lineAt(line.from).number + (data.astNodeInfo.range?.range?.startpos?.line ?? 0) - 1;
+
+      return new CustomOffsetGutterMarker(number.toString());
+    },
+  });
+
   return (
     <SC.NodeOuterContainer>
       <Handle type="target" position={Position.Top} />
@@ -93,7 +125,7 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
       />
       <ReactCodeMirror
         readOnly={true}
-        extensions={[cpp()]}
+        extensions={[customOffsetGutter, cpp()]}
         theme={theme === 'dark' ? githubDark : githubLight}
         style={{ fontSize: '0.8rem' }}
         value={text}
@@ -101,6 +133,9 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
         height={'290px'}
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleClick()}
+        basicSetup={{
+          lineNumbers: false,
+        }}
       />
     </SC.NodeOuterContainer>
   );
