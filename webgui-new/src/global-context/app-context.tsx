@@ -162,6 +162,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
       createGitClient(workspaceId);
 
       const initLabels = (await getLabels()) ?? new Map();
+      setLabels(initLabels);
 
       const {
         storedProjectFileId,
@@ -179,27 +180,22 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
         storedTreeViewOption,
       } = getStore();
 
-      setLabels(initLabels);
-      setProjectFileId(storedProjectFileId);
-      setSearchProps(storedSearchProps);
-      setMetricsGenId(storedMetricsGenId);
-      setDiagramGenId(storedDiagramGenId);
-      setDiagramTypeId(storedDiagramTypeId);
-      setLanguageNodeId(storedLanguageNodeId);
+      setProjectFileId(routerQuery.projectFileId ?? storedProjectFileId);
+      setMetricsGenId(routerQuery.metricsGenId ?? storedMetricsGenId);
+      setDiagramGenId(routerQuery.diagramGenId ?? storedDiagramGenId);
+      setDiagramTypeId(routerQuery.diagramTypeId ? parseInt(routerQuery.diagramTypeId) : storedDiagramTypeId);
+      setLanguageNodeId(routerQuery.languageNodeId ?? storedLanguageNodeId);
       setEditorSelection(storedEditorSelection);
-      setGitRepoId(storedGitRepoId);
-      setGitBranch(storedGitBranch);
-      setGitCommitId(storedGitCommitId);
+      setSearchProps(storedSearchProps);
+      setGitRepoId(routerQuery.gitRepoId ?? storedGitRepoId);
+      setGitBranch(routerQuery.gitBranch ?? storedGitBranch);
+      setGitCommitId(routerQuery.gitCommitId ?? storedGitCommitId);
       setGitBlameInfo([]);
-      setActiveAccordion(storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
-      setActiveTab(storedActiveTab ?? TabName.WELCOME);
-      setTreeViewOption(storedTreeViewOption ?? false);
+      setActiveAccordion(routerQuery.activeAccordion ?? storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
+      setActiveTab(routerQuery.activeTab ? parseInt(routerQuery.activeTab) : storedActiveTab ?? TabName.WELCOME);
+      setTreeViewOption(Boolean(routerQuery.treeViewOption ?? storedTreeViewOption ?? false));
 
-      setStore({
-        storedWorkspaceId: workspaceId,
-      });
-
-      if (routerQuery.projectFileId && routerQuery.editorSelection) {
+      if (routerQuery.editorSelection) {
         const selection = routerQuery.editorSelection.split('|');
         const startLine = parseInt(selection[0]);
         const startCol = parseInt(selection[1]);
@@ -219,11 +215,14 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
           endpos,
         });
 
-        setActiveAccordion(AccordionLabel.FILE_MANAGER);
-        setActiveTab(TabName.CODE);
-        setProjectFileId(routerQuery.projectFileId);
         setEditorSelection(range);
+      }
 
+      setStore({
+        storedWorkspaceId: workspaceId,
+      });
+
+      if (routerQuery) {
         router.replace({
           pathname: '/project',
           query: {},

@@ -1,9 +1,9 @@
-import { IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { Button, IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import React, { KeyboardEvent, useContext, useEffect, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypeOptions } from 'enums/search-enum';
-import { enumToArray } from 'utils/utils';
+import { enumToArray, updateUrlWithParams } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
@@ -13,6 +13,8 @@ import { AccordionLabel } from 'enums/accordion-enum';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
+import { toast } from 'react-toastify';
+import { RouterQueryType } from 'utils/types';
 
 export const Header = (): JSX.Element => {
   const appCtx = useContext(AppContext);
@@ -168,6 +170,37 @@ export const Header = (): JSX.Element => {
     return modifiedQueryString;
   };
 
+  const copyURL = () => {
+    let selection = '1|1|1|1';
+    const currentSelectionRange = appCtx.editorSelection;
+    if (currentSelectionRange && currentSelectionRange.startpos && currentSelectionRange.endpos) {
+      const { line: startLine, column: startCol } = currentSelectionRange.startpos;
+      const { line: endLine, column: endCol } = currentSelectionRange.endpos;
+      selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
+    }
+
+    const params: RouterQueryType = {
+      workspaceId: appCtx.workspaceId,
+      projectFileId: appCtx.projectFileId,
+      activeAccordion: appCtx.activeAccordion,
+      activeTab: appCtx.activeTab?.toString(),
+      treeViewOption: appCtx.treeViewOption?.toString(),
+      editorSelection: selection,
+      metricsGenId: appCtx.metricsGenId,
+      diagramGenId: appCtx.diagramGenId,
+      diagramTypeId: appCtx.diagramTypeId?.toString(),
+      languageNodeId: appCtx.languageNodeId,
+      gitRepoId: appCtx.gitRepoId,
+      gitBranch: appCtx.gitBranch,
+      gitCommitId: appCtx.gitCommitId,
+    };
+
+    const url = updateUrlWithParams(params);
+
+    navigator.clipboard.writeText(url);
+    toast.success('URL copied to clipboard!');
+  };
+
   return (
     <SC.StyledHeader>
       <SC.HeaderLogo />
@@ -255,9 +288,12 @@ export const Header = (): JSX.Element => {
             setSelectedSearchTypeOptions={setSelectedSearchTypeOptions}
           />
         </SC.SettingsContainer>
-        <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? <LightMode /> : <DarkMode />}
-        </IconButton>
+        <SC.HeaderButtons>
+          <Button onClick={() => copyURL()}>{'Share URL'}</Button>
+          <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <LightMode /> : <DarkMode />}
+          </IconButton>
+        </SC.HeaderButtons>
       </SC.HeaderContent>
     </SC.StyledHeader>
   );

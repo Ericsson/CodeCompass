@@ -13,7 +13,7 @@ export type RouterQueryType = {
   gitCommitId?: string;
   activeAccordion?: string;
   activeTab?: string;
-  treeViewOption?: boolean;
+  treeViewOption?: string;
 };
 
 export type TreeNode = {

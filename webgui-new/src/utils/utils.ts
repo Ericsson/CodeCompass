@@ -36,14 +36,16 @@ export const updateUrlWithParams = (params: RouterQueryType) => {
   const searchParams = new URLSearchParams(url.search);
 
   Object.entries(params).forEach(([key, value]) => {
-    const existingValue = searchParams.get(key);
-    const valueString = String(value);
+    if (value) {
+      const existingValue = searchParams.get(key);
+      const valueString = String(value);
 
-    if (existingValue !== valueString) {
-      if (existingValue) {
-        searchParams.set(key, valueString);
-      } else {
-        searchParams.append(key, valueString);
+      if (existingValue !== valueString) {
+        if (existingValue) {
+          searchParams.set(key, valueString);
+        } else {
+          searchParams.append(key, valueString);
+        }
       }
     }
   });
