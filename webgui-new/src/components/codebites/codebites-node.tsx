@@ -2,7 +2,6 @@ import { cpp } from '@codemirror/lang-cpp';
 import { AstNodeInfo, FileInfo } from '@thrift-generated';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { FileName } from 'components/file-name/file-name';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import {
@@ -116,13 +115,9 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
     <SC.NodeOuterContainer>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
-      <FileName
-        fileName={fileInfo ? (fileInfo.name as string) : ''}
-        filePath={fileInfo ? (fileInfo.path as string) : ''}
-        parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
-        info={fileInfo ?? undefined}
-        hideFileRefMenu
-      />
+      <SC.NodeHeader>
+        {fileInfo ? (fileInfo.name as string) : ''} :: {fileInfo ? (fileInfo.path as string) : ''}
+      </SC.NodeHeader>
       <ReactCodeMirror
         readOnly={true}
         extensions={[customOffsetGutter, cpp()]}
@@ -130,7 +125,7 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
         style={{ fontSize: '0.8rem' }}
         value={text}
         width={'490px'}
-        height={'290px'}
+        height={'310px'}
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleClick()}
         basicSetup={{
