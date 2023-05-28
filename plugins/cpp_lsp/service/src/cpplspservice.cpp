@@ -498,7 +498,8 @@ Diagram CppLspServiceHandler::fileDiagram(
   if (!file)
     return std::string();
 
-  const static std::map<std::string, std::int32_t> diagramTypes = {
+  const static std::map<std::string, std::int32_t> diagramTypes =
+  {
     {"Internal architecture of this module",
       language::CppServiceHandler::SUBSYSTEM_DEPENDENCY},
     {"This module depends on",
@@ -545,7 +546,8 @@ Diagram CppLspServiceHandler::nodeDiagram(
 
   _cppService.getAstNodeInfoByPosition(astNodeInfo, cppPosition);
 
-  const static std::map<std::string, std::int32_t> diagramTypes = {
+  const static std::map<std::string, std::int32_t> diagramTypes =
+  {
     {"Function call diagram", language::CppServiceHandler::FUNCTION_CALL},
     {"Detailed class diagram", language::CppServiceHandler::DETAILED_CLASS},
     {"Class collaboration diagram",
@@ -585,7 +587,7 @@ void CppLspServiceHandler::addLocationToIdInDiagram(
     if (visited.find(nodeInfo.id) == visited.end() || !visited[nodeInfo.id])
     {
       visited[nodeInfo.id] = true;
-      for (auto& child : graph_.getChildren(nodeInfo.id))
+      for (const auto& child : graph_.getChildren(nodeInfo.id))
       {
         if(visited.find(child) == visited.end())
         {
@@ -593,7 +595,7 @@ void CppLspServiceHandler::addLocationToIdInDiagram(
           visited[child] = false;
         }
       }
-      for (auto& parent : graph_.getParents(nodeInfo.id))
+      for (const auto& parent : graph_.getParents(nodeInfo.id))
       {
         if(visited.find(parent) == visited.end())
         {
@@ -632,7 +634,7 @@ void CppLspServiceHandler::addPathToIdInFileDiagram(
     if (visited.find(fileInfo.id) == visited.end() || !visited[fileInfo.id])
     {
       visited[fileInfo.id] = true;
-      for (auto& child : graph_.getChildren(fileInfo.id))
+      for (const auto& child : graph_.getChildren(fileInfo.id))
       {
         if(visited.find(child) == visited.end())
         {
@@ -640,7 +642,7 @@ void CppLspServiceHandler::addPathToIdInFileDiagram(
           visited[child] = false;
         }
       }
-      for (auto& parent : graph_.getParents(fileInfo.id))
+      for (const auto& parent : graph_.getParents(fileInfo.id))
       {
         if(visited.find(parent) == visited.end())
         {
