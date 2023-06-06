@@ -37,7 +37,17 @@ class GitBlameGutterMarker extends GutterMarker {
     outerDiv.style.alignItems = 'center';
     outerDiv.style.justifyContent = 'space-between';
     outerDiv.style.width = '400px';
-    outerDiv.style.cursor = 'pointer';
+
+    if (this.commitMessage) {
+      outerDiv.style.cursor = 'pointer';
+      outerDiv.addEventListener('mouseover', () => {
+        outerDiv.style.color = 'red';
+      });
+
+      outerDiv.addEventListener('mouseout', () => {
+        outerDiv.style.color = '';
+      });
+    }
 
     const commitDiv = document.createElement('div');
     commitDiv.style.display = 'flex';
