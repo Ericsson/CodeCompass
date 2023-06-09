@@ -250,3 +250,5 @@ jobs:
     needs: parse
     if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release/') == true) }}
     uses: ./.github/workflows/tarball.yml
+    secrets:
+      GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}

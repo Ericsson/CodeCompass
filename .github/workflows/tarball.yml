@@ -1,6 +1,11 @@
 name: Create Tarball
 
-on: [workflow_dispatch, workflow_call]
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      GITLAB_TRIGGER_TOKEN:
+        required: true
 
 jobs:
   tarball:
