@@ -237,21 +237,16 @@ jobs:
   docker:
     needs: parse
     if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release/') == true) }}
-
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Build Docker images
-        uses: ./.github/workflows/docker.yml
-        with:
-          tag-latest: ${{ github.ref_name == 'master' }}
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag-latest: ${{ github.ref_name == 'master' }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
   ## TARBALL JOB
   tarball:
     needs: parse
     if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release/') == true) }}
-
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Create Tarball
-        uses: ./.github/workflows/tarball.yml
+    uses: ./.github/workflows/tarball.yml
