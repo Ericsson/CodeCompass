@@ -1,0 +1,17 @@
+name: Create Tarball
+
+on: [workflow_dispatch, workflow_call]
+
+jobs:
+  tarball:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Update apt-get
+        run: sudo apt-get update
+
+      - name: Install curl
+        run: sudo apt-get install curl
+
+      - name: Trigger GitLab CI
+        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=${{ github.ref_name }} https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
