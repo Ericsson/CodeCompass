@@ -75,13 +75,14 @@ jobs:
 
       - name: Configure CMake
         working-directory: ${{github.workspace}}
-        run: cmake -E make_directory ${{github.workspace}}/build
+        run:
+          cmake -E make_directory $HOME/cc-build
 
       - name: Run CMake
-        working-directory: ${{github.workspace}}/build
         run: >
-          cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+          cd $HOME/cc-build &&
+          cmake ${{github.workspace}} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+          -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           -DDATABASE=$DB_TYPE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DLLVM_DIR=/usr/lib/llvm-10/cmake
@@ -89,23 +90,26 @@ jobs:
           -DTEST_DB=$DB_CONNSTRING
 
       - name: Build
-        working-directory: ${{github.workspace}}/build
-        run: make -j $(nproc)
+        run: |
+          cd $HOME/cc-build
+          make -j $(nproc)
 
       - name: Install
-        working-directory: ${{github.workspace}}/build
-        run: make install
+        run: |
+          cd $HOME/cc-build
+          make install
 
       - name: Run tests
-        working-directory: ${{github.workspace}}/build
-        run: make test ARGS=-V
+        run: |
+          cd $HOME/cc-build
+          make test ARGS=-V
 
       - name: Archive CodeCompass artifacts
         run: |
           mkdir ${{github.workspace}}/artifacts
-          cd ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+          cd $HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           zip -rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip .
-          cd ${{github.workspace}}/build
+          cd $HOME/cc-build
           zip -Rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip *.c *.h *.cpp *.hpp *.cxx *.hxx *.ixx *.js compile_commands.json
 
       - name: Upload CodeCompass binaries
@@ -176,14 +180,14 @@ jobs:
 
       - name: Unpack CodeCompass artifacts
         run: |
-          mkdir ${{github.workspace}}/install && cd ${{github.workspace}}/install
+          mkdir $HOME/cc-install && cd $HOME/cc-install
           unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
-          mkdir ${{github.workspace}}/build && cd ${{github.workspace}}/build
+          mkdir $HOME/cc-build && cd $HOME/cc-build
           unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
 
       - name: Add execute right to parser and move source files
         run: |
-          chmod +x ${{github.workspace}}/install/bin/CodeCompass_parser
+          chmod +x $HOME/cc-install/bin/CodeCompass_parser
 
       - name: Environment setup (Postgresql)
         if: ${{ matrix.db == 'postgresql' }}
@@ -209,17 +213,17 @@ jobs:
           mkdir build_tinyxml2 && cd build_tinyxml2
           cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
+          cd $HOME/cc-install/bin
           ./CodeCompass_parser -d $PROJ_TINYXML_CONNSTRING -w $HOME/$DIR_WS/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
 
       - name: Parse CodeCompass
         run: >
-          ${{github.workspace}}/install/bin/CodeCompass_parser
+          $HOME/cc-install/bin/CodeCompass_parser
           -d $PROJ_CODECOMPASS_CONNSTRING
           -w $HOME/$DIR_WS/
           -n "CodeCompass"
           -i ${{github.workspace}}
-          -i ${{github.workspace}}/build/compile_commands.json
+          -i $HOME/cc-build/compile_commands.json
           -j $(nproc)
 
       - name: Parse Xerces-C
@@ -229,7 +233,7 @@ jobs:
           mkdir build_xerces-c && cd build_xerces-c
           cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
+          cd $HOME/cc-install/bin
           ./CodeCompass_parser -d $PROJ_XERCES_CONNSTRING -w $HOME/$DIR_WS/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
 
 
