@@ -161,7 +161,10 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const line = view.state.doc.lineAt(head);
     const column = view.state.selection.ranges[0].head - line.from;
 
-    const astNodeInfo = await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+    const astNodeInfo =
+      fileInfo?.type === 'Unknown'
+        ? null
+        : await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
     if (astNodeInfo) {
       dispatchSelection(astNodeInfo?.range?.range as Range);
       appCtx.setEditorSelection(astNodeInfo?.range?.range);
@@ -227,6 +230,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
         gitBlameEnabled={appCtx.gitBlameInfo.length !== 0}
+        hideFileRefMenu={fileInfo?.type === 'Unknown'}
       />
       <ReactCodeMirror
         readOnly={true}
