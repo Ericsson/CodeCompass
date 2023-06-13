@@ -172,6 +172,7 @@ export const EditorContextMenu = ({
                       setContextMenu(null);
                       appCtx.setDiagramGenId(astNodeInfo?.id as string);
                       appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                      appCtx.setDiagramType('ast');
                       appCtx.setActiveTab(TabName.DIAGRAMS);
                     }}
                   >
@@ -183,6 +184,7 @@ export const EditorContextMenu = ({
                     setContextMenu(null);
                     appCtx.setDiagramGenId(astNodeInfo?.id as string);
                     appCtx.setDiagramTypeId(999);
+                    appCtx.setDiagramType('ast');
                     appCtx.setActiveTab(TabName.DIAGRAMS);
                   }}
                 >

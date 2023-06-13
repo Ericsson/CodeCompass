@@ -31,10 +31,15 @@ export const Diagrams = (): JSX.Element => {
   const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
-    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === -1) return;
+    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === -1 || !appCtx.diagramType) return;
     const init = async () => {
       const initDiagramInfo =
-        (await getFileInfo(appCtx.diagramGenId)) ?? (await getCppAstNodeInfo(appCtx.diagramGenId));
+        appCtx.diagramType === 'file'
+          ? await getFileInfo(appCtx.diagramGenId)
+          : appCtx.diagramType === 'ast'
+          ? await getCppAstNodeInfo(appCtx.diagramGenId)
+          : undefined;
+
       if (!initDiagramInfo) return;
 
       if (appCtx.diagramTypeId === 999) {
@@ -70,7 +75,7 @@ export const Diagrams = (): JSX.Element => {
       setDiagramInfo(initDiagramInfo);
     };
     init();
-  }, [appCtx.diagramGenId, appCtx.diagramTypeId]);
+  }, [appCtx.diagramGenId, appCtx.diagramTypeId, appCtx.diagramType]);
 
   const generateDiagram = async (e: MouseEvent) => {
     const parentNode = (e.target as HTMLElement)?.parentElement;
@@ -78,7 +83,13 @@ export const Diagrams = (): JSX.Element => {
 
     const diagramGenId = parentNode?.id as string;
 
-    const initDiagramInfo = (await getFileInfo(diagramGenId)) ?? (await getCppAstNodeInfo(diagramGenId));
+    const initDiagramInfo =
+      appCtx.diagramType === 'file'
+        ? await getFileInfo(appCtx.diagramGenId)
+        : appCtx.diagramType === 'ast'
+        ? await getCppAstNodeInfo(appCtx.diagramGenId)
+        : undefined;
+
     if (!initDiagramInfo) return;
 
     if (initDiagramInfo instanceof FileInfo) {

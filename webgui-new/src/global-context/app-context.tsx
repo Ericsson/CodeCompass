@@ -34,6 +34,8 @@ type AppContextProps = {
   setDiagramGenId: (_val: string) => void;
   diagramTypeId: number;
   setDiagramTypeId: (_val: number) => void;
+  diagramType: 'file' | 'ast';
+  setDiagramType: (_val: 'file' | 'ast') => void;
   languageNodeId: string;
   setLanguageNodeId: (_val: string) => void;
   editorSelection: Range | undefined;
@@ -73,6 +75,8 @@ export const AppContext = createContext<AppContextProps>({
   setDiagramGenId: (_val) => {},
   diagramTypeId: -1,
   setDiagramTypeId: (_val) => {},
+  diagramType: 'file',
+  setDiagramType: (_val) => {},
   languageNodeId: '',
   setLanguageNodeId: (_val) => {},
   editorSelection: undefined,
@@ -110,6 +114,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   const [metricsGenId, setMetricsGenId] = useState<string | undefined>(undefined);
   const [diagramGenId, setDiagramGenId] = useState<string | undefined>(undefined);
   const [diagramTypeId, setDiagramTypeId] = useState<number | undefined>(undefined);
+  const [diagramType, setDiagramType] = useState<'file' | 'ast' | undefined>(undefined);
   const [languageNodeId, setLanguageNodeId] = useState<string | undefined>(undefined);
   const [editorSelection, setEditorSelection] = useState<Range | undefined>(undefined);
   const [gitRepoId, setGitRepoId] = useState<string | undefined>(undefined);
@@ -169,6 +174,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
         storedMetricsGenId,
         storedDiagramGenId,
         storedDiagramTypeId,
+        storedDiagramType,
         storedLanguageNodeId,
         storedEditorSelection,
         storedGitRepoId,
@@ -185,6 +191,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
       setMetricsGenId(storedMetricsGenId);
       setDiagramGenId(storedDiagramGenId);
       setDiagramTypeId(storedDiagramTypeId);
+      setDiagramType(storedDiagramType);
       setLanguageNodeId(storedLanguageNodeId);
       setEditorSelection(storedEditorSelection);
       setGitRepoId(storedGitRepoId);
@@ -242,6 +249,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
       storedMetricsGenId: metricsGenId,
       storedDiagramGenId: diagramGenId,
       storedDiagramTypeId: diagramTypeId,
+      storedDiagramType: diagramType,
       storedLanguageNodeId: languageNodeId,
       storedEditorSelection: editorSelection,
       storedGitRepoId: gitRepoId,
@@ -257,6 +265,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     metricsGenId,
     diagramGenId,
     diagramTypeId,
+    diagramType,
     languageNodeId,
     editorSelection,
     gitRepoId,
@@ -275,6 +284,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     metricsGenId: metricsGenId as string,
     diagramGenId: diagramGenId as string,
     diagramTypeId: diagramTypeId as number,
+    diagramType: diagramType as 'file' | 'ast',
     languageNodeId: languageNodeId as string,
     editorSelection: editorSelection as Range,
     gitRepoId: gitRepoId as string,
@@ -294,6 +304,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     setMetricsGenId,
     setDiagramGenId,
     setDiagramTypeId,
+    setDiagramType,
     setLanguageNodeId,
     setEditorSelection,
     setGitRepoId,
