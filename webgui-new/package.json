@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",
+    "@types/dagre": "^0.7.48",
     "@types/express": "^4.17.17",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.10",
@@ -37,6 +38,7 @@
     "@next/font": "13.1.1",
     "@uiw/codemirror-theme-github": "^4.19.8",
     "@uiw/react-codemirror": "^4.19.6",
+    "dagre": "^0.8.5",
     "devicons-react": "^1.2.5",
     "next": "13.1.1",
     "react": "18.2.0",

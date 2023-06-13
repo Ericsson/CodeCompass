@@ -160,7 +160,24 @@ export const FileManager = (): JSX.Element => {
           }
         : null
     );
-    handleFileClick(fileInfo);
+    if (!fileInfo.isDirectory) {
+      if (appCtx.treeViewOption) {
+        const children = await getChildFiles(fileInfo.parent as string);
+        setFiles(children);
+      } else {
+        const parents = await getParents(folderPath as string);
+        setExpandedFileTreeNodes(parents);
+      }
+
+      appCtx.setProjectFileId(fileInfo.id as string);
+      appCtx.setEditorSelection(
+        new Range({
+          startpos: new Position({ line: 1, column: 1 }),
+          endpos: new Position({ line: 1, column: 1 }),
+        })
+      );
+      appCtx.setActiveTab(TabName.CODE);
+    }
     setFileInfoForDiagram(fileInfo);
   };
 

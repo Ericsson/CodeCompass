@@ -1,6 +1,7 @@
 import thrift from 'thrift';
 import { CppReparseService } from '@thrift-generated';
 import { config } from './config';
+import { toast } from 'react-toastify';
 
 let client: CppReparseService.Client | undefined;
 export const createCppReparseClient = (workspace: string) => {
@@ -22,6 +23,7 @@ export const getAsHTML = async (fileId: string) => {
   try {
     return await client.getAsHTML(fileId);
   } catch (e) {
+    toast.error('Could not get AST HTML.');
     console.error(e);
     return '';
   }
@@ -34,6 +36,7 @@ export const getAsHTMLForNode = async (nodeId: string) => {
   try {
     return await client.getAsHTMLForNode(nodeId);
   } catch (e) {
+    toast.error('Could not get AST HTML for this node.');
     console.error(e);
     return '';
   }

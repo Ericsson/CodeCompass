@@ -12,6 +12,7 @@ type StoreOptions = {
   storedMetricsGenId?: string;
   storedDiagramGenId?: string;
   storedDiagramTypeId?: number;
+  storedDiagramType?: 'file' | 'ast';
   storedLanguageNodeId?: string;
   storedEditorSelection?: Range;
   storedFiles?: FileInfo[];
@@ -41,6 +42,7 @@ type StoreOptionKey =
   | 'storedMetricsGenId'
   | 'storedDiagramGenId'
   | 'storedDiagramTypeId'
+  | 'storedDiagramType'
   | 'storedLanguageNodeId'
   | 'storedEditorSelection'
   | 'storedFiles'

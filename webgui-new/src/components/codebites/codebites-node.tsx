@@ -2,7 +2,6 @@ import { cpp } from '@codemirror/lang-cpp';
 import { AstNodeInfo, FileInfo } from '@thrift-generated';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { FileName } from 'components/file-name/file-name';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from 'react';
 import {
@@ -13,6 +12,7 @@ import {
 } from 'service/cpp-service';
 import { getFileInfo } from 'service/project-service';
 import { NodeProps, Handle, Position } from 'reactflow';
+import { gutter, GutterMarker } from '@codemirror/view';
 import * as SC from './styled-components';
 
 type CodeBitesElement = {
@@ -26,6 +26,25 @@ type DataProps = {
   setElements: Dispatch<SetStateAction<CodeBitesElement[]>>;
   rowNum: number;
 };
+
+class CustomOffsetGutterMarker extends GutterMarker {
+  number: string;
+
+  constructor(number: string) {
+    super();
+    this.number = number;
+  }
+
+  eq(other: CustomOffsetGutterMarker) {
+    return this.number === other.number;
+  }
+
+  toDOM() {
+    const div = document.createElement('div');
+    div.innerHTML = this.number;
+    return div;
+  }
+}
 
 export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
   const { theme } = useContext(ThemeContext);
@@ -80,27 +99,38 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
     data.setElements((prevNodes) => [...prevNodes, { astNodeInfo: newAstNodeDef, rowNum: data.rowNum }]);
   };
 
+  const customOffsetGutter = gutter({
+    class: 'customGutter',
+    renderEmptyElements: false,
+    lineMarker(view, line, others) {
+      if (others.some((m) => m.toDOM)) return null;
+
+      const number = view.state.doc.lineAt(line.from).number + (data.astNodeInfo.range?.range?.startpos?.line ?? 0) - 1;
+
+      return new CustomOffsetGutterMarker(number.toString());
+    },
+  });
+
   return (
     <SC.NodeOuterContainer>
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
-      <FileName
-        fileName={fileInfo ? (fileInfo.name as string) : ''}
-        filePath={fileInfo ? (fileInfo.path as string) : ''}
-        parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
-        info={fileInfo ?? undefined}
-        hideFileRefMenu
-      />
+      <SC.NodeHeader>
+        {fileInfo ? (fileInfo.name as string) : ''} :: {fileInfo ? (fileInfo.path as string) : ''}
+      </SC.NodeHeader>
       <ReactCodeMirror
         readOnly={true}
-        extensions={[cpp()]}
+        extensions={[customOffsetGutter, cpp()]}
         theme={theme === 'dark' ? githubDark : githubLight}
         style={{ fontSize: '0.8rem' }}
         value={text}
         width={'490px'}
-        height={'290px'}
+        height={'310px'}
         onCreateEditor={(view, state) => (editorRef.current = { view, state })}
         onClick={() => handleClick()}
+        basicSetup={{
+          lineNumbers: false,
+        }}
       />
     </SC.NodeOuterContainer>
   );

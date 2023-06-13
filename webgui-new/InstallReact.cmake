@@ -35,7 +35,7 @@ file(REMOVE_RECURSE ${INSTALL_WEBROOT_REACT_DIR}/out)
 file(RENAME ${INSTALL_WEBROOT_REACT_DIR}/app/out ${INSTALL_WEBROOT_REACT_DIR}/out)
 
 # Create symbolic link
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${INSTALL_WEBROOT_REACT_DIR}/out ${INSTALL_WEBROOT_DIR}/new)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../webgui-new/out ${INSTALL_WEBROOT_DIR}/new)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   # Remove application source code in case of Release build

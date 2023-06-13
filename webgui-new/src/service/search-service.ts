@@ -1,6 +1,7 @@
 import thrift from 'thrift';
 import { SearchFilter, SearchParams, SearchRange, SearchService } from '@thrift-generated';
 import { config } from './config';
+import { toast } from 'react-toastify';
 
 let client: SearchService.Client | undefined;
 export const createSearchClient = (workspace: string) => {
@@ -91,6 +92,7 @@ export const getSearchResults = async (
           })
         );
   } catch (e) {
+    toast.error('Could not display search results.');
     console.error(e);
     return;
   }

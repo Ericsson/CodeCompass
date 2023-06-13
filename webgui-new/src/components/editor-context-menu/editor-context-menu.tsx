@@ -134,6 +134,23 @@ export const EditorContextMenu = ({
     setContextMenu(null);
   };
 
+  const showGitBlame = async () => {
+    setContextMenu(null);
+    const fileInfo = await getFileInfo(appCtx.projectFileId as string);
+    const currentRepo = await getRepositoryByProjectPath(fileInfo?.path as string);
+    const srcPath = appCtx.labels.get('src');
+    const filePath = fileInfo?.path as string;
+    const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
+    const blameInfo = await getBlameInfo(
+      currentRepo?.repoId as string,
+      currentRepo?.commitId as string,
+      path as string,
+      fileInfo?.id as string
+    );
+    appCtx.setGitBlameInfo(blameInfo);
+    appCtx.setActiveTab(TabName.CODE);
+  };
+
   return appCtx.languageNodeId ? (
     <>
       <Menu
@@ -155,6 +172,7 @@ export const EditorContextMenu = ({
                       setContextMenu(null);
                       appCtx.setDiagramGenId(astNodeInfo?.id as string);
                       appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                      appCtx.setDiagramType('ast');
                       appCtx.setActiveTab(TabName.DIAGRAMS);
                     }}
                   >
@@ -166,6 +184,7 @@ export const EditorContextMenu = ({
                     setContextMenu(null);
                     appCtx.setDiagramGenId(astNodeInfo?.id as string);
                     appCtx.setDiagramTypeId(999);
+                    appCtx.setDiagramType('ast');
                     appCtx.setActiveTab(TabName.DIAGRAMS);
                   }}
                 >
@@ -183,28 +202,7 @@ export const EditorContextMenu = ({
         )}
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
         <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
-        {appCtx.languageNodeId && (
-          <MenuItem
-            onClick={async () => {
-              setContextMenu(null);
-              const fileInfo = await getFileInfo(appCtx.projectFileId as string);
-              const currentRepo = await getRepositoryByProjectPath(fileInfo?.path as string);
-              const srcPath = appCtx.labels.get('src');
-              const filePath = fileInfo?.path as string;
-              const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
-              const blameInfo = await getBlameInfo(
-                currentRepo?.repoId as string,
-                currentRepo?.commitId as string,
-                path as string,
-                fileInfo?.id as string
-              );
-              appCtx.setGitBlameInfo(blameInfo);
-              appCtx.setActiveTab(TabName.CODE);
-            }}
-          >
-            {'Git blame'}
-          </MenuItem>
-        )}
+        <MenuItem onClick={() => showGitBlame()}>{'Git blame'}</MenuItem>
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
         <SC.ModalBox>
@@ -224,6 +222,14 @@ export const EditorContextMenu = ({
       </Modal>
     </>
   ) : (
-    <></>
+    <Menu
+      open={contextMenu !== null}
+      onClose={() => setContextMenu(null)}
+      anchorReference={'anchorPosition'}
+      anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
+    >
+      <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
+      <MenuItem onClick={() => showGitBlame()}>{'Git blame'}</MenuItem>
+    </Menu>
   );
 };
