@@ -1,6 +1,7 @@
 import thrift from 'thrift';
 import { MetricsService, MetricsType } from '@thrift-generated';
 import { config } from './config';
+import { toast } from 'react-toastify';
 
 let client: MetricsService.Client | undefined;
 export const createMetricsClient = (workspace: string) => {
@@ -34,6 +35,7 @@ export const getMetrics = async (fileId: string, fileTypeFilter: string[], metri
   try {
     return await client.getMetrics(fileId, fileTypeFilter, metricsType);
   } catch (e) {
+    toast.error('Could not display metrics.');
     console.error(e);
     return '';
   }
