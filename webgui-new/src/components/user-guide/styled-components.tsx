@@ -12,6 +12,11 @@ export const StyledParagraph = styled('p')({
   marginBottom: '5xp',
 });
 
+export const StyledUl = styled('ul')({
+  listStyle: 'inside',
+  marginLeft: '20px',
+});
+
 export const StyledHeading1 = styled('h1')({
   fontSize: '1.5rem',
   marginBottom: '20px',
