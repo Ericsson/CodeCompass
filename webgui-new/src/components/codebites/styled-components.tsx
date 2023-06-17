@@ -20,9 +20,16 @@ export const NodeOuterContainer = styled('div')(({ theme }) => ({
 export const NodeHeader = styled('div')(({ theme }) => ({
   width: '100%',
   height: '30px',
-  overflow: 'scroll',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '1rem',
+}));
+
+export const NodeTitle = styled('div')({
+  overflow: 'hidden',
   padding: '5px',
   fontSize: '0.85rem',
   textAlign: 'center',
-  borderBottom: `1px solid ${theme.colors?.primary}`,
-}));
+  flexGrow: '1',
+});
