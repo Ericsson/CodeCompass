@@ -1,6 +1,7 @@
 import thrift from 'thrift';
 import { LanguageService, FilePosition, Position } from '@thrift-generated';
 import { config } from './config';
+import { toast } from 'react-toastify';
 
 let client: LanguageService.Client | undefined;
 export const createCppClient = (workspace: string) => {
@@ -43,6 +44,7 @@ export const getCppFileDiagram = async (fileId: string, diagramId: number) => {
   try {
     return await client.getFileDiagram(fileId, diagramId);
   } catch (e) {
+    toast.error('Could not display diagram.');
     console.error(e);
     return '';
   }
@@ -55,6 +57,7 @@ export const getCppFileDiagramLegend = async (diagramId: number) => {
   try {
     return await client.getFileDiagramLegend(diagramId);
   } catch (e) {
+    toast.error('Could not display diagram legend.');
     console.error(e);
     return '';
   }
@@ -81,6 +84,7 @@ export const getCppDiagram = async (astNodeId: string, diagramId: number) => {
   try {
     return await client.getDiagram(astNodeId, diagramId);
   } catch (e) {
+    toast.error('Could not display diagram.');
     console.error(e);
     return '';
   }
@@ -93,6 +97,7 @@ export const getCppDiagramLegend = async (diagramId: number) => {
   try {
     return await client.getDiagramLegend(diagramId);
   } catch (e) {
+    toast.error('Could not display diagram legend.');
     console.error(e);
     return '';
   }
@@ -241,6 +246,7 @@ export const getCppDocumentation = async (astNodeId: string) => {
   try {
     return await client.getDocumentation(astNodeId);
   } catch (e) {
+    toast.error('Could not get documentation about this AST node.');
     console.error(e);
     return '';
   }
@@ -273,6 +279,7 @@ export const getCppAstNodeInfoByPosition = async (fileId: string, line: number, 
       })
     );
   } catch (e) {
+    toast.error('Could not get information about this AST node.');
     console.error(e);
     return;
   }

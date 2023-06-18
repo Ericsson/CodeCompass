@@ -3,7 +3,7 @@ import { AccordionLabel } from 'enums/accordion-enum';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
 import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
-import { FileInfo, Range } from '@thrift-generated';
+import { FileInfo, Position, Range } from '@thrift-generated';
 import { cpp } from '@codemirror/lang-cpp';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
@@ -37,7 +37,17 @@ class GitBlameGutterMarker extends GutterMarker {
     outerDiv.style.alignItems = 'center';
     outerDiv.style.justifyContent = 'space-between';
     outerDiv.style.width = '400px';
-    outerDiv.style.cursor = 'pointer';
+
+    if (this.commitMessage) {
+      outerDiv.style.cursor = 'pointer';
+      outerDiv.addEventListener('mouseover', () => {
+        outerDiv.style.color = 'red';
+      });
+
+      outerDiv.addEventListener('mouseout', () => {
+        outerDiv.style.color = '';
+      });
+    }
 
     const commitDiv = document.createElement('div');
     commitDiv.style.display = 'flex';
@@ -151,13 +161,30 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const line = view.state.doc.lineAt(head);
     const column = view.state.selection.ranges[0].head - line.from;
 
-    const astNodeInfo = await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
-    if (!astNodeInfo) return;
-
-    dispatchSelection(astNodeInfo?.range?.range as Range);
-    appCtx.setEditorSelection(astNodeInfo?.range?.range);
-    appCtx.setLanguageNodeId(astNodeInfo?.id as string);
-    appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
+    const astNodeInfo =
+      fileInfo?.type === 'Unknown'
+        ? null
+        : await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+    if (astNodeInfo) {
+      dispatchSelection(astNodeInfo?.range?.range as Range);
+      appCtx.setEditorSelection(astNodeInfo?.range?.range);
+      appCtx.setLanguageNodeId(astNodeInfo?.id as string);
+      appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
+    } else {
+      const range = new Range({
+        startpos: new Position({
+          line: line.number,
+          column: line.text.indexOf(line.text.trimStart()[0]) + 1,
+        }),
+        endpos: new Position({
+          line: line.number,
+          column: line.length + 1,
+        }),
+      });
+      dispatchSelection(range);
+      appCtx.setEditorSelection(range);
+      appCtx.setLanguageNodeId('');
+    }
   };
 
   const gitBlameGutter = gutter({
@@ -203,6 +230,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
         gitBlameEnabled={appCtx.gitBlameInfo.length !== 0}
+        hideFileRefMenu={fileInfo?.type === 'Unknown'}
       />
       <ReactCodeMirror
         readOnly={true}

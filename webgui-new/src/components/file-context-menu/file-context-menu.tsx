@@ -92,6 +92,7 @@ export const FileContextMenu = ({
                     setContextMenu(null);
                     appCtx.setDiagramGenId(fileInfo.id as string);
                     appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
+                    appCtx.setDiagramType('file');
                     appCtx.setActiveTab(TabName.DIAGRAMS);
                   }}
                 >

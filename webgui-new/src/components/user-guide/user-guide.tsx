@@ -7,8 +7,7 @@ export const UserGuide = (): JSX.Element => {
       <SC.StyledHeading1>{'User guide'}</SC.StyledHeading1>
       <SC.StyledHeading2>{'Header'}</SC.StyledHeading2>
       <SC.StyledParagraph>
-        {`The select menu that provides various search types was moved to the settings
-      menu, containing all other options as before. The settings menu can be opened by
+        {`The settings menu that provides various search types can be opened by
       clicking the Gear icon next to the first search box.
       The application now also supports dark mode. To switch between light and dark
       mode, click the Sun or Moon icon in the top right corner of the header.`}
@@ -19,21 +18,20 @@ export const UserGuide = (): JSX.Element => {
           {`You can switch between projects by using the select menu in the header. The
         accordion menu on the left contains the same options as before: File manager, Search
         results, Info tree and Revision control navigator.
-        The tab menu contains the menu points seen before in the header menu: Welcome,
-        User guide, Credits; and newly added ones: Code, Metrics, Diagrams and Git diff.`}
+        The tab menu contains the following menu points: Welcome, Code, Metrics, Diagrams, Git diff, User guide and Credits`}
         </div>
-        <ul>
-          <li>{'The Welcome tab contains an introduction to CodeCompass and its features.'}</li>
-          <li>{'The Code tab displays the parse status, name, path and contents of the currently selected file.'}</li>
-          <li>{'The Metrics tab shows the generated metrics of a directory.'}</li>
-          <li>{'The Diagrams tab is used to display and inspect the generated diagrams.'}</li>
-          <li>{'The Git diff tab displays detailed commit information, diffs and file changes.'}</li>
-          <li>{'The Credits tab shows the members of the project and their contribution.'}</li>
-        </ul>
       </SC.StyledParagraph>
+      <SC.StyledUl>
+        <li>{'The Welcome tab contains an introduction to CodeCompass and its features.'}</li>
+        <li>{'The Code tab displays the parse status, name, path and contents of the currently selected file.'}</li>
+        <li>{'The Metrics tab shows the generated metrics of a directory.'}</li>
+        <li>{'The Diagrams tab is used to display and inspect the generated diagrams.'}</li>
+        <li>{'The Git diff tab displays detailed commit information, diffs and file changes.'}</li>
+        <li>{'The Credits tab shows the members of the project and their contribution.'}</li>
+      </SC.StyledUl>
       <SC.StyledHeading2>{'File manager'}</SC.StyledHeading2>
       <SC.StyledParagraph>
-        {`The file manager now also supports a tree view along with the previously implemented explorer view.
+        {`The file manager supports a tree view and an explorer view.
         You can switch between these views using the Tree checkbox.
         All files and folders from the current project can be found here, represented by different icons.
         To make navigation easier, the explorer view provides a Jump to root
