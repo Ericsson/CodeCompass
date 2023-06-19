@@ -13,7 +13,6 @@ import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { useUrlState } from 'hooks/use-url-state';
 import { getStore } from 'utils/store';
-import { useRouter } from 'next/router';
 import { Box, CircularProgress } from '@mui/material';
 
 /* eslint-disable no-unused-vars */
@@ -101,8 +100,6 @@ export const AppContext = createContext<AppContextProps>({
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const AppContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
-  const router = useRouter();
-
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
 
@@ -213,7 +210,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     setTreeViewOption,
   };
 
-  return loadComplete && router.isReady ? (
+  return loadComplete ? (
     <AppContext.Provider value={appContext}>{children}</AppContext.Provider>
   ) : (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
