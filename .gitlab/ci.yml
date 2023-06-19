@@ -82,7 +82,9 @@ variables:
         # show GLIBC verison
         - *show-glibc-version
 
-tarball suse-42.1:
+# Permanently disabled job
+# (Distribution package repository metadata not available anymore.)
+.tarball suse-42.1:
     extends: .tarball
     image: opensuse/archive:42.1
     cache:
@@ -157,7 +159,9 @@ tarball ubuntu-16.04:
         ARCH_SUFFIX: suse-15
     needs: ["tarball suse-15"]
 
-upload suse-42.1:
+# Permanently disabled job
+# (Distribution package repository metadata not available anymore.)
+.upload suse-42.1:
     extends: .upload
     variables:
         ARCH_SUFFIX: suse-42.1
