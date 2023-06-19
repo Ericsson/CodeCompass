@@ -155,7 +155,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
   };
 
   const handleAstNodeSelect = async () => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || appCtx.gitBlameInfo.length) return;
 
     const view = editorRef.current.view;
     if (!view) return;

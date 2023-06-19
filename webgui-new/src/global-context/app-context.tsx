@@ -164,9 +164,15 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
 
       const { storedSearchProps } = getStore();
       setSearchProps(storedSearchProps);
+
+      setGitBlameInfo([]);
     };
     initializeApp().then(() => setLoadComplete(true));
   }, [workspaceId]);
+
+  useEffect(() => {
+    setGitBlameInfo([]);
+  }, [projectFileId]);
 
   const appContext = {
     workspaces: workspaces as WorkspaceInfo[],

@@ -279,8 +279,6 @@ export const getCppAstNodeInfoByPosition = async (fileId: string, line: number, 
       })
     );
   } catch (e) {
-    toast.error('Could not get information about this AST node.');
-    console.error(e);
     return;
   }
 };
