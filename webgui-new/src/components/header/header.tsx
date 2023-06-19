@@ -1,4 +1,4 @@
-import { Button, IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import React, { KeyboardEvent, useContext, useEffect, useState } from 'react';
@@ -13,7 +13,6 @@ import { AccordionLabel } from 'enums/accordion-enum';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
-import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 
@@ -183,11 +182,6 @@ export const Header = (): JSX.Element => {
     return modifiedQueryString;
   };
 
-  const copyURL = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success('URL copied to clipboard!');
-  };
-
   return (
     <SC.StyledHeader>
       <SC.HeaderLogo />
@@ -275,12 +269,9 @@ export const Header = (): JSX.Element => {
             setSelectedSearchTypeOptions={setSelectedSearchTypeOptions}
           />
         </SC.SettingsContainer>
-        <SC.HeaderButtons>
-          <Button onClick={() => copyURL()}>{'Copy URL'}</Button>
-          <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-            {theme === 'dark' ? <LightMode /> : <DarkMode />}
-          </IconButton>
-        </SC.HeaderButtons>
+        <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? <LightMode /> : <DarkMode />}
+        </IconButton>
       </SC.HeaderContent>
     </SC.StyledHeader>
   );
