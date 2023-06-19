@@ -13,11 +13,13 @@ import { ChevronRight, ExpandMore, MoreHoriz } from '@mui/icons-material';
 import { formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
-import { getStore } from 'utils/store';
 import { GitIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const RevisionControl = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const DISPLAYED_COMMIT_CNT = 15;
@@ -44,33 +46,31 @@ export const RevisionControl = (): JSX.Element => {
         initExpandedTreeNodes.push(repo.id as string);
       }
 
-      const { storedGitRepoId, storedGitBranch } = getStore();
-
-      if (storedGitRepoId && storedGitBranch) {
+      if (appCtx.gitRepoId && appCtx.gitBranch) {
         const initBranches: typeof branches = new Map();
         const initCommitOffsets: typeof commitOffsets = new Map();
 
-        const repoBranches = await getBranchList(storedGitRepoId);
+        const repoBranches = await getBranchList(appCtx.gitRepoId);
         for (const repoBranch of repoBranches) {
           initCommitOffsets.set(repoBranch, 0);
         }
-        initBranches.set(storedGitRepoId, repoBranches);
-        initExpandedTreeNodes.push(`${storedGitRepoId}-${storedGitBranch}`);
-        initExpandedTreeNodes.push(`${storedGitRepoId}-branches`);
+        initBranches.set(appCtx.gitRepoId, repoBranches);
+        initExpandedTreeNodes.push(`${appCtx.gitRepoId}-${appCtx.gitBranch}`);
+        initExpandedTreeNodes.push(`${appCtx.gitRepoId}-branches`);
 
         const initTopCommits: typeof topCommits = new Map();
         const initCommits: typeof commits = new Map();
 
-        const topCommit = (await getReferenceTopObject(storedGitRepoId, storedGitBranch)) as ReferenceTopObjectResult;
-        initTopCommits.set(storedGitBranch, topCommit);
+        const topCommit = (await getReferenceTopObject(appCtx.gitRepoId, appCtx.gitBranch)) as ReferenceTopObjectResult;
+        initTopCommits.set(appCtx.gitBranch, topCommit);
         const commitList = (await getCommitListFiltered(
-          storedGitRepoId,
+          appCtx.gitRepoId,
           topCommit.oid as string,
           DISPLAYED_COMMIT_CNT,
           0,
           ''
         )) as CommitListFilteredResult;
-        initCommits.set(storedGitBranch, commitList);
+        initCommits.set(appCtx.gitBranch, commitList);
 
         setTopCommits(initTopCommits);
         setCommits(initCommits);
@@ -83,7 +83,7 @@ export const RevisionControl = (): JSX.Element => {
       setExpandedTreeNodes(initExpandedTreeNodes);
     };
     init();
-  }, [appCtx.workspaceId]);
+  }, [appCtx.workspaceId, appCtx.gitRepoId, appCtx.gitBranch]);
 
   const loadBranches = async (repoId: string) => {
     if (branches.get(repoId)) return;
@@ -169,10 +169,16 @@ export const RevisionControl = (): JSX.Element => {
   };
 
   const getCommitDiff = async (repoId: string, branch: string, commitId: string) => {
-    appCtx.setGitRepoId(repoId);
-    appCtx.setGitBranch(branch);
-    appCtx.setGitCommitId(commitId);
-    appCtx.setActiveTab(TabName.GIT_DIFF);
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        gitRepoId: repoId,
+        gitBranch: branch,
+        gitCommitId: commitId,
+        activeTab: TabName.GIT_DIFF.toString(),
+      } as RouterQueryType,
+    });
   };
 
   const RenderedCommits = ({

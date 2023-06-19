@@ -1,4 +1,4 @@
-import { RouterQueryType } from './types';
+import { Range, Position } from '@thrift-generated';
 
 export const enumToArray = <T>(enumToConvert: { [s: string]: T }): T[] => {
   return Array.from(Object.values(enumToConvert));
@@ -31,25 +31,37 @@ export const formatDate = (date: Date): string => {
   return formattedDate;
 };
 
-export const updateUrlWithParams = (params: RouterQueryType) => {
-  const url = new URL(window.location.href);
-  const searchParams = new URLSearchParams(url.search);
+export const convertSelectionStringToRange = (selectionString: string): Range => {
+  const selection = selectionString.split('|');
+  const startLine = parseInt(selection[0]);
+  const startCol = parseInt(selection[1]);
+  const endLine = parseInt(selection[2]);
+  const endCol = parseInt(selection[3]);
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      const existingValue = searchParams.get(key);
-      const valueString = String(value);
-
-      if (existingValue !== valueString) {
-        if (existingValue) {
-          searchParams.set(key, valueString);
-        } else {
-          searchParams.append(key, valueString);
-        }
-      }
-    }
+  const startpos = new Position({
+    line: startLine,
+    column: startCol,
   });
 
-  url.search = searchParams.toString();
-  return url.toString();
+  const endpos = new Position({
+    line: endLine,
+    column: endCol,
+  });
+
+  const range = new Range({
+    startpos,
+    endpos,
+  });
+
+  return range;
+};
+
+export const convertSelectionRangeToString = (selectionRange: Range | undefined): string => {
+  if (selectionRange && selectionRange.startpos && selectionRange.endpos) {
+    const { line: startLine, column: startCol } = selectionRange.startpos;
+    const { line: endLine, column: endCol } = selectionRange.endpos;
+    return `${startLine}|${startCol}|${endLine}|${endCol}`;
+  } else {
+    return '';
+  }
 };

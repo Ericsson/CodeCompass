@@ -1,23 +1,9 @@
-import { FileInfo, FileSearchResult, Range, SearchResult, SearchType } from '@thrift-generated';
+import { FileInfo, FileSearchResult, SearchResult, SearchType } from '@thrift-generated';
 import { FileNode, SearchProps, TreeNode } from './types';
 
 type StoreOptions = {
   storedTheme?: 'light' | 'dark';
-  storedActiveAccordion?: string;
-  storedActiveTab?: number;
-  storedTreeViewOption?: boolean;
-  storedWorkspaceId?: string;
-  storedProjectFileId?: string;
   storedSearchProps?: SearchProps;
-  storedMetricsGenId?: string;
-  storedDiagramGenId?: string;
-  storedDiagramTypeId?: number;
-  storedDiagramType?: 'file' | 'ast';
-  storedLanguageNodeId?: string;
-  storedEditorSelection?: Range;
-  storedFiles?: FileInfo[];
-  storedFileTree?: TreeNode;
-  storedFolderPath?: string;
   storedSearchType?: SearchType;
   storedSearchLanguage?: string;
   storedSearchOtherLanguage?: string;
@@ -26,28 +12,11 @@ type StoreOptions = {
   storedExpandedFileTreeNodes?: string[];
   storedExpandedSearchPathNodes?: string[];
   storedExpandedSearchFileNodes?: FileNode;
-  storedGitRepoId?: string;
-  storedGitCommitId?: string;
-  storedGitBranch?: string;
 };
 
 type StoreOptionKey =
   | 'storedTheme'
-  | 'storedActiveAccordion'
-  | 'storedActiveTab'
-  | 'storedTreeViewOption'
-  | 'storedWorkspaceId'
-  | 'storedProjectFileId'
   | 'storedSearchProps'
-  | 'storedMetricsGenId'
-  | 'storedDiagramGenId'
-  | 'storedDiagramTypeId'
-  | 'storedDiagramType'
-  | 'storedLanguageNodeId'
-  | 'storedEditorSelection'
-  | 'storedFiles'
-  | 'storedFileTree'
-  | 'storedFolderPath'
   | 'storedSearchType'
   | 'storedSearchLanguage'
   | 'storedSearchOtherLanguage'
@@ -55,10 +24,7 @@ type StoreOptionKey =
   | 'storedSelectedSearchResult'
   | 'storedExpandedFileTreeNodes'
   | 'storedExpandedSearchPathNodes'
-  | 'storedExpandedSearchFileNodes'
-  | 'storedGitRepoId'
-  | 'storedGitCommitId'
-  | 'storedGitBranch';
+  | 'storedExpandedSearchFileNodes';
 
 type StoreOptionValue =
   | string

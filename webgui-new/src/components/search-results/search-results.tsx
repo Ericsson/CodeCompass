@@ -7,11 +7,13 @@ import { AppContext } from 'global-context/app-context';
 import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import { getSearchResultCount, getSearchResults } from 'service/search-service';
 import { getStore, removeStore, setStore } from 'utils/store';
-import { FileNode } from 'utils/types';
-import { getFileFolderPath } from 'utils/utils';
+import { FileNode, RouterQueryType } from 'utils/types';
+import { convertSelectionRangeToString, getFileFolderPath } from 'utils/utils';
 import * as SC from './styled-components';
+import { useRouter } from 'next/router';
 
 export const SearchResults = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const [searchType, setSearchType] = useState<number>(0);
@@ -147,9 +149,15 @@ export const SearchResults = (): JSX.Element => {
   };
 
   const handleFileLineClick = async (file: FileInfo, lineMatch?: LineMatch, idx?: string) => {
-    appCtx.setActiveTab(TabName.CODE);
-    appCtx.setProjectFileId(file.id as string);
-    appCtx.setEditorSelection(lineMatch?.range?.range);
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        activeTab: TabName.CODE.toString(),
+        projectFileId: file.id as string,
+        editorSelection: convertSelectionRangeToString(lineMatch?.range?.range),
+      } as RouterQueryType,
+    });
 
     setSelectedSearchResult(idx ?? (file.id as string));
     setStore({

@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState } from 'react';
-import { GitBlameHunk, Position, Range, WorkspaceInfo } from '@thrift-generated';
+import { GitBlameHunk, WorkspaceInfo } from '@thrift-generated';
 import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
 import { createProjectClient, getLabels } from 'service/project-service';
 import { createSearchClient } from 'service/search-service';
@@ -8,11 +8,13 @@ import { createCppReparseClient } from 'service/cpp-reparse-service';
 import { createMetricsClient } from 'service/metrics-service';
 import { createGitClient } from 'service/git-service';
 import { createConfig } from 'service/config';
-import { getStore, setStore } from 'utils/store';
-import { RouterQueryType, SearchProps } from 'utils/types';
-import { useRouter } from 'next/router';
+import { SearchProps } from 'utils/types';
 import { TabName } from 'enums/tab-enum';
 import { AccordionLabel } from 'enums/accordion-enum';
+import { useUrlState } from 'hooks/use-url-state';
+import { getStore } from 'utils/store';
+import { useRouter } from 'next/router';
+import { Box, CircularProgress } from '@mui/material';
 
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
@@ -32,14 +34,14 @@ type AppContextProps = {
   setMetricsGenId: (_val: string) => void;
   diagramGenId: string;
   setDiagramGenId: (_val: string) => void;
-  diagramTypeId: number;
-  setDiagramTypeId: (_val: number) => void;
-  diagramType: 'file' | 'ast';
-  setDiagramType: (_val: 'file' | 'ast') => void;
+  diagramTypeId: string;
+  setDiagramTypeId: (_val: string) => void;
+  diagramType: string;
+  setDiagramType: (_val: string) => void;
   languageNodeId: string;
   setLanguageNodeId: (_val: string) => void;
-  editorSelection: Range | undefined;
-  setEditorSelection: (_val: Range | undefined) => void;
+  editorSelection: string;
+  setEditorSelection: (_val: string) => void;
   gitRepoId: string;
   setGitRepoId: (_val: string) => void;
   gitBranch: string;
@@ -50,12 +52,10 @@ type AppContextProps = {
   setGitBlameInfo: (_val: GitBlameHunk[]) => void;
   activeAccordion: string;
   setActiveAccordion: (_val: string) => void;
-  activeTab: number;
-  setActiveTab: (_val: number) => void;
-  treeViewOption: boolean;
-  setTreeViewOption: (_val: boolean) => void;
-  loadComplete: boolean;
-  setLoadComplete: (_val: boolean) => void;
+  activeTab: string;
+  setActiveTab: (_val: string) => void;
+  treeViewOption: string;
+  setTreeViewOption: (_val: string) => void;
 };
 
 export const AppContext = createContext<AppContextProps>({
@@ -73,13 +73,13 @@ export const AppContext = createContext<AppContextProps>({
   setMetricsGenId: (_val) => {},
   diagramGenId: '',
   setDiagramGenId: (_val) => {},
-  diagramTypeId: -1,
+  diagramTypeId: '',
   setDiagramTypeId: (_val) => {},
   diagramType: 'file',
   setDiagramType: (_val) => {},
   languageNodeId: '',
   setLanguageNodeId: (_val) => {},
-  editorSelection: undefined,
+  editorSelection: '',
   setEditorSelection: (_val) => {},
   gitRepoId: '',
   setGitRepoId: (_val) => {},
@@ -91,12 +91,10 @@ export const AppContext = createContext<AppContextProps>({
   setGitBlameInfo: (_val) => {},
   activeAccordion: '',
   setActiveAccordion: (_val) => {},
-  activeTab: 0,
+  activeTab: '0',
   setActiveTab: (_val) => {},
-  treeViewOption: false,
+  treeViewOption: 'false',
   setTreeViewOption: (_val) => {},
-  loadComplete: false,
-  setLoadComplete: (_val) => {},
 });
 /* eslint-enable no-unused-vars */
 /* eslint-enable @typescript-eslint/no-empty-function */
@@ -104,32 +102,33 @@ export const AppContext = createContext<AppContextProps>({
 
 export const AppContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const router = useRouter();
-  const routerQuery = router.query as RouterQueryType;
 
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
-  const [workspaceId, setWorkspaceId] = useState<string | undefined>(undefined);
-  const [projectFileId, setProjectFileId] = useState<string | undefined>(undefined);
+
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
-  const [metricsGenId, setMetricsGenId] = useState<string | undefined>(undefined);
-  const [diagramGenId, setDiagramGenId] = useState<string | undefined>(undefined);
-  const [diagramTypeId, setDiagramTypeId] = useState<number | undefined>(undefined);
-  const [diagramType, setDiagramType] = useState<'file' | 'ast' | undefined>(undefined);
-  const [languageNodeId, setLanguageNodeId] = useState<string | undefined>(undefined);
-  const [editorSelection, setEditorSelection] = useState<Range | undefined>(undefined);
-  const [gitRepoId, setGitRepoId] = useState<string | undefined>(undefined);
-  const [gitBranch, setGitBranch] = useState<string | undefined>(undefined);
-  const [gitCommitId, setGitCommitId] = useState<string | undefined>(undefined);
   const [gitBlameInfo, setGitBlameInfo] = useState<GitBlameHunk[]>([]);
-  const [activeAccordion, setActiveAccordion] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<number | undefined>(undefined);
-  const [treeViewOption, setTreeViewOption] = useState<boolean | undefined>(undefined);
+
+  const [workspaceId, setWorkspaceId] = useUrlState('workspaceId', 'CodeCompass');
+  const [projectFileId, setProjectFileId] = useUrlState('projectFileId', '');
+  const [metricsGenId, setMetricsGenId] = useUrlState('metricsGenId', '');
+  const [diagramGenId, setDiagramGenId] = useUrlState('diagramGenId', '');
+  const [diagramTypeId, setDiagramTypeId] = useUrlState('diagramTypeId', '');
+  const [diagramType, setDiagramType] = useUrlState('diagramType', 'file');
+  const [languageNodeId, setLanguageNodeId] = useUrlState('languageNodeId', '');
+  const [editorSelection, setEditorSelection] = useUrlState('editorSelection', '');
+  const [gitRepoId, setGitRepoId] = useUrlState('gitRepoId', '');
+  const [gitBranch, setGitBranch] = useUrlState('gitBranch', '');
+  const [gitCommitId, setGitCommitId] = useUrlState('gitCommitId', '');
+  const [activeAccordion, setActiveAccordion] = useUrlState('activeAccordion', AccordionLabel.FILE_MANAGER);
+  const [activeTab, setActiveTab] = useUrlState('activeTab', TabName.WELCOME.toString());
+  const [treeViewOption, setTreeViewOption] = useUrlState('treeViewOption', 'false');
+
   const [loadComplete, setLoadComplete] = useState<boolean>(false);
 
   useEffect(() => {
     const init = async () => {
       const url = window.location;
-
       const wHost = url.hostname;
       const wPort = url.port;
       const wHTTPS = url.protocol === 'https:';
@@ -150,12 +149,6 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
-    if (!workspaces) return;
-    const { storedWorkspaceId } = getStore();
-    setWorkspaceId(routerQuery.workspaceId ?? storedWorkspaceId ?? (workspaces[0].id as string));
-  }, [workspaces, routerQuery.workspaceId]);
-
-  useEffect(() => {
     if (!workspaceId) return;
     setLoadComplete(false);
     const initializeApp = async () => {
@@ -169,98 +162,17 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
       const initLabels = (await getLabels()) ?? new Map();
       setLabels(initLabels);
 
-      const {
-        storedProjectFileId,
-        storedSearchProps,
-        storedMetricsGenId,
-        storedDiagramGenId,
-        storedDiagramTypeId,
-        storedDiagramType,
-        storedLanguageNodeId,
-        storedEditorSelection,
-        storedGitRepoId,
-        storedGitBranch,
-        storedGitCommitId,
-        storedActiveAccordion,
-        storedActiveTab,
-        storedTreeViewOption,
-      } = getStore();
-
-      setProjectFileId(routerQuery.projectFileId ?? storedProjectFileId);
-      setMetricsGenId(routerQuery.metricsGenId ?? storedMetricsGenId);
-      setDiagramGenId(routerQuery.diagramGenId ?? storedDiagramGenId);
-      setDiagramTypeId(routerQuery.diagramTypeId ? parseInt(routerQuery.diagramTypeId) : storedDiagramTypeId);
-      setDiagramType(storedDiagramType);
-      setLanguageNodeId(routerQuery.languageNodeId ?? storedLanguageNodeId);
-      setEditorSelection(storedEditorSelection);
+      const { storedSearchProps } = getStore();
       setSearchProps(storedSearchProps);
-      setGitRepoId(routerQuery.gitRepoId ?? storedGitRepoId);
-      setGitBranch(routerQuery.gitBranch ?? storedGitBranch);
-      setGitCommitId(routerQuery.gitCommitId ?? storedGitCommitId);
-      setGitBlameInfo([]);
-      setActiveAccordion(routerQuery.activeAccordion ?? storedActiveAccordion ?? AccordionLabel.FILE_MANAGER);
-      setActiveTab(routerQuery.activeTab ? parseInt(routerQuery.activeTab) : storedActiveTab ?? TabName.WELCOME);
-      setTreeViewOption(Boolean(routerQuery.treeViewOption ?? storedTreeViewOption ?? false));
-
-      if (routerQuery.editorSelection) {
-        const selection = routerQuery.editorSelection.split('|');
-        const startLine = parseInt(selection[0]);
-        const startCol = parseInt(selection[1]);
-        const endLine = parseInt(selection[2]);
-        const endCol = parseInt(selection[3]);
-
-        const startpos = new Position({
-          line: startLine,
-          column: startCol,
-        });
-        const endpos = new Position({
-          line: endLine,
-          column: endCol,
-        });
-        const range = new Range({
-          startpos,
-          endpos,
-        });
-
-        setEditorSelection(range);
-      }
-
-      setStore({
-        storedWorkspaceId: workspaceId,
-      });
-
-      if (routerQuery) {
-        router.replace({
-          pathname: '/project',
-          query: {},
-        });
-      }
     };
     initializeApp().then(() => setLoadComplete(true));
-    // This is required so the 'router' does not need to be passed as a dependecy, because it would cause an infinite loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
-  useEffect(() => {
-    setStore({
-      storedProjectFileId: projectFileId,
-      storedSearchProps: searchProps,
-      storedMetricsGenId: metricsGenId,
-      storedDiagramGenId: diagramGenId,
-      storedDiagramTypeId: diagramTypeId,
-      storedDiagramType: diagramType,
-      storedLanguageNodeId: languageNodeId,
-      storedEditorSelection: editorSelection,
-      storedGitRepoId: gitRepoId,
-      storedGitBranch: gitBranch,
-      storedGitCommitId: gitCommitId,
-      storedActiveAccordion: activeAccordion,
-      storedActiveTab: activeTab,
-      storedTreeViewOption: treeViewOption,
-    });
-  }, [
+  const appContext = {
+    workspaces: workspaces as WorkspaceInfo[],
+    workspaceId,
     projectFileId,
-    searchProps,
+    searchProps: searchProps,
     metricsGenId,
     diagramGenId,
     diagramTypeId,
@@ -270,32 +182,12 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     gitRepoId,
     gitBranch,
     gitCommitId,
+    gitBlameInfo,
     activeAccordion,
     activeTab,
     treeViewOption,
-  ]);
-
-  const appContext = {
-    workspaces: workspaces as WorkspaceInfo[],
-    workspaceId: workspaceId as string,
-    projectFileId: projectFileId as string,
-    searchProps: searchProps,
-    metricsGenId: metricsGenId as string,
-    diagramGenId: diagramGenId as string,
-    diagramTypeId: diagramTypeId as number,
-    diagramType: diagramType as 'file' | 'ast',
-    languageNodeId: languageNodeId as string,
-    editorSelection: editorSelection as Range,
-    gitRepoId: gitRepoId as string,
-    gitBranch: gitBranch as string,
-    gitCommitId: gitCommitId as string,
-    gitBlameInfo,
-    activeAccordion: activeAccordion as string,
-    activeTab: activeTab as number,
-    treeViewOption: treeViewOption as boolean,
     labels,
     setLabels,
-    loadComplete,
     setWorkspaces,
     setWorkspaceId,
     setProjectFileId,
@@ -313,8 +205,13 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     setActiveAccordion,
     setActiveTab,
     setTreeViewOption,
-    setLoadComplete,
   };
 
-  return <AppContext.Provider value={appContext}>{children}</AppContext.Provider>;
+  return loadComplete && router.isReady ? (
+    <AppContext.Provider value={appContext}>{children}</AppContext.Provider>
+  ) : (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>
+  );
 };

@@ -4,6 +4,7 @@ import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from 'themes/index-styles';
+import { RouterQueryType } from 'utils/types';
 
 const Home = (): JSX.Element => {
   const router = useRouter();
@@ -11,31 +12,18 @@ const Home = (): JSX.Element => {
 
   const loadWorkspace = (workspace: string) => {
     removeStore([
-      'storedActiveAccordion',
-      'storedActiveTab',
-      'storedProjectFileId',
       'storedSearchProps',
-      'storedDiagramGenId',
-      'storedDiagramTypeId',
-      'storedMetricsGenId',
-      'storedLanguageNodeId',
-      'storedFiles',
-      'storedFileTree',
-      'storedFolderPath',
-      'storedEditorSelection',
       'storedSelectedSearchResult',
       'storedExpandedFileTreeNodes',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
-      'storedGitRepoId',
-      'storedGitCommitId',
-      'storedGitBranch',
     ]);
-    router.replace({
+    router.push({
       pathname: '/project',
-      query: {},
+      query: {
+        workspaceId: workspace,
+      } as RouterQueryType,
     });
-    appCtx.setWorkspaceId(workspace);
   };
 
   return (

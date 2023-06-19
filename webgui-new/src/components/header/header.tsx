@@ -3,7 +3,7 @@ import { ProjectSelect } from 'components/project-select/project-select';
 import { Search, Settings, LightMode, DarkMode, Info } from '@mui/icons-material';
 import React, { KeyboardEvent, useContext, useEffect, useState } from 'react';
 import { SearchOptions, SearchMethods, SearchMainLanguages, SearchTypeOptions } from 'enums/search-enum';
-import { enumToArray, updateUrlWithParams } from 'utils/utils';
+import { enumToArray } from 'utils/utils';
 import { ThemeContext } from 'global-context/theme-context';
 import { SettingsMenu } from 'components/settings-menu/settings-menu';
 import { getTooltipText } from './get-tooltip-text';
@@ -14,9 +14,11 @@ import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 
 export const Header = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
   const { theme, setTheme } = useContext(ThemeContext);
 
@@ -79,7 +81,18 @@ export const Header = (): JSX.Element => {
       };
 
       appCtx.setSearchProps(initSearchProps);
-      appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
+
+      setStore({
+        storedSearchProps: initSearchProps,
+      });
+
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          activeAccordion: AccordionLabel.SEARCH_RESULTS,
+        } as RouterQueryType,
+      });
       removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {
       return;
@@ -171,33 +184,7 @@ export const Header = (): JSX.Element => {
   };
 
   const copyURL = () => {
-    let selection = '1|1|1|1';
-    const currentSelectionRange = appCtx.editorSelection;
-    if (currentSelectionRange && currentSelectionRange.startpos && currentSelectionRange.endpos) {
-      const { line: startLine, column: startCol } = currentSelectionRange.startpos;
-      const { line: endLine, column: endCol } = currentSelectionRange.endpos;
-      selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
-    }
-
-    const params: RouterQueryType = {
-      workspaceId: appCtx.workspaceId,
-      projectFileId: appCtx.projectFileId,
-      activeAccordion: appCtx.activeAccordion,
-      activeTab: appCtx.activeTab?.toString(),
-      treeViewOption: appCtx.treeViewOption?.toString(),
-      editorSelection: selection,
-      metricsGenId: appCtx.metricsGenId,
-      diagramGenId: appCtx.diagramGenId,
-      diagramTypeId: appCtx.diagramTypeId?.toString(),
-      languageNodeId: appCtx.languageNodeId,
-      gitRepoId: appCtx.gitRepoId,
-      gitBranch: appCtx.gitBranch,
-      gitCommitId: appCtx.gitCommitId,
-    };
-
-    const url = updateUrlWithParams(params);
-
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(window.location.href);
     toast.success('URL copied to clipboard!');
   };
 
@@ -289,7 +276,7 @@ export const Header = (): JSX.Element => {
           />
         </SC.SettingsContainer>
         <SC.HeaderButtons>
-          <Button onClick={() => copyURL()}>{'Share URL'}</Button>
+          <Button onClick={() => copyURL()}>{'Copy URL'}</Button>
           <IconButton onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
             {theme === 'dark' ? <LightMode /> : <DarkMode />}
           </IconButton>

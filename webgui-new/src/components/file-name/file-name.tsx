@@ -7,6 +7,9 @@ import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
 import { RefIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
+import { convertSelectionRangeToString } from 'utils/utils';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const FileName = ({
   fileName,
@@ -23,6 +26,7 @@ export const FileName = ({
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
 }): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -74,9 +78,15 @@ export const FileName = ({
 
   const jumpToRef = async (astNodeInfo: AstNodeInfo) => {
     const fileId = astNodeInfo.range?.file as string;
-    appCtx.setProjectFileId(fileId);
-    appCtx.setEditorSelection(astNodeInfo.range?.range as Range);
-    appCtx.setActiveTab(TabName.CODE);
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        projectFileId: fileId,
+        editorSelection: convertSelectionRangeToString(astNodeInfo.range?.range as Range),
+        activeTab: TabName.CODE.toString(),
+      } as RouterQueryType,
+    });
   };
 
   return (
