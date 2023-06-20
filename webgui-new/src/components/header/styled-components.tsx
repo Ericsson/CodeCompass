@@ -30,8 +30,3 @@ export const SettingsContainer = styled('div')({
   display: 'flex',
   gap: '1rem',
 });
-
-export const HeaderButtons = styled('div')({
-  display: 'flex',
-  gap: '1rem',
-});
