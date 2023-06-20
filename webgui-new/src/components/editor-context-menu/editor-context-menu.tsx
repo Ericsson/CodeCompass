@@ -132,7 +132,7 @@ export const EditorContextMenu = ({
     setContextMenu(null);
   };
 
-  const showGitBlame = async () => {
+  const getGitBlameInfo = async () => {
     setContextMenu(null);
     const fileInfo = await getFileInfo(appCtx.projectFileId as string);
     const currentRepo = await getRepositoryByProjectPath(fileInfo?.path as string);
@@ -145,15 +145,7 @@ export const EditorContextMenu = ({
       path as string,
       fileInfo?.id as string
     );
-    appCtx.setGitBlameInfo(blameInfo);
-
-    router.push({
-      pathname: '/project',
-      query: {
-        ...router.query,
-        activeTab: TabName.CODE.toString(),
-      } as RouterQueryType,
-    });
+    return blameInfo;
   };
 
   return appCtx.languageNodeId ? (
@@ -219,7 +211,14 @@ export const EditorContextMenu = ({
         )}
         <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
         <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
-        <MenuItem onClick={() => showGitBlame()}>{'Git blame'}</MenuItem>
+        <MenuItem
+          onClick={async () => {
+            const blameInfo = await getGitBlameInfo();
+            appCtx.setGitBlameInfo(blameInfo);
+          }}
+        >
+          {'Git blame'}
+        </MenuItem>
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
         <SC.ModalBox>
@@ -246,7 +245,14 @@ export const EditorContextMenu = ({
       anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
     >
       <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
-      <MenuItem onClick={() => showGitBlame()}>{'Git blame'}</MenuItem>
+      <MenuItem
+        onClick={async () => {
+          const blameInfo = await getGitBlameInfo();
+          appCtx.setGitBlameInfo(blameInfo);
+        }}
+      >
+        {'Git blame'}
+      </MenuItem>
     </Menu>
   );
 };

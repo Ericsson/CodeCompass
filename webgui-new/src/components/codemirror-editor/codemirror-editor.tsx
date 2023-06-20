@@ -155,6 +155,63 @@ export const CodeMirrorEditor = (): JSX.Element => {
     });
   };
 
+  const GitBlameLines = (): JSX.Element => {
+    let previousLineCount = 1;
+    const renderedLines = appCtx.gitBlameInfo.map((info, idx) => {
+      const trimmedMessage =
+        (info?.finalCommitMessage?.length as number) > 27
+          ? `${info.finalCommitMessage?.split('').slice(0, 27).join('')}...`
+          : info?.finalCommitMessage;
+      const date = formatDate(new Date((info.finalSignature?.time as unknown as number) * 1000));
+
+      previousLineCount = info.linesInHunk as number;
+      const lineHeight = 17.9 * previousLineCount;
+
+      return (
+        <Tooltip
+          key={idx}
+          title={
+            <div style={{ width: 'max-content' }}>
+              <div>{`#${info.finalCommitId?.substring(0, 8)} `}</div>
+              <div>{info.finalCommitMessage}</div>
+              <div>{`${info.finalSignature?.name} (${info.finalSignature?.email})`}</div>
+              <div>{`Commited on ${date}`}</div>
+            </div>
+          }
+          placement={'top-start'}
+          componentsProps={{
+            tooltip: {
+              sx: {
+                fontSize: '0.85rem',
+                padding: '10px',
+                width: '400px',
+                height: 'auto',
+                overflow: 'scroll',
+              },
+            },
+          }}
+        >
+          <SC.GitBlameLine
+            sx={{
+              cursor: 'pointer',
+              marginBottom: `${lineHeight}px`,
+              borderTop: (theme) => `1px solid ${theme.colors?.primary}`,
+              ':hover': {
+                backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
+              },
+            }}
+            onClick={() => getCommitInfo(info.finalCommitId as string)}
+          >
+            <div>{trimmedMessage}</div>
+            <div>{`on ${date}`}</div>
+          </SC.GitBlameLine>
+        </Tooltip>
+      );
+    });
+
+    return <>{renderedLines}</>;
+  };
+
   return (
     <>
       <FileName
@@ -176,56 +233,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
             editor.scrollTop = scroll;
           }}
         >
-          {appCtx.gitBlameInfo.map((_, idx) => {
-            const info = appCtx.gitBlameInfo.find((info) => info.finalStartLineNumber === idx + 1);
-            if (!info || !info.finalCommitMessage) return <SC.GitBlameLine key={idx}>&nbsp;</SC.GitBlameLine>;
-
-            const trimmedMessage =
-              info?.finalCommitMessage?.length > 27
-                ? `${info.finalCommitMessage?.split('').slice(0, 27).join('')}...`
-                : info?.finalCommitMessage;
-            const date = formatDate(new Date((info.finalSignature?.time as unknown as number) * 1000));
-
-            return (
-              <Tooltip
-                key={idx}
-                title={
-                  <div style={{ width: 'max-content' }}>
-                    <div>{`#${info.finalCommitId?.substring(0, 8)} `}</div>
-                    <div>{info.finalCommitMessage}</div>
-                    <div>{`${info.finalSignature?.name} (${info.finalSignature?.email})`}</div>
-                    <div>{`Commited on ${date}`}</div>
-                  </div>
-                }
-                placement={'top-start'}
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      fontSize: '0.85rem',
-                      padding: '10px',
-                      width: '400px',
-                      height: 'auto',
-                      overflow: 'scroll',
-                    },
-                  },
-                }}
-              >
-                <SC.GitBlameLine
-                  sx={{
-                    cursor: 'pointer',
-                    borderTop: (theme) => `1px solid ${theme.colors?.primary}`,
-                    ':hover': {
-                      backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
-                    },
-                  }}
-                  onClick={() => getCommitInfo(info.finalCommitId as string)}
-                >
-                  <div>{trimmedMessage}</div>
-                  <div>{`on ${date}`}</div>
-                </SC.GitBlameLine>
-              </Tooltip>
-            );
-          })}
+          <GitBlameLines />
         </SC.GitBlameContainer>
         <ReactCodeMirror
           readOnly={true}
