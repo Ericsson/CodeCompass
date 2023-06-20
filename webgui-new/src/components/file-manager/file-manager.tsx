@@ -1,7 +1,7 @@
 import { Code, DriveFolderUpload } from '@mui/icons-material';
-import { alpha } from '@mui/material';
+import { Checkbox, alpha } from '@mui/material';
 import React, { useContext, useState, MouseEvent, useEffect, SyntheticEvent } from 'react';
-import { FileInfo, Position, Range } from '@thrift-generated';
+import { FileInfo } from '@thrift-generated';
 import {
   getChildFiles,
   getFileInfo,
@@ -14,7 +14,6 @@ import { FileIcon, FolderIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
 import { FileContextMenu } from 'components/file-context-menu/file-context-menu';
 import { RouterQueryType, TreeNode } from 'utils/types';
-import { getStore, setStore } from 'utils/store';
 import { useRouter } from 'next/router';
 import { getFileFolderPath } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
@@ -22,8 +21,6 @@ import * as SC from './styled-components';
 
 export const FileManager = (): JSX.Element => {
   const router = useRouter();
-  const routerQuery = router.query as RouterQueryType;
-
   const appCtx = useContext(AppContext);
 
   const [rootFiles, setRootFiles] = useState<FileInfo[]>([]);
@@ -43,31 +40,16 @@ export const FileManager = (): JSX.Element => {
     const init = async () => {
       const rootFileData = await getRootFiles();
       const rootDirectory = rootFileData.find((info) => info.isDirectory) as FileInfo;
+
       setRootFiles(rootFileData);
-
-      const { storedFiles, storedFileTree, storedFolderPath, storedExpandedFileTreeNodes } = getStore();
-
-      setFiles(storedFiles ?? rootFileData);
-      setFileTree(storedFileTree ?? { info: rootDirectory });
-      setFolderPath(storedFolderPath ?? '');
-      setExpandedFileTreeNodes(storedExpandedFileTreeNodes ?? []);
-
-      if (routerQuery.projectFileId) {
-        try {
-          const initFileInfo = await getFileInfo(routerQuery.projectFileId);
-          const children = await getChildFiles(initFileInfo?.parent as string);
-          const parents = await getParents(initFileInfo?.path as string);
-
-          setFiles(children);
-          setExpandedFileTreeNodes(parents);
-        } catch {
-          return;
-        }
-      }
+      setFiles(rootFileData);
+      setFileTree({ info: rootDirectory });
+      setFolderPath('');
+      setExpandedFileTreeNodes([]);
     };
 
     init();
-  }, [appCtx.workspaceId, routerQuery.projectFileId]);
+  }, [appCtx.workspaceId]);
 
   useEffect(() => {
     if (!appCtx.projectFileId) return;
@@ -141,15 +123,6 @@ export const FileManager = (): JSX.Element => {
     updateTree();
   }, [rootFiles, expandedFileTreeNodes]);
 
-  useEffect(() => {
-    setStore({
-      storedFiles: files,
-      storedFileTree: fileTree,
-      storedFolderPath: folderPath,
-      storedExpandedFileTreeNodes: expandedFileTreeNodes,
-    });
-  }, [files, fileTree, folderPath, expandedFileTreeNodes]);
-
   const handleContextMenu = async (event: MouseEvent, fileInfo: FileInfo) => {
     event.preventDefault();
     setContextMenu(
@@ -169,14 +142,15 @@ export const FileManager = (): JSX.Element => {
         setExpandedFileTreeNodes(parents);
       }
 
-      appCtx.setProjectFileId(fileInfo.id as string);
-      appCtx.setEditorSelection(
-        new Range({
-          startpos: new Position({ line: 1, column: 1 }),
-          endpos: new Position({ line: 1, column: 1 }),
-        })
-      );
-      appCtx.setActiveTab(TabName.CODE);
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          projectFileId: fileInfo.id as string,
+          editorSelection: '',
+          activeTab: TabName.CODE.toString(),
+        } as RouterQueryType,
+      });
     }
     setFileInfoForDiagram(fileInfo);
   };
@@ -235,14 +209,15 @@ export const FileManager = (): JSX.Element => {
         setExpandedFileTreeNodes(parents);
       }
 
-      appCtx.setProjectFileId(fInfo.id as string);
-      appCtx.setEditorSelection(
-        new Range({
-          startpos: new Position({ line: 1, column: 1 }),
-          endpos: new Position({ line: 1, column: 1 }),
-        })
-      );
-      appCtx.setActiveTab(TabName.CODE);
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          projectFileId: fInfo.id as string,
+          editorSelection: '',
+          activeTab: TabName.CODE.toString(),
+        } as RouterQueryType,
+      });
     }
   };
 
@@ -323,7 +298,24 @@ export const FileManager = (): JSX.Element => {
 
   return (
     <>
-      {appCtx.treeViewOption ? (
+      <SC.TreeSetting
+        control={
+          <Checkbox
+            checked={appCtx.treeViewOption === 'true'}
+            onChange={() =>
+              router.push({
+                pathname: '/project',
+                query: {
+                  ...router.query,
+                  treeViewOption: appCtx.treeViewOption === 'true' ? 'false' : 'true',
+                } as RouterQueryType,
+              })
+            }
+          />
+        }
+        label={'Tree view'}
+      />
+      {appCtx.treeViewOption === 'true' ? (
         <SC.StyledTreeView
           defaultCollapseIcon={<FolderIcon open />}
           defaultExpandIcon={<FolderIcon />}

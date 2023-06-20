@@ -3,6 +3,7 @@ import { AppContext } from 'global-context/app-context';
 import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
+import { RouterQueryType } from 'utils/types';
 
 export const ProjectSelect = (): JSX.Element => {
   const router = useRouter();
@@ -11,34 +12,21 @@ export const ProjectSelect = (): JSX.Element => {
 
   const loadWorkspace = (e: SelectChangeEvent<string>) => {
     removeStore([
-      'storedActiveAccordion',
-      'storedActiveTab',
-      'storedProjectFileId',
       'storedSearchProps',
-      'storedDiagramGenId',
-      'storedDiagramTypeId',
-      'storedMetricsGenId',
-      'storedLanguageNodeId',
-      'storedFiles',
-      'storedFileTree',
-      'storedFolderPath',
-      'storedEditorSelection',
       'storedSelectedSearchResult',
       'storedExpandedFileTreeNodes',
       'storedExpandedSearchFileNodes',
       'storedExpandedSearchPathNodes',
-      'storedGitRepoId',
-      'storedGitCommitId',
-      'storedGitBranch',
     ]);
-    router.replace({
-      pathname: router.pathname,
-      query: {},
+    router.push({
+      pathname: '/project',
+      query: {
+        workspaceId: e.target.value,
+      } as RouterQueryType,
     });
-    appCtx.setWorkspaceId(e.target.value);
   };
 
-  return appCtx.workspaces ? (
+  return appCtx.workspaces.length ? (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
       <Select value={appCtx.workspaceId} label={'Project'} onChange={(e) => loadWorkspace(e)}>

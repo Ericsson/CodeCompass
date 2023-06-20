@@ -13,8 +13,11 @@ import { AccordionLabel } from 'enums/accordion-enum';
 import { getStore, removeStore, setStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const Header = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
   const { theme, setTheme } = useContext(ThemeContext);
 
@@ -77,7 +80,18 @@ export const Header = (): JSX.Element => {
       };
 
       appCtx.setSearchProps(initSearchProps);
-      appCtx.setActiveAccordion(AccordionLabel.SEARCH_RESULTS);
+
+      setStore({
+        storedSearchProps: initSearchProps,
+      });
+
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          activeAccordion: AccordionLabel.SEARCH_RESULTS,
+        } as RouterQueryType,
+      });
       removeStore(['storedExpandedSearchFileNodes', 'storedExpandedSearchPathNodes']);
     } else {
       return;

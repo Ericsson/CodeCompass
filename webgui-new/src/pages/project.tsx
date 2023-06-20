@@ -1,7 +1,6 @@
 import React, { SyntheticEvent, useContext } from 'react';
 import { Header } from 'components/header/header';
 import { AccordionMenu } from 'components/accordion-menu/accordion-menu';
-import { Box, CircularProgress } from '@mui/material';
 import { TabName } from 'enums/tab-enum';
 import { Diagrams } from 'components/diagrams/diagrams';
 import { Metrics } from 'components/metrics/metrics';
@@ -12,6 +11,7 @@ import { Credits } from 'components/credits/credits';
 import { Welcome } from 'components/welcome/welcome';
 import { UserGuide } from 'components/user-guide/user-guide';
 import * as SC from 'themes/project-styles';
+import { useRouter } from 'next/router';
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -29,17 +29,20 @@ const TabPanel = (props: TabPanelProps) => {
 };
 
 const Project = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
-  return appCtx.loadComplete ? (
+  return (
     <SC.OuterContainer>
       <Header />
       <SC.InnerContainer>
         <AccordionMenu />
         <div>
           <SC.StyledTabs
-            value={appCtx.activeTab}
-            onChange={(_e: SyntheticEvent, newValue: number) => appCtx.setActiveTab(newValue)}
+            value={parseInt(appCtx.activeTab)}
+            onChange={(_e: SyntheticEvent, newValue: number) =>
+              router.push({ pathname: '/project', query: { ...router.query, activeTab: newValue.toString() } })
+            }
           >
             <SC.StyledTab label={'Welcome'} />
             <SC.StyledTab label={'Code'} />
@@ -49,34 +52,30 @@ const Project = (): JSX.Element => {
             <SC.StyledTab label={'User guide'} />
             <SC.StyledTab label={'Credits'} />
           </SC.StyledTabs>
-          <TabPanel value={appCtx.activeTab} index={TabName.WELCOME}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.WELCOME}>
             <Welcome />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.CODE}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.CODE}>
             <CodeMirrorEditor />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.METRICS}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.METRICS}>
             <Metrics />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.DIAGRAMS}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.DIAGRAMS}>
             <Diagrams />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.GIT_DIFF}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.GIT_DIFF}>
             <GitDiff />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.USER_GUIDE}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.USER_GUIDE}>
             <UserGuide />
           </TabPanel>
-          <TabPanel value={appCtx.activeTab} index={TabName.CREDITS}>
+          <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.CREDITS}>
             <Credits />
           </TabPanel>
         </div>
       </SC.InnerContainer>
     </SC.OuterContainer>
-  ) : (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <CircularProgress />
-    </Box>
   );
 };
 
