@@ -160,8 +160,9 @@ jobs:
       - name: Update apt-get
         run: sudo apt-get update
 
-      - name: Install required packages for runtime
-        run: ./.github/scripts/setup_runtime_${{matrix.os}}.sh
+      # We need build dependencies for CodeCompass, as it will parsed as well
+      - name: Install required packages for build
+        run: ./.github/scripts/setup_build_${{matrix.os}}.sh
 
       - name: Install database packages
         run: ./.github/scripts/setup_${{matrix.db}}_${{matrix.os}}.sh
