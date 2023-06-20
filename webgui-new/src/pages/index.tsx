@@ -30,7 +30,7 @@ const Home = (): JSX.Element => {
     <SC.OuterContainer>
       <SC.InnerContainer>
         <SC.Title>{'Click on a project to start using CodeCompass!'}</SC.Title>
-        {appCtx.workspaces
+        {appCtx.workspaces.length
           ? appCtx.workspaces.map((ws) => (
               <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
                 {ws.id}

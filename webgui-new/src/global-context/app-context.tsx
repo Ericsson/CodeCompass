@@ -100,7 +100,7 @@ export const AppContext = createContext<AppContextProps>({
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 export const AppContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
-  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[] | undefined>(undefined);
+  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
 
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
@@ -172,10 +172,10 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   }, [projectFileId]);
 
   const appContext = {
-    workspaces: workspaces as WorkspaceInfo[],
+    workspaces,
     workspaceId,
     projectFileId,
-    searchProps: searchProps,
+    searchProps,
     metricsGenId,
     diagramGenId,
     diagramTypeId,

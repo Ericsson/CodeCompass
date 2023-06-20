@@ -26,7 +26,7 @@ export const ProjectSelect = (): JSX.Element => {
     });
   };
 
-  return appCtx.workspaces ? (
+  return appCtx.workspaces.length ? (
     <FormControl>
       <InputLabel>{'Project'}</InputLabel>
       <Select value={appCtx.workspaceId} label={'Project'} onChange={(e) => loadWorkspace(e)}>
