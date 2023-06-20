@@ -11,9 +11,11 @@ import { FileName } from 'components/file-name/file-name';
 import { AppContext } from 'global-context/app-context';
 import { getFileContent, getFileInfo } from 'service/project-service';
 import { gutter, GutterMarker } from '@codemirror/view';
-import { formatDate } from 'utils/utils';
+import { convertSelectionRangeToString, convertSelectionStringToRange, formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { getRepositoryByProjectPath } from 'service/git-service';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 class GitBlameGutterMarker extends GutterMarker {
   number: string;
@@ -77,6 +79,7 @@ class GitBlameGutterMarker extends GutterMarker {
 }
 
 export const CodeMirrorEditor = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
 
@@ -108,7 +111,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
 
   useEffect(() => {
     if (!appCtx.editorSelection) return;
-    dispatchSelection(appCtx.editorSelection);
+    dispatchSelection(convertSelectionStringToRange(appCtx.editorSelection));
   }, [appCtx.editorSelection, fileContent]);
 
   const dispatchSelection = (range: Range) => {
@@ -152,7 +155,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
   };
 
   const handleAstNodeSelect = async () => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || appCtx.gitBlameInfo.length) return;
 
     const view = editorRef.current.view;
     if (!view) return;
@@ -167,9 +170,15 @@ export const CodeMirrorEditor = (): JSX.Element => {
         : await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
     if (astNodeInfo) {
       dispatchSelection(astNodeInfo?.range?.range as Range);
-      appCtx.setEditorSelection(astNodeInfo?.range?.range);
-      appCtx.setLanguageNodeId(astNodeInfo?.id as string);
-      appCtx.setActiveAccordion(AccordionLabel.INFO_TREE);
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          editorSelection: convertSelectionRangeToString(astNodeInfo?.range?.range),
+          languageNodeId: astNodeInfo?.id as string,
+          activeAccordion: AccordionLabel.INFO_TREE,
+        } as RouterQueryType,
+      });
     } else {
       const range = new Range({
         startpos: new Position({
@@ -182,8 +191,14 @@ export const CodeMirrorEditor = (): JSX.Element => {
         }),
       });
       dispatchSelection(range);
-      appCtx.setEditorSelection(range);
-      appCtx.setLanguageNodeId('');
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          editorSelection: convertSelectionRangeToString(range),
+          languageNodeId: '',
+        } as RouterQueryType,
+      });
     }
   };
 
@@ -213,9 +228,15 @@ export const CodeMirrorEditor = (): JSX.Element => {
         );
         if (!info) return true;
         getRepositoryByProjectPath(fileInfo?.path as string).then((result) => {
-          appCtx.setGitRepoId(result?.repoId as string);
-          appCtx.setGitCommitId(info.finalCommitId as string);
-          appCtx.setActiveTab(TabName.GIT_DIFF);
+          router.push({
+            pathname: '/project',
+            query: {
+              ...router.query,
+              gitRepoId: result?.repoId as string,
+              gitCommitId: info.finalCommitId as string,
+              activeTab: TabName.GIT_DIFF.toString(),
+            } as RouterQueryType,
+          });
         });
         return true;
       },

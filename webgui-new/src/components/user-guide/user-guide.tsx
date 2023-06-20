@@ -14,12 +14,10 @@ export const UserGuide = (): JSX.Element => {
       </SC.StyledParagraph>
       <SC.StyledHeading2>{'Navigation'}</SC.StyledHeading2>
       <SC.StyledParagraph>
-        <div>
-          {`You can switch between projects by using the select menu in the header. The
+        {`You can switch between projects by using the select menu in the header. The
         accordion menu on the left contains the same options as before: File manager, Search
         results, Info tree and Revision control navigator.
         The tab menu contains the following menu points: Welcome, Code, Metrics, Diagrams, Git diff, User guide and Credits`}
-        </div>
       </SC.StyledParagraph>
       <SC.StyledUl>
         <li>{'The Welcome tab contains an introduction to CodeCompass and its features.'}</li>

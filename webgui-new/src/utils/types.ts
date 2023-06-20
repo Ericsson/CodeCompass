@@ -7,13 +7,14 @@ export type RouterQueryType = {
   metricsGenId?: string;
   diagramGenId?: string;
   diagramTypeId?: string;
+  diagramType?: string;
   languageNodeId?: string;
   gitRepoId?: string;
   gitBranch?: string;
   gitCommitId?: string;
   activeAccordion?: string;
   activeTab?: string;
-  treeViewOption?: boolean;
+  treeViewOption?: string;
 };
 
 export type TreeNode = {

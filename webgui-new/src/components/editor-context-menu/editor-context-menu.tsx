@@ -11,12 +11,14 @@ import {
 } from 'service/cpp-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { AstNodeInfo, Range } from '@thrift-generated';
-import { updateUrlWithParams } from 'utils/utils';
+import { convertSelectionRangeToString } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { getFileInfo } from 'service/project-service';
 import * as SC from './styled-components';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -33,6 +35,7 @@ export const EditorContextMenu = ({
     } | null>
   >;
 }): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const docsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -109,27 +112,22 @@ export const EditorContextMenu = ({
     }
 
     const fileId = def.range?.file as string;
-    appCtx.setProjectFileId(fileId);
-    appCtx.setEditorSelection(def.range?.range as Range);
-    appCtx.setActiveTab(TabName.CODE);
+
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        projectFileId: fileId,
+        editorSelection: convertSelectionRangeToString(def.range?.range as Range),
+        activeTab: TabName.CODE.toString(),
+      } as RouterQueryType,
+    });
+
     setContextMenu(null);
   };
 
   const getSelectionLink = () => {
-    const currentSelectionRange = appCtx.editorSelection;
-    if (!currentSelectionRange || !currentSelectionRange.startpos || !currentSelectionRange.endpos) return;
-
-    const { line: startLine, column: startCol } = currentSelectionRange.startpos;
-    const { line: endLine, column: endCol } = currentSelectionRange.endpos;
-    const selection = `${startLine}|${startCol}|${endLine}|${endCol}`;
-
-    const selectionLink = updateUrlWithParams({
-      workspaceId: appCtx.workspaceId,
-      projectFileId: appCtx.projectFileId,
-      editorSelection: selection,
-    });
-
-    navigator.clipboard.writeText(selectionLink);
+    navigator.clipboard.writeText(window.location.href);
     toast.success('Selection link copied to clipboard!');
     setContextMenu(null);
   };
@@ -148,7 +146,14 @@ export const EditorContextMenu = ({
       fileInfo?.id as string
     );
     appCtx.setGitBlameInfo(blameInfo);
-    appCtx.setActiveTab(TabName.CODE);
+
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        activeTab: TabName.CODE.toString(),
+      } as RouterQueryType,
+    });
   };
 
   return appCtx.languageNodeId ? (
@@ -170,10 +175,16 @@ export const EditorContextMenu = ({
                     key={diagramTypes.get(type)}
                     onClick={() => {
                       setContextMenu(null);
-                      appCtx.setDiagramGenId(astNodeInfo?.id as string);
-                      appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
-                      appCtx.setDiagramType('ast');
-                      appCtx.setActiveTab(TabName.DIAGRAMS);
+                      router.push({
+                        pathname: '/project',
+                        query: {
+                          ...router.query,
+                          diagramGenId: astNodeInfo?.id as string,
+                          diagramTypeId: (diagramTypes.get(type) as number).toString(),
+                          diagramType: 'ast',
+                          activeTab: TabName.DIAGRAMS.toString(),
+                        } as RouterQueryType,
+                      });
                     }}
                   >
                     {type}
@@ -182,10 +193,16 @@ export const EditorContextMenu = ({
                 <MenuItem
                   onClick={() => {
                     setContextMenu(null);
-                    appCtx.setDiagramGenId(astNodeInfo?.id as string);
-                    appCtx.setDiagramTypeId(999);
-                    appCtx.setDiagramType('ast');
-                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                    router.push({
+                      pathname: '/project',
+                      query: {
+                        ...router.query,
+                        diagramGenId: astNodeInfo?.id as string,
+                        diagramTypeId: '999',
+                        diagramType: 'ast',
+                        activeTab: TabName.DIAGRAMS.toString(),
+                      } as RouterQueryType,
+                    });
                   }}
                 >
                   {'CodeBites'}

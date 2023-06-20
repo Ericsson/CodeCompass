@@ -17,8 +17,12 @@ import { AppContext } from 'global-context/app-context';
 import { getFileInfo } from 'service/project-service';
 import { CodeBites } from 'components/codebites/codebites';
 import * as SC from './styled-components';
+import { convertSelectionRangeToString } from 'utils/utils';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const Diagrams = (): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
@@ -31,7 +35,7 @@ export const Diagrams = (): JSX.Element => {
   const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
-    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === -1 || !appCtx.diagramType) return;
+    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === '' || !appCtx.diagramType) return;
     const init = async () => {
       const initDiagramInfo =
         appCtx.diagramType === 'file'
@@ -42,7 +46,7 @@ export const Diagrams = (): JSX.Element => {
 
       if (!initDiagramInfo) return;
 
-      if (appCtx.diagramTypeId === 999) {
+      if (parseInt(appCtx.diagramTypeId) === 999) {
         const refTypes = await getCppReferenceTypes(initDiagramInfo.id as string);
         if (refTypes.get('Definition') === undefined) return;
 
@@ -57,9 +61,9 @@ export const Diagrams = (): JSX.Element => {
 
       const diagram =
         initDiagramInfo instanceof FileInfo
-          ? await getCppFileDiagram(appCtx.diagramGenId, appCtx.diagramTypeId)
+          ? await getCppFileDiagram(appCtx.diagramGenId, parseInt(appCtx.diagramTypeId))
           : initDiagramInfo instanceof AstNodeInfo
-          ? await getCppDiagram(appCtx.diagramGenId, appCtx.diagramTypeId)
+          ? await getCppDiagram(appCtx.diagramGenId, parseInt(appCtx.diagramTypeId))
           : '';
 
       const parser = new DOMParser();
@@ -93,15 +97,34 @@ export const Diagrams = (): JSX.Element => {
     if (!initDiagramInfo) return;
 
     if (initDiagramInfo instanceof FileInfo) {
-      appCtx.setProjectFileId(diagramGenId);
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          projectFileId: diagramGenId,
+        } as RouterQueryType,
+      });
     } else if (initDiagramInfo instanceof AstNodeInfo) {
       const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
-      appCtx.setProjectFileId(astNodeInfo?.range?.file as string);
-      appCtx.setEditorSelection(astNodeInfo?.range?.range);
-      appCtx.setLanguageNodeId(diagramGenId);
+
+      router.push({
+        pathname: '/project',
+        query: {
+          ...router.query,
+          projectFileId: astNodeInfo?.range?.file as string,
+          editorSelection: convertSelectionRangeToString(astNodeInfo?.range?.range),
+          languageNodeId: diagramGenId,
+        } as RouterQueryType,
+      });
     }
 
-    appCtx.setDiagramGenId(diagramGenId);
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        diagramGenId: diagramGenId,
+      } as RouterQueryType,
+    });
   };
 
   const generateLegend = async () => {
@@ -109,9 +132,9 @@ export const Diagrams = (): JSX.Element => {
 
     const diagramLegend =
       diagramInfo instanceof FileInfo
-        ? await getCppFileDiagramLegend(appCtx.diagramTypeId)
+        ? await getCppFileDiagramLegend(parseInt(appCtx.diagramTypeId))
         : diagramInfo instanceof AstNodeInfo
-        ? await getCppDiagramLegend(appCtx.diagramTypeId)
+        ? await getCppDiagramLegend(parseInt(appCtx.diagramTypeId))
         : '';
 
     const parser = new DOMParser();

@@ -9,6 +9,8 @@ import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
 import { getFileInfoByPath } from 'service/project-service';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
+import { useRouter } from 'next/router';
+import { RouterQueryType } from 'utils/types';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -27,6 +29,7 @@ export const FileContextMenu = ({
   >;
   fileInfo: FileInfo;
 }): JSX.Element => {
+  const router = useRouter();
   const appCtx = useContext(AppContext);
 
   const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
@@ -53,8 +56,14 @@ export const FileContextMenu = ({
             setContextMenu(null);
             const sourceFolder = appCtx.labels.get('src') as string;
             const fInfo = fileInfo.path?.includes(sourceFolder) ? fileInfo : await getFileInfoByPath(sourceFolder);
-            appCtx.setMetricsGenId(fInfo?.id as string);
-            appCtx.setActiveTab(TabName.METRICS);
+            router.push({
+              pathname: '/project',
+              query: {
+                ...router.query,
+                metricsGenId: fInfo?.id as string,
+                activeTab: TabName.METRICS.toString(),
+              } as RouterQueryType,
+            });
           }}
         >
           {'Metrics'}
@@ -75,7 +84,13 @@ export const FileContextMenu = ({
               fileInfo.id as string
             );
             appCtx.setGitBlameInfo(blameInfo);
-            appCtx.setActiveTab(TabName.CODE);
+            router.push({
+              pathname: '/project',
+              query: {
+                ...router.query,
+                activeTab: TabName.CODE.toString(),
+              } as RouterQueryType,
+            });
           }}
         >
           {'Git blame'}
@@ -90,10 +105,16 @@ export const FileContextMenu = ({
                   key={diagramTypes.get(type)}
                   onClick={() => {
                     setContextMenu(null);
-                    appCtx.setDiagramGenId(fileInfo.id as string);
-                    appCtx.setDiagramTypeId(diagramTypes.get(type) as number);
-                    appCtx.setDiagramType('file');
-                    appCtx.setActiveTab(TabName.DIAGRAMS);
+                    router.push({
+                      pathname: '/project',
+                      query: {
+                        ...router.query,
+                        diagramGenId: fileInfo.id as string,
+                        diagramTypeId: (diagramTypes.get(type) as number).toString(),
+                        diagramType: 'file',
+                        activeTab: TabName.DIAGRAMS.toString(),
+                      } as RouterQueryType,
+                    });
                   }}
                 >
                   {type}

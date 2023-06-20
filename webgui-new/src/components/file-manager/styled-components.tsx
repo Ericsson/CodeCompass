@@ -1,5 +1,5 @@
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
-import { alpha, styled } from '@mui/material';
+import { FormControlLabel, alpha, styled } from '@mui/material';
 
 export const StyledDiv = styled('div')({});
 
@@ -44,4 +44,11 @@ export const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     marginLeft: '10px',
     borderLeft: `1px dashed ${alpha(theme.palette.text.primary, 0.4)}`,
   },
+}));
+
+export const TreeSetting = styled(FormControlLabel)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  width: '100%',
+  borderBottom: `1px solid ${theme.colors?.primary}`,
 }));
