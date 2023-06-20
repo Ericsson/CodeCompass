@@ -43,6 +43,21 @@ export const FileContextMenu = ({
     init();
   }, [fileInfo]);
 
+  const getGitBlameInfo = async () => {
+    setContextMenu(null);
+    const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
+    const srcPath = appCtx.labels.get('src');
+    const filePath = fileInfo.path as string;
+    const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
+    const blameInfo = await getBlameInfo(
+      currentRepo?.repoId as string,
+      currentRepo?.commitId as string,
+      path as string,
+      fileInfo.id as string
+    );
+    return blameInfo;
+  };
+
   return (
     <Menu
       open={contextMenu !== null}
@@ -72,25 +87,8 @@ export const FileContextMenu = ({
       {fileInfo && !fileInfo.isDirectory && (
         <MenuItem
           onClick={async () => {
-            setContextMenu(null);
-            const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
-            const srcPath = appCtx.labels.get('src');
-            const filePath = fileInfo.path as string;
-            const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
-            const blameInfo = await getBlameInfo(
-              currentRepo?.repoId as string,
-              currentRepo?.commitId as string,
-              path as string,
-              fileInfo.id as string
-            );
+            const blameInfo = await getGitBlameInfo();
             appCtx.setGitBlameInfo(blameInfo);
-            router.push({
-              pathname: '/project',
-              query: {
-                ...router.query,
-                activeTab: TabName.CODE.toString(),
-              } as RouterQueryType,
-            });
           }}
         >
           {'Git blame'}

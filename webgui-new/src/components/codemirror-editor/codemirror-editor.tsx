@@ -10,73 +10,13 @@ import { EditorContextMenu } from 'components/editor-context-menu/editor-context
 import { FileName } from 'components/file-name/file-name';
 import { AppContext } from 'global-context/app-context';
 import { getFileContent, getFileInfo } from 'service/project-service';
-import { gutter, GutterMarker } from '@codemirror/view';
 import { convertSelectionRangeToString, convertSelectionStringToRange, formatDate } from 'utils/utils';
 import { TabName } from 'enums/tab-enum';
 import { getRepositoryByProjectPath } from 'service/git-service';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
-
-class GitBlameGutterMarker extends GutterMarker {
-  number: string;
-  commitMessage: string;
-  commitDate: string;
-
-  constructor(number: string, commitMessage: string, commitDate: string) {
-    super();
-    this.number = number;
-    this.commitMessage = commitMessage;
-    this.commitDate = commitDate;
-  }
-
-  eq(other: GitBlameGutterMarker) {
-    return this.number === other.number;
-  }
-
-  toDOM() {
-    const outerDiv = document.createElement('div');
-    outerDiv.style.display = 'flex';
-    outerDiv.style.alignItems = 'center';
-    outerDiv.style.justifyContent = 'space-between';
-    outerDiv.style.width = '400px';
-
-    if (this.commitMessage) {
-      outerDiv.style.cursor = 'pointer';
-      outerDiv.addEventListener('mouseover', () => {
-        outerDiv.style.color = 'red';
-      });
-
-      outerDiv.addEventListener('mouseout', () => {
-        outerDiv.style.color = '';
-      });
-    }
-
-    const commitDiv = document.createElement('div');
-    commitDiv.style.display = 'flex';
-    commitDiv.style.alignItems = 'center';
-    commitDiv.style.justifyContent = 'space-between';
-    commitDiv.style.flexGrow = '1';
-    commitDiv.style.gap = '5px';
-
-    const commitMessageDiv = document.createElement('div');
-    commitMessageDiv.innerHTML = this.commitMessage;
-
-    const commitDateDiv = document.createElement('div');
-    commitDateDiv.innerHTML = this.commitDate !== '' ? `on ${this.commitDate}` : '';
-
-    commitDiv.appendChild(commitMessageDiv);
-    commitDiv.appendChild(commitDateDiv);
-
-    const lineNumberDiv = document.createElement('div');
-    lineNumberDiv.innerHTML = this.number;
-    lineNumberDiv.style.padding = '0 10px';
-
-    outerDiv.appendChild(commitDiv);
-    outerDiv.appendChild(lineNumberDiv);
-
-    return outerDiv;
-  }
-}
+import { Tooltip, alpha } from '@mui/material';
+import * as SC from './styled-components';
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const router = useRouter();
@@ -155,7 +95,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
   };
 
   const handleAstNodeSelect = async () => {
-    if (!editorRef.current || appCtx.gitBlameInfo.length) return;
+    if (!editorRef.current) return;
 
     const view = editorRef.current.view;
     if (!view) return;
@@ -202,46 +142,75 @@ export const CodeMirrorEditor = (): JSX.Element => {
     }
   };
 
-  const gitBlameGutter = gutter({
-    class: 'customGutter',
-    renderEmptyElements: false,
-    lineMarker(view, line, others) {
-      if (others.some((m) => m.toDOM)) return null;
+  const getCommitInfo = async (finalCommitId: string) => {
+    const repo = await getRepositoryByProjectPath(fileInfo?.path as string);
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        gitRepoId: repo?.repoId as string,
+        gitCommitId: finalCommitId,
+        activeTab: TabName.GIT_DIFF.toString(),
+      } as RouterQueryType,
+    });
+  };
 
-      const number = view.state.doc.lineAt(line.from).number;
-      const info = appCtx.gitBlameInfo.find((info) => info.finalStartLineNumber === number);
-
-      if (!info || !info.finalCommitMessage) return new GitBlameGutterMarker(number.toString(), '', '');
-
+  const GitBlameLines = (): JSX.Element => {
+    let previousLineCount = 1;
+    const renderedLines = appCtx.gitBlameInfo.map((info, idx) => {
       const trimmedMessage =
-        info?.finalCommitMessage?.length > 27
-          ? `${info.finalCommitMessage.split('').slice(0, 27).join('')}...`
+        (info?.finalCommitMessage?.length as number) > 27
+          ? `${info.finalCommitMessage?.split('').slice(0, 27).join('')}...`
           : info?.finalCommitMessage;
       const date = formatDate(new Date((info.finalSignature?.time as unknown as number) * 1000));
 
-      return new GitBlameGutterMarker(number.toString(), trimmedMessage, date);
-    },
-    domEventHandlers: {
-      click(view, line) {
-        const info = appCtx.gitBlameInfo.find(
-          (info) => info.finalStartLineNumber === view.state.doc.lineAt(line.from).number
-        );
-        if (!info) return true;
-        getRepositoryByProjectPath(fileInfo?.path as string).then((result) => {
-          router.push({
-            pathname: '/project',
-            query: {
-              ...router.query,
-              gitRepoId: result?.repoId as string,
-              gitCommitId: info.finalCommitId as string,
-              activeTab: TabName.GIT_DIFF.toString(),
-            } as RouterQueryType,
-          });
-        });
-        return true;
-      },
-    },
-  });
+      previousLineCount = info.linesInHunk as number;
+      const lineHeight = 17.9 * previousLineCount;
+
+      return (
+        <Tooltip
+          key={idx}
+          title={
+            <div style={{ width: 'max-content' }}>
+              <div>{`#${info.finalCommitId?.substring(0, 8)} `}</div>
+              <div>{info.finalCommitMessage}</div>
+              <div>{`${info.finalSignature?.name} (${info.finalSignature?.email})`}</div>
+              <div>{`Commited on ${date}`}</div>
+            </div>
+          }
+          placement={'top-start'}
+          componentsProps={{
+            tooltip: {
+              sx: {
+                fontSize: '0.85rem',
+                padding: '10px',
+                width: '400px',
+                height: 'auto',
+                overflow: 'scroll',
+              },
+            },
+          }}
+        >
+          <SC.GitBlameLine
+            sx={{
+              cursor: 'pointer',
+              marginBottom: `${lineHeight}px`,
+              borderTop: (theme) => `1px solid ${theme.colors?.primary}`,
+              ':hover': {
+                backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
+              },
+            }}
+            onClick={() => getCommitInfo(info.finalCommitId as string)}
+          >
+            <div>{trimmedMessage}</div>
+            <div>{`on ${date}`}</div>
+          </SC.GitBlameLine>
+        </Tooltip>
+      );
+    });
+
+    return <>{renderedLines}</>;
+  };
 
   return (
     <>
@@ -253,25 +222,45 @@ export const CodeMirrorEditor = (): JSX.Element => {
         gitBlameEnabled={appCtx.gitBlameInfo.length !== 0}
         hideFileRefMenu={fileInfo?.type === 'Unknown'}
       />
-      <ReactCodeMirror
-        readOnly={true}
-        extensions={appCtx.gitBlameInfo.length !== 0 ? [gitBlameGutter, cpp()] : [cpp()]}
-        theme={theme === 'dark' ? githubDark : githubLight}
-        style={{ fontSize: '0.8rem' }}
-        width={'100%'}
-        height={'100%'}
-        minWidth={'calc(1460px - 280px)'}
-        maxWidth={'calc(100vw - 280px)'}
-        maxHeight={'calc(100vh - 78px - 48px - 49px)'}
-        value={fileContent ?? ''}
-        ref={editorRef}
-        onCreateEditor={(view, state) => (editorRef.current = { view, state })}
-        onClick={() => handleAstNodeSelect()}
-        onContextMenu={(e) => handleContextMenu(e)}
-        basicSetup={{
-          lineNumbers: appCtx.gitBlameInfo.length === 0,
-        }}
-      />
+      <SC.OuterContainer>
+        <SC.GitBlameContainer
+          id={'gitBlameContainer'}
+          sx={{ display: appCtx.gitBlameInfo.length ? 'flex' : 'none' }}
+          onScroll={(e) => {
+            const editor = document.querySelector('.cm-scroller');
+            if (!editor) return;
+            const scroll = e.currentTarget.scrollTop;
+            editor.scrollTop = scroll;
+          }}
+        >
+          <GitBlameLines />
+        </SC.GitBlameContainer>
+        <ReactCodeMirror
+          readOnly={true}
+          extensions={[cpp()]}
+          theme={theme === 'dark' ? githubDark : githubLight}
+          style={{ fontSize: '0.8rem' }}
+          width={appCtx.gitBlameInfo.length !== 0 ? 'calc(100vw - 280px - 400px)' : 'calc(100vw - 280px)'}
+          height={'100%'}
+          minWidth={'calc(1460px - 280px)'}
+          maxWidth={'calc(100vw - 280px)'}
+          maxHeight={'calc(100vh - 78px - 48px - 49px)'}
+          value={fileContent ?? ''}
+          ref={editorRef}
+          onCreateEditor={(view, state) => {
+            editorRef.current = { view, state };
+
+            const cmScroller = document.querySelector('.cm-scroller') as HTMLDivElement;
+            const gitBlameContainer = document.querySelector('#gitBlameContainer') as HTMLDivElement;
+
+            cmScroller.addEventListener('scroll', () => {
+              gitBlameContainer.scrollTop = cmScroller.scrollTop;
+            });
+          }}
+          onClick={() => handleAstNodeSelect()}
+          onContextMenu={(e) => handleContextMenu(e)}
+        />
+      </SC.OuterContainer>
       <EditorContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} />
     </>
   );
