@@ -292,3 +292,16 @@ In both the parser and the webserver it is possible to write the logs to a given
 This feature can be enabled by passing the `--logtarget` command line option with the full
 path to the directory to be used for storing the log files.
 If this argument is not specified, the logs will be written to the terminal only.
+
+### Language Server Protocol support
+
+The CodeCompass_webserver is not a fully fledged LSP server on its own,
+but it does support some standard and non-standard LSP requests for C and C++ projects.
+The full list can be found here: [Supported LSP Requests](lsp.md)
+
+To access this feature, requests must be sent to the following address:
+`http://<domain>:<port>/<project_name>/CppLspService`
+
+e.g.: [`http://localhost:6251/MyProject/CppLspService`](http://localhost:6251/MyProject/CppLspService)
+
+The project name should match the name of the project used by the CodeCompass_parser.
