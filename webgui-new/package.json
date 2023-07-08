@@ -1,6 +1,6 @@
 {
-  "name": "webgui-new",
-  "version": "0.1.0",
+  "name": "codecompass-react-webgui",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "ts-node src/server.ts",
