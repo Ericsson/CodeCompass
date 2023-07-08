@@ -56,9 +56,10 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
 
       menu.addChild(new MenuItem({
         label     : 'New Web GUI',
+        iconClass : 'menuicon icon icon-rocket',
         onClick   : function () {
           window.open(
-            `${window.location.pathname}/new`);
+            `${window.location.pathname}/new/`);
         }
       }));
 
