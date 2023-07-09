@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
 import { AstNodeInfo, BuildLog, FileInfo, Range } from '@thrift-generated';
 import React, { useContext, useEffect, useState } from 'react';
@@ -27,6 +27,15 @@ export const FileName = ({
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
 }): JSX.Element => {
+  const buildLogMessages = {
+    0: 'Unknown',
+    1: 'Error',
+    2: 'FatalError',
+    3: 'Warning',
+    4: 'Note',
+    5: 'CodingRule',
+  };
+
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -92,6 +101,19 @@ export const FileName = ({
     });
   };
 
+  const jumpToBuildLog = (range: Range) => {
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        projectFileId: info?.id as string,
+        editorSelection: convertSelectionRangeToString(range),
+        activeTab: TabName.CODE.toString(),
+      } as RouterQueryType,
+    });
+    setBuildLogAnchorEl(null);
+  };
+
   useEffect(() => {
     if (!buildLogAnchorEl) return;
     const init = async () => {
@@ -142,15 +164,30 @@ export const FileName = ({
                   onClose={() => setBuildLogAnchorEl(null)}
                 >
                   <SC.BuildLogHeader>{'Build logs'}</SC.BuildLogHeader>
-                  <div>
-                    {buildLog.length
-                      ? buildLog.map((log, idx) => (
-                          <div
-                            key={idx}
-                          >{`${log.range?.startpos?.line}:${log.range?.startpos?.column} ${log.message} (${log.messageType})`}</div>
-                        ))
-                      : 'No build logs for this file'}
-                  </div>
+                  {buildLog.length ? (
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{'Type'}</TableCell>
+                          <TableCell>{'Message'}</TableCell>
+                          <TableCell>{'From (Ln:Col)'}</TableCell>
+                          <TableCell>{'To (Ln:Col)'}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {buildLog.map((log, idx) => (
+                          <SC.BuildLogTableRow key={idx} onClick={() => jumpToBuildLog(log.range as Range)}>
+                            <TableCell>{buildLogMessages[log.messageType ?? '0']}</TableCell>
+                            <TableCell>{log.message}</TableCell>
+                            <TableCell>{`${log.range?.startpos?.line}:${log.range?.startpos?.column}`}</TableCell>
+                            <TableCell>{`${log.range?.endpos?.line}:${log.range?.endpos?.column}`}</TableCell>
+                          </SC.BuildLogTableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div>{'No build logs for this file'}</div>
+                  )}
                 </SC.BuildLogMenu>
               </>
             )}
