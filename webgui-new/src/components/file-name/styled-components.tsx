@@ -28,6 +28,21 @@ export const StyledMenu = styled(Menu)(({ theme }) => ({
   },
 }));
 
+export const BuildLogMenu = styled(Menu)(({ theme }) => ({
+  '.MuiMenu-list': {
+    border: `1px solid ${theme.colors?.primary}`,
+    width: '300px',
+    maxHeight: '500px',
+    overflow: 'scroll',
+    padding: '10px',
+  },
+}));
+
+export const BuildLogHeader = styled('div')(({ theme }) => ({
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  marginBottom: '5px',
+}));
+
 export const StyledTreeView = styled(TreeView)(({ theme }) => ({
   color: theme.colors?.primary,
   backgroundColor: theme.backgroundColors?.primary,

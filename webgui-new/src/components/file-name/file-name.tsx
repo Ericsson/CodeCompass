@@ -1,7 +1,7 @@
 import { Button } from '@mui/material';
 import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
-import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
-import React, { useContext, useState } from 'react';
+import { AstNodeInfo, BuildLog, FileInfo, Range } from '@thrift-generated';
+import React, { useContext, useEffect, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
@@ -10,6 +10,7 @@ import * as SC from './styled-components';
 import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { getBuildLog } from 'service/project-service';
 
 export const FileName = ({
   fileName,
@@ -30,7 +31,9 @@ export const FileName = ({
   const appCtx = useContext(AppContext);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [buildLogAnchorEl, setBuildLogAnchorEl] = useState<HTMLElement | null>(null);
   const [references, setReferences] = useState<React.ReactNode[]>([]);
+  const [buildLog, setBuildLog] = useState<BuildLog[]>([]);
 
   const getParseStatusText = (status: number): string => {
     if (status === 2) {
@@ -89,38 +92,67 @@ export const FileName = ({
     });
   };
 
+  useEffect(() => {
+    if (!buildLogAnchorEl) return;
+    const init = async () => {
+      const initBuildLog = await getBuildLog(info?.id as string);
+      setBuildLog(initBuildLog);
+    };
+    init();
+  }, [buildLogAnchorEl, info]);
+
   return (
     <SC.Container>
       {info ? (
         <>
           <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {!info.isDirectory && (
-              <SC.ParseStatus
-                sx={{
-                  color: (theme) =>
-                    parseStatus === 2
-                      ? theme.backgroundColors?.primary
-                      : parseStatus === 3
-                      ? theme.backgroundColors?.primary
-                      : '#FFFFFF',
-                  backgroundColor: (theme) =>
-                    parseStatus === 2
-                      ? theme.colors?.warning
-                      : parseStatus === 3
-                      ? theme.colors?.success
-                      : theme.colors?.error,
-                  border: (theme) =>
-                    `1px solid ${
+              <>
+                <SC.ParseStatus
+                  onClick={(e) => setBuildLogAnchorEl(e.currentTarget)}
+                  sx={{
+                    color: (theme) =>
+                      parseStatus === 2
+                        ? theme.backgroundColors?.primary
+                        : parseStatus === 3
+                        ? theme.backgroundColors?.primary
+                        : '#FFFFFF',
+                    backgroundColor: (theme) =>
                       parseStatus === 2
                         ? theme.colors?.warning
                         : parseStatus === 3
                         ? theme.colors?.success
-                        : theme.colors?.error
-                    }`,
-                }}
-              >
-                {getParseStatusText(parseStatus)}
-              </SC.ParseStatus>
+                        : theme.colors?.error,
+                    border: (theme) =>
+                      `1px solid ${
+                        parseStatus === 2
+                          ? theme.colors?.warning
+                          : parseStatus === 3
+                          ? theme.colors?.success
+                          : theme.colors?.error
+                      }`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {getParseStatusText(parseStatus)}
+                </SC.ParseStatus>
+                <SC.BuildLogMenu
+                  anchorEl={buildLogAnchorEl}
+                  open={Boolean(buildLogAnchorEl)}
+                  onClose={() => setBuildLogAnchorEl(null)}
+                >
+                  <SC.BuildLogHeader>{'Build logs'}</SC.BuildLogHeader>
+                  <div>
+                    {buildLog.length
+                      ? buildLog.map((log, idx) => (
+                          <div
+                            key={idx}
+                          >{`${log.range?.startpos?.line}:${log.range?.startpos?.column} ${log.message} (${log.messageType})`}</div>
+                        ))
+                      : 'No build logs for this file'}
+                  </div>
+                </SC.BuildLogMenu>
+              </>
             )}
             <div>{fileName}</div>
             <div>{'::'}</div>
