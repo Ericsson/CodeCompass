@@ -212,6 +212,7 @@ export const Metrics = (): JSX.Element => {
         stroke="#fff"
         fill="#8884d8"
         content={<CustomizedContent setData={setData} fileInfo={fileInfo as FileInfo} setFileInfo={setFileInfo} />}
+        isAnimationActive={false}
       />
     ) : (
       <></>
