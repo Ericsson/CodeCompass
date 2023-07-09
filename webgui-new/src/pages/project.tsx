@@ -12,6 +12,8 @@ import { Welcome } from 'components/welcome/welcome';
 import { UserGuide } from 'components/user-guide/user-guide';
 import * as SC from 'themes/project-styles';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { Box } from '@mui/material';
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -32,7 +34,7 @@ const Project = (): JSX.Element => {
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
-  return (
+  return appCtx.workspaceId ? (
     <SC.OuterContainer>
       <Header />
       <SC.InnerContainer>
@@ -76,6 +78,13 @@ const Project = (): JSX.Element => {
         </div>
       </SC.InnerContainer>
     </SC.OuterContainer>
+  ) : (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ textAlign: 'center', fontSize: '1.5rem' }}>
+        <div style={{ marginBottom: '10px' }}>{'No project found...'}</div>
+        <Link href="/">{'Back to home'}</Link>
+      </div>
+    </Box>
   );
 };
 
