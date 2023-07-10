@@ -199,7 +199,21 @@
       "other": "Other"
     },
     "tooltips": {
-      "anyTooltip": "In case of Any, search happens in every file, not only in listed ones."
+      "anyTooltip": "In case of \"Any\", search happens in every file, not only in listed ones.",
+      "searchOptionTooltip": {
+        "textAndDefinition": "For <b>\"Text search\"</b> and <b>\"Definition search\"</b> you can use wildcards, regex, and logical operators:",
+        "phrases": "<b>Phrases:</b> a Phrase is a group of words surrounded by double quotes such as \"hello dolly\". A Phrase query matches if the words are next to each other in the particular order.",
+        "wildcars": "<b>Wildcards:</b> single and multiple character wildcard searches within single terms.<br />Examples: *test te?t test* te*t<br /><b>Note:</b> you cannot use wildcard searches within phrase queries!",
+        "regex": "<b>Regular Expressions:</b> matching a pattern between forward slashes.<br />Example: /[mb]oat/",
+        "boolean": "<b>Boolean Operators:</b> Boolean operators allow terms to be combined through logic operators.<br />We support AND, \"+\", OR, NOT and \"-\" as Boolean operators. (Note: Boolean operators must be ALL CAPS)",
+        "booleanOR": "<b>OR:</b> The OR operator links two terms and finds a matching document if either of the terms exist in a document. If there is no Boolean operator between two terms, the OR operator is used.<br />Example: \"some text\" OR other",
+        "booleanAND": "<b>AND:</b> The AND operator matches documents where both terms exist anywhere in the text of a single document.<br />Example: \"some text\" AND other",
+        "escaping": "<b>Escaping Special Characters:</b> The current list special characters are: + - && || ! ( ) {} [ ] ^ \" ~ * ? :  /<br /><b>The escape character is the \"\" (back slash).</b>",
+        "fileSearch": "In <b>\"File name search\"</b> you can use a regular expression for matching on full (absolute) path of files in the database.<br />Example: /path/.*/te?t.cpp",
+        "logSearch": "For the documentation of <b>\"Log search\"</b> please see the user manual."
+      },
+      "fileRegexTooltip": "This filter is a regular expression of file names. <br /> Example: .*cpp",
+      "pathRegexTooltip": "This filter is a regular expression of directory paths. <br /> Example: /path/to/source/subdir/.*"
     }
   },
   "fileManager": {
@@ -250,6 +264,10 @@
     "copyNotification": "Selection link copied to clipboard!",
     "noDocs": "No documentation available for this node",
     "noAST": "No AST HTML available for this node"
+  },
+  "gitBlame": {
+    "onDate": "on {{date}}",
+    "commitedOn": "Commited on {{date}}"
   },
   "searchResults": {
     "size": "Size",
