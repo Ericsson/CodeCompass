@@ -1,0 +1,131 @@
+{
+  "index": {
+    "title": "Click on a project to start using CodeCompass!"
+  },
+  "project": {
+    "notFound": "No project found.",
+    "backToHome": "Back to home"
+  },
+  "projectSelect": "Project",
+  "tabMenu": {
+    "welcome": "Welcome",
+    "code": "Code",
+    "metrics": "Metrics",
+    "diagrams": "Diagrams",
+    "gitDiff": "Git diff",
+    "userGuide": "User guide",
+    "credits": "Credits"
+  },
+  "accordionMenu": {
+    "fileManager": "File manager",
+    "searchResults": "Search results",
+    "infoTree": "Info tree",
+    "revisionControl": "Revision control navigator"
+  },
+  "searchSettings": {
+    "methods": {
+      "expression": "Search by expression",
+      "fileRegex": "File name filter regex",
+      "pathRegex": "Path filter regex"
+    },
+    "options": {
+      "textOption": "Text search",
+      "definitionOption": "Definition search",
+      "fileOption": "File name search",
+      "logOption": "Log search"
+    },
+    "types": {
+      "type": "Type",
+      "function": "Function",
+      "constant": "Constant",
+      "variable": "Variable",
+      "field": "Field",
+      "label": "Label",
+      "macro": "Macro",
+      "module": "Module"
+    },
+    "menu": {
+      "searchOptions": "Search options",
+      "languages": "Languages",
+      "types": "Types",
+      "all": "All",
+      "any": "Any",
+      "other": "Other"
+    },
+    "tooltips": {
+      "anyTooltip": "In case of Any, search happens in every file, not only in listed ones."
+    }
+  },
+  "fileManager": {
+    "treeView": "Tree view",
+    "jumpTo": "Jump to:"
+  },
+  "fileName": {
+    "parseStatus": {
+      "full": "Fully parsed",
+      "partial": "Partially parsed",
+      "noParse": "Not parsed"
+    },
+    "buildLogs": {
+      "title": "Build logs",
+      "type": "Type",
+      "message": "Message",
+      "from": "From (Ln:Col)",
+      "to": "To (Ln:Col)",
+      "noBuildLogs": "No build logs for this file",
+      "messageTypes": {
+        "unknown": "Unknown",
+        "error": "Error",
+        "fatalError": "FatalError",
+        "warning": "Warning",
+        "note": "Note",
+        "codingRule": "CodingRule"
+      }
+    },
+    "fileRefs": {
+      "title": "File references"
+    },
+    "hideGitBlame": "Hide git blame",
+    "noFile": "No file selected"
+  },
+  "searchResults": {
+    "size": "Size",
+    "noResults": "No results"
+  },
+  "infoTree": {
+    "noNode": "No node selected"
+  },
+  "diagrams": {
+    "noDiagram": "No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate diagrams.",
+    "legend": "Legend",
+    "exportSVG": "Export SVG",
+    "downloadImg": "Download image",
+    "reset": "Reset",
+    "copyNotification": "Copied to clipboard"
+  },
+  "metrics": {
+    "noMetrics": "No directory selected. Right click on a directory in the file manager to generate Metrics.",
+    "fileType": "File type",
+    "sizeDimension": "Size dimension",
+    "drawMetrics": "Draw metrics"
+  },
+  "revisionControl": {
+    "noRepos": "No repositories available",
+    "repoList": "List of repositores",
+    "repoTitle": "Repository of {{repoName}} ({{repoPath}})",
+    "branches": "Branches",
+    "tags": "Tags",
+    "commitsInBranch": "Commits in {{branch}}",
+    "commitsInTag": "Commits in {{tag}}",
+    "commitedOn": "Commited on {{date}}",
+    "loading": "Loading",
+    "loadMore": "Load more"
+  },
+  "gitDiff": {
+    "noCommit": "No commit selected or commit information could not be loaded.",
+    "commitedOn": ", Commited on {{date}}",
+    "commitParents": "{{number}} parent(s)",
+    "inLine": "Inline",
+    "sideBySide": "Side-by-side"
+  }
+}

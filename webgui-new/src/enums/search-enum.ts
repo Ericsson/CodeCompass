@@ -1,16 +1,18 @@
 /* eslint-disable no-unused-vars */
-export enum SearchMethods {
-  EXPRESSION = 'Search by expression',
-  FILE_REGEX = 'File name filter regex',
-  PATH_REGEX = 'Path filter regex',
-}
+import i18n from 'i18n/i18n';
 
-export enum SearchOptions {
-  TEXT = 'Text search',
-  DEFINITION = 'Definition search',
-  FILE_NAME = 'File name search',
-  LOG = 'Log search',
-}
+export const SearchMethods = {
+  EXPRESSION: i18n.t('searchSettings.methods.expression'),
+  FILE_REGEX: i18n.t('searchSettings.methods.fileRegex'),
+  PATH_REGEX: i18n.t('searchSettings.methods.pathRegex'),
+};
+
+export const SearchOptions = {
+  TEXT: i18n.t('searchSettings.options.textOption'),
+  DEFINITION: i18n.t('searchSettings.options.definitionOption'),
+  FILE_NAME: i18n.t('searchSettings.options.fileNameOption'),
+  LOG: i18n.t('searchSettings.options.logOption'),
+};
 
 export enum SearchMainLanguages {
   C_CPP = 'C/C++',
@@ -51,13 +53,13 @@ export enum SearchOtherLanguages {
   X_TEXINFO = 'text/x-texinfo',
 }
 
-export enum SearchTypeOptions {
-  TYPE = 'Type',
-  FUNCTION = 'Function',
-  CONSTANT = 'Constant',
-  VARIABLE = 'Variable',
-  FIELD = 'Field',
-  LABEL = 'Label',
-  MACRO = 'Macro',
-  MODULE = 'Module',
-}
+export const SearchTypeOptions = {
+  TYPE: i18n.t('searchSettings.types.type'),
+  FUNCTION: i18n.t('searchSettings.types.function'),
+  CONSTANT: i18n.t('searchSettings.types.constant'),
+  VARIABLE: i18n.t('searchSettings.types.variable'),
+  FIELD: i18n.t('searchSettings.types.field'),
+  LABEL: i18n.t('searchSettings.types.label'),
+  MACRO: i18n.t('searchSettings.types.macro'),
+  MODULE: i18n.t('searchSettings.types.module'),
+};

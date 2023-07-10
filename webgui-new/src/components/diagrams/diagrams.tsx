@@ -20,8 +20,10 @@ import * as SC from './styled-components';
 import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 export const Diagrams = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -196,7 +198,7 @@ export const Diagrams = (): JSX.Element => {
                     <IconButton onClick={() => zoomIn()}>
                       <ZoomIn />
                     </IconButton>
-                    <Button onClick={() => resetTransform()}>{'Reset'}</Button>
+                    <Button onClick={() => resetTransform()}>{t('diagrams.reset')}</Button>
                     <IconButton onClick={() => zoomOut()}>
                       <ZoomOut />
                     </IconButton>
@@ -209,7 +211,7 @@ export const Diagrams = (): JSX.Element => {
             </TransformWrapper>
 
             <SC.DiagramOptionsContainer>
-              <Button onClick={() => generateLegend()}>{'Legend'}</Button>
+              <Button onClick={() => generateLegend()}>{t('diagrams.legend')}</Button>
               <Tooltip
                 PopperProps={{
                   disablePortal: true,
@@ -219,12 +221,12 @@ export const Diagrams = (): JSX.Element => {
                 disableFocusListener
                 disableHoverListener
                 disableTouchListener
-                title={'Copied to clipboard'}
+                title={t('diagrams.copyNotification')}
                 arrow
               >
-                <Button onClick={() => exportDiagramSVG()}>{'Export SVG'}</Button>
+                <Button onClick={() => exportDiagramSVG()}>{t('diagrams.exportSVG')}</Button>
               </Tooltip>
-              <Button onClick={() => downloadSVG()}>{'Download image'}</Button>
+              <Button onClick={() => downloadSVG()}>{t('diagrams.downloadImg')}</Button>
               <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
                 <SC.ModalBox>
                   <SC.DiagramLegendContainer ref={diagramLegendContainerRef} />
@@ -236,10 +238,6 @@ export const Diagrams = (): JSX.Element => {
       </>
     </>
   ) : (
-    <SC.Placeholder>
-      {
-        'No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate diagrams.'
-      }
-    </SC.Placeholder>
+    <SC.Placeholder>{t('diagrams.noDiagram')}</SC.Placeholder>
   );
 };

@@ -18,8 +18,10 @@ import * as SC from './styled-components';
 import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 export const InfoTree = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -184,7 +186,7 @@ export const InfoTree = (): JSX.Element => {
     )
   ) : (
     <SC.StyledDiv sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '10px' }}>
-      {'No node selected'}
+      {t('infoTree.noNode')}
     </SC.StyledDiv>
   );
 };

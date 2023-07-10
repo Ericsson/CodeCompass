@@ -17,6 +17,7 @@ import { Treemap } from 'recharts';
 import { AppContext } from 'global-context/app-context';
 import { getFileInfo, getFileInfoByPath } from 'service/project-service';
 import * as SC from './styled-components';
+import { useTranslation } from 'react-i18next';
 
 type RespType = {
   [key: string]: {
@@ -161,6 +162,7 @@ const convertResObject = (res: RespType): DataItem => {
 };
 
 export const Metrics = (): JSX.Element => {
+  const { t } = useTranslation();
   const appCtx = useContext(AppContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
@@ -230,7 +232,7 @@ export const Metrics = (): JSX.Element => {
       <SC.OuterContainer>
         <SC.MetricsOptionsContainer>
           <FormControl sx={{ width: 300 }}>
-            <InputLabel>{'File type'}</InputLabel>
+            <InputLabel>{t('metrics.fileType')}</InputLabel>
             <Select
               multiple
               value={selectedFileTypeOptions}
@@ -240,7 +242,7 @@ export const Metrics = (): JSX.Element => {
                 } = e;
                 setSelectedFileTypeOptions(typeof value === 'string' ? value.split(',') : value);
               }}
-              input={<OutlinedInput label="File type" />}
+              input={<OutlinedInput label={t('metrics.fileType')} />}
               renderValue={(selected) => selected.join(', ')}
             >
               {fileTypeOptions.map((type) => (
@@ -252,10 +254,10 @@ export const Metrics = (): JSX.Element => {
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{'Size dimension'}</InputLabel>
+            <InputLabel>{t('metrics.sizeDimension')}</InputLabel>
             <Select
               value={sizeDimension.name}
-              label="Size dimension"
+              label={t('metrics.sizeDimension')}
               onChange={(e) =>
                 setSizeDimension(
                   metricsTypeNames.find((typeName) => typeName.name === e.target.value) as MetricsTypeName
@@ -269,7 +271,7 @@ export const Metrics = (): JSX.Element => {
               ))}
             </Select>
           </FormControl>
-          <Button onClick={() => generateMetrics()}>{'Draw metrics'}</Button>
+          <Button onClick={() => generateMetrics()}>{t('metrics.drawMetrics')}</Button>
         </SC.MetricsOptionsContainer>
         <SC.StyledBreadcrumbs>
           {fileInfo.path?.split('/').map((p, idx) => (
@@ -301,8 +303,6 @@ export const Metrics = (): JSX.Element => {
       </SC.OuterContainer>
     </>
   ) : (
-    <SC.Placeholder>
-      {'No directory selected. Right click on a directory in the file manager to generate Metrics.'}
-    </SC.Placeholder>
+    <SC.Placeholder>{t('metrics.noMetrics')}</SC.Placeholder>
   );
 };

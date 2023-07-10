@@ -18,8 +18,10 @@ import { useRouter } from 'next/router';
 import { getFileFolderPath } from 'utils/utils';
 import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
+import { useTranslation } from 'react-i18next';
 
 export const FileManager = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -301,7 +303,7 @@ export const FileManager = (): JSX.Element => {
         {Array.from(appCtx.labels.keys()).map((key) => (
           <SC.FileLabel key={key} onClick={() => jumpToLabel(appCtx.labels.get(key) as string)} sx={{ padding: '5px' }}>
             <Code sx={{ width: '20px', height: '20px' }} />
-            <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to: ' + key}</SC.StyledDiv>
+            <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`${t('fileManager.jumpTo')} ${key}`}</SC.StyledDiv>
           </SC.FileLabel>
         ))}
       </>
@@ -325,7 +327,7 @@ export const FileManager = (): JSX.Element => {
             }
           />
         }
-        label={'Tree view'}
+        label={t('fileManager.treeView')}
       />
       {appCtx.treeViewOption === 'true' ? (
         <SC.StyledTreeView

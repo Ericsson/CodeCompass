@@ -11,6 +11,7 @@ import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { getBuildLog } from 'service/project-service';
+import { useTranslation } from 'react-i18next';
 
 export const FileName = ({
   fileName,
@@ -27,17 +28,18 @@ export const FileName = ({
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
 }): JSX.Element => {
-  const buildLogMessages = {
-    0: 'Unknown',
-    1: 'Error',
-    2: 'FatalError',
-    3: 'Warning',
-    4: 'Note',
-    5: 'CodingRule',
-  };
-
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
+
+  const buildLogMessages = {
+    0: t('fileName.buildLogs.messageTypes.unknown'),
+    1: t('fileName.buildLogs.messageTypes.error'),
+    2: t('fileName.buildLogs.messageTypes.fatalError'),
+    3: t('fileName.buildLogs.messageTypes.warning'),
+    4: t('fileName.buildLogs.messageTypes.note'),
+    5: t('fileName.buildLogs.messageTypes.codingRule'),
+  };
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [buildLogAnchorEl, setBuildLogAnchorEl] = useState<HTMLElement | null>(null);
@@ -46,11 +48,11 @@ export const FileName = ({
 
   const getParseStatusText = (status: number): string => {
     if (status === 2) {
-      return 'Partially parsed';
+      return t('fileName.parseStatus.partial');
     } else if (status === 3) {
-      return 'Fully parsed';
+      return t('fileName.parseStatus.full');
     } else {
-      return 'Not parsed';
+      return t('fileName.parseStatus.noParse');
     }
   };
 
@@ -163,15 +165,15 @@ export const FileName = ({
                   open={Boolean(buildLogAnchorEl)}
                   onClose={() => setBuildLogAnchorEl(null)}
                 >
-                  <SC.BuildLogHeader>{'Build logs'}</SC.BuildLogHeader>
+                  <SC.BuildLogHeader>{t('fileName.buildLogs.title')}</SC.BuildLogHeader>
                   {buildLog.length ? (
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>{'Type'}</TableCell>
-                          <TableCell>{'Message'}</TableCell>
-                          <TableCell>{'From (Ln:Col)'}</TableCell>
-                          <TableCell>{'To (Ln:Col)'}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.type')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.message')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.from')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.to')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -186,7 +188,7 @@ export const FileName = ({
                       </TableBody>
                     </Table>
                   ) : (
-                    <div>{'No build logs for this file'}</div>
+                    <div>{t('fileName.buildLogs.noBuildLogs')}</div>
                   )}
                 </SC.BuildLogMenu>
               </>
@@ -194,7 +196,9 @@ export const FileName = ({
             <div>{fileName}</div>
             <div>{'::'}</div>
             <div>{filePath}</div>
-            {gitBlameEnabled && <Button onClick={() => appCtx.setGitBlameInfo([])}>{'Hide Git blame'}</Button>}
+            {gitBlameEnabled && (
+              <Button onClick={() => appCtx.setGitBlameInfo([])}>{t('fileName.hideGitBlame')}</Button>
+            )}
           </SC.StyledDiv>
           {!info.isDirectory && !hideFileRefMenu && (
             <>
@@ -204,7 +208,7 @@ export const FileName = ({
                   renderFileReferences();
                 }}
               >
-                {'File references'}
+                {t('fileName.fileRefs.title')}
               </Button>
               <SC.StyledMenu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
                 <SC.StyledTreeView
@@ -220,7 +224,7 @@ export const FileName = ({
           )}
         </>
       ) : (
-        <div>{'No file selected'}</div>
+        <div>{t('fileName.noFile')}</div>
       )}
     </SC.Container>
   );
