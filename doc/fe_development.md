@@ -1,4 +1,4 @@
-# New Web GUI development guide
+# Frontend development guide
 
 ## Prerequisites
 
@@ -26,10 +26,13 @@ chmod +x thrift-codegen.sh && ./thrift-codegen.sh --thrift-source ../
 ```
 
 You can set the URL of the webserver (`BACKEND_URL`) and the port of the development server (`DEVSERVER_PORT`) by creating a `.env.local` file at the root of the project. This will override the variables in the `.env` file.\
-The default value is `http://localhost:8080` for the webserver URL and `3000` for the port of the development server, as seen in the `.env` file.
+The default value is `http://localhost:8080` for the webserver URL and `3000` for the port of the development server, as seen in the `.env` file.\
+
+If the frontend has a subpath specified (e.g `codecompass.net` has the `/demo` path), you can set this with the `PUBLIC_URL` variable.
 
 ```py
 # .env.local
+PUBLIC_URL=
 BACKEND_URL=
 DEVSERVER_PORT=
 ```
@@ -56,7 +59,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Build and Install
 
-For building and installing the application, or parsing projects, please refer to the [CodeCompass README](/README.md) documentations and development sections.\
-(Note: For development, use SQLite as a database for parsing projects.)
+The necessary steps for building and installing the application can be found in the [deps](./deps.md) and [usage](./usage.md) guides.\
+(Note: It is recommended to use SQLite as a database for parsing projects in development.)
 
 After installing, the current webgui will still be available at the root URL of the webserver (`/`), but you can also reach the new webgui at (`/new`).
