@@ -12,6 +12,7 @@ import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { getBuildLog } from 'service/project-service';
 import { useTranslation } from 'react-i18next';
+import { fileReferenceTypeArray } from 'enums/entity-types';
 
 export const FileName = ({
   fileName,
@@ -70,7 +71,7 @@ export const FileName = ({
           nodeId={`${value}`}
           label={
             <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
-              {key} ({refCountForType})
+              {fileReferenceTypeArray[value]} ({refCountForType})
             </SC.StyledDiv>
           }
           icon={<RefIcon refName={key} />}

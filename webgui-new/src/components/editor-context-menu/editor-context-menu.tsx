@@ -20,6 +20,7 @@ import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
+import { diagramTypeArray } from 'enums/entity-types';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -178,7 +179,7 @@ export const EditorContextMenu = ({
                       });
                     }}
                   >
-                    {type}
+                    {diagramTypeArray[diagramTypes.get(type) as number]}
                   </MenuItem>
                 ))}
                 <MenuItem

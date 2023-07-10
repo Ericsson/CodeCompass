@@ -12,6 +12,7 @@ import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
+import { diagramTypeArray } from 'enums/entity-types';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -114,7 +115,7 @@ export const FileContextMenu = ({
                     });
                   }}
                 >
-                  {type}
+                  {diagramTypeArray[diagramTypes.get(type) as number]}
                 </MenuItem>
               ))}
             </>

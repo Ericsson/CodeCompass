@@ -19,6 +19,7 @@ import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
+import { referenceTypeArray } from 'enums/entity-types';
 
 export const InfoTree = (): JSX.Element => {
   const { t } = useTranslation();
@@ -141,7 +142,7 @@ export const InfoTree = (): JSX.Element => {
                 icon={<RefIcon refName={type} />}
                 label={
                   <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
-                    {type} ({refCounts.get(type)})
+                    {referenceTypeArray[refTypes.get(type) as number]} ({refCounts.get(type)})
                   </SC.StyledDiv>
                 }
               >

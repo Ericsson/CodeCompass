@@ -308,5 +308,52 @@
     "commitParents": "{{number}} parent(s)",
     "inLine": "Inline",
     "sideBySide": "Side-by-side"
+  },
+  "referenceTypes": {
+    "DEFINITION": "Definition",
+    "DECLARATION": "Declaration",
+    "USAGE": "Usage",
+    "THIS_CALLS": "This calls",
+    "CALLS_OF_THIS": "Calls of this",
+    "CALLEE": "Callee",
+    "CALLER": "Caller",
+    "VIRTUAL_CALL": "Virtual call",
+    "FUNC_PTR_CALL": "Function pointer call",
+    "PARAMETER": "Parameters",
+    "LOCAL_VAR": "Local variables",
+    "RETURN_TYPE": "Return type",
+    "OVERRIDE": "Overrides",
+    "OVERRIDDEN_BY": "Overridden by",
+    "READ": "Reads",
+    "WRITE": "Writes",
+    "TYPE": "Type",
+    "ALIAS": "Aliases",
+    "INHERIT_FROM": "Inherits from",
+    "INHERIT_BY": "Inherited by",
+    "DATA_MEMBER": "Data member",
+    "METHOD": "Method",
+    "FRIEND": "Friends",
+    "UNDERLYING_TYPE": "Underlying type",
+    "ENUM_CONSTANTS": "Enum constants",
+    "EXPANSION": "Expansions",
+    "UNDEFINITION": "Undefinitions"
+  },
+  "fileReferenceTypes": {
+    "INCLUDES": "Includes",
+    "TYPES": "Types",
+    "FUNCTIONS": "Functions",
+    "MACROS": "Macros"
+  },
+  "diagramTypes": {
+    "FUNCTION_CALL": "Function call diagram",
+    "DETAILED_CLASS": "Detailed class diagram",
+    "CLASS_OVERVIEW": "Class overview diagram",
+    "CLASS_COLLABORATION": "Class collaboration diagram",
+    "COMPONENT_USERS": "Component Users",
+    "EXTERNAL_DEPENDENCY": "This module depends on",
+    "EXTERNAL_USERS": "Users of this module",
+    "INCLUDE_DEPENDENCY": "Include Dependency",
+    "INTERFACE": "Interface Diagram",
+    "SUBSYSTEM_DEPENDENCY": "Internal architecture of this module"
   }
 }
