@@ -11,6 +11,7 @@ import { getFileInfoByPath } from 'service/project-service';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -29,6 +30,7 @@ export const FileContextMenu = ({
   >;
   fileInfo: FileInfo;
 }): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -78,7 +80,7 @@ export const FileContextMenu = ({
             });
           }}
         >
-          {'Metrics'}
+          {t('fileContextMenu.metrics')}
         </MenuItem>
       )}
       {fileInfo && !fileInfo.isDirectory && (
@@ -88,7 +90,7 @@ export const FileContextMenu = ({
             appCtx.setGitBlameInfo(blameInfo);
           }}
         >
-          {'Git blame'}
+          {t('fileContextMenu.gitBlame')}
         </MenuItem>
       )}
       {diagramTypes.size !== 0 ? (
@@ -120,7 +122,7 @@ export const FileContextMenu = ({
           placement={'right-start'}
         >
           <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div>{'Diagrams'}</div>
+            <div>{t('fileContextMenu.diagrams')}</div>
             <ChevronRight />
           </MenuItem>
         </Tooltip>

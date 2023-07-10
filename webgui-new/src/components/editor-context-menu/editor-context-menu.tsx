@@ -19,6 +19,7 @@ import * as SC from './styled-components';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -35,6 +36,7 @@ export const EditorContextMenu = ({
     } | null>
   >;
 }): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -75,7 +77,7 @@ export const EditorContextMenu = ({
       docsContainerRef.current.appendChild(parsedHTML.body);
     } else {
       const placeHolder = document.createElement('div');
-      placeHolder.innerHTML = 'No documentation available for this node';
+      placeHolder.innerHTML = t('editorContextMenu.noDocs');
       docsContainerRef.current.appendChild(placeHolder);
     }
   };
@@ -91,7 +93,7 @@ export const EditorContextMenu = ({
       astHTMLContainerRef.current.appendChild(parsedHTML.body);
     } else {
       const placeHolder = document.createElement('div');
-      placeHolder.innerHTML = 'No AST HTML available for this node';
+      placeHolder.innerHTML = t('editorContextMenu.noAST');
       astHTMLContainerRef.current.appendChild(placeHolder);
     }
   };
@@ -128,7 +130,7 @@ export const EditorContextMenu = ({
 
   const getSelectionLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success('Selection link copied to clipboard!');
+    toast.success(t('editorContextMenu.copyNotification'));
     setContextMenu(null);
   };
 
@@ -153,8 +155,8 @@ export const EditorContextMenu = ({
         anchorReference={'anchorPosition'}
         anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
       >
-        <MenuItem onClick={() => jumpToDef()}>{'Jump to definiton'}</MenuItem>
-        <MenuItem onClick={() => getDocs()}>{'Documentation'}</MenuItem>
+        <MenuItem onClick={() => jumpToDef()}>{t('editorContextMenu.jumpToDef')}</MenuItem>
+        <MenuItem onClick={() => getDocs()}>{t('editorContextMenu.docs')}</MenuItem>
         {diagramTypes.size !== 0 && (
           <Tooltip
             title={
@@ -194,27 +196,27 @@ export const EditorContextMenu = ({
                     });
                   }}
                 >
-                  {'CodeBites'}
+                  {t('editorContextMenu.codeBites')}
                 </MenuItem>
               </>
             }
             placement={'right-start'}
           >
             <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div>{'Diagrams'}</div>
+              <div>{t('editorContextMenu.diagrams')}</div>
               <ChevronRight />
             </MenuItem>
           </Tooltip>
         )}
-        <MenuItem onClick={() => getAstHTML()}>{'Show AST HTML'}</MenuItem>
-        <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
+        <MenuItem onClick={() => getAstHTML()}>{t('editorContextMenu.ast')}</MenuItem>
+        <MenuItem onClick={() => getSelectionLink()}>{t('editorContextMenu.selection')}</MenuItem>
         <MenuItem
           onClick={async () => {
             const blameInfo = await getGitBlameInfo();
             appCtx.setGitBlameInfo(blameInfo);
           }}
         >
-          {'Git blame'}
+          {t('editorContextMenu.gitBlame')}
         </MenuItem>
       </Menu>
       <Modal open={modalOpen} onClose={() => closeModal()} keepMounted>
@@ -241,14 +243,14 @@ export const EditorContextMenu = ({
       anchorReference={'anchorPosition'}
       anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
     >
-      <MenuItem onClick={() => getSelectionLink()}>{'Get permalink to selection'}</MenuItem>
+      <MenuItem onClick={() => getSelectionLink()}>{t('editorContextMenu.selection')}</MenuItem>
       <MenuItem
         onClick={async () => {
           const blameInfo = await getGitBlameInfo();
           appCtx.setGitBlameInfo(blameInfo);
         }}
       >
-        {'Git blame'}
+        {t('editorContextMenu.gitBlame')}
       </MenuItem>
     </Menu>
   );

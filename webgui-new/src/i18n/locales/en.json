@@ -234,6 +234,23 @@
     "hideGitBlame": "Hide git blame",
     "noFile": "No file selected"
   },
+  "fileContextMenu": {
+    "metrics": "Metrics",
+    "diagrams": "Diagrams",
+    "gitBlame": "Git blame"
+  },
+  "editorContextMenu": {
+    "diagrams": "Diagrams",
+    "codeBites": "CodeBites",
+    "gitBlame": "Git blame",
+    "docs": "Documentation",
+    "ast": "Show AST HTML",
+    "selection": "Get permalink to selection",
+    "jumpToDef": "Jump to definition",
+    "copyNotification": "Selection link copied to clipboard!",
+    "noDocs": "No documentation available for this node",
+    "noAST": "No AST HTML available for this node"
+  },
   "searchResults": {
     "size": "Size",
     "noResults": "No results"
