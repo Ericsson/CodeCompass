@@ -155,9 +155,8 @@ export const FileManager = (): JSX.Element => {
     setFileInfoForDiagram(fileInfo);
   };
 
-  const jumpToFolder = async (path: 'root' | 'src') => {
-    const sourcePath = appCtx.labels.get('src') as string;
-    const fInfo = await getFileInfoByPath(path === 'src' ? sourcePath : path === 'root' ? '/' : '/');
+  const jumpToLabel = async (label: string) => {
+    const fInfo = await getFileInfoByPath(label);
 
     if (!fInfo) return;
 
@@ -296,6 +295,19 @@ export const FileManager = (): JSX.Element => {
     );
   };
 
+  const Labels = (): JSX.Element => {
+    return (
+      <>
+        {Array.from(appCtx.labels.keys()).map((key) => (
+          <SC.FileLabel key={key} onClick={() => jumpToLabel(appCtx.labels.get(key) as string)} sx={{ padding: '5px' }}>
+            <Code sx={{ width: '20px', height: '20px' }} />
+            <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to: ' + key}</SC.StyledDiv>
+          </SC.FileLabel>
+        ))}
+      </>
+    );
+  };
+
   return (
     <>
       <SC.TreeSetting
@@ -338,21 +350,11 @@ export const FileManager = (): JSX.Element => {
       ) : (
         <>
           {folderPath !== undefined && folderPath === '' ? (
-            <SC.FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
-              <Code sx={{ width: '20px', height: '20px' }} />
-              <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</SC.StyledDiv>
-            </SC.FileLabel>
+            <Labels />
           ) : (
             <>
               <SC.FolderName>{folderPath === '/' ? '/' : '../' + folderPath?.split('/').reverse()[0]}</SC.FolderName>
-              <SC.FileLabel onClick={() => jumpToFolder('root')} sx={{ padding: '5px' }}>
-                <Code sx={{ width: '20px', height: '20px' }} />
-                <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to root'}</SC.StyledDiv>
-              </SC.FileLabel>
-              <SC.FileLabel onClick={() => jumpToFolder('src')} sx={{ padding: '5px' }}>
-                <Code sx={{ width: '20px', height: '20px' }} />
-                <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Jump to source'}</SC.StyledDiv>
-              </SC.FileLabel>
+              <Labels />
               <SC.FolderUp onClick={() => navigateBack()}>
                 <DriveFolderUpload sx={{ width: '20px', height: '20px' }} />
                 <div>{'..'}</div>
