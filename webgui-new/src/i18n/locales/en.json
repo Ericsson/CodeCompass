@@ -2,6 +2,46 @@
   "index": {
     "title": "Click on a project to start using CodeCompass!"
   },
+  "welcome": {
+    "title": "CodeCompass",
+    "desc": "CodeCompass is a pluginable code comprehension tool which helps you to understand large code bases.",
+    "newRelease": "Highlights of the new release",
+    "features": {
+      "n1": "Pluginable interface",
+      "n2": "New icon set",
+      "n3": "Faster/parallel parsing of C/C++ files",
+      "n4": "New Git Navigation/Commit View",
+      "n5": "Faster diagram generation"
+    },
+    "featureHighlights": "Feature highlights",
+    "infoTree": {
+      "title": "Info tree",
+      "desc": "Info Tree shows different information about given language elements such as its name, qualified name, and place of definition."
+    },
+    "codeBites": {
+      "title": "CodeBites",
+      "desc": "By CodeBites diagram one can inspect the source code without loosing the visited path. CodeBites can be called on functions, variables, classes or macros. In each case the definition of the element is placed in a graph (tree) node."
+    },
+    "metrics": {
+      "title": "Metrics",
+      "desc": "Spot your most problematic modules by asking for Metrics for a directory. A treemap view will show the the distribution of codechecker faults or McCabe complexity organized by directory."
+    },
+    "diagrams": {
+      "title": "Diagrams",
+      "desc": "CodeCompass can display many diagrams:",
+      "types": {
+        "n1": "Function call diagram",
+        "n2": "UML class diagram",
+        "n3": "Collaboration diagram",
+        "n4": "CodeBites",
+        "n5": "etc."
+      }
+    },
+    "revControl": {
+      "title": "Revision Control Navigator",
+      "desc": "The revision control navigator allows to search in the GIT repositories, visualize branches and merges, list and show commit diffs."
+    }
+  },
   "project": {
     "notFound": "No project found.",
     "backToHome": "Back to home"

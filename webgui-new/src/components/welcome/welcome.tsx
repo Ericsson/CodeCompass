@@ -2,34 +2,35 @@ import React from 'react';
 import * as SC from './styled-components';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 
 export const Welcome = (): JSX.Element => {
+  const { t } = useTranslation();
+
   return (
     <SC.OuterContainer>
-      <SC.StyledHeading1>CodeCompass</SC.StyledHeading1>
-      <SC.StyledParagraph sx={{ width: '60%' }}>
-        CodeCompass is a pluginable code comprehension tool which helps you to understand large code bases.
-      </SC.StyledParagraph>
+      <SC.StyledHeading1>{t('welcome.title')}</SC.StyledHeading1>
+      <SC.StyledParagraph sx={{ width: '60%' }}>{t('welcome.desc')}</SC.StyledParagraph>
 
       <SC.StyledHeading2>
-        Highlights of the new{' '}
+        {t('welcome.newRelease')} (
         <Link href={'https://github.com/ericsson/CodeCompass'} target="_blank">
           {'Flash'}
-        </Link>{' '}
-        release
+        </Link>
+        )
       </SC.StyledHeading2>
 
       <SC.Container>
         <SC.StyledUl>
-          <li>Pluginable interface</li>
-          <li>New icon set</li>
-          <li>Faster/parallel parsing of C/C++ files</li>
-          <li>New Git Navigation/Commit View</li>
-          <li>Faster diagram generation</li>
+          <li>{t('welcome.features.n1')}</li>
+          <li>{t('welcome.features.n2')}</li>
+          <li>{t('welcome.features.n3')}</li>
+          <li>{t('welcome.features.n4')}</li>
+          <li>{t('welcome.features.n5')}</li>
         </SC.StyledUl>
         <Image
           src={'/cc_overview.png'}
-          alt={'Overview'}
+          alt={t('welcome.title')}
           width={0}
           height={0}
           sizes="100vw"
@@ -37,19 +38,16 @@ export const Welcome = (): JSX.Element => {
         />
       </SC.Container>
 
-      <SC.StyledHeading2>Feature highlights</SC.StyledHeading2>
+      <SC.StyledHeading2>{t('welcome.featureHighlights')}</SC.StyledHeading2>
 
       <SC.Container>
         <SC.FeatureDescription>
-          <SC.StyledHeading3>Info Tree</SC.StyledHeading3>
-          <SC.StyledParagraph>
-            Info Tree shows different information about given language elements such as its name, qualified name, and
-            place of definition.
-          </SC.StyledParagraph>
+          <SC.StyledHeading3>{t('welcome.infoTree.title')}</SC.StyledHeading3>
+          <SC.StyledParagraph>{t('welcome.infoTree.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
         <Image
           src={'/cc_info_tree.png'}
-          alt={'Overview'}
+          alt={t('welcome.infoTree.title')}
           width={0}
           height={0}
           sizes="100vw"
@@ -59,16 +57,12 @@ export const Welcome = (): JSX.Element => {
 
       <SC.Container>
         <SC.FeatureDescription>
-          <SC.StyledHeading3>CodeBites</SC.StyledHeading3>
-          <SC.StyledParagraph>
-            By CodeBites diagram one can inspect the source code without loosing the visited path. CodeBites can be
-            called on functions, variables, classes or macros. In each case the definition of the element is placed in a
-            graph (tree) node.
-          </SC.StyledParagraph>
+          <SC.StyledHeading3>{t('welcome.codeBites.title')}</SC.StyledHeading3>
+          <SC.StyledParagraph>{t('welcome.codeBites.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
         <Image
           src={'/cc_codebites.png'}
-          alt={'Overview'}
+          alt={t('welcome.codeBites.title')}
           width={0}
           height={0}
           sizes="100vw"
@@ -78,15 +72,12 @@ export const Welcome = (): JSX.Element => {
 
       <SC.Container>
         <SC.FeatureDescription>
-          <SC.StyledHeading3>Metrics</SC.StyledHeading3>
-          <SC.StyledParagraph>
-            Spot your most problematic modules by asking for &quot;Metrics&quot; for a directory. A treemap view will
-            show the the distribution of codechecker faults or McCabe complexity organized by directory.
-          </SC.StyledParagraph>
+          <SC.StyledHeading3>{t('welcome.metrics.title')}</SC.StyledHeading3>
+          <SC.StyledParagraph>{t('welcome.metrics.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
         <Image
           src={'/cc_metrics.png'}
-          alt={'Overview'}
+          alt={t('welcome.metrics.title')}
           width={0}
           height={0}
           sizes="100vw"
@@ -96,19 +87,19 @@ export const Welcome = (): JSX.Element => {
 
       <SC.Container>
         <SC.FeatureDescription>
-          <SC.StyledHeading3>Diagrams</SC.StyledHeading3>
-          <SC.StyledParagraph>CodeCompass can display many diagrams:</SC.StyledParagraph>
+          <SC.StyledHeading3>{t('welcome.diagrams.title')}</SC.StyledHeading3>
+          <SC.StyledParagraph>{t('welcome.diagrams.desc')}</SC.StyledParagraph>
           <SC.StyledUl sx={{ marginTop: '5px' }}>
-            <li>Function call diagram</li>
-            <li>UML class diagram</li>
-            <li>Collaboration diagram</li>
-            <li>CodeBites</li>
-            <li>etc.</li>
+            <li>{t('welcome.diagrams.types.n1')}</li>
+            <li>{t('welcome.diagrams.types.n2')}</li>
+            <li>{t('welcome.diagrams.types.n3')}</li>
+            <li>{t('welcome.diagrams.types.n4')}</li>
+            <li>{t('welcome.diagrams.types.n5')}</li>
           </SC.StyledUl>
         </SC.FeatureDescription>
         <Image
           src={'/cc_diagrams.png'}
-          alt={'Overview'}
+          alt={t('welcome.diagrams.title')}
           width={0}
           height={0}
           sizes="100vw"
@@ -118,15 +109,12 @@ export const Welcome = (): JSX.Element => {
 
       <SC.Container>
         <SC.FeatureDescription>
-          <SC.StyledHeading3>Revision Control Navigator</SC.StyledHeading3>
-          <SC.StyledParagraph>
-            The revision control navigator allows to search in the GIT repositories, visualize branches and merges, list
-            and show commit diffs.
-          </SC.StyledParagraph>
+          <SC.StyledHeading3>{t('welcome.revControl.title')}</SC.StyledHeading3>
+          <SC.StyledParagraph>{t('welcome.revControl.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
         <Image
           src={'/cc_revcontrol.png'}
-          alt={'Overview'}
+          alt={t('welcome.revControl.title')}
           width={0}
           height={0}
           sizes="100vw"
