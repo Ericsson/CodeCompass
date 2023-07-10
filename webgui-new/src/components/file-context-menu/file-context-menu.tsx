@@ -46,13 +46,10 @@ export const FileContextMenu = ({
   const getGitBlameInfo = async () => {
     setContextMenu(null);
     const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
-    const srcPath = appCtx.labels.get('src');
-    const filePath = fileInfo.path as string;
-    const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
     const blameInfo = await getBlameInfo(
       currentRepo?.repoId as string,
       currentRepo?.commitId as string,
-      path as string,
+      currentRepo?.repoPath as string,
       fileInfo.id as string
     );
     return blameInfo;
