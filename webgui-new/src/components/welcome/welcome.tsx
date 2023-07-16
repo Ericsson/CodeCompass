@@ -1,11 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as SC from './styled-components';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import CC_Overview from '@images/cc_overview.png';
+import CC_InfoTree from '@images/cc_info_tree.png';
+import CC_CodeBites from '@images/cc_codebites.png';
+import CC_Metrics from '@images/cc_metrics.png';
+import CC_Diagrams from '@images/cc_diagrams.png';
+import CC_RevControl from '@images/cc_revcontrol.png';
+import { StaticImageData } from 'next/image';
+import { Modal } from '@mui/material';
 
 export const Welcome = (): JSX.Element => {
   const { t } = useTranslation();
+  const [currentImg, setCurrentImg] = useState<StaticImageData | null>(null);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+
+  const ImageContainer = ({ image }: { image: StaticImageData }): JSX.Element => {
+    return (
+      <SC.ImageContainer
+        sx={{
+          backgroundImage: `url(${image.src})`,
+          width: image.width / 2,
+          height: image.height / 2,
+        }}
+        onClick={() => {
+          setModalOpen(true);
+          setCurrentImg(image);
+        }}
+      />
+    );
+  };
 
   return (
     <SC.OuterContainer>
@@ -28,14 +53,7 @@ export const Welcome = (): JSX.Element => {
           <li>{t('welcome.features.n4')}</li>
           <li>{t('welcome.features.n5')}</li>
         </SC.StyledUl>
-        <Image
-          src={'/cc_overview.png'}
-          alt={t('welcome.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '25%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_Overview} />
       </SC.Container>
 
       <SC.StyledHeading2>{t('welcome.featureHighlights')}</SC.StyledHeading2>
@@ -45,14 +63,7 @@ export const Welcome = (): JSX.Element => {
           <SC.StyledHeading3>{t('welcome.infoTree.title')}</SC.StyledHeading3>
           <SC.StyledParagraph>{t('welcome.infoTree.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
-        <Image
-          src={'/cc_info_tree.png'}
-          alt={t('welcome.infoTree.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '10%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_InfoTree} />
       </SC.Container>
 
       <SC.Container>
@@ -60,14 +71,7 @@ export const Welcome = (): JSX.Element => {
           <SC.StyledHeading3>{t('welcome.codeBites.title')}</SC.StyledHeading3>
           <SC.StyledParagraph>{t('welcome.codeBites.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
-        <Image
-          src={'/cc_codebites.png'}
-          alt={t('welcome.codeBites.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '25%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_CodeBites} />
       </SC.Container>
 
       <SC.Container>
@@ -75,14 +79,7 @@ export const Welcome = (): JSX.Element => {
           <SC.StyledHeading3>{t('welcome.metrics.title')}</SC.StyledHeading3>
           <SC.StyledParagraph>{t('welcome.metrics.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
-        <Image
-          src={'/cc_metrics.png'}
-          alt={t('welcome.metrics.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '25%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_Metrics} />
       </SC.Container>
 
       <SC.Container>
@@ -97,14 +94,7 @@ export const Welcome = (): JSX.Element => {
             <li>{t('welcome.diagrams.types.n5')}</li>
           </SC.StyledUl>
         </SC.FeatureDescription>
-        <Image
-          src={'/cc_diagrams.png'}
-          alt={t('welcome.diagrams.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '25%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_Diagrams} />
       </SC.Container>
 
       <SC.Container>
@@ -112,15 +102,24 @@ export const Welcome = (): JSX.Element => {
           <SC.StyledHeading3>{t('welcome.revControl.title')}</SC.StyledHeading3>
           <SC.StyledParagraph>{t('welcome.revControl.desc')}</SC.StyledParagraph>
         </SC.FeatureDescription>
-        <Image
-          src={'/cc_revcontrol.png'}
-          alt={t('welcome.revControl.title')}
-          width={0}
-          height={0}
-          sizes="100vw"
-          style={{ width: '25%', height: 'auto' }}
-        />
+        <ImageContainer image={CC_RevControl} />
       </SC.Container>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <SC.ModalBox>
+          {currentImg ? (
+            <SC.ImageContainer
+              sx={{
+                backgroundImage: `url(${currentImg.src})`,
+                width: currentImg.width,
+                height: currentImg.height,
+              }}
+            />
+          ) : (
+            <></>
+          )}
+        </SC.ModalBox>
+      </Modal>
     </SC.OuterContainer>
   );
 };

@@ -1,4 +1,4 @@
-import { styled } from '@mui/material';
+import { Box, styled } from '@mui/material';
 
 export const OuterContainer = styled('div')({
   padding: '10px',
@@ -35,6 +35,20 @@ export const Container = styled('div')({
   display: 'flex',
   gap: '2rem',
   margin: '100px 0',
+});
+
+export const ImageContainer = styled('div')({
+  backgroundSize: 'cover',
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'center center',
+  cursor: 'pointer',
+});
+
+export const ModalBox = styled(Box)({
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
 });
 
 export const FeatureDescription = styled('div')({
