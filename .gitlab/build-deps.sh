@@ -377,12 +377,12 @@ rm -f $PACKAGES_DIR/release-1.10.0.tar.gz
 #######
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://nodejs.org/dist/v14.15.0/node-v14.15.0-linux-x64.tar.xz
-tar -xf node-v14.15.0-linux-x64.tar.xz -C $DEPS_INSTALL_RUNTIME_DIR
-rm -f node-v14.15.0-linux-x64.tar.xz
+wget --no-verbose --no-clobber https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz
+tar -xf node-v16.20.2-linux-x64.tar.xz -C $DEPS_INSTALL_RUNTIME_DIR
+rm -f node-v16.20.2-linux-x64.tar.xz
 
 cd $DEPS_INSTALL_RUNTIME_DIR
-mv node-v14.15.0-linux-x64 node-install
+mv node-v16.20.2-linux-x64 node-install
 export PATH=$DEPS_INSTALL_RUNTIME_DIR/node-install/bin:$PATH
 
 ############
