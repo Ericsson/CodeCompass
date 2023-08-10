@@ -37,6 +37,9 @@ po::options_description commandLineArguments()
          po::value<trivial::severity_level>()->default_value(trivial::info),
          "Logging level of the parser. Possible values are: debug, info, warning, "
          "error, critical")
+        ("logtarget", po::value<std::string>(),
+         "This is the path to the folder where the logging output files will be written. "
+         "If omitted, the output will be on the console only.")
         ("jobs,j", po::value<int>()->default_value(4),
          "Number of worker threads.");
 
@@ -51,7 +54,7 @@ int main(int argc, char* argv[])
     const std::string SERVICE_PLUGIN_DIR = compassRoot + "/lib/serviceplugin";
     const std::string WEBGUI_DIR = compassRoot + "/share/codecompass/webgui/";
 
-    cc::util::initLogger();
+    cc::util::initConsoleLogger();
 
     MainRequestHandler requestHandler;
     requestHandler.pluginHandler.addDirectory(SERVICE_PLUGIN_DIR);
@@ -66,6 +69,18 @@ int main(int argc, char* argv[])
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
+
+    if (vm.count("logtarget"))
+    {
+    vm.at("logtarget").value() = cc::util::getLoggingBase( vm["logtarget"].as<std::string>()
+                                                          , "CodeCompass"
+                                                          );
+
+        if (!cc::util::initFileLogger(vm["logtarget"].as<std::string>() + "webserver.log"))
+        {
+            vm.at("logtarget").value() = std::string();
+        }
+    }
 
     if (argc < 2 || vm.count("help"))
     {

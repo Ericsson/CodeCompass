@@ -40,7 +40,7 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
 
       menu.addChild(new MenuItem({
         label     : 'User guide',
-        iconClass : 'menuicon icon icon-star',
+        iconClass : 'menuicon icon icon-list',
         onClick   : function () {
           topic.publish('codecompass/infopage', 'userguide');
         }
@@ -51,6 +51,16 @@ function (cookie, topic, declare, DropDownMenu, DropDownButton, Select,
         iconClass : 'menuicon icon icon-user',
         onClick   : function () {
           topic.publish('codecompass/infopage', 'credits');
+        }
+      }));
+
+      menu.addChild(new MenuItem({
+        label     : 'New Web GUI',
+        iconClass : 'menuicon icon icon-star',
+        onClick   : function () {
+          console.warn(window.location);
+          window.open(
+            `${window.location.origin}/${window.location.pathname}/new/`);
         }
       }));
 

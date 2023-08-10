@@ -6,20 +6,20 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
+
+  ## BUILD JOBS
   build:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-20.04, ubuntu-18.04]
+        os: [ubuntu-20.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
-    # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres
         # Provide the password for postgres
         env:
@@ -35,115 +35,17 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Update apt-get
         run: sudo apt-get update
 
-      # Ubuntu 18.04 commands
-      - name: Install required packages Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        run: >
-          sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libboost-all-dev
-          llvm-10-dev clang-10 libclang-10-dev default-jdk libssl1.0-dev libgraphviz-dev
-          libmagic-dev libgit2-dev ctags doxygen libgtest-dev npm libldap2-dev
-          libyaml-cpp-dev
+      - name: Install required packages for build
+        run: ./.github/scripts/setup_build_${{matrix.os}}.sh
 
-      - name: Remove default Postgresql Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get remove libpq5
+      - name: Install database packages
+        run: ./.github/scripts/setup_${{matrix.db}}_${{matrix.os}}.sh
 
-      - name: Install Postgresql Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get install postgresql-server-dev-10
-
-      - name: Install SQLite3 Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'sqlite3' }}
-        run: sudo apt-get install libsqlite3-dev
-
-      - name: Cache Thrift Ubuntu 18
-        id: thrift-cache
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        uses: actions/cache@v2
-        with:
-          path: ~/thrift_install
-          key: ${{ matrix.db }}-thrift-v2
-
-      - name: Install Thrift
-        if: ${{ matrix.os == 'ubuntu-18.04' && steps.thrift-cache.outputs.cache-hit != 'true' }}
-        run: >
-          cd $HOME
-
-          wget -O thrift-0.13.0.tar.gz
-          "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz"
-
-          tar -xvf ./thrift-0.13.0.tar.gz
-
-          cd thrift-0.13.0
-
-          ./configure --prefix=$HOME/thrift_install --without-python --enable-libtool-lock
-          --enable-tutorial=no --enable-tests=no --with-libevent --with-zlib --without-nodejs
-          --without-lua --without-ruby --without-csharp --without-erlang --without-perl
-          --without-php --without-php_extension --without-dart --without-haskell --without-go
-          --without-rs --without-haxe --without-dotnetcore --without-d --without-qt4 --without-qt5
-          --without-java --without-swift
-
-          make install -j $(nproc)
-
-      - name: Cache ODB Ubuntu 18
-        id: odb-cache
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        uses: actions/cache@v2
-        with:
-          path: ~/odb_install
-          key: ${{ matrix.db }}-odb-v2
-
-      - name: Install ODB
-        if: ${{ matrix.os == 'ubuntu-18.04' && steps.odb-cache.outputs.cache-hit != 'true' }}
-        run: |
-          cd $HOME
-          mkdir /tmp/build2src
-          cd /tmp/build2src
-          curl -sSfO https://download.build2.org/0.15.0/build2-install-0.15.0.sh
-          sh build2-install-0.15.0.sh --yes --trust yes "$HOME/build2_install/"
-          export PATH=$PATH:$HOME/build2_install/bin/
-          mkdir /tmp/odb_build
-          cd /tmp/odb_build
-          bpkg create --quiet --jobs $(nproc) cc config.cxx=g++ config.cc.coptions=-O3 config.bin.rpath="$HOME/odb_install/lib" config.install.root="$HOME/odb_install" config.install.sudo=sudo
-          bpkg add https://pkg.cppget.org/1/beta --trust-yes
-          bpkg fetch --trust-yes
-          bpkg build odb --yes
-          bpkg build libodb --yes
-          bpkg build libodb-sqlite --yes
-          bpkg build libodb-pgsql --yes
-          bpkg install --all --recursive
-
-      - name: Export environment variables Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        run: |
-          ls $HOME/odb_install/bin
-          ls $HOME/thrift_install/bin
-          echo "CMAKE_PREFIX_PATH=$HOME/thrift_install:$HOME/odb_install:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
-          echo "PATH=$HOME/thrift_install/bin:$HOME/odb_install/bin:$PATH" >> $GITHUB_ENV
-
-      # Ubuntu 20.04 commands
-      - name: Install required packages Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
-        run: >
-          sudo apt-get install -y git cmake make g++ libboost-all-dev llvm-10-dev clang-10
-          libclang-10-dev odb libodb-dev thrift-compiler libthrift-dev default-jdk libssl-dev
-          libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen libgtest-dev npm libldap2-dev
-          libyaml-cpp-dev
-
-      - name: Install Postgresql Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get install libodb-pgsql-dev postgresql-server-dev-12
-
-      - name: Install SQLite3 Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'sqlite3' }}
-        run: sudo apt-get install libodb-sqlite-dev libsqlite3-dev
-
-      # Common commands
       - name: Install GoogleTest
         run: |
           echo $PATH
@@ -159,51 +61,55 @@ jobs:
           make install -j $(nproc)
           echo "GTEST_ROOT=$HOME/gtest-install" >> $GITHUB_ENV
 
+      - name: Environment setup (Postgresql)
+        if: ${{ matrix.db == 'postgresql' }}
+        run: |
+          echo "DB_TYPE=pgsql" >> $GITHUB_ENV
+          echo "DB_CONNSTRING=pgsql:host=localhost;username=postgres;password=postgres;port=5432;database=cc_test" >> $GITHUB_ENV
+
+      - name: Environment setup (Sqlite3)
+        if: ${{ matrix.db == 'sqlite3' }}
+        run: |
+          echo "DB_TYPE=sqlite" >> $GITHUB_ENV
+          echo "DB_CONNSTRING=sqlite:database=$HOME/mydatabase.sqlite" >> $GITHUB_ENV
+
       - name: Configure CMake
         working-directory: ${{github.workspace}}
-        run: cmake -E make_directory ${{github.workspace}}/build
+        run:
+          cmake -E make_directory $HOME/cc-build
 
-      - name: Run CMake (Postgresql)
-        if: ${{ matrix.db == 'postgresql' }}
-        working-directory: ${{github.workspace}}/build
+      - name: Run CMake
         run: >
-          cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
-          -DDATABASE=pgsql
+          cd $HOME/cc-build &&
+          cmake ${{github.workspace}} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+          -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
+          -DDATABASE=$DB_TYPE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
           -DLLVM_DIR=/usr/lib/llvm-10/cmake
           -DClang_DIR=/usr/lib/cmake/clang-10
-          -DTEST_DB="pgsql:host=localhost;username=postgres;password=postgres;port=5432;database=cc_test"
-
-      - name: Run CMake (SQLite3)
-        if: ${{ matrix.db == 'sqlite3' }}
-        working-directory: ${{github.workspace}}/build
-        run: >
-          cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
-          -DDATABASE=sqlite -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DLLVM_DIR=/usr/lib/llvm-10/cmake
-          -DClang_DIR=/usr/lib/cmake/clang-10
-          -DTEST_DB="sqlite:database=$HOME/mydatabase.sqlite"
+          -DTEST_DB=$DB_CONNSTRING
 
       - name: Build
-        working-directory: ${{github.workspace}}/build
-        run: make -j $(nproc)
+        run: |
+          cd $HOME/cc-build
+          make -j $(nproc)
 
       - name: Install
-        working-directory: ${{github.workspace}}/build
-        run: make install
+        run: |
+          cd $HOME/cc-build
+          make install
 
       - name: Run tests
-        working-directory: ${{github.workspace}}/build
-        run: make test ARGS=-V
+        run: |
+          cd $HOME/cc-build
+          make test ARGS=-V
 
       - name: Archive CodeCompass artifacts
         run: |
           mkdir ${{github.workspace}}/artifacts
-          cd ${{github.workspace}}/${{ matrix.os }}/${{ matrix.db }}/install
+          cd $HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           zip -rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip .
-          cd ${{github.workspace}}/build
+          cd $HOME/cc-build
           zip -Rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip *.c *.h *.cpp *.hpp *.cxx *.hxx *.ixx *.js compile_commands.json
 
       - name: Upload CodeCompass binaries
@@ -218,21 +124,21 @@ jobs:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
 
+
+  ## PARSING JOBS
   parse:
     needs: build
     strategy:
       matrix:
-        db: [ postgresql, sqlite3 ]
-        os: [ ubuntu-20.04, ubuntu-18.04 ]
+        db: [postgresql, sqlite3]
+        os: [ubuntu-20.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
-    # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres
         # Provide the password for postgres
         env:
@@ -249,73 +155,18 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Update apt-get
         run: sudo apt-get update
 
-      # Ubuntu 18.04 commands
-      - name: Install required packages Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        run: >
-          sudo apt-get install -y git cmake make g++ gcc-7-plugin-dev libgraphviz-dev
-          libboost-filesystem-dev libboost-log-dev libboost-program-options-dev
-          llvm-10-dev clang-10 libclang-10-dev default-jre libssl1.0-dev libmagic-dev
-          libgit2-dev ctags libgtest-dev libldap-2.4-2
+      # We need build dependencies for CodeCompass, as it will parsed as well
+      - name: Install required packages for build
+        run: ./.github/scripts/setup_build_${{matrix.os}}.sh
 
-      - name: Remove default Postgresql Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get remove libpq5
+      - name: Install database packages
+        run: ./.github/scripts/setup_${{matrix.db}}_${{matrix.os}}.sh
 
-      - name: Install Postgresql Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get install postgresql-server-dev-10
-
-      - name: Install SQLite3 Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' && matrix.db == 'sqlite3' }}
-        run: sudo apt-get install libsqlite3-dev
-
-      - name: Cache ODB Ubuntu 18
-        id: odb-cache
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        uses: actions/cache@v2
-        with:
-          path: ~/odb_install
-          key: ${{ matrix.db }}-odb-v2
-
-      - name: Cache Thrift Ubuntu 18
-        id: thrift-cache
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        uses: actions/cache@v2
-        with:
-          path: ~/thrift_install
-          key: ${{ matrix.db }}-thrift-v2
-
-      - name: Export environment variables Ubuntu 18
-        if: ${{ matrix.os == 'ubuntu-18.04' }}
-        run: |
-          echo "LD_LIBRARY_PATH=$HOME/thrift_install/lib:$HOME/odb_install/lib:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
-          echo "PATH=$HOME/thrift_install/bin:$HOME/odb_install/bin:$PATH" >> $GITHUB_ENV
-
-      # Ubuntu 20.04 commands
-      - name: Install required packages Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
-        run: >
-          sudo apt-get install -y git cmake make g++ libboost-filesystem-dev
-          libboost-log-dev libboost-program-options-dev llvm-10-dev clang-10
-          libclang-10-dev libgraphviz-dev libgtest-dev odb libodb-dev
-          libthrift-dev default-jre libssl1.1 libmagic-dev libgit2-dev ctags
-          libldap-2.4-2
-
-      - name: Install Postgresql Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'postgresql' }}
-        run: sudo apt-get install libodb-pgsql-dev postgresql-server-dev-12
-
-      - name: Install SQLite3 Ubuntu 20
-        if: ${{ matrix.os == 'ubuntu-20.04' && matrix.db == 'sqlite3' }}
-        run: sudo apt-get install libodb-sqlite-dev libsqlite3-dev
-
-      # Common commands
       - name: Download CodeCompass binaries
         uses: actions/download-artifact@v2
         with:
@@ -330,147 +181,79 @@ jobs:
 
       - name: Unpack CodeCompass artifacts
         run: |
-          mkdir ${{github.workspace}}/install && cd ${{github.workspace}}/install
+          mkdir $HOME/cc-install && cd $HOME/cc-install
           unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
-          mkdir ${{github.workspace}}/build && cd ${{github.workspace}}/build
+          mkdir $HOME/cc-build && cd $HOME/cc-build
           unzip -oq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
 
       - name: Add execute right to parser and move source files
         run: |
-          chmod +x ${{github.workspace}}/install/bin/CodeCompass_parser
+          chmod +x $HOME/cc-install/bin/CodeCompass_parser
 
-      # Parsing with Postgresql
-      - name: Parse TinyXML Postgresql
+      - name: Environment setup (Postgresql)
         if: ${{ matrix.db == 'postgresql' }}
+        run: |
+          echo "DIR_WS=ws_pgsql" >> $GITHUB_ENV
+          echo "PROJ_TINYXML_CONNSTRING=pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=tinyxml2" >> $GITHUB_ENV
+          echo "PROJ_CODECOMPASS_CONNSTRING=pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=codecompass" >> $GITHUB_ENV
+          echo "PROJ_XERCES_CONNSTRING=pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=xerces_c" >> $GITHUB_ENV
+
+      - name: Environment setup (Sqlite3)
+        if: ${{ matrix.db == 'sqlite3' }}
+        run: |
+          echo "DIR_WS=ws_sqlite3" >> $GITHUB_ENV
+          echo "PROJ_TINYXML_CONNSTRING=sqlite:database=$HOME/tinyxml2.sqlite" >> $GITHUB_ENV
+          echo "PROJ_CODECOMPASS_CONNSTRING=sqlite:database=$HOME/codecompass.sqlite" >> $GITHUB_ENV
+          echo "PROJ_XERCES_CONNSTRING=sqlite:database=$HOME/xerces.sqlite" >> $GITHUB_ENV
+
+      # Parsing projects
+      - name: Parse TinyXML
         run: |
           cd $HOME
           git clone https://github.com/leethomason/tinyxml2
           mkdir build_tinyxml2 && cd build_tinyxml2
           cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
-          ./CodeCompass_parser  -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=tinyxml2" -w $HOME/ws_pgsql/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
+          cd $HOME/cc-install/bin
+          ./CodeCompass_parser -d $PROJ_TINYXML_CONNSTRING -w $HOME/$DIR_WS/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
 
-      - name: Parse CodeCompass Postgresql
-        if: ${{ matrix.db == 'postgresql' }}
+      - name: Parse CodeCompass
         run: >
-          ${{github.workspace}}/install/bin/CodeCompass_parser
-          -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=codecompass"
-          -w $HOME/ws_pgsql/
+          $HOME/cc-install/bin/CodeCompass_parser
+          -d $PROJ_CODECOMPASS_CONNSTRING
+          -w $HOME/$DIR_WS/
           -n "CodeCompass"
           -i ${{github.workspace}}
-          -i ${{github.workspace}}/build/compile_commands.json
+          -i $HOME/cc-build/compile_commands.json
           -j $(nproc)
 
-      - name: Parse Xerces-C Postgresql
-        if: ${{ matrix.db == 'postgresql' }}
+      - name: Parse Xerces-C
         run: |
           cd $HOME
           git clone https://github.com/apache/xerces-c/
           mkdir build_xerces-c && cd build_xerces-c
           cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
-          ./CodeCompass_parser -d "pgsql:host=localhost;port=5432;user=postgres;password=postgres;database=xerces_c" -w $HOME/ws_pgsql/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
+          cd $HOME/cc-install/bin
+          ./CodeCompass_parser -d $PROJ_XERCES_CONNSTRING -w $HOME/$DIR_WS/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
 
-      # Parsing with SQLite3
-      - name: Parse TinyXML Sqlite3
-        if: ${{ matrix.db == 'sqlite3' }}
-        run: |
-          cd $HOME
-          git clone https://github.com/leethomason/tinyxml2
-          mkdir build_tinyxml2 && cd build_tinyxml2
-          cmake $HOME/tinyxml2 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
-          ./CodeCompass_parser  -d "sqlite:database=$HOME/tinyxml2.sqlite" -w $HOME/ws_pgsql/ -n TinyXML2 -i $HOME/tinyxml2 -i $HOME/build_tinyxml2/compile_commands.json -j $(nproc)
 
-      - name: Parse CodeCompass SQLite3
-        if: ${{ matrix.db == 'sqlite3' }}
-        run: >
-          ${{github.workspace}}/install/bin/CodeCompass_parser
-          -d "sqlite:database=$HOME/codecompass.sqlite"
-          -w $HOME/ws_pgsql/
-          -n "CodeCompass"
-          -i ${{github.workspace}}
-          -i ${{github.workspace}}/build/compile_commands.json
-          -j $(nproc)
-
-      - name: Parse Xerces-C SQLite3
-        if: ${{ matrix.db == 'sqlite3' }}
-        run: |
-          cd $HOME
-          git clone https://github.com/apache/xerces-c/
-          mkdir build_xerces-c && cd build_xerces-c
-          cmake $HOME/xerces-c -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          make -j $(nproc)
-          cd ${{github.workspace}}/install/bin
-          ./CodeCompass_parser -d "sqlite:database=$HOME/xerces.sqlite" -w $HOME/ws_pgsql/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
-
+  ## DOCKER IMAGE JOB
   docker:
     needs: parse
     if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release/') == true) }}
-    runs-on: ubuntu-20.04
+    uses: ./.github/workflows/docker.yml
+    with:
+      tag-latest: ${{ github.ref_name == 'master' }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
 
-      - name: Branch name slug
-        uses: rlespinasse/github-slug-action@v4
-
-      - name: Branch name substring
-        uses: bhowell2/github-substring-action@v1.0.0
-        id: branch_substring
-        with:
-          value: ${{ env.GITHUB_REF_SLUG }}
-          index_of_str: "release-"
-          fail_if_not_found: false
-          default_return_value: ""
-
-      - name: Build images
-        run: |
-          BRANCH_PREFIX=${{ steps.branch_substring.outputs.substring }}
-          BRANCH_PREFIX=${BRANCH_PREFIX}${BRANCH_PREFIX:+-} # append dash if not empty
-          docker build -t codecompass:dev     -t modelcpp/codecompass:${BRANCH_PREFIX}dev            --file docker/dev/Dockerfile .
-          docker build -t codecompass:runtime -t modelcpp/codecompass:${BRANCH_PREFIX}runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
-          docker build -t codecompass:web     -t modelcpp/codecompass:${BRANCH_PREFIX}web-sqlite     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass:runtime -t modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass:web     -t modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql      --file docker/web/Dockerfile --no-cache .
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push images
-        run: |
-          BRANCH_PREFIX=${{ steps.branch_substring.outputs.substring }}
-          BRANCH_PREFIX=${BRANCH_PREFIX}${BRANCH_PREFIX:+-} # append dash if not empty
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}dev
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}runtime-sqlite
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}web-sqlite
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql
-
-      - name: Tag and push latest image
-        if: ${{ github.ref_name == 'master' }}
-        run: |
-          docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
-          docker push modelcpp/codecompass:latest
-
+  ## TARBALL JOB
   tarball:
     needs: parse
     if: ${{ github.repository == 'Ericsson/CodeCompass' && (github.ref_name == 'master' || startsWith(github.ref_name, 'release/') == true) }}
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Update apt-get
-        run: sudo apt-get update
-
-      - name: Install curl
-        run: sudo apt-get install curl
-
-      - name: Trigger GitLab CI
-        run: curl -X POST -F token=${{ secrets.GITLAB_TRIGGER_TOKEN }} -F ref=${{ github.ref_name }} https://gitlab.inf.elte.hu/api/v4/projects/85/trigger/pipeline
+    uses: ./.github/workflows/tarball.yml
+    secrets:
+      GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
