@@ -15,7 +15,7 @@ import { getMetrics, getMetricsTypeNames } from 'service/metrics-service';
 import { FileInfo, MetricsType, MetricsTypeName } from '@thrift-generated';
 import { Treemap } from 'recharts';
 import { AppContext } from 'global-context/app-context';
-import { getFileInfo, getFileInfoByPath } from 'service/project-service';
+import { getFileInfoByPath } from 'service/project-service';
 import * as SC from './styled-components';
 import { useTranslation } from 'react-i18next';
 
@@ -47,7 +47,8 @@ type CustomTreeNodeProps = {
 const CustomizedContent = (
   props: CustomTreeNodeProps & {
     setData: Dispatch<SetStateAction<DataItem[] | undefined>>;
-    fileInfo: FileInfo;
+    filePath: string;
+    setFilePath: Dispatch<SetStateAction<string>>;
     setFileInfo: Dispatch<SetStateAction<FileInfo | undefined>>;
   }
 ): JSX.Element => {
@@ -74,9 +75,7 @@ const CustomizedContent = (
   const updateTreemap = async () => {
     if (!children) return;
 
-    const currentPath = props.fileInfo.path as string;
-    const newPath = `${currentPath}/${name}`;
-
+    const newPath = `${props.filePath}/${name}`;
     const newFileInfo = await getFileInfoByPath(newPath);
     const newData = children.map((child) =>
       Object.fromEntries([
@@ -87,6 +86,7 @@ const CustomizedContent = (
     );
 
     props.setFileInfo(newFileInfo);
+    props.setFilePath(newPath);
     props.setData(newData);
   };
 
@@ -166,6 +166,8 @@ export const Metrics = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
+  const [filePath, setFilePath] = useState<string>('');
+  const [initialPath, setInitialPath] = useState<string>('');
   const [data, setData] = useState<DataItem[] | undefined>(undefined);
   const [selectedFileTypeOptions, setSelectedFileTypeOptions] = useState<string[]>(fileTypeOptions);
   const [sizeDimension, setSizeDimension] = useState<MetricsTypeName | undefined>(undefined);
@@ -175,37 +177,50 @@ export const Metrics = (): JSX.Element => {
     if (!appCtx.metricsGenId) return;
     const init = async () => {
       const initMetricsTypeNames = await getMetricsTypeNames();
-      const initFileInfo = await getFileInfo(appCtx.metricsGenId);
 
       const metricsRes = await getMetrics(
-        initFileInfo?.id as string,
+        appCtx.metricsGenId,
         fileTypeOptions,
         initMetricsTypeNames[0].type as MetricsType
       );
       const convertedObject = convertResObject(JSON.parse(metricsRes));
 
+      let path = `/${convertedObject.name}`;
+      let item = convertedObject;
+      while (item.children?.length === 1) {
+        item = item.children[0];
+        path += `/${item.name}`;
+      }
+
+      const initFileInfo = await getFileInfoByPath(path);
+
       setMetricsTypeNames(initMetricsTypeNames);
       setSizeDimension(initMetricsTypeNames[0]);
       setFileInfo(initFileInfo);
+      setFilePath(path);
+      setInitialPath(path);
       setData(findChildren(convertedObject));
     };
     init();
   }, [appCtx.metricsGenId]);
 
-  const generateMetrics = async (filePath?: string) => {
-    const fInfo = filePath ? await getFileInfoByPath(filePath) : fileInfo;
+  const generateMetrics = async (fPath?: string) => {
+    const fInfo = fPath ? await getFileInfoByPath(fPath) : fileInfo;
     const metricsRes = await getMetrics(
       fInfo?.id as string,
       selectedFileTypeOptions,
       sizeDimension?.type as MetricsType
     );
     const convertedObject = convertResObject(JSON.parse(metricsRes));
-    if (filePath) setFileInfo(fInfo);
+    if (fPath) {
+      setFileInfo(fInfo);
+      setFilePath(fPath);
+    }
     setData(findChildren(convertedObject));
   };
 
   const renderTreeMap = useMemo(() => {
-    return data && fileInfo ? (
+    return data && filePath ? (
       <Treemap
         width={900}
         height={900}
@@ -213,13 +228,20 @@ export const Metrics = (): JSX.Element => {
         dataKey="size"
         stroke="#fff"
         fill="#8884d8"
-        content={<CustomizedContent setData={setData} fileInfo={fileInfo as FileInfo} setFileInfo={setFileInfo} />}
+        content={
+          <CustomizedContent
+            setData={setData}
+            filePath={filePath}
+            setFilePath={setFilePath}
+            setFileInfo={setFileInfo}
+          />
+        }
         isAnimationActive={false}
       />
     ) : (
       <></>
     );
-  }, [data, fileInfo]);
+  }, [data, filePath]);
 
   return appCtx.metricsGenId && fileInfo && sizeDimension ? (
     <>
@@ -274,25 +296,26 @@ export const Metrics = (): JSX.Element => {
           <Button onClick={() => generateMetrics()}>{t('metrics.drawMetrics')}</Button>
         </SC.MetricsOptionsContainer>
         <SC.StyledBreadcrumbs>
-          {fileInfo.path?.split('/').map((p, idx) => (
+          {filePath.split('/').map((p, idx) => (
             <SC.StyledDiv
               key={idx}
-              sx={{
-                cursor: idx !== (fileInfo.path?.split('/').length as number) - 1 && idx !== 1 ? 'pointer' : '',
-                ':hover':
-                  idx !== (fileInfo.path?.split('/').length as number) - 1 && idx !== 1
-                    ? {
+              sx={
+                idx !== filePath.split('/').length - 1 && !initialPath.slice(0, -1).includes(p)
+                  ? {
+                      cursor: 'pointer',
+                      ':hover': {
                         color: (theme) => theme.backgroundColors?.secondary,
-                      }
-                    : {},
-              }}
+                      },
+                    }
+                  : {}
+              }
               onClick={() => {
-                if (idx === (fileInfo.path?.split('/').length as number) - 1 || idx === 1) return;
-                const filePath = fileInfo.path
+                if (idx === filePath.split('/').length - 1 || initialPath.slice(0, -1).includes(p)) return;
+                const trimmedPath = filePath
                   ?.split('/')
                   .slice(0, idx + 1)
                   .join('/') as string;
-                generateMetrics(filePath);
+                generateMetrics(trimmedPath);
               }}
             >
               <div>{p}</div>

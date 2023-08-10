@@ -7,7 +7,6 @@ import { AppContext } from 'global-context/app-context';
 import { getCppFileDiagramTypes } from 'service/cpp-service';
 import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
-import { getFileInfoByPath } from 'service/project-service';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
@@ -69,13 +68,11 @@ export const FileContextMenu = ({
         <MenuItem
           onClick={async () => {
             setContextMenu(null);
-            const sourceFolder = appCtx.labels.get('src') as string;
-            const fInfo = fileInfo.path?.includes(sourceFolder) ? fileInfo : await getFileInfoByPath(sourceFolder);
             router.push({
               pathname: '/project',
               query: {
                 ...router.query,
-                metricsGenId: fInfo?.id as string,
+                metricsGenId: fileInfo?.id as string,
                 activeTab: TabName.METRICS.toString(),
               } as RouterQueryType,
             });
