@@ -158,7 +158,8 @@ export const FileManager = (): JSX.Element => {
   };
 
   const jumpToLabel = async (label: string) => {
-    const fInfo = await getFileInfoByPath(label);
+    const trailingSlash = label.endsWith('/');
+    const fInfo = await getFileInfoByPath(trailingSlash ? label.slice(0, -1) : label);
 
     if (!fInfo) return;
 
