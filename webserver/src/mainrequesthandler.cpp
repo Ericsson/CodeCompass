@@ -15,7 +15,8 @@ static bool isProtected(const char* uri_)
     "style/",      // Resource directory - contains no secret.
     "userguide/",  // Resource directory - contains no secret.
     "favicon.ico", // Resource - contains no secret.
-    "login.html"   // Allow to handle web browser auth.
+    "login.html",  // Allow to handle web browser auth.
+    "ga.txt"       // Google Analytics tracking ID.
   };
 
   // Swallow the leading '/' of the URI.
