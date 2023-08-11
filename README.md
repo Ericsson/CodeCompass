@@ -30,9 +30,11 @@ Features
 Documentations
 --------
 - [User guide](doc/usage.md)
+- [Using the application](doc/fe_usage.md)
 - [Docker guide](docker/README.md)
 
 Development
 --------
 - [Building CodeCompass](doc/deps.md)
 - [Coding conventions](doc/coding_conventions.md)
+- [Developing the frontend](doc/fe_development.md)

@@ -106,7 +106,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
   const [gitBlameInfo, setGitBlameInfo] = useState<GitBlameHunk[]>([]);
 
-  const [workspaceId, setWorkspaceId] = useUrlState('workspaceId', 'CodeCompass');
+  const [workspaceId, setWorkspaceId] = useUrlState('workspaceId', '');
   const [projectFileId, setProjectFileId] = useUrlState('projectFileId', '');
   const [metricsGenId, setMetricsGenId] = useUrlState('metricsGenId', '');
   const [diagramGenId, setDiagramGenId] = useUrlState('diagramGenId', '');
@@ -121,7 +121,7 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   const [activeTab, setActiveTab] = useUrlState('activeTab', TabName.WELCOME.toString());
   const [treeViewOption, setTreeViewOption] = useUrlState('treeViewOption', 'false');
 
-  const [loadComplete, setLoadComplete] = useState<boolean>(false);
+  const [loadComplete, setLoadComplete] = useState<boolean>(true);
 
   useEffect(() => {
     const init = async () => {

@@ -7,10 +7,11 @@ import { AppContext } from 'global-context/app-context';
 import { getCppFileDiagramTypes } from 'service/cpp-service';
 import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
-import { getFileInfoByPath } from 'service/project-service';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
+import { diagramTypeArray } from 'enums/entity-types';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -29,6 +30,7 @@ export const FileContextMenu = ({
   >;
   fileInfo: FileInfo;
 }): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -46,13 +48,10 @@ export const FileContextMenu = ({
   const getGitBlameInfo = async () => {
     setContextMenu(null);
     const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
-    const srcPath = appCtx.labels.get('src');
-    const filePath = fileInfo.path as string;
-    const path = filePath.replace(new RegExp(`^${srcPath}`), '').slice(1);
     const blameInfo = await getBlameInfo(
       currentRepo?.repoId as string,
       currentRepo?.commitId as string,
-      path as string,
+      currentRepo?.repoPath as string,
       fileInfo.id as string
     );
     return blameInfo;
@@ -69,19 +68,17 @@ export const FileContextMenu = ({
         <MenuItem
           onClick={async () => {
             setContextMenu(null);
-            const sourceFolder = appCtx.labels.get('src') as string;
-            const fInfo = fileInfo.path?.includes(sourceFolder) ? fileInfo : await getFileInfoByPath(sourceFolder);
             router.push({
               pathname: '/project',
               query: {
                 ...router.query,
-                metricsGenId: fInfo?.id as string,
+                metricsGenId: fileInfo?.id as string,
                 activeTab: TabName.METRICS.toString(),
               } as RouterQueryType,
             });
           }}
         >
-          {'Metrics'}
+          {t('fileContextMenu.metrics')}
         </MenuItem>
       )}
       {fileInfo && !fileInfo.isDirectory && (
@@ -91,7 +88,7 @@ export const FileContextMenu = ({
             appCtx.setGitBlameInfo(blameInfo);
           }}
         >
-          {'Git blame'}
+          {t('fileContextMenu.gitBlame')}
         </MenuItem>
       )}
       {diagramTypes.size !== 0 ? (
@@ -115,7 +112,7 @@ export const FileContextMenu = ({
                     });
                   }}
                 >
-                  {type}
+                  {diagramTypeArray[diagramTypes.get(type) as number]}
                 </MenuItem>
               ))}
             </>
@@ -123,7 +120,7 @@ export const FileContextMenu = ({
           placement={'right-start'}
         >
           <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div>{'Diagrams'}</div>
+            <div>{t('fileContextMenu.diagrams')}</div>
             <ChevronRight />
           </MenuItem>
         </Tooltip>

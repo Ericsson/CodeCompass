@@ -1,5 +1,5 @@
 import { styled } from '@mui/material';
-import Logo from '../../../public/logo.png';
+import Logo from '@images/logo.png';
 
 export const StyledHeader = styled('header')(({ theme }) => ({
   display: 'grid',

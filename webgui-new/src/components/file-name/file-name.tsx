@@ -1,7 +1,7 @@
-import { Button } from '@mui/material';
+import { Button, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import { ChevronRight, Code, ExpandMore } from '@mui/icons-material';
-import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
-import React, { useContext, useState } from 'react';
+import { AstNodeInfo, BuildLog, FileInfo, Range } from '@thrift-generated';
+import React, { useContext, useEffect, useState } from 'react';
 import { getCppFileReferenceCount, getCppFileReferences, getCppFileReferenceTypes } from 'service/cpp-service';
 import { TabName } from 'enums/tab-enum';
 import { AppContext } from 'global-context/app-context';
@@ -10,6 +10,9 @@ import * as SC from './styled-components';
 import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { getBuildLog } from 'service/project-service';
+import { useTranslation } from 'react-i18next';
+import { fileReferenceTypeArray } from 'enums/entity-types';
 
 export const FileName = ({
   fileName,
@@ -26,19 +29,31 @@ export const FileName = ({
   hideFileRefMenu?: boolean;
   gitBlameEnabled?: boolean;
 }): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
+  const buildLogMessages = {
+    0: t('fileName.buildLogs.messageTypes.unknown'),
+    1: t('fileName.buildLogs.messageTypes.error'),
+    2: t('fileName.buildLogs.messageTypes.fatalError'),
+    3: t('fileName.buildLogs.messageTypes.warning'),
+    4: t('fileName.buildLogs.messageTypes.note'),
+    5: t('fileName.buildLogs.messageTypes.codingRule'),
+  };
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [buildLogAnchorEl, setBuildLogAnchorEl] = useState<HTMLElement | null>(null);
   const [references, setReferences] = useState<React.ReactNode[]>([]);
+  const [buildLog, setBuildLog] = useState<BuildLog[]>([]);
 
   const getParseStatusText = (status: number): string => {
     if (status === 2) {
-      return 'Partially parsed';
+      return t('fileName.parseStatus.partial');
     } else if (status === 3) {
-      return 'Fully parsed';
+      return t('fileName.parseStatus.full');
     } else {
-      return 'Not parsed';
+      return t('fileName.parseStatus.noParse');
     }
   };
 
@@ -56,7 +71,7 @@ export const FileName = ({
           nodeId={`${value}`}
           label={
             <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
-              {key} ({refCountForType})
+              {fileReferenceTypeArray[value]} ({refCountForType})
             </SC.StyledDiv>
           }
           icon={<RefIcon refName={key} />}
@@ -89,43 +104,102 @@ export const FileName = ({
     });
   };
 
+  const jumpToBuildLog = (range: Range) => {
+    router.push({
+      pathname: '/project',
+      query: {
+        ...router.query,
+        projectFileId: info?.id as string,
+        editorSelection: convertSelectionRangeToString(range),
+        activeTab: TabName.CODE.toString(),
+      } as RouterQueryType,
+    });
+    setBuildLogAnchorEl(null);
+  };
+
+  useEffect(() => {
+    if (!buildLogAnchorEl) return;
+    const init = async () => {
+      const initBuildLog = await getBuildLog(info?.id as string);
+      setBuildLog(initBuildLog);
+    };
+    init();
+  }, [buildLogAnchorEl, info]);
+
   return (
     <SC.Container>
       {info ? (
         <>
           <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {!info.isDirectory && (
-              <SC.ParseStatus
-                sx={{
-                  color: (theme) =>
-                    parseStatus === 2
-                      ? theme.backgroundColors?.primary
-                      : parseStatus === 3
-                      ? theme.backgroundColors?.primary
-                      : '#FFFFFF',
-                  backgroundColor: (theme) =>
-                    parseStatus === 2
-                      ? theme.colors?.warning
-                      : parseStatus === 3
-                      ? theme.colors?.success
-                      : theme.colors?.error,
-                  border: (theme) =>
-                    `1px solid ${
+              <>
+                <SC.ParseStatus
+                  onClick={(e) => setBuildLogAnchorEl(e.currentTarget)}
+                  sx={{
+                    color: (theme) =>
+                      parseStatus === 2
+                        ? theme.backgroundColors?.primary
+                        : parseStatus === 3
+                        ? theme.backgroundColors?.primary
+                        : '#FFFFFF',
+                    backgroundColor: (theme) =>
                       parseStatus === 2
                         ? theme.colors?.warning
                         : parseStatus === 3
                         ? theme.colors?.success
-                        : theme.colors?.error
-                    }`,
-                }}
-              >
-                {getParseStatusText(parseStatus)}
-              </SC.ParseStatus>
+                        : theme.colors?.error,
+                    border: (theme) =>
+                      `1px solid ${
+                        parseStatus === 2
+                          ? theme.colors?.warning
+                          : parseStatus === 3
+                          ? theme.colors?.success
+                          : theme.colors?.error
+                      }`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {getParseStatusText(parseStatus)}
+                </SC.ParseStatus>
+                <SC.BuildLogMenu
+                  anchorEl={buildLogAnchorEl}
+                  open={Boolean(buildLogAnchorEl)}
+                  onClose={() => setBuildLogAnchorEl(null)}
+                >
+                  <SC.BuildLogHeader>{t('fileName.buildLogs.title')}</SC.BuildLogHeader>
+                  {buildLog.length ? (
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{t('fileName.buildLogs.type')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.message')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.from')}</TableCell>
+                          <TableCell>{t('fileName.buildLogs.to')}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {buildLog.map((log, idx) => (
+                          <SC.BuildLogTableRow key={idx} onClick={() => jumpToBuildLog(log.range as Range)}>
+                            <TableCell>{buildLogMessages[log.messageType ?? '0']}</TableCell>
+                            <TableCell>{log.message}</TableCell>
+                            <TableCell>{`${log.range?.startpos?.line}:${log.range?.startpos?.column}`}</TableCell>
+                            <TableCell>{`${log.range?.endpos?.line}:${log.range?.endpos?.column}`}</TableCell>
+                          </SC.BuildLogTableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div>{t('fileName.buildLogs.noBuildLogs')}</div>
+                  )}
+                </SC.BuildLogMenu>
+              </>
             )}
             <div>{fileName}</div>
             <div>{'::'}</div>
             <div>{filePath}</div>
-            {gitBlameEnabled && <Button onClick={() => appCtx.setGitBlameInfo([])}>{'Hide Git blame'}</Button>}
+            {gitBlameEnabled && (
+              <Button onClick={() => appCtx.setGitBlameInfo([])}>{t('fileName.hideGitBlame')}</Button>
+            )}
           </SC.StyledDiv>
           {!info.isDirectory && !hideFileRefMenu && (
             <>
@@ -135,7 +209,7 @@ export const FileName = ({
                   renderFileReferences();
                 }}
               >
-                {'File references'}
+                {t('fileName.fileRefs.title')}
               </Button>
               <SC.StyledMenu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
                 <SC.StyledTreeView
@@ -151,7 +225,7 @@ export const FileName = ({
           )}
         </>
       ) : (
-        <div>{'No file selected'}</div>
+        <div>{t('fileName.noFile')}</div>
       )}
     </SC.Container>
   );

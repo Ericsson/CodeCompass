@@ -1,5 +1,5 @@
 import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
-import { Menu, alpha, styled } from '@mui/material';
+import { Menu, TableRow, alpha, styled } from '@mui/material';
 
 export const StyledDiv = styled('div')({});
 
@@ -25,6 +25,28 @@ export const StyledMenu = styled(Menu)(({ theme }) => ({
     width: '500px',
     maxHeight: '500px',
     overflow: 'scroll',
+  },
+}));
+
+export const BuildLogMenu = styled(Menu)(({ theme }) => ({
+  '.MuiMenu-list': {
+    border: `1px solid ${theme.colors?.primary}`,
+    width: 'max-content',
+    maxHeight: '500px',
+    overflow: 'scroll',
+    padding: '10px',
+  },
+}));
+
+export const BuildLogHeader = styled('div')(({ theme }) => ({
+  borderBottom: `1px solid ${theme.colors?.primary}`,
+  marginBottom: '10px',
+}));
+
+export const BuildLogTableRow = styled(TableRow)(({ theme }) => ({
+  cursor: 'pointer',
+  ':hover': {
+    backgroundColor: alpha(theme.backgroundColors?.secondary as string, 0.3),
   },
 }));
 

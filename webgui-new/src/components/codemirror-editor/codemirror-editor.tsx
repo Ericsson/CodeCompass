@@ -17,8 +17,10 @@ import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { Tooltip, alpha } from '@mui/material';
 import * as SC from './styled-components';
+import { useTranslation } from 'react-i18next';
 
 export const CodeMirrorEditor = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
@@ -175,7 +177,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
               <div>{`#${info.finalCommitId?.substring(0, 8)} `}</div>
               <div>{info.finalCommitMessage}</div>
               <div>{`${info.finalSignature?.name} (${info.finalSignature?.email})`}</div>
-              <div>{`Commited on ${date}`}</div>
+              <div>{t('gitBlame.commitedOn', { date })}</div>
             </div>
           }
           placement={'top-start'}
@@ -203,7 +205,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
             onClick={() => getCommitInfo(info.finalCommitId as string)}
           >
             <div>{trimmedMessage}</div>
-            <div>{`on ${date}`}</div>
+            <div>{t('gitBlame.onDate', { date })}</div>
           </SC.GitBlameLine>
         </Tooltip>
       );

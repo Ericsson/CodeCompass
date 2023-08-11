@@ -1,7 +1,9 @@
 /* eslint-disable no-unused-vars */
-export enum AccordionLabel {
-  FILE_MANAGER = 'File manager',
-  SEARCH_RESULTS = 'Search results',
-  INFO_TREE = 'Info tree',
-  REVISION_CONTROL_NAVIGATOR = 'Revision control navigator',
-}
+import i18n from 'i18n/i18n';
+
+export const AccordionLabel = {
+  FILE_MANAGER: i18n.t('accordionMenu.fileManager'),
+  SEARCH_RESULTS: i18n.t('accordionMenu.searchResults'),
+  INFO_TREE: i18n.t('accordionMenu.infoTree'),
+  REVISION_CONTROL_NAVIGATOR: i18n.t('accordionMenu.revisionControl'),
+};

@@ -12,6 +12,9 @@ import { Welcome } from 'components/welcome/welcome';
 import { UserGuide } from 'components/user-guide/user-guide';
 import * as SC from 'themes/project-styles';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -29,10 +32,11 @@ const TabPanel = (props: TabPanelProps) => {
 };
 
 const Project = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
-  return (
+  return appCtx.workspaceId ? (
     <SC.OuterContainer>
       <Header />
       <SC.InnerContainer>
@@ -44,13 +48,13 @@ const Project = (): JSX.Element => {
               router.push({ pathname: '/project', query: { ...router.query, activeTab: newValue.toString() } })
             }
           >
-            <SC.StyledTab label={'Welcome'} />
-            <SC.StyledTab label={'Code'} />
-            <SC.StyledTab label={'Metrics'} />
-            <SC.StyledTab label={'Diagrams'} />
-            <SC.StyledTab label={'Git diff'} />
-            <SC.StyledTab label={'User guide'} />
-            <SC.StyledTab label={'Credits'} />
+            <SC.StyledTab label={t('tabMenu.welcome')} />
+            <SC.StyledTab label={t('tabMenu.code')} />
+            <SC.StyledTab label={t('tabMenu.metrics')} />
+            <SC.StyledTab label={t('tabMenu.diagrams')} />
+            <SC.StyledTab label={t('tabMenu.gitDiff')} />
+            <SC.StyledTab label={t('tabMenu.userGuide')} />
+            <SC.StyledTab label={t('tabMenu.credits')} />
           </SC.StyledTabs>
           <TabPanel value={parseInt(appCtx.activeTab)} index={TabName.WELCOME}>
             <Welcome />
@@ -76,6 +80,13 @@ const Project = (): JSX.Element => {
         </div>
       </SC.InnerContainer>
     </SC.OuterContainer>
+  ) : (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ textAlign: 'center', fontSize: '1.5rem' }}>
+        <div style={{ marginBottom: '10px' }}>{t('project.notFound')}</div>
+        <Link href="/">{t('project.backToHome')}</Link>
+      </div>
+    </Box>
   );
 };
 
