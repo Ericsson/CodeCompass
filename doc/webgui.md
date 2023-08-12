@@ -25,8 +25,7 @@ The file manager supports a tree view and an explorer view. You can switch betwe
 
 The names of the files are color-coded based on their parse status: green if fully parsed, orange if partially parsed, and no color if the file has not been parsed. If you click on a file, its contents will be displayed in the Code tab.
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui-new/public/images/cc_file_manager_explorer.png" height="350px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui-new/public/images/cc_file_manager_tree.png" height="350px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui-new/public/images/cc_file_manager_explorer.png" height="350px" /> <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui-new/public/images/cc_file_manager_tree.png" height="350px" />
 
 ## Search results
 
