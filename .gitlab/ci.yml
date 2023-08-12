@@ -28,8 +28,8 @@ variables:
     script:
         - cd .gitlab
         - chmod +x build-deps.sh build-codecompass.sh
-        - ./build-deps.sh
-        - ./build-codecompass.sh
+        - ./build-deps.sh > ./build-deps.log
+        - ./build-codecompass.sh > ./build-codecompass.log
         - cd $BUILD_DIR
         - cp $CI_PROJECT_DIR/.gitlab/cc-env.sh .
         - cp $CI_PROJECT_DIR/.gitlab/README.md .
@@ -38,7 +38,10 @@ variables:
     artifacts:
         paths:
             - build/codecompass.tar.gz
+            - .gitlab/build-deps.log
+            - .gitlab/build-codecompass.log
         expire_in: 1 week
+        when: always
     cache:
         paths:
             - $DEPS_INSTALL_BUILD_DIR/gcc-install/
@@ -58,8 +61,7 @@ variables:
     echo "GLIBC version: $GLIBC_VERSION"
     echo "GLIBCXX versions: $GLIBCXX_VERSIONS"
 
-# Temporarily disabled job
-.tarball suse-15:
+tarball suse-15:
     extends: .tarball
     image: opensuse/leap:15
     cache:
@@ -127,7 +129,7 @@ tarball ubuntu-16.04:
         # build tools for ctags
         - apt-get install -yqq dh-autoreconf pkg-config
         # build tools for OpenLDAP
-        - apt install -yqq groff-base
+        - apt-get install -yqq groff-base
         # build tools for ccdb-tools
         - apt-get install -yqq libffi-dev
         # show GLIBC verison
@@ -152,8 +154,7 @@ tarball ubuntu-16.04:
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
-# Temporarily disabled job
-.upload suse-15:
+upload suse-15:
     extends: .upload
     variables:
         ARCH_SUFFIX: suse-15

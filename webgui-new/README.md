@@ -59,7 +59,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Build and Install
 
-The necessary steps for building and installing the application can be found in the [deps](./deps.md) and [usage](./usage.md) guides.\
+The necessary steps for building and installing the application can be found in the [Building CodeCompass Guide](/doc/deps.md) and the [User guide](/doc/usage.md) guides.\
 (Note: It is recommended to use SQLite as a database for parsing projects in development.)
 
 After installing, the current webgui will still be available at the root URL of the webserver (`/`), but you can also reach the new webgui at (`/new`).

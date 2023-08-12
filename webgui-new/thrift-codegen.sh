@@ -18,8 +18,17 @@ rm -rf ./thrift
 
 mkdir -p thrift
 
-for file in $(find "$THRIFT_SOURCE" -type f -name '*.thrift'); do
+for file in $(find "$THRIFT_SOURCE/service/" -type f -name '*.thrift'); do
   filename=$(basename "$file")
+  echo "Installing $filename"
+  if [ ! -f "./thrift/$filename" ]; then
+    cp "$file" "./thrift/"
+  fi
+done
+
+for file in $(find "$THRIFT_SOURCE/plugins/" -type f -name '*.thrift'); do
+  filename=$(basename "$file")
+  echo "Installing $filename"
   if [ ! -f "./thrift/$filename" ]; then
     cp "$file" "./thrift/"
   fi

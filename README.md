@@ -12,7 +12,8 @@ CodeCompass is a pluginable code comprehension tool.
 
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/home.png" height="100px" /><img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/codebites.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/home.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/codebites.png" height="100px" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/infotree.png" height="100px" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_function_call_diagram.png" height="100px" />
 <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_detailed_class_diagram.png" height="100px" />
@@ -29,12 +30,12 @@ Features
 
 Documentations
 --------
-- [User guide](doc/usage.md)
-- [Using the application](doc/fe_usage.md)
+- [Backend user guide](doc/usage.md)
+- [Frontend user guide](doc/webgui.md)
 - [Docker guide](docker/README.md)
 
 Development
 --------
 - [Building CodeCompass](doc/deps.md)
+- [Frontend development guide](webgui-new/README.md)
 - [Coding conventions](doc/coding_conventions.md)
-- [Developing the frontend](doc/fe_development.md)
