@@ -30,7 +30,7 @@
 #include <model/yamlastnode.h>
 #include <model/yamlastnode-odb.hxx>
 
-#include "parser/yamlparser.h"
+#include "parser/helmparser.h"
 #include "valueanalyzer.h"
 #include "templateanalyzer.h"
 

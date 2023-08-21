@@ -26,8 +26,7 @@
 #include <util/util.h>
 #include <webserver/servercontext.h>
 
-//#include <LanguageService.h>
-#include <YamlService.h>
+#include <HelmService.h>
 
 namespace cc
 {
@@ -36,10 +35,10 @@ namespace service
 namespace language
 {
 
-class YamlServiceHandler  : virtual public YamlServiceIf
+class HelmServiceHandler  : virtual public HelmServiceIf
 {
 public:
-  YamlServiceHandler(
+  HelmServiceHandler(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);

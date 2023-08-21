@@ -6,9 +6,9 @@
 
 #include <model/file.h>
 #include <model/yamlastnode.h>
-#include <service/yamlservice.h>
+#include <service/helmservice.h>
 
-#include "yamlfilediagram.h"
+#include "helmfilediagram.h"
 
 namespace
 {
@@ -72,7 +72,7 @@ namespace service
 namespace language
 {
 
-YamlServiceHandler::YamlServiceHandler(
+HelmServiceHandler::HelmServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
@@ -83,13 +83,13 @@ YamlServiceHandler::YamlServiceHandler(
 {
 }
 
-void YamlServiceHandler::getFileTypes(std::vector<std::string>& return_)
+void HelmServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
   return_.emplace_back("YAML");
   return_.emplace_back("Dir");
 }
 
-void YamlServiceHandler::getAstNodeInfo(
+void HelmServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_)
 {
@@ -98,7 +98,7 @@ void YamlServiceHandler::getAstNodeInfo(
   });
 }
 
-void YamlServiceHandler::getAstNodeInfoByPosition(
+void HelmServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_)
 {
@@ -127,7 +127,7 @@ void YamlServiceHandler::getAstNodeInfoByPosition(
   });
 }
 
-void YamlServiceHandler::getSourceText(
+void HelmServiceHandler::getSourceText(
   std::string& return_,
   const core::AstNodeId& astNodeId_)
 {
@@ -146,11 +146,11 @@ void YamlServiceHandler::getSourceText(
   });
 }
 
-void YamlServiceHandler::getDocumentation(
+void HelmServiceHandler::getDocumentation(
   std::string& return_,
   const core::AstNodeId& astNodeId_) {}
 
-void YamlServiceHandler::getProperties(
+void HelmServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_)
 {
@@ -163,20 +163,20 @@ void YamlServiceHandler::getProperties(
   });
 }
 
-void YamlServiceHandler::getDiagramTypes(
+void HelmServiceHandler::getDiagramTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::AstNodeId& astNodeId_) {}
 
-void YamlServiceHandler::getDiagram(
+void HelmServiceHandler::getDiagram(
         std::string& return_,
         const core::AstNodeId& astNodeId_,
         const std::int32_t diagramId_) {}
 
-void YamlServiceHandler::getDiagramLegend(
+void HelmServiceHandler::getDiagramLegend(
         std::string& return_,
         const std::int32_t diagramId_) {}
 
-void YamlServiceHandler::getFileDiagramTypes(
+void HelmServiceHandler::getFileDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_)
 {
@@ -200,12 +200,12 @@ void YamlServiceHandler::getFileDiagramTypes(
   }
 }
 
-void YamlServiceHandler::getFileDiagram(
+void HelmServiceHandler::getFileDiagram(
   std::string& return_,
   const core::FileId& fileId_,
   const int32_t diagramId_)
 {
-  YamlFileDiagram diagram(_db, _datadir, _context);
+  HelmFileDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
   graph.setAttribute("rankdir", "LR");
 
@@ -244,52 +244,52 @@ void YamlServiceHandler::getFileDiagram(
   }
 }
 
-void YamlServiceHandler::getFileDiagramLegend(
+void HelmServiceHandler::getFileDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_) {}
 
-void YamlServiceHandler::getReferenceTypes(
+void HelmServiceHandler::getReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::AstNodeId& astNodeId) {}
 
-void YamlServiceHandler::getReferences(
+void HelmServiceHandler::getReferences(
   std::vector<AstNodeInfo>& return_,
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_,
   const std::vector<std::string>& tags_) {}
 
-std::int32_t YamlServiceHandler::getReferenceCount(
+std::int32_t HelmServiceHandler::getReferenceCount(
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_) {}
 
-void YamlServiceHandler::getReferencesInFile(
+void HelmServiceHandler::getReferencesInFile(
   std::vector<AstNodeInfo>& return_,
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_,
   const core::FileId& fileId_,
   const std::vector<std::string>& tags_) {}
 
-void YamlServiceHandler::getReferencesPage(
+void HelmServiceHandler::getReferencesPage(
   std::vector<AstNodeInfo>& return_,
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_,
   const std::int32_t pageSize_,
   const std::int32_t pageNo_) {}
 
-void YamlServiceHandler::getFileReferenceTypes(
+void HelmServiceHandler::getFileReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_) {}
 
-void YamlServiceHandler::getFileReferences(
+void HelmServiceHandler::getFileReferences(
   std::vector<AstNodeInfo>& return_,
   const core::FileId& fileId_,
   const std::int32_t referenceId_) {}
 
-std::int32_t YamlServiceHandler::getFileReferenceCount(
+std::int32_t HelmServiceHandler::getFileReferenceCount(
   const core::FileId& fileId_,
   const std::int32_t referenceId_) {}
 
-void YamlServiceHandler::getSyntaxHighlight(
+void HelmServiceHandler::getSyntaxHighlight(
   std::vector<SyntaxHighlight>& return_,
   const core::FileRange& range_)
 {
@@ -344,7 +344,7 @@ void YamlServiceHandler::getSyntaxHighlight(
 
 /* --- Extending language service --- */
 
-void YamlServiceHandler::getMicroserviceDiagramTypes(
+void HelmServiceHandler::getMicroserviceDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const language::MicroserviceId& serviceId_)
 {
@@ -354,12 +354,12 @@ void YamlServiceHandler::getMicroserviceDiagramTypes(
   return_["Resource usage"] = RESOURCES;
 }
 
-void YamlServiceHandler::getMicroserviceDiagram(
+void HelmServiceHandler::getMicroserviceDiagram(
   std::string& return_,
   const language::MicroserviceId& serviceId_,
   const int32_t diagramId_)
 {
-  YamlFileDiagram diagram(_db, _datadir, _context);
+  HelmFileDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
   graph.setAttribute("rankdir", "LR");
 
@@ -372,7 +372,7 @@ void YamlServiceHandler::getMicroserviceDiagram(
   }
 }
 
-void YamlServiceHandler::getMicroserviceList(
+void HelmServiceHandler::getMicroserviceList(
   std::vector<MicroserviceInfo>& return_,
   ServiceType::type type_)
 {
@@ -399,7 +399,7 @@ void YamlServiceHandler::getMicroserviceList(
   });
 }
 
-void YamlServiceHandler::getMicroserviceTypes(
+void HelmServiceHandler::getMicroserviceTypes(
   std::vector<cc::service::language::ServiceType::type>& return_)
 {
   typedef model::Microservice::ServiceType MSServiceType;
@@ -407,7 +407,7 @@ void YamlServiceHandler::getMicroserviceTypes(
   return_.push_back(convertToThriftType(MSServiceType::EXTERNAL));
 }
 
-inline cc::service::language::ServiceType::type YamlServiceHandler::convertToThriftType(
+inline cc::service::language::ServiceType::type HelmServiceHandler::convertToThriftType(
   model::Microservice::ServiceType type_)
 {
   typedef model::Microservice::ServiceType MSServiceType;
@@ -418,7 +418,7 @@ inline cc::service::language::ServiceType::type YamlServiceHandler::convertToThr
   }
 }
 
-inline model::Microservice::ServiceType YamlServiceHandler::convertToModelType(
+inline model::Microservice::ServiceType HelmServiceHandler::convertToModelType(
   cc::service::language::ServiceType::type type_)
 {
   typedef model::Microservice::ServiceType MSServiceType;
@@ -429,7 +429,7 @@ inline model::Microservice::ServiceType YamlServiceHandler::convertToModelType(
   }
 }
 
-model::YamlAstNode YamlServiceHandler::queryYamlAstNode(
+model::YamlAstNode HelmServiceHandler::queryYamlAstNode(
   const core::AstNodeId &astNodeId_)
 {
   return _transaction([&, this](){

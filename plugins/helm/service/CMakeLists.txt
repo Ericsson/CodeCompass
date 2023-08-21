@@ -13,50 +13,50 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/YamlService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/YamlService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/HelmService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/HelmService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp --gen js
       -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
-      ${CMAKE_CURRENT_SOURCE_DIR}/yaml.thrift
+  ${CMAKE_CURRENT_SOURCE_DIR}/helm.thrift
   DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/yaml.thrift
+  ${CMAKE_CURRENT_SOURCE_DIR}/helm.thrift
   COMMENT
-    "Generating Thrift for yaml.thrift")
+    "Generating Thrift for helm.thrift")
 
-add_library(yamlthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/yaml_types.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/YamlService.cpp)
+add_library(helmthrift STATIC
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/helm_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/HelmService.cpp)
 
-target_compile_options(yamlthrift PUBLIC -fPIC)
+target_compile_options(helmthrift PUBLIC -fPIC)
 
-add_dependencies(yamlthrift projectthrift)
-add_dependencies(yamlthrift languagethrift)
+add_dependencies(helmthrift projectthrift)
+add_dependencies(helmthrift languagethrift)
 
-add_library(yamlservice SHARED
-  src/yamlservice.cpp
-  src/yamlfilediagram.cpp
+add_library(helmservice SHARED
+  src/helmservice.cpp
+  src/helmfilediagram.cpp
   src/plugin.cpp)
 
-target_compile_options(yamlservice PUBLIC -Wno-unknown-pragmas)
+target_compile_options(helmservice PUBLIC -Wno-unknown-pragmas)
 
-target_link_libraries(yamlservice
+target_link_libraries(helmservice
   util
   model
-  yamlmodel
+  helmmodel
   gvc
   projectservice
   languagethrift
-  yamlthrift
+  helmthrift
   ${THRIFT_LIBTHRIFT_LIBRARIES})
 
-install(TARGETS yamlservice DESTINATION ${INSTALL_SERVICE_DIR})
+install(TARGETS helmservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift()

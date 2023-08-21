@@ -4,7 +4,7 @@
 #include <model/microservice.h>
 #include <model/msresource.h>
 
-#include <service/yamlservice.h>
+#include <service/helmservice.h>
 #include <projectservice/projectservice.h>
 #include <util/graph.h>
 
@@ -22,10 +22,10 @@ typedef odb::result<model::YamlFile> YamlResult;
 typedef odb::result<model::YamlContent> YamlContentResult;
 typedef odb::query<model::YamlContent> YamlContentQuery;
 
-class YamlFileDiagram
+class HelmFileDiagram
 {
 public:
-  YamlFileDiagram(
+  HelmFileDiagram(
     std::shared_ptr<odb::database> db_,
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
@@ -175,7 +175,7 @@ private:
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
-  YamlServiceHandler _yamlHandler;
+  HelmServiceHandler _helmHandler;
   core::ProjectServiceHandler _projectHandler;
 };
 

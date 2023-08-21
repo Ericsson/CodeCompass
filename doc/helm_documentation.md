@@ -1,15 +1,15 @@
 # Helm chart static analysis plugin
 ## Developers' documentation
 
-The microservice plugin serves the purpose of analyzing Helm charts and storing data about the microservices and their relations in the database.
+The Helm plugin serves the purpose of analyzing Helm charts and storing data about the microservices and their relations in the database.
 
 The plugin uses the _yaml-cpp_ library to parse YAML nodes. 
 The analysis is executed file-by-file.
 **This plugin heavily relies on the rules and conventions of Helm and Kubernetes.**
 
-## YAML file analysis steps
+## Helm file analysis steps
 
-The microservice parser receives one or more root directories of Helm charts. 
+The Helm parser receives one or more root directories of Helm charts. 
 The directory is traversed in a recursive manner. 
 The plugin is capable of multi-threaded analysis, where each thread receives a file for analysis.
 

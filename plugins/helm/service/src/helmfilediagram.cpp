@@ -12,11 +12,11 @@
 #include <model/helmtemplate-odb.hxx>
 
 #include <model/file.h>
-#include <service/yamlservice.h>
+#include <service/helmservice.h>
 #include <util/dbutil.h>
 #include <numeric>
 
-#include "yamlfilediagram.h"
+#include "helmfilediagram.h"
 
 namespace cc
 {
@@ -36,18 +36,18 @@ typedef odb::result<model::MSResource> MSResourceResult;
 typedef odb::query<model::HelmTemplate> HelmTemplateQuery;
 typedef odb::result<model::HelmTemplate> HelmTemplateResult;
 
-YamlFileDiagram::YamlFileDiagram(
+HelmFileDiagram::HelmFileDiagram(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
   : _db(db_),
     _transaction(db_),
-    _yamlHandler(db_, datadir_, context_),
+    _helmHandler(db_, datadir_, context_),
     _projectHandler(db_, datadir_, context_)
 {
 }
 
-void YamlFileDiagram::getYamlFileInfo(
+void HelmFileDiagram::getYamlFileInfo(
   util::Graph& graph_,
   const core::FileId& fileId_)
 {
@@ -92,7 +92,7 @@ void YamlFileDiagram::getYamlFileInfo(
 }
 
 
-void YamlFileDiagram::getYamlFileDiagram(
+void HelmFileDiagram::getYamlFileDiagram(
   util::Graph& graph_,
   const core::FileId& fileId_)
 {
@@ -129,7 +129,7 @@ void YamlFileDiagram::getYamlFileDiagram(
   });
 }
 
-void YamlFileDiagram::getMicroserviceDiagram(
+void HelmFileDiagram::getMicroserviceDiagram(
   util::Graph& graph_,
   const core::FileId& fileId_)
 {
@@ -137,12 +137,12 @@ void YamlFileDiagram::getMicroserviceDiagram(
   _projectHandler.getFileInfo(fileInfo, fileId_);
   util::Graph::Node currentNode = addNode(graph_, fileInfo);
 
-  util::bfsBuild(graph_, currentNode, std::bind(&YamlFileDiagram::getMicroservices,
+  util::bfsBuild(graph_, currentNode, std::bind(&HelmFileDiagram::getMicroservices,
     this, std::placeholders::_1, std::placeholders::_2),
     microserviceNodeDecoration, {}, 1);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
+std::vector<util::Graph::Node> HelmFileDiagram::getMicroservices(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
@@ -160,7 +160,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getMicroservices(
 
 /* ---- Dependent microservices ---- */
 
-void YamlFileDiagram::getDependentServicesDiagram(
+void HelmFileDiagram::getDependentServicesDiagram(
   util::Graph& graph_,
   const language::MicroserviceId& serviceId_)
 {
@@ -177,21 +177,21 @@ void YamlFileDiagram::getDependentServicesDiagram(
   std::vector<util::Graph::Node> revServiceNodes = getRevDependencies(graph_, currentNode);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getDependencies(
+std::vector<util::Graph::Node> HelmFileDiagram::getDependencies(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentServices(graph_, node_);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getRevDependencies(
+std::vector<util::Graph::Node> HelmFileDiagram::getRevDependencies(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentServices(graph_, node_, true);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
+std::vector<util::Graph::Node> HelmFileDiagram::getDependentServices(
   util::Graph& graph_,
   const util::Graph::Node& node_,
   bool reverse_)
@@ -216,7 +216,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentServices(
   return dependencies;
 }
 
-std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentServiceIds(
+std::multimap<model::MicroserviceId, std::string> HelmFileDiagram::getDependentServiceIds(
   util::Graph&,
   const util::Graph::Node& node_,
   bool reverse_) {
@@ -242,7 +242,7 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
 
 /* ---- Generated config maps ---- */
 
-void YamlFileDiagram::getConfigMapsDiagram(
+void HelmFileDiagram::getConfigMapsDiagram(
   util::Graph& graph_,
   const language::MicroserviceId& serviceId_)
 {
@@ -258,21 +258,21 @@ void YamlFileDiagram::getConfigMapsDiagram(
   std::vector<util::Graph::Node> configMapNodes = getConfigMaps(graph_, currentNode);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getConfigMaps(
+std::vector<util::Graph::Node> HelmFileDiagram::getConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentConfigMaps(graph_, node_);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getRevConfigMaps(
+std::vector<util::Graph::Node> HelmFileDiagram::getRevConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentConfigMaps(graph_, node_, true);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
+std::vector<util::Graph::Node> HelmFileDiagram::getDependentConfigMaps(
   util::Graph& graph_,
   const util::Graph::Node& node_,
   bool reverse_)
@@ -295,7 +295,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentConfigMaps(
   return dependencies;
 }
 
-std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentConfigMapIds(
+std::multimap<model::MicroserviceId, std::string> HelmFileDiagram::getDependentConfigMapIds(
   util::Graph& graph_,
   const util::Graph::Node& node_,
   bool reverse_)
@@ -323,7 +323,7 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentC
 
 /* ---- Secrets ---- */
 
-void YamlFileDiagram::getSecretsDiagram(
+void HelmFileDiagram::getSecretsDiagram(
   util::Graph& graph_,
   const language::MicroserviceId& serviceId_)
 {
@@ -339,21 +339,21 @@ void YamlFileDiagram::getSecretsDiagram(
   std::vector<util::Graph::Node> secretNodes = getSecrets(graph_, currentNode);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getSecrets(
+std::vector<util::Graph::Node> HelmFileDiagram::getSecrets(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentSecrets(graph_, node_);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getRevSecrets(
+std::vector<util::Graph::Node> HelmFileDiagram::getRevSecrets(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
   return getDependentSecrets(graph_, node_, true);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getDependentSecrets(
+std::vector<util::Graph::Node> HelmFileDiagram::getDependentSecrets(
   util::Graph& graph_,
   const util::Graph::Node& node_,
   bool reverse_)
@@ -377,7 +377,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getDependentSecrets(
   return dependencies;
 }
 
-std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentSecretIds(
+std::multimap<model::MicroserviceId, std::string> HelmFileDiagram::getDependentSecretIds(
   util::Graph&,
   const util::Graph::Node& node_,
   bool reverse_)
@@ -403,7 +403,7 @@ std::multimap<model::MicroserviceId, std::string> YamlFileDiagram::getDependentS
   return dependencies;
 }
 
-void YamlFileDiagram::getResourcesDiagram(
+void HelmFileDiagram::getResourcesDiagram(
   util::Graph& graph_,
   const language::MicroserviceId& serviceId_)
 {
@@ -419,7 +419,7 @@ void YamlFileDiagram::getResourcesDiagram(
   std::vector<util::Graph::Node> secretNodes = getResources(graph_, currentNode);
 }
 
-std::vector<util::Graph::Node> YamlFileDiagram::getResources(
+std::vector<util::Graph::Node> HelmFileDiagram::getResources(
   util::Graph& graph_,
   const util::Graph::Node& node_)
 {
@@ -469,7 +469,7 @@ std::vector<util::Graph::Node> YamlFileDiagram::getResources(
   return resources;
 }
 
-std::string YamlFileDiagram::graphHtmlTag(
+std::string HelmFileDiagram::graphHtmlTag(
   const std::string& tag_,
   const std::string& content_,
   const std::string& attr_)
@@ -485,7 +485,7 @@ std::string YamlFileDiagram::graphHtmlTag(
     .append(">");
 }
 
-util::Graph::Node YamlFileDiagram::addNode(
+util::Graph::Node HelmFileDiagram::addNode(
   util::Graph& graph_,
   const core::FileInfo& fileInfo_)
 {
@@ -512,7 +512,7 @@ util::Graph::Node YamlFileDiagram::addNode(
   return node_;
 }
 
-util::Graph::Node YamlFileDiagram::addNode(
+util::Graph::Node HelmFileDiagram::addNode(
   util::Graph& graph_,
   const model::Microservice& service_)
 {
@@ -524,7 +524,7 @@ util::Graph::Node YamlFileDiagram::addNode(
   return node_;
 }
 
-util::Graph::Node YamlFileDiagram::addNode(
+util::Graph::Node HelmFileDiagram::addNode(
   util::Graph& graph_,
   const model::MSResource::ResourceType& type_,
   float amount_)
@@ -537,7 +537,7 @@ util::Graph::Node YamlFileDiagram::addNode(
   return node_;
 }
 
-std::string YamlFileDiagram::getLastNParts(
+std::string HelmFileDiagram::getLastNParts(
         const std::string& path_,
         std::size_t n_)
 {
@@ -552,7 +552,7 @@ std::string YamlFileDiagram::getLastNParts(
   return p > 0 && p < path_.size() ? "..." + path_.substr(p) : path_;
 }
 
-void YamlFileDiagram::decorateNode(
+void HelmFileDiagram::decorateNode(
         util::Graph& graph_,
         const util::Graph::Node& node_,
         const Decoration& decoration_) const
@@ -561,7 +561,7 @@ void YamlFileDiagram::decorateNode(
     graph_.setNodeAttribute(node_, attr.first, attr.second);
 }
 
-void YamlFileDiagram::decorateEdge(
+void HelmFileDiagram::decorateEdge(
   util::Graph& graph_,
   const util::Graph::Edge& edge_,
   const Decoration& decoration_) const
@@ -570,33 +570,33 @@ void YamlFileDiagram::decorateEdge(
     graph_.setEdgeAttribute(edge_, attr.first, attr.second);
 }
 
-const YamlFileDiagram::Decoration
-  YamlFileDiagram::sourceFileNodeDecoration = {
+const HelmFileDiagram::Decoration
+  HelmFileDiagram::sourceFileNodeDecoration = {
   {"shape", "box"},
   {"style", "filled"},
   {"fillcolor", "#116db6"},
   {"fontcolor", "white"}
 };
 
-const YamlFileDiagram::Decoration
-        YamlFileDiagram::directoryNodeDecoration = {
+const HelmFileDiagram::Decoration
+        HelmFileDiagram::directoryNodeDecoration = {
   {"shape", "folder"}
 };
 
-const YamlFileDiagram::Decoration
-  YamlFileDiagram::binaryFileNodeDecoration = {
+const HelmFileDiagram::Decoration
+  HelmFileDiagram::binaryFileNodeDecoration = {
   {"shape", "box3d"},
   {"style", "filled"},
   {"fillcolor", "#f18a21"},
   {"fontcolor", "white"}
 };
 
-const YamlFileDiagram::Decoration YamlFileDiagram::microserviceNodeDecoration = {
+const HelmFileDiagram::Decoration HelmFileDiagram::microserviceNodeDecoration = {
   {"shape", "folder"},
   {"color", "blue"}
 };
 
-const YamlFileDiagram::Decoration YamlFileDiagram::dependsEdgeDecoration = {
+const HelmFileDiagram::Decoration HelmFileDiagram::dependsEdgeDecoration = {
   {"label", "depends on"}
 };
 

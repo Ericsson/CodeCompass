@@ -1,6 +1,6 @@
 #include <webserver/pluginhelper.h>
 
-#include <service/yamlservice.h>
+#include <service/helmservice.h>
 
 /* These two methods are used by the plugin manager to allow dynamic loading
   of CodeCompass Service plugins. Clang (>= version 6.0) gives a warning that
@@ -35,7 +35,7 @@ extern "C"
     cc::webserver::registerPluginSimple(
       context_,
       pluginHandler_,
-      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Yaml, language),
+      CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Helm, language),
       "YamlService");
   }
 }

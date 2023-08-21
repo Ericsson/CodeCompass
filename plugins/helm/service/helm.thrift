@@ -21,7 +21,7 @@ struct MicroserviceInfo
   4: ServiceType type
 }
 
-service YamlService extends language.LanguageService
+service HelmService extends language.LanguageService
 {
   map<string, i32> getMicroserviceDiagramTypes(1:MicroserviceId serviceId)
       throws (1:common.InvalidId ex)
