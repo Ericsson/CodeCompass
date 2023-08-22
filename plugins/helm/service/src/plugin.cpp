@@ -19,7 +19,7 @@ extern "C"
   {
     namespace po = boost::program_options;
 
-    po::options_description description("YAML Plugin");
+    po::options_description description("Helm Plugin");
 
     description.add_options()
       ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
@@ -36,7 +36,7 @@ extern "C"
       context_,
       pluginHandler_,
       CODECOMPASS_SERVICE_FACTORY_WITH_CFG(Helm, language),
-      "YamlService");
+      "HelmService");
   }
 }
 #pragma clang diagnostic pop
