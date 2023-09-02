@@ -17,6 +17,8 @@
 
 #include <model/buildaction.h>
 #include <model/buildaction-odb.hxx>
+#include <model/builddirectory.h>
+#include <model/builddirectory-odb.hxx>
 #include <model/buildsourcetarget.h>
 #include <model/buildsourcetarget-odb.hxx>
 #include <model/file.h>
@@ -254,6 +256,7 @@ void CppParser::addCompileCommand(
 
   std::vector<model::BuildSource> sources;
   std::vector<model::BuildTarget> targets;
+  model::BuildDirectory buildDir;
 
   for (const auto& srcTarget : extractInputOutputs(command_))
   {
@@ -277,6 +280,9 @@ void CppParser::addCompileCommand(
 
     targets.push_back(std::move(buildTarget));
   }
+  
+  buildDir.directory = command_.Directory;
+  buildDir.action = buildAction_;
 
   _ctx.srcMgr.persistFiles();
 
@@ -285,6 +291,7 @@ void CppParser::addCompileCommand(
       _ctx.db->persist(buildSource);
     for (model::BuildTarget buildTarget : targets)
       _ctx.db->persist(buildTarget);
+    _ctx.db->persist(buildDir);
   });
 }
 
@@ -303,12 +310,21 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   int argc = commandLine.size();
 
+  std::string buildDir = command_.Directory;
+  if (!fs::is_directory(buildDir))
+  {
+    LOG(debug) << "Compilation directory " << buildDir
+               << " is missing, using '/' instead.";
+    buildDir = "/";
+  }
+
   std::string compilationDbLoadError;
   std::unique_ptr<clang::tooling::FixedCompilationDatabase> compilationDb(
     clang::tooling::FixedCompilationDatabase::loadFromCommandLine(
       argc,
       commandLine.data(),
-      compilationDbLoadError));
+      compilationDbLoadError,
+      buildDir));
 
   if (!compilationDb)
   {
@@ -324,12 +340,13 @@ int CppParser::parseWorker(const clang::tooling::CompileCommand& command_)
 
   //--- Start the tool ---//
 
-  fs::path sourceFullPath(command_.Filename);
-  if (!sourceFullPath.is_absolute())
-    sourceFullPath = fs::path(command_.Directory) / command_.Filename;
-
   VisitorActionFactory factory(_ctx);
-  clang::tooling::ClangTool tool(*compilationDb, sourceFullPath.string());
+
+  // Use a PhysicalFileSystem as it's thread-safe
+
+  clang::tooling::ClangTool tool(*compilationDb, command_.Filename,
+    std::make_shared<clang::PCHContainerOperations>(),
+    llvm::vfs::createPhysicalFileSystem().release());
 
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts
     = new clang::DiagnosticOptions();

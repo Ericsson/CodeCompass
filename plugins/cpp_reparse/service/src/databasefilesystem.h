@@ -44,6 +44,10 @@ private:
   util::OdbTransaction _transaction;
 
   std::string _currentWorkingDirectory;
+
+  llvm::ErrorOr<std::string> toCanonical(const llvm::Twine& relPath_) const;
+
+  std::string toCanonicalOrSame(const llvm::Twine& relPath_) const;
 };
 
 } //namespace reparse

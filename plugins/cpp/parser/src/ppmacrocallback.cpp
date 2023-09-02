@@ -254,10 +254,12 @@ std::string PPMacroCallback::getUSR(const clang::MacroInfo* mi_)
      = std::to_string(presLoc.getLine())   + ":" +
        std::to_string(presLoc.getColumn()) + ":";
 
+  std::string filePath = _fileLocUtil.getFilePath(presLoc.getFileID());
+
   return locStr
     + (isBuiltInMacro(mi_)
-    ? presLoc.getFilename()
-    : std::to_string(_ctx.srcMgr.getFile(presLoc.getFilename())->id));
+    ? filePath
+    : std::to_string(_ctx.srcMgr.getFile(filePath)->id));
 }
 
 } // parser
