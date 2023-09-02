@@ -25,6 +25,7 @@ struct BuildAction
   {
     Compile,
     Link,
+    Interpret,
     Other
   };
 

@@ -309,6 +309,7 @@ function (model, viewHandler, util) {
   }
 
   var cppInfoTree = {
+    id: 'cpp-info-tree',
     render : function (elementInfo) {
       var ret = [];
 

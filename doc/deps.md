@@ -40,6 +40,7 @@ be installed from the official repository of the given Linux distribution.
 - **`libgtest-dev`**: For testing CodeCompass.
   ***See [Known issues](#known-issues)!***
 - **`libldap2-dev`**: For LDAP authentication.
+- **`python3.8`**: For python parsing.
 
 ## Quick guide
 
@@ -52,7 +53,7 @@ known issues.
 sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
   llvm-10-dev clang-10 libclang-10-dev \
   default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
-  libldap2-dev libgtest-dev npm
+  libldap2-dev libgtest-dev npm python3.8
 ```
 
 #### Ubuntu 20.04 ("Focal Fossa") LTS

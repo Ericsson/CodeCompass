@@ -1,0 +1,25 @@
+from typing import List, TypeVar, Generic
+
+T = TypeVar('T')
+
+
+class OrderedHashableList(Generic[T], List[T]):
+    def __hash__(self):
+        return hash(e for e in self)
+
+    def __add__(self, other):
+        new_list = OrderedHashableList()
+        new_list.extend(self)
+        new_list.extend(other)
+        return new_list
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)) or len(other) != len(self):
+            return False
+        for i in range(0, len(self)):
+            if self[i] != other[i]:
+                return False
+        return True
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
