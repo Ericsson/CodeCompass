@@ -221,9 +221,8 @@ std::unique_ptr<clang::ASTConsumer> ASTHTMLActionFactory::newASTConsumer()
 {
   assert(_stream && "Must not call newASTConsumer twice as the underlying "
     "stream has been moved out.");
-    const bool dumpdecltypes = true;
   return clang::CreateASTDumper(std::move(_stream), "",
-                                true, true, false, dumpdecltypes, clang::ADOF_Default);
+                                true, true, false, false, clang::ADOF_Default);
 }
 
 std::unique_ptr<clang::ASTConsumer>
