@@ -192,13 +192,14 @@ public:
   {
     if (_locator.matchNodeAgainstLocation(s_))
     {
-      s_->dump(*_out, _context.getSourceManager());
+      s_->dump(*_out, _context);
       return true;
     }
     return Base::TraverseStmt(s_);
   }
 
 private:
+
   std::unique_ptr<raw_ostream> _out;
   ASTContext& _context;
   cc::service::reparse::ASTNodeLocator _locator;
@@ -220,8 +221,9 @@ std::unique_ptr<clang::ASTConsumer> ASTHTMLActionFactory::newASTConsumer()
 {
   assert(_stream && "Must not call newASTConsumer twice as the underlying "
     "stream has been moved out.");
+    const bool dumpdecltypes = true;
   return clang::CreateASTDumper(std::move(_stream), "",
-                                true, true, false, clang::ADOF_Default);
+                                true, true, false, dumpdecltypes, clang::ADOF_Default);
 }
 
 std::unique_ptr<clang::ASTConsumer>
