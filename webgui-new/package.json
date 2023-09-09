@@ -7,7 +7,7 @@
     "build": "next build && next export",
     "start": "NODE_ENV=production ts-node src/server.ts",
     "lint": "next lint",
-    "thrift-ts": "thrift-typescript --fallbackNamespace none"
+    "thrift-ts": "thrift-typescript --fallbackNamespace none --outDir generated"
   },
   "devDependencies": {
     "@creditkarma/thrift-typescript": "^3.7.6",

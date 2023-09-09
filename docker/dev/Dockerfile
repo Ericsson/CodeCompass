@@ -25,6 +25,7 @@ RUN set -x && apt-get update -qq \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
+  libyaml-cpp-dev \
   llvm-10 clang-10 llvm-10-dev libclang-10-dev \
   npm \
   thrift-compiler libthrift-dev \

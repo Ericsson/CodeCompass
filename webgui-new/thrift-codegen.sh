@@ -40,7 +40,6 @@ for file in $(find ./thrift -type f -name '*.thrift'); do
 done
 
 npm run thrift-ts
-mv codegen generated
 rm -rf ./thrift
 
 for file in $(find ./generated -type f -name '*.ts'); do
@@ -51,3 +50,6 @@ done
 sed -i 's/import \* as SearchResult from "\.\/SearchResult";/import \* as SearchRes from "\.\/SearchResult";/g' ./generated/SearchService.ts
 sed -i 's/SearchResult\.SearchResult/SearchRes.SearchResult/g' ./generated/SearchService.ts
 
+# Add missing inclusion dependency in HelmService for LanguageService
+sed -i '/import \* as __ROOT_NAMESPACE__ from "\.\/";/a import \* as LanguageService from "\.\/LanguageService";' ./generated/HelmService.ts
+sed -i 's/__ROOT_NAMESPACE__\.LanguageService/LanguageService/g' ./generated/HelmService.ts
