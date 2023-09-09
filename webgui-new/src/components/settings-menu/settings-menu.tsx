@@ -19,6 +19,7 @@ import { Info, Close } from '@mui/icons-material';
 import { getStore, setStore } from 'utils/store';
 import { SearchType } from '@thrift-generated';
 import * as SC from './styled-components';
+import { useTranslation } from 'react-i18next';
 
 export const SettingsMenu = ({
   anchorEl,
@@ -41,6 +42,8 @@ export const SettingsMenu = ({
   selectedSearchTypeOptions: string[];
   setSelectedSearchTypeOptions: Dispatch<SetStateAction<string[] | undefined>>;
 }): JSX.Element => {
+  const { t } = useTranslation();
+
   const searchMainLanguages = enumToArray(SearchMainLanguages);
   const searchOtherLanguages = enumToArray(SearchOtherLanguages) as string[];
   const searchTypeOptions = enumToArray(SearchTypeOptions);
@@ -75,7 +78,7 @@ export const SettingsMenu = ({
   const Options = () => {
     return (
       <div>
-        <FormLabel>{'Search options'}</FormLabel>
+        <FormLabel>{t('searchSettings.menu.searchOptions')}</FormLabel>
         <RadioGroup value={searchType?.name ?? searchTypes[0].name}>
           {searchTypes.map((elem, idx) => {
             return (
@@ -96,7 +99,7 @@ export const SettingsMenu = ({
   const Languages = () => {
     return (
       <div>
-        <FormLabel>{'Languages'}</FormLabel>
+        <FormLabel>{t('searchSettings.menu.languages')}</FormLabel>
         <RadioGroup value={searchLanguage ?? searchMainLanguages[0]}>
           {searchMainLanguages.map((elem, idx) => {
             return (
@@ -123,15 +126,9 @@ export const SettingsMenu = ({
               }}
               value={'Any'}
               control={<Radio />}
-              label={'Any'}
+              label={t('searchSettings.menu.any')}
             />
-            <Tooltip
-              title={
-                <span>
-                  In case of <i>Any</i>, search happens in every file, not only in listed ones.
-                </span>
-              }
-            >
+            <Tooltip title={t('searchSettings.tooltips.anyTooltip')}>
               <Info />
             </Tooltip>
           </SC.RadioWithInfo>
@@ -149,11 +146,11 @@ export const SettingsMenu = ({
               checked={searchOtherLanguages.includes(searchLanguage)}
             />
             <FormControl>
-              <InputLabel>{'Other'}</InputLabel>
+              <InputLabel>{t('searchSettings.menu.other')}</InputLabel>
               <Select
                 disabled={searchLanguagesDisabled}
                 value={searchOtherLanguage}
-                label="Other"
+                label={t('searchSettings.menu.other')}
                 onChange={(e) => {
                   if (!searchLanguagesDisabled) {
                     setSearchOtherLanguage(e.target.value);
@@ -192,7 +189,7 @@ export const SettingsMenu = ({
   const Types = () => {
     return (
       <FormGroup>
-        <FormLabel>{'Types'}</FormLabel>
+        <FormLabel>{t('searchSettings.menu.types')}</FormLabel>
         {searchTypeOptions.map((elem, idx) => {
           return (
             <FormControlLabel
@@ -228,7 +225,7 @@ export const SettingsMenu = ({
               checked={searchTypeOptions.every((t) => selectedSearchTypeOptions.includes(t))}
             />
           }
-          label={'All'}
+          label={t('searchSettings.menu.all')}
         />
       </FormGroup>
     );

@@ -11,8 +11,10 @@ import { diffViewerTheme } from 'themes/theme';
 import { blue, red } from '@mui/material/colors';
 import { FileIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
+import { useTranslation } from 'react-i18next';
 
 export const GitDiff = (): JSX.Element => {
+  const { t } = useTranslation();
   const appCtx = useContext(AppContext);
   const themeCtx = useContext(ThemeContext);
 
@@ -122,10 +124,10 @@ export const GitDiff = (): JSX.Element => {
         <div>
           <div>
             <span style={{ fontWeight: 'bold' }}>{`${commit.author?.name} (${commit.author?.email})`}</span>
-            {`, Commited on ${formatDate(new Date((commit.time as unknown as number) * 1000))}`}
+            {t('gitDiff.commitedOn', { date: formatDate(new Date((commit.time as unknown as number) * 1000)) })}
           </div>
           <div>
-            <span>{`${commit.parentOids?.length} parent(s)`}</span>{' '}
+            <span>{t('gitDiff.commitParents', { number: commit.parentOids?.length })}</span>{' '}
             {commit.parentOids?.map((id) => (
               <SC.StyledSpan key={id} sx={{ color: blue[800] }}>
                 {`#${id.substring(0, 8)} `}
@@ -144,10 +146,10 @@ export const GitDiff = (): JSX.Element => {
           onChange={(_e, newAlignment) => setSplitView(newAlignment === 'Side-by-side')}
         >
           <ToggleButton sx={{ textTransform: 'none' }} value={'Inline'}>
-            {'Inline'}
+            {t('gitDiff.inLine')}
           </ToggleButton>
           <ToggleButton sx={{ textTransform: 'none' }} value={'Side-by-side'}>
-            {'Side-by-side'}
+            {t('gitDiff.sideBySide')}
           </ToggleButton>
         </ToggleButtonGroup>
       </SC.DiffViewOptions>
@@ -193,6 +195,6 @@ export const GitDiff = (): JSX.Element => {
       </SC.DiffViewContainer>
     </>
   ) : (
-    <SC.Placeholder>{'No commit selected or commit information could not be loaded.'}</SC.Placeholder>
+    <SC.Placeholder>{t('gitDiff.noCommit')}</SC.Placeholder>
   );
 };

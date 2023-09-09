@@ -11,8 +11,10 @@ import { FileNode, RouterQueryType } from 'utils/types';
 import { convertSelectionRangeToString, getFileFolderPath } from 'utils/utils';
 import * as SC from './styled-components';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 
 export const SearchResults = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -206,10 +208,10 @@ export const SearchResults = (): JSX.Element => {
     <>
       <SC.PaginationContainer>
         <FormControl>
-          <InputLabel>{'Size'}</InputLabel>
+          <InputLabel>{t('searchResults.size')}</InputLabel>
           <Select
             value={searchSize}
-            label={'Size'}
+            label={t('searchResults.size')}
             onChange={(e) => {
               setSearchStart(0);
               setSearchSize(e.target.value as number);
@@ -371,7 +373,7 @@ export const SearchResults = (): JSX.Element => {
             </SC.StyledDiv>
           </SC.StyledTreeView>
         ) : (
-          <SC.Placeholder>{'No results'}</SC.Placeholder>
+          <SC.Placeholder>{t('searchResults.noResults')}</SC.Placeholder>
         )}
       </SC.ResultsContainer>
     </>

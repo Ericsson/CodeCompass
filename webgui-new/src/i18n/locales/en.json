@@ -1,0 +1,359 @@
+{
+  "index": {
+    "title": "Click on a project to start using CodeCompass!"
+  },
+  "welcome": {
+    "title": "CodeCompass",
+    "desc": "CodeCompass is a pluginable code comprehension tool which helps you to understand large code bases.",
+    "newRelease": "Highlights of the new release",
+    "features": {
+      "n1": "Pluginable interface",
+      "n2": "New icon set",
+      "n3": "Faster/parallel parsing of C/C++ files",
+      "n4": "New Git Navigation/Commit View",
+      "n5": "Faster diagram generation"
+    },
+    "featureHighlights": "Feature highlights",
+    "infoTree": {
+      "title": "Info tree",
+      "desc": "Info Tree shows different information about given language elements such as its name, qualified name, and place of definition."
+    },
+    "codeBites": {
+      "title": "CodeBites",
+      "desc": "By CodeBites diagram one can inspect the source code without loosing the visited path. CodeBites can be called on functions, variables, classes or macros. In each case the definition of the element is placed in a graph (tree) node."
+    },
+    "metrics": {
+      "title": "Metrics",
+      "desc": "Spot your most problematic modules by asking for Metrics for a directory. A treemap view will show the the distribution of codechecker faults or McCabe complexity organized by directory."
+    },
+    "diagrams": {
+      "title": "Diagrams",
+      "desc": "CodeCompass can display many diagrams:",
+      "types": {
+        "n1": "Function call diagram",
+        "n2": "UML class diagram",
+        "n3": "Collaboration diagram",
+        "n4": "CodeBites",
+        "n5": "etc."
+      }
+    },
+    "revControl": {
+      "title": "Revision Control Navigator",
+      "desc": "The revision control navigator allows to search in the GIT repositories, visualize branches and merges, list and show commit diffs."
+    }
+  },
+  "userGuide": {
+    "title": "User guide",
+    "header": {
+      "title": "Header",
+      "desc": "The settings menu that provides various search types can be opened by clicking the Gear icon next to the first search box. The application now also supports dark mode. To switch between light and dark mode, click the Sun or Moon icon in the top right corner of the header."
+    },
+    "navigation": {
+      "title": "Navigation",
+      "desc": "You can switch between projects by using the select menu in the header. The accordion menu on the left contains the same options as before: File manager, Search results, Info tree and Revision control navigator.\nThe tab menu contains the following menu points: Welcome, Code, Metrics, Diagrams, Git diff, User guide and Credits",
+      "tabs": {
+        "n1": "The Welcome tab contains an introduction to CodeCompass and its features.",
+        "n2": "The Code tab displays the parse status, name, path and contents of the currently selected file.",
+        "n3": "The Metrics tab shows the generated metrics of a directory.",
+        "n4": "The Diagrams tab is used to display and inspect the generated diagrams.",
+        "n5": "The Git diff tab displays detailed commit information, diffs and file changes.",
+        "n6": "The Credits tab shows the members of the project and their contribution."
+      }
+    },
+    "fileManager": {
+      "title": "File manager",
+      "desc1": "The file manager supports a tree view and an explorer view. You can switch between these views using the Tree checkbox. All files and folders from the current project can be found here, represented by different icons. To make navigation easier, the explorer view provides a Jump to root and Jump to source button which can be used to navigate to the root and source directories respectively.",
+      "desc2": "The names of the files are color-coded based on their parse status: green if fully parsed, orange if partially parsed, and no color if the file has not been parsed. If you click on a file, its contents will be displayed in the Code tab."
+    },
+    "searchResults": {
+      "title": "Search results",
+      "desc1": "For searching through the code base, you can use the three search boxes in the header. It is mandatory to provide an input for the first search box, as it is a regular search query. The file and path filters can be used to narrow your search results down.",
+      "desc2": "Additionally, clicking the Gear icon next to the first box will show the settings menu with more search options. Selecting Text search or Definition search will allow you to also choose a specific language for your search. Furthermore, at Definition search you can also filter the types of definitions you want to search for. The Info icons next to the search boxes display additional information about each type of search if you hover over them.",
+      "desc3": "After setting the desired options and search queries, hit the Enter key to display the results in the Search results accordion. The results are grouped by directories and files. You can change the number of results shown at a time with the Size select menu. To navigate to another search page, use the arrows buttons. Clicking on a search result will navigate you to its location in the code."
+    },
+    "diagrams": {
+      "title": "Diagrams",
+      "desc1": "You can generate diagrams for folders, files, and a selection of source elements. Right click on a file or folder in the file manager or a source element in the code, and hover over the Diagrams option for the available diagrams. After clicking on a diagram, the result will be visible in the Diagrams tab.",
+      "desc2": "At the diagrams tab, you can click on a diagram node to generate a new diagram for the entity represented by the node. This will also navigate you to its location in the code or file manager, depending if it was a file, folder or source element. The options at the bottom of the screen can be used to view the diagram legend, export the diagram SVG or download it as an image. The diagram can be zoomed in/out and panned, both using the cursor and the +, Reset and - buttons at the bottom right of the screen.",
+      "desc3": "For visualizing source elements there is an additional type of diagram, called CodeBites, which can be used to connect the various source elements together in the code using their definition. Click on a new source element, e.g. variable or function, to expand the diagram and connect its definition. Note that exporting or downloading the diagram is not supported for CodeBites."
+    },
+    "metrics": {
+      "title": "Metrics",
+      "desc1": "Metrics generation is available for directories. Right click on a directory in the file manager and select Metrics. This will navigate you to the Metrics tab where a tree map will be drawn representing the number of code lines with color-coded rectangles. Hovering over the rectangles will show you how many lines of code that file or directory has in total - the larger the number, the darker the rectangle.",
+      "desc2": "You can regenerate the tree map by selecting different options using the select menus and clicking Draw metrics. To generate a new tree map for a directory, either click on it inside the tree map or in the directory path displayed above the tree map."
+    },
+    "infoTree": {
+      "title": "Info tree",
+      "desc1": "The info tree is used to inspect source elements, such as functions, variables or macros, and see their references in the project, like usages. To select a source element, click on it inside the code displayed in the Code tab, and its references will be visible in the Info tree accordion. Click on a reference to jump to its location in the code or click on the name of the current source element at the top of the info tree to navigate back to it. After navigating to a reference, you can click on it again in the code to view its info tree.",
+      "desc2": "You can also inspect the references of each file, e.g. functions, using the File references menu next to the file name and path, which is visible in the Code and Diagrams tabs. Click on a reference to jump to its location.",
+      "desc3": "Additionally, you can right click on a source element in the code to jump to its definition, inspect it as HTML, view its documentation or copy its selection link."
+    },
+    "revControl": {
+      "title": "Revision control navigator",
+      "desc1": "With the revision control navigator, you are able to browse through the git repositories, branches, tags and commits of the project. Hover over the Commit icon next to each commit label to display a detailed commit information.",
+      "desc2": "Clicking on the commit will display the diff and file changes related to that commit in the Git diff tab, where you can use an inline or side-by-side view to inspect the changes.",
+      "desc3": "Furthermore, right clicking on a file, folder or source element will allow you to display the Git blame view, to see which commit is responsible for that change. You can close this view by clicking Hide git blame above the code. Click on a commit in the git blame view to display it in the Git diff tab."
+    }
+  },
+  "credits": {
+    "projectMembers": {
+      "title": "Project members",
+      "n1": {
+        "name": "Zoltán Borók-Nagy",
+        "contribution": "C++ plugin"
+      },
+      "n2": {
+        "name": "Tibor Brunner",
+        "contribution": "Parser & Service infrastructure, C++ plugin, Metrics plugin, Web GUI, Diagrams"
+      },
+      "n3": {
+        "name": "Máté Cserép",
+        "contribution": "Parser infrastructure, C++ plugin, CodeBites, Diagrams"
+      },
+      "n4": {
+        "name": "Tamás Cséri",
+        "contribution": "Git plugin"
+      },
+      "n5": {
+        "name": "Márton Csordás",
+        "contribution": "Build system, Parser & Service infrastructure, Web GUI"
+      },
+      "n6": {
+        "name": "Anett Fekete",
+        "contribution": "C++ plugin"
+      },
+      "n7": {
+        "name": "Gábor Alex Ispánovics",
+        "contribution": "C++ plugin, Search plugin"
+      },
+      "n8": {
+        "name": "Zoltán Porkoláb",
+        "contribution": "Project owner, C++ expert"
+      },
+      "n9": {
+        "name": "Richárd Szalay",
+        "contribution": "C++ plugin, Webserver"
+      },
+      "n10": {
+        "name": "Deme Maráki",
+        "contribution": "New Web GUI"
+      }
+    },
+    "thanks": {
+      "title": "Thanks for Support",
+      "text": "Thanks for MTAS and MiniLink for support!"
+    },
+    "specialThanks": {
+      "title": "Special Thanks",
+      "text": "Special thanks to the Coffee Machine!"
+    }
+  },
+  "project": {
+    "notFound": "No project found.",
+    "backToHome": "Back to home"
+  },
+  "projectSelect": "Project",
+  "tabMenu": {
+    "welcome": "Welcome",
+    "code": "Code",
+    "metrics": "Metrics",
+    "diagrams": "Diagrams",
+    "gitDiff": "Git diff",
+    "userGuide": "User guide",
+    "credits": "Credits"
+  },
+  "accordionMenu": {
+    "fileManager": "File manager",
+    "searchResults": "Search results",
+    "infoTree": "Info tree",
+    "revisionControl": "Revision control navigator"
+  },
+  "searchSettings": {
+    "methods": {
+      "expression": "Search by expression",
+      "fileRegex": "File name filter regex",
+      "pathRegex": "Path filter regex"
+    },
+    "options": {
+      "textOption": "Text search",
+      "definitionOption": "Definition search",
+      "fileOption": "File name search",
+      "logOption": "Log search"
+    },
+    "types": {
+      "type": "Type",
+      "function": "Function",
+      "constant": "Constant",
+      "variable": "Variable",
+      "field": "Field",
+      "label": "Label",
+      "macro": "Macro",
+      "module": "Module"
+    },
+    "menu": {
+      "searchOptions": "Search options",
+      "languages": "Languages",
+      "types": "Types",
+      "all": "All",
+      "any": "Any",
+      "other": "Other"
+    },
+    "tooltips": {
+      "anyTooltip": "In case of \"Any\", search happens in every file, not only in listed ones.",
+      "searchOptionTooltip": {
+        "textAndDefinition": "For <b>\"Text search\"</b> and <b>\"Definition search\"</b> you can use wildcards, regex, and logical operators:",
+        "phrases": "<b>Phrases:</b> a Phrase is a group of words surrounded by double quotes such as \"hello dolly\". A Phrase query matches if the words are next to each other in the particular order.",
+        "wildcars": "<b>Wildcards:</b> single and multiple character wildcard searches within single terms.<br />Examples: *test te?t test* te*t<br /><b>Note:</b> you cannot use wildcard searches within phrase queries!",
+        "regex": "<b>Regular Expressions:</b> matching a pattern between forward slashes.<br />Example: /[mb]oat/",
+        "boolean": "<b>Boolean Operators:</b> Boolean operators allow terms to be combined through logic operators.<br />We support AND, \"+\", OR, NOT and \"-\" as Boolean operators. (Note: Boolean operators must be ALL CAPS)",
+        "booleanOR": "<b>OR:</b> The OR operator links two terms and finds a matching document if either of the terms exist in a document. If there is no Boolean operator between two terms, the OR operator is used.<br />Example: \"some text\" OR other",
+        "booleanAND": "<b>AND:</b> The AND operator matches documents where both terms exist anywhere in the text of a single document.<br />Example: \"some text\" AND other",
+        "escaping": "<b>Escaping Special Characters:</b> The current list special characters are: + - && || ! ( ) {} [ ] ^ \" ~ * ? :  /<br /><b>The escape character is the \"\" (back slash).</b>",
+        "fileSearch": "In <b>\"File name search\"</b> you can use a regular expression for matching on full (absolute) path of files in the database.<br />Example: /path/.*/te?t.cpp",
+        "logSearch": "For the documentation of <b>\"Log search\"</b> please see the user manual."
+      },
+      "fileRegexTooltip": "This filter is a regular expression of file names. <br /> Example: .*cpp",
+      "pathRegexTooltip": "This filter is a regular expression of directory paths. <br /> Example: /path/to/source/subdir/.*"
+    }
+  },
+  "fileManager": {
+    "treeView": "Tree view",
+    "jumpTo": "Jump to:"
+  },
+  "fileName": {
+    "parseStatus": {
+      "full": "Fully parsed",
+      "partial": "Partially parsed",
+      "noParse": "Not parsed"
+    },
+    "buildLogs": {
+      "title": "Build logs",
+      "type": "Type",
+      "message": "Message",
+      "from": "From (Ln:Col)",
+      "to": "To (Ln:Col)",
+      "noBuildLogs": "No build logs for this file",
+      "messageTypes": {
+        "unknown": "Unknown",
+        "error": "Error",
+        "fatalError": "FatalError",
+        "warning": "Warning",
+        "note": "Note",
+        "codingRule": "CodingRule"
+      }
+    },
+    "fileRefs": {
+      "title": "File references"
+    },
+    "hideGitBlame": "Hide git blame",
+    "noFile": "No file selected"
+  },
+  "fileContextMenu": {
+    "metrics": "Metrics",
+    "diagrams": "Diagrams",
+    "gitBlame": "Git blame"
+  },
+  "editorContextMenu": {
+    "diagrams": "Diagrams",
+    "codeBites": "CodeBites",
+    "gitBlame": "Git blame",
+    "docs": "Documentation",
+    "ast": "Show AST HTML",
+    "selection": "Get permalink to selection",
+    "jumpToDef": "Jump to definition",
+    "copyNotification": "Selection link copied to clipboard!",
+    "noDocs": "No documentation available for this node",
+    "noAST": "No AST HTML available for this node"
+  },
+  "gitBlame": {
+    "onDate": "on {{date}}",
+    "commitedOn": "Commited on {{date}}"
+  },
+  "searchResults": {
+    "size": "Size",
+    "noResults": "No results"
+  },
+  "infoTree": {
+    "noNode": "No node selected"
+  },
+  "diagrams": {
+    "noDiagram": "No file/directory/node selected. Right click on a file/directory in the file manager or a node in the editor to generate diagrams.",
+    "legend": "Legend",
+    "exportSVG": "Export SVG",
+    "downloadImg": "Download image",
+    "reset": "Reset",
+    "copyNotification": "Copied to clipboard"
+  },
+  "metrics": {
+    "noMetrics": "No directory selected. Right click on a directory in the file manager to generate Metrics.",
+    "fileType": "File type",
+    "sizeDimension": "Size dimension",
+    "drawMetrics": "Draw metrics"
+  },
+  "revisionControl": {
+    "noRepos": "No repositories available",
+    "repoList": "List of repositores",
+    "repoTitle": "Repository of {{repoName}} ({{repoPath}})",
+    "branches": "Branches",
+    "tags": "Tags",
+    "commitsInBranch": "Commits in {{branch}}",
+    "commitsInTag": "Commits in {{tag}}",
+    "commitedOn": "Commited on {{date}}",
+    "loading": "Loading",
+    "loadMore": "Load more"
+  },
+  "gitDiff": {
+    "noCommit": "No commit selected or commit information could not be loaded.",
+    "commitedOn": ", Commited on {{date}}",
+    "commitParents": "{{number}} parent(s)",
+    "inLine": "Inline",
+    "sideBySide": "Side-by-side"
+  },
+  "referenceTypes": {
+    "DEFINITION": "Definition",
+    "DECLARATION": "Declaration",
+    "USAGE": "Usage",
+    "THIS_CALLS": "This calls",
+    "CALLS_OF_THIS": "Calls of this",
+    "CALLEE": "Callee",
+    "CALLER": "Caller",
+    "VIRTUAL_CALL": "Virtual call",
+    "FUNC_PTR_CALL": "Function pointer call",
+    "PARAMETER": "Parameters",
+    "LOCAL_VAR": "Local variables",
+    "RETURN_TYPE": "Return type",
+    "OVERRIDE": "Overrides",
+    "OVERRIDDEN_BY": "Overridden by",
+    "READ": "Reads",
+    "WRITE": "Writes",
+    "TYPE": "Type",
+    "ALIAS": "Aliases",
+    "INHERIT_FROM": "Inherits from",
+    "INHERIT_BY": "Inherited by",
+    "DATA_MEMBER": "Data member",
+    "METHOD": "Method",
+    "FRIEND": "Friends",
+    "UNDERLYING_TYPE": "Underlying type",
+    "ENUM_CONSTANTS": "Enum constants",
+    "EXPANSION": "Expansions",
+    "UNDEFINITION": "Undefinitions"
+  },
+  "fileReferenceTypes": {
+    "INCLUDES": "Includes",
+    "TYPES": "Types",
+    "FUNCTIONS": "Functions",
+    "MACROS": "Macros"
+  },
+  "diagramTypes": {
+    "FUNCTION_CALL": "Function call diagram",
+    "DETAILED_CLASS": "Detailed class diagram",
+    "CLASS_OVERVIEW": "Class overview diagram",
+    "CLASS_COLLABORATION": "Class collaboration diagram",
+    "COMPONENT_USERS": "Component Users",
+    "EXTERNAL_DEPENDENCY": "This module depends on",
+    "EXTERNAL_USERS": "Users of this module",
+    "INCLUDE_DEPENDENCY": "Include Dependency",
+    "INTERFACE": "Interface Diagram",
+    "SUBSYSTEM_DEPENDENCY": "Internal architecture of this module"
+  }
+}

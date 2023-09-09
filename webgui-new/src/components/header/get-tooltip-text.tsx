@@ -1,90 +1,53 @@
 import { SearchMethods } from 'enums/search-enum';
+import { Trans } from 'react-i18next';
 import React from 'react';
 
 export const getTooltipText = (value: string): string | React.ReactNode => {
   switch (value) {
     case SearchMethods.FILE_REGEX:
-      return (
-        <>
-          This filter is a regular expression of file names.
-          <br />
-          Example: .*cpp
-        </>
-      );
+      return <Trans i18nKey={'searchSettings.tooltips.fileRegexTooltip'} components={{ b: <b /> }} />;
     case SearchMethods.PATH_REGEX:
-      return (
-        <>
-          This filter is a regular expression of directory paths.
-          <br />
-          Example: /path/to/source/subdir/.*
-        </>
-      );
+      return <Trans i18nKey={'searchSettings.tooltips.pathRegexTooltip'} components={{ b: <b /> }} />;
     case SearchMethods.EXPRESSION:
       return (
         <>
           <div>
-            For <b>&quot;Text search&quot;</b> and <b>&quot;Definition search&quot;</b> you can use wildcards, regex,
-            and logical operators:
+            <Trans
+              i18nKey={'searchSettings.tooltips.searchOptionTooltip.textAndDefinition'}
+              components={{ b: <b /> }}
+            />
           </div>
-          <ul>
+          <ul style={{ listStyle: 'inside' }}>
             <li>
-              <b>Phrases:</b> a Phrase is a group of words surrounded by double quotes such as &quot;hello dolly&quot;.
-              A Phrase query matches if the words are next to each other in the particular order.
+              <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.phrases'} components={{ b: <b /> }} />
             </li>
             <li>
-              <b>Wildcards:</b> single and multiple character wildcard searches within single terms.
-              <br />
-              Examples: *test te?t test* te*t
-              <br />
-              <b>Note:</b> you cannot use wildcard searches within phrase queries!
+              <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.wildcars'} components={{ b: <b /> }} />
             </li>
             <li>
-              <b>Regular Expressions:</b> matching a pattern between forward slashes.
-              <br />
-              Example: /[mb]oat/
+              <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.regex'} components={{ b: <b /> }} />
             </li>
             <li>
-              <b>Boolean Operators:</b> Boolean operators allow terms to be combined through logic operators.
-              <br />
-              We support AND, &quot;+&quot;, OR, NOT and &quot;-&quot; as Boolean operators. (Note: Boolean operators
-              must be ALL CAPS)
-              <ul>
+              <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.boolean'} components={{ b: <b /> }} />
+              <ul style={{ listStyle: 'inside', marginLeft: '20px' }}>
                 <li>
-                  <b>OR:</b> The OR operator links two terms and finds a matching document if either of the terms exist
-                  in a document. If there is no Boolean operator between two terms, the OR operator is used.
-                  <br />
-                  Example: &quot;some text&quot; OR other
+                  <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.booleanOR'} components={{ b: <b /> }} />
                 </li>
                 <li>
-                  <b>AND:</b> The AND operator matches documents where both terms exist anywhere in the text of a single
-                  document.
-                  <br />
-                  Example: &quot;some text&quot; AND other
+                  <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.booleanAND'} components={{ b: <b /> }} />
                 </li>
               </ul>
             </li>
             <li>
-              <b>Escaping Special Characters:</b> The current list special characters are: + - && || ! ( ) {} [ ] ^
-              &quot; ~ * ? : \ /
-              <br />
-              <b>The escape character is the &quot;\&quot; (back slash).</b>
+              <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.escaping'} components={{ b: <b /> }} />
             </li>
           </ul>
           <div>
-            In <b>&quot;File name search&quot;</b> you can use a regular expression for matching on full (absolute) path
-            of files in the database.
-            <br />
-            Example: /path/.*/te?t\.cpp
+            <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.fileSearch'} components={{ b: <b /> }} />
           </div>
           <div>
-            For the documentation of <b>&quot;Log search&quot;</b> please see the user manual.
+            <Trans i18nKey={'searchSettings.tooltips.searchOptionTooltip.logSearch'} components={{ b: <b /> }} />
           </div>
-        </>
-      );
-    case 'Any':
-      return (
-        <>
-          In case of <i>Any</i>, search happens in every file, not only in listed ones.
         </>
       );
     default:

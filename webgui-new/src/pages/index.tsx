@@ -5,8 +5,10 @@ import { removeStore } from 'utils/store';
 import { AppContext } from 'global-context/app-context';
 import * as SC from 'themes/index-styles';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 const Home = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -29,7 +31,7 @@ const Home = (): JSX.Element => {
   return (
     <SC.OuterContainer>
       <SC.InnerContainer>
-        <SC.Title>{'Click on a project to start using CodeCompass!'}</SC.Title>
+        <SC.Title>{t('index.title')}</SC.Title>
         {appCtx.workspaces.length
           ? appCtx.workspaces.map((ws) => (
               <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>

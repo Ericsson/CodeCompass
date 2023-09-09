@@ -16,7 +16,8 @@
     "incremental": true,
     "baseUrl": "src",
     "paths": {
-      "@thrift-generated": ["../generated/index.ts"]
+      "@thrift-generated": ["../generated/index.ts"],
+      "@images/*": ["../public/images/*"]
     }
   },
   "ts-node": {

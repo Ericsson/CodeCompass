@@ -17,8 +17,10 @@ import { GitIcon } from 'components/custom-icon/custom-icon';
 import * as SC from './styled-components';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { useTranslation } from 'react-i18next';
 
 export const RevisionControl = (): JSX.Element => {
+  const { t } = useTranslation();
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
@@ -207,7 +209,11 @@ export const RevisionControl = (): JSX.Element => {
                   <div>{`#${commit.oid?.substring(0, 8)}`}</div>
                   <div>{commit.message}</div>
                   <div>{`${commit.author?.name} (${commit.author?.email})`}</div>
-                  <div>{`Commited on ${formatDate(new Date((commit.time as unknown as number) * 1000))}`}</div>
+                  <div>
+                    {t('revisionControl.commitedOn', {
+                      date: formatDate(new Date((commit.time as unknown as number) * 1000)),
+                    })}
+                  </div>
                 </SC.StyledDiv>
               }
               placement={'top-start'}
@@ -241,7 +247,7 @@ export const RevisionControl = (): JSX.Element => {
     <SC.OuterContainer>
       <SC.StyledDiv sx={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
         <GitIcon name={'repolist'} />
-        <div>{'List of repositories'}</div>
+        <div>{t('revisionControl.repoList')}</div>
       </SC.StyledDiv>
       <SC.StyledTreeView
         defaultExpandIcon={<ChevronRight />}
@@ -265,13 +271,15 @@ export const RevisionControl = (): JSX.Element => {
             nodeId={`${repo.id as string}`}
             key={repo.id as string}
             label={
-              <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Repository of ${repo.name} (${repo.path})`}</SC.StyledDiv>
+              <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
+                {t('revisionControl.repoTitle', { repoName: repo.name, repoPath: repo.path })}
+              </SC.StyledDiv>
             }
             icon={<GitIcon name={'repository'} />}
           >
             <SC.StyledTreeItem
               nodeId={`${repo.id as string}-branches`}
-              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Branches'}</SC.StyledDiv>}
+              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{t('revisionControl.branches')}</SC.StyledDiv>}
               icon={<GitIcon name={'branch'} />}
               onClick={() => loadBranches(repo.id as string)}
             >
@@ -280,7 +288,11 @@ export const RevisionControl = (): JSX.Element => {
                   <SC.StyledTreeItem
                     nodeId={`${repo.id as string}-${branch}`}
                     key={`${repo.id as string}-${branch}`}
-                    label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${branch}`}</SC.StyledDiv>}
+                    label={
+                      <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
+                        {t('revisionControl.commitsInBranch', { branch })}
+                      </SC.StyledDiv>
+                    }
                     icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, branch)}
                   >
@@ -294,17 +306,17 @@ export const RevisionControl = (): JSX.Element => {
                       onClick={() => loadCommits(repo.id as string, branch)}
                     >
                       <MoreHoriz />
-                      <SC.StyledDiv>{'Load more'}</SC.StyledDiv>
+                      <SC.StyledDiv>{t('revisionControl.loadMore')}</SC.StyledDiv>
                     </SC.Label>
                   </SC.StyledTreeItem>
                 ))
               ) : (
-                <div>{'Loading'}</div>
+                <div>{t('revisionControl.loading')}</div>
               )}
             </SC.StyledTreeItem>
             <SC.StyledTreeItem
               nodeId={`${repo.id as string}-tags`}
-              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{'Tags'}</SC.StyledDiv>}
+              label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{t('revisionControl.tags')}</SC.StyledDiv>}
               icon={<GitIcon name={'tag'} />}
               onClick={() => loadTags(repo.id as string)}
             >
@@ -313,7 +325,11 @@ export const RevisionControl = (): JSX.Element => {
                   <SC.StyledTreeItem
                     nodeId={`${repo.id as string}-${tag}`}
                     key={`${repo.id as string}-${tag}`}
-                    label={<SC.StyledDiv sx={{ fontSize: '0.85rem' }}>{`Commits in ${tag}`}</SC.StyledDiv>}
+                    label={
+                      <SC.StyledDiv sx={{ fontSize: '0.85rem' }}>
+                        {t('revisionControl.commitsInTag', { tag })}
+                      </SC.StyledDiv>
+                    }
                     icon={<GitIcon name={'commit'} />}
                     onClick={() => loadInitialCommits(repo.id as string, tag)}
                   >
@@ -327,12 +343,12 @@ export const RevisionControl = (): JSX.Element => {
                       onClick={() => loadCommits(repo.id as string, tag)}
                     >
                       <MoreHoriz />
-                      <SC.StyledDiv>{'Load more'}</SC.StyledDiv>
+                      <SC.StyledDiv>{t('revisionControl.loadMore')}</SC.StyledDiv>
                     </SC.Label>
                   </SC.StyledTreeItem>
                 ))
               ) : (
-                <div>{'Loading'}</div>
+                <div>{t('revisionControl.loading')}</div>
               )}
             </SC.StyledTreeItem>
           </SC.StyledTreeItem>
@@ -340,6 +356,6 @@ export const RevisionControl = (): JSX.Element => {
       </SC.StyledTreeView>
     </SC.OuterContainer>
   ) : (
-    <SC.Placeholder>{'No repositories available.'}</SC.Placeholder>
+    <SC.Placeholder>{t('revisionControl.noRepos')}</SC.Placeholder>
   );
 };

@@ -113,3 +113,15 @@ export const getLabels = async () => {
     return;
   }
 };
+
+export const getBuildLog = async (fileId: string) => {
+  if (!client) {
+    return [];
+  }
+  try {
+    return await client.getBuildLog(fileId);
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+};

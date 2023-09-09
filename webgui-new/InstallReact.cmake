@@ -15,6 +15,8 @@ endif()
 
 message("Installation of npm packages are finished.")
 
+message("Generating TypeScript files from Thrift...")
+
 # Generate TypeScript from Thrift
 execute_process(
   COMMAND bash -c "chmod +x thrift-codegen.sh"
@@ -23,6 +25,8 @@ execute_process(
 execute_process(
   COMMAND bash thrift-codegen.sh --thrift-source ${CMAKE_SOURCE_DIR}
   WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR}/app)
+
+message("Generating TypeScript files from Thrift finished.")
 
 message("Building React App...")
 
