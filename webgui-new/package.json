@@ -53,5 +53,8 @@
     "recharts": "^2.5.0",
     "sass": "^1.57.1",
     "thrift": "0.13.0-hotfix.1"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
