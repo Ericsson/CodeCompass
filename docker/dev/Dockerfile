@@ -25,7 +25,7 @@ RUN set -x && apt-get update -qq \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
-  llvm-10 clang-10 llvm-10-dev libclang-10-dev \
+  llvm-11 clang-11 llvm-11-dev libclang-11-dev \
   npm \
   thrift-compiler libthrift-dev \
   odb libodb-sqlite-dev libodb-pgsql-dev && \
