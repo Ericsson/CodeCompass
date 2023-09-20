@@ -15,7 +15,7 @@ be installed from the official repository of the given Linux distribution.
   is required. (Alternatively, you can compile with Clang.)
 - **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-10-dev`**, **`clang-10`**, **`libclang-10-dev`**: C++ parser uses
+- **`llvm-11-dev`**, **`clang-11`**, **`libclang-11-dev`**: C++ parser uses
   LLVM/Clang for parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
   Object Relation Mapping (ORM) system.
@@ -59,10 +59,20 @@ sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
 
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
-  llvm-10-dev clang-10 libclang-10-dev \
+  llvm-11-dev clang-11 libclang-11-dev \
   odb libodb-dev thrift-compiler libthrift-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
   libldap2-dev libgtest-dev npm
+```
+
+#### Ubuntu 22.04 ("Jammy Jellyfish") LTS
+
+```bash
+sudo apt install git curl wget cmake make libboost-all-dev \
+  g++ gcc-11-plugin-dev \
+  llvm-11-dev clang-11 libclang-11-dev \
+  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev exuberant-ctags doxygen \
+  libldap2-dev libgtest-dev
 ```
 
 #### Database engine support
@@ -94,6 +104,15 @@ sudo apt install libodb-sqlite-dev libsqlite3-dev
 sudo apt install libodb-pgsql-dev postgresql-server-dev-<version>
 ```
 
+##### Ubuntu 22.04 ("Jammy Jellyfish") LTS
+
+```bash
+# For SQLite database systems:
+sudo apt install libsqlite3-dev
+
+# For PostgreSQL database systems:
+sudo apt install postgresql-server-dev-14
+```
 
 ## Known issues
 Some third-party tools are present in the distribution's package manager in a
@@ -106,7 +125,7 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### ODB (for Ubuntu 18.04)
+### ODB (for Ubuntu 18.04, Ubuntu 22.04)
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
 For Ubuntu 18.04, the official release of ODB conflicts with the official
 compiler (GNU G++ 7) of the distribution. A newer version of ODB must be
@@ -153,7 +172,7 @@ time (depending on the machine one is using).
 > **Note:** now you may delete the *Build2* toolchain installed in the
 > `<build2_install_dir>` folder, if you do not need any longer.
 
-### Thrift (for Ubuntu 18.04)
+### Thrift (for Ubuntu 18.04, Ubuntu 22.04)
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. A suitable version of
 Thrift is, unfortunately, not part of the official Ubuntu repositories for
@@ -215,7 +234,7 @@ seen by CMake. Please set this environment before executing the build.
 ```bash
 export GTEST_ROOT=<gtest_install_dir>
 
-# If using Ubuntu 18.04:
+# If using Ubuntu 18.04 or Ubuntu 22.04:
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
 
@@ -239,8 +258,8 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<CodeCompass_install_dir> \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type> \
-  -DLLVM_DIR=/usr/lib/llvm-10/cmake \
-  -DClang_DIR=/usr/lib/cmake/clang-10
+  -DLLVM_DIR=/usr/lib/llvm-11/cmake \
+  -DClang_DIR=/usr/lib/cmake/clang-11
 
 # To specify linker for building CodeCompass use
 #   -DCODECOMPASS_LINKER=<path_to_linker>
