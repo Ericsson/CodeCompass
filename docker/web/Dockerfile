@@ -8,37 +8,43 @@ FROM codecompass:runtime as runtime
 #------------------------    EXECUTABLE CONTAINER   --------------------------#
 ###############################################################################
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # tzdata package is installed implicitly in the following command. This package
 # sets timezone interactively during the installation process. This environment
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
+COPY --from=runtime /packages /packages/
+
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
-    postgresql-server-dev-12 \
+    postgresql-server-dev-14 \
     default-jre \
     libgit2-dev \
     libldap-2.4-2 \
     libssl1.1 \
     libgvc6 \
-    libthrift-dev \
-    libodb-sqlite-dev \
-    libodb-pgsql-dev \
+    /packages/thrift-0.13-CodeCompass_0.1-1_amd64.deb \
+    /packages/odb-CodeCompass_0.1-1_amd64.deb \
     # To switch user and exec command.
     gosu \
     tini \
-    curl \
+    curl ca-certificates gpg \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
 
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
+RUN mkdir -p /etc/apt/keyrings \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
+    gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | \
+    tee /etc/apt/sources.list.d/nodesource.list \
+  && apt-get update \
+  && apt-get install -y nodejs
 
 ARG CC_GID=960
 ARG CC_UID=960

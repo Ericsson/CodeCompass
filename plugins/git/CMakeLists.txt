@@ -1,4 +1,4 @@
-find_package(Git2 REQUIRED)
+find_package(libgit2 REQUIRED)
 
 add_subdirectory(parser)
 add_subdirectory(service)

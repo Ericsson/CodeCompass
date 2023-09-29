@@ -1,4 +1,5 @@
 ARG CC_DATABASE=sqlite
+ARG INSTALL_COMMAND="apt-get install -qqy --no-install-recommends"
 
 ###############################################################################
 #-----------------------------    BUILD STAGE   ------------------------------#
@@ -15,11 +16,13 @@ ENV CC_DATABASE ${CC_DATABASE}
 ARG CC_BUILD_TYPE=Release
 ENV CC_BUILD_TYPE ${CC_BUILD_TYPE}
 
+ARG GIT_REPO="https://github.com/Ericsson/CodeCompass.git"
+
 RUN apt-get update -qq && \
     apt-get install --yes git
 
 # Download CodeCompass release.
-RUN git clone https://github.com/Ericsson/CodeCompass.git /CodeCompass
+RUN git clone ${GIT_REPO} /CodeCompass
 WORKDIR /CodeCompass
 RUN git checkout ${CC_VERSION}
 
@@ -38,30 +41,29 @@ RUN mkdir /CodeCompass-build && \
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # tzdata package is installed implicitly in the following command. This package
 # sets timezone interactively during the installation process. This environment
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
+ARG INSTALL_COMMAND
 
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
-    apt-get update -qq --yes && \
-    apt-get install -qq --yes --no-install-recommends \
-    postgresql-server-dev-12 \   
-    libodb-pgsql-dev; \
-    else \
-    apt-get update -qq && \
-    apt-get install -qq --yes --no-install-recommends \
-    libsqlite3-dev \
-    libodb-sqlite-dev; \
-    fi;
+COPY --from=builder /packages /packages/
+
+RUN apt-get update -qq && \
+  ${INSTALL_COMMAND} /packages/odb-CodeCompass_0.1-1_amd64.deb && \
+  if [ "pgsql" = "${CC_DATABASE}" ]; then \
+    ${INSTALL_COMMAND} postgresql-server-dev-14; \
+  else \
+    ${INSTALL_COMMAND} libsqlite3-dev; \
+  fi;
     
-RUN set -x && apt-get update -qq && \
-    apt-get install -qq --yes --no-install-recommends \
+RUN set -x && apt-get update -qq \
+  && ${INSTALL_COMMAND} \
     llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
@@ -70,19 +72,16 @@ RUN set -x && apt-get update -qq && \
     libgvc6 \
     libldap-2.4-2 \
     libmagic-dev \
-    libthrift-dev \
+    /packages/thrift-0.13-CodeCompass_0.1-1_amd64.deb \
     ctags \
-    tini && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/ && \
-    set +x
-
+    tini \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/ \
+  && set +x
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass
 
 ENV PATH="/codecompass/bin:$PATH"
 
-
 ENTRYPOINT ["tini", "--"]
-
