@@ -511,7 +511,7 @@ Diagram CppLspServiceHandler::fileDiagram(
   };
 
   auto diagramTypeIt = diagramTypes.find(params_.diagramType);
-  if(diagramTypeIt == diagramTypes.end())
+  if (diagramTypeIt == diagramTypes.end())
     return std::string();
 
   auto graph = _cppService.returnFileDiagram(
@@ -555,7 +555,7 @@ Diagram CppLspServiceHandler::nodeDiagram(
   };
 
   auto diagramTypeIt = diagramTypes.find(params_.diagramType);
-  if(diagramTypeIt == diagramTypes.end())
+  if (diagramTypeIt == diagramTypes.end())
     return std::string();
 
   auto graph = _cppService.returnDiagram(astNodeInfo.id, diagramTypeIt->second);
@@ -589,7 +589,7 @@ void CppLspServiceHandler::addLocationToIdInDiagram(
       visited[nodeInfo.id] = true;
       for (const auto& child : graph_.getChildren(nodeInfo.id))
       {
-        if(visited.find(child) == visited.end())
+        if (visited.find(child) == visited.end())
         {
           unvisited.push(child);
           visited[child] = false;
@@ -597,7 +597,7 @@ void CppLspServiceHandler::addLocationToIdInDiagram(
       }
       for (const auto& parent : graph_.getParents(nodeInfo.id))
       {
-        if(visited.find(parent) == visited.end())
+        if (visited.find(parent) == visited.end())
         {
           unvisited.push(parent);
           visited[parent] = false;
@@ -636,7 +636,7 @@ void CppLspServiceHandler::addPathToIdInFileDiagram(
       visited[fileInfo.id] = true;
       for (const auto& child : graph_.getChildren(fileInfo.id))
       {
-        if(visited.find(child) == visited.end())
+        if (visited.find(child) == visited.end())
         {
           unvisited.push(child);
           visited[child] = false;
@@ -644,7 +644,7 @@ void CppLspServiceHandler::addPathToIdInFileDiagram(
       }
       for (const auto& parent : graph_.getParents(fileInfo.id))
       {
-        if(visited.find(parent) == visited.end())
+        if (visited.find(parent) == visited.end())
         {
           unvisited.push(parent);
           visited[parent] = false;
