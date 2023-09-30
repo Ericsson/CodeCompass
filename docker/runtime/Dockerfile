@@ -54,12 +54,22 @@ ENV CC_DATABASE ${CC_DATABASE}
 
 COPY --from=builder /packages /packages/
 
-RUN apt-get update -qq && \
-  ${INSTALL_COMMAND} /packages/odb-CodeCompass_0.1-1_amd64.deb && \
-  if [ "pgsql" = "${CC_DATABASE}" ]; then \
-    ${INSTALL_COMMAND} postgresql-server-dev-14; \
+RUN apt-get update -qq \
+  && ${INSTALL_COMMAND} \
+    /packages/libodb-2.5.deb \
+    /packages/libodb-dev.deb \
+  && if [ "pgsql" = "${CC_DATABASE}" ]; then \
+    ${INSTALL_COMMAND} \
+      libpq5 \
+      /packages/libodb-pgsql-2.5.deb \
+      /packages/libodb-pgsql-dev.deb \
+      postgresql-server-dev-14; \
   else \
-    ${INSTALL_COMMAND} libsqlite3-dev; \
+    ${INSTALL_COMMAND} \
+      /packages/libsqlite-3-1.deb \
+      /packages/libodb-sqlite-2.5.deb \
+      /packages/libodb-sqlite-dev.deb \
+      libsqlite3-dev; \
   fi;
     
 RUN set -x && apt-get update -qq \
@@ -68,12 +78,13 @@ RUN set -x && apt-get update -qq \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \
-    libssl1.1 \
+    libssl3 \
     libgvc6 \
-    libldap-2.4-2 \
+    libldap-2.5-0 \
     libmagic-dev \
-    /packages/thrift-0.13-CodeCompass_0.1-1_amd64.deb \
-    ctags \
+    /packages/libthrift-0.13.0.deb \
+    /packages/libthrift-dev.deb \
+    universal-ctags \
     tini \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \

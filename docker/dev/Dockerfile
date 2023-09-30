@@ -48,13 +48,10 @@ RUN ${INSTALL_COMMAND} \
   llvm-11-dev \
   libclang-11-dev
 
-# Install Thrift.
+# Install Thrift, ODB and SQLite and Postgres libs.
 RUN ${INSTALL_COMMAND} \
-  /packages/thrift-0.13-CodeCompass_0.1-1_amd64.deb
-
-# Install ODB and SQLite and Postgres libs.
-RUN ${INSTALL_COMMAND} \
-  /packages/odb-CodeCompass_0.1-1_amd64.deb \
+  libpq5 \
+  /packages/*.deb \
   libsqlite3-dev \
   postgresql-server-dev-14
 

@@ -1,5 +1,5 @@
 # Find LLVM
-find_package(LLVM 11.1 REQUIRED)
+find_package(LLVM 11.1 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 

@@ -25,11 +25,17 @@ RUN set -x && apt-get update -qq \
     postgresql-server-dev-14 \
     default-jre \
     libgit2-dev \
-    libldap-2.4-2 \
-    libssl1.1 \
+    libldap-2.5-0 \
+    libssl3 \
     libgvc6 \
-    /packages/thrift-0.13-CodeCompass_0.1-1_amd64.deb \
-    /packages/odb-CodeCompass_0.1-1_amd64.deb \
+    /packages/libthrift-0.13.0.deb \
+    /packages/libthrift-dev.deb \
+    /packages/libsqlite-3-1.deb \
+    /packages/libodb-sqlite-2.5.deb \
+    /packages/libodb-sqlite-dev.deb \
+    libpq5 \
+    /packages/libodb-pgsql-2.5.deb \
+    /packages/libodb-pgsql-dev.deb \
     # To switch user and exec command.
     gosu \
     tini \
