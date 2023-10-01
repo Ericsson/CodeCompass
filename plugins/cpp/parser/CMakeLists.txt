@@ -1,5 +1,5 @@
 # Set LLVM version to 11.1 if using Ubuntu 22
-execute_process(COMMAND bash -c /get_ubuntu_version.sh
+execute_process(COMMAND bash -c get_ubuntu_version.sh
         OUTPUT_VARIABLE UBUNTU_VERSION
         RESULT_VARIABLE VERSION_RESULT
         OUTPUT_STRIP_TRAILING_WHITESPACE)
