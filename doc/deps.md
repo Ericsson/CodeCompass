@@ -18,7 +18,7 @@ be installed from the official repository of the given Linux distribution.
 - **`llvm-11-dev`**, **`clang-11`**, **`libclang-11-dev`**: C++ parser uses
   LLVM/Clang for parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
-  Object Relation Mapping (ORM) system.
+  Object Relation Mapping (ORM) system.  
   ***See [Known issues](#known-issues)!***
 - **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the
   corresponding ODB development library, in case SQLite database system is
@@ -37,11 +37,11 @@ be installed from the official repository of the given Linux distribution.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
 - **`node`** and **`npm`**: For building and developing the CodeCompass web GUI
-  and managing dependencies.
+  and managing dependencies.  
   ***See [Known issues](#known-issues)!***
 - **`ctags`**: For search parsing.
 - **`doxygen`**: For documentation generation.
-- **`libgtest-dev`**: For testing CodeCompass.
+- **`libgtest-dev`**: For testing CodeCompass.  
   ***See [Known issues](#known-issues)!***
 - **`libldap2-dev`**: For LDAP authentication.
 

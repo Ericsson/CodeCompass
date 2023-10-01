@@ -18,6 +18,11 @@ public:
   void getWorkspaces(std::vector<WorkspaceInfo>& _return) override;
 
 private:
+  /**
+   * This function defines an ordering between WorkspaceInfo objects by name.
+   */
+  static bool workspaceInfoOrder(const WorkspaceInfo& left, const WorkspaceInfo& right);
+
   std::string _workspace;
 };
 
