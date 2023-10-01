@@ -1,4 +1,4 @@
-import { ThemeProvider } from '@mui/material';
+import { ThemeProvider, useMediaQuery } from '@mui/material';
 import React, { createContext, useEffect, useState } from 'react';
 import { darkTheme, lightTheme } from 'themes/theme';
 import { getStore, setStore } from 'utils/store';
@@ -23,11 +23,12 @@ export const ThemeContext = createContext<ThemeContextType>({
 
 export const ThemeContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const [theme, setTheme] = useState<'light' | 'dark' | undefined>(undefined);
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
   useEffect(() => {
     const { storedTheme } = getStore();
-    setTheme(storedTheme ?? 'light');
-  }, []);
+    setTheme(storedTheme ?? (prefersDarkMode ? 'dark' : 'light'));
+  }, [prefersDarkMode]);
 
   useEffect(() => {
     setStore({
