@@ -10,6 +10,7 @@
 #include <clang/Basic/SourceManager.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/ParentMapContext.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <model/cppastnode.h>
@@ -1435,7 +1436,7 @@ private:
   {
     while (expr_)
     {
-      clang::ASTContext::DynTypedNodeList parents
+      clang::DynTypedNodeList parents
         = _astContext.getParents(*expr_);
 
       const clang::ast_type_traits::DynTypedNode& parent = parents[0];

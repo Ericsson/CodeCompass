@@ -25,8 +25,7 @@ public final class SuggestionHandler implements AutoCloseable {
   /**
    * Logger.
    */
-  private static final Logger _log = Logger.getLogger(SuggestionHandler.class
-    .getName());
+  private static final Logger _log = Logger.getGlobal();
   /**
    * Filename suggester.
    */

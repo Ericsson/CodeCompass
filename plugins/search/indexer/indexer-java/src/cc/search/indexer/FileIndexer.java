@@ -16,8 +16,7 @@ public class FileIndexer extends AbstractIndexer {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(FileIndexer.class
-    .getName());
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * File path to index.
    */

@@ -18,6 +18,7 @@ public:
   virtual ~GitParser();
   virtual bool parse() override;
 private:
+  static int getSubmodulePaths(git_submodule *sm, const char *smName, void *payload);
   util::DirIterCallback getParserCallback();
 };
 

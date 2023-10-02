@@ -116,6 +116,8 @@ public:
     const GitDiffOptions& options_,
     const bool isCompact_ = false) override;
 
+  virtual bool isRepositoryAvailable() override;
+
 private:
   /**
    * Returns the absolute path of the repository identified by repository id.

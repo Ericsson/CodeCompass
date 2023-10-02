@@ -70,7 +70,11 @@ SearchParser::SearchParser(ParserContext& ctx_) : AbstractParser(ctx_),
     _indexProcess.reset(new IndexerProcess(
       _searchDatabase,
       ctx_.compassRoot,
-      IndexerProcess::OpenMode::Create));
+      IndexerProcess::OpenMode::Create,
+      IndexerProcess::LockMode::Simple,
+      ctx_.options.count("logtarget")
+        ? ctx_.options["logtarget"].as<std::string>()
+        : ""));
   }
   catch (const IndexerProcess::Failure& ex_)
   {
@@ -128,7 +132,7 @@ util::DirIterCallback SearchParser::getParserCallback(const std::string& path_)
       if (std::find(_skipDirectories.begin(), _skipDirectories.end(),
             canonicalPath) != _skipDirectories.end())
       {
-        LOG(info) << "Skipping " << currPath_ << " because it was listed in "
+        LOG(trace) << "Skipping " << currPath_ << " because it was listed in "
           "the skipping directory flag of the search parser.";
         return false;
       }
@@ -184,7 +188,7 @@ bool SearchParser::shouldHandle(const std::string& path_)
     if (normPath.length() >= sufflen &&
         normPath.compare(normPath.length() - sufflen, sufflen, suff) == 0)
     {
-      LOG(info) << "Skipping " << path_;
+      LOG(trace) << "Skipping " << path_;
       return false;
     }
   }
@@ -202,7 +206,7 @@ bool SearchParser::shouldHandle(const std::string& path_)
 
   if (!_ctx.srcMgr.isPlainText(path_))
   {
-    LOG(info) << "Skipping " << path_ << " because it is not plain text.";
+    LOG(trace) << "Skipping " << path_ << " because it is not plain text.";
     return false;
   }
 

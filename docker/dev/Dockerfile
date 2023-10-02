@@ -11,6 +11,8 @@ RUN set -x && apt-get update -qq \
   cmake make \
   default-jdk \
   ctags \
+  curl \
+  doxygen \
   gcc-9 gcc-9-plugin-dev g++-9 \
   libboost-filesystem-dev \
   libboost-log-dev \
@@ -19,15 +21,19 @@ RUN set -x && apt-get update -qq \
   libgit2-dev \
   libgraphviz-dev \
   libgtest-dev \
+  libldap2-dev \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
-  llvm-10 clang-10 llvm-10-dev libclang-10-dev \
+  llvm-11 clang-11 llvm-11-dev libclang-11-dev \
   npm \
   thrift-compiler libthrift-dev \
   odb libodb-sqlite-dev libodb-pgsql-dev && \
   ln -s /usr/bin/gcc-9 /usr/bin/gcc && \
   ln -s /usr/bin/g++-9 /usr/bin/g++
+
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 # Build GTest.
 RUN cd /usr/src/googletest && \
@@ -49,6 +55,7 @@ ENV DATABASE=sqlite \
     INSTALL_DIR=/CodeCompass/install \
     SOURCE_DIR=/CodeCompass/CodeCompass \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
-    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite"
+    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
+    WITH_AUTH="plain;ldap"
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"
