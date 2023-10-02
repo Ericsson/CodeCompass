@@ -78,11 +78,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install npm
-        run: npm init
-             npm install
-
-
       - name: Running linter
         run: npm run lint
 
