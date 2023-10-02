@@ -1,10 +1,11 @@
 include_directories(
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/model/include
-  ${BOOST_INCLUDE_DIRS})
+  ${PROJECT_SOURCE_DIR}/model/include)
 
 include_directories(SYSTEM
-  ${ODB_INCLUDE_DIRS})
+  ${Boost_INCLUDE_DIRS}
+  ${ODB_INCLUDE_DIRS}
+  ${GRAPHVIZ_INCLUDE_DIRS})
 
 add_library(util SHARED
   src/dbutil.cpp
@@ -19,13 +20,16 @@ add_library(util SHARED
 
 target_link_libraries(util
   model
-  gvc
-  ${Boost_LIBRARIES})
+  ${Boost_LIBRARIES}
+  ${ODB_LIBRARIES}
+  ${GRAPHVIZ_GVC_LIBRARY}
+  ${GRAPHVIZ_CGRAPH_LIBRARY})
 
 string(TOLOWER "${DATABASE}" _database)
 if (${_database} STREQUAL "sqlite")
+  find_package(SQLite3)
   target_link_libraries(util
-    sqlite3)
+    ${SQLite3_LIBRARIES})
 endif()
 
 install(TARGETS util DESTINATION ${INSTALL_LIB_DIR})

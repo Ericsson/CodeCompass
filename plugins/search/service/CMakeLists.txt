@@ -9,6 +9,7 @@ include_directories(
   ${PLUGIN_DIR}/model/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 # Generate thrift files
