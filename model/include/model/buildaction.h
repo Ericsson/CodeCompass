@@ -1,6 +1,7 @@
 #ifndef CC_MODEL_BUILDACTION_H
 #define CC_MODEL_BUILDACTION_H
 
+#include <cstdint>
 #include <string>
 #include <memory>
 #include <vector>
