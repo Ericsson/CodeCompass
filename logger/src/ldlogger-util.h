@@ -2,7 +2,9 @@
 #define CC_LOGGER_UTIL_H
 
 #include <limits.h>
+#ifdef __linux__
 #include <linux/limits.h>
+#endif
 #include <string.h>
 
 /**
