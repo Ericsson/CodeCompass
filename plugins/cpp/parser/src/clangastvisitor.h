@@ -961,24 +961,27 @@ public:
   bool VisitUsingDecl(clang::UsingDecl* ud_)
   {
     //--- CppAstNode ---//
-    
-    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSourceText(
-      _clangSrcMgr,
-      ud_->getBeginLoc(),
-      ud_->getLocation(),
-      true);
-    astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
-    astNode->entityHash = util::fnvHash(getUSR(ud_));
-    astNode->symbolType = model::CppAstNode::SymbolType::Other;
-    astNode->astType = model::CppAstNode::AstType::Usage;
+    for (const clang::UsingShadowDecl* nd : ud_->shadows()) {
+      model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->id = model::createIdentifier(*astNode);
-    
-    if (insertToCache(ud_, astNode))
-      _astNodes.push_back(astNode);
-    
+      astNode->astValue = getSourceText(
+        _clangSrcMgr,
+        ud_->getBeginLoc(),
+        ud_->getLocation(),
+        true);
+      astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
+      astNode->entityHash = util::fnvHash(getUSR(nd->getTargetDecl()));
+
+      astNode->symbolType = model::CppAstNode::SymbolType::Other;
+      astNode->astType = model::CppAstNode::AstType::Usage;
+
+      astNode->id = model::createIdentifier(*astNode);
+
+      if (insertToCache(nd, astNode))
+        _astNodes.push_back(astNode);
+    }
+
     return true;
   }
   
