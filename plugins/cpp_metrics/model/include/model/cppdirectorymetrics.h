@@ -1,8 +1,35 @@
-//
-// Created by efekane on 2023.10.01..
-//
+#ifndef CC_MODEL_CPPDIRECTORYMETRICS_H
+#define CC_MODEL_CPPDIRECTORYMETRICS_H
 
-#ifndef CODECOMPASS_CPPDIRECTORYMETRICS_H
-#define CODECOMPASS_CPPDIRECTORYMETRICS_H
+#include <model/file.h>
 
-#endif //CODECOMPASS_CPPDIRECTORYMETRICS_H
+namespace cc
+{
+namespace model
+{
+
+#pragma db object
+struct CppDirectoryMetrics
+{
+  enum Type
+  {
+    PLACEHOLDER
+  };
+
+  #pragma db id auto
+  std::uint64_t id;
+
+  #pragma db not_null
+  FileId file;
+
+  #pragma db not_null
+  Type type;
+
+  #pragma db not_null
+  unsigned value;
+};
+
+} //model
+} //cc
+
+#endif //CC_MODEL_CPPDIRECTORYMETRICS_H

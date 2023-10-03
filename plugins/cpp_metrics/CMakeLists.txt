@@ -8,6 +8,7 @@ if ("${cpp_PLUGIN_DIR}" STREQUAL "")
     "C++ Metrics plugin found without C++ plugin in the plugins directory.")
 endif()
 
+add_subdirectory(model)
 add_subdirectory(parser)
 add_subdirectory(service)
 

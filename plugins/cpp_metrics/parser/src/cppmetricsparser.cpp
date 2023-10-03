@@ -1,5 +1,10 @@
 #include <cppmetricsparser/cppmetricsparser.h>
 
+#include <model/cppastnodemetrics.h>
+#include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppdirectorymetrics.h>
+#include <model/cppdirectorymetrics-odb.hxx>
+
 #include <boost/filesystem.hpp>
 
 #include <util/logutil.h>
