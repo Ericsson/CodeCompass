@@ -25,6 +25,7 @@ function(generate_odb_files _src)
           -I ${CMAKE_SOURCE_DIR}/model/include
           -I ${CMAKE_SOURCE_DIR}/util/include
           -I ${ODB_INCLUDE_DIRS}
+          -I ${CMAKE_SOURCE_DIR}/plugins/cpp/model/include # TEMP!
           ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
       COMMAND
         mv ${CMAKE_CURRENT_BINARY_DIR}/include/model/${_cxx}

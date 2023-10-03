@@ -39,6 +39,8 @@ add_library(cppmetricsservice SHARED
 target_compile_options(cppmetricsservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(cppmetricsservice
+  cppmetricsmodel
+  model
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   ${ODB_LIBRARIES}

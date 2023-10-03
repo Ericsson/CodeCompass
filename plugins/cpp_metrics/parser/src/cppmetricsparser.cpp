@@ -2,12 +2,16 @@
 
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
-#include <model/cppdirectorymetrics.h>
-#include <model/cppdirectorymetrics-odb.hxx>
+#include <model/cppfilemetrics.h>
+#include <model/cppfilemetrics-odb.hxx>
+
+#include <model/cppastnode.h>
+#include <model/cppastnode-odb.hxx>
 
 #include <boost/filesystem.hpp>
 
 #include <util/logutil.h>
+#include <util/odbtransaction.h>
 
 #include <memory>
 
@@ -26,15 +30,26 @@ bool CppMetricsParser::accept(const std::string& path_)
   return ext == ".dummy";
 }
 
-bool CppMetricsParser::parse()
-{        
-  for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
-  {
-    if(accept(path))
+void CppMetricsParser::functionParameters()
+{
+  util::OdbTransaction {_ctx.db} ([&, this] {
+    for (const model::CppFunction func
+      : _ctx.db->query<model::CppFunction>())
     {
-      LOG(info) << "CppMetricsParser parse path: " << path;
+      model::CppAstNodeMetrics funcParams;
+      funcParams.astNodeId = func.astNodeId;
+      funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
+      funcParams.value = func.parameters.size();
+      _ctx.db->persist(funcParams);
     }
-  }
+  });
+}
+
+bool CppMetricsParser::parse()
+{
+  // Function parameter number metric.
+  functionParameters();
+
   return true;
 }
 
@@ -58,11 +73,7 @@ extern "C"
 {
   boost::program_options::options_description getOptions()
   {
-    boost::program_options::options_description description("Cpp Metrics Plugin");
-
-    description.add_options()
-        ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),
-          "This argument will be used by the dummy parser.");
+    boost::program_options::options_description description("C++ Metrics Plugin");
 
     return description;
   }

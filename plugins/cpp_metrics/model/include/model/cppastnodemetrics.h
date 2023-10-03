@@ -1,8 +1,8 @@
-#ifndef CC_MODEL_CPPFUNCTIONMETRICS_H
-#define CC_MODEL_CPPFUNCTIONMETRICS_H
+#ifndef CC_MODEL_CPPASTNODEMETRICS_H
+#define CC_MODEL_CPPASTNODEMETRICS_H
 
-#include <../../../../plugins/cpp/model/include/model/cppastnode.h>
-//#include <model/cppfunction.h>
+//#include <../../../../plugins/cpp/model/include/model/cppastnode.h>
+#include <model/cppastnode.h>
 
 namespace cc
 {
@@ -33,4 +33,4 @@ struct CppAstNodeMetrics
 } //model
 } //cc
 
-#endif //CC_MODEL_CPPFUNCTIONMETRICS_H
+#endif //CC_MODEL_CPPASTNODEMETRICS_H

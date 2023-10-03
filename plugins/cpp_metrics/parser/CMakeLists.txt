@@ -7,15 +7,15 @@ include_directories(
   ${PROJECT_BINARY_DIR}/plugins/cpp/model/include
   ${PLUGIN_DIR}/model/include)
 
-add_library(cppmetricsparser SHARED
+add_library(cxxmetricsparser SHARED
   src/cppmetricsparser.cpp)
 
-target_link_libraries(cppmetricsparser
+target_link_libraries(cxxmetricsparser
   cppmetricsmodel
   model
   util
   ${Boost_LIBRARIES})
 
-install(TARGETS cppmetricsparser
+install(TARGETS cxxmetricsparser
   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
   DESTINATION ${INSTALL_PARSER_DIR})
