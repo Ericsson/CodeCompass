@@ -27,8 +27,6 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  void getDummyString(std::string& str_);
-
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

@@ -12,10 +12,6 @@ extern "C"
 
     po::options_description description("Cpp Metrics Plugin");
 
-    description.add_options()
-      ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
-        "This value will be returned by the dummy service.");
-
     return description;
   }
 

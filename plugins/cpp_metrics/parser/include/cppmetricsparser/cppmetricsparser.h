@@ -1,5 +1,5 @@
-#ifndef CC_PARSER_DUMMYPARSER_H
-#define CC_PARSER_DUMMYPARSER_H
+#ifndef CC_PARSER_CPPMETRICSPARSER_H
+#define CC_PARSER_CPPMETRICSPARSER_H
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
@@ -36,4 +36,4 @@ private:
 } // parser
 } // cc
 
-#endif // CC_PLUGINS_PARSER_CPPMETRICSPARSER_H
+#endif // CC_PARSER_CPPMETRICSPARSER_H

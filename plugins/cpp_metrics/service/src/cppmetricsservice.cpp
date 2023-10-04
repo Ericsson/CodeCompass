@@ -16,11 +16,6 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
 {
 }
 
-void CppMetricsServiceHandler::getDummyString(std::string& str_)
-{
-  str_ = _config["dummy-result"].as<std::string>();
-}
-
 } // cppmetrics
 } // service
 } // cc

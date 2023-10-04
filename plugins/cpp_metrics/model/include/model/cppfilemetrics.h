@@ -1,5 +1,5 @@
-#ifndef CC_MODEL_CPPDIRECTORYMETRICS_H
-#define CC_MODEL_CPPDIRECTORYMETRICS_H
+#ifndef CC_MODEL_CPPFILEMETRICS_H
+#define CC_MODEL_CPPFILEMETRICS_H
 
 #include <model/file.h>
 
@@ -9,7 +9,7 @@ namespace model
 {
 
 #pragma db object
-struct CppDirectoryMetrics
+struct CppFileMetrics
 {
   enum Type
   {
@@ -32,4 +32,4 @@ struct CppDirectoryMetrics
 } //model
 } //cc
 
-#endif //CC_MODEL_CPPDIRECTORYMETRICS_H
+#endif //CC_MODEL_CPPFILEMETRICS_H
