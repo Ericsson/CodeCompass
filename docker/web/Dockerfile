@@ -28,14 +28,8 @@ RUN set -x && apt-get update -qq \
     libldap-2.5-0 \
     libssl3 \
     libgvc6 \
-    /packages/libthrift-0.13.0.deb \
-    /packages/libthrift-dev.deb \
-    /packages/libsqlite-3-1.deb \
-    /packages/libodb-sqlite-2.5.deb \
-    /packages/libodb-sqlite-dev.deb \
     libpq5 \
-    /packages/libodb-pgsql-2.5.deb \
-    /packages/libodb-pgsql-dev.deb \
+    /packages/*.deb \
     # To switch user and exec command.
     gosu \
     tini \

@@ -52,7 +52,7 @@ ARG INSTALL_COMMAND
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-COPY --from=builder /packages /packages/
+COPY --from=builder /packages/lib* /packages/
 
 RUN apt-get update -qq \
   && ${INSTALL_COMMAND} \
@@ -66,7 +66,7 @@ RUN apt-get update -qq \
       postgresql-server-dev-14; \
   else \
     ${INSTALL_COMMAND} \
-      /packages/libsqlite-3-1.deb \
+      /packages/libsqlite3-1.deb \
       /packages/libodb-sqlite-2.5.deb \
       /packages/libodb-sqlite-dev.deb \
       libsqlite3-dev; \

@@ -38,7 +38,6 @@ RUN ${INSTALL_COMMAND} \
   libgtest-dev \
   libldap2-dev \
   libmagic-dev \
-  libsqlite3-dev \
   libssl-dev
 
 # Install LLVM and Clang.
@@ -87,4 +86,4 @@ ENV DATABASE=sqlite \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
     WITH_AUTH="plain;ldap"
 
-ENV PATH="$INSTALL_DIR/bin:/odb_install/bin:$PATH"
+ENV PATH="$INSTALL_DIR/bin:$PATH"
