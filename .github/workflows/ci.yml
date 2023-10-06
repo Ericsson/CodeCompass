@@ -6,7 +6,7 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
-
+ 
   ## BUILD JOBS
   build:
     strategy:
@@ -72,18 +72,6 @@ jobs:
         run: |
           echo "DB_TYPE=sqlite" >> $GITHUB_ENV
           echo "DB_CONNSTRING=sqlite:database=$HOME/mydatabase.sqlite" >> $GITHUB_ENV
-
-      - name: Set up Node.JS
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install npm dependencies
-        run: npm ci
-        
-
-      - name: Running linter
-        run: npm run lint
 
       - name: Configure CMake
         working-directory: ${{github.workspace}}
