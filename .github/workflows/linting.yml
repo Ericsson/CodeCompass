@@ -20,17 +20,17 @@ jobs:
               uses: actions/setup-node@v3
               with:
                 node-version: 20
-
-            - name: install npm
-              run: npm install
             
             - name: cache npm
               uses: actions/cache@v3
               env:
                 cache-name: npm_cache
               with:
-                path: ./webgui-new/
+                path: ~/.npm
                 key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
+
+            - name: install npm
+              run: npm install
 
             - name: run linter
               run: npm run lint
