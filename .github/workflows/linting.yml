@@ -19,7 +19,7 @@ jobs:
                 node-version: 20
 
             - name: install npm
-              uses: npm install
+              run: npm install
 
             - name: run linter
               run: npm run lint
