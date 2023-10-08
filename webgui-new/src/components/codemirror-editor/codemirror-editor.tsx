@@ -18,6 +18,7 @@ import { RouterQueryType } from 'utils/types';
 import { Tooltip, alpha } from '@mui/material';
 import * as SC from './styled-components';
 import { useTranslation } from 'react-i18next';
+import { sendGAEvent } from 'utils/analytics';
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const { t } = useTranslation();
@@ -111,6 +112,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
         ? null
         : await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
     if (astNodeInfo) {
+      sendGAEvent({
+        event_action: 'click_on_word',
+        event_category: appCtx.workspaceId,
+        event_label: `${fileInfo?.name}: ${astNodeInfo.astNodeValue}`,
+      });
       dispatchSelection(astNodeInfo?.range?.range as Range);
       router.push({
         pathname: '/project',
@@ -131,6 +137,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
           line: line.number,
           column: line.length + 1,
         }),
+      });
+      sendGAEvent({
+        event_action: 'click_on_word',
+        event_category: appCtx.workspaceId,
+        event_label: `${fileInfo?.name}: ${convertSelectionRangeToString(range)}`,
       });
       dispatchSelection(range);
       router.push({
