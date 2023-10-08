@@ -23,6 +23,14 @@ jobs:
 
             - name: install npm
               run: npm install
+            
+            - name: cache npm
+              uses: actions/cache@v3
+              env:
+                cache-name: npm_cache
+              with:
+                path: ./webgui-new/
+                key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
 
             - name: run linter
               run: npm run lint
