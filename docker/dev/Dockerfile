@@ -54,14 +54,14 @@ RUN ${INSTALL_COMMAND} \
   libsqlite3-dev \
   postgresql-server-dev-14
 
-# Install Node 18 (with NPM).
+# Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings \
-  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
-    gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | \
-    tee /etc/apt/sources.list.d/nodesource.list \
-  && apt-get update \
-  && apt-get install -y nodejs
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update -qq \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/
 
 # Build GTest.
 RUN cd /usr/src/googletest \
