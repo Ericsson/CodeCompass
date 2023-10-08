@@ -35,9 +35,14 @@ export const CookieNotice = (): JSX.Element => {
     const fetchGaTrackingCode = async () => {
       try {
         const res = await fetch(`/ga.txt`);
+        if (res.status !== 200) {
+          setGaTrackingCode(undefined);
+          return;
+        }
         const gaCode = await res.text();
         setGaTrackingCode(gaCode);
       } catch (e) {
+        // network-related error
         setGaTrackingCode(undefined);
       }
       const store = getStore();
