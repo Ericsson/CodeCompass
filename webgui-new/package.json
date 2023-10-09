@@ -26,7 +26,7 @@
     "express": "^4.18.2",
     "http-proxy-middleware": "^3.0.0-beta.1",
     "ts-node": "^10.9.1",
-    "typescript": "4.9.4"
+    "typescript": "^4.9.4"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",
@@ -35,16 +35,16 @@
     "@mui/icons-material": "^5.11.0",
     "@mui/lab": "5.0.0-alpha.116",
     "@mui/material": "^5.11.4",
-    "@next/font": "13.1.1",
+    "@next/font": "~13.4.19",
     "@uiw/codemirror-theme-github": "^4.19.8",
     "@uiw/react-codemirror": "^4.19.6",
     "dagre": "^0.8.5",
     "devicons-react": "^1.2.5",
     "i18next": "^23.2.8",
-    "next": "13.1.1",
-    "react": "18.2.0",
+    "next": "~13.4.19",
+    "react": "^18.2.0",
     "react-diff-viewer-continued": "^3.2.6",
-    "react-dom": "18.2.0",
+    "react-dom": "^18.2.0",
     "react-i18next": "^13.0.1",
     "react-icons": "^4.8.0",
     "react-toastify": "^9.1.2",
@@ -52,6 +52,7 @@
     "reactflow": "^11.7.0",
     "recharts": "^2.5.0",
     "sass": "^1.57.1",
+    "sharp": "^0.32.6",
     "thrift": "0.13.0-hotfix.1"
   },
   "engines": {
