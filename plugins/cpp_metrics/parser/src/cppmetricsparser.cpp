@@ -39,7 +39,8 @@ void CppMetricsParser::functionParameters()
       model::CppAstNodeMetrics funcParams;
       funcParams.astNodeId = func.astNodeId;
       funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
-      funcParams.value = func.parameters.size();
+      funcParams.value = _ctx.db->query_value<model::CppFunctionParamCount>
+        (odb::query<model::CppFunction>::astNodeId == func.astNodeId).count;
       _ctx.db->persist(funcParams);
     }
   });
