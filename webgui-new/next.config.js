@@ -15,14 +15,6 @@ const nextConfig = {
     assetPrefix: `${process.env.PUBLIC_URL || ''}/new`,
     basePath: `${process.env.PUBLIC_URL || ''}/new`,
   }),
-  async rewrites() {
-    return [
-      {
-        source: '/ga.txt',
-        destination: `${process.env.BACKEND_URL}/ga.txt`,
-      },
-    ];
-  },
 };
 
 module.exports = nextConfig;
