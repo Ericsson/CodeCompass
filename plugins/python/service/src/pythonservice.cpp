@@ -17,6 +17,8 @@ PythonServiceHandler::PythonServiceHandler(
 void PythonServiceHandler::getFileTypes(
   std::vector<std::string>& return_) 
 {
+  return_.push_back("PY");
+  return_.push_back("Dir");
   return;
 }
 
