@@ -686,11 +686,11 @@ TEST_F(CppParserTest, Namespace)
     model::CppNamespace myNamespace1 = _db->query_value<model::CppNamespace>(
       QCppNamespace::name == "MyNamespace1");
     model::CppAstNode astNode = _db->query_value<model::CppAstNode>(
-      QCppAstNode::entityHash == myNamespace1.entityHash);
+      QCppAstNode::entityHash == myNamespace1.entityHash &&
+      QCppAstNode::astType == model::CppAstNode::AstType::Definition);
 
     EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Namespace);
     EXPECT_EQ(astNode.location.range.start.line, 1);
-    EXPECT_EQ(astNode.astType, model::CppAstNode::AstType::Definition);
 
     model::CppNamespace myNamespace2 = _db->query_value<model::CppNamespace>(
       QCppNamespace::name == "MyNamespace2");
