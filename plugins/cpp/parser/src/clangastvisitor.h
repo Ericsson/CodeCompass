@@ -1258,13 +1258,15 @@ private:
 
     clang::SourceLocation realStart = start_;
     clang::SourceLocation realEnd = end_;
-
-    if (_clangSrcMgr.isMacroBodyExpansion(start_)
-      || _clangSrcMgr.isMacroArgExpansion(start_))
+    
+    if (_clangSrcMgr.isMacroBodyExpansion(start_))
+      realStart = _clangSrcMgr.getExpansionLoc(start_);
+    if (_clangSrcMgr.isMacroArgExpansion(start_))
       realStart = _clangSrcMgr.getSpellingLoc(start_);
 
-    if (_clangSrcMgr.isMacroBodyExpansion(end_)
-      || _clangSrcMgr.isMacroArgExpansion(end_))
+    if (_clangSrcMgr.isMacroBodyExpansion(end_))
+      realEnd = _clangSrcMgr.getExpansionLoc(end_);
+    if (_clangSrcMgr.isMacroArgExpansion(end_))
       realEnd = _clangSrcMgr.getSpellingLoc(end_);
 
     if (!_isImplicit)
