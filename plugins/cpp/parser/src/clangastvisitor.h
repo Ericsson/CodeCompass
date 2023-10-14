@@ -766,11 +766,10 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSourceText(
-      _clangSrcMgr,
-      fd_->getSourceRange().getBegin(),
-      fd_->getSourceRange().getEnd(),
-      true);
+    astNode->astValue = fd_->getType().getAsString();
+    astNode->astValue.append(" ");
+    astNode->astValue.append(fd_->getNameAsString());
+
     astNode->location = getFileLoc(fd_->getBeginLoc(), fd_->getEndLoc());
     astNode->entityHash = util::fnvHash(getUSR(fd_));
     astNode->symbolType
