@@ -829,12 +829,11 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSourceText(
-      _clangSrcMgr,
-      vd_->getOuterLocStart(),
-      vd_->getEndLoc(),
-      true);
-    astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocation());
+    astNode->astValue = vd_->getType().getAsString();
+    astNode->astValue.append(" ");
+    astNode->astValue.append(vd_->getNameAsString());
+
+    astNode->location = getFileLoc(vd_->getBeginLoc(), vd_->getEndLoc());
     astNode->entityHash = util::fnvHash(getUSR(vd_));
     astNode->symbolType
       = isFunctionPointer(vd_)
@@ -881,6 +880,8 @@ public:
 
     if (_functionStack.empty())
       variable->tags.insert(model::Tag::Global);
+    if (_isImplicit)
+      variable->tags.insert(model::Tag::Implicit);
 
     //--- CppMemberType ---//
 
@@ -1259,9 +1260,12 @@ private:
     clang::SourceLocation realStart = start_;
     clang::SourceLocation realEnd = end_;
 
-    if (_clangSrcMgr.isMacroArgExpansion(start_))
+    if (_clangSrcMgr.isMacroBodyExpansion(start_)
+      || _clangSrcMgr.isMacroArgExpansion(start_))
       realStart = _clangSrcMgr.getSpellingLoc(start_);
-    if (_clangSrcMgr.isMacroArgExpansion(end_))
+
+    if (_clangSrcMgr.isMacroBodyExpansion(end_)
+      || _clangSrcMgr.isMacroArgExpansion(end_))
       realEnd = _clangSrcMgr.getSpellingLoc(end_);
 
     if (!_isImplicit)
