@@ -1,16 +1,5 @@
-# Set LLVM version to 11.1 if using Ubuntu 22
-execute_process(COMMAND bash -c get_ubuntu_version.sh
-        OUTPUT_VARIABLE UBUNTU_VERSION
-        RESULT_VARIABLE VERSION_RESULT
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-if (${VERSION_RESULT} EQUAL 0)
-    if (${UBUNTU_VERSION} GREATER_EQUAL 22)
-        message(STATUS "LLVM version override to 11.1 because of Ubuntu 22")
-        set(LLVM_VERSION_TO_FIND 11.1)
-    endif ()
-endif ()
 # Find LLVM
-find_package(LLVM ${LLVM_VERSION_TO_FIND} REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 

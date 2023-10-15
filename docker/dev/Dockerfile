@@ -17,42 +17,28 @@ RUN set -x \
     default-jdk \
     universal-ctags \
     curl ca-certificates gpg \
-    doxygen
-
-# Install and link GCC and G++.
-RUN ${INSTALL_COMMAND} gcc-11 gcc-11-plugin-dev g++-11 \
+    doxygen \
+    gcc-11 gcc-11-plugin-dev g++-11 \
+    libboost-filesystem-dev \
+    libboost-log-dev \
+    libboost-program-options-dev \
+    libboost-regex-dev \
+    libgit2-dev \
+    libgraphviz-dev \
+    libgtest-dev \
+    libldap2-dev \
+    libmagic-dev \
+    libssl-dev \
+    llvm-11 \
+    clang-11 \
+    llvm-11-dev \
+    libclang-11-dev \
+    libpq5 \
+    /packages/*.deb \
+    libsqlite3-dev \
+    postgresql-server-dev-14 \
   && ln -s /usr/bin/gcc-11 /usr/bin/gcc \
   && ln -s /usr/bin/g++-11 /usr/bin/g++
-
-# Install Boost libs.
-RUN ${INSTALL_COMMAND} \
-  libboost-filesystem-dev \
-  libboost-log-dev \
-  libboost-program-options-dev \
-  libboost-regex-dev
-
-# Install additional libs.
-RUN ${INSTALL_COMMAND} \
-  libgit2-dev \
-  libgraphviz-dev \
-  libgtest-dev \
-  libldap2-dev \
-  libmagic-dev \
-  libssl-dev
-
-# Install LLVM and Clang.
-RUN ${INSTALL_COMMAND} \
-  llvm-11 \
-  clang-11 \
-  llvm-11-dev \
-  libclang-11-dev
-
-# Install Thrift, ODB and SQLite and Postgres libs.
-RUN ${INSTALL_COMMAND} \
-  libpq5 \
-  /packages/*.deb \
-  libsqlite3-dev \
-  postgresql-server-dev-14
 
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings \
@@ -73,8 +59,8 @@ RUN cd /usr/src/googletest \
   && rm -rf /usr/src/googletest/build
 
 # Adding CodeCompass builder script.
-COPY docker/dev/codecompass-build.sh docker/dev/get_ubuntu_version.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/codecompass-build.sh /usr/local/bin/get_ubuntu_version.sh
+COPY docker/dev/codecompass-build.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/codecompass-build.sh
 
 # Setting the environment.
 ENV DATABASE=sqlite \
@@ -84,6 +70,7 @@ ENV DATABASE=sqlite \
     SOURCE_DIR=/CodeCompass/CodeCompass \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
-    WITH_AUTH="plain;ldap"
+    WITH_AUTH="plain;ldap" \
+    LLVM_DIR=/usr/lib/llvm-11/cmake
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"
