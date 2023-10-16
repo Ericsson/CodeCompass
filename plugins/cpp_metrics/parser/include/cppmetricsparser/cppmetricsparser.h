@@ -23,6 +23,7 @@ class CppMetricsParser : public AbstractParser
 public:
   CppMetricsParser(ParserContext& ctx_);
   virtual ~CppMetricsParser();
+  virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
 private:
@@ -30,6 +31,7 @@ private:
 
   void functionParameters();
 
+  std::unordered_set<model::FileId> _fileIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
 };
   

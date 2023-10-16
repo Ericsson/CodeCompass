@@ -30,17 +30,58 @@ bool CppMetricsParser::accept(const std::string& path_)
   return ext == ".dummy";
 }
 
+bool CppMetricsParser::cleanupDatabase()
+{
+  if (!_fileIdCache.empty())
+  {
+    try
+    {
+      util::OdbTransaction {_ctx.db} ([this] {
+        for (const model::File& file
+          : _ctx.db->query<model::File>(
+          odb::query<model::File>::id.in_range(_fileIdCache.begin(), _fileIdCache.end())))
+        {
+          auto it = _ctx.fileStatus.find(file.path);
+          if (it != _ctx.fileStatus.end() &&
+              (it->second == cc::parser::IncrementalStatus::DELETED ||
+               it->second == cc::parser::IncrementalStatus::MODIFIED ||
+               it->second == cc::parser::IncrementalStatus::ACTION_CHANGED))
+          {
+            LOG(info) << "[cxxmetricsparser] Database cleanup: " << file.path;
+
+            _ctx.db->erase_query<model::CppFileMetrics>(odb::query<model::CppFileMetrics>::file == file.id);
+            _fileIdCache.erase(file.id);
+          }
+        }
+      });
+    }
+    catch (odb::database_exception&)
+    {
+      LOG(fatal) << "Transaction failed in cxxmetrics parser!";
+      return false;
+    }
+  }
+  return true;
+}
+
 void CppMetricsParser::functionParameters()
 {
-  util::OdbTransaction {_ctx.db} ([&, this] {
+  util::OdbTransaction {_ctx.db} ([&, this]
+  {
+    std::map<model::CppAstNodeId, std::uint64_t> paramCounts;
+    for (const model::CppFunctionParamCountWithId paramCount
+      : _ctx.db->query<model::CppFunctionParamCountWithId>())
+    {
+      paramCounts.insert({paramCount.id, paramCount.count});
+    }
+
     for (const model::CppFunction func
       : _ctx.db->query<model::CppFunction>())
     {
       model::CppAstNodeMetrics funcParams;
       funcParams.astNodeId = func.astNodeId;
       funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
-      funcParams.value = _ctx.db->query_value<model::CppFunctionParamCount>
-        (odb::query<model::CppFunction>::astNodeId == func.astNodeId).count;
+      funcParams.value = paramCounts[func.astNodeId];
       _ctx.db->persist(funcParams);
     }
   });
