@@ -68,20 +68,13 @@ void CppMetricsParser::functionParameters()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
   {
-    std::map<model::CppAstNodeId, std::uint64_t> paramCounts;
     for (const model::CppFunctionParamCountWithId paramCount
       : _ctx.db->query<model::CppFunctionParamCountWithId>())
     {
-      paramCounts.insert({paramCount.id, paramCount.count});
-    }
-
-    for (const model::CppFunction func
-      : _ctx.db->query<model::CppFunction>())
-    {
       model::CppAstNodeMetrics funcParams;
-      funcParams.astNodeId = func.astNodeId;
+      funcParams.astNodeId = paramCount.id;
       funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
-      funcParams.value = paramCounts[func.astNodeId];
+      funcParams.value = paramCount.count;
       _ctx.db->persist(funcParams);
     }
   });
