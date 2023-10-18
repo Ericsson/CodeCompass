@@ -1,6 +1,6 @@
 # Build Environment
 We build CodeCompass in a Linux environment. Currently, Ubuntu Long-Term
-Support releases are the main targets: Ubuntu 18.04 LTS and Ubuntu 20.04 LTS.
+Support releases are the main targets: Ubuntu 20.04 LTS and Ubuntu 22.04 LTS.
 
 We also provide a Docker image that can be used as developer environment to
 CodeCompass. See its usage [in a seperate document](/docker/README.md).
@@ -15,10 +15,11 @@ be installed from the official repository of the given Linux distribution.
   is required. (Alternatively, you can compile with Clang.)
 - **`gcc-X`, `gcc-X-plugin-dev`**: For building ODB.
 - **`libboost-all-dev`**: Boost can be used during the development.
-- **`llvm-10-dev`**, **`clang-10`**, **`libclang-10-dev`**: C++ parser uses
+- **`llvm-11-dev`**, **`clang-11`**, **`libclang-11-dev`**: C++ parser uses
   LLVM/Clang for parsing the source code.
 - **`odb`**, **`libodb-dev`**: For persistence ODB can be used which is an
-  Object Relation Mapping (ORM) system.
+  Object Relation Mapping (ORM) system.  
+  ***See [Known issues](#known-issues)!***
 - **`libsqlite3-dev`**, **`libodb-sqlite-dev`**: SQLite library and the
   corresponding ODB development library, in case SQLite database system is
   used.
@@ -27,17 +28,20 @@ be installed from the official repository of the given Linux distribution.
   database system is used.
 - **`default-jdk`**: For search parsing CodeCompass uses an indexer written in
   Java.
-- **`thrift-compiler`**, **`libthrift-dev`**: Thrift is used as the Web RPC API.
+- **`thrift-compiler`**, **`libthrift-dev`**: Thrift is used as the Web RPC API.  
+  ***See [Known issues](#known-issues)!***
 - **`libssl-dev`** / **`libssl1.0-dev`**: OpenSSL libs are required by Thrift,
   and NodeJS.
 - **`libgraphviz-dev`**: GraphViz is used for generating diagram
   visualizations.
 - **`libmagic-dev`**: For detecting file types.
 - **`libgit2-dev`**: For compiling Git plugin in CodeCompass.
-- **`npm`**: For handling JavaScript dependencies for CodeCompass web GUI.
+- **`node`** and **`npm`**: For building and developing the CodeCompass web GUI
+  and managing dependencies.  
+  ***See [Known issues](#known-issues)!***
 - **`ctags`**: For search parsing.
 - **`doxygen`**: For documentation generation.
-- **`libgtest-dev`**: For testing CodeCompass.
+- **`libgtest-dev`**: For testing CodeCompass.  
   ***See [Known issues](#known-issues)!***
 - **`libldap2-dev`**: For LDAP authentication.
 
@@ -46,23 +50,24 @@ be installed from the official repository of the given Linux distribution.
 The following command installs the packages except for those which have some
 known issues.
 
-#### Ubuntu 18.04 ("Bionic Beaver") LTS
-
-```bash
-sudo apt install git cmake make g++ gcc-7-plugin-dev libboost-all-dev \
-  llvm-10-dev clang-10 libclang-10-dev \
-  default-jdk libssl1.0-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
-  libldap2-dev libgtest-dev npm
-```
-
 #### Ubuntu 20.04 ("Focal Fossa") LTS
 
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
-  llvm-10-dev clang-10 libclang-10-dev \
+  llvm-11-dev clang-11 libclang-11-dev \
   odb libodb-dev thrift-compiler libthrift-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
-  libldap2-dev libgtest-dev npm
+  libldap2-dev libgtest-dev
+```
+
+#### Ubuntu 22.04 ("Jammy Jellyfish") LTS
+
+```bash
+sudo apt install git cmake make g++ libboost-all-dev \
+  llvm-11-dev clang-11 libclang-11-dev \
+  gcc-11-plugin-dev \
+  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev exuberant-ctags doxygen \
+  libldap2-dev libgtest-dev
 ```
 
 #### Database engine support
@@ -70,7 +75,17 @@ sudo apt install git cmake make g++ libboost-all-dev \
 Depending on the desired database engines to be supported, the following
 packages should be installed:
 
-##### Ubuntu 18.04 ("Bionic Beaver")
+##### Ubuntu 20.04 ("Focal Fossa") LTS
+
+```bash
+# For SQLite database systems:
+sudo apt install libodb-sqlite-dev libsqlite3-dev
+
+# For PostgreSQL database systems:
+sudo apt install libodb-pgsql-dev postgresql-server-dev-12
+```
+
+##### Ubuntu 22.04 ("Jammy Jellyfish") LTS
 
 The database connector library must be compiled manually for this release,
 however, the database programs themselves should be installed from the
@@ -81,19 +96,8 @@ package manager.
 sudo apt install libsqlite3-dev
 
 # For PostgreSQL database systems:
-sudo apt install postgresql-server-dev-<version>
+sudo apt install postgresql-server-dev-14
 ```
-
-##### Ubuntu 20.04 ("Focal Fossa") LTS
-
-```bash
-# For SQLite database systems:
-sudo apt install libodb-sqlite-dev libsqlite3-dev
-
-# For PostgreSQL database systems:
-sudo apt install libodb-pgsql-dev postgresql-server-dev-<version>
-```
-
 
 ## Known issues
 Some third-party tools are present in the distribution's package manager in a
@@ -106,10 +110,10 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### ODB (for Ubuntu 18.04)
+### ODB (for Ubuntu 22.04)
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
-For Ubuntu 18.04, the official release of ODB conflicts with the official
-compiler (GNU G++ 7) of the distribution. A newer version of ODB must be
+For Ubuntu 22.04, the official release of ODB conflicts with the official
+compiler (GNU G++ 11) of the distribution. A newer version of ODB must be
 compiled manually.
 
 The ODB installation uses the build2 build system. (Build2 is not needed for
@@ -153,11 +157,12 @@ time (depending on the machine one is using).
 > **Note:** now you may delete the *Build2* toolchain installed in the
 > `<build2_install_dir>` folder, if you do not need any longer.
 
-### Thrift (for Ubuntu 18.04)
+### Thrift (for Ubuntu 22.04)
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. A suitable version of
 Thrift is, unfortunately, not part of the official Ubuntu repositories for
-these versions, so you should download and build from source.
+this version (only a newer version is available), so you should download and 
+build from source.
 
 Thrift can generate stubs for many programming languages. The configure
 script looks at the development environment and if it finds the environment
@@ -192,6 +197,30 @@ cd thrift-0.13.0
 make install -j $(nproc)
 ```
 
+### Node.js and NPM
+Make sure you are using at least version 18 of [Node.js](https://nodejs.org/en/).
+Unfortunately only older versions are available in the official Ubuntu repositories
+for all supported versions, therefore a separate installation might be required from
+[NodeSource](https://github.com/nodesource/distributions).
+
+```bash
+# Download and import the Nodesource GPG key
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+# Create deb repository
+NODE_MAJOR=18 # or 20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+# Run Update and Install
+sudo apt-get update
+sudo apt-get install nodejs 
+```
+
+You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install`
+at the root of the project to use the specified Node version (18.13.0).
+
+
 ### GTest/Googletest
 The `libgtest-dev` package contains only the source files of GTest, but the
 binaries are missing. You have to compile GTest manually.
@@ -213,9 +242,10 @@ The previously self-compiled and installed dependencies are not automatically
 seen by CMake. Please set this environment before executing the build.
 
 ```bash
+# For all supported OS versions:
 export GTEST_ROOT=<gtest_install_dir>
 
-# If using Ubuntu 18.04:
+# If using Ubuntu 22.04:
 export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
 
@@ -239,8 +269,8 @@ cmake .. \
   -DCMAKE_INSTALL_PREFIX=<CodeCompass_install_dir> \
   -DDATABASE=<database_type> \
   -DCMAKE_BUILD_TYPE=<build_type> \
-  -DLLVM_DIR=/usr/lib/llvm-10/cmake \
-  -DClang_DIR=/usr/lib/cmake/clang-10
+  -DLLVM_DIR=/usr/lib/llvm-11/cmake \
+  -DClang_DIR=/usr/lib/cmake/clang-11
 
 # To specify linker for building CodeCompass use
 #   -DCODECOMPASS_LINKER=<path_to_linker>

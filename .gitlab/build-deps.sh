@@ -254,9 +254,9 @@ export PATH=$DEPS_INSTALL_RUNTIME_DIR/python-install/bin:$PATH
 
 if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/llvm-install/bin/clang ]; then
   cd $PACKAGES_DIR
-  wget --no-verbose --no-clobber https://github.com/llvm/llvm-project/archive/llvmorg-10.0.1.tar.gz
-  tar -xf llvmorg-10.0.1.tar.gz
-  mv llvm-project-llvmorg-10.0.1 llvm-project
+  wget --no-verbose --no-clobber https://github.com/llvm/llvm-project/archive/llvmorg-11.1.0.tar.gz
+  tar -xf llvmorg-11.1.0.tar.gz
+  mv llvm-project-llvmorg-11.1.0 llvm-project
   mkdir llvm-project/build
   cd llvm-project/build
 
@@ -268,7 +268,7 @@ if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/llvm-install/bin/clang ]; then
     -DLLVM_ENABLE_RTTI=ON
 
   make install --quiet --jobs $(nproc)
-  rm -f $PACKAGES_DIR/llvmorg-10.0.1.tar.gz
+  rm -f $PACKAGES_DIR/llvmorg-11.1.0.tar.gz
 else
   echo "Found LLVM/Clang in cache."
 fi

@@ -13,7 +13,7 @@ WorkspaceServiceHandler::WorkspaceServiceHandler(const std::string& workspace_)
 {
 }
 
-void WorkspaceServiceHandler::getWorkspaces(std::vector<WorkspaceInfo>& _return)
+void WorkspaceServiceHandler::getWorkspaces(std::vector<WorkspaceInfo>& return_)
 {
   namespace fs = boost::filesystem;
 
@@ -35,8 +35,17 @@ void WorkspaceServiceHandler::getWorkspaces(std::vector<WorkspaceInfo>& _return)
     info.id = filename;
     info.description = filename;
 
-    _return.push_back(std::move(info));
+    return_.push_back(std::move(info));
   }
+
+  std::sort(return_.begin(), return_.end(), workspaceInfoOrder);
+}
+
+bool WorkspaceServiceHandler::workspaceInfoOrder(
+  const WorkspaceInfo& left_,
+  const WorkspaceInfo& right_)
+{
+  return left_.id < right_.id;
 }
 
 } // workspace
