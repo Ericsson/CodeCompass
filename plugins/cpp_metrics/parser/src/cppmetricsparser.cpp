@@ -24,12 +24,6 @@ CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
 }
 
-bool CppMetricsParser::accept(const std::string& path_)
-{
-  std::string ext = boost::filesystem::extension(path_);
-  return ext == ".dummy";
-}
-
 bool CppMetricsParser::cleanupDatabase()
 {
   if (!_fileIdCache.empty())
