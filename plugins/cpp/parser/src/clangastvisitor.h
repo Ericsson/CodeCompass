@@ -435,15 +435,12 @@ public:
     cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
-    if (const clang::CXXRecordDecl* crd
-        = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
-    {
-      cppRecord->isAbstract = crd->isAbstract();
-      cppRecord->isPOD = crd->isPOD();
-    }
 
     if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
+      cppRecord->isAbstract = crd->isAbstract();
+      cppRecord->isPOD = crd->isPOD();
+
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)
@@ -513,6 +510,28 @@ public:
           friendship->target = cppRecord->entityHash;
           friendship->theFriend = util::fnvHash(getUSR(friendDecl));
         }
+      }
+
+      // --- Destructor --- //
+
+      void* ref = crd;
+      model::FileLoc location = getFileLoc(crd->getEndLoc(), crd->getEndLoc());
+      if (clang::CXXDestructorDecl* dd = crd->getDestructor())
+      {
+        ref = dd;
+        if (crd->hasUserDeclaredDestructor())
+        {
+          clang::Stmt* body = dd->getBody();
+          location = body
+            ? getFileLoc(body->getEndLoc(), body->getEndLoc())
+            : getFileLoc(dd->getEndLoc(), dd->getEndLoc());
+        }
+      }
+
+      for (auto it = crd->field_begin(); it != crd->field_end(); ++it)
+      {
+        clang::FieldDecl* fd = *it;
+        addDestructorUsage(fd->getType(), location, ref);
       }
     }
 
@@ -921,6 +940,32 @@ public:
     return true;
   }
 
+  bool VisitStmt(clang::Stmt* s_)
+  {
+    if (clang::DeclStmt* ds = llvm::dyn_cast<clang::DeclStmt>(s_))
+    {
+      // FIXME: Using the parent map is expensive.
+      // My original idea was to simply use the second top-most statement from
+      // _contextStatementStack as scopeSt, but the stack is always empty
+      // for some reason, except in VisitDeclRefExpr... (why?)
+      auto parents = _astContext.getParentMapContext()
+        .getParents<clang::Stmt>(*s_);
+      const clang::Stmt* scopeSt = parents[0].get<clang::Stmt>();
+      
+      for (auto it = ds->decl_begin(); it != ds->decl_end(); ++it)
+      {
+        if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
+        {
+          model::FileLoc loc =
+            getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
+          addDestructorUsage(vd->getType(), loc, vd);
+        }
+      }
+    }
+
+    return true;
+  }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl* nd_)
   {
     //--- CppAstNode ---//
@@ -1036,6 +1081,8 @@ public:
     if (insertToCache(de_, astNode))
       _astNodes.push_back(astNode);
 
+    addDestructorUsage(de_->getDestroyedType(), astNode->location, de_);
+
     return true;
   }
 
@@ -1088,9 +1135,6 @@ public:
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
       astNode = std::make_shared<model::CppAstNode>();
-
-      model::FileLoc location =
-        getFileLoc(vd->getLocation(), vd->getLocation());
 
       if (!_contextStatementStack.empty())
       {
@@ -1204,6 +1248,30 @@ public:
 
 private:
   using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+
+  void addDestructorUsage(
+    clang::QualType type_,
+    const model::FileLoc& location_,
+    const void* clangPtr_)
+  {
+    if (clang::CXXRecordDecl* rd = type_->getAsCXXRecordDecl())
+    {
+      if (clang::CXXDestructorDecl* dd = rd->getDestructor())
+      {
+        model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+        astNode->astValue = getSignature(dd);
+        astNode->location = location_;
+        astNode->entityHash = util::fnvHash(getUSR(dd));
+        astNode->symbolType = model::CppAstNode::SymbolType::Function;
+        astNode->astType = model::CppAstNode::AstType::Usage;
+        astNode->id = model::createIdentifier(*astNode);
+
+        if (insertToCache(clangPtr_, astNode))
+          _astNodes.push_back(astNode);
+      }
+    }
+  }
 
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
