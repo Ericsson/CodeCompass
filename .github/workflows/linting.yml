@@ -16,7 +16,6 @@ jobs:
             - name: setup Node.JS
               uses: actions/setup-node@v3
               with:
-                cache: 'npm'
                 node-version: 20
             
             - name: install npm
