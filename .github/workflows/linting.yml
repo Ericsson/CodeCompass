@@ -16,18 +16,19 @@ jobs:
             - name: setup Node.JS
               uses: actions/setup-node@v3
               with:
+                cache: 'npm'
                 node-version: 20
             
-            - name: cache npm
-              uses: actions/cache@v3
-              env:
-                cache-name: npm_cache
-              with:
-                path: node_modules
-                key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
-
             - name: install npm
               run: npm install
+
+            - name: cache node modules
+              uses: actions/cache@v3
+              with:
+                path: node_modules
+                key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+                restore-keys: |
+                  ${{ runner.os }}-npm-
 
             - name: run linter
               run: npm run lint
