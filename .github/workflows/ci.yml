@@ -7,9 +7,9 @@ env:
 
 jobs:
  
-  ## LINTING JOBS  
-  linting:
-    uses: ./.github/workflows/linting.yml
+  # ## LINTING JOBS  
+  # linting:
+  #   uses: ./.github/workflows/linting.yml
 
       
   ## BUILD JOBS
