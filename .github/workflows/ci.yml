@@ -6,10 +6,7 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
- 
-  # ## LINTING JOBS  
-  # linting:
-  #   uses: ./.github/workflows/linting.yml
+
 
       
   ## BUILD JOBS

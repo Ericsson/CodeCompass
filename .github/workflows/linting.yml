@@ -1,9 +1,6 @@
 name: Frontend linting
 
 on: [push, pull_request, workflow_dispatch]
-# on:
-#   workflow_dispatch:
-#   workflow_call:
 
 jobs:
     linting:
@@ -26,8 +23,7 @@ jobs:
               env:
                 cache-name: npm_cache
               with:
-                # path: ~/.npm
-                path: /usr/lib/node_modules
+                path: node_modules
                 key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package.json') }}
 
             - name: install npm
