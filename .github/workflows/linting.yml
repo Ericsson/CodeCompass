@@ -17,10 +17,6 @@ jobs:
               uses: actions/setup-node@v3
               with:
                 node-version: 20
-            
-            - name: install npm
-              if: steps.cache_node_modules.outputs.cache-hit != 'true'
-              run: npm install
 
             - name: cache node modules
               id: cache_node_modules
@@ -30,6 +26,10 @@ jobs:
                 key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
                 restore-keys: |
                   ${{ runner.os }}-npm-
+
+            - name: install npm
+              if: steps.cache_node_modules.outputs.cache-hit != 'true'
+              run: npm install
 
             - name: run linter
               run: npm run lint
