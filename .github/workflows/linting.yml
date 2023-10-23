@@ -19,9 +19,11 @@ jobs:
                 node-version: 20
             
             - name: install npm
+              if: steps.cache_node_modules.outputs.cache-hit != 'true'
               run: npm install
 
             - name: cache node modules
+              id: cache_node_modules
               uses: actions/cache@v3
               with:
                 path: ./webgui-new/node_modules
