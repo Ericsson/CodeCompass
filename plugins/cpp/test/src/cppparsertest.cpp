@@ -83,6 +83,10 @@ TEST_F(CppParserTest, FilesAreInDatabase)
     file = _db->query_value<model::File>(QFile::filename == "namespace.cpp");
     EXPECT_EQ(file.type, "CPP");
     EXPECT_EQ(file.parseStatus, model::File::PSFullyParsed);
+
+    file = _db->query_value<model::File>(QFile::filename == "using.cpp");
+    EXPECT_EQ(file.type, "CPP");
+    EXPECT_EQ(file.parseStatus, model::File::PSFullyParsed);
   });
 }
 
@@ -546,7 +550,7 @@ TEST_F(CppParserTest, Fields)
 {
   _transaction([&, this] {
     model::CppVariable fieldFunction = _db->query_value<model::CppVariable>(
-      QCppFunction::name == "fieldFunction");
+      QCppVariable::name == "fieldFunction");
     RCppAstNode astNodes = _db->query<model::CppAstNode>(
       QCppAstNode::entityHash == fieldFunction.entityHash);
 
@@ -700,5 +704,68 @@ TEST_F(CppParserTest, Namespace)
     EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Namespace);
     EXPECT_EQ(astNode.location.range.start.line, 3);
     EXPECT_EQ(astNode.astType, model::CppAstNode::AstType::Definition);
+  });
+}
+
+TEST_F(CppParserTest, Using)
+{
+  _transaction([&, this] {
+    model::CppNamespace nested = _db->query_value<model::CppNamespace>(
+      QCppNamespace::name == "Nested");
+
+    model::CppAstNode astNode = _db->query_value<model::CppAstNode>(
+      QCppAstNode::entityHash == nested.entityHash &&
+        QCppAstNode::astType == model::CppAstNode::AstType::Usage);
+
+    EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Namespace);
+    EXPECT_EQ(astNode.location.range.start.line, 20);
+
+
+    model::CppRecord cClass = _db->query_value<model::CppRecord>(
+      QCppRecord::qualifiedName == "Nested::MyNamespace::C");
+
+    astNode = _db->query_value<model::CppAstNode>(
+      QCppAstNode::entityHash == cClass.entityHash &&
+        QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+
+    EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
+    EXPECT_EQ(astNode.location.range.start.line, 26);
+
+
+    model::CppVariable var1 = _db->query_value<model::CppVariable>(
+      QCppVariable::name == "VAR1");
+
+    astNode = _db->query_value<model::CppAstNode>(
+      QCppAstNode::entityHash == var1.entityHash &&
+        QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+
+    EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
+    EXPECT_EQ(astNode.location.range.start.line, 27);
+
+    astNode = _db->query_value<model::CppAstNode>(
+      QCppAstNode::entityHash == var1.entityHash &&
+        QCppAstNode::astType == model::CppAstNode::AstType::Read);
+
+    EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Variable);
+    EXPECT_EQ(astNode.location.range.start.line, 31);
+
+    RCppFunction functions_with_g = _db->query<model::CppFunction>(
+      QCppFunction::qualifiedName == "Nested::MyNamespace::g");
+
+    for (const model::CppFunction& func : functions_with_g) {
+      astNode = _db->query_value<model::CppAstNode>(
+        QCppAstNode::entityHash == func.entityHash &&
+          QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+
+      EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
+      EXPECT_EQ(astNode.location.range.start.line, 22);
+
+
+      astNode = _db->query_value<model::CppAstNode>(
+        QCppAstNode::entityHash == func.entityHash &&
+          QCppAstNode::astType == model::CppAstNode::AstType::Usage);
+
+      EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Function);
+    }
   });
 }

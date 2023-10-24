@@ -57,6 +57,7 @@ struct CppAstNode
     LocalTypeLoc,
     TypedefTypeLoc,
     InheritanceTypeLoc,
+    Resolution,
     Other = 1000
   };
 
@@ -131,6 +132,7 @@ inline std::string astTypeToString(CppAstNode::AstType type_)
     case CppAstNode::AstType::LocalTypeLoc: return "LocalTypeLoc";
     case CppAstNode::AstType::TypedefTypeLoc: return "TypedefTypeLoc";
     case CppAstNode::AstType::InheritanceTypeLoc: return "InheritanceTypeLoc";
+    case CppAstNode::AstType::Resolution: return "Resolution";
     case CppAstNode::AstType::Other: return "Other";
   }
 

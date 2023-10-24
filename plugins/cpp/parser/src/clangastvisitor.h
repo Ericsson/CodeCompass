@@ -974,7 +974,7 @@ public:
       astNode->entityHash = util::fnvHash(getUSR(nd->getTargetDecl()));
 
       astNode->symbolType = model::CppAstNode::SymbolType::Other;
-      astNode->astType = model::CppAstNode::AstType::Usage;
+      astNode->astType = model::CppAstNode::AstType::Resolution;
 
       astNode->id = model::createIdentifier(*astNode);
 
