@@ -21,30 +21,26 @@ link_directories(${LLVM_LIBRARY_DIRS})
 
 add_definitions(${LLVM_DEFINITIONS})
 
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js:jquery
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      -I ${PROJECT_SOURCE_DIR}/service
-      ${CMAKE_CURRENT_SOURCE_DIR}/cppreparse.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/cppreparse.thrift
-  COMMENT
-    "Generating Thrift for cppreparse.thrift")
+set(CPPREPARSETHRIFT_OUTPUT_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.h)
 
-add_library(cppreparsethrift STATIC
+set(CPPREPARSETHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cppreparse.thrift)
+
+set(CPPREPARSETHRIFT_ADDITIONAL_ARGS --gen cpp --gen js:jquery -I ${PROJECT_SOURCE_DIR}/service)
+
+generate_from_thrift("${CPPREPARSETHRIFT_OUTPUT_FILES}" "${CPPREPARSETHRIFT_THRIFT_FILE}" "${CPPREPARSETHRIFT_ADDITIONAL_ARGS}")
+
+set(cppreparsethrift_sources
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp)
+
+add_library(cppreparsethrift STATIC ${cppreparsethrift_sources})
 
 target_compile_options(cppreparsethrift PUBLIC -fPIC)
 

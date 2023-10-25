@@ -11,30 +11,23 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-# Generate thrift files
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/SearchService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-java
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      -I ${PROJECT_SOURCE_DIR}/service
-      ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift
-  COMMENT
-    "Generating Thrift for search.thrift")
-
-# Create cpp static library from thrift files
-add_library(searchthrift STATIC
+set(SEARCHTHRIFT_OUTPUT_FILES
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/SearchService.cpp)
+
+set(SEARCHTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/search.thrift)
+
+set(SEARCHTHRIFT_ADDITIONAL_ARGS --gen cpp --gen js --gen java -I ${PROJECT_SOURCE_DIR}/service)
+
+generate_from_thrift("${SEARCHTHRIFT_OUTPUT_FILES}" "${SEARCHTHRIFT_THRIFT_FILE}" "${SEARCHTHRIFT_ADDITIONAL_ARGS}")
+
+set(searchthrift_sources
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/SearchService.cpp)
+
+add_library(searchthrift STATIC ${searchthrift_sources})
 
 target_compile_options(searchthrift PUBLIC -fPIC)
 

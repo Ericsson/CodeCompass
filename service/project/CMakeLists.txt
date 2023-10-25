@@ -11,52 +11,47 @@ include_directories(SYSTEM
 
 # The folders here are added so that executing `make clean` removes all
 # generated files.
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-java
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift
-  COMMENT
-    "Generating Thrift for common.thrift")
 
-# Do not add the same folders to both output commands as it produces a warning.
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.h
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen java
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift
-  COMMENT
-    "Generating Thrift for project.thrift")
+set(COMMONTHRIFT_OUTPUT_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.h)
 
-add_library(commonthrift STATIC
+set(COMMONTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/common.thrift)
+
+set(COMMONTHRIFT_ADDITIONAL_ARGS --gen cpp --gen js --gen java)
+
+generate_from_thrift("${COMMONTHRIFT_OUTPUT_FILES}" "${COMMONTHRIFT_THRIFT_FILE}" "${COMMONTHRIFT_ADDITIONAL_ARGS}")
+
+set(commonthrift_sources
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp)
 
+add_library(commonthrift STATIC ${commonthrift_sources})
+
 target_compile_options(commonthrift PUBLIC -fPIC)
 
-add_library(projectthrift STATIC
+set(PROJECTTHRIFT_OUTPUT_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.h)
+
+set(PROJECTTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/project.thrift)
+
+set(PROJECTTHRIFT_ADDITIONAL_ARGS --gen cpp --gen js --gen java)
+
+generate_from_thrift("${PROJECTTHRIFT_OUTPUT_FILES}" "${PROJECTTHRIFT_THRIFT_FILE}" "${PROJECTTHRIFT_ADDITIONAL_ARGS}")
+
+set(projectthrift_sources
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp)
+
+add_library(projectthrift STATIC ${projectthrift_sources})
 
 target_compile_options(projectthrift PUBLIC -fPIC)
 

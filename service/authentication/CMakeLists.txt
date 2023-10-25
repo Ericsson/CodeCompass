@@ -7,31 +7,28 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js/authentication_types.js
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js/AuthenticationService.js
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js:jquery
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/authentication.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/authentication.thrift
-  COMMENT
-    "Generating Thrift for authentication.thrift")
+set(AUTHENTICATIONTHRIFT_OUTPUT_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-js/authentication_types.js
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-js/AuthenticationService.js)
 
-add_library(authenticationthrift STATIC
+set(AUTHENTICATIONTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/authentication.thrift)
+
+set(AUTHENTICATIONTHRIFT_ADDITIONAL_ARGS --gen cpp --gen js:jquery)
+
+generate_from_thrift("${AUTHENTICATIONTHRIFT_OUTPUT_FILES}" "${AUTHENTICATIONTHRIFT_THRIFT_FILE}" "${AUTHENTICATIONTHRIFT_ADDITIONAL_ARGS}")
+
+set(authenticationthrift_sources
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.cpp)
+
+add_library(authenticationthrift STATIC ${authenticationthrift_sources})
 
 target_compile_options(authenticationthrift PUBLIC -fPIC -Wno-unknown-pragmas)
 

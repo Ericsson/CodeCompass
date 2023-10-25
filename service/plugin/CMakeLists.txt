@@ -7,29 +7,26 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-js
-  COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js
-      -o ${CMAKE_CURRENT_BINARY_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift
-  COMMENT
-    "Generating Thrift for plugin.thrift")
+set(PLUGINTHRIFT_OUTPUT_FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.h
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.h)
 
-add_library(pluginthrift STATIC
+set(PLUGINTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/plugin.thrift)
+
+set(PLUGINTHRIFT_ADDITIONAL_ARGS --gen cpp --gen js)
+
+generate_from_thrift("${PLUGINTHRIFT_OUTPUT_FILES}" "${PLUGINTHRIFT_THRIFT_FILE}" "${PLUGINTHRIFT_ADDITIONAL_ARGS}")
+
+set(pluginthrift_sources
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.cpp)
+
+add_library(pluginthrift STATIC ${pluginthrift_sources})
 
 target_compile_options(pluginthrift PUBLIC -fPIC -Wno-unknown-pragmas)
 
