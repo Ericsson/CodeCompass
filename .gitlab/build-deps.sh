@@ -328,9 +328,9 @@ fi
 ##########
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber http://archive.apache.org/dist/thrift/0.13.0/thrift-0.13.0.tar.gz
-tar -xf thrift-0.13.0.tar.gz
-cd thrift-0.13.0
+wget --no-verbose --no-clobber http://archive.apache.org/dist/thrift/0.16.0/thrift-0.16.0.tar.gz
+tar -xf thrift-0.16.0.tar.gz
+cd thrift-0.16.0
 
 CXXFLAGS="$CXXFLAGS -I$DEPS_INSTALL_RUNTIME_DIR/boost-install/include" \
 LDFLAGS="$LDFLAGS -Wl,-rpath-link,$DEPS_INSTALL_RUNTIME_DIR/openssl-install/lib" \
@@ -342,7 +342,7 @@ LDFLAGS="$LDFLAGS -Wl,-rpath-link,$DEPS_INSTALL_RUNTIME_DIR/openssl-install/lib"
   --without-python
 
 make install --quiet --jobs $(nproc)
-rm -f $PACKAGES_DIR/thrift-0.13.0.tar.gz
+rm -f $PACKAGES_DIR/thrift-0.16.0.tar.gz
 
 ########
 # Java #
