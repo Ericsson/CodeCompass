@@ -180,10 +180,10 @@ avoid using them if it's not necessary.
 
 ```bash
 # Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" \
-  -O thrift-0.13.0.tar.gz
-tar -xvf ./thrift-0.13.0.tar.gz
-cd thrift-0.13.0
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.16.0/thrift-0.16.0.tar.gz" \
+  -O thrift-0.16.0.tar.gz
+tar -xvf ./thrift-0.16.0.tar.gz
+cd thrift-0.16.0
 
 ./configure --prefix=<thrift_install_dir> --silent --without-python \
   --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
