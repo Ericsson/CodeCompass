@@ -148,4 +148,4 @@ function(generate_from_thrift _output_files _thrift_file _additional_args)
     DEPENDS ${_thrift_file}
     COMMENT "Generating Thrift for ${_thrift_file}"
   )
-endfunction()
+endfunction(generate_from_thrift)
