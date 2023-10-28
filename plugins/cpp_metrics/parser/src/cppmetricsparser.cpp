@@ -22,6 +22,21 @@ namespace parser
 
 CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  util::OdbTransaction {_ctx.db} ([&, this] {
+    for (const model::CppFileMetrics& fm
+      : _ctx.db->query<model::CppFileMetrics>())
+    {
+      _fileIdCache.insert(fm.file);
+    }
+
+    for (const model::CppAstNodeMetrics& anm
+      : _ctx.db->query<model::CppAstNodeMetrics>())
+    {
+      auto node = _ctx.db->query_one<model::CppAstNode>(
+        odb::query<model::CppAstNode>::id == anm.astNodeId);
+      _astNodeIdCache.insert({anm.astNodeId, node->location.file->id});
+    }
+  });
 }
 
 bool CppMetricsParser::cleanupDatabase()
@@ -47,6 +62,24 @@ bool CppMetricsParser::cleanupDatabase()
             _fileIdCache.erase(file.id);
           }
         }
+
+        for (const auto& pair : _astNodeIdCache)
+        {
+          auto file = _ctx.db->query_one<model::File>(
+            odb::query<model::File>::id == pair.second);
+
+          auto it = _ctx.fileStatus.find(file->path);
+          if (it != _ctx.fileStatus.end() &&
+              (it->second == cc::parser::IncrementalStatus::DELETED ||
+               it->second == cc::parser::IncrementalStatus::MODIFIED ||
+               it->second == cc::parser::IncrementalStatus::ACTION_CHANGED))
+          {
+            LOG(info) << "[cxxmetricsparser] Database cleanup: " << file->path;
+
+            _ctx.db->erase_query<model::CppAstNodeMetrics>(odb::query<model::CppAstNodeMetrics>::astNodeId == pair.first);
+            _astNodeIdCache.erase(pair.first);
+          }
+        }
       });
     }
     catch (odb::database_exception&)
@@ -62,7 +95,7 @@ void CppMetricsParser::functionParameters()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
   {
-    for (const model::CppFunctionParamCountWithId paramCount
+    for (const model::CppFunctionParamCountWithId& paramCount
       : _ctx.db->query<model::CppFunctionParamCountWithId>())
     {
       model::CppAstNodeMetrics funcParams;
