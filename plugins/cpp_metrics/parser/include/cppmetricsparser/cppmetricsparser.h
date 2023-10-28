@@ -27,8 +27,6 @@ public:
   virtual bool parse() override;
 
 private:
-  bool accept(const std::string& path_);
-
   void functionParameters();
 
   std::unordered_set<model::FileId> _fileIdCache;
