@@ -35,3 +35,7 @@ next-env.d.ts
 
 # thrift generated files
 generated/
+
+# JetBrain IDEs
+.idea/
+

@@ -7,6 +7,8 @@ env:
 
 jobs:
 
+
+      
   ## BUILD JOBS
   build:
     strategy:
@@ -85,8 +87,8 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           -DDATABASE=$DB_TYPE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DLLVM_DIR=/usr/lib/llvm-10/cmake
-          -DClang_DIR=/usr/lib/cmake/clang-10
+          -DLLVM_DIR=/usr/lib/llvm-11/cmake
+          -DClang_DIR=/usr/lib/cmake/clang-11
           -DTEST_DB=$DB_CONNSTRING
 
       - name: Build

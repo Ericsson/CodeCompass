@@ -13,6 +13,7 @@ install(FILES
 
 # Install React application
 install(CODE "set(CC_PACKAGE \"${CMAKE_CURRENT_SOURCE_DIR}/package.json\")")
+install(CODE "set(CC_PACKAGE_LOCK \"${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json\")")
 install(CODE "set(INSTALL_WEBROOT_DIR ${INSTALL_WEBROOT_DIR})")
 install(CODE "set(INSTALL_WEBROOT_REACT_DIR ${INSTALL_WEBROOT_REACT_DIR})")
 install(CODE "set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})")

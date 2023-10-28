@@ -62,7 +62,7 @@ RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
     
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
-    llvm-10 \
+    llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \

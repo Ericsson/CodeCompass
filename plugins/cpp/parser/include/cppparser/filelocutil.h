@@ -95,7 +95,7 @@ public:
     if (!fileEntry)
       return std::string();
 
-    return fileEntry->getName();
+    return std::string(fileEntry->getName());
   }
 
 private:
