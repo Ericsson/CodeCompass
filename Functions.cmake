@@ -124,28 +124,5 @@ function(join _values _glue _output)
   string (REGEX REPLACE "([^\\]|^);" "\\1${_glue}" _tmpStr "${_values}")
   string (REGEX REPLACE "[\\](.)" "\\1" _tmpStr "${_tmpStr}") #fixes escaping
   set (${_output} "${_tmpStr}" PARENT_SCOPE)
-endfunction(join)
   
-
-# Wrapper function to generate source files from a thrift file with the given arguments.
-# Since Thrift 0.14, some of the files may not be generated, if they would be empty.
-# To overcome this, we manually create the source files, in case the thrift compiler does not generate them.
-function(generate_from_thrift _output_files _thrift_file _additional_args)
-  set(DIRECTORIES_TO_CREATE "")
-
-  foreach(OUTPUT_FILE ${_output_files})
-    get_filename_component(OUTPUT_DIRECTORY ${OUTPUT_FILE} DIRECTORY)
-    list(APPEND DIRECTORIES_TO_CREATE ${OUTPUT_DIRECTORY})
-  endforeach()
-
-  list(REMOVE_DUPLICATES DIRECTORIES_TO_CREATE)
-
-  add_custom_command(
-    OUTPUT ${_output_files}
-    COMMAND ${THRIFT_EXECUTABLE} ${_additional_args} -o ${CMAKE_CURRENT_BINARY_DIR} ${_thrift_file}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${DIRECTORIES_TO_CREATE}
-    COMMAND ${CMAKE_COMMAND} -E touch ${_output_files}
-    DEPENDS ${_thrift_file}
-    COMMENT "Generating Thrift for ${_thrift_file}"
-  )
-endfunction(generate_from_thrift)
+endfunction(join)
