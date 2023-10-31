@@ -7,27 +7,28 @@ include_directories(
 include_directories(SYSTEM
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
-set(DUMMYTHRIFT_OUTPUT_FILES
+add_custom_command(
+  OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.h
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+  COMMAND
+    ${THRIFT_EXECUTABLE} --gen cpp
+      -o ${CMAKE_CURRENT_BINARY_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}/dummy.thrift
+  DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/dummy.thrift
+  COMMENT
+    "Generating Thrift for dummy.thrift")
+
+add_library(dummythrift STATIC
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.h
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.h
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.h)
-
-set(DUMMYTHRIFT_THRIFT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/dummy.thrift)
-
-set(DUMMYTHRIFT_ADDITIONAL_ARGS --gen cpp)
-
-generate_from_thrift("${DUMMYTHRIFT_OUTPUT_FILES}" "${DUMMYTHRIFT_THRIFT_FILE}" "${DUMMYTHRIFT_ADDITIONAL_ARGS}")
-
-set(dummythrift_sources
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp
-)
-
-add_library(dummythrift STATIC ${dummythrift_sources})
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp)
 
 target_compile_options(dummythrift PUBLIC -fPIC)
 
