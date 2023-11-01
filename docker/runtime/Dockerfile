@@ -1,11 +1,13 @@
 ARG CC_DATABASE=sqlite
-ARG INSTALL_COMMAND="apt-get install -qqy --no-install-recommends"
 
 ###############################################################################
 #-----------------------------    BUILD STAGE   ------------------------------#
 ###############################################################################
 
 FROM codecompass:dev as builder
+
+ARG CC_REPO_URL="https://github.com/Ericsson/CodeCompass.git"
+ENV CC_REPO_URL ${CC_REPO_URL}
 
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
@@ -16,13 +18,11 @@ ENV CC_DATABASE ${CC_DATABASE}
 ARG CC_BUILD_TYPE=Release
 ENV CC_BUILD_TYPE ${CC_BUILD_TYPE}
 
-ARG GIT_REPO="https://github.com/Ericsson/CodeCompass.git"
-
 RUN apt-get update -qq && \
     apt-get install --yes git
 
 # Download CodeCompass release.
-RUN git clone ${GIT_REPO} /CodeCompass
+RUN git clone ${CC_REPO_URL} /CodeCompass
 WORKDIR /CodeCompass
 RUN git checkout ${CC_VERSION}
 
@@ -47,33 +47,32 @@ FROM ubuntu:22.04
 # sets timezone interactively during the installation process. This environment
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
-ARG INSTALL_COMMAND
 
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
 COPY --from=builder /packages/lib* /packages/
 
-RUN apt-get update -qq \
-  && ${INSTALL_COMMAND} \
+RUN apt-get update -qq && \
+  apt-get install -qq --yes --no-install-recommends \
     /packages/libodb-2.5.deb \
-    /packages/libodb-dev.deb \
-  && if [ "pgsql" = "${CC_DATABASE}" ]; then \
-    ${INSTALL_COMMAND} \
+    /packages/libodb-dev.deb && \
+  if [ "pgsql" = "${CC_DATABASE}" ]; then \
+    apt-get install -qq --yes --no-install-recommends \
       libpq5 \
       /packages/libodb-pgsql-2.5.deb \
       /packages/libodb-pgsql-dev.deb \
       postgresql-server-dev-14; \
   else \
-    ${INSTALL_COMMAND} \
+    apt-get install -qq --yes --no-install-recommends \
       /packages/libsqlite3-1.deb \
       /packages/libodb-sqlite-2.5.deb \
       /packages/libodb-sqlite-dev.deb \
       libsqlite3-dev; \
   fi;
     
-RUN set -x && apt-get update -qq \
-  && ${INSTALL_COMMAND} \
+RUN set -x && apt-get update -qq && \
+    apt-get install -qq --yes --no-install-recommends \
     llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
@@ -85,10 +84,10 @@ RUN set -x && apt-get update -qq \
     /packages/libthrift-0.13.0.deb \
     /packages/libthrift-dev.deb \
     universal-ctags \
-    tini \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/ \
-  && set +x
+    tini && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/ && \
+    set +x
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass
