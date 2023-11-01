@@ -25,6 +25,8 @@
 #include <model/cppinheritance-odb.hxx>
 #include <model/cppnamespace.h>
 #include <model/cppnamespace-odb.hxx>
+#include <model/cppnamespacealias.h>
+#include <model/cppnamespacealias-odb.hxx>
 #include <model/cpprelation.h>
 #include <model/cpprelation-odb.hxx>
 #include <model/cpprecord.h>
@@ -117,6 +119,7 @@ public:
       util::persistAll(_typedefs, _ctx.db);
       util::persistAll(_variables, _ctx.db);
       util::persistAll(_namespaces, _ctx.db);
+      util::persistAll(_namespaceAliases, _ctx.db);
       util::persistAll(_members, _ctx.db);
       util::persistAll(_inheritances, _ctx.db);
       util::persistAll(_friends, _ctx.db);
@@ -958,6 +961,43 @@ public:
     return true;
   }
 
+  bool VisitNamespaceAliasDecl(clang::NamespaceAliasDecl* nad_)
+  {
+    //--- CppAstNode ---//
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      nad_->getBeginLoc(),
+      nad_->getLocation(),
+      true);
+
+    astNode->location = getFileLoc(nad_->getBeginLoc(), nad_->getEndLoc());
+    astNode->entityHash = util::fnvHash(getUSR(nad_->getAliasedNamespace()));
+    astNode->symbolType = model::CppAstNode::SymbolType::NamespaceAlias;
+    astNode->astType = model::CppAstNode::AstType::Definition;
+
+    astNode->id = model::createIdentifier(*astNode);
+
+    if (insertToCache(nad_, astNode))
+      _astNodes.push_back(astNode);
+    else
+      return true;
+
+    //--- CppNamespaceAlias ---//
+
+    model::CppNamespaceAliasPtr nsa = std::make_shared<model::CppNamespaceAlias>();
+    _namespaceAliases.push_back(nsa);
+
+    nsa->astNodeId = astNode->id;
+    nsa->entityHash = astNode->entityHash;
+    nsa->name = nad_->getNameAsString();
+    nsa->qualifiedName = nad_->getQualifiedNameAsString();
+
+    return true;
+  }
+
   bool VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
   {
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
@@ -1464,18 +1504,19 @@ private:
     return false;
   }
 
-  std::vector<model::CppAstNodePtr>      _astNodes;
-  std::vector<model::CppEnumConstantPtr> _enumConstants;
-  std::vector<model::CppEnumPtr>         _enums;
-  std::vector<model::CppFunctionPtr>     _functions;
+  std::vector<model::CppAstNodePtr>        _astNodes;
+  std::vector<model::CppEnumConstantPtr>   _enumConstants;
+  std::vector<model::CppEnumPtr>           _enums;
+  std::vector<model::CppFunctionPtr>       _functions;
   std::vector<model::CppRecordPtr>         _types;
-  std::vector<model::CppTypedefPtr>      _typedefs;
-  std::vector<model::CppVariablePtr>     _variables;
-  std::vector<model::CppNamespacePtr>    _namespaces;
-  std::vector<model::CppMemberTypePtr>   _members;
-  std::vector<model::CppInheritancePtr>  _inheritances;
-  std::vector<model::CppFriendshipPtr>   _friends;
-  std::vector<model::CppRelationPtr>     _relations;
+  std::vector<model::CppTypedefPtr>        _typedefs;
+  std::vector<model::CppVariablePtr>       _variables;
+  std::vector<model::CppNamespacePtr>      _namespaces;
+  std::vector<model::CppNamespaceAliasPtr> _namespaceAliases;
+  std::vector<model::CppMemberTypePtr>     _members;
+  std::vector<model::CppInheritancePtr>    _inheritances;
+  std::vector<model::CppFriendshipPtr>     _friends;
+  std::vector<model::CppRelationPtr>       _relations;
 
   // TODO: Maybe we don't even need a stack, if functions can't be nested.
   // Check lambda.
