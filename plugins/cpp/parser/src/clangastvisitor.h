@@ -335,6 +335,14 @@ public:
     return b;
   }
 
+  bool TraverseStmt(clang::Stmt* s_)
+  {
+    _statements.push(s_);
+    bool b = Base::TraverseStmt(s_);
+    _statements.pop();
+    return b;
+  }
+
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
   {
     const clang::TypedefType* type = tl_.getTypePtr();
@@ -940,26 +948,21 @@ public:
     return true;
   }
 
-  bool VisitStmt(clang::Stmt* s_)
+  bool VisitDeclStmt(clang::DeclStmt* ds_)
   {
-    if (clang::DeclStmt* ds = llvm::dyn_cast<clang::DeclStmt>(s_))
+    assert(_statements.top() == ds_ &&
+      "ds_ was expected to be the top-level statement.");
+    _statements.pop();
+    clang::Stmt* scopeSt = _statements.top();
+    _statements.push(ds_);
+
+    for (auto it = ds_->decl_begin(); it != ds_->decl_end(); ++it)
     {
-      // FIXME: Using the parent map is expensive.
-      // My original idea was to simply use the second top-most statement from
-      // _contextStatementStack as scopeSt, but the stack is always empty
-      // for some reason, except in VisitDeclRefExpr... (why?)
-      auto parents = _astContext.getParentMapContext()
-        .getParents<clang::Stmt>(*s_);
-      const clang::Stmt* scopeSt = parents[0].get<clang::Stmt>();
-      
-      for (auto it = ds->decl_begin(); it != ds->decl_end(); ++it)
+      if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
       {
-        if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
-        {
-          model::FileLoc loc =
-            getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
-          addDestructorUsage(vd->getType(), loc, vd);
-        }
+        model::FileLoc loc =
+          getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
+        addDestructorUsage(vd->getType(), loc, vd);
       }
     }
 
@@ -1576,6 +1579,8 @@ private:
   std::unordered_map<unsigned, model::CppAstNode::AstType> _locToAstType;
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
+  // This stack contains the parent chain of the current Stmt.
+  std::stack<clang::Stmt*> _statements;
   // This stack has the same role as _locTo* maps. In case of
   // clang::DeclRefExpr objects we need to determine the contect of the given
   // expression. In this stack we store the deepest statement node in AST which
