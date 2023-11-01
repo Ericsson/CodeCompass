@@ -6,6 +6,7 @@ import { ThemeContextController } from 'global-context/theme-context';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18n/i18n';
 import React from 'react';
+import { CookieNotice } from 'components/cookie-notice/cookie-notice';
 
 const App = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
@@ -14,6 +15,7 @@ const App = ({ Component, pageProps }: AppProps): JSX.Element => {
         <ThemeContextController>
           <CssBaseline />
           <Component {...pageProps} />
+          <CookieNotice />
         </ThemeContextController>
       </AppContextController>
     </I18nextProvider>

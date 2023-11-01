@@ -355,5 +355,33 @@
     "INCLUDE_DEPENDENCY": "Include Dependency",
     "INTERFACE": "Interface Diagram",
     "SUBSYSTEM_DEPENDENCY": "Internal architecture of this module"
+  },
+  "cookie": {
+    "ACCEPT": "Accept",
+    "INTRO_TEXT": "Our website uses cookies to improve your experience.",
+    "LEARN_MORE": "Learn more"
+  },
+  "cookiePolicy": {
+    "TITLE": "Cookie policy",
+    "sections": {
+      "cookies": {
+        "SERVICE": "Service",
+        "PURPOSE": "Purpose",
+        "DURATION": "Duration",
+        "MORE_INFORMATION": "More Information",
+        "COOKIE_NAMES": "Cookie names",
+        "WHAT_COOKIES": "What are cookies?",
+        "WHAT_COOKIES_DESCRIPTION": "Cookies are small text files that websites store on a user's device, primarily for analytics purposes. They enable websites to gather valuable data about user interactions, helping businesses understand user behavior, preferences, and engagement. By analyzing this data, organizations can make informed decisions to improve their websites, content, and marketing strategies. Cookies play a crucial role in optimizing the online experience and tailoring content to better serve users' needs while respecting their privacy through proper consent mechanisms.",
+        "HOW_USE_TITLE": "How we use cookies?",
+        "CONCLUSION": "By clicking \"Accept\", you agree to the use of cookies on this website, enhancing your browsing experience and enabling us to gather valuable analytics data for continual improvement. You can always withdraw your consent later on by simply removing the corresponding cookies from your device.",
+        "googleAnalytics": {
+          "SERVICE": "Google Analytics",
+          "COOKIE_NAMES": "_ga, _ga_<MEASUREMENT_ID>",
+          "DURATION": "2 years",
+          "PURPOSE": "Tracking of page views, code editor operations, diagram generations, metrics collection, and version-control actions.",
+          "MORE_INFORMATION": "https://policies.google.com/technologies/cookies"
+        }
+      }
+    }
   }
 }

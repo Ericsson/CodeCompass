@@ -16,9 +16,10 @@ const main = async () => {
   const proxyHandler = createProxyMiddleware({
     target: process.env.BACKEND_URL,
     changeOrigin: true,
-    pathFilter: '**/*Service',
+    pathFilter: ['**/*Service', '**/ga.txt'],
     pathRewrite: {
       '^/[^/]+/(.+Service)$': '/$1',
+      '^/ga.txt' : '/ga.txt'
     },
   });
 
