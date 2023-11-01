@@ -11,11 +11,6 @@ namespace model
 #pragma db object
 struct CppNamespaceAlias : CppEntity
 {
-  #pragma db unique
-  CppAstNodeId aliasedNamespaceNodeId;
-
-  CppAstNodePtr aliasedNamespace;
-
   std::string toString() const
   {
     std::string ret("CppNamespaceAlias");
