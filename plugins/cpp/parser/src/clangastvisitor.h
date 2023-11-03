@@ -73,8 +73,7 @@ public:
     clang::ASTContext& astContext_,
     EntityCache& entityCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
-    : _isImplicit(false),
-      _ctx(ctx_),
+    : _ctx(ctx_),
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
       _astContext(astContext_),
@@ -127,21 +126,8 @@ public:
 
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
-
-  bool TraverseDecl(clang::Decl* decl_)
-  {
-    bool prevIsImplicit = _isImplicit;
-
-    if (decl_)
-      _isImplicit = decl_->isImplicit() || _isImplicit;
-
-    bool b = Base::TraverseDecl(decl_);
-
-    _isImplicit = prevIsImplicit;
-
-    return b;
-  }
-
+  bool shouldVisitLambdaBody() const { return true; }
+  
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
     _functionStack.push(std::make_shared<model::CppFunction>());
@@ -401,7 +387,7 @@ public:
     // some implementation defined reasons. The position of this node is at the
     // name of the record after the "class", "struct", etc. keywords. We don't
     // want to store these in the database
-    if (rd_->isImplicit())
+    if (rd_->isImplicit() && !rd_->isLambda())
       return true;
 
     //--- CppAstNode ---//
@@ -680,10 +666,12 @@ public:
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
 
-    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
-
     //--- Tags ---//
 
+    if (fn_->isImplicit())
+      cppFunction->tags.insert(model::Tag::Implicit);
+
+    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
     if (md)
     {
       if (md->isVirtual())
@@ -698,9 +686,6 @@ public:
       if (llvm::isa<clang::CXXDestructorDecl>(md))
         cppFunction->tags.insert(model::Tag::Destructor);
     }
-
-    if (_isImplicit)
-      cppFunction->tags.insert(model::Tag::Implicit);
 
     //--- AST type for the return type ---//
 
@@ -1269,8 +1254,7 @@ private:
     if (_clangSrcMgr.isMacroArgExpansion(end_))
       realEnd = _clangSrcMgr.getSpellingLoc(end_);
 
-    if (!_isImplicit)
-      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+    _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
 
     fileLoc.file = getFile(realStart);
 
@@ -1489,7 +1473,6 @@ private:
   std::stack<model::CppRecordPtr>     _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
 
-  bool _isImplicit;
   ParserContext& _ctx;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
