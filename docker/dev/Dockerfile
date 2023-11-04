@@ -5,9 +5,6 @@ FROM ubuntu:22.04
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Copy prebuilt packages.
-COPY docker/packages /packages/
-
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
   && apt-get -y install --no-install-recommends \
@@ -15,6 +12,7 @@ RUN set -x && apt-get update -qq \
   default-jdk \
   universal-ctags \
   curl ca-certificates gnupg \
+  wget \
   doxygen \
   gcc-11 gcc-11-plugin-dev g++-11 \
   libboost-filesystem-dev \
@@ -29,10 +27,18 @@ RUN set -x && apt-get update -qq \
   libssl-dev \
   llvm-11 clang-11 llvm-11-dev libclang-11-dev \
   libsqlite3-dev \
-  postgresql-server-dev-14 \
-  /packages/*.deb && \
+  postgresql-server-dev-14 && \
   ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
   ln -s /usr/bin/g++-11 /usr/bin/g++
+
+# Copy install scripts
+COPY docker/dev/install_odb.sh docker/dev/install_thrift.sh /
+
+# Build ODB from source
+RUN sh /install_odb.sh && rm /install_odb.sh
+
+# Build Thrift 0.13 from source
+RUN sh /install_thrift.sh && rm /install_thrift.sh
 
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings && \
@@ -65,7 +71,7 @@ ENV DATABASE=sqlite \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
     WITH_AUTH="plain;ldap" \
-    LLVM_DIR=/usr/lib/llvm-11/cmake
+    LLVM_DIR=/usr/lib/llvm-11/cmake \
     Clang_DIR=/usr/lib/cmake/clang-11
 
 ENV PATH="$INSTALL_DIR/bin:$PATH"

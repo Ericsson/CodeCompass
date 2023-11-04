@@ -51,26 +51,20 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-COPY --from=builder /packages/lib* /packages/
+# Copy install scripts
+COPY docker/dev/install_odb.sh docker/dev/install_thrift.sh /
 
 RUN apt-get update -qq && \
-  apt-get install -qq --yes --no-install-recommends \
-    /packages/libodb-2.5.deb \
-    /packages/libodb-dev.deb && \
   if [ "pgsql" = "${CC_DATABASE}" ]; then \
     apt-get install -qq --yes --no-install-recommends \
       libpq5 \
-      /packages/libodb-pgsql-2.5.deb \
-      /packages/libodb-pgsql-dev.deb \
       postgresql-server-dev-14; \
   else \
     apt-get install -qq --yes --no-install-recommends \
-      /packages/libsqlite3-1.deb \
-      /packages/libodb-sqlite-2.5.deb \
-      /packages/libodb-sqlite-dev.deb \
       libsqlite3-dev; \
-  fi;
-    
+  fi && \
+  sh /install_odb.sh "${CC_DATABASE}"
+
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
     llvm-11 \
@@ -81,13 +75,14 @@ RUN set -x && apt-get update -qq && \
     libgvc6 \
     libldap-2.5-0 \
     libmagic-dev \
-    /packages/libthrift-0.13.0.deb \
-    /packages/libthrift-dev.deb \
     universal-ctags \
     tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
+
+# Install Thrift 0.13 from source
+RUN sh /install_thrift.sh && rm /install_thrift.sh
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass

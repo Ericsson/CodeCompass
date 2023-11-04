@@ -15,7 +15,8 @@ FROM ubuntu:22.04
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
-COPY --from=runtime /packages /packages/
+# Copy install scripts
+COPY docker/dev/install_odb.sh docker/dev/install_thrift.sh /
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
@@ -29,14 +30,19 @@ RUN set -x && apt-get update -qq \
     libssl3 \
     libgvc6 \
     libpq5 \
-    /packages/*.deb \
     # To switch user and exec command.
     gosu \
     tini \
-    curl ca-certificates gnugpg \
+    curl ca-certificates gnupg \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
+
+# Build ODB from source
+RUN sh /install_odb.sh && rm /install_odb.sh
+
+# Build Thrift 0.13 from source
+RUN sh /install_thrift.sh && rm /install_thrift.sh
 
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings && \
