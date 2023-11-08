@@ -4,6 +4,10 @@ on: [push, pull_request, workflow_dispatch]
 
 env:
   BUILD_TYPE: Debug
+  ## For locally compiled dependencies
+  INSTALL_PATH: ${{github.workspace}}/installed
+  ## Temp directory for installers of the downloaded dependencies
+  DOWNLOAD_PATH: ${{github.workspace}}/downloads
 
 jobs:
 
@@ -16,6 +20,9 @@ jobs:
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
+    outputs:
+      has-compiled-dependencies: ${{ steps.compilation-flag.outputs.has-compiled-dependencies }}
+      compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
 
     services:
       # Label used to access the service container
@@ -41,10 +48,57 @@ jobs:
         run: sudo apt-get update
 
       - name: Install required packages for build
-        run: ./.github/scripts/setup_build_${{matrix.os}}.sh
+        run: ./.github/scripts/${{ matrix.os }}/setup_build.sh
+
+      - name: Set has-compiled-dependencies flag
+        id: compilation-flag
+        run: |
+          if [ -f ./.github/scripts/${{ matrix.os }}/compile_build.sh ]; then
+            echo "has-compiled-dependencies=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-compiled-dependencies=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download installers for compiled dependencies
+        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        id: download-compile-dependencies
+        run: |
+           chmod +x ./.github/scripts/${{ matrix.os }}/download_build.sh
+           ./.github/scripts/${{ matrix.os }}/download_build.sh
+
+      - name: Restore compiled dependencies
+        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        id: restore-compiled-dependencies
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.INSTALL_PATH }}
+          key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
+
+      - name: Compile dependencies
+        if: steps.restore-compiled-dependencies.outputs.cache-hit != 'true' && steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        run: |
+           chmod +x ./.github/scripts/${{ matrix.os }}/compile_build.sh
+           ./.github/scripts/${{ matrix.os }}/compile_build.sh
+
+      - name: Post compilation configuration (build)
+        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        run: |
+          if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_build.sh ]; then
+           chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_build.sh
+           ./.github/scripts/${{ matrix.os }}/postcompile_build.sh
+          fi
+
+      - name: Save dependencies
+        if: steps.restore-compiled-dependencies.outputs.cache-hit != 'true' && steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        id: save-compiled-dependencies
+        uses: actions/cache/save@v3
+        with:
+         path: ${{ env.INSTALL_PATH }}
+         key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
+
 
       - name: Install database packages
-        run: ./.github/scripts/setup_${{matrix.db}}_${{matrix.os}}.sh
+        run: ./.github/scripts/${{ matrix.os }}/setup_${{matrix.db}}.sh
 
       - name: Install GoogleTest
         run: |
@@ -162,10 +216,26 @@ jobs:
 
       # We need build dependencies for CodeCompass, as it will parsed as well
       - name: Install required packages for build
-        run: ./.github/scripts/setup_build_${{matrix.os}}.sh
+        run: ./.github/scripts/${{ matrix.os }}/setup_build.sh
 
       - name: Install database packages
-        run: ./.github/scripts/setup_${{matrix.db}}_${{matrix.os}}.sh
+        run: ./.github/scripts/${{ matrix.os }}/setup_${{matrix.db}}.sh
+
+      - name: Restore compiled dependencies
+        if: needs.build.outputs.has-compiled-dependencies == 'true'
+        id: restore-compiled-dependencies
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.INSTALL_PATH }}
+          key: ${{ matrix.os }}-compile-install-${{needs.build.outputs.compile-hash-key}}
+
+      - name: Post compilation configuration (runtime)
+        if: needs.build.outputs.has-compiled-dependencies == 'true'
+        run: |
+         if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh ]; then
+          chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
+          ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
+         fi
 
       - name: Download CodeCompass binaries
         uses: actions/download-artifact@v2
