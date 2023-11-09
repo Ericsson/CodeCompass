@@ -5,6 +5,8 @@ on: [push, pull_request, workflow_dispatch]
 env:
   BUILD_TYPE: Debug
 
+permissions: read-all
+
 jobs:
 
 

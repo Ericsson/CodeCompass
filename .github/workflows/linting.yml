@@ -2,6 +2,8 @@ name: Frontend linting
 
 on: [push, pull_request, workflow_dispatch]
 
+permissions: read-all
+
 jobs:
     linting:
         runs-on: ubuntu-20.04
