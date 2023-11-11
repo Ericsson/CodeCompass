@@ -864,7 +864,7 @@ public:
 
     if (_functionStack.empty())
       variable->tags.insert(model::Tag::Global);
-    if (_isImplicit)
+    if (vd_->isImplicit())
       variable->tags.insert(model::Tag::Implicit);
 
     //--- CppMemberType ---//
