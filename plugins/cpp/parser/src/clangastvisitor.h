@@ -444,7 +444,8 @@ public:
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
 
-    if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
+    if (const clang::CXXRecordDecl* crd
+      = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
       cppRecord->isAbstract = crd->isAbstract();
       cppRecord->isPOD = crd->isPOD();
@@ -522,7 +523,7 @@ public:
 
       // --- Destructor --- //
 
-      void* ref = crd;
+      const clang::NamedDecl* ref = crd;
       model::FileLoc location = getFileLoc(crd->getEndLoc(), crd->getEndLoc());
       if (clang::CXXDestructorDecl* dd = crd->getDestructor())
       {
