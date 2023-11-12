@@ -1,4 +1,4 @@
-# Compile dependencies that are cannot be acquired via the official repositories
+# Compile dependencies that cannot be acquired via the official repositories
 
 mkdir -p ${INSTALL_PATH}
 
@@ -15,8 +15,3 @@ cd thrift-0.16.0
   --without-java --without-swift
 
 make install -j $(nproc)
-
-
-
-
-
