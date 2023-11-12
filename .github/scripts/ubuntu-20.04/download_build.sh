@@ -4,7 +4,7 @@ mkdir -p ${DOWNLOAD_PATH}
 
 ## Thrift 0.16
 
-wget -O ${DOWNLOAD_PATH}/thrift-0.16.0.tar.gz "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.16.0/thrift-0.16.0.tar.gz"
+wget -O ${DOWNLOAD_PATH}/thrift-0.16.0.tar.gz "http://archive.apache.org/dist/thrift/0.16.0/thrift-0.16.0.tar.gz"
 
 # Calculate hash of dependencies for Github Cache Action
 
