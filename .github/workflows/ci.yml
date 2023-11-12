@@ -5,12 +5,11 @@ on: [push, pull_request, workflow_dispatch]
 env:
   BUILD_TYPE: Debug
   ## For locally compiled dependencies
-  INSTALL_PATH: ${{github.workspace}}/installed
+  INSTALL_PATH: ${{github.workspace}}/dependencies/install
   ## Temp directory for installers of the downloaded dependencies
-  DOWNLOAD_PATH: ${{github.workspace}}/downloads
+  DOWNLOAD_PATH: ${{github.workspace}}/dependencies/download
 
 jobs:
-
   ## BUILD JOBS
   build:
     strategy:
@@ -63,8 +62,8 @@ jobs:
         if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
         id: download-compile-dependencies
         run: |
-           chmod +x ./.github/scripts/${{ matrix.os }}/download_build.sh
-           ./.github/scripts/${{ matrix.os }}/download_build.sh
+          chmod +x ./.github/scripts/${{ matrix.os }}/download_build.sh
+          ./.github/scripts/${{ matrix.os }}/download_build.sh
 
       - name: Restore compiled dependencies
         if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
@@ -77,8 +76,8 @@ jobs:
       - name: Compile dependencies
         if: steps.restore-compiled-dependencies.outputs.cache-hit != 'true' && steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
         run: |
-           chmod +x ./.github/scripts/${{ matrix.os }}/compile_build.sh
-           ./.github/scripts/${{ matrix.os }}/compile_build.sh
+          chmod +x ./.github/scripts/${{ matrix.os }}/compile_build.sh
+          ./.github/scripts/${{ matrix.os }}/compile_build.sh
 
       - name: Post compilation configuration (build)
         if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
@@ -93,9 +92,8 @@ jobs:
         id: save-compiled-dependencies
         uses: actions/cache/save@v3
         with:
-         path: ${{ env.INSTALL_PATH }}
-         key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
-
+          path: ${{ env.INSTALL_PATH }}
+          key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
 
       - name: Install database packages
         run: ./.github/scripts/${{ matrix.os }}/setup_${{matrix.db}}.sh
@@ -129,8 +127,7 @@ jobs:
 
       - name: Configure CMake
         working-directory: ${{github.workspace}}
-        run:
-          cmake -E make_directory $HOME/cc-build
+        run: cmake -E make_directory $HOME/cc-build
 
       - name: Run CMake
         run: >
@@ -177,7 +174,6 @@ jobs:
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
-
 
   ## PARSING JOBS
   parse:
@@ -232,10 +228,10 @@ jobs:
       - name: Post compilation configuration (runtime)
         if: needs.build.outputs.has-compiled-dependencies == 'true'
         run: |
-         if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh ]; then
-          chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-          ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-         fi
+          if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh ]; then
+           chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
+           ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
+          fi
 
       - name: Download CodeCompass binaries
         uses: actions/download-artifact@v2
@@ -307,7 +303,6 @@ jobs:
           cd $HOME/cc-install/bin
           ./CodeCompass_parser -d $PROJ_XERCES_CONNSTRING -w $HOME/$DIR_WS/ -n "Xerces-C" -i $HOME/xerces-c -i $HOME/build_xerces-c/compile_commands.json -j $(nproc)
 
-
   ## DOCKER IMAGE JOB
   docker:
     needs: parse
@@ -318,7 +313,6 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-
 
   ## TARBALL JOB
   tarball:
