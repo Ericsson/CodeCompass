@@ -9,8 +9,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/WorkspaceService.cpp
@@ -27,7 +25,6 @@ add_custom_command(
     "Generating Thrift for workspace.thrift")
 
 add_library(workspacethrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/workspace_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/WorkspaceService.cpp)
 

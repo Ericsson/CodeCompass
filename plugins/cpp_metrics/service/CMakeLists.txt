@@ -9,10 +9,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
@@ -26,8 +22,6 @@ add_custom_command(
     "Generating Thrift for cppmetrics.thrift")
 
 add_library(cppmetricsthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppmetrics_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.cpp)
 
 target_compile_options(cppmetricsthrift PUBLIC -fPIC)

@@ -60,13 +60,24 @@ public class IPCProcessor implements AutoCloseable {
     _processor = processor_;
     
     TProtocolFactory factory = new TBinaryProtocol.Factory();
-    _inTransport = new TIOStreamTransport(
-      new FileInputStream(getFileNameFromFd(options_.ipcInFd)));
-    _outTransport = new TIOStreamTransport(
-      new FileOutputStream(getFileNameFromFd(options_.ipcOutFd)));
-    
-    _inProtocol = factory.getProtocol(_inTransport);
-    _outProtocol = factory.getProtocol(_outTransport);
+    TTransport inTransport = null;
+    TTransport outTransport = null;
+    TProtocol inProtocol = null;
+    TProtocol outProtocol = null;
+
+    try {
+      inTransport = new TIOStreamTransport(new FileInputStream(getFileNameFromFd(options_.ipcInFd)));
+      outTransport = new TIOStreamTransport(new FileOutputStream(getFileNameFromFd(options_.ipcOutFd)));
+      inProtocol = factory.getProtocol(inTransport);
+      outProtocol = factory.getProtocol(outTransport);
+    } catch (TTransportException ex) {
+      _log.log(Level.SEVERE, "An error occured during the initialization of IO stream transports!", ex);
+    } finally {
+      _inTransport = inTransport;
+      _outTransport = outTransport;
+      _inProtocol = inProtocol;
+      _outProtocol = outProtocol;
+    }
   }
   
   /**

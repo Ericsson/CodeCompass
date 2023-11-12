@@ -32,8 +32,6 @@ add_custom_command(
 # Do not add the same folders to both output commands as it produces a warning.
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp
@@ -48,13 +46,11 @@ add_custom_command(
     "Generating Thrift for project.thrift")
 
 add_library(commonthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/common_types.cpp)
 
 target_compile_options(commonthrift PUBLIC -fPIC)
 
 add_library(projectthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/project_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/ProjectService.cpp)
 
