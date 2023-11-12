@@ -6,6 +6,7 @@ set(ODB_SOURCES
   include/model/cppfunction.h
   include/model/cppinheritance.h
   include/model/cppnamespace.h
+  include/model/cppnamespacealias.h
   include/model/cpprelation.h
   include/model/cpptypedef.h
   include/model/cpprecord.h
