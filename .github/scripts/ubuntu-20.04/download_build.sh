@@ -10,12 +10,13 @@ wget -O ${DOWNLOAD_PATH}/thrift-0.16.0.tar.gz "http://archive.apache.org/dist/th
 
 dependencies_to_hash=("thrift-0.16.0.tar.gz")
 
-concatenated_data=""
+concatenated_hashes=""
 for file in "${dependencies_to_hash[@]}"; do
-    concatenated_data="${concatenated_data}$(echo -n "$file"; cat "${DOWNLOAD_PATH}/${file}")"
+    file_hash=$(md5sum "${DOWNLOAD_PATH}/${file}" | awk '{print $1}')
+    concatenated_hashes="${concatenated_hashes}${file_hash}"
 done
 
-hash_value=$(echo -n "$concatenated_data" | md5sum | awk '{print $1}')
+hash_value=$(echo -n "$concatenated_hashes" | md5sum | awk '{print $1}')
 
 ## Save said hash
 
