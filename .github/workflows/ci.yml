@@ -9,7 +9,12 @@ env:
   ## Temp directory for installers of the downloaded dependencies
   DOWNLOAD_PATH: ${{github.workspace}}/dependencies/download
 
+permissions: read-all
+
 jobs:
+
+
+      
   ## BUILD JOBS
   build:
     strategy:

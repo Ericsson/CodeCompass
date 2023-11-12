@@ -1,0 +1,42 @@
+name: Frontend linting
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions: read-all
+
+jobs:
+    linting:
+        runs-on: ubuntu-20.04
+        defaults:
+            run:
+                working-directory: ./webgui-new/
+
+        steps:
+            - name: checkout
+              uses: actions/checkout@v3
+
+            - name: setup Node.JS
+              uses: actions/setup-node@v3
+              with:
+                node-version: 20
+                cache: 'npm'
+                cache-dependency-path: ./webgui-new/package-lock.json
+
+            - name: cache node modules
+              id: cache_node_modules
+              uses: actions/cache@v3
+              with:
+                path: ./webgui-new/node_modules
+                key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+                restore-keys: |
+                  ${{ runner.os }}-npm-
+
+            - name: install npm
+              if: steps.cache_node_modules.outputs.cache-hit != 'true'
+              run: npm install
+
+            - name: run linter
+              run: npm run lint
+
+            
+

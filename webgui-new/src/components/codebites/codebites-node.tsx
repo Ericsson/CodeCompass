@@ -18,6 +18,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { AppContext } from 'global-context/app-context';
 import dagre from 'dagre';
+import { sendGAEvent } from 'utils/analytics';
 
 type CodeBitesElement = {
   astNodeInfo: AstNodeInfo;
@@ -94,6 +95,7 @@ class CustomOffsetGutterMarker extends GutterMarker {
 
 export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
   const { diagramGenId: initialNodeId } = useContext(AppContext);
+  const appCtx = useContext(AppContext);
   const { theme } = useContext(ThemeContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
@@ -108,11 +110,16 @@ export const CodeBitesNode = ({ data }: NodeProps<DataProps>): JSX.Element => {
     const init = async () => {
       const initFileInfo = await getFileInfo(data.astNodeInfo.range?.file as string);
       const initText = await getCppSourceText(data.astNodeInfo.id as string);
+      sendGAEvent({
+        event_action: 'code_bites',
+        event_category: appCtx.workspaceId,
+        event_label: `${initFileInfo?.name}: ${initText}`,
+      });
       setFileInfo(initFileInfo);
       setText(initText);
     };
     init();
-  }, [data.astNodeInfo]);
+  }, [appCtx.workspaceId, data.astNodeInfo]);
 
   const handleClick = async () => {
     if (!editorRef.current) return;

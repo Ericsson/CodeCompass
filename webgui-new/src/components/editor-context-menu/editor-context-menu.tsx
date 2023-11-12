@@ -21,6 +21,7 @@ import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
 import { diagramTypeArray } from 'enums/entity-types';
+import { sendGAEvent } from 'utils/analytics';
 
 export const EditorContextMenu = ({
   contextMenu,
@@ -69,8 +70,14 @@ export const EditorContextMenu = ({
 
   const getDocs = async () => {
     const initDocs = await getCppDocumentation(astNodeInfo?.id as string);
+    const fileInfo = await getFileInfo(appCtx.projectFileId as string);
     const parser = new DOMParser();
     const parsedHTML = parser.parseFromString(initDocs, 'text/html');
+    sendGAEvent({
+      event_action: 'documentation',
+      event_category: appCtx.workspaceId,
+      event_label: `${fileInfo?.name}: ${astNodeInfo?.astNodeValue}`,
+    });
     setModalOpen(true);
     setContextMenu(null);
     if (!docsContainerRef.current) return;
@@ -87,6 +94,12 @@ export const EditorContextMenu = ({
     const initAstHTML = await getAsHTMLForNode(astNodeInfo?.id as string);
     const parser = new DOMParser();
     const parsedHTML = parser.parseFromString(initAstHTML, 'text/html');
+    const fileInfo = await getFileInfo(appCtx.projectFileId as string);
+    sendGAEvent({
+      event_action: 'cpp_reparse_node',
+      event_category: appCtx.workspaceId,
+      event_label: `${fileInfo?.name}: ${astNodeInfo?.astNodeValue}`,
+    });
     setModalOpen(true);
     setContextMenu(null);
     if (!astHTMLContainerRef.current) return;
@@ -115,6 +128,12 @@ export const EditorContextMenu = ({
     }
 
     const fileId = def.range?.file as string;
+    const fileInfo = await getFileInfo(appCtx.projectFileId as string);
+    sendGAEvent({
+      event_action: 'jump_to_def',
+      event_category: appCtx.workspaceId,
+      event_label: `${fileInfo?.name}: ${astNodeInfo.astNodeValue}`,
+    });
 
     router.push({
       pathname: '/project',
@@ -145,6 +164,11 @@ export const EditorContextMenu = ({
       currentRepo?.repoPath as string,
       fileInfo?.id as string
     );
+    sendGAEvent({
+      event_action: 'git_blame',
+      event_category: appCtx.workspaceId,
+      event_label: fileInfo?.name,
+    });
     return blameInfo;
   };
 

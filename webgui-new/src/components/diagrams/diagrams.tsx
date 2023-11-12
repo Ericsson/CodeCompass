@@ -21,6 +21,7 @@ import { convertSelectionRangeToString } from 'utils/utils';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
+import { sendGAEvent } from 'utils/analytics';
 
 export const Diagrams = (): JSX.Element => {
   const { t } = useTranslation();
@@ -67,7 +68,18 @@ export const Diagrams = (): JSX.Element => {
           : initDiagramInfo instanceof AstNodeInfo
           ? await getCppDiagram(appCtx.diagramGenId, parseInt(appCtx.diagramTypeId))
           : '';
-
+      
+      sendGAEvent({
+        event_action: `load_diagram: ${appCtx.diagramTypeId}`,
+        event_category: appCtx.workspaceId,
+        event_label:
+          initDiagramInfo instanceof FileInfo
+            ? initDiagramInfo.name
+            : initDiagramInfo instanceof AstNodeInfo
+            ? initDiagramInfo.astNodeValue
+            : '',
+      });
+      
       const parser = new DOMParser();
       const parsedDiagram = parser.parseFromString(diagram, 'text/xml');
       const diagramSvg = parsedDiagram.getElementsByTagName('svg')[0];
@@ -81,7 +93,7 @@ export const Diagrams = (): JSX.Element => {
       setDiagramInfo(initDiagramInfo);
     };
     init();
-  }, [appCtx.diagramGenId, appCtx.diagramTypeId, appCtx.diagramType]);
+  }, [appCtx.diagramGenId, appCtx.diagramTypeId, appCtx.diagramType, appCtx.workspaceId]);
 
   const generateDiagram = async (e: MouseEvent) => {
     const parentNode = (e.target as HTMLElement)?.parentElement;

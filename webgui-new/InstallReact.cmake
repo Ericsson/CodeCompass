@@ -3,9 +3,10 @@ include(${CMAKE_SOURCE_DIR}/Functions.cmake)
 
 message("Install npm packages...")
 
-if(${CC_PACKAGE} IS_NEWER_THAN ${INSTALL_WEBROOT_REACT_DIR}/app/package.json)
+if(${CC_PACKAGE_LOCK} IS_NEWER_THAN ${INSTALL_WEBROOT_REACT_DIR}/app/package-lock.json)
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E copy ${CC_PACKAGE} ${INSTALL_WEBROOT_REACT_DIR}/app/package.json
+    COMMAND ${CMAKE_COMMAND} -E copy ${CC_PACKAGE_LOCK} ${INSTALL_WEBROOT_REACT_DIR}/app/package-lock.json
     WORKING_DIRECTORY ${INSTALL_WEBROOT_REACT_DIR})
 
   execute_process(
