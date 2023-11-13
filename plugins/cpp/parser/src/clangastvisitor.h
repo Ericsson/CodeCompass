@@ -998,6 +998,60 @@ public:
     return true;
   }
 
+
+  bool VisitUsingDecl(clang::UsingDecl* ud_)
+  {
+    //--- CppAstNode ---//
+
+    for (const clang::UsingShadowDecl* nd : ud_->shadows()) {
+      model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+      astNode->astValue = getSourceText(
+        _clangSrcMgr,
+        ud_->getBeginLoc(),
+        ud_->getLocation(),
+        true);
+      astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
+      astNode->entityHash = util::fnvHash(getUSR(nd->getTargetDecl()));
+
+      astNode->symbolType = model::CppAstNode::SymbolType::Other;
+      astNode->astType = model::CppAstNode::AstType::UsingLoc;
+
+      astNode->id = model::createIdentifier(*astNode);
+
+      if (insertToCache(nd, astNode))
+        _astNodes.push_back(astNode);
+    }
+
+    return true;
+  }
+
+  bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* udd_)
+  {
+    //--- CppAstNode ---//
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+    const clang::NamespaceDecl* nd = udd_->getNominatedNamespace();
+
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      udd_->getBeginLoc(),
+      udd_->getLocation(),
+      true);
+    astNode->location = getFileLoc(udd_->getBeginLoc(), udd_->getEndLoc());
+    astNode->entityHash = util::fnvHash(getUSR(nd));
+    astNode->symbolType = model::CppAstNode::SymbolType::Namespace;
+    astNode->astType = model::CppAstNode::AstType::Usage;
+
+    astNode->id = model::createIdentifier(*astNode);
+
+    if (insertToCache(udd_, astNode))
+      _astNodes.push_back(astNode);
+
+    return true;
+  }
+
   bool VisitCXXConstructExpr(clang::CXXConstructExpr* ce_)
   {
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
@@ -1298,7 +1352,7 @@ private:
 
     clang::SourceLocation realStart = start_;
     clang::SourceLocation realEnd = end_;
-    
+
     if (_clangSrcMgr.isMacroBodyExpansion(start_))
       realStart = _clangSrcMgr.getExpansionLoc(start_);
     if (_clangSrcMgr.isMacroArgExpansion(start_))

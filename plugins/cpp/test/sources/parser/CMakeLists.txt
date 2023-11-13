@@ -9,5 +9,6 @@ add_library(CppTestProject STATIC
   cxxrecord.cpp
   enum.cpp
   function.cpp
+  using.cpp
   variable.cpp
   namespace.cpp)
