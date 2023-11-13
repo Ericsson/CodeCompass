@@ -726,7 +726,7 @@ TEST_F(CppParserTest, Using)
 
     astNode = _db->query_value<model::CppAstNode>(
       QCppAstNode::entityHash == cClass.entityHash &&
-        QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+        QCppAstNode::astType == model::CppAstNode::AstType::UsingLoc);
 
     EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
     EXPECT_EQ(astNode.location.range.start.line, 26);
@@ -737,7 +737,7 @@ TEST_F(CppParserTest, Using)
 
     astNode = _db->query_value<model::CppAstNode>(
       QCppAstNode::entityHash == var1.entityHash &&
-        QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+        QCppAstNode::astType == model::CppAstNode::AstType::UsingLoc);
 
     EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
     EXPECT_EQ(astNode.location.range.start.line, 27);
@@ -755,7 +755,7 @@ TEST_F(CppParserTest, Using)
     for (const model::CppFunction& func : functions_with_g) {
       astNode = _db->query_value<model::CppAstNode>(
         QCppAstNode::entityHash == func.entityHash &&
-          QCppAstNode::astType == model::CppAstNode::AstType::Resolution);
+          QCppAstNode::astType == model::CppAstNode::AstType::UsingLoc);
 
       EXPECT_EQ(astNode.symbolType, model::CppAstNode::SymbolType::Other);
       EXPECT_EQ(astNode.location.range.start.line, 22);
