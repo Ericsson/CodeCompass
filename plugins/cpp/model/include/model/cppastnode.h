@@ -34,6 +34,7 @@ struct CppAstNode
     Enum,
     EnumConstant,
     Namespace,
+    NamespaceAlias,
     StringLiteral,
     File = 500,
     Other = 1000
@@ -104,6 +105,7 @@ inline std::string symbolTypeToString(CppAstNode::SymbolType type_)
     case CppAstNode::SymbolType::Enum: return "Enum";
     case CppAstNode::SymbolType::EnumConstant: return "EnumConstant";
     case CppAstNode::SymbolType::Namespace: return "Namespace";
+    case CppAstNode::SymbolType::NamespaceAlias: return "NamespaceAlias";
     case CppAstNode::SymbolType::StringLiteral: return "StringLiteral";
     case CppAstNode::SymbolType::File: return "File";
     case CppAstNode::SymbolType::Other: return "Other";

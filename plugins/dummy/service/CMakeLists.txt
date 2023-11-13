@@ -9,10 +9,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
@@ -26,8 +22,6 @@ add_custom_command(
     "Generating Thrift for dummy.thrift")
 
 add_library(dummythrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/dummy_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/DummyService.cpp)
 
 target_compile_options(dummythrift PUBLIC -fPIC)

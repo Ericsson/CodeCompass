@@ -3,6 +3,7 @@ import { FileNode, SearchProps, TreeNode } from './types';
 
 type StoreOptions = {
   storedTheme?: 'light' | 'dark';
+  storedCookieConsent?: boolean;
   storedSearchProps?: SearchProps;
   storedSearchType?: SearchType;
   storedSearchLanguage?: string;
@@ -16,6 +17,7 @@ type StoreOptions = {
 
 type StoreOptionKey =
   | 'storedTheme'
+  | 'storedCookieConsent'
   | 'storedSearchProps'
   | 'storedSearchType'
   | 'storedSearchLanguage'

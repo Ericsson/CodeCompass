@@ -15,6 +15,7 @@ import { AppContext } from 'global-context/app-context';
 import * as SC from './styled-components';
 import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
+import { sendGAEvent } from 'utils/analytics';
 
 export const Header = (): JSX.Element => {
   const router = useRouter();
@@ -83,6 +84,12 @@ export const Header = (): JSX.Element => {
 
       setStore({
         storedSearchProps: initSearchProps,
+      });
+
+      sendGAEvent({
+        event_action: `search: ${searchType ? searchType.name : 'undefined'}`,
+        event_category: appCtx.workspaceId,
+        event_label: query,
       });
 
       router.push({

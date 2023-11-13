@@ -12,6 +12,7 @@ import { useRouter } from 'next/router';
 import { RouterQueryType } from 'utils/types';
 import { useTranslation } from 'react-i18next';
 import { diagramTypeArray } from 'enums/entity-types';
+import { sendGAEvent } from 'utils/analytics';
 
 export const FileContextMenu = ({
   contextMenu,
@@ -67,6 +68,11 @@ export const FileContextMenu = ({
       {fileInfo && fileInfo.isDirectory && (
         <MenuItem
           onClick={async () => {
+            sendGAEvent({
+              event_action: 'metrics',
+              event_category: appCtx.workspaceId,
+              event_label: fileInfo.name,
+            });
             setContextMenu(null);
             router.push({
               pathname: '/project',

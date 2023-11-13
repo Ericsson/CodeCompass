@@ -40,6 +40,18 @@ struct CppFunctionParamCount
 };
 
 #pragma db view \
+  object(CppFunction) object(CppVariable = Parameters : CppFunction::parameters) \
+  query((?) + "GROUP BY" + cc::model::CppEntity::astNodeId)
+struct CppFunctionParamCountWithId
+{
+  #pragma db column("CppEntity.astNodeId")
+  CppAstNodeId id;
+
+  #pragma db column("count(" + Parameters::id + ")")
+  std::size_t count;
+};
+
+#pragma db view \
   object(CppFunction) object(CppVariable = Locals : CppFunction::locals)
 struct CppFunctionLocalCount
 {
