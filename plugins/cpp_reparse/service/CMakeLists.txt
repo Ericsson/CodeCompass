@@ -23,8 +23,6 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp
@@ -42,7 +40,6 @@ add_custom_command(
     "Generating Thrift for cppreparse.thrift")
 
 add_library(cppreparsethrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cppreparse_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppReparseService.cpp)
 

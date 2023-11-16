@@ -13,8 +13,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GitService.cpp
@@ -31,7 +29,6 @@ add_custom_command(
     "Generating Thrift for git.thrift")
 
 add_library(gitthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/git_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/GitService.cpp)
 

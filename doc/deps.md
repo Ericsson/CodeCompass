@@ -55,7 +55,7 @@ known issues.
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
   llvm-11-dev clang-11 libclang-11-dev \
-  odb libodb-dev thrift-compiler libthrift-dev \
+  odb libodb-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
   libldap2-dev libgtest-dev
 ```
@@ -65,7 +65,7 @@ sudo apt install git cmake make g++ libboost-all-dev \
 ```bash
 sudo apt install git cmake make g++ libboost-all-dev \
   llvm-11-dev clang-11 libclang-11-dev \
-  gcc-11-plugin-dev \
+  gcc-11-plugin-dev thrift-compiler libthrift-dev \
   default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev exuberant-ctags doxygen \
   libldap2-dev libgtest-dev
 ```
@@ -157,11 +157,11 @@ time (depending on the machine one is using).
 > **Note:** now you may delete the *Build2* toolchain installed in the
 > `<build2_install_dir>` folder, if you do not need any longer.
 
-### Thrift (for Ubuntu 22.04)
+### Thrift (for Ubuntu 20.04)
 CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
 Procedure Call (RPC) between the server and the client. A suitable version of
 Thrift is, unfortunately, not part of the official Ubuntu repositories for
-this version (only a newer version is available), so you should download and 
+this version (only an older version is available), so you should download and 
 build from source.
 
 Thrift can generate stubs for many programming languages. The configure
@@ -180,10 +180,10 @@ avoid using them if it's not necessary.
 
 ```bash
 # Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.13.0/thrift-0.13.0.tar.gz" \
-  -O thrift-0.13.0.tar.gz
-tar -xvf ./thrift-0.13.0.tar.gz
-cd thrift-0.13.0
+wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.16.0/thrift-0.16.0.tar.gz" \
+  -O thrift-0.16.0.tar.gz
+tar -xvf ./thrift-0.16.0.tar.gz
+cd thrift-0.16.0
 
 ./configure --prefix=<thrift_install_dir> --silent --without-python \
   --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \

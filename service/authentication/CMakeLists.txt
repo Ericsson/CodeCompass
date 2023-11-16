@@ -9,8 +9,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.cpp
@@ -29,7 +27,6 @@ add_custom_command(
     "Generating Thrift for authentication.thrift")
 
 add_library(authenticationthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/authentication_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/AuthenticationService.cpp)
 
