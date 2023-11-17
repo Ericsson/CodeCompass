@@ -11,30 +11,33 @@ cd /odb_build
 bpkg create --quiet --jobs $(nproc) cc \
   config.cxx=g++ \
   config.cc.coptions=-O3 \
-  config.bin.rpath=/odb_install/lib \
-  config.install.root=/odb_install
+  config.bin.rpath=/usr/local/lib \
+  config.install.root=/usr/local
 # Getting the source
 bpkg add https://pkg.cppget.org/1/beta --trust-yes
 bpkg fetch --trust-yes
-# Building odb
-bpkg build libodb --yes
+# Building ODB
+BUILD_LIST="libodb"
 case $opt in
   "sqlite")
-    bpkg build libodb-sqlite --yes
+    BUILD_LIST="$BUILD_LIST libodb-sqlite"
   ;;
   "pgsql")
-    bpkg build libodb-pgsql --yes
+    BUILD_LIST="$BUILD_LIST libodb-pgsql"
   ;;
   *)
-    bpkg build odb --yes
-    bpkg build libodb-sqlite --yes
-    bpkg build libodb-pgsql --yes
+    BUILD_LIST="$BUILD_LIST odb libodb-sqlite libodb-pgsql"
   ;;
 esac
-bpkg install --all --recursive
-# Copy to /usr
-cp -rn /odb_install/* /usr
+for pack in "$BUILD_LIST"; do
+  bpkg build $pack --yes
+done
+# Install ODB (to /usr/local)
+INSTALL_LIST="$BUILD_LIST libstudxml libcutl"
+for pack in "$INSTALL_LIST"; do
+  bpkg install $pack
+done
 # Clean up
 cd /
 sh install_latest_build2.sh --uninstall
-rm -rf /odb_build /odb_install install_latest_build2.sh build2-toolchain-*.tar.gz
+rm -rf /odb_build install_latest_build2.sh build2-toolchain-*.tar.gz

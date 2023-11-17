@@ -51,22 +51,13 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-# Copy install scripts
-COPY docker/dev/install_odb.sh docker/dev/install_thrift.sh /
-
-RUN apt-get update -qq && \
-  if [ "pgsql" = "${CC_DATABASE}" ]; then \
-    apt-get install -qq --yes --no-install-recommends \
-      libpq5 \
-      postgresql-server-dev-14; \
-  else \
-    apt-get install -qq --yes --no-install-recommends \
-      libsqlite3-dev; \
-  fi && \
-  sh /install_odb.sh "${CC_DATABASE}"
+# Copy install script
+COPY docker/dev/install_odb.sh /
 
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
+    curl ca-certificates gnupg \
+    wget \
     llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
@@ -75,14 +66,24 @@ RUN set -x && apt-get update -qq && \
     libgvc6 \
     libldap-2.5-0 \
     libmagic-dev \
+    libthrift-dev \
     universal-ctags \
+    gcc-11 g++-11 \
     tini && \
+    ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
+    ln -s /usr/bin/g++-11 /usr/bin/g++ && \
+    if [ "pgsql" = "${CC_DATABASE}" ]; then \
+      apt-get install -qq --yes --no-install-recommends \
+      libpq5 \
+      postgresql-server-dev-14; \
+    else \
+      apt-get install -qq --yes --no-install-recommends \
+      libsqlite3-dev; \
+    fi && \
+    sh /install_odb.sh "${CC_DATABASE}" && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
-
-# Install Thrift 0.13 from source
-RUN sh /install_thrift.sh && rm /install_thrift.sh
 
 # Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
 COPY --from=builder /CodeCompass-install /codecompass

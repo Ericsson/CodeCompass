@@ -24,21 +24,19 @@ RUN set -x && apt-get update -qq \
   libgtest-dev \
   libldap2-dev \
   libmagic-dev \
+  libsqlite3-dev \
   libssl-dev \
   llvm-11 clang-11 llvm-11-dev libclang-11-dev \
-  libsqlite3-dev \
+  thrift-compiler libthrift-dev \
   postgresql-server-dev-14 && \
   ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
   ln -s /usr/bin/g++-11 /usr/bin/g++
 
-# Copy install scripts
-COPY docker/dev/install_odb.sh docker/dev/install_thrift.sh /
+# Copy install script
+COPY docker/dev/install_odb.sh /
 
 # Build ODB from source
 RUN sh /install_odb.sh && rm /install_odb.sh
-
-# Build Thrift 0.13 from source
-RUN sh /install_thrift.sh && rm /install_thrift.sh
 
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings && \
