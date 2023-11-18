@@ -9,10 +9,23 @@ fi
 
 install_dir=$1
 toolchain_file="toolchain.sha256"
-wget --no-verbose --no-clobber https://download.build2.org/toolchain.sha256 -O "${toolchain_file}"
+if [ "$1" = "--version" ]; then
+    wget -q --no-verbose --no-clobber https://download.build2.org/toolchain.sha256 -O "${toolchain_file}"
+else
+    wget --no-verbose --no-clobber https://download.build2.org/toolchain.sha256 -O "${toolchain_file}"
+fi
+
 
 version_line=$(grep -m 1 '' "$toolchain_file")
 version_number=$(echo "$version_line" | awk '{print $2}')
+
+### Return with version string only without actually installing build2 if "--version" flag is specified.
+if [ "$1" = "--version" ]; then
+    echo "${version_number}"
+    rm -f "${toolchain_file}"
+    exit 0
+fi
+
 version_to_install=build2-install-${version_number}.sh
 download_url=https://download.build2.org/${version_number}/${version_to_install}
 wget --no-verbose --no-clobber "${download_url}" -O "${version_to_install}"
