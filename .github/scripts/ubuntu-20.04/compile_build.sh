@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Compile dependencies that cannot be acquired via the official repositories
 
 mkdir -p ${INSTALL_PATH}
