@@ -1,0 +1,10 @@
+{
+  "name": "codecompass-dev",
+  "image": "modelcpp/codecompass:dev",
+  "mounts": [{
+    "source": "/home/hiro/Documents/Egyetem/MSC/1/CodeCompass",
+    "target": "/CodeCompass",
+    "type": "bind"
+  }],
+  "forwardPorts": [8080]
+}
