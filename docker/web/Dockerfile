@@ -8,36 +8,43 @@ FROM codecompass:runtime as runtime
 #------------------------    EXECUTABLE CONTAINER   --------------------------#
 ###############################################################################
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # tzdata package is installed implicitly in the following command. This package
 # sets timezone interactively during the installation process. This environment
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Copy install script
+COPY docker/dev/install_odb.sh /
+
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     llvm-11 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
-    postgresql-server-dev-12 \
+    postgresql-server-dev-14 \
     default-jre \
     libgit2-dev \
-    libldap-2.4-2 \
-    libssl1.1 \
+    libldap-2.5-0 \
+    libssl3 \
     libgvc6 \
     libthrift-dev \
-    libodb-sqlite-dev \
-    libodb-pgsql-dev \
+    libpq5 \
     # To switch user and exec command.
     gosu \
     tini \
-    ca-certificates \
-    curl \
-    gnupg \
+    curl ca-certificates gnupg \
+    wget \
+    gcc-11 g++-11 \
+  && ln -s /usr/bin/gcc-11 /usr/bin/gcc \
+  && ln -s /usr/bin/g++-11 /usr/bin/g++ \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
+
+# Build ODB from source
+RUN sh /install_odb.sh && rm /install_odb.sh
 
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings && \

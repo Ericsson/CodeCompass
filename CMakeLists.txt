@@ -12,7 +12,7 @@ include(Testing.cmake)
 
 find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
 find_package(Java    REQUIRED)
-find_package(Odb     REQUIRED)
+find_package(ODB     REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Thrift  REQUIRED)
 find_package(GTest)
