@@ -13,7 +13,9 @@ struct CppAstNodeMetrics
 {
   enum Type
   {
-    PARAMETER_COUNT
+    PARAMETER_COUNT,
+    LACK_OF_COHESION,
+    LACK_OF_COHESION_HS,
   };
 
   #pragma db id auto

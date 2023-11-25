@@ -107,10 +107,116 @@ void CppMetricsParser::functionParameters()
   });
 }
 
+void CppMetricsParser::lackOfCohesion()
+{
+  util::OdbTransaction {_ctx.db} ([&, this]
+  {
+    // Simplify some type names for readability.
+    typedef model::CppMemberType::Kind MemberKind;
+    typedef model::CppAstNode::AstType AstType;
+    typedef std::uint64_t HashType;
+
+    typedef odb::query<model::CppMemberType> QMem;
+    typedef odb::query<model::CppAstNode> QNode;
+    
+    // Calculate the cohesion metric for all types.
+    for (const model::CppRecord& type
+      : _ctx.db->query<model::CppRecord>())
+    {
+      std::unordered_set<HashType> fieldHashes;
+      // Query all members...
+      for (const model::CppMemberType& field
+        : _ctx.db->query<model::CppMemberType>(
+          // ... that are fields
+          QMem::kind == MemberKind::Field &&
+          // ... of the current type.
+          QMem::typeHash == type.entityHash
+        ))
+      {
+        // Record these fields for later use.
+        fieldHashes.insert(field.memberAstNode->entityHash);
+      }
+      size_t fieldCount = fieldHashes.size();
+
+      size_t methodCount = 0;
+      size_t totalCohesion = 0;
+      // Query all members...
+      for (const model::CppMemberType& method
+        : _ctx.db->query<model::CppMemberType>(
+          // ... that are methods
+          QMem::kind == MemberKind::Method &&
+          // ... of the current type.
+          QMem::typeHash == type.entityHash
+        ))
+      {
+        // Do not consider methods with no explicit bodies.
+        model::FileLoc methodLoc = method.memberAstNode->location;
+        if (methodLoc.range.start < methodLoc.range.end)
+        {
+          std::unordered_set<HashType> usedFields;
+
+          // Query all AST nodes...
+          for (const model::CppAstNode& node
+            : _ctx.db->query<model::CppAstNode>(
+              // ... that use a variable for reading or writing
+              (QNode::astType == AstType::Read ||
+              QNode::astType == AstType::Write) &&
+              // ... in the same file as the current method
+              (QNode::location.file->path == methodLoc.file->path &&
+              // ... within the textual scope of the current method's body.
+              (QNode::location.range.start.line >= methodLoc.range.start.line
+                || (QNode::location.range.start.line == methodLoc.range.start.line
+                && QNode::location.range.start.column >= methodLoc.range.start.column)) &&
+              (QNode::location.range.end.line <= methodLoc.range.end.line
+                || (QNode::location.range.end.line == methodLoc.range.end.line
+                && QNode::location.range.end.column <= methodLoc.range.end.column)))
+            ))
+          {
+            // If this AST node is a reference to a field of the type...
+            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
+            {
+              // ... then mark it as used by this method.
+              usedFields.insert(node.entityHash);
+            }
+          }
+
+          ++methodCount;
+          totalCohesion += usedFields.size();
+        }
+      }
+
+      // Calculate and record metrics.
+      const double dF = fieldCount;
+      const double dM = methodCount;
+      const double dC = totalCohesion;
+      constexpr double scaling = 1e+4;
+      
+      // Standard lack of cohesion:
+      model::CppAstNodeMetrics lcm;
+      lcm.astNodeId = type.astNodeId;
+      lcm.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION;
+      lcm.value = static_cast<unsigned int>(scaling * 
+        (1.0 - dC / (dM * dF)));// range: [0,1]
+      _ctx.db->persist(lcm);
+
+      // Henderson-Sellers variant:
+      model::CppAstNodeMetrics lcm_hs;
+      lcm_hs.astNodeId = type.astNodeId;
+      lcm_hs.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION_HS;
+      lcm_hs.value = static_cast<unsigned int>(scaling * 
+        ((dM - dC / dF) / (dM - 1.0)));// range: [0,2]
+      _ctx.db->persist(lcm_hs);
+    }
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   // Function parameter number metric.
   functionParameters();
+
+  // Lack of cohesion within types.
+  lackOfCohesion();
 
   return true;
 }

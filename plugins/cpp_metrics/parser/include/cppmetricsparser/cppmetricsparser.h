@@ -10,6 +10,9 @@
 #include <model/cppfunction.h>
 #include <model/cppfunction-odb.hxx>
 
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
+
 #include <util/parserutil.h>
 #include <util/threadpool.h>
 
@@ -28,7 +31,8 @@ public:
 
 private:
   void functionParameters();
-
+  void lackOfCohesion();
+  
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
