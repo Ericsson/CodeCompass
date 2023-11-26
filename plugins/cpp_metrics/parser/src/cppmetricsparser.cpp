@@ -107,10 +107,28 @@ void CppMetricsParser::functionParameters()
   });
 }
 
+void CppMetricsParser::functionMcCabe()
+{
+  util::OdbTransaction {_ctx.db} ([&, this]
+  {
+    for (const model::CppFunction& function
+      : _ctx.db->query<model::CppFunction>())
+    {
+      model::CppAstNodeMetrics funcParams;
+      funcParams.astNodeId = function.id;
+      funcParams.type = model::CppAstNodeMetrics::Type::MCCABE;
+      funcParams.value = function.mccabe;
+      _ctx.db->persist(funcParams);
+    }
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   // Function parameter number metric.
   functionParameters();
+  // Function McCabe metric
+  functionMcCabe();
 
   return true;
 }

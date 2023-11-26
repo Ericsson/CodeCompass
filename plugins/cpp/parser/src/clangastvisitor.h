@@ -682,6 +682,7 @@ public:
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
+    cppFunction->mccabe = getStatementMcCabe(fn_->getBody());
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
 
@@ -1561,6 +1562,70 @@ private:
     }
 
     return false;
+  }
+
+  static unsigned int getStatementMcCabe(clang::Stmt* const stmt_)
+  {
+    if (!stmt_)
+      return 0;
+    switch (stmt_->getStmtClass())
+    {
+      case clang::Stmt::IfStmtClass:
+      {
+        clang::IfStmt* ifStmt = clang::dyn_cast<clang::IfStmt>(stmt_);
+        return 1 + getStatementMcCabe(ifStmt->getThen()) + getStatementMcCabe(ifStmt->getElse());
+      }
+      case clang::Stmt::WhileStmtClass:
+      {
+        clang::WhileStmt* whileStmt = clang::dyn_cast<clang::WhileStmt>(stmt_);
+        return 1 + getStatementMcCabe(whileStmt->getBody());
+      }
+      case clang::Stmt::DoStmtClass:
+      {
+        clang::DoStmt* doStmt = clang::dyn_cast<clang::DoStmt>(stmt_);
+        return 1 + getStatementMcCabe(doStmt->getBody());
+      }
+      case clang::Stmt::ForStmtClass:
+      {
+        clang::ForStmt* forStmt = clang::dyn_cast<clang::ForStmt>(stmt_);
+        return 1 + getStatementMcCabe(forStmt->getBody());
+      }
+      case clang::Stmt::CaseStmtClass:
+      {
+        clang::CaseStmt* caseStmt = clang::dyn_cast<clang::CaseStmt>(stmt_);
+        return 1 + getStatementMcCabe(caseStmt->getSubStmt());
+      }
+      case clang::Stmt::DefaultStmtClass:
+      {
+        clang::DefaultStmt* defaultStmt = clang::dyn_cast<clang::DefaultStmt>(stmt_);
+        return 1 + getStatementMcCabe(defaultStmt->getSubStmt());
+      }
+      case clang::Stmt::ContinueStmtClass:
+        return 1;
+      case clang::Stmt::GotoStmtClass:
+        return 1;
+      case clang::Stmt::BinaryConditionalOperatorClass:
+        return 1;
+      case clang::Stmt::CXXCatchStmtClass:
+      {
+        clang::CXXCatchStmt* catchStmt = clang::dyn_cast<clang::CXXCatchStmt>(stmt_);
+        return 1 + getStatementMcCabe(catchStmt->getHandlerBlock());
+      }
+      case clang::Stmt::ConditionalOperatorClass:
+        return 1;
+      case clang::Stmt::CompoundStmtClass:
+      {
+        clang::CompoundStmt* compoundStmt = clang::dyn_cast<clang::CompoundStmt>(stmt_);
+        unsigned bodySum = 0;
+        for (clang::Stmt* child: compoundStmt->body())
+        {
+          bodySum += getStatementMcCabe(child);
+        }
+        return bodySum;
+      }
+      default:
+        return 0;
+    }
   }
 
   std::vector<model::CppAstNodePtr>        _astNodes;

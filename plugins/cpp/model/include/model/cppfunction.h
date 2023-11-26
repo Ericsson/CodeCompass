@@ -18,6 +18,7 @@ struct CppFunction : CppTypedEntity
   std::vector<odb::lazy_shared_ptr<CppVariable>> parameters;
   #pragma db on_delete(cascade)
   std::vector<odb::lazy_shared_ptr<CppVariable>> locals;
+  unsigned int mccabe;
 
   std::string toString() const
   {

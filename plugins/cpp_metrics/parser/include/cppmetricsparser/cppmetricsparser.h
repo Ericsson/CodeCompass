@@ -28,6 +28,7 @@ public:
 
 private:
   void functionParameters();
+  void functionMcCabe();
 
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;

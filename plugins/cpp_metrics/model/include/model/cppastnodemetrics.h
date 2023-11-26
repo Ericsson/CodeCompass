@@ -13,7 +13,8 @@ struct CppAstNodeMetrics
 {
   enum Type
   {
-    PARAMETER_COUNT
+    PARAMETER_COUNT,
+    MCCABE
   };
 
   #pragma db id auto
