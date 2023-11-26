@@ -94,11 +94,8 @@ struct CppRecordCount
   object(CppMemberType) \
   object(CppAstNode : CppMemberType::memberAstNode) \
   query(CppMemberType::kind == cc::model::CppMemberType::Kind::Field && (?))
-struct CppFieldWithEntityHash
+struct CohesionCppFieldView
 {
-  #pragma db column(CppMemberType::typeHash)
-  std::uint64_t typeHash;
-  
   #pragma db column(CppAstNode::entityHash)
   std::size_t entityHash;
 };
@@ -108,12 +105,9 @@ struct CppFieldWithEntityHash
   object(CppAstNode : CppMemberType::memberAstNode) \
   object(File : CppAstNode::location.file) \
   query(CppMemberType::kind == cc::model::CppMemberType::Kind::Method && (?))
-struct CppMethodWithLocation
+struct CohesionCppMethodView
 {
   typedef cc::model::Position::PosType PosType;
-
-  #pragma db column(CppMemberType::typeHash)
-  std::uint64_t typeHash;
 
   #pragma db column(CppAstNode::location.range.start.line)
   PosType startLine;

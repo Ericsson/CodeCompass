@@ -114,13 +114,13 @@ void CppMetricsParser::lackOfCohesion()
     // Simplify some type names for readability.
     typedef std::uint64_t HashType;
 
-    typedef odb::query<model::CppFieldWithEntityHash>::query_columns QField;
+    typedef odb::query<model::CohesionCppFieldView>::query_columns QField;
     const auto& QFieldTypeHash = QField::CppMemberType::typeHash;
 
-    typedef odb::query<model::CppMethodWithLocation>::query_columns QMethod;
+    typedef odb::query<model::CohesionCppMethodView>::query_columns QMethod;
     const auto& QMethodTypeHash = QMethod::CppMemberType::typeHash;
     
-    typedef odb::query<model::CppRWAstNodeWithHashAndLoc>::query_columns QNode;
+    typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
     const auto& QNodeFilePath = QNode::File::path;
     const auto& QNodeRange = QNode::CppAstNode::location.range;
     
@@ -130,8 +130,8 @@ void CppMetricsParser::lackOfCohesion()
     {
       std::unordered_set<HashType> fieldHashes;
       // Query all fields of the current type.
-      for (const model::CppFieldWithEntityHash& field
-        : _ctx.db->query<model::CppFieldWithEntityHash>(
+      for (const model::CohesionCppFieldView& field
+        : _ctx.db->query<model::CohesionCppFieldView>(
           QFieldTypeHash == type.entityHash
         ))
       {
@@ -143,8 +143,8 @@ void CppMetricsParser::lackOfCohesion()
       size_t methodCount = 0;
       size_t totalCohesion = 0;
       // Query all methods of the current type.
-      for (const model::CppMethodWithLocation& method
-        : _ctx.db->query<model::CppMethodWithLocation>(
+      for (const model::CohesionCppMethodView& method
+        : _ctx.db->query<model::CohesionCppMethodView>(
           QMethodTypeHash == type.entityHash
         ))
       {
@@ -156,8 +156,8 @@ void CppMetricsParser::lackOfCohesion()
           std::unordered_set<HashType> usedFields;
           
           // Query all AST nodes that use a variable for reading or writing...
-          for (const model::CppRWAstNodeWithHashAndLoc& node
-            : _ctx.db->query<model::CppRWAstNodeWithHashAndLoc>(
+          for (const model::CohesionCppAstNodeView& node
+            : _ctx.db->query<model::CohesionCppAstNodeView>(
               // ... in the same file as the current method
               (QNodeFilePath == method.filePath &&
               // ... within the textual scope of the current method's body.
