@@ -1,0 +1,16 @@
+{
+  "name": "CodeCompass-devcontainer",
+  "image": "modelcpp/codecompass:dev",
+  "workspaceFolder": "/CodeCompass/CodeCompass",
+  "workspaceMount": "src=${localWorkspaceFolder},dst=/CodeCompass,type=bind,consistency=cached",
+  "mounts": [
+    {
+      "source": "${localWorkspaceFolder}/..",
+      "target": "/CodeCompass",
+      "type": "bind"
+    }
+  ],
+  "forwardPorts": [
+    "8001:8080"
+  ]
+}
