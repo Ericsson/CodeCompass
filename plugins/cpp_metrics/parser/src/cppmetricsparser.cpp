@@ -118,7 +118,7 @@ void CppMetricsParser::lackOfCohesion()
 
     typedef odb::query<model::CppMemberType> QMem;
     typedef odb::query<model::CppAstNode> QNode;
-    
+
     // Calculate the cohesion metric for all types.
     for (const model::CppRecord& type
       : _ctx.db->query<model::CppRecord>())
@@ -133,8 +133,11 @@ void CppMetricsParser::lackOfCohesion()
           QMem::typeHash == type.entityHash
         ))
       {
-        // Record these fields for later use.
-        fieldHashes.insert(field.memberAstNode->entityHash);
+        if (model::CppAstNodePtr fieldAst = field.memberAstNode.load())
+        {
+          // Record these fields for later use.
+          fieldHashes.insert(fieldAst->entityHash);
+        }
       }
       size_t fieldCount = fieldHashes.size();
 
@@ -149,39 +152,49 @@ void CppMetricsParser::lackOfCohesion()
           QMem::typeHash == type.entityHash
         ))
       {
-        // Do not consider methods with no explicit bodies.
-        model::FileLoc methodLoc = method.memberAstNode->location;
-        if (methodLoc.range.start < methodLoc.range.end)
+        if (model::CppAstNodePtr methodAst = method.memberAstNode.load())
         {
-          std::unordered_set<HashType> usedFields;
-
-          // Query all AST nodes...
-          for (const model::CppAstNode& node
-            : _ctx.db->query<model::CppAstNode>(
-              // ... that use a variable for reading or writing
-              (QNode::astType == AstType::Read ||
-              QNode::astType == AstType::Write) &&
-              // ... in the same file as the current method
-              (QNode::location.file->path == methodLoc.file->path &&
-              // ... within the textual scope of the current method's body.
-              (QNode::location.range.start.line >= methodLoc.range.start.line
-                || (QNode::location.range.start.line == methodLoc.range.start.line
-                && QNode::location.range.start.column >= methodLoc.range.start.column)) &&
-              (QNode::location.range.end.line <= methodLoc.range.end.line
-                || (QNode::location.range.end.line == methodLoc.range.end.line
-                && QNode::location.range.end.column <= methodLoc.range.end.column)))
-            ))
+          // Do not consider methods with no explicit bodies.
+          model::FileLoc methodLoc = methodAst->location;
+          model::FilePtr filePtr = methodLoc.file.load();
+          if (filePtr && methodLoc.range.start < methodLoc.range.end)
           {
-            // If this AST node is a reference to a field of the type...
-            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
+            std::unordered_set<HashType> usedFields;
+            
+            // Query all AST nodes...
+            for (const model::CppAstNode& node
+              : _ctx.db->query<model::CppAstNode>(
+                // ... that use a variable for reading or writing
+                (QNode::astType == AstType::Read ||
+                QNode::astType == AstType::Write) &&
+                // ... in the same file as the current method
+                (QNode::location.file->path == filePtr->path &&
+                // ... within the textual scope of the current method's body.
+                (QNode::location.range.start.line
+                    >= methodLoc.range.start.line
+                  || (QNode::location.range.start.line
+                    == methodLoc.range.start.line
+                  && QNode::location.range.start.column
+                    >= methodLoc.range.start.column)) &&
+                (QNode::location.range.end.line
+                    <= methodLoc.range.end.line
+                  || (QNode::location.range.end.line
+                    == methodLoc.range.end.line
+                  && QNode::location.range.end.column
+                    <= methodLoc.range.end.column)))
+              ))
             {
-              // ... then mark it as used by this method.
-              usedFields.insert(node.entityHash);
+              // If this AST node is a reference to a field of the type...
+              if (fieldHashes.find(node.entityHash) != fieldHashes.end())
+              {
+                // ... then mark it as used by this method.
+                usedFields.insert(node.entityHash);
+              }
             }
+            
+            ++methodCount;
+            totalCohesion += usedFields.size();
           }
-
-          ++methodCount;
-          totalCohesion += usedFields.size();
         }
       }
 
