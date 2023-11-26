@@ -112,11 +112,10 @@ void CppMetricsParser::lackOfCohesion()
   util::OdbTransaction {_ctx.db} ([&, this]
   {
     // Simplify some type names for readability.
-    typedef model::CppMemberType::Kind MemberKind;
     typedef model::CppAstNode::AstType AstType;
     typedef std::uint64_t HashType;
 
-    typedef odb::query<model::CppMemberType> QMem;
+    typedef odb::query<model::CppMemberType> QMember;
     typedef odb::query<model::CppAstNode> QNode;
 
     // Calculate the cohesion metric for all types.
@@ -124,77 +123,59 @@ void CppMetricsParser::lackOfCohesion()
       : _ctx.db->query<model::CppRecord>())
     {
       std::unordered_set<HashType> fieldHashes;
-      // Query all members...
-      for (const model::CppMemberType& field
-        : _ctx.db->query<model::CppMemberType>(
-          // ... that are fields
-          QMem::kind == MemberKind::Field &&
-          // ... of the current type.
-          QMem::typeHash == type.entityHash
+      // Query all fields of the current type.
+      for (const model::CppFieldWithEntityHash& field
+        : _ctx.db->query<model::CppFieldWithEntityHash>(
+          QMember::typeHash == type.entityHash
         ))
       {
-        if (model::CppAstNodePtr fieldAst = field.memberAstNode.load())
-        {
-          // Record these fields for later use.
-          fieldHashes.insert(fieldAst->entityHash);
-        }
+        // Record these fields for later use.
+        fieldHashes.insert(field.entityHash);
       }
       size_t fieldCount = fieldHashes.size();
 
       size_t methodCount = 0;
       size_t totalCohesion = 0;
-      // Query all members...
-      for (const model::CppMemberType& method
-        : _ctx.db->query<model::CppMemberType>(
-          // ... that are methods
-          QMem::kind == MemberKind::Method &&
-          // ... of the current type.
-          QMem::typeHash == type.entityHash
+      // Query all methods of the current type.
+      for (const model::CppMethodWithLocation& method
+        : _ctx.db->query<model::CppMethodWithLocation>(
+          QMember::typeHash == type.entityHash
         ))
       {
-        if (model::CppAstNodePtr methodAst = method.memberAstNode.load())
+        // Do not consider methods with no explicit bodies.
+        const model::Position start(method.startLine, method.startColumn);
+        const model::Position end(method.endLine, method.endColumn);
+        if (start < end)
         {
-          // Do not consider methods with no explicit bodies.
-          model::FileLoc methodLoc = methodAst->location;
-          model::FilePtr filePtr = methodLoc.file.load();
-          if (filePtr && methodLoc.range.start < methodLoc.range.end)
+          std::unordered_set<HashType> usedFields;
+          
+          // Query all AST nodes...
+          for (const model::CppAstNode& node
+            : _ctx.db->query<model::CppAstNode>(
+              // ... that use a variable for reading or writing
+              (QNode::astType == AstType::Read ||
+              QNode::astType == AstType::Write) &&
+              // ... in the same file as the current method
+              (QNode::location.file->path == method.filePath &&
+              // ... within the textual scope of the current method's body.
+              (QNode::location.range.start.line >= start.line
+                || (QNode::location.range.start.line == start.line
+                && QNode::location.range.start.column >= start.column)) &&
+              (QNode::location.range.end.line <= end.line
+                || (QNode::location.range.end.line == end.line
+                && QNode::location.range.end.column <= end.column)))
+            ))
           {
-            std::unordered_set<HashType> usedFields;
-            
-            // Query all AST nodes...
-            for (const model::CppAstNode& node
-              : _ctx.db->query<model::CppAstNode>(
-                // ... that use a variable for reading or writing
-                (QNode::astType == AstType::Read ||
-                QNode::astType == AstType::Write) &&
-                // ... in the same file as the current method
-                (QNode::location.file->path == filePtr->path &&
-                // ... within the textual scope of the current method's body.
-                (QNode::location.range.start.line
-                    >= methodLoc.range.start.line
-                  || (QNode::location.range.start.line
-                    == methodLoc.range.start.line
-                  && QNode::location.range.start.column
-                    >= methodLoc.range.start.column)) &&
-                (QNode::location.range.end.line
-                    <= methodLoc.range.end.line
-                  || (QNode::location.range.end.line
-                    == methodLoc.range.end.line
-                  && QNode::location.range.end.column
-                    <= methodLoc.range.end.column)))
-              ))
+            // If this AST node is a reference to a field of the type...
+            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
             {
-              // If this AST node is a reference to a field of the type...
-              if (fieldHashes.find(node.entityHash) != fieldHashes.end())
-              {
-                // ... then mark it as used by this method.
-                usedFields.insert(node.entityHash);
-              }
+              // ... then mark it as used by this method.
+              usedFields.insert(node.entityHash);
             }
-            
-            ++methodCount;
-            totalCohesion += usedFields.size();
           }
+          
+          ++methodCount;
+          totalCohesion += usedFields.size();
         }
       }
 

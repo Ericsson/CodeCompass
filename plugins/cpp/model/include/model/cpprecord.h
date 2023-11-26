@@ -90,6 +90,43 @@ struct CppRecordCount
   std::size_t count;
 };
 
+#pragma db view \
+  object(CppMemberType) \
+  object(CppAstNode : CppMemberType::memberAstNode) \
+  query(CppMemberType::kind == cc::model::CppMemberType::Kind::Field && (?))
+struct CppFieldWithEntityHash
+{
+  #pragma db column(CppMemberType::typeHash)
+  std::uint64_t typeHash;
+  
+  #pragma db column(CppAstNode::entityHash)
+  std::size_t entityHash;
+};
+
+#pragma db view \
+  object(CppMemberType) \
+  object(CppAstNode : CppMemberType::memberAstNode) \
+  object(File : CppAstNode::location.file) \
+  query(CppMemberType::kind == cc::model::CppMemberType::Kind::Method && (?))
+struct CppMethodWithLocation
+{
+  typedef cc::model::Position::PosType PosType;
+
+  #pragma db column(CppMemberType::typeHash)
+  std::uint64_t typeHash;
+
+  #pragma db column(CppAstNode::location.range.start.line)
+  PosType startLine;
+  #pragma db column(CppAstNode::location.range.start.column)
+  PosType startColumn;
+  #pragma db column(CppAstNode::location.range.end.line)
+  PosType endLine;
+  #pragma db column(CppAstNode::location.range.end.column)
+  PosType endColumn;
+
+  #pragma db column(File::path)
+  std::string filePath;
+};
 }
 }
 
