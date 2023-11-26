@@ -112,12 +112,18 @@ void CppMetricsParser::lackOfCohesion()
   util::OdbTransaction {_ctx.db} ([&, this]
   {
     // Simplify some type names for readability.
-    typedef model::CppAstNode::AstType AstType;
     typedef std::uint64_t HashType;
 
-    typedef odb::query<model::CppMemberType> QMember;
-    typedef odb::query<model::CppAstNode> QNode;
+    typedef odb::query<model::CppFieldWithEntityHash>::query_columns QField;
+    const auto& QFieldTypeHash = QField::CppMemberType::typeHash;
 
+    typedef odb::query<model::CppMethodWithLocation>::query_columns QMethod;
+    const auto& QMethodTypeHash = QMethod::CppMemberType::typeHash;
+    
+    typedef odb::query<model::CppRWAstNodeWithHashAndLoc>::query_columns QNode;
+    const auto& QNodeFilePath = QNode::File::path;
+    const auto& QNodeRange = QNode::CppAstNode::location.range;
+    
     // Calculate the cohesion metric for all types.
     for (const model::CppRecord& type
       : _ctx.db->query<model::CppRecord>())
@@ -126,7 +132,7 @@ void CppMetricsParser::lackOfCohesion()
       // Query all fields of the current type.
       for (const model::CppFieldWithEntityHash& field
         : _ctx.db->query<model::CppFieldWithEntityHash>(
-          QMember::typeHash == type.entityHash
+          QFieldTypeHash == type.entityHash
         ))
       {
         // Record these fields for later use.
@@ -139,7 +145,7 @@ void CppMetricsParser::lackOfCohesion()
       // Query all methods of the current type.
       for (const model::CppMethodWithLocation& method
         : _ctx.db->query<model::CppMethodWithLocation>(
-          QMember::typeHash == type.entityHash
+          QMethodTypeHash == type.entityHash
         ))
       {
         // Do not consider methods with no explicit bodies.
@@ -149,21 +155,18 @@ void CppMetricsParser::lackOfCohesion()
         {
           std::unordered_set<HashType> usedFields;
           
-          // Query all AST nodes...
-          for (const model::CppAstNode& node
-            : _ctx.db->query<model::CppAstNode>(
-              // ... that use a variable for reading or writing
-              (QNode::astType == AstType::Read ||
-              QNode::astType == AstType::Write) &&
+          // Query all AST nodes that use a variable for reading or writing...
+          for (const model::CppRWAstNodeWithHashAndLoc& node
+            : _ctx.db->query<model::CppRWAstNodeWithHashAndLoc>(
               // ... in the same file as the current method
-              (QNode::location.file->path == method.filePath &&
+              (QNodeFilePath == method.filePath &&
               // ... within the textual scope of the current method's body.
-              (QNode::location.range.start.line >= start.line
-                || (QNode::location.range.start.line == start.line
-                && QNode::location.range.start.column >= start.column)) &&
-              (QNode::location.range.end.line <= end.line
-                || (QNode::location.range.end.line == end.line
-                && QNode::location.range.end.column <= end.column)))
+              (QNodeRange.start.line >= start.line
+                || (QNodeRange.start.line == start.line
+                && QNodeRange.start.column >= start.column)) &&
+              (QNodeRange.end.line <= end.line
+                || (QNodeRange.end.line == end.line
+                && QNodeRange.end.column <= end.column)))
             ))
           {
             // If this AST node is a reference to a field of the type...
