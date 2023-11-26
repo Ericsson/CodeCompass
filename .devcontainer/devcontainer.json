@@ -10,7 +10,7 @@
       "type": "bind"
     }
   ],
-  "forwardPorts": [
+  "appPort": [
     "8001:8080"
   ]
 }
