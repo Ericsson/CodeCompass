@@ -3,12 +3,17 @@
 
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>
+#include <parser/sourcemanager.h>
+#include <util/parserutil.h>
+#include <boost/python.hpp>
 
 namespace cc
 {
 namespace parser
 {
   
+namespace python = boost::python;
+
 class PythonParser : public AbstractParser
 {
 public:
@@ -17,6 +22,7 @@ public:
   virtual bool parse() override;
 private:
   bool accept(const std::string& path_);
+  python::object m_py_module;
 };
   
 } // parser

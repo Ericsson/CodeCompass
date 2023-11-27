@@ -1,9 +1,6 @@
 #include <pythonparser/pythonparser.h>
-
 #include <boost/filesystem.hpp>
-
 #include <util/logutil.h>
-
 #include <memory>
 
 namespace cc
@@ -13,21 +10,52 @@ namespace parser
 
 PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  // Init Python Interpreter
+  std::string py_parser_dir = _ctx.compassRoot + "/lib/parserplugin/pyparser/";
+  LOG(info) << "py_parser_dir: " << py_parser_dir;
+  setenv("PYTHONPATH", py_parser_dir.c_str(), 1);
+  
+  Py_Initialize();
+
+  // Init PyService module
+  try {
+    m_py_module = python::import("parser");
+
+    // DEBUG
+    m_py_module.attr("hello")();
+  }catch (const python::error_already_set&)
+  {
+    PyErr_Print();
+  }
+
 }
 
 bool PythonParser::accept(const std::string& path_)
 {
   std::string ext = boost::filesystem::extension(path_);
-  return ext == ".dummy";
+  return ext == ".py";
 }
 
 bool PythonParser::parse()
-{        
+{
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
-    if(accept(path))
+    if(boost::filesystem::is_directory(path))
     {
-      LOG(info) << "DummyParser parse path: " << path;
+      util::iterateDirectoryRecursive(path, [this](const std::string& currPath_)
+      {
+        if (boost::filesystem::is_regular_file(currPath_) && accept(currPath_))
+        {
+            LOG(info) << "PythonParser parse path: " << currPath_;
+
+            model::FilePtr pyfile = _ctx.srcMgr.getFile(currPath_);
+            pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
+            pyfile->type = "PY";
+            _ctx.srcMgr.updateFile(*pyfile);
+        }
+
+        return true;
+      });
     }
   }
   return true;
@@ -44,10 +72,6 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("Python Plugin");
-
-    description.add_options()
-        ("dummy-arg", po::value<std::string>()->default_value("Dummy arg"),
-          "This argument will be used by the dummy parser.");
 
     return description;
   }
