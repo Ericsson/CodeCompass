@@ -20,9 +20,6 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   // Init PyService module
   try {
     m_py_module = python::import("parser");
-
-    // DEBUG
-    m_py_module.attr("hello")();
   }catch (const python::error_already_set&)
   {
     PyErr_Print();
@@ -48,10 +45,21 @@ bool PythonParser::parse()
         {
             LOG(info) << "PythonParser parse path: " << currPath_;
 
-            model::FilePtr pyfile = _ctx.srcMgr.getFile(currPath_);
-            pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
-            pyfile->type = "PY";
-            _ctx.srcMgr.updateFile(*pyfile);
+            try {
+              bool parsed = python::extract<bool>(m_py_module.attr("parse")(currPath_));
+
+              if(parsed)
+              {
+                model::FilePtr pyfile = _ctx.srcMgr.getFile(currPath_);
+                pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
+                pyfile->type = "PY";
+                _ctx.srcMgr.updateFile(*pyfile);
+              }
+
+            }catch (const python::error_already_set&)
+            {
+              PyErr_Print();
+            }
         }
 
         return true;
