@@ -7,7 +7,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
-  && apt-get install -y postgresql-14 \
   && apt-get -y install --no-install-recommends \
   cmake make \
   default-jdk \
@@ -31,7 +30,8 @@ RUN set -x && apt-get update -qq \
   thrift-compiler libthrift-dev \
   postgresql-server-dev-14 && \
   ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
-  ln -s /usr/bin/g++-11 /usr/bin/g++
+  ln -s /usr/bin/g++-11 /usr/bin/g++ && \
+  apt-get install -y postgresql-14
 
 # Copy install script
 COPY docker/dev/install_odb.sh /
