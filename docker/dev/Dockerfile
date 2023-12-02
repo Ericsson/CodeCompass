@@ -7,6 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
+  && apt-get install -y postgresql-14 \
   && apt-get -y install --no-install-recommends \
   cmake make \
   default-jdk \
