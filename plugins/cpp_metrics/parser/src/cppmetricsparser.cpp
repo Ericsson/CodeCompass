@@ -15,6 +15,16 @@
 
 #include <memory>
 
+// Controls whether cohesion metrics are printed to the output
+// immediately as they are being calculated.
+#define DEBUG_COHESION_VERBOSE
+
+#ifdef DEBUG_COHESION_VERBOSE
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+#endif
+
 namespace cc
 {
 namespace parser
@@ -128,13 +138,36 @@ void CppMetricsParser::lackOfCohesion()
     const auto& QNodeFilePath = QNode::File::path;
     const auto& QNodeRange = QNode::CppAstNode::location.range;
     
+    #ifdef DEBUG_COHESION_VERBOSE
+    std::size_t typecount =
+      _ctx.db->query_value<model::CppRecordCount>().count;
+    std::size_t typeindex = 0;
+    std::size_t checkedcount = 0;
+
+    std::cout << "=== Lack of Cohesion (LoC) metrics parser ===" << std::endl;
+    int colwidth = static_cast<int>(ceil(log10(typecount)));
+    auto start = std::chrono::steady_clock::now();
+    #endif
+
     // Calculate the cohesion metric for all types.
     for (const model::CohesionCppRecordView& type
       : _ctx.db->query<model::CohesionCppRecordView>())
     {
+      #ifdef DEBUG_COHESION_VERBOSE
+      ++typeindex;
+      #endif
+
       // Skip types that were included from external libraries.
       if (!isInInputPath(type.filePath))
         continue;
+
+      #ifdef DEBUG_COHESION_VERBOSE
+      ++checkedcount;
+      std::cout << std::right << std::setw(colwidth) << typeindex << '/';
+      std::cout << std::left << std::setw(colwidth) << typecount << '\t';
+      std::cout << std::left << std::setw(32) << type.qualifiedName;
+      std::cout.flush();
+      #endif
 
       std::unordered_set<HashType> fieldHashes;
       // Query all fields of the current type.
@@ -211,7 +244,22 @@ void CppMetricsParser::lackOfCohesion()
       lcm_hs.value = static_cast<unsigned int>(scaling * 
         ((dM - dC / dF) / (dM - 1.0)));// range: [0,2]
       _ctx.db->persist(lcm_hs);
+
+      #ifdef DEBUG_COHESION_VERBOSE
+      std::cout << std::right << std::setw(8) << (lcm.value / scaling);
+      std::cout << std::right << std::setw(8) << (lcm_hs.value / scaling);
+      std::cout << std::endl;
+      #endif
     }
+
+    #ifdef DEBUG_COHESION_VERBOSE
+    auto finish = std::chrono::steady_clock::now();
+    auto duration = finish - start;
+    auto durs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    std::cout << "=== Checked types: " << checkedcount
+      << ", Total runtime: " << durs.count()
+      << "s ===" << std::endl;
+    #endif
   });
 }
 
