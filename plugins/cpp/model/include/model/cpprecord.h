@@ -90,6 +90,26 @@ struct CppRecordCount
   std::size_t count;
 };
 
+
+#pragma db view \
+  object(CppRecord) \
+  object(CppAstNode : CppRecord::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file)
+struct CohesionCppRecordView
+{
+  #pragma db column(CppEntity::entityHash)
+  std::size_t entityHash;
+
+  #pragma db column(CppEntity::qualifiedName)
+  std::string qualifiedName;
+
+  #pragma db column(CppEntity::astNodeId)
+  CppAstNodeId astNodeId;
+  
+  #pragma db column(File::path)
+  std::string filePath;
+};
+
 #pragma db view \
   object(CppMemberType) \
   object(CppAstNode : CppMemberType::memberAstNode) \
