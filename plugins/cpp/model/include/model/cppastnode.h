@@ -236,17 +236,6 @@ struct CppAstCount
   #pragma db column("count(" + CppAstNode::id + ")")
   std::size_t count;
 };
-
-#pragma db view \
-  object(CppAstNode) \
-  object(File : CppAstNode::location.file) \
-  query((CppAstNode::astType == cc::model::CppAstNode::AstType::Read \
-      || CppAstNode::astType == cc::model::CppAstNode::AstType::Write) && (?))
-struct CohesionCppAstNodeView
-{
-  #pragma db column(CppAstNode::entityHash)
-  std::uint64_t entityHash;
-};
 }
 }
 

@@ -2,6 +2,8 @@
 
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppcohesionmetrics.h>
+#include <model/cppcohesionmetrics-odb.hxx>
 #include <model/cppfilemetrics.h>
 #include <model/cppfilemetrics-odb.hxx>
 
