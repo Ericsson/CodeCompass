@@ -1,8 +1,7 @@
 include_directories(
         ${PLUGIN_DIR}/model/include
         ${PLUGIN_DIR}/service/include
-        ${PROJECT_BINARY_DIR}/service/language/gen-cpp
-        ${PROJECT_BINARY_DIR}/service/project/gen-cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/../service/gen-cpp
         ${PROJECT_SOURCE_DIR}/model/include)
 
 include_directories(SYSTEM
