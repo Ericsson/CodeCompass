@@ -24,13 +24,19 @@ namespace parser
 class CppMetricsParser : public AbstractParser
 {
 public:
+  static constexpr double LOC_SCALING = 1e+4;
+
   CppMetricsParser(ParserContext& ctx_);
   virtual ~CppMetricsParser();
+
   virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
 private:
+  // Calculate the count of parameters for every function.
   void functionParameters();
+  // Calculate the lack of cohesion between member variables
+  // and member functions for every type.
   void lackOfCohesion();
   
   // Checks if the given (canonical) path begins with any of the input paths
