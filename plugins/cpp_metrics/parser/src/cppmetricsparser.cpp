@@ -245,13 +245,12 @@ void CppMetricsParser::lackOfCohesion()
       const double dF = fieldCount;
       const double dM = methodCount;
       const double dC = totalCohesion;
-      constexpr double scaling = 1e+4;
       
       // Standard lack of cohesion:
       model::CppAstNodeMetrics lcm;
       lcm.astNodeId = type.astNodeId;
       lcm.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION;
-      lcm.value = static_cast<unsigned int>(scaling * 
+      lcm.value = static_cast<unsigned int>(LOC_SCALING * 
         (1.0 - dC / (dM * dF)));// range: [0,1]
       _ctx.db->persist(lcm);
 
@@ -259,13 +258,13 @@ void CppMetricsParser::lackOfCohesion()
       model::CppAstNodeMetrics lcm_hs;
       lcm_hs.astNodeId = type.astNodeId;
       lcm_hs.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION_HS;
-      lcm_hs.value = static_cast<unsigned int>(scaling * 
+      lcm_hs.value = static_cast<unsigned int>(LOC_SCALING * 
         ((dM - dC / dF) / (dM - 1.0)));// range: [0,2]
       _ctx.db->persist(lcm_hs);
 
       #ifdef DEBUG_COHESION_VERBOSE
-      std::cout << std::right << std::setw(8) << (lcm.value / scaling);
-      std::cout << std::right << std::setw(8) << (lcm_hs.value / scaling);
+      std::cout << std::right << std::setw(8) << (lcm.value / LOC_SCALING);
+      std::cout << std::right << std::setw(8) << (lcm_hs.value / LOC_SCALING);
       std::cout << std::endl;
       #endif
     }
@@ -291,14 +290,10 @@ bool CppMetricsParser::isInInputPath(const std::string& path_) const
 
 bool CppMetricsParser::parse()
 {
-  // Function parameter number metric.
   functionParameters();
   // Function McCabe metric
   functionMcCabe();
-
-  // Lack of cohesion within types.
   lackOfCohesion();
-
   return true;
 }
 

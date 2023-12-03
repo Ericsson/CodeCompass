@@ -236,6 +236,7 @@ struct CppAstCount
   #pragma db column("count(" + CppAstNode::id + ")")
   std::size_t count;
 };
+
 }
 }
 

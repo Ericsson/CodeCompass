@@ -89,6 +89,7 @@ struct CppRecordCount
   #pragma db column("count(" + CppRecord::id + ")")
   std::size_t count;
 };
+
 }
 }
 
