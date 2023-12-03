@@ -111,8 +111,8 @@ void CppMetricsParser::functionMcCabe()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
   {
-    for (const model::CppFunction& function
-      : _ctx.db->query<model::CppFunction>())
+    for (const model::CppFunctionMcCabeWithId& function
+      : _ctx.db->query<model::CppFunctionMcCabeWithId>())
     {
       model::CppAstNodeMetrics funcParams;
       funcParams.astNodeId = function.id;

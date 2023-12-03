@@ -60,6 +60,13 @@ struct CppFunctionLocalCount
   std::size_t count;
 };
 
+#pragma db view object(CppFunction)
+struct CppFunctionMcCabeWithId
+{
+  CppAstNodeId id;
+  unsigned int mccabe;
+};
+
 }
 }
 
