@@ -22,6 +22,10 @@ namespace parser
 
 CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  for (const std::string& path :
+    _ctx.options["input"].as<std::vector<std::string>>())
+    _inputPaths.push_back(boost::filesystem::canonical(path).string());
+
   util::OdbTransaction {_ctx.db} ([&, this] {
     for (const model::CppFileMetrics& fm
       : _ctx.db->query<model::CppFileMetrics>())
@@ -125,9 +129,13 @@ void CppMetricsParser::lackOfCohesion()
     const auto& QNodeRange = QNode::CppAstNode::location.range;
     
     // Calculate the cohesion metric for all types.
-    for (const model::CppRecord& type
-      : _ctx.db->query<model::CppRecord>())
+    for (const model::CohesionCppRecordView& type
+      : _ctx.db->query<model::CohesionCppRecordView>())
     {
+      // Skip types that were included from external libraries.
+      if (!isInInputPath(type.filePath))
+        continue;
+
       std::unordered_set<HashType> fieldHashes;
       // Query all fields of the current type.
       for (const model::CohesionCppFieldView& field
@@ -138,10 +146,10 @@ void CppMetricsParser::lackOfCohesion()
         // Record these fields for later use.
         fieldHashes.insert(field.entityHash);
       }
-      size_t fieldCount = fieldHashes.size();
+      std::size_t fieldCount = fieldHashes.size();
 
-      size_t methodCount = 0;
-      size_t totalCohesion = 0;
+      std::size_t methodCount = 0;
+      std::size_t totalCohesion = 0;
       // Query all methods of the current type.
       for (const model::CohesionCppMethodView& method
         : _ctx.db->query<model::CohesionCppMethodView>(
@@ -205,6 +213,14 @@ void CppMetricsParser::lackOfCohesion()
       _ctx.db->persist(lcm_hs);
     }
   });
+}
+
+bool CppMetricsParser::isInInputPath(const std::string& path_) const
+{
+  std::size_t i = 0;
+  while (i < _inputPaths.size() && path_.rfind(_inputPaths[i], 0) != 0)
+    ++i;
+  return i < _inputPaths.size();
 }
 
 bool CppMetricsParser::parse()
