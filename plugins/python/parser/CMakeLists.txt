@@ -5,7 +5,8 @@ include_directories(
   include
   ${PROJECT_SOURCE_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
-  ${PROJECT_SOURCE_DIR}/parser/include)
+  ${PROJECT_SOURCE_DIR}/parser/include
+  ${PLUGIN_DIR}/model/include)
 
 include_directories(SYSTEM
   ${Boost_INCLUDE_DIRS}
