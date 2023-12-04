@@ -338,6 +338,14 @@ public:
     return b;
   }
 
+  bool TraverseStmt(clang::Stmt* s_)
+  {
+    _statements.push(s_);
+    bool b = Base::TraverseStmt(s_);
+    _statements.pop();
+    return b;
+  }
+
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
   {
     const clang::TypedefType* type = tl_.getTypePtr();
@@ -438,15 +446,13 @@ public:
     cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
+
     if (const clang::CXXRecordDecl* crd
-        = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
+      = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
       cppRecord->isAbstract = crd->isAbstract();
       cppRecord->isPOD = crd->isPOD();
-    }
 
-    if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
-    {
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)
@@ -516,6 +522,28 @@ public:
           friendship->target = cppRecord->entityHash;
           friendship->theFriend = util::fnvHash(getUSR(friendDecl));
         }
+      }
+
+      // --- Destructor --- //
+
+      const clang::NamedDecl* ref = crd;
+      model::FileLoc location = getFileLoc(crd->getEndLoc(), crd->getEndLoc());
+      if (clang::CXXDestructorDecl* dd = crd->getDestructor())
+      {
+        ref = dd;
+        if (crd->hasUserDeclaredDestructor())
+        {
+          clang::Stmt* body = dd->getBody();
+          location = body
+            ? getFileLoc(body->getEndLoc(), body->getEndLoc())
+            : getFileLoc(dd->getEndLoc(), dd->getEndLoc());
+        }
+      }
+
+      for (auto it = crd->field_begin(); it != crd->field_end(); ++it)
+      {
+        clang::FieldDecl* fd = *it;
+        addDestructorUsage(fd->getType(), location, ref);
       }
     }
 
@@ -924,6 +952,27 @@ public:
     return true;
   }
 
+  bool VisitDeclStmt(clang::DeclStmt* ds_)
+  {
+    assert(_statements.top() == ds_ &&
+      "ds_ was expected to be the top-level statement.");
+    _statements.pop();
+    clang::Stmt* scopeSt = _statements.top();
+    _statements.push(ds_);
+
+    for (auto it = ds_->decl_begin(); it != ds_->decl_end(); ++it)
+    {
+      if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
+      {
+        model::FileLoc loc =
+          getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
+        addDestructorUsage(vd->getType(), loc, vd);
+      }
+    }
+
+    return true;
+  }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl* nd_)
   {
     //--- CppAstNode ---//
@@ -1130,6 +1179,8 @@ public:
     if (insertToCache(de_, astNode))
       _astNodes.push_back(astNode);
 
+    addDestructorUsage(de_->getDestroyedType(), astNode->location, de_);
+
     return true;
   }
 
@@ -1182,9 +1233,6 @@ public:
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
       astNode = std::make_shared<model::CppAstNode>();
-
-      model::FileLoc location =
-        getFileLoc(vd->getLocation(), vd->getLocation());
 
       if (!_contextStatementStack.empty())
       {
@@ -1298,6 +1346,30 @@ public:
 
 private:
   using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+
+  void addDestructorUsage(
+    clang::QualType type_,
+    const model::FileLoc& location_,
+    const void* clangPtr_)
+  {
+    if (clang::CXXRecordDecl* rd = type_->getAsCXXRecordDecl())
+    {
+      if (clang::CXXDestructorDecl* dd = rd->getDestructor())
+      {
+        model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+        astNode->astValue = getSignature(dd);
+        astNode->location = location_;
+        astNode->entityHash = util::fnvHash(getUSR(dd));
+        astNode->symbolType = model::CppAstNode::SymbolType::Function;
+        astNode->astType = model::CppAstNode::AstType::Usage;
+        astNode->id = model::createIdentifier(*astNode);
+
+        if (insertToCache(clangPtr_, astNode))
+          _astNodes.push_back(astNode);
+      }
+    }
+  }
 
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
@@ -1608,6 +1680,8 @@ private:
   std::unordered_map<unsigned, model::CppAstNode::AstType> _locToAstType;
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
+  // This stack contains the parent chain of the current Stmt.
+  std::stack<clang::Stmt*> _statements;
   // This stack has the same role as _locTo* maps. In case of
   // clang::DeclRefExpr objects we need to determine the contect of the given
   // expression. In this stack we store the deepest statement node in AST which
