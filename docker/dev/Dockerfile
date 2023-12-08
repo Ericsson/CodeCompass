@@ -28,10 +28,10 @@ RUN set -x && apt-get update -qq \
   libssl-dev \
   llvm-11 clang-11 llvm-11-dev libclang-11-dev \
   thrift-compiler libthrift-dev \
-  postgresql-server-dev-14 && \
+  postgresql-server-dev-14 \
+  postgresql-14 && \
   ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
-  ln -s /usr/bin/g++-11 /usr/bin/g++ && \
-  apt-get install -y postgresql-14
+  ln -s /usr/bin/g++-11 /usr/bin/g++
 
 # Copy install script
 COPY docker/dev/install_odb.sh /
