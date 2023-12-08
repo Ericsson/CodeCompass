@@ -5,6 +5,7 @@
 #include <mutex>
 #include <type_traits>
 #include <stack>
+#include <functional>
 
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
@@ -38,7 +39,6 @@
 #include <parser/sourcemanager.h>
 #include <util/hash.h>
 #include <util/odbtransaction.h>
-#include <util/logutil.h>
 
 #include <cppparser/filelocutil.h>
 
@@ -161,8 +161,8 @@ public:
     return b;
   }
 
-  bool TraverseFunctionDeclWithBody(clang::FunctionDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseFunctionDeclWithBody(clang::FunctionDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -196,8 +196,8 @@ public:
     return b;
   }
 
-  bool TraverseCXXDeductionGuideDeclWithBody(clang::CXXDeductionGuideDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseCXXDeductionGuideDeclWithBody(clang::CXXDeductionGuideDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -231,8 +231,8 @@ public:
     return b;
   }
 
-  bool TraverseCXXMethodDeclWithBody(clang::CXXMethodDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseCXXMethodDeclWithBody(clang::CXXMethodDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -266,8 +266,8 @@ public:
     return b;
   }
 
-  bool TraverseCXXConstructorDeclWithBody(clang::CXXConstructorDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseCXXConstructorDeclWithBody(clang::CXXConstructorDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -301,8 +301,8 @@ public:
     return b;
   }
 
-  bool TraverseCXXDestructorDeclWithBody(clang::CXXDestructorDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseCXXDestructorDeclWithBody(clang::CXXDestructorDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -336,8 +336,8 @@ public:
     return b;
   }
 
-  bool TraverseCXXConversionDeclWithBody(clang::CXXConversionDecl* fd_) {
-    LOG(info) << "[McCabe] Traversing function " << fd_->getQualifiedNameAsString();
+  bool TraverseCXXConversionDeclWithBody(clang::CXXConversionDecl* fd_)
+  {
     _functionStack.push(std::make_shared<model::CppFunction>());
     _mcCabeStack.push(1);
 
@@ -448,10 +448,8 @@ public:
 
   bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
   {
-    if (bo_->isLogicalOp() && !_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing BinaryOperator";
+    if (bo_->isLogicalOp() && !_mcCabeStack.empty())
       ++_mcCabeStack.top();
-    }
     _contextStatementStack.push(bo_);
     bool b = Base::TraverseBinaryOperator(bo_);
     _contextStatementStack.pop();
@@ -473,112 +471,72 @@ public:
     _contextStatementStack.pop();
     return b;
   }
-  
+
+  bool TraverseWithMcCabeAdd(const std::function<bool()>& func_)
+  {
+    if(!_mcCabeStack.empty())
+      ++_mcCabeStack.top();
+    return func_();
+  }
+
   bool TraverseIfStmt(clang::IfStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing IfStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseIfStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseIfStmt(stmt_); });
   }
 
   bool TraverseWhileStmt(clang::WhileStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing WhileStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseWhileStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseWhileStmt(stmt_); });
   }
 
   bool TraverseDoStmt(clang::DoStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing DoStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseDoStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseDoStmt(stmt_); });
   }
 
   bool TraverseForStmt(clang::ForStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing ForStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseForStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseForStmt(stmt_); });
   }
 
-  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* stmt_) {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing CXXForRangeStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseCXXForRangeStmt(stmt_);
+  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* stmt_)
+  {
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCXXForRangeStmt(stmt_); });
   }
 
   bool TraverseCaseStmt(clang::CaseStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing CaseStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseCaseStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCaseStmt(stmt_); });
   }
 
   bool TraverseDefaultStmt(clang::DefaultStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing DefaultStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseDefaultStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseDefaultStmt(stmt_); });
   }
 
   bool TraverseContinueStmt(clang::ContinueStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing ContinueStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseContinueStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseContinueStmt(stmt_); });
   }
 
   bool TraverseGotoStmt(clang::GotoStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing GotoStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseGotoStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseGotoStmt(stmt_); });
   }
 
   bool TraverseCXXCatchStmt(clang::CXXCatchStmt* stmt_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing CXXCatchStmt";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseCXXCatchStmt(stmt_);
+    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCXXCatchStmt(stmt_); });
   }
 
   bool TraverseConditionalOperator(clang::ConditionalOperator* op_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing ConditionalOperator";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseConditionalOperator(op_);
+    return TraverseWithMcCabeAdd([op_, this] { return Base::TraverseConditionalOperator(op_); });
   }
 
   bool TraverseBinaryConditionalOperator(clang::BinaryConditionalOperator* op_)
   {
-    if(!_mcCabeStack.empty()) {
-      LOG(info) << "[McCabe] Traversing BinaryConditionalOperator";
-      ++_mcCabeStack.top();
-    }
-    return Base::TraverseBinaryConditionalOperator(op_);
+    return TraverseWithMcCabeAdd([op_, this] { return Base::TraverseBinaryConditionalOperator(op_); });
   }
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
