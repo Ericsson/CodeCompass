@@ -472,71 +472,86 @@ public:
     return b;
   }
 
-  bool TraverseWithMcCabeAdd(const std::function<bool()>& func_)
+  template<typename T>
+  bool StatementStackDecorator(T* stmt_, const std::function<bool(T*)>& func_)
+  {
+    _statements.push(stmt_);
+    bool b = func_(stmt_);
+    _statements.pop();
+    return b;
+  }
+
+  template<typename T>
+  bool McCabeDecorator(T* stmt_, const std::function<bool(T*)>& func_)
   {
     if(!_mcCabeStack.empty())
       ++_mcCabeStack.top();
-    return func_();
+    return StatementStackDecorator(stmt_, func_);
   }
 
   bool TraverseIfStmt(clang::IfStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseIfStmt(stmt_); });
+    return McCabeDecorator<clang::IfStmt>(stmt_, [this] (clang::IfStmt* s) { return Base::TraverseIfStmt(s); });
   }
 
   bool TraverseWhileStmt(clang::WhileStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseWhileStmt(stmt_); });
+    return McCabeDecorator<clang::WhileStmt>(stmt_, [this] (clang::WhileStmt* s) { return Base::TraverseWhileStmt(s); });
   }
 
   bool TraverseDoStmt(clang::DoStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseDoStmt(stmt_); });
+    return McCabeDecorator<clang::DoStmt>(stmt_, [this] (clang::DoStmt* s) { return Base::TraverseDoStmt(s); });
   }
 
   bool TraverseForStmt(clang::ForStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseForStmt(stmt_); });
+    return McCabeDecorator<clang::ForStmt>(stmt_, [this] (clang::ForStmt* s) { return Base::TraverseForStmt(s); });
   }
 
   bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCXXForRangeStmt(stmt_); });
+    return McCabeDecorator<clang::CXXForRangeStmt>(stmt_, [this] (clang::CXXForRangeStmt* s) { return Base::TraverseCXXForRangeStmt(s); });
   }
 
   bool TraverseCaseStmt(clang::CaseStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCaseStmt(stmt_); });
+    return McCabeDecorator<clang::CaseStmt>(stmt_, [this] (clang::CaseStmt* s) { return Base::TraverseCaseStmt(s); });
   }
 
   bool TraverseDefaultStmt(clang::DefaultStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseDefaultStmt(stmt_); });
+    return McCabeDecorator<clang::DefaultStmt>(stmt_, [this] (clang::DefaultStmt* s) { return Base::TraverseDefaultStmt(s); });
   }
 
   bool TraverseContinueStmt(clang::ContinueStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseContinueStmt(stmt_); });
+    return McCabeDecorator<clang::ContinueStmt>(stmt_, [this] (clang::ContinueStmt* s) { return Base::TraverseContinueStmt(s); });
   }
 
   bool TraverseGotoStmt(clang::GotoStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseGotoStmt(stmt_); });
+    return McCabeDecorator<clang::GotoStmt>(stmt_, [this] (clang::GotoStmt* s) { return Base::TraverseGotoStmt(s); });
   }
 
   bool TraverseCXXCatchStmt(clang::CXXCatchStmt* stmt_)
   {
-    return TraverseWithMcCabeAdd([stmt_, this] { return Base::TraverseCXXCatchStmt(stmt_); });
+    return McCabeDecorator<clang::CXXCatchStmt>(stmt_, [this] (clang::CXXCatchStmt* s) { return Base::TraverseCXXCatchStmt(s); });
   }
 
   bool TraverseConditionalOperator(clang::ConditionalOperator* op_)
   {
-    return TraverseWithMcCabeAdd([op_, this] { return Base::TraverseConditionalOperator(op_); });
+    return McCabeDecorator<clang::ConditionalOperator>(op_, [this] (clang::ConditionalOperator* s) { return Base::TraverseConditionalOperator(s); });
   }
 
   bool TraverseBinaryConditionalOperator(clang::BinaryConditionalOperator* op_)
   {
-    return TraverseWithMcCabeAdd([op_, this] { return Base::TraverseBinaryConditionalOperator(op_); });
+    return McCabeDecorator<clang::BinaryConditionalOperator>(op_, [this] (clang::BinaryConditionalOperator* s) { return Base::TraverseBinaryConditionalOperator(s); });
+  }
+
+  bool TraverseStmt(clang::Stmt* stmt_)
+  {
+    return StatementStackDecorator<clang::Stmt>(stmt_, [this] (clang::Stmt* s) { return Base::TraverseStmt(s); });
   }
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
@@ -639,15 +654,13 @@ public:
     cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
+
     if (const clang::CXXRecordDecl* crd
-        = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
+      = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
       cppRecord->isAbstract = crd->isAbstract();
       cppRecord->isPOD = crd->isPOD();
-    }
 
-    if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
-    {
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)
@@ -717,6 +730,28 @@ public:
           friendship->target = cppRecord->entityHash;
           friendship->theFriend = util::fnvHash(getUSR(friendDecl));
         }
+      }
+
+      // --- Destructor --- //
+
+      const clang::NamedDecl* ref = crd;
+      model::FileLoc location = getFileLoc(crd->getEndLoc(), crd->getEndLoc());
+      if (clang::CXXDestructorDecl* dd = crd->getDestructor())
+      {
+        ref = dd;
+        if (crd->hasUserDeclaredDestructor())
+        {
+          clang::Stmt* body = dd->getBody();
+          location = body
+            ? getFileLoc(body->getEndLoc(), body->getEndLoc())
+            : getFileLoc(dd->getEndLoc(), dd->getEndLoc());
+        }
+      }
+
+      for (auto it = crd->field_begin(); it != crd->field_end(); ++it)
+      {
+        clang::FieldDecl* fd = *it;
+        addDestructorUsage(fd->getType(), location, ref);
       }
     }
 
@@ -1126,6 +1161,27 @@ public:
     return true;
   }
 
+  bool VisitDeclStmt(clang::DeclStmt* ds_)
+  {
+    assert(_statements.top() == ds_ &&
+      "ds_ was expected to be the top-level statement.");
+    _statements.pop();
+    clang::Stmt* scopeSt = _statements.top();
+    _statements.push(ds_);
+
+    for (auto it = ds_->decl_begin(); it != ds_->decl_end(); ++it)
+    {
+      if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
+      {
+        model::FileLoc loc =
+          getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
+        addDestructorUsage(vd->getType(), loc, vd);
+      }
+    }
+
+    return true;
+  }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl* nd_)
   {
     //--- CppAstNode ---//
@@ -1332,6 +1388,8 @@ public:
     if (insertToCache(de_, astNode))
       _astNodes.push_back(astNode);
 
+    addDestructorUsage(de_->getDestroyedType(), astNode->location, de_);
+
     return true;
   }
 
@@ -1384,9 +1442,6 @@ public:
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
       astNode = std::make_shared<model::CppAstNode>();
-
-      model::FileLoc location =
-        getFileLoc(vd->getLocation(), vd->getLocation());
 
       if (!_contextStatementStack.empty())
       {
@@ -1500,6 +1555,30 @@ public:
 
 private:
   using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+
+  void addDestructorUsage(
+    clang::QualType type_,
+    const model::FileLoc& location_,
+    const void* clangPtr_)
+  {
+    if (clang::CXXRecordDecl* rd = type_->getAsCXXRecordDecl())
+    {
+      if (clang::CXXDestructorDecl* dd = rd->getDestructor())
+      {
+        model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+        astNode->astValue = getSignature(dd);
+        astNode->location = location_;
+        astNode->entityHash = util::fnvHash(getUSR(dd));
+        astNode->symbolType = model::CppAstNode::SymbolType::Function;
+        astNode->astType = model::CppAstNode::AstType::Usage;
+        astNode->id = model::createIdentifier(*astNode);
+
+        if (insertToCache(clangPtr_, astNode))
+          _astNodes.push_back(astNode);
+      }
+    }
+  }
 
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
@@ -1811,6 +1890,8 @@ private:
   std::unordered_map<unsigned, model::CppAstNode::AstType> _locToAstType;
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
+  // This stack contains the parent chain of the current Stmt.
+  std::stack<clang::Stmt*> _statements;
   // This stack has the same role as _locTo* maps. In case of
   // clang::DeclRefExpr objects we need to determine the contect of the given
   // expression. In this stack we store the deepest statement node in AST which
