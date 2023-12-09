@@ -22,7 +22,7 @@
 #define DEBUG_COHESION_VERBOSE
 
 #ifdef DEBUG_COHESION_VERBOSE
-#include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <chrono>
 #endif
@@ -146,7 +146,7 @@ void CppMetricsParser::lackOfCohesion()
     std::size_t typeindex = 0;
     std::size_t checkedcount = 0;
 
-    std::cout << "=== Lack of Cohesion (LoC) metrics parser ===" << std::endl;
+    LOG(debug) << "=== Lack of Cohesion (LoC) metrics parser ===";
     int colwidth = static_cast<int>(ceil(log10(typecount)));
     auto start = std::chrono::steady_clock::now();
     #endif
@@ -165,10 +165,10 @@ void CppMetricsParser::lackOfCohesion()
 
       #ifdef DEBUG_COHESION_VERBOSE
       ++checkedcount;
-      std::cout << std::right << std::setw(colwidth) << typeindex << '/';
-      std::cout << std::left << std::setw(colwidth) << typecount << '\t';
-      std::cout << std::left << std::setw(32) << type.qualifiedName;
-      std::cout.flush();
+      std::ostringstream logLine;
+      logLine << std::right << std::setw(colwidth) << typeindex << '/';
+      logLine << std::left << std::setw(colwidth) << typecount << '\t';
+      logLine << std::left << std::setw(32) << type.qualifiedName;
       #endif
 
       std::unordered_set<HashType> fieldHashes;
@@ -247,9 +247,9 @@ void CppMetricsParser::lackOfCohesion()
       _ctx.db->persist(lcm_hs);
 
       #ifdef DEBUG_COHESION_VERBOSE
-      std::cout << std::right << std::setw(8) << (lcm.value / LOC_SCALING);
-      std::cout << std::right << std::setw(8) << (lcm_hs.value / LOC_SCALING);
-      std::cout << std::endl;
+      logLine << std::right << std::setw(8) << (lcm.value / LOC_SCALING);
+      logLine << std::right << std::setw(8) << (lcm_hs.value / LOC_SCALING);
+      LOG(debug) << logLine.str();
       #endif
     }
 
@@ -257,9 +257,8 @@ void CppMetricsParser::lackOfCohesion()
     auto finish = std::chrono::steady_clock::now();
     auto duration = finish - start;
     auto durs = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    std::cout << "=== Checked types: " << checkedcount
-      << ", Total runtime: " << durs.count()
-      << "s ===" << std::endl;
+    LOG(debug) << "=== Checked types: " << checkedcount
+      << ", Total runtime: " << durs.count() << "s ===";
     #endif
   });
 }
