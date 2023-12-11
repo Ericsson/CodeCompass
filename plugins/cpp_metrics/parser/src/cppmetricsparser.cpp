@@ -13,6 +13,7 @@
 #include <boost/filesystem.hpp>
 
 #include <util/logutil.h>
+#include <util/filesystem.h>
 #include <util/odbtransaction.h>
 
 #include <memory>
@@ -141,14 +142,14 @@ void CppMetricsParser::lackOfCohesion()
     const auto& QNodeRange = QNode::CppAstNode::location.range;
     
     #ifdef DEBUG_COHESION_VERBOSE
-    std::size_t typecount =
+    std::size_t typeCount =
       _ctx.db->query_value<model::CppRecordCount>().count;
-    std::size_t typeindex = 0;
-    std::size_t checkedcount = 0;
+    std::size_t typeIndex = 0;
+    std::size_t checkedCount = 0;
 
     LOG(debug) << "=== Lack of Cohesion (LoC) metrics parser ===";
-    int colwidth = static_cast<int>(ceil(log10(typecount)));
-    auto start = std::chrono::steady_clock::now();
+    int colWidth = static_cast<int>(ceil(log10(typeCount)));
+    auto startTime = std::chrono::steady_clock::now();
     #endif
 
     // Calculate the cohesion metric for all types.
@@ -156,18 +157,18 @@ void CppMetricsParser::lackOfCohesion()
       : _ctx.db->query<model::CohesionCppRecordView>())
     {
       #ifdef DEBUG_COHESION_VERBOSE
-      ++typeindex;
+      ++typeIndex;
       #endif
 
       // Skip types that were included from external libraries.
-      if (!isInInputPath(type.filePath))
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
         continue;
 
       #ifdef DEBUG_COHESION_VERBOSE
-      ++checkedcount;
+      ++checkedCount;
       std::ostringstream logLine;
-      logLine << std::right << std::setw(colwidth) << typeindex << '/';
-      logLine << std::left << std::setw(colwidth) << typecount << '\t';
+      logLine << std::right << std::setw(colWidth) << typeIndex << '/';
+      logLine << std::left << std::setw(colWidth) << typeCount << '\t';
       logLine << std::left << std::setw(32) << type.qualifiedName;
       #endif
 
@@ -254,21 +255,13 @@ void CppMetricsParser::lackOfCohesion()
     }
 
     #ifdef DEBUG_COHESION_VERBOSE
-    auto finish = std::chrono::steady_clock::now();
-    auto duration = finish - start;
-    auto durs = std::chrono::duration_cast<std::chrono::seconds>(duration);
-    LOG(debug) << "=== Checked types: " << checkedcount
-      << ", Total runtime: " << durs.count() << "s ===";
+    auto finishTime = std::chrono::steady_clock::now();
+    auto durTime = finishTime - startTime;
+    auto durSecs = std::chrono::duration_cast<std::chrono::seconds>(durTime);
+    LOG(debug) << "=== Checked types: " << checkedCount
+      << ", Total runtime: " << durSecs.count() << "s ===";
     #endif
   });
-}
-
-bool CppMetricsParser::isInInputPath(const std::string& path_) const
-{
-  std::size_t i = 0;
-  while (i < _inputPaths.size() && path_.rfind(_inputPaths[i], 0) != 0)
-    ++i;
-  return i < _inputPaths.size();
 }
 
 bool CppMetricsParser::parse()
