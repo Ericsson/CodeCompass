@@ -40,11 +40,7 @@ private:
   // and member functions for every type.
   void lackOfCohesion();
   
-  // Checks if the given (canonical) path begins with any of the input paths
-  // specified for the metrics parser via command line arguments on startup.
-  bool isInInputPath(const std::string& path_) const;
   std::vector<std::string> _inputPaths;
-  
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
