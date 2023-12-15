@@ -135,15 +135,15 @@ public:
     // should be stored for AST nodes in our database. This differs somewhat
     // from Clang's concept of implicitness.
     // To bridge the gap between the two interpretations, we mostly assume
-    // implicitness to be hereditary from parent to child nodes,
-    // except in some special cases (see lambdas in TraverseCXXRecordDecl).
+    // implicitness to be hereditary from parent to child nodes, except
+    // in some known special cases (see lambdas in TraverseCXXRecordDecl).
     bool wasImplicit = _isImplicit;
     _isImplicit |= decl_->isImplicit();
 
     bool b = Base::TraverseDecl(decl_);
 
     _isImplicit = wasImplicit;
-    
+
     return b;
   }
 
@@ -240,7 +240,7 @@ public:
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
-    // Although lamba closure types are implicit by nature as far as
+    // Although lambda closure types are implicit by nature as far as
     // Clang is concerned, their operator() is not. In order to be able to
     // properly assign symbol location information to AST nodes within
     // lambda bodies, we must force lambdas to be considered explicit.
