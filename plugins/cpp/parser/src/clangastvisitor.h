@@ -73,7 +73,8 @@ public:
     clang::ASTContext& astContext_,
     EntityCache& entityCache_,
     std::unordered_map<const void*, model::CppAstNodeId>& clangToAstNodeId_)
-    : _ctx(ctx_),
+    : _isImplicit(false),
+      _ctx(ctx_),
       _clangSrcMgr(astContext_.getSourceManager()),
       _fileLocUtil(astContext_.getSourceManager()),
       _astContext(astContext_),
@@ -128,6 +129,24 @@ public:
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitLambdaBody() const { return true; }
   
+  bool TraverseDecl(clang::Decl* decl_)
+  {
+    // We use implicitness to determine if actual symbol location information
+    // should be stored for AST nodes in our database. This differs somewhat
+    // from Clang's concept of implicitness.
+    // To bridge the gap between the two interpretations, we mostly assume
+    // implicitness to be hereditary from parent to child nodes,
+    // except in some special cases (see lambdas in TraverseCXXRecordDecl).
+    bool wasImplicit = _isImplicit;
+    _isImplicit |= decl_->isImplicit();
+
+    bool b = Base::TraverseDecl(decl_);
+
+    _isImplicit = wasImplicit;
+    
+    return b;
+  }
+
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
     _functionStack.push(std::make_shared<model::CppFunction>());
@@ -221,6 +240,12 @@ public:
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
+    // Although lamba closure types are implicit by nature as far as
+    // Clang is concerned, their operator() is not. In order to be able to
+    // properly assign symbol location information to AST nodes within
+    // lambda bodies, we must force lambdas to be considered explicit.
+    bool wasImplicit = _isImplicit;
+    _isImplicit &= !rd_->isLambda();
     _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseCXXRecordDecl(rd_);
@@ -228,6 +253,7 @@ public:
     if (_typeStack.top()->astNodeId)
       _types.push_back(_typeStack.top());
     _typeStack.pop();
+    _isImplicit = wasImplicit;
 
     return b;
   }
@@ -668,7 +694,7 @@ public:
 
     //--- Tags ---//
 
-    if (fn_->isImplicit())
+    if (_isImplicit)
       cppFunction->tags.insert(model::Tag::Implicit);
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
@@ -864,7 +890,7 @@ public:
 
     if (_functionStack.empty())
       variable->tags.insert(model::Tag::Global);
-    if (vd_->isImplicit())
+    if (_isImplicit)
       variable->tags.insert(model::Tag::Implicit);
 
     //--- CppMemberType ---//
@@ -1254,7 +1280,8 @@ private:
     if (_clangSrcMgr.isMacroArgExpansion(end_))
       realEnd = _clangSrcMgr.getSpellingLoc(end_);
 
-    _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+    if (!_isImplicit)
+      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
 
     fileLoc.file = getFile(realStart);
 
@@ -1473,6 +1500,7 @@ private:
   std::stack<model::CppRecordPtr>     _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
 
+  bool _isImplicit;
   ParserContext& _ctx;
   const clang::SourceManager& _clangSrcMgr;
   FileLocUtil _fileLocUtil;
