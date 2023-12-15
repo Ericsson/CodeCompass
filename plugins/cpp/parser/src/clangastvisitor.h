@@ -138,7 +138,8 @@ public:
     // implicitness to be hereditary from parent to child nodes, except
     // in some known special cases (see lambdas in TraverseCXXRecordDecl).
     bool wasImplicit = _isImplicit;
-    _isImplicit |= decl_->isImplicit();
+    if (decl_ != nullptr)
+      _isImplicit |= decl_->isImplicit();
 
     bool b = Base::TraverseDecl(decl_);
 
@@ -245,7 +246,8 @@ public:
     // properly assign symbol location information to AST nodes within
     // lambda bodies, we must force lambdas to be considered explicit.
     bool wasImplicit = _isImplicit;
-    _isImplicit &= !rd_->isLambda();
+    if (rd_ != nullptr)
+      _isImplicit &= !rd_->isLambda();
     _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseCXXRecordDecl(rd_);
