@@ -112,15 +112,15 @@ public:
   MyClass(unsigned int arg1) // +1
   {
     if (arg1 < LIMIT) // +1
-      bad_practice = new char[LIMIT];
+      badPractice = new char[LIMIT];
     else
-      bad_practice = new char[arg1];
+      badPractice = new char[arg1];
   } // 2
 
   ~MyClass() // +1
   {
     for (unsigned int i = 0; i < LIMIT; ++i) {} // +1
-    delete[] bad_practice;
+    delete[] badPractice;
   } // 2
 
   void method1(int arg1) // +1
@@ -144,5 +144,5 @@ public:
   } // 8
 private:
   const unsigned int LIMIT = 42;
-  char* bad_practice;
+  char* badPractice;
 };

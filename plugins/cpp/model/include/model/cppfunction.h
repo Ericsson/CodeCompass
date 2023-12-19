@@ -63,7 +63,7 @@ struct CppFunctionLocalCount
 #pragma db view object(CppFunction)
 struct CppFunctionMcCabeWithId
 {
-  CppAstNodeId id;
+  CppAstNodeId astNodeId;
   unsigned int mccabe;
 };
 

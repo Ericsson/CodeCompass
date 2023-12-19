@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  GTEST_LOG_(INFO) << "Testing C++ started...";
+  GTEST_LOG_(INFO) << "Testing C++ metrics plugin started...";
   GTEST_LOG_(INFO) << "Executing build command: " << argv[1];
   system(argv[1]);
 

@@ -114,11 +114,11 @@ void CppMetricsParser::functionMcCabe()
     for (const model::CppFunctionMcCabeWithId& function
       : _ctx.db->query<model::CppFunctionMcCabeWithId>())
     {
-      model::CppAstNodeMetrics funcParams;
-      funcParams.astNodeId = function.id;
-      funcParams.type = model::CppAstNodeMetrics::Type::MCCABE;
-      funcParams.value = function.mccabe;
-      _ctx.db->persist(funcParams);
+      model::CppAstNodeMetrics funcMcCabe;
+      funcMcCabe.astNodeId = function.astNodeId;
+      funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
+      funcMcCabe.value = function.mccabe;
+      _ctx.db->persist(funcMcCabe);
     }
   });
 }
