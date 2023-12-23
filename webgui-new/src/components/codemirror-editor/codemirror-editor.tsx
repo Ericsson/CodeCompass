@@ -1,9 +1,9 @@
-import ReactCodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import ReactCodeMirror, { Decoration, EditorView, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
-import { getCppAstNodeInfoByPosition } from 'service/cpp-service';
-import { FileInfo, Position, Range } from '@thrift-generated';
+import { getCppAstNodeInfoByPosition, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
+import { AstNodeInfo, FileInfo, Position, Range } from '@thrift-generated';
 import { cpp } from '@codemirror/lang-cpp';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
@@ -20,6 +20,14 @@ import * as SC from './styled-components';
 import { useTranslation } from 'react-i18next';
 import { sendGAEvent } from 'utils/analytics';
 
+type HighlightPosition = {
+  startpos: {line: number, column: number}
+  endpos: {line: number, column: number}
+}
+
+const HIGHLIGHT_FOR_DARK = 'rgba(187, 181, 255, 0.3)';
+const HIGHLIGHT_FOR_LIGHT = '#f0d8a8';
+
 export const CodeMirrorEditor = (): JSX.Element => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -34,6 +42,9 @@ export const CodeMirrorEditor = (): JSX.Element => {
     mouseX: number;
     mouseY: number;
   } | null>(null);
+  const [highlightRanges, setHighlightRanges] = useState<HighlightPosition[]>([]);
+  const [visitedLastAstNode, setVisitedLastAstNode] = useState<AstNodeInfo | null>(null);
+  const [highlightColor, setHighlightColor] = useState(theme === 'dark' ?  HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT);
 
   useEffect(() => {
     if (!appCtx.workspaceId) return;
@@ -56,6 +67,59 @@ export const CodeMirrorEditor = (): JSX.Element => {
     if (!appCtx.editorSelection) return;
     dispatchSelection(convertSelectionStringToRange(appCtx.editorSelection));
   }, [appCtx.editorSelection, fileContent]);
+
+  useEffect(() => {
+    setHighlightColor(theme === 'dark' ? HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT);
+  }, [theme])
+
+  useEffect(() => {
+    if(!editorRef.current || !editorRef.current.view) return;
+    setHighlightRanges([]);
+  }, [appCtx.workspaceId, fileInfo, fileContent])
+
+  const createHighlightDecoration = (view: EditorView, highlightPosition: HighlightPosition, highlightColor: string) => {
+    if (!editorRef.current || !editorRef.current.state || !editorRef.current.view) return;
+    
+    const startPos = highlightPosition.startpos as Position;
+    const endPos = highlightPosition.endpos as Position;
+
+    const from =
+      view.state.doc.line(startPos.line as number).from +
+      (startPos.column as number) -
+      1;
+    const to =
+      view.state.doc.line(endPos.line as number).from + (endPos.column as number) - 1;
+
+    return Decoration.mark({
+      attributes: { style: `background-color:${highlightColor}` },
+    }).range(from, to);
+  };
+  
+  const highlightExtension = () => {return EditorView.decorations.of((view) => {
+    const decorations = highlightRanges.map((pos) => createHighlightDecoration(view, pos, highlightColor)) as never;
+    return Decoration.set(decorations, true);
+  })}
+
+  const updateHighlights = async (astNode : AstNodeInfo) => {
+    const refTypes = await getCppReferenceTypes(astNode.id as string)
+    if(visitedLastAstNode?.id !== astNode.id){
+      const allReferences = await getCppReferences(astNode.id as string, refTypes.get('Usage') as number, []);
+      const referencesInFile = allReferences.filter(ref => ref.range?.file === fileInfo?.id);
+      setHighlightRanges(referencesInFile.map(nodeInfo => {
+        const startpos = nodeInfo?.range?.range?.startpos as { line: number, column: number };
+        const endpos = nodeInfo?.range?.range?.endpos as { line: number, column: number };
+        return {
+          startpos: { line: startpos.line, column: startpos.column },
+          endpos: { line: endpos.line, column: endpos.column }
+        };
+      }));
+      setVisitedLastAstNode(astNode);
+
+    }else{
+      setHighlightRanges([]);
+      setVisitedLastAstNode(null);
+    }
+  }
 
   const dispatchSelection = (range: Range) => {
     if (!range || !range.startpos || !range.endpos) return;
@@ -117,12 +181,14 @@ export const CodeMirrorEditor = (): JSX.Element => {
         event_category: appCtx.workspaceId,
         event_label: `${fileInfo?.name}: ${astNodeInfo.astNodeValue}`,
       });
-      dispatchSelection(astNodeInfo?.range?.range as Range);
+      const nodeRange = astNodeInfo?.range?.range as Range;
+      await updateHighlights(astNodeInfo);
+      dispatchSelection(nodeRange);
       router.push({
         pathname: '/project',
         query: {
           ...router.query,
-          editorSelection: convertSelectionRangeToString(astNodeInfo?.range?.range),
+          editorSelection: convertSelectionRangeToString(nodeRange),
           languageNodeId: astNodeInfo?.id as string,
           activeAccordion: AccordionLabel.INFO_TREE,
         } as RouterQueryType,
@@ -143,6 +209,8 @@ export const CodeMirrorEditor = (): JSX.Element => {
         event_category: appCtx.workspaceId,
         event_label: `${fileInfo?.name}: ${convertSelectionRangeToString(range)}`,
       });
+      setHighlightRanges([]);
+      setVisitedLastAstNode(null);
       dispatchSelection(range);
       router.push({
         pathname: '/project',
@@ -250,8 +318,13 @@ export const CodeMirrorEditor = (): JSX.Element => {
         </SC.GitBlameContainer>
         <ReactCodeMirror
           readOnly={true}
-          extensions={[cpp()]}
+          extensions={[cpp(), highlightExtension()]}
           theme={theme === 'dark' ? githubDark : githubLight}
+          basicSetup={{
+            syntaxHighlighting: false,
+            highlightSelectionMatches: false,
+            highlightActiveLine: false
+          }}
           style={{ fontSize: '0.8rem' }}
           width={appCtx.gitBlameInfo.length !== 0 ? 'calc(100vw - 280px - 400px)' : 'calc(100vw - 280px)'}
           height={'100%'}
@@ -269,6 +342,9 @@ export const CodeMirrorEditor = (): JSX.Element => {
             cmScroller.addEventListener('scroll', () => {
               gitBlameContainer.scrollTop = cmScroller.scrollTop;
             });
+          }}
+          onChange={(_, update) => {
+            editorRef.current = { view: update.view, state: update.state };
           }}
           onClick={() => handleAstNodeSelect()}
           onContextMenu={(e) => handleContextMenu(e)}
