@@ -37,19 +37,11 @@ target_link_libraries(cppmetricsparsertest
 if (NOT FUNCTIONAL_TESTING_ENABLED)
     fancy_message("Skipping generation of test project cppmetricstest." "yellow" TRUE)
 else()
-    # Clean up the build folder and the output of the test in a `make clean`.
     set_property(DIRECTORY APPEND PROPERTY
             ADDITIONAL_MAKE_CLEAN_FILES
             "${CMAKE_CURRENT_BINARY_DIR}/build"
             "${CMAKE_CURRENT_BINARY_DIR}/workdir")
 
-    # Add test to the project to run by ctest.
-    #
-    # There are three arguments that are passed to the `cppmetricsservicetest` binary
-    # here.
-    #   The first sets up the build environment and builds the project.
-    #   The second executes the parsing.
-    #   Then we put the database string which will be used by the tests.
     add_test(NAME cppmetricsservice COMMAND cppmetricsservicetest
             "echo \"Test database used: ${TEST_DB}\" && \
        rm -rf ${CMAKE_CURRENT_BINARY_DIR}/build && \
