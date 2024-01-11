@@ -50,7 +50,7 @@
     "react-icons": "^4.8.0",
     "react-toastify": "^9.1.2",
     "react-zoom-pan-pinch": "^3.0.5",
-    "reactflow": "^11.7.0",
+    "reactflow": "^11.10.1",
     "recharts": "^2.5.0",
     "sass": "^1.57.1",
     "sharp": "^0.32.6",
