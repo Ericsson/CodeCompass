@@ -55,7 +55,7 @@ RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
     curl ca-certificates gnupg \
     wget \
-    llvm-11 \
+    llvm-15 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \
