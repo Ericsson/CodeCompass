@@ -137,8 +137,8 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           -DDATABASE=$DB_TYPE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DLLVM_DIR=/usr/lib/llvm-11/cmake
-          -DClang_DIR=/usr/lib/cmake/clang-11
+          -DLLVM_DIR=/usr/lib/llvm-15/cmake
+          -DClang_DIR=/usr/lib/cmake/clang-15
           -DTEST_DB=$DB_CONNSTRING
 
       - name: Build
