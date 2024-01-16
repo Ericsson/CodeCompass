@@ -5,6 +5,7 @@
 #include <mutex>
 #include <type_traits>
 #include <stack>
+#include <functional>
 
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
@@ -38,7 +39,6 @@
 #include <parser/sourcemanager.h>
 #include <util/hash.h>
 #include <util/odbtransaction.h>
-#include <util/logutil.h>
 
 #include <cppparser/filelocutil.h>
 
@@ -147,6 +147,9 @@ public:
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseFunctionDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseFunctionDecl(fd_);
@@ -158,8 +161,30 @@ public:
     return b;
   }
 
+  bool TraverseFunctionDeclWithBody(clang::FunctionDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseFunctionDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseCXXDeductionGuideDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
@@ -171,8 +196,30 @@ public:
     return b;
   }
 
+  bool TraverseCXXDeductionGuideDeclWithBody(clang::CXXDeductionGuideDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXMethodDecl(clang::CXXMethodDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseCXXMethodDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseCXXMethodDecl(fd_);
@@ -184,8 +231,30 @@ public:
     return b;
   }
 
+  bool TraverseCXXMethodDeclWithBody(clang::CXXMethodDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseCXXMethodDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseCXXConstructorDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseCXXConstructorDecl(fd_);
@@ -197,8 +266,30 @@ public:
     return b;
   }
 
+  bool TraverseCXXConstructorDeclWithBody(clang::CXXConstructorDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseCXXConstructorDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseCXXDestructorDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseCXXDestructorDecl(fd_);
@@ -210,14 +301,55 @@ public:
     return b;
   }
 
+  bool TraverseCXXDestructorDeclWithBody(clang::CXXDestructorDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseCXXDestructorDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseCXXConversionDecl(clang::CXXConversionDecl* fd_)
   {
+    if (fd_->doesThisDeclarationHaveABody())
+      return TraverseCXXConversionDeclWithBody(fd_);
+
     _functionStack.push(std::make_shared<model::CppFunction>());
 
     bool b = Base::TraverseCXXConversionDecl(fd_);
 
     if (_functionStack.top()->astNodeId)
       _functions.push_back(_functionStack.top());
+    _functionStack.pop();
+
+    return b;
+  }
+
+  bool TraverseCXXConversionDeclWithBody(clang::CXXConversionDecl* fd_)
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+    _mcCabeStack.push(1);
+
+    bool b = Base::TraverseCXXConversionDecl(fd_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+    {
+      top->mccabe = _mcCabeStack.top();
+      _functions.push_back(top);
+    }
+    _mcCabeStack.pop();
     _functionStack.pop();
 
     return b;
@@ -316,6 +448,8 @@ public:
 
   bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
   {
+    if (bo_->isLogicalOp() && !_mcCabeStack.empty())
+      ++_mcCabeStack.top();
     _contextStatementStack.push(bo_);
     bool b = Base::TraverseBinaryOperator(bo_);
     _contextStatementStack.pop();
@@ -338,12 +472,86 @@ public:
     return b;
   }
 
-  bool TraverseStmt(clang::Stmt* s_)
+  template<typename T>
+  bool StatementStackDecorator(T* stmt_, const std::function<bool(T*)>& func_)
   {
-    _statements.push(s_);
-    bool b = Base::TraverseStmt(s_);
+    _statements.push(stmt_);
+    bool b = func_(stmt_);
     _statements.pop();
     return b;
+  }
+
+  template<typename T>
+  bool McCabeDecorator(T* stmt_, const std::function<bool(T*)>& func_)
+  {
+    if(!_mcCabeStack.empty())
+      ++_mcCabeStack.top();
+    return StatementStackDecorator(stmt_, func_);
+  }
+
+  bool TraverseIfStmt(clang::IfStmt* stmt_)
+  {
+    return McCabeDecorator<clang::IfStmt>(stmt_, [this] (clang::IfStmt* s) { return Base::TraverseIfStmt(s); });
+  }
+
+  bool TraverseWhileStmt(clang::WhileStmt* stmt_)
+  {
+    return McCabeDecorator<clang::WhileStmt>(stmt_, [this] (clang::WhileStmt* s) { return Base::TraverseWhileStmt(s); });
+  }
+
+  bool TraverseDoStmt(clang::DoStmt* stmt_)
+  {
+    return McCabeDecorator<clang::DoStmt>(stmt_, [this] (clang::DoStmt* s) { return Base::TraverseDoStmt(s); });
+  }
+
+  bool TraverseForStmt(clang::ForStmt* stmt_)
+  {
+    return McCabeDecorator<clang::ForStmt>(stmt_, [this] (clang::ForStmt* s) { return Base::TraverseForStmt(s); });
+  }
+
+  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* stmt_)
+  {
+    return McCabeDecorator<clang::CXXForRangeStmt>(stmt_, [this] (clang::CXXForRangeStmt* s) { return Base::TraverseCXXForRangeStmt(s); });
+  }
+
+  bool TraverseCaseStmt(clang::CaseStmt* stmt_)
+  {
+    return McCabeDecorator<clang::CaseStmt>(stmt_, [this] (clang::CaseStmt* s) { return Base::TraverseCaseStmt(s); });
+  }
+
+  bool TraverseDefaultStmt(clang::DefaultStmt* stmt_)
+  {
+    return McCabeDecorator<clang::DefaultStmt>(stmt_, [this] (clang::DefaultStmt* s) { return Base::TraverseDefaultStmt(s); });
+  }
+
+  bool TraverseContinueStmt(clang::ContinueStmt* stmt_)
+  {
+    return McCabeDecorator<clang::ContinueStmt>(stmt_, [this] (clang::ContinueStmt* s) { return Base::TraverseContinueStmt(s); });
+  }
+
+  bool TraverseGotoStmt(clang::GotoStmt* stmt_)
+  {
+    return McCabeDecorator<clang::GotoStmt>(stmt_, [this] (clang::GotoStmt* s) { return Base::TraverseGotoStmt(s); });
+  }
+
+  bool TraverseCXXCatchStmt(clang::CXXCatchStmt* stmt_)
+  {
+    return McCabeDecorator<clang::CXXCatchStmt>(stmt_, [this] (clang::CXXCatchStmt* s) { return Base::TraverseCXXCatchStmt(s); });
+  }
+
+  bool TraverseConditionalOperator(clang::ConditionalOperator* op_)
+  {
+    return McCabeDecorator<clang::ConditionalOperator>(op_, [this] (clang::ConditionalOperator* s) { return Base::TraverseConditionalOperator(s); });
+  }
+
+  bool TraverseBinaryConditionalOperator(clang::BinaryConditionalOperator* op_)
+  {
+    return McCabeDecorator<clang::BinaryConditionalOperator>(op_, [this] (clang::BinaryConditionalOperator* s) { return Base::TraverseBinaryConditionalOperator(s); });
+  }
+
+  bool TraverseStmt(clang::Stmt* stmt_)
+  {
+    return StatementStackDecorator<clang::Stmt>(stmt_, [this] (clang::Stmt* s) { return Base::TraverseStmt(s); });
   }
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
@@ -710,6 +918,7 @@ public:
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
+    cppFunction->mccabe = 1;
 
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
 
@@ -1653,8 +1862,9 @@ private:
   // Check lambda.
   // TODO: _enumStack also doesn't have to be a stack.
   std::stack<model::CppFunctionPtr> _functionStack;
-  std::stack<model::CppRecordPtr>     _typeStack;
+  std::stack<model::CppRecordPtr>   _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
+  std::stack<unsigned int>          _mcCabeStack;
 
   bool _isImplicit;
   ParserContext& _ctx;

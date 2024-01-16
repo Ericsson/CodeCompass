@@ -18,6 +18,7 @@ struct CppFunction : CppTypedEntity
   std::vector<odb::lazy_shared_ptr<CppVariable>> parameters;
   #pragma db on_delete(cascade)
   std::vector<odb::lazy_shared_ptr<CppVariable>> locals;
+  unsigned int mccabe;
 
   std::string toString() const
   {
@@ -57,6 +58,13 @@ struct CppFunctionLocalCount
 {
   #pragma db column("count(" + Locals::id + ")")
   std::size_t count;
+};
+
+#pragma db view object(CppFunction)
+struct CppFunctionMcCabeWithId
+{
+  CppAstNodeId astNodeId;
+  unsigned int mccabe;
 };
 
 }
