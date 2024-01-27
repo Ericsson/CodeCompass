@@ -283,8 +283,11 @@ void CppMetricsParser::lackOfCohesion()
 bool CppMetricsParser::parse()
 {
   functionParameters();
+  
   functionMcCabe();
+
   lackOfCohesion();
+
   return true;
 }
 
