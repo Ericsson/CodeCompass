@@ -2,6 +2,8 @@
 #define CC_MODEL_CPPASTNODEMETRICS_H
 
 #include <model/cppastnode.h>
+#include <model/cppentity.h>
+#include <model/cpprecord.h>
 
 namespace cc
 {
@@ -29,6 +31,16 @@ struct CppAstNodeMetrics
   Type type;
 
   #pragma db null
+  double value;
+};
+
+#pragma db view \
+  object(CppRecord) \
+  object(CppAstNodeMetrics : \
+    CppRecord::astNodeId == CppAstNodeMetrics::astNodeId)
+struct CppRecordMetricsView
+{
+  #pragma db column(CppAstNodeMetrics::value)
   double value;
 };
 
