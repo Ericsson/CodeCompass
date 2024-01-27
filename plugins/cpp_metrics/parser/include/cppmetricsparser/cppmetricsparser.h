@@ -24,8 +24,6 @@ namespace parser
 class CppMetricsParser : public AbstractParser
 {
 public:
-  static constexpr double LOC_SCALING = 1e+4;
-
   CppMetricsParser(ParserContext& ctx_);
   virtual ~CppMetricsParser();
 

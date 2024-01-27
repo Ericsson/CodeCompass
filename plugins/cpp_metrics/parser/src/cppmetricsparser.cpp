@@ -184,7 +184,7 @@ void CppMetricsParser::lackOfCohesion()
       ++checkedCount;
       std::ostringstream logLine;
       logLine << std::right << std::setw(colWidth) << typeIndex << '/';
-      logLine << std::left << std::setw(colWidth) << typeCount << '\t';
+      logLine << std::left << std::setw(colWidth) << typeCount << ' ';
       logLine << std::left << std::setw(32) << type.qualifiedName;
       #endif
 
@@ -246,26 +246,31 @@ void CppMetricsParser::lackOfCohesion()
       const double dF = fieldCount;
       const double dM = methodCount;
       const double dC = totalCohesion;
+      const bool trivial = fieldCount == 0 || methodCount == 0;
+      const bool singular = methodCount == 1;
       
-      // Standard lack of cohesion:
+      // Standard lack of cohesion (range: [0,1])
       model::CppAstNodeMetrics lcm;
       lcm.astNodeId = type.astNodeId;
       lcm.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION;
-      lcm.value = static_cast<unsigned int>(LOC_SCALING * 
-        (1.0 - dC / (dM * dF)));// range: [0,1]
+      lcm.value = trivial ? 0.0 :
+        (1.0 - dC / (dM * dF));
       _ctx.db->persist(lcm);
 
-      // Henderson-Sellers variant:
+      // Henderson-Sellers variant (range: [0,2])
       model::CppAstNodeMetrics lcm_hs;
       lcm_hs.astNodeId = type.astNodeId;
       lcm_hs.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION_HS;
-      lcm_hs.value = static_cast<unsigned int>(LOC_SCALING * 
-        ((dM - dC / dF) / (dM - 1.0)));// range: [0,2]
+      lcm_hs.value = trivial ? 0.0 : singular ? NAN :
+        ((dM - dC / dF) / (dM - 1.0));
       _ctx.db->persist(lcm_hs);
 
       #ifdef DEBUG_COHESION_VERBOSE
-      logLine << std::right << std::setw(8) << (lcm.value / LOC_SCALING);
-      logLine << std::right << std::setw(8) << (lcm_hs.value / LOC_SCALING);
+      constexpr int valuePrec = 4;
+      constexpr int valueWidth = valuePrec + 3;
+      logLine << std::setprecision(valuePrec);
+      logLine << std::right << std::setw(valueWidth) << lcm.value;
+      logLine << std::right << std::setw(valueWidth) << lcm_hs.value;
       LOG(debug) << logLine.str();
       #endif
     }
@@ -283,11 +288,8 @@ void CppMetricsParser::lackOfCohesion()
 bool CppMetricsParser::parse()
 {
   functionParameters();
-  
   functionMcCabe();
-
   lackOfCohesion();
-
   return true;
 }
 

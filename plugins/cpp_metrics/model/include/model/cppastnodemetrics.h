@@ -28,8 +28,8 @@ struct CppAstNodeMetrics
   #pragma db not_null
   Type type;
 
-  #pragma db not_null
-  unsigned value;
+  #pragma db null
+  double value;
 };
 
 } //model
