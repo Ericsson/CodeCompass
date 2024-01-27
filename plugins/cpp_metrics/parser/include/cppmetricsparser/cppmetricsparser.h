@@ -35,6 +35,7 @@ public:
 private:
   // Calculate the count of parameters for every function.
   void functionParameters();
+  // Calculate the McCabe complexity of functions.
   void functionMcCabe();
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
