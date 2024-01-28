@@ -1,9 +1,10 @@
+#include <math.h>
 #include <gtest/gtest.h>
 
 // Same as EXPECT_NEAR, but NANs are also considered equal.
 #define EXPECT_EQF(val1, val2, abs_error) { \
   const auto v1 = val1; const auto v2 = val2; \
-  const bool n1 = std::isnan(v1); const bool n2 = std::isnan(v2); \
+  const bool n1 = isnan(v1); const bool n2 = isnan(v2); \
   EXPECT_EQ(n1, n2); \
   if (!n1 && !n2) EXPECT_NEAR(v1, v2, abs_error); \
 }
@@ -31,22 +32,32 @@ public:
 protected:
   typedef model::CppAstNodeMetrics::Type Type;
 
-  double queryRecordMetric(const std::string& qualType_, Type metricType_);
+  bool queryRecordMetric(
+    const std::string& qualType_,
+    Type metricType_,
+    double& result_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 };
 
-double CppMetricsParserTest::queryRecordMetric(
+bool CppMetricsParserTest::queryRecordMetric(
   const std::string& qualType_,
-  Type metricType_)
+  Type metricType_,
+  double& result_)
 {
   typedef odb::query<model::CppRecordMetricsView>::query_columns QEntry;
   const auto& QEntryQualName = QEntry::CppRecord::qualifiedName;
   const auto& QEntryType = QEntry::CppAstNodeMetrics::type;
 
-  return _db->query_value<model::CppRecordMetricsView>(
-      QEntryQualName == qualType_ && QEntryType == metricType_).value;
+  model::CppRecordMetricsView entry;
+  if (_db->query_one<model::CppRecordMetricsView>(
+      QEntryQualName == qualType_ && QEntryType == metricType_, entry))
+  {
+    result_ = entry.value;
+    return true;
+  }
+  else return false;
 }
 
 // McCabe
@@ -133,8 +144,9 @@ std::vector<LackOfCohesionParam> paramLackOfCohesion = {
 TEST_P(ParameterizedLackOfCohesionTest, LackOfCohesionTest) {
   _transaction([&, this]() {
     const std::string& qualType = GetParam().typeName;
-    double loc = queryRecordMetric(qualType, Type::LACK_OF_COHESION);
-    double locHS = queryRecordMetric(qualType, Type::LACK_OF_COHESION_HS);
+    double loc, locHS;
+    ASSERT_TRUE(queryRecordMetric(qualType, Type::LACK_OF_COHESION, loc));
+    ASSERT_TRUE(queryRecordMetric(qualType, Type::LACK_OF_COHESION_HS, locHS));
 
     constexpr double tolerance = 1e-8;
     EXPECT_EQF(GetParam().loc, loc, tolerance);
