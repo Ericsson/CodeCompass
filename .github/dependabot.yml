@@ -15,3 +15,5 @@ updates:
       interval: "weekly"
     labels:
       - "Target: WebGUI"
+    # Disable version updates, only security updates will be made!
+    open-pull-requests-limit: 0
