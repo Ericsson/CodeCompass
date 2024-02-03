@@ -26,7 +26,7 @@
     "express": "^4.18.2",
     "http-proxy-middleware": "^3.0.0-beta.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",
