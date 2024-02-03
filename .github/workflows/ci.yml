@@ -206,6 +206,10 @@ jobs:
           - 5432:5432
 
     steps:
+      # Clean up docker images to save space
+      - name: Clean up docker images
+        run: docker image prune -a -f
+
       - uses: actions/checkout@v3
 
       - name: Update apt-get
@@ -238,14 +242,6 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-20-04-compile-hash-key }}
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
-
-      - name: Post compilation configuration (runtime)
-        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
-        run: |
-          if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh ]; then
-           chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-           ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-          fi
 
       - name: Download CodeCompass binaries
         uses: actions/download-artifact@v2
