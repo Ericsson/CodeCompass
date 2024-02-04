@@ -10,6 +10,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <util/filesystem.h>
 #include <util/logutil.h>
 #include <util/odbtransaction.h>
 
@@ -20,8 +21,14 @@ namespace cc
 namespace parser
 {
 
+namespace fs = boost::filesystem;
+
 CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  for (const std::string& path :
+    _ctx.options["input"].as<std::vector<std::string>>())
+    _inputPaths.push_back(fs::canonical(path).string());
+
   util::OdbTransaction {_ctx.db} ([&, this] {
     for (const model::CppFileMetrics& fm
       : _ctx.db->query<model::CppFileMetrics>())
@@ -98,6 +105,10 @@ void CppMetricsParser::functionParameters()
     for (const model::CppFunctionParamCountWithId& paramCount
       : _ctx.db->query<model::CppFunctionParamCountWithId>())
     {
+      // Skip functions that were included from external libraries.
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, paramCount.filePath))
+        continue;
+
       model::CppAstNodeMetrics funcParams;
       funcParams.astNodeId = paramCount.id;
       funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
@@ -111,9 +122,13 @@ void CppMetricsParser::functionMcCabe()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
   {
-    for (const model::CppFunctionMcCabeWithId& function
-      : _ctx.db->query<model::CppFunctionMcCabeWithId>())
+    for (const model::CppFunctionMcCabe& function
+      : _ctx.db->query<model::CppFunctionMcCabe>())
     {
+      // Skip functions that were included from external libraries.
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, function.filePath))
+        continue;
+
       model::CppAstNodeMetrics funcMcCabe;
       funcMcCabe.astNodeId = function.astNodeId;
       funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
