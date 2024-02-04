@@ -280,7 +280,7 @@ void CppServiceHandler::getProperties(
       {
         VarResult variables = _db->query<model::CppVariable>(
           VarQuery::entityHash == node.entityHash);
-        
+
         if (!variables.empty())
         {
           model::CppVariable variable = *variables.begin();
@@ -289,7 +289,7 @@ void CppServiceHandler::getProperties(
           return_["Type"] = variable.qualifiedType;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying properties "
                "of C++ variable: "
             << toShortDiagnosticString(node);
@@ -312,7 +312,7 @@ void CppServiceHandler::getProperties(
           return_["Signature"] = function.name;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying properties "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -338,7 +338,7 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = type.qualifiedName;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying properties "
                "of C++ type: "
             << toShortDiagnosticString(node);
@@ -359,11 +359,11 @@ void CppServiceHandler::getProperties(
           return_["Qualified name"] = type.qualifiedName;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying properties "
                "of C++ typedef: "
             << toShortDiagnosticString(node);
-         
+
         break;
       }
 
@@ -381,7 +381,7 @@ void CppServiceHandler::getProperties(
           return_["Value"] = std::to_string(enumConst.value);
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying properties "
                "of C++ enum constant: "
             << toShortDiagnosticString(node);
@@ -502,7 +502,7 @@ std::int32_t CppServiceHandler::getReferenceCount(
             TypeQuery::entityHash == function.typeHash).count;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when counting return types "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -538,7 +538,7 @@ std::int32_t CppServiceHandler::getReferenceCount(
             TypeQuery::entityHash == variable.typeHash).count;
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when counting types "
                "of C++ variable: "
             << toShortDiagnosticString(node);
@@ -788,7 +788,7 @@ void CppServiceHandler::getReferences(
               std::to_string(var.load()->astNodeId)));
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying parameters "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -811,7 +811,7 @@ void CppServiceHandler::getReferences(
               std::to_string(var.load()->astNodeId)));
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying local variables "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -840,7 +840,7 @@ void CppServiceHandler::getReferences(
           }
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying return type "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -904,7 +904,7 @@ void CppServiceHandler::getReferences(
           }
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying type "
                "of C++ variable: "
             << toShortDiagnosticString(node);
@@ -1005,7 +1005,7 @@ void CppServiceHandler::getReferences(
           nodes = std::vector<model::CppAstNode>(result.begin(), result.end());
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying underlying type "
                "of C++ typedef: "
             << toShortDiagnosticString(node);
@@ -1033,7 +1033,7 @@ void CppServiceHandler::getReferences(
             });
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying enum constants "
                "of C++ enum: "
             << toShortDiagnosticString(node);
@@ -1253,7 +1253,9 @@ void CppServiceHandler::getSyntaxHighlight(
 
       // Regular expression to find element position
       const std::regex specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
-      std::string sanitizedAstValue = std::regex_replace(node.astValue, specialChars, R"(\$&)");
+      std::string sanitizedAstValue = std::regex_replace(node.astValue,
+                                                         specialChars,
+                                                         R"(\$&)");
       std::string reg = "\\b" + sanitizedAstValue + "\\b";
 
       for (std::size_t i = node.location.range.start.line - 1;
@@ -1292,6 +1294,16 @@ void CppServiceHandler::getDiagram(
   const core::AstNodeId& astNodeId_,
   const std::int32_t diagramId_)
 {
+  util::Graph graph = returnDiagram(astNodeId_, diagramId_);
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+}
+
+util::Graph CppServiceHandler::returnDiagram(
+  const core::AstNodeId& astNodeId_,
+  const std::int32_t diagramId_)
+{
   Diagram diagram(_db, _datadir, _context);
   util::Graph graph;
 
@@ -1310,8 +1322,7 @@ void CppServiceHandler::getDiagram(
       break;
   }
 
-  if (graph.nodeCount() != 0)
-    return_ = graph.output(util::Graph::SVG);
+  return graph;
 }
 
 void CppServiceHandler::getDiagramLegend(
@@ -1367,6 +1378,16 @@ void CppServiceHandler::getFileDiagram(
   const core::FileId& fileId_,
   const int32_t diagramId_)
 {
+  util::Graph graph = returnFileDiagram(fileId_, diagramId_);
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+}
+
+util::Graph CppServiceHandler::returnFileDiagram(
+  const core::FileId& fileId_,
+  const int32_t diagramId_)
+{
   FileDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
   graph.setAttribute("rankdir", "LR");
@@ -1398,8 +1419,7 @@ void CppServiceHandler::getFileDiagram(
       break;
   }
 
-  if (graph.nodeCount() != 0)
-    return_ = graph.output(util::Graph::SVG);
+  return graph;
 }
 
 void CppServiceHandler::getFileDiagramLegend(
@@ -1649,7 +1669,7 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(model::tagToString(tag));
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying tags "
                "of C++ function: "
             << toShortDiagnosticString(node);
@@ -1684,7 +1704,7 @@ CppServiceHandler::getTags(const std::vector<model::CppAstNode>& nodes_)
             tags[node.id].push_back(model::tagToString(tag));
         }
         else
-          LOG(warning) 
+          LOG(warning)
             << "Unexpected empty result when querying tags "
                "of C++ variable: "
             << toShortDiagnosticString(node);

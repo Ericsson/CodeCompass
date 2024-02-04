@@ -1,5 +1,6 @@
 add_subdirectory(authentication)
 add_subdirectory(language)
+add_subdirectory(lsp)
 add_subdirectory(plugin)
 add_subdirectory(project)
 add_subdirectory(workspace)
