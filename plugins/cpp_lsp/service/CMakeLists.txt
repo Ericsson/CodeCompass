@@ -12,6 +12,9 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/webserver/include
   ${PROJECT_SOURCE_DIR}/service/lsp/include)
 
+include_directories(SYSTEM
+  ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
+
 add_library(cpplspservice SHARED
   src/cpplspservice.cpp
   src/plugin.cpp)
@@ -19,6 +22,7 @@ add_library(cpplspservice SHARED
 target_link_libraries(cpplspservice
   cppservice
   lspservice
-  util)
+  util
+  ${THRIFT_LIBTHRIFT_LIBRARIES})
 
 install(TARGETS cpplspservice DESTINATION ${INSTALL_SERVICE_DIR})
