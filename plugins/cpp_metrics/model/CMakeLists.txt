@@ -2,8 +2,6 @@ include_directories(
   include
   ${cpp_PLUGIN_DIR}/model/include)
 
-message(WARNING "${cpp_PLUGIN_DIR}/model/include")
-
 set(ODB_SOURCES
   include/model/cppastnodemetrics.h
   include/model/cppcohesionmetrics.h

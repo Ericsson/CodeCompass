@@ -19,6 +19,7 @@
 #include <model/cpprelation-odb.hxx>
 
 #include <util/odbtransaction.h>
+#include <util/graph.h>
 #include <webserver/servercontext.h>
 
 namespace cc
@@ -69,6 +70,10 @@ public:
     const core::AstNodeId& astNodeId_,
     const std::int32_t diagramId_) override;
 
+  util::Graph returnDiagram(
+    const core::AstNodeId& astNodeId_,
+    const std::int32_t diagramId_);
+
   void getDiagramLegend(
     std::string& return_,
     const std::int32_t diagramId_) override;
@@ -81,6 +86,10 @@ public:
     std::string& return_,
     const core::FileId& fileId_,
     const int32_t diagramId_) override;
+
+  util::Graph returnFileDiagram(
+    const core::FileId& fileId_,
+    const int32_t diagramId_);
 
   void getFileDiagramLegend(
     std::string& return_,
@@ -131,7 +140,6 @@ public:
     std::vector<SyntaxHighlight>& return_,
     const core::FileRange& range_) override;
 
-private:
   enum ReferenceType
   {
     DEFINITION, /*!< By this option the definition(s) of the AST node can be
@@ -258,6 +266,7 @@ private:
       of a module. */
   };
 
+private:
   static bool compareByPosition(
     const model::CppAstNode& lhs,
     const model::CppAstNode& rhs);

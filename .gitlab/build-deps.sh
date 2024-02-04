@@ -10,7 +10,7 @@ mkdir -p $PACKAGES_DIR
 
 if [ ! -f $DEPS_INSTALL_BUILD_DIR/gcc-install/bin/g++ ]; then
   cd $PACKAGES_DIR
-  wget --no-verbose --no-clobber http://robotlab.itk.ppke.hu/gcc/releases/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.xz
+  wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VERSION/gcc-$GCC_VERSION.tar.xz
   tar -xf gcc-$GCC_VERSION.tar.xz
   cd gcc-$GCC_VERSION
   ./contrib/download_prerequisites

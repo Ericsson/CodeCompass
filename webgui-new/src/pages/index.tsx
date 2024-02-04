@@ -1,4 +1,5 @@
 import { Button } from '@mui/material';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React, { useContext } from 'react';
 import { removeStore } from 'utils/store';
@@ -29,18 +30,24 @@ const Home = (): JSX.Element => {
   };
 
   return (
-    <SC.OuterContainer>
-      <SC.InnerContainer>
-        <SC.Title>{t('index.title')}</SC.Title>
-        {appCtx.workspaces.length
-          ? appCtx.workspaces.map((ws) => (
-              <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
-                {ws.id}
-              </Button>
-            ))
-          : ''}
-      </SC.InnerContainer>
-    </SC.OuterContainer>
+    <>
+      <Head>
+        <link rel="icon" href="favicon.ico" />
+      </Head>
+      <SC.OuterContainer>
+        <SC.InnerContainer>
+          <SC.Title>{t('index.title')}</SC.Title>
+          {appCtx.workspaces.length
+            ? appCtx.workspaces.map((ws) => (
+                <Button key={ws.id} onClick={() => loadWorkspace(ws.id as string)}>
+                  {ws.id}
+                </Button>
+              ))
+            : ''}
+        </SC.InnerContainer>
+      </SC.OuterContainer>
+    </>
+    
   );
 };
 
