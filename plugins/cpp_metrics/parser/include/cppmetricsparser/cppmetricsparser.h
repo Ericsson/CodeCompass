@@ -30,6 +30,7 @@ private:
   void functionParameters();
   void functionMcCabe();
 
+  std::vector<std::string> _inputPaths;
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;
