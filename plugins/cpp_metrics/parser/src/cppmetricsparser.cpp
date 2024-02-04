@@ -19,16 +19,6 @@
 
 #include <memory>
 
-// Controls whether cohesion metrics are printed to the output
-// immediately as they are being calculated.
-#define DEBUG_COHESION_VERBOSE
-
-#ifdef DEBUG_COHESION_VERBOSE
-#include <sstream>
-#include <iomanip>
-#include <chrono>
-#endif
-
 namespace cc
 {
 namespace parser
@@ -167,37 +157,14 @@ void CppMetricsParser::lackOfCohesion()
     typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
     const auto& QNodeFilePath = QNode::File::path;
     const auto& QNodeRange = QNode::CppAstNode::location.range;
-    
-    #ifdef DEBUG_COHESION_VERBOSE
-    std::size_t typeCount =
-      _ctx.db->query_value<model::CppRecordCount>().count;
-    std::size_t typeIndex = 0;
-    std::size_t checkedCount = 0;
-
-    LOG(debug) << "=== Lack of Cohesion (LoC) metrics parser ===";
-    int colWidth = static_cast<int>(ceil(log10(typeCount)));
-    auto startTime = std::chrono::steady_clock::now();
-    #endif
 
     // Calculate the cohesion metric for all types.
     for (const model::CohesionCppRecordView& type
       : _ctx.db->query<model::CohesionCppRecordView>())
     {
-      #ifdef DEBUG_COHESION_VERBOSE
-      ++typeIndex;
-      #endif
-
       // Skip types that were included from external libraries.
       if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
         continue;
-
-      #ifdef DEBUG_COHESION_VERBOSE
-      ++checkedCount;
-      std::ostringstream logLine;
-      logLine << std::right << std::setw(colWidth) << typeIndex << '/';
-      logLine << std::left << std::setw(colWidth) << typeCount << ' ';
-      logLine << std::left << std::setw(32) << type.qualifiedName;
-      #endif
 
       std::unordered_set<HashType> fieldHashes;
       // Query all fields of the current type.
@@ -275,24 +242,7 @@ void CppMetricsParser::lackOfCohesion()
       lcm_hs.value = trivial ? 0.0 : singular ? NAN :
         ((dM - dC / dF) / (dM - 1.0));
       _ctx.db->persist(lcm_hs);
-
-      #ifdef DEBUG_COHESION_VERBOSE
-      constexpr int valuePrec = 4;
-      constexpr int valueWidth = valuePrec + 3;
-      logLine << std::setprecision(valuePrec);
-      logLine << std::right << std::setw(valueWidth) << lcm.value;
-      logLine << std::right << std::setw(valueWidth) << lcm_hs.value;
-      LOG(debug) << logLine.str();
-      #endif
     }
-
-    #ifdef DEBUG_COHESION_VERBOSE
-    auto finishTime = std::chrono::steady_clock::now();
-    auto durTime = finishTime - startTime;
-    auto durSecs = std::chrono::duration_cast<std::chrono::seconds>(durTime);
-    LOG(debug) << "=== Checked types: " << checkedCount
-      << ", Total runtime: " << durSecs.count() << "s ===";
-    #endif
   });
 }
 
