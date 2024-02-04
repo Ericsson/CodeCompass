@@ -56,6 +56,7 @@ else()
        --database \"${TEST_DB}\" \
        --name cppmetricsservicetest \
        --input ${CMAKE_CURRENT_BINARY_DIR}/build/compile_commands.json \
+       --input ${CMAKE_CURRENT_SOURCE_DIR}/sources/service \
        --workspace ${CMAKE_CURRENT_BINARY_DIR}/workdir/ \
        --force"
             "${TEST_DB}")
@@ -71,6 +72,7 @@ else()
        --database \"${TEST_DB}\" \
        --name cppparsertest \
        --input ${CMAKE_CURRENT_BINARY_DIR}/build/compile_commands.json \
+       --input ${CMAKE_CURRENT_SOURCE_DIR}/sources/parser \
        --workspace ${CMAKE_CURRENT_BINARY_DIR}/workdir/ \
        --force"
             "${TEST_DB}")
