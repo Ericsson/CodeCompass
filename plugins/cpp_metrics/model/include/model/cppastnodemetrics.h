@@ -2,6 +2,8 @@
 #define CC_MODEL_CPPASTNODEMETRICS_H
 
 #include <model/cppastnode.h>
+#include <model/cppentity.h>
+#include <model/cpprecord.h>
 
 namespace cc
 {
@@ -14,7 +16,9 @@ struct CppAstNodeMetrics
   enum Type
   {
     PARAMETER_COUNT,
-    MCCABE
+    MCCABE,
+    LACK_OF_COHESION,
+    LACK_OF_COHESION_HS,
   };
 
   #pragma db id auto
@@ -26,8 +30,18 @@ struct CppAstNodeMetrics
   #pragma db not_null
   Type type;
 
-  #pragma db not_null
-  unsigned value;
+  #pragma db null
+  double value;
+};
+
+#pragma db view \
+  object(CppRecord) \
+  object(CppAstNodeMetrics : \
+    CppRecord::astNodeId == CppAstNodeMetrics::astNodeId)
+struct CppRecordMetricsView
+{
+  #pragma db column(CppAstNodeMetrics::value)
+  double value;
 };
 
 } //model

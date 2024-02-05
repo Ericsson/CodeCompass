@@ -1633,34 +1633,27 @@ private:
     model::FileLoc fileLoc;
 
     if (start_.isInvalid() || end_.isInvalid())
-    {
       fileLoc.file = getFile(start_);
-      const std::string& type = fileLoc.file.load()->type;
-      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
-      {
-        fileLoc.file->type = _cppSourceType;
-        _ctx.srcMgr.updateFile(*fileLoc.file);
-      }
-      return fileLoc;
+    else
+    {
+      clang::SourceLocation realStart = start_;
+      clang::SourceLocation realEnd = end_;
+
+      if (_clangSrcMgr.isMacroBodyExpansion(start_))
+        realStart = _clangSrcMgr.getExpansionLoc(start_);
+      if (_clangSrcMgr.isMacroArgExpansion(start_))
+        realStart = _clangSrcMgr.getSpellingLoc(start_);
+
+      if (_clangSrcMgr.isMacroBodyExpansion(end_))
+        realEnd = _clangSrcMgr.getExpansionLoc(end_);
+      if (_clangSrcMgr.isMacroArgExpansion(end_))
+        realEnd = _clangSrcMgr.getSpellingLoc(end_);
+
+      if (!_isImplicit)
+        _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+
+      fileLoc.file = getFile(realStart);
     }
-
-    clang::SourceLocation realStart = start_;
-    clang::SourceLocation realEnd = end_;
-
-    if (_clangSrcMgr.isMacroBodyExpansion(start_))
-      realStart = _clangSrcMgr.getExpansionLoc(start_);
-    if (_clangSrcMgr.isMacroArgExpansion(start_))
-      realStart = _clangSrcMgr.getSpellingLoc(start_);
-
-    if (_clangSrcMgr.isMacroBodyExpansion(end_))
-      realEnd = _clangSrcMgr.getExpansionLoc(end_);
-    if (_clangSrcMgr.isMacroArgExpansion(end_))
-      realEnd = _clangSrcMgr.getSpellingLoc(end_);
-
-    if (!_isImplicit)
-      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
-
-    fileLoc.file = getFile(realStart);
 
     const std::string& type = fileLoc.file.load()->type;
     if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)

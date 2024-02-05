@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
-project(CppTestProject)
+project(CppMetricsTestProject)
 
-add_library(CppTestProject STATIC
-  mccabe.cpp)
+add_library(CppMetricsTestProject STATIC
+  mccabe.cpp
+  lackofcohesion.cpp)

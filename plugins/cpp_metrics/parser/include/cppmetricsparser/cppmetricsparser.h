@@ -10,6 +10,9 @@
 #include <model/cppfunction.h>
 #include <model/cppfunction-odb.hxx>
 
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
+
 #include <util/parserutil.h>
 #include <util/threadpool.h>
 
@@ -23,12 +26,18 @@ class CppMetricsParser : public AbstractParser
 public:
   CppMetricsParser(ParserContext& ctx_);
   virtual ~CppMetricsParser();
+
   virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
 private:
+  // Calculate the count of parameters for every function.
   void functionParameters();
+  // Calculate the McCabe complexity of functions.
   void functionMcCabe();
+  // Calculate the lack of cohesion between member variables
+  // and member functions for every type.
+  void lackOfCohesion();
 
   std::vector<std::string> _inputPaths;
   std::unordered_set<model::FileId> _fileIdCache;
