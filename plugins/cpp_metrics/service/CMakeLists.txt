@@ -41,7 +41,7 @@ add_library(cxxmetricsservice SHARED
   src/cppmetricsservice.cpp
   src/plugin.cpp)
 
-#target_compile_options(cxxmetricsservice PUBLIC -Wno-unknown-pragmas)
+target_compile_options(cxxmetricsservice PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(cxxmetricsservice
   util

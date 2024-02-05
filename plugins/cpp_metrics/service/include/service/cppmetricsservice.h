@@ -13,8 +13,6 @@
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
 
-//#include <projectservice/projectservice.h>
-
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
@@ -36,9 +34,16 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  double getCppMetricsForAstNode(
-    const ::cc::service::core::AstNodeId& astNodeId_,
+  double getSingleCppMetricForAstNode(
+    const core::AstNodeId& astNodeId_,
     const CppMetricsType::type metrics_) override;
+
+  void getCppMetricsForAstNode(
+    std::vector<CppMetricsAstNode>& _return,
+    const core::AstNodeId& astNodeId_) override;
+
+  void getCppMetricsTypeNames(
+    std::vector<CppMetricsTypeName>& _return) override;
 
 private:
   double astNodeMetrics(
