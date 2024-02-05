@@ -32,13 +32,12 @@ jobs:
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started & increase SHM size
+        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          --shm-size=8gb
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
@@ -196,21 +195,18 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
+        # Set health checks to wait until postgres has started & increase SHM size
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --shm-size=2gb
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
 
     steps:
-      # Clean up docker images to save space
-      - name: Clean up docker images
-        run: docker image prune -a -f
-
       - uses: actions/checkout@v3
 
       - name: Update apt-get
