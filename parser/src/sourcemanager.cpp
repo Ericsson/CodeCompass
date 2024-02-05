@@ -160,6 +160,9 @@ model::FilePtr SourceManager::getCreateFileEntry(
 
 model::FilePtr SourceManager::getFile(const std::string& path_)
 {
+  if (path_.empty()) 
+    return nullptr;
+
   //--- Create canonical form of the path ---//
 
   boost::system::error_code ec;

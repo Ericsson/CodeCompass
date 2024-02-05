@@ -1635,13 +1635,16 @@ private:
     if (start_.isInvalid() || end_.isInvalid())
     {
       fileLoc.file = getFile(start_);
-      const std::string& type = fileLoc.file.load()->type;
-      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+      if (fileLoc.file)
       {
-        fileLoc.file->type = _cppSourceType;
-        _ctx.srcMgr.updateFile(*fileLoc.file);
+        const std::string& type = fileLoc.file.load()->type;
+        if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+        {
+            fileLoc.file->type = _cppSourceType;
+            _ctx.srcMgr.updateFile(*fileLoc.file);
+        }
       }
-      return fileLoc;
+        return fileLoc;
     }
 
     clang::SourceLocation realStart = start_;
@@ -1662,14 +1665,16 @@ private:
 
     fileLoc.file = getFile(realStart);
 
-    const std::string& type = fileLoc.file.load()->type;
-    if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+    if (fileLoc.file)
     {
-      fileLoc.file->type = _cppSourceType;
-      _ctx.srcMgr.updateFile(*fileLoc.file);
+      const std::string& type = fileLoc.file.load()->type;
+      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
+      {
+        fileLoc.file->type = _cppSourceType;
+          _ctx.srcMgr.updateFile(*fileLoc.file);
+      }
     }
-
-    return fileLoc;
+      return fileLoc;
   }
 
   bool isFunctionPointer(const clang::ValueDecl* vd_) const

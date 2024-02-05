@@ -202,7 +202,10 @@ void incrementalCleanup(cc::parser::ParserContext& ctx_)
           cc::model::FilePtr delFile = ctx_.srcMgr.getFile(item.first);
 
           // Delete File and FileContent (only when no other File references it)
-          ctx_.srcMgr.removeFile(*delFile);
+          if (delFile)
+          {
+            ctx_.srcMgr.removeFile(*delFile);
+          }
           break;
         }
         case cc::parser::IncrementalStatus::ADDED:
