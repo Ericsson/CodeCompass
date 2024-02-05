@@ -1,6 +1,11 @@
 include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
+  ${PROJECT_SOURCE_DIR}/service/project/include
+  ${PROJECT_SOURCE_DIR}/model/include
+  ${PROJECT_BINARY_DIR}/service/language/gen-cpp
+  ${PLUGIN_DIR}/model/include
   ${PROJECT_SOURCE_DIR}/util/include
   ${PROJECT_SOURCE_DIR}/webserver/include)
 
@@ -9,35 +14,45 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cxxmetrics_types.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cxxmetrics_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   COMMAND
     ${THRIFT_EXECUTABLE} --gen cpp
       -o ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/cppmetrics.thrift
+      -I ${PROJECT_SOURCE_DIR}/service
+      ${CMAKE_CURRENT_SOURCE_DIR}/cxxmetrics.thrift
   DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/cppmetrics.thrift
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxxmetrics.thrift
   COMMENT
-    "Generating Thrift for cppmetrics.thrift")
+    "Generating Thrift for cxxmetrics.thrift")
 
-add_library(cppmetricsthrift STATIC
+add_library(cxxmetricsthrift STATIC
+  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/cxxmetrics_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.cpp)
 
-target_compile_options(cppmetricsthrift PUBLIC -fPIC)
+target_compile_options(cxxmetricsthrift PUBLIC -fPIC)
 
-add_library(cppmetricsservice SHARED
+add_dependencies(cxxmetricsthrift projectthrift)
+
+add_library(cxxmetricsservice SHARED
   src/cppmetricsservice.cpp
   src/plugin.cpp)
 
-target_compile_options(cppmetricsservice PUBLIC -Wno-unknown-pragmas)
+#target_compile_options(cxxmetricsservice PUBLIC -Wno-unknown-pragmas)
 
-target_link_libraries(cppmetricsservice
-  cppmetricsmodel
-  model
+target_link_libraries(cxxmetricsservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
+  model
+  cppmetricsmodel
+  projectthrift
+  projectservice
+  commonthrift
   ${ODB_LIBRARIES}
-  cppmetricsthrift)
+  cxxmetricsthrift)
 
-install(TARGETS cppmetricsservice DESTINATION ${INSTALL_SERVICE_DIR})
+install(TARGETS cxxmetricsservice DESTINATION ${INSTALL_SERVICE_DIR})
+install_js_thrift()
