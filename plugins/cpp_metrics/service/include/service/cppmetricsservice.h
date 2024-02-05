@@ -9,7 +9,7 @@
 #include <odb/database.hxx>
 
 #include <model/cppastnodemetrics.h>
-//#include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppastnodemetrics-odb.hxx>
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
 
@@ -41,6 +41,10 @@ public:
     const CppMetricsType::type metrics_) override;
 
 private:
+  double astNodeMetrics(
+    const ::cc::service::core::AstNodeId& astNodeId_,
+    const CppMetricsType::type type_);
+
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 

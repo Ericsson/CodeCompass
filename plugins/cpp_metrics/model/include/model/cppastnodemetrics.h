@@ -15,10 +15,10 @@ struct CppAstNodeMetrics
 {
   enum Type
   {
-    PARAMETER_COUNT,
-    MCCABE,
-    LACK_OF_COHESION,
-    LACK_OF_COHESION_HS,
+    PARAMETER_COUNT = 1,
+    MCCABE = 2,
+    LACK_OF_COHESION = 3,
+    LACK_OF_COHESION_HS = 4,
   };
 
   #pragma db id auto
