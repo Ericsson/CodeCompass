@@ -14,7 +14,7 @@ enum CppMetricsType
 
 service CppMetricsService
 {
-  //double getCppMetricsForAstNode(
-    //1:common.AstNodeId astNodeId,
-    //2:CppMetricsType type)
+  double getCppMetricsForAstNode(
+    1:common.AstNodeId astNodeId,
+    2:CppMetricsType type)
 }

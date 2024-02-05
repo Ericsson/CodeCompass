@@ -36,9 +36,9 @@ public:
     std::shared_ptr<std::string> datadir_,
     const cc::webserver::ServerContext& context_);
 
-  //double getCppMetricsForAstNode(
-    //const ::cc::service::core::AstNodeId& astNodeId_,
-    //const CppMetricsType::type metrics_) override;
+  double getCppMetricsForAstNode(
+    const ::cc::service::core::AstNodeId& astNodeId_,
+    const CppMetricsType::type metrics_) override;
 
 private:
   std::shared_ptr<odb::database> _db;

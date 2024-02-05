@@ -1,10 +1,13 @@
 include_directories(
-        ${PLUGIN_DIR}/model/include
-        ${PLUGIN_DIR}/service/include
-        ${CMAKE_CURRENT_BINARY_DIR}/../service/gen-cpp
-        ${PROJECT_SOURCE_DIR}/model/include
-        ${PROJECT_SOURCE_DIR}/plugins/cpp_metrics/model/include
-        ${PROJECT_BINARY_DIR}/plugins/cpp_metrics/model/include)
+  include
+  ${PLUGIN_DIR}/model/include
+  ${PLUGIN_DIR}/service/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../service/gen-cpp
+  ${PROJECT_SOURCE_DIR}/model/include
+  ${PROJECT_BINARY_DIR}/service/project/gen-cpp
+  ${PROJECT_SOURCE_DIR}/service/project/include
+  ${PROJECT_SOURCE_DIR}/plugins/cpp_metrics/model/include
+  ${PROJECT_BINARY_DIR}/plugins/cpp_metrics/model/include)
 
 include_directories(SYSTEM
         ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
@@ -24,6 +27,7 @@ target_link_libraries(cppmetricsservicetest
         model
         cppmodel
         cppservice
+        commonthrift
         ${Boost_LIBRARIES}
         ${GTEST_BOTH_LIBRARIES}
         pthread)

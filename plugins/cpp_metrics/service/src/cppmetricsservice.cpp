@@ -16,12 +16,12 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
 {
 }
 
-//double CppMetricsServiceHandler::getCppMetricsForAstNode(
-  //const core::AstNodeId& astNodeId_,
-  //const CppMetricsType::type metrics_)
-//{
+double CppMetricsServiceHandler::getCppMetricsForAstNode(
+  const core::AstNodeId& astNodeId_,
+  const CppMetricsType::type metrics_)
+{
 
-//}
+}
 
 } // cppmetrics
 } // service
