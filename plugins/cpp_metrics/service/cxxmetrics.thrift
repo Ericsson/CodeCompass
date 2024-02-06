@@ -32,7 +32,7 @@ service CppMetricsService
    */
   double getSingleCppMetricForAstNode(
     1:common.AstNodeId astNodeId,
-    2:CppMetricsType type)
+    2:CppMetricsType metric)
 
   /**
    * This function returns all available C++ metrics

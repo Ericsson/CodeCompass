@@ -34,7 +34,7 @@ void CppMetricsServiceHandler::getCppMetricsTypeNames(
   _return.push_back(typeName);
 
   typeName.type = CppMetricsType::LackOfCohesionHS;
-  typeName.name = "Lack of cohesion HS of function";
+  typeName.name = "Lack of cohesion of function (Henderson-Sellers variant)";
   _return.push_back(typeName);
 }
 
@@ -42,40 +42,33 @@ void CppMetricsServiceHandler::getCppMetricsForAstNode(
   std::vector<CppMetricsAstNode>& _return,
   const core::AstNodeId& astNodeId_)
 {
-  std::vector<CppMetricsTypeName> types;
-  getCppMetricsTypeNames(types);
   CppMetricsAstNode metric;
 
-  for (const auto& pair : types)
-  {
-    double value = astNodeMetrics(astNodeId_, pair.type);
-    metric.type = pair.type;
-    metric.value = value;
-    _return.push_back(metric);
-  }
+  _transaction([&, this](){
+    typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
+
+    auto nodeMetrics = _db->query<model::CppAstNodeMetrics>(
+      CppAstNodeMetricsQuery::astNodeId == std::stoull(astNodeId_));
+
+    for (const auto& nodeMetric : nodeMetrics)
+    {
+      metric.type = static_cast<CppMetricsType::type>(nodeMetric.type);
+      metric.value = nodeMetric.value;
+      _return.push_back(metric);
+    }
+  });
 }
 
 double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
   const core::AstNodeId& astNodeId_,
-  const CppMetricsType::type metrics_)
+  CppMetricsType::type metric_)
 {
-  return astNodeMetrics(astNodeId_, metrics_);
-}
-
-double CppMetricsServiceHandler::astNodeMetrics(
-  const ::cc::service::core::AstNodeId& astNodeId_,
-  const CppMetricsType::type type_)
-{
-  _transaction([&, this](){
-    typedef odb::result<model::CppAstNode> CppAstNodeResult;
-    typedef odb::query<model::CppAstNode> CppAstNodeQuery;
-    typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
+  return _transaction([&, this]() -> std::double_t {
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
 
     auto nodeMetric = _db->query<model::CppAstNodeMetrics>(
       CppAstNodeMetricsQuery::astNodeId == std::stoull(astNodeId_) &&
-      CppAstNodeMetricsQuery::type ==
-        static_cast<model::CppAstNodeMetrics::Type>(type_));
+      CppAstNodeMetricsQuery::type == static_cast<model::CppAstNodeMetrics::Type>(metric_));
 
     if (nodeMetric.empty())
       return -DBL_MAX;

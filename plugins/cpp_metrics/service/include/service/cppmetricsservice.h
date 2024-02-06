@@ -36,7 +36,7 @@ public:
 
   double getSingleCppMetricForAstNode(
     const core::AstNodeId& astNodeId_,
-    const CppMetricsType::type metrics_) override;
+    CppMetricsType::type metric_) override;
 
   void getCppMetricsForAstNode(
     std::vector<CppMetricsAstNode>& _return,
@@ -46,10 +46,6 @@ public:
     std::vector<CppMetricsTypeName>& _return) override;
 
 private:
-  double astNodeMetrics(
-    const ::cc::service::core::AstNodeId& astNodeId_,
-    const CppMetricsType::type type_);
-
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
