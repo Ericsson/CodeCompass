@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Update package repository
+sudo apt-get update
+
 # Install required packages for CodeCompass build
 sudo apt install git cmake make g++ libboost-all-dev \
   llvm-15-dev clang-15 libclang-15-dev \

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Update package repository
+sudo apt-get update
+
 # Add official LLVM repositories
 wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
 echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo tee /etc/apt/sources.list.d/llvm.list

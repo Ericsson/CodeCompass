@@ -58,7 +58,7 @@ target_link_libraries(cxxmetricsservice
 if(APPLE)
     # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
     # cppmetricsservice references headers from the webserver without implementation
-    set_target_properties(cppmetricsservice PROPERTIES LINK_FLAGS
+    set_target_properties(cxxmetricsservice PROPERTIES LINK_FLAGS
         "-undefined dynamic_lookup")
 endif(APPLE)
 
