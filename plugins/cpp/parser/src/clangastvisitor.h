@@ -1775,7 +1775,7 @@ private:
       clang::DynTypedNodeList parents
         = _astContext.getParents(*expr_);
 
-      const clang::ast_type_traits::DynTypedNode& parent = parents[0];
+      const clang::DynTypedNode& parent = parents[0];
 
       if (const clang::BinaryOperator* op = parent.get<clang::BinaryOperator>())
       {
