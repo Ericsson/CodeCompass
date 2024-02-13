@@ -43,8 +43,6 @@ bool PythonParser::parse()
       {
         if (boost::filesystem::is_regular_file(currPath_) && accept(currPath_))
         {
-            LOG(info) << "PythonParser parse path: " << currPath_;
-
             try {
               bool parsed = python::extract<bool>(m_py_module.attr("parse")(currPath_));
 
