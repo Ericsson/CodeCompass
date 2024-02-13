@@ -6,7 +6,8 @@
 #include <parser/sourcemanager.h>
 #include <util/parserutil.h>
 #include <boost/python.hpp>
-
+#include <model/pyname.h>
+#include <model/pyname-odb.hxx>
 namespace cc
 {
 namespace parser

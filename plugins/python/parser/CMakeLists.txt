@@ -17,6 +17,7 @@ add_library(pythonparser SHARED
 
 target_link_libraries(pythonparser
   model
+  pythonmodel
   ${Boost_LIBRARIES}
   ${Python3_LIBRARIES})
 
