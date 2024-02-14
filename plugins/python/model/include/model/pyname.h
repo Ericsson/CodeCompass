@@ -14,6 +14,10 @@ struct PYName
 {
     #pragma db id
     std::uint64_t id = 0;
+
+    std::uint64_t line;
+    std::uint64_t column;
+    std::uint64_t refID;
 };
 }
 }

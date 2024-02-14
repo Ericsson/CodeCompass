@@ -2,6 +2,7 @@
 #include <boost/filesystem.hpp>
 #include <util/logutil.h>
 #include <memory>
+#include <string>
 
 namespace cc
 {
@@ -17,7 +18,7 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   
   Py_Initialize();
 
-  // Init PyService module
+  // Init PyParser module
   try {
     m_py_module = python::import("parser");
   }catch (const python::error_already_set&)
@@ -44,9 +45,16 @@ bool PythonParser::parse()
         if (boost::filesystem::is_regular_file(currPath_) && accept(currPath_))
         {
             try {
-              bool parsed = python::extract<bool>(m_py_module.attr("parse")(currPath_));
 
-              if(parsed)
+              python::object refs = m_py_module.attr("parse")(currPath_);
+              const int len = python::len(refs);
+              for (int i = 0; i < len; i++)
+              {
+                python::object node = refs[i];
+                std::string full_name = python::extract<std::string>(node["full_name"]);
+              }
+
+              if(len > 0)
               {
                 model::FilePtr pyfile = _ctx.srcMgr.getFile(currPath_);
                 pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
