@@ -13,6 +13,7 @@ def parse(path):
         for x in script.get_names(definitions = True, references = True):
             name = {}
             
+            name["hash"] = hashName(x)
             name["module_name"] = x.module_name
             name["module_path"] = x.module_path
             name["full_name"] = x.full_name
@@ -29,8 +30,8 @@ def parse(path):
 
     return names_arr
 
-def hashName(file_path, line, start_column, end_column):
-    s = f"{file_path}|{line}|{start_column}|{end_column}".encode("utf-8")
-    hash = str(sha1(s).hexdigest())
+def hashName(name):
+    s = f"{name.module_path}|{name.line}|{name.column}".encode("utf-8")
+    hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
     return hash
 

@@ -51,7 +51,7 @@ bool PythonParser::parse()
               for (int i = 0; i < len; i++)
               {
                 python::object node = refs[i];
-                std::string full_name = python::extract<std::string>(node["full_name"]);
+                uint64_t hash = python::extract<uint64_t>(node["hash"]);
               }
 
               if(len > 0)
