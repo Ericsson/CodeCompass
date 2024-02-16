@@ -21,7 +21,7 @@ struct PYName
     #pragma db id
     std::uint64_t id = 0;
 
-    std::uint64_t refid;
+    std::uint64_t ref_id;
     bool is_definition = false;
     bool is_builtin = false;
     std::string full_name;
@@ -32,6 +32,7 @@ struct PYName
     std::uint64_t line_end;
     std::uint64_t column_start;
     std::uint64_t column_end;
+    std::uint64_t file_id;
 };
 }
 }

@@ -72,7 +72,7 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 
       model::PYName pyname;
       pyname.id = python::extract<uint64_t>(node["id"]);
-      pyname.refid = python::extract<uint64_t>(node["refid"]);
+      pyname.ref_id = python::extract<uint64_t>(node["ref_id"]);
       pyname.full_name = python::extract<std::string>(node["full_name"]);
       pyname.is_definition = python::extract<bool>(node["is_definition"]);
       pyname.is_builtin = python::extract<bool>(node["is_builtin"]);
@@ -82,6 +82,7 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
       pyname.line_end = python::extract<uint64_t>(node["line_end"]);
       pyname.column_start = python::extract<uint64_t>(node["column_start"]);
       pyname.column_end = python::extract<uint64_t>(node["column_end"]);
+      pyname.file_id = python::extract<uint64_t>(node["file_id"]);
 
       // PYNameType
       std::string type_str = python::extract<std::string>(node["type"]);

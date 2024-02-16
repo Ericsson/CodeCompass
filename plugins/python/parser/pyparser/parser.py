@@ -44,7 +44,7 @@ def parse(path):
 def getNodeInfo(name, refid):
     node = {}
     node["id"] = hashName(name)
-    node["refid"] = refid
+    node["ref_id"] = refid
     node["module_name"] = name.module_name
     node["module_path"] = name.module_path
     node["full_name"] = name.full_name if name.full_name else ""
@@ -69,6 +69,7 @@ def getNodeInfo(name, refid):
     node["type"] = name.type
     node["is_definition"] = name.is_definition()
     node["is_builtin"] = name.in_builtin_module()
+    node["file_id"] = getFileId(name)
 
     return node
 
@@ -80,3 +81,15 @@ def hashName(name):
     hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
     return hash
 
+def fnvHash(str):
+  hash = 14695981039346656037
+
+  for c in str:
+    hash ^= ord(c)
+    hash *= 1099511628211
+
+  # see: https://stackoverflow.com/questions/20766813/how-to-convert-signed-to-unsigned-integer-in-python
+  return hash & 0xffffffffffffffff
+
+def getFileId(name):
+    return fnvHash(str(name.module_path))
