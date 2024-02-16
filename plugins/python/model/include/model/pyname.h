@@ -13,11 +13,6 @@ namespace model
 #pragma db object
 struct PYName
 {
-    enum class PYNameType
-    {
-        Module, Class, Instance, Function, Param, Path, Keyword, Property, Statement, Unknown
-    };
-
     #pragma db id
     std::uint64_t id = 0;
 
@@ -25,15 +20,15 @@ struct PYName
     bool is_definition = false;
     bool is_builtin = false;
     std::string full_name;
-    PYNameType type;
-    std::uint64_t line;
-    std::uint64_t column;
+    std::string value;
+    std::string type;
     std::uint64_t line_start;
     std::uint64_t line_end;
     std::uint64_t column_start;
     std::uint64_t column_end;
     std::uint64_t file_id;
 };
+
 }
 }
 

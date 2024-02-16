@@ -35,6 +35,23 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
   const core::FilePosition& fpos_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  _transaction([&]() {
+      auto nodes = _db->query<model::PYName>(
+        odb::query<model::PYName>::file_id == std::stoull(fpos_.file) &&
+        odb::query<model::PYName>::line_start == fpos_.pos.line &&
+        odb::query<model::PYName>::column_start <= fpos_.pos.column &&
+        odb::query<model::PYName>::column_end >= fpos_.pos.column
+      );
+
+      if(!nodes.empty())
+      {
+        model::PYName pyname = *nodes.begin();
+        return_.id = pyname.id;
+        return_.astNodeValue = pyname.value;
+      }else{
+        LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos_.pos.line << " column = " << fpos_.pos.column << ")";
+      }
+  });
   return;
 }
 

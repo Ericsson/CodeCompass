@@ -49,22 +49,18 @@ def getNodeInfo(name, refid):
     node["module_path"] = name.module_path
     node["full_name"] = name.full_name if name.full_name else ""
 
-    node["line"] = 0
-    node["column"] = 0
     node["line_start"] = 0
     node["line_end"] = 0
     node["column_start"] = 0
     node["column_end"] = 0
-
-    if name.line and name.column:
-        node["line"] = name.line
-        node["column"] = name.column
+    node["value"] = ""
 
     if name.get_definition_start_position():
         node["line_start"] = name.get_definition_start_position()[0]
         node["line_end"] = name.get_definition_end_position()[0]
-        node["column_start"] = name.get_definition_start_position()[1]
-        node["column_end"] = name.get_definition_end_position()[1]
+        node["column_start"] = name.get_definition_start_position()[1] + 1
+        node["column_end"] = name.get_definition_end_position()[1] + 1
+        node["value"] = name.get_line_code()
     
     node["type"] = name.type
     node["is_definition"] = name.is_definition()

@@ -12,6 +12,9 @@
 
 #include <LanguageService.h>
 
+#include <model/pyname.h>
+#include <model/pyname-odb.hxx>
+
 namespace cc
 {
 namespace service

@@ -28,7 +28,6 @@ public:
 private:
   bool accept(const std::string& path_);
   void parseFile(const std::string& path_, PYNameMap& map);
-  model::PYName::PYNameType getPYNameType(const std::string& str);
   python::object m_py_module;
 };
   

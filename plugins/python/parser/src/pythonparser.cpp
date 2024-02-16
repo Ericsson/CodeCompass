@@ -34,33 +34,11 @@ bool PythonParser::accept(const std::string& path_)
   return ext == ".py";
 }
 
-model::PYName::PYNameType PythonParser::getPYNameType(const std::string& str)
-{
-  static std::unordered_map<std::string,model::PYName::PYNameType> const table = { 
-    {"class",model::PYName::PYNameType::Class},
-    {"function",model::PYName::PYNameType::Function},
-    {"instance",model::PYName::PYNameType::Instance},
-    {"keyword",model::PYName::PYNameType::Keyword},
-    {"module",model::PYName::PYNameType::Module},
-    {"param",model::PYName::PYNameType::Param},
-    {"path",model::PYName::PYNameType::Path},
-    {"property",model::PYName::PYNameType::Property},
-    {"statement",model::PYName::PYNameType::Statement},
-    {"unknown",model::PYName::PYNameType::Unknown}
-  };
-
-  auto it = table.find(str);
-  if (it != table.end()) {
-    return it->second;
-  } else {
-    return model::PYName::PYNameType::Unknown;
-  }
-}
-
 void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 {
   try {
 
+    // Call PythonParser parse(path)
     python::object result = m_py_module.attr("parse")(path_);
     python::object nodes = result["nodes"];
     std::string status = python::extract<std::string>(result["status"]);
@@ -76,17 +54,13 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
       pyname.full_name = python::extract<std::string>(node["full_name"]);
       pyname.is_definition = python::extract<bool>(node["is_definition"]);
       pyname.is_builtin = python::extract<bool>(node["is_builtin"]);
-      pyname.line = python::extract<uint64_t>(node["line"]);
-      pyname.column = python::extract<uint64_t>(node["column"]);
       pyname.line_start = python::extract<uint64_t>(node["line_start"]);
       pyname.line_end = python::extract<uint64_t>(node["line_end"]);
       pyname.column_start = python::extract<uint64_t>(node["column_start"]);
       pyname.column_end = python::extract<uint64_t>(node["column_end"]);
       pyname.file_id = python::extract<uint64_t>(node["file_id"]);
-
-      // PYNameType
-      std::string type_str = python::extract<std::string>(node["type"]);
-      pyname.type = PythonParser::getPYNameType(type_str);
+      pyname.value = python::extract<std::string>(node["value"]);
+      pyname.type = python::extract<std::string>(node["type"]);
 
       // Put in map
       if(map.find(pyname.id) == map.end())
