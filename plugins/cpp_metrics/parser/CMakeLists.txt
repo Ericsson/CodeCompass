@@ -8,6 +8,7 @@ include_directories(
   ${PLUGIN_DIR}/model/include)
 
 add_library(cxxmetricsparser SHARED
+  src/efferent.cpp
   src/cppmetricsparser.cpp)
 
 target_link_libraries(cxxmetricsparser

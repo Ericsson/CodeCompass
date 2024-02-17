@@ -1,4 +1,5 @@
 #include <cppmetricsparser/cppmetricsparser.h>
+#include "efferent.h"
 
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
@@ -251,6 +252,9 @@ bool CppMetricsParser::parse()
   functionParameters();
   functionMcCabe();
   lackOfCohesion();
+
+  EfferentCoupling efferent(_ctx, _inputPaths);
+  efferent.efferentTypeLevel();
   return true;
 }
 
