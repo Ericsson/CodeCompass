@@ -3,7 +3,6 @@
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
 
-#include <util/filesystem.h>
 #include <util/odbtransaction.h>
 
 #include "efferent.h"
@@ -26,6 +25,7 @@ void EfferentCoupling::efferentTypeLevel()
 
   util::OdbTransaction{_ctx.db}([&, this]
   {
+    std::set<std::uint64_t> memberTypes;
     for (const model::CppRecord& type
       : _ctx.db->query<model::CppRecord>())
     {
@@ -33,14 +33,18 @@ void EfferentCoupling::efferentTypeLevel()
       //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.))
         //continue;
 
-      auto count = _ctx.db->query_value<model::CppMemberTypeCount>(
+      memberTypes.clear();
+      for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
         MemTypeQuery::typeHash == type.entityHash &&
-        MemTypeQuery::kind == model::CppMemberType::Kind::Field).count;
+          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+      {
+        memberTypes.insert(mem.memberTypeHash);
+      }
 
       model::CppAstNodeMetrics metric;
       metric.astNodeId = type.astNodeId;
       metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
-      metric.value = count;
+      metric.value = memberTypes.size();
       _ctx.db->persist(metric);
     }
   });
