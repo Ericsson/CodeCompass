@@ -49,19 +49,9 @@ def getNodeInfo(name, refid):
     node["module_path"] = name.module_path
     node["full_name"] = name.full_name if name.full_name else ""
 
-    node["line_start"] = 0
-    node["line_end"] = 0
-    node["column_start"] = 0
-    node["column_end"] = 0
-    node["value"] = ""
+    pos = getNamePosInfo(name)
+    node.update(pos) # merge pos dictionary
 
-    if name.get_definition_start_position():
-        node["line_start"] = name.get_definition_start_position()[0]
-        node["line_end"] = name.get_definition_end_position()[0]
-        node["column_start"] = name.get_definition_start_position()[1] + 1
-        node["column_end"] = name.get_definition_end_position()[1] + 1
-        node["value"] = name.get_line_code()
-    
     node["type"] = name.type
     node["is_definition"] = name.is_definition()
     node["is_builtin"] = name.in_builtin_module()
@@ -69,11 +59,30 @@ def getNodeInfo(name, refid):
 
     return node
 
+def getNamePosInfo(name):
+    pos = {
+        "line_start": 0,
+        "line_end": 0,
+        "column_start": 0,
+        "column_end": 0,
+        "value": ""
+    }
+
+    if name.get_definition_start_position():
+        pos["line_start"] = name.get_definition_start_position()[0]
+        pos["line_end"] = name.get_definition_end_position()[0]
+        pos["column_start"] = name.get_definition_start_position()[1] + 1
+        pos["column_end"] = name.get_definition_end_position()[1] + 1
+        pos["value"] = name.get_line_code()
+
+    return pos
+
 def putInMap(hashmap, node):
     hashmap[node["id"]] = node
 
 def hashName(name):
-    s = f"{name.module_path}|{name.line}|{name.column}".encode("utf-8")
+    pos = getNamePosInfo(name)
+    s = f"{name.module_path}|{pos['line_start']}|{pos['line_end']}|{pos['column_start']}|{pos['column_end']}".encode("utf-8")
     hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
     return hash
 
