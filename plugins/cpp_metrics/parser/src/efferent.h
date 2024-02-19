@@ -13,12 +13,12 @@ class EfferentCoupling
 public:
   EfferentCoupling(
     ParserContext& ctx_,
-    std::vector<std::string> inputPaths_);
+    std::vector<std::string>& inputPaths_);
+
   void efferentTypeLevel();
 
 private:
   ParserContext _ctx;
-
   std::vector<std::string> _inputPaths;
 };
 

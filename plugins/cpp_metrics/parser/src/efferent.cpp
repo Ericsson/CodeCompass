@@ -2,7 +2,10 @@
 #include <model/cpprecord-odb.hxx>
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppcohesionmetrics.h>
+#include <model/cppcohesionmetrics-odb.hxx>
 
+#include <util/filesystem.h>
 #include <util/odbtransaction.h>
 
 #include "efferent.h"
@@ -14,7 +17,7 @@ namespace parser
 
 EfferentCoupling::EfferentCoupling(
   ParserContext& ctx_,
-  std::vector<std::string> inputPaths_)
+  std::vector<std::string>& inputPaths_)
   : _ctx(ctx_), _inputPaths(inputPaths_)
 {
 }
@@ -26,17 +29,17 @@ void EfferentCoupling::efferentTypeLevel()
   util::OdbTransaction{_ctx.db}([&, this]
   {
     std::set<std::uint64_t> memberTypes;
-    for (const model::CppRecord& type
-      : _ctx.db->query<model::CppRecord>())
+    for (const model::CohesionCppRecordView& type
+      : _ctx.db->query<model::CohesionCppRecordView>())
     {
       // Skip types that were included from external libraries.
-      //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.))
-        //continue;
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
+        continue;
 
       memberTypes.clear();
       for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
         MemTypeQuery::typeHash == type.entityHash &&
-          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+        MemTypeQuery::kind == model::CppMemberType::Kind::Field))
       {
         memberTypes.insert(mem.memberTypeHash);
       }
