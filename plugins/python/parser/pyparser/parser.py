@@ -18,8 +18,8 @@ def parse(path):
 
         nodes = {}
 
-        for x in script.get_names(references = True):
-            defs = x.goto(follow_imports=True)
+        for x in script.get_names(references = True, all_scopes = True):
+            defs = x.goto(follow_imports = True)
             
             if len(defs) > 0:
                 refid = min(list(map(lambda x : hashName(x), defs)))

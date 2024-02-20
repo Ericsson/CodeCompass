@@ -46,8 +46,9 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
       if(!nodes.empty())
       {
         model::PYName pyname = *nodes.begin();
-        return_.id = pyname.id;
+        return_.id = std::to_string(pyname.id);
         return_.astNodeValue = pyname.value;
+        return_.entityHash = 68;
       }else{
         LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos_.pos.line << " column = " << fpos_.pos.column << ")";
       }
@@ -134,6 +135,8 @@ void PythonServiceHandler::getReferenceTypes(
   const core::AstNodeId& astNodeId) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  return_.emplace("Definition", DEFINITION);
+  return_.emplace("Usage", USAGE);
   return;
 }
 
@@ -144,6 +147,41 @@ void PythonServiceHandler::getReferences(
   const std::vector<std::string>& tags_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  LOG(info) << "astNodeID: " << astNodeId_;
+  LOG(info) << "referenceId_: " << referenceId_;
+
+  _transaction([&]() {
+
+    std::uint64_t ref_id = _db->query_value<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_)).ref_id; 
+
+    odb::result<model::PYName> nodes;
+    switch (referenceId_)
+    {
+      case DEFINITION:
+        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == true);
+        break;
+      case USAGE:
+        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == false);
+        break;
+    }
+
+    for(const model::PYName& pyname : nodes)
+    {
+      AstNodeInfo info;
+      info.id = pyname.id;
+      info.astNodeType = pyname.type;
+      info.range.file = std::to_string(pyname.file_id);
+      info.range.range.startpos.line = pyname.line_start;
+      info.range.range.startpos.column = pyname.column_start;
+      info.range.range.endpos.line = pyname.line_end;
+      info.range.range.endpos.column = pyname.column_end;
+      info.astNodeValue = pyname.value;
+      return_.push_back(info);
+    }
+
+    return;
+  });
+  
   return;
 }
 
@@ -152,7 +190,27 @@ std::int32_t PythonServiceHandler::getReferenceCount(
   const std::int32_t referenceId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  return 0;
+  LOG(info) << "astNodeID: " << astNodeId_;
+  LOG(info) << "referenceId_: " << referenceId_;
+
+  std::int32_t ret = 0;
+  _transaction([&]() {
+
+    std::uint64_t ref_id = _db->query_value<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_)).ref_id; 
+
+    switch (referenceId_)
+    {
+      case DEFINITION:
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == true).size();
+        break;
+      case USAGE:
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == false).size();
+        break;
+    }
+    return;
+  });
+
+  return ret;
 }
 
 void PythonServiceHandler::getReferencesInFile(
@@ -182,6 +240,8 @@ void PythonServiceHandler::getFileReferenceTypes(
   const core::FileId& fileId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  return_["Definition"] = DEFINITION;
+  return_["Usage"] = USAGE;
   return;
 }
 
