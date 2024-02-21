@@ -13,7 +13,6 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   // Init Python Interpreter
   std::string py_parser_dir = _ctx.compassRoot + "/lib/parserplugin/pyparser/";
-  LOG(info) << "py_parser_dir: " << py_parser_dir;
   setenv("PYTHONPATH", py_parser_dir.c_str(), 1);
   
   Py_Initialize();
@@ -21,6 +20,14 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   // Init PyParser module
   try {
     m_py_module = python::import("parser");
+
+    // Set venv
+    if (_ctx.options.count("venv"))
+    {
+      std::string venv = _ctx.options["venv"].as<std::string>();
+      m_py_module.attr("venv_config")(venv);
+    }
+  
   }catch (const python::error_already_set&)
   {
     PyErr_Print();
@@ -135,6 +142,9 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("Python Plugin");
+    description.add_options()
+      ("venv", po::value<std::string>(),
+       "Set 'venv' to specify the project's Python virtual environment path.");
 
     return description;
   }

@@ -11,11 +11,6 @@ extern "C"
     namespace po = boost::program_options;
 
     po::options_description description("Python Plugin");
-
-    description.add_options()
-      ("dummy-result", po::value<std::string>()->default_value("Dummy result"),
-        "This value will be returned by the dummy service.");
-
     return description;
   }
 

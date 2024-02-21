@@ -1,22 +1,38 @@
 import jedi
 from hashlib import sha1
 
+config = {
+    "env": None,
+    "env_path": None
+}
+
 def log(msg):
     print(f"[PythonParser] {msg}")
 
-def parse(path):
-    log(f"[PythonParser] Parsing: {path}")
+def venv_config(venv_path):
+    try:
+        config["env"] = jedi.create_environment(venv_path)
+        config["env_path"] = venv_path
+        log(f"Using virtual environment: {venv_path}")
+    except:
+        log(f"Failed to use virtual environment: {venv_path}")
 
+def parse(path):
     result = {
-        "status": "full",
+        "status": "none",
         "nodes": []
     }
 
     with open(path) as f:
+        if config["env_path"] and path.startswith(config["env_path"]):
+            return result
+
+        log(f"Parsing: {path}")
         source = f.read()
-        script = jedi.Script(source, path=path)
+        script = jedi.Script(source, path=path, environment=config["env"])
 
         nodes = {}
+        result["status"] = "full"
 
         for x in script.get_names(references = True, all_scopes = True):
             defs = x.goto(follow_imports = True)
