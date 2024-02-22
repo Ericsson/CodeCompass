@@ -70,6 +70,8 @@ namespace parser
 class ClangASTVisitor : public clang::RecursiveASTVisitor<ClangASTVisitor>
 {
 public:
+  using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+
   ClangASTVisitor(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
@@ -128,10 +130,12 @@ public:
     });
   }
 
+
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitLambdaBody() const { return true; }
   
+
   bool TraverseDecl(clang::Decl* decl_)
   {
     // We use implicitness to determine if actual symbol location information
@@ -151,215 +155,58 @@ public:
     return b;
   }
 
+
+  template<typename T>
+  bool FunctionStackDecorator(T* fun_, bool (Base::*base_)(T*))
+  {
+    _functionStack.push(std::make_shared<model::CppFunction>());
+
+    bool b = (this->*base_)(fun_);
+
+    model::CppFunctionPtr top = _functionStack.top();
+    if (top->astNodeId)
+      _functions.push_back(top);
+    _functionStack.pop();
+
+    return b;
+  }
+
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseFunctionDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseFunctionDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::FunctionDecl>(fd_,
+      &Base::TraverseFunctionDecl);
   }
 
-  bool TraverseFunctionDeclWithBody(clang::FunctionDecl* fd_)
+  bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* dgd_)
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseFunctionDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::CXXDeductionGuideDecl>(dgd_,
+      &Base::TraverseCXXDeductionGuideDecl);
   }
 
-  bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* fd_)
+  bool TraverseCXXMethodDecl(clang::CXXMethodDecl* md_)
   {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseCXXDeductionGuideDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::CXXMethodDecl>(md_,
+      &Base::TraverseCXXMethodDecl);
   }
 
-  bool TraverseCXXDeductionGuideDeclWithBody(clang::CXXDeductionGuideDecl* fd_)
+  bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* cd_)
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::CXXConstructorDecl>(cd_,
+      &Base::TraverseCXXConstructorDecl);
   }
 
-  bool TraverseCXXMethodDecl(clang::CXXMethodDecl* fd_)
+  bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* dd_)
   {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseCXXMethodDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXMethodDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::CXXDestructorDecl>(dd_,
+      &Base::TraverseCXXDestructorDecl);
   }
 
-  bool TraverseCXXMethodDeclWithBody(clang::CXXMethodDecl* fd_)
+  bool TraverseCXXConversionDecl(clang::CXXConversionDecl* cd_)
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseCXXMethodDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
+    return FunctionStackDecorator<clang::CXXConversionDecl>(cd_,
+      &Base::TraverseCXXConversionDecl);
   }
 
-  bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* fd_)
-  {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseCXXConstructorDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXConstructorDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXConstructorDeclWithBody(clang::CXXConstructorDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseCXXConstructorDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* fd_)
-  {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseCXXDestructorDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXDestructorDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXDestructorDeclWithBody(clang::CXXDestructorDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseCXXDestructorDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXConversionDecl(clang::CXXConversionDecl* fd_)
-  {
-    if (fd_->doesThisDeclarationHaveABody())
-      return TraverseCXXConversionDeclWithBody(fd_);
-
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXConversionDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXConversionDeclWithBody(clang::CXXConversionDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-    _mcCabeStack.push(1);
-
-    bool b = Base::TraverseCXXConversionDecl(fd_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-    {
-      top->mccabe = _mcCabeStack.top();
-      _functions.push_back(top);
-    }
-    _mcCabeStack.pop();
-    _functionStack.pop();
-
-    return b;
-  }
 
   bool TraverseRecordDecl(clang::RecordDecl* rd_)
   {
@@ -394,6 +241,7 @@ public:
 
     return b;
   }
+
 
   bool TraverseClassTemplateSpecializationDecl(
     clang::ClassTemplateSpecializationDecl* rd_)
@@ -436,137 +284,158 @@ public:
     return b;
   }
 
-  bool TraverseCallExpr(clang::CallExpr* ce_)
+
+  template<typename T>
+  bool ContextStackDecorator(
+    T* expr_,
+    bool (Base::*base_)(T*, DataRecursionQueue*))
   {
-    _contextStatementStack.push(ce_);
-    bool b = Base::TraverseCallExpr(ce_);
+    _contextStatementStack.push(expr_);
+    bool b = (this->*base_)(expr_, nullptr);
     _contextStatementStack.pop();
     return b;
+  }
+
+  bool TraverseCallExpr(clang::CallExpr* ce_)
+  {
+    return ContextStackDecorator<clang::CallExpr>(ce_,
+      &Base::TraverseCallExpr);
   }
 
   bool TraverseDeclStmt(clang::DeclStmt* ds_)
   {
-    _contextStatementStack.push(ds_);
-    bool b = Base::TraverseDeclStmt(ds_);
-    _contextStatementStack.pop();
-    return b;
+    return ContextStackDecorator<clang::DeclStmt>(ds_,
+      &Base::TraverseDeclStmt);
   }
 
   bool TraverseMemberExpr(clang::MemberExpr* me_)
   {
-    _contextStatementStack.push(me_);
-    bool b = Base::TraverseMemberExpr(me_);
-    _contextStatementStack.pop();
-    return b;
+    return ContextStackDecorator<clang::MemberExpr>(me_,
+      &Base::TraverseMemberExpr);
   }
 
   bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
   {
-    if (bo_->isLogicalOp() && !_mcCabeStack.empty())
-      ++_mcCabeStack.top();
-    _contextStatementStack.push(bo_);
-    bool b = Base::TraverseBinaryOperator(bo_);
-    _contextStatementStack.pop();
-    return b;
+    if (bo_->isLogicalOp() && !_functionStack.empty())
+      ++_functionStack.top()->mccabe;
+    
+    return ContextStackDecorator<clang::BinaryOperator>(bo_,
+      &Base::TraverseBinaryOperator);
   }
 
   bool TraverseReturnStmt(clang::ReturnStmt* rs_)
   {
-    _contextStatementStack.push(rs_);
-    bool b = Base::TraverseReturnStmt(rs_);
-    _contextStatementStack.pop();
-    return b;
+    return ContextStackDecorator<clang::ReturnStmt>(rs_,
+      &Base::TraverseReturnStmt);
   }
 
   bool TraverseCXXDeleteExpr(clang::CXXDeleteExpr* de_)
   {
-    _contextStatementStack.push(de_);
-    bool b = Base::TraverseCXXDeleteExpr(de_);
-    _contextStatementStack.pop();
-    return b;
+    return ContextStackDecorator<clang::CXXDeleteExpr>(de_,
+      &Base::TraverseCXXDeleteExpr);
   }
 
+
   template<typename T>
-  bool StatementStackDecorator(T* stmt_, const std::function<bool(T*)>& func_)
+  bool StatementStackDecorator(
+    T* stmt_,
+    bool (Base::*base_)(T*, DataRecursionQueue*))
   {
     _statements.push(stmt_);
-    bool b = func_(stmt_);
+    bool b = (this->*base_)(stmt_, nullptr);
     _statements.pop();
     return b;
   }
 
   template<typename T>
-  bool McCabeDecorator(T* stmt_, const std::function<bool(T*)>& func_)
+  bool McCabeDecorator(
+    T* stmt_,
+    bool (Base::*base_)(T*, DataRecursionQueue*))
   {
-    if(!_mcCabeStack.empty())
-      ++_mcCabeStack.top();
-    return StatementStackDecorator(stmt_, func_);
+    if (!_functionStack.empty())
+      ++_functionStack.top()->mccabe;
+    return StatementStackDecorator(stmt_, base_);
   }
 
-  bool TraverseIfStmt(clang::IfStmt* stmt_)
+  bool TraverseIfStmt(clang::IfStmt* is_)
   {
-    return McCabeDecorator<clang::IfStmt>(stmt_, [this] (clang::IfStmt* s) { return Base::TraverseIfStmt(s); });
+    return McCabeDecorator<clang::IfStmt>(is_,
+      &Base::TraverseIfStmt);
   }
 
-  bool TraverseWhileStmt(clang::WhileStmt* stmt_)
+  bool TraverseWhileStmt(clang::WhileStmt* ws_)
   {
-    return McCabeDecorator<clang::WhileStmt>(stmt_, [this] (clang::WhileStmt* s) { return Base::TraverseWhileStmt(s); });
+    return McCabeDecorator<clang::WhileStmt>(ws_,
+      &Base::TraverseWhileStmt);
   }
 
-  bool TraverseDoStmt(clang::DoStmt* stmt_)
+  bool TraverseDoStmt(clang::DoStmt* ds_)
   {
-    return McCabeDecorator<clang::DoStmt>(stmt_, [this] (clang::DoStmt* s) { return Base::TraverseDoStmt(s); });
+    return McCabeDecorator<clang::DoStmt>(ds_,
+      &Base::TraverseDoStmt);
   }
 
-  bool TraverseForStmt(clang::ForStmt* stmt_)
+  bool TraverseForStmt(clang::ForStmt* fs_)
   {
-    return McCabeDecorator<clang::ForStmt>(stmt_, [this] (clang::ForStmt* s) { return Base::TraverseForStmt(s); });
+    return McCabeDecorator<clang::ForStmt>(fs_,
+      &Base::TraverseForStmt);
   }
 
-  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* stmt_)
+  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* frs_)
   {
-    return McCabeDecorator<clang::CXXForRangeStmt>(stmt_, [this] (clang::CXXForRangeStmt* s) { return Base::TraverseCXXForRangeStmt(s); });
+    return McCabeDecorator<clang::CXXForRangeStmt>(frs_,
+      &Base::TraverseCXXForRangeStmt);
   }
 
-  bool TraverseCaseStmt(clang::CaseStmt* stmt_)
+  bool TraverseCaseStmt(clang::CaseStmt* cs_)
   {
-    return McCabeDecorator<clang::CaseStmt>(stmt_, [this] (clang::CaseStmt* s) { return Base::TraverseCaseStmt(s); });
+    return McCabeDecorator<clang::CaseStmt>(cs_,
+      &Base::TraverseCaseStmt);
   }
 
-  bool TraverseDefaultStmt(clang::DefaultStmt* stmt_)
+  bool TraverseDefaultStmt(clang::DefaultStmt* ds_)
   {
-    return McCabeDecorator<clang::DefaultStmt>(stmt_, [this] (clang::DefaultStmt* s) { return Base::TraverseDefaultStmt(s); });
+    return McCabeDecorator<clang::DefaultStmt>(ds_,
+      &Base::TraverseDefaultStmt);
   }
 
-  bool TraverseContinueStmt(clang::ContinueStmt* stmt_)
+  bool TraverseContinueStmt(clang::ContinueStmt* cs_)
   {
-    return McCabeDecorator<clang::ContinueStmt>(stmt_, [this] (clang::ContinueStmt* s) { return Base::TraverseContinueStmt(s); });
+    return McCabeDecorator<clang::ContinueStmt>(cs_,
+      &Base::TraverseContinueStmt);
   }
 
-  bool TraverseGotoStmt(clang::GotoStmt* stmt_)
+  bool TraverseGotoStmt(clang::GotoStmt* gs_)
   {
-    return McCabeDecorator<clang::GotoStmt>(stmt_, [this] (clang::GotoStmt* s) { return Base::TraverseGotoStmt(s); });
+    return McCabeDecorator<clang::GotoStmt>(gs_,
+      &Base::TraverseGotoStmt);
   }
 
-  bool TraverseCXXCatchStmt(clang::CXXCatchStmt* stmt_)
+  bool TraverseCXXCatchStmt(clang::CXXCatchStmt* cs_)
   {
-    return McCabeDecorator<clang::CXXCatchStmt>(stmt_, [this] (clang::CXXCatchStmt* s) { return Base::TraverseCXXCatchStmt(s); });
+    return McCabeDecorator<clang::CXXCatchStmt>(cs_,
+      &Base::TraverseCXXCatchStmt);
   }
 
-  bool TraverseConditionalOperator(clang::ConditionalOperator* op_)
+  bool TraverseConditionalOperator(clang::ConditionalOperator* co_)
   {
-    return McCabeDecorator<clang::ConditionalOperator>(op_, [this] (clang::ConditionalOperator* s) { return Base::TraverseConditionalOperator(s); });
+    return McCabeDecorator<clang::ConditionalOperator>(co_,
+      &Base::TraverseConditionalOperator);
   }
 
-  bool TraverseBinaryConditionalOperator(clang::BinaryConditionalOperator* op_)
+  bool TraverseBinaryConditionalOperator(
+    clang::BinaryConditionalOperator* bco_)
   {
-    return McCabeDecorator<clang::BinaryConditionalOperator>(op_, [this] (clang::BinaryConditionalOperator* s) { return Base::TraverseBinaryConditionalOperator(s); });
+    return McCabeDecorator<clang::BinaryConditionalOperator>(bco_,
+      &Base::TraverseBinaryConditionalOperator);
   }
 
-  bool TraverseStmt(clang::Stmt* stmt_)
+  bool TraverseStmt(clang::Stmt* s_)
   {
-    return StatementStackDecorator<clang::Stmt>(stmt_, [this] (clang::Stmt* s) { return Base::TraverseStmt(s); });
+    return StatementStackDecorator<clang::Stmt>(s_,
+      &Base::TraverseStmt);
   }
+
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
   {
@@ -932,7 +801,7 @@ public:
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
-    cppFunction->mccabe = 1;
+    cppFunction->mccabe = fn_->isThisDeclarationADefinition() ? 1 : 0;
 
     //--- Tags ---//
 
@@ -1567,8 +1436,6 @@ public:
   }
 
 private:
-  using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
-
   void addDestructorUsage(
     clang::QualType type_,
     const model::FileLoc& location_,
@@ -1870,7 +1737,6 @@ private:
   std::stack<model::CppFunctionPtr> _functionStack;
   std::stack<model::CppRecordPtr>   _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
-  std::stack<unsigned int>          _mcCabeStack;
 
   bool _isImplicit;
   ParserContext& _ctx;
