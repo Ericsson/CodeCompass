@@ -35,7 +35,7 @@ def parse(path):
         result["status"] = "full"
 
         for x in script.get_names(references = True, all_scopes = True):
-            defs = x.goto(follow_imports = True)
+            defs = x.goto(follow_imports = True, follow_builtin_imports = True)
             
             if len(defs) > 0:
                 refid = min(list(map(lambda x : hashName(x), defs)))

@@ -26,9 +26,15 @@ public:
   virtual ~PythonParser();
   virtual bool parse() override;
 private:
+  struct ParseResult {
+    std::uint32_t partial;
+    std::uint32_t full;
+  };
+
   bool accept(const std::string& path_);
   void parseFile(const std::string& path_, PYNameMap& map);
   python::object m_py_module;
+  ParseResult m_parse_result;
 };
   
 } // parser

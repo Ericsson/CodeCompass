@@ -82,9 +82,11 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
       
       if(status == "full")
       {
+        m_parse_result.full++;
         pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
       }else if (status == "partial")
       {
+        m_parse_result.partial++;
         pyfile->parseStatus = model::File::ParseStatus::PSPartiallyParsed;
       }
       
@@ -101,6 +103,8 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 bool PythonParser::parse()
 {
   PYNameMap map;
+  m_parse_result.full = 0;
+  m_parse_result.partial = 0;
 
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
@@ -127,6 +131,10 @@ bool PythonParser::parse()
       _ctx.db->persist(value);  
     });
   }
+
+  LOG(info) << "[PythonParser] Parsing finished!";
+  LOG(info) << "[PythonParser] Fully parsed files: " << m_parse_result.full;
+  LOG(info) << "[PythonParser] Partially parsed files: " << m_parse_result.partial;
 
   return true;
 }

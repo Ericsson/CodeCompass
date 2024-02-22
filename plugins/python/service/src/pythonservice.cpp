@@ -148,7 +148,6 @@ void PythonServiceHandler::getReferences(
 {
   LOG(info) << "[PYSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
-  LOG(info) << "referenceId_: " << referenceId_;
 
   _transaction([&]() {
 
@@ -191,7 +190,6 @@ std::int32_t PythonServiceHandler::getReferenceCount(
 {
   LOG(info) << "[PYSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
-  LOG(info) << "referenceId_: " << referenceId_;
 
   std::int32_t ret = 0;
   _transaction([&]() {
