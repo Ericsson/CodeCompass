@@ -35,6 +35,25 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
 
 }
 
+void PythonParser::prepareInput(const std::string& root_path)
+{
+  try {
+    if (_ctx.options.count("venv"))
+    {
+      std::string venv = _ctx.options["venv"].as<std::string>();
+      m_py_module.attr("project_config")(root_path, venv);
+    }
+    else
+    {
+      m_py_module.attr("project_config")(root_path);
+    }
+  
+  }catch (const python::error_already_set&)
+  {
+    PyErr_Print();
+  }
+}
+
 bool PythonParser::accept(const std::string& path_)
 {
   std::string ext = boost::filesystem::extension(path_);
@@ -108,6 +127,8 @@ bool PythonParser::parse()
 
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
+    PythonParser::prepareInput(path);
+
     if(boost::filesystem::is_directory(path))
     {
       util::iterateDirectoryRecursive(path, [&](const std::string& currPath_)

@@ -35,6 +35,7 @@ private:
   void parseFile(const std::string& path_, PYNameMap& map);
   python::object m_py_module;
   ParseResult m_parse_result;
+  void prepareInput(const std::string& root_path);
 };
   
 } // parser

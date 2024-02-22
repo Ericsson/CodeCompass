@@ -2,18 +2,22 @@ import jedi
 from hashlib import sha1
 
 config = {
-    "env": None,
-    "env_path": None
+    "venv_path": None,
+    "project": None
 }
 
 def log(msg):
     print(f"[PythonParser] {msg}")
 
-def venv_config(venv_path):
+def project_config(root_path, venv_path = None):
     try:
-        config["env"] = jedi.create_environment(venv_path)
-        config["env_path"] = venv_path
-        log(f"Using virtual environment: {venv_path}")
+        if venv_path:
+            jedi.create_environment(venv_path)
+            config["venv_path"] = venv_path
+            log(f"Using virtual environment: {venv_path}")
+        
+        config["project"] = jedi.Project(path = root_path, environment_path = venv_path)
+
     except:
         log(f"Failed to use virtual environment: {venv_path}")
 
@@ -24,12 +28,12 @@ def parse(path):
     }
 
     with open(path) as f:
-        if config["env_path"] and path.startswith(config["env_path"]):
+        if config["venv_path"] and path.startswith(config["venv_path"]):
             return result
 
         log(f"Parsing: {path}")
         source = f.read()
-        script = jedi.Script(source, path=path, environment=config["env"])
+        script = jedi.Script(source, path=path, project=config["project"])
 
         nodes = {}
         result["status"] = "full"
