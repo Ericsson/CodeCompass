@@ -2,6 +2,7 @@ import jedi
 from hashlib import sha1
 
 config = {
+    "root_path": None,
     "venv_path": None,
     "project": None
 }
@@ -10,6 +11,9 @@ def log(msg):
     print(f"[PythonParser] {msg}")
 
 def project_config(root_path, venv_path = None):
+    
+    config["root_path"] = root_path
+
     try:
         if venv_path:
             jedi.create_environment(venv_path)
@@ -24,7 +28,8 @@ def project_config(root_path, venv_path = None):
 def parse(path):
     result = {
         "status": "none",
-        "nodes": []
+        "nodes": [],
+        "imports": []
     }
 
     if config["venv_path"] and path.startswith(config["venv_path"]):
@@ -51,6 +56,9 @@ def parse(path):
 
             for d in defs:
                 putInMap(nodes, getNodeInfo(d, refid))
+                
+                if d.module_path and not str(d.module_path).startswith(config["root_path"]):
+                    result["imports"].append(str(d.module_path))
 
     result["nodes"] = list(nodes.values())
 

@@ -107,6 +107,15 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
       _ctx.srcMgr.updateFile(*pyfile);
     }
 
+    // Additional paths (example: builtin definition paths)
+    // These files need to be added to db
+    python::object imports = result["imports"];
+    for (int i = 0; i < python::len(imports); i++)
+    {
+      std::string p = python::extract<std::string>(imports[i]);
+      _ctx.srcMgr.getFile(p);
+    }
+
   }catch (const python::error_already_set&)
   {
     PyErr_Print();
