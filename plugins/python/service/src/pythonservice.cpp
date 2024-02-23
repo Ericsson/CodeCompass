@@ -48,7 +48,7 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
         model::PYName pyname = *nodes.begin();
         return_.id = std::to_string(pyname.id);
         return_.astNodeValue = pyname.value;
-        return_.entityHash = 68;
+        return_.symbolType = pyname.type;
       }else{
         LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos_.pos.line << " column = " << fpos_.pos.column << ")";
       }
@@ -77,6 +77,26 @@ void PythonServiceHandler::getProperties(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  _transaction([&]() {
+    auto nodes = _db->query<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_));
+
+    if(!nodes.empty())
+    {
+      model::PYName pyname = *nodes.begin();
+      if(!pyname.full_name.empty())
+      {
+        return_.emplace("Full name", pyname.full_name);
+      }
+
+      return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
+
+      if(!pyname.type_hint.empty())
+      {
+        return_.emplace("Type hint", pyname.type_hint);
+      }
+    }
+  });
+
   return;
 }
 

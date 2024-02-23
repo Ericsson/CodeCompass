@@ -321,7 +321,16 @@ require([
           var props = model.pythonservice.getProperties(elementInfo.id);
   
           for (var propName in props) {
-            var propId = propName.replace(/ /g, '-');
+            var propId;
+
+            switch(propName)
+            {
+              case "Builtin": propId = "Declaration"; break;
+              case "Full name": propId = "Name"; break;
+              case "Type hint": propId = "Type"; break;
+              default: propId = propName;
+            }
+            
             var label
               = '<span class="label">' + propName + '</span>: '
               + '<span class="value">' + props[propName] + '</span>';

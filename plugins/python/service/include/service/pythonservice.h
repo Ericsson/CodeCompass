@@ -255,6 +255,7 @@ private:
 
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;
+  inline const char* const boolToString(bool b) { return b ? "true" : "false"; }
 };
 
 } // language

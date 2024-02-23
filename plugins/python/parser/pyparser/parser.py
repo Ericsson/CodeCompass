@@ -47,7 +47,7 @@ def parse(path):
                 refid = hashName(x)
                 reportMissingDefinition(x, result)
 
-            putInMap(nodes, getNodeInfo(x, refid))
+            putInMap(nodes, getNodeInfo(x, refid, defs))
 
             for d in defs:
                 putInMap(nodes, getNodeInfo(d, refid))
@@ -59,7 +59,7 @@ def parse(path):
 
     return result
 
-def getNodeInfo(name, refid):
+def getNodeInfo(name, refid, defs = []):
     node = {}
     node["id"] = hashName(name)
     node["ref_id"] = refid
@@ -72,9 +72,9 @@ def getNodeInfo(name, refid):
 
     node["type"] = name.type
     node["is_definition"] = name.is_definition()
-    node["is_builtin"] = name.in_builtin_module()
     node["file_id"] = getFileId(name)
     node["type_hint"] = getNameTypeHint(name)
+    node["is_builtin"] = name.in_builtin_module() or any(list(map(lambda x : x.in_builtin_module(), defs)))
 
     return node
 
@@ -102,7 +102,11 @@ def getNamePosInfo(name):
         pos["line_end"] = name.get_definition_end_position()[0]
         pos["column_start"] = name.get_definition_start_position()[1] + 1
         pos["column_end"] = name.get_definition_end_position()[1] + 1
-        pos["value"] = name.get_line_code()
+
+        if pos["line_start"] == pos["line_end"]:
+            pos["value"] = name.get_line_code()[pos["column_start"]-1:pos["column_end"]-1]
+        else:
+            pos["value"] = name.get_line_code()[pos["column_start"]-1:]
 
     return pos
 
