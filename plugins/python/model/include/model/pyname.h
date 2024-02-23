@@ -27,6 +27,7 @@ struct PYName
     std::uint64_t column_start;
     std::uint64_t column_end;
     std::uint64_t file_id;
+    std::string type_hint;
 };
 
 }

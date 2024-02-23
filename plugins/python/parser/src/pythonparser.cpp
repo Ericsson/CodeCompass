@@ -80,6 +80,7 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
       pyname.file_id = python::extract<uint64_t>(node["file_id"]);
       pyname.value = python::extract<std::string>(node["value"]);
       pyname.type = python::extract<std::string>(node["type"]);
+      pyname.type_hint = python::extract<std::string>(node["type_hint"]);
 
       // Put in map
       if(map.find(pyname.id) == map.end())

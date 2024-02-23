@@ -27,10 +27,10 @@ def parse(path):
         "nodes": []
     }
 
-    with open(path) as f:
-        if config["venv_path"] and path.startswith(config["venv_path"]):
-            return result
+    if config["venv_path"] and path.startswith(config["venv_path"]):
+        return result
 
+    with open(path) as f:
         log(f"Parsing: {path}")
         source = f.read()
         script = jedi.Script(source, path=path, project=config["project"])
@@ -44,11 +44,9 @@ def parse(path):
             if len(defs) > 0:
                 refid = min(list(map(lambda x : hashName(x), defs)))
             else:
-                result["status"] = "partial"
-                log(f"No definition found for {x.full_name}")
-                log(f"{x.full_name}: file = {x.module_path} line = {x.line} column = {x.column}")
                 refid = hashName(x)
-            
+                reportMissingDefinition(x, result)
+
             putInMap(nodes, getNodeInfo(x, refid))
 
             for d in defs:
@@ -76,8 +74,19 @@ def getNodeInfo(name, refid):
     node["is_definition"] = name.is_definition()
     node["is_builtin"] = name.in_builtin_module()
     node["file_id"] = getFileId(name)
+    node["type_hint"] = getNameTypeHint(name)
 
     return node
+
+def getNameTypeHint(name):
+    hint = ""
+    try:
+        res = name.get_type_hint()
+        hint = res if res else ""
+    except:
+        pass
+
+    return hint
 
 def getNamePosInfo(name):
     pos = {
@@ -96,6 +105,11 @@ def getNamePosInfo(name):
         pos["value"] = name.get_line_code()
 
     return pos
+
+def reportMissingDefinition(name, result):
+    if name.is_definition() and name.type == 'module' and getNamePosInfo(name)["line_start"] > 0:
+        log(f"Missing {name.description}")
+        result["status"] = "partial"
 
 def putInMap(hashmap, node):
     hashmap[node["id"]] = node
