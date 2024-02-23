@@ -153,9 +153,10 @@ bool PythonParser::parse()
     });
   }
 
-  LOG(info) << "[PythonParser] Parsing finished!";
-  LOG(info) << "[PythonParser] Fully parsed files: " << m_parse_result.full;
-  LOG(info) << "[PythonParser] Partially parsed files: " << m_parse_result.partial;
+  LOG(info) << "[pythonparser] Parsing finished!";
+  LOG(info) << "[pythonparser] Inserted PYName: " << map.size();
+  LOG(info) << "[pythonparser] Fully parsed files: " << m_parse_result.full;
+  LOG(info) << "[pythonparser] Partially parsed files: " << m_parse_result.partial;
 
   return true;
 }
