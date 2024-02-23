@@ -20,15 +20,8 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   // Init PyParser module
   try {
     m_py_module = python::import("parser");
-
-    // Set venv
-    if (_ctx.options.count("venv"))
-    {
-      std::string venv = _ctx.options["venv"].as<std::string>();
-      m_py_module.attr("venv_config")(venv);
-    }
-  
-  }catch (const python::error_already_set&)
+  }
+  catch (const python::error_already_set&)
   {
     PyErr_Print();
   }
