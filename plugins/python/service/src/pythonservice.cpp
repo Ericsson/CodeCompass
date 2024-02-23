@@ -78,22 +78,18 @@ void PythonServiceHandler::getProperties(
 {
   LOG(info) << "[PYSERVICE] " << __func__;
   _transaction([&]() {
-    auto nodes = _db->query<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_));
-
-    if(!nodes.empty())
+    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+   
+    if(!pyname.full_name.empty())
     {
-      model::PYName pyname = *nodes.begin();
-      if(!pyname.full_name.empty())
-      {
-        return_.emplace("Full name", pyname.full_name);
-      }
+      return_.emplace("Full name", pyname.full_name);
+    }
 
-      return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
+    return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
 
-      if(!pyname.type_hint.empty())
-      {
-        return_.emplace("Type hint", pyname.type_hint);
-      }
+    if(!pyname.type_hint.empty())
+    {
+      return_.emplace("Type hint", pyname.type_hint);
     }
   });
 
@@ -171,16 +167,21 @@ void PythonServiceHandler::getReferences(
 
   _transaction([&]() {
 
-    std::uint64_t ref_id = _db->query_value<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_)).ref_id; 
+    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
 
     odb::result<model::PYName> nodes;
     switch (referenceId_)
     {
       case DEFINITION:
-        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == true);
+        if (pyname.type != "module")
+        {
+          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true);
+        }else{
+          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::line_start == 0);
+        }
         break;
       case USAGE:
-        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == false);
+        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false);
         break;
     }
 
@@ -214,15 +215,20 @@ std::int32_t PythonServiceHandler::getReferenceCount(
   std::int32_t ret = 0;
   _transaction([&]() {
 
-    std::uint64_t ref_id = _db->query_value<model::PYName>(odb::query<model::PYName>::id == std::stoull(astNodeId_)).ref_id; 
+    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
 
     switch (referenceId_)
     {
       case DEFINITION:
-        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == true).size();
+        if (pyname.type != "module")
+        {
+          ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true).size();
+        }else{
+          ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::line_start == 0).size();
+        }
         break;
       case USAGE:
-        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == ref_id && odb::query<model::PYName>::is_definition == false).size();
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false).size();
         break;
     }
     return;
@@ -286,6 +292,22 @@ void PythonServiceHandler::getSyntaxHighlight(
 {
   LOG(info) << "[PYSERVICE] " << __func__;
   return;
+}
+
+model::PYName PythonServiceHandler::queryNode(const std::string& id)
+{
+  model::PYName pyname;
+
+  _transaction([&]() {
+    auto nodes = _db->query<model::PYName>(odb::query<model::PYName>::id == std::stoull(id));
+
+    if(!nodes.empty())
+    {
+      pyname = *nodes.begin();
+    }
+  });
+
+  return pyname;
 }
 
 } // language
