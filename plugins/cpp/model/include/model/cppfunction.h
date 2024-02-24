@@ -18,7 +18,10 @@ struct CppFunction : CppTypedEntity
   std::vector<odb::lazy_shared_ptr<CppVariable>> parameters;
   #pragma db on_delete(cascade)
   std::vector<odb::lazy_shared_ptr<CppVariable>> locals;
+
   unsigned int mccabe;
+  unsigned int bumpiness;
+  unsigned int statementCount;
 
   std::string toString() const
   {
@@ -80,6 +83,28 @@ struct CppFunctionMcCabe
 
   #pragma db column(File::path)
   std::string filePath;
+};
+
+#pragma db view \
+  object(CppFunction) \
+  object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file)
+struct CppFunctionBumpyRoad
+{
+  #pragma db column(CppEntity::astNodeId)
+  CppAstNodeId astNodeId;
+
+  #pragma db column(CppFunction::bumpiness)
+  unsigned int bumpiness;
+
+  #pragma db column(CppFunction::statementCount)
+  unsigned int statementCount;
+
+  #pragma db column(File::path)
+  std::string filePath;
+
+  #pragma db column(CppFunction::qualifiedName)
+  std::string qualName;
 };
 
 }

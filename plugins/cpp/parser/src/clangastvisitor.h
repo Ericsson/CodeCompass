@@ -44,6 +44,7 @@
 
 #include "entitycache.h"
 #include "symbolhelper.h"
+#include "nestedscope.h"
 
 namespace cc
 {
@@ -156,19 +157,49 @@ public:
   }
 
 
+  class FunctionStackScope final
+  {
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppFunctionPtr _curFun;
+
+  public:
+    FunctionStackScope(ClangASTVisitor* visitor_) :
+      _visitor(visitor_),
+      _curFun(std::make_shared<model::CppFunction>())
+    {
+      _visitor->_functionStack.push(_curFun);
+    }
+
+    ~FunctionStackScope()
+    {
+      if (_curFun->astNodeId)
+        _visitor->_functions.push_back(_curFun);
+      _visitor->_functionStack.pop();
+
+      if (_curFun->astNodeId && !_visitor->_functionStack.empty())
+      {
+        assert(_visitor->_scopeStack.Top() != nullptr &&
+          "Previous function entry has no corresponding scope stack entry.");
+        // If the currently parsed function had a total bumpiness of B
+        // from S statements, and is nested inside an enclosing function
+        // at depth D, then the total bumpiness of that enclosing function
+        // must be increased by the total bumpiness of the nested function:
+        // B (core nested bumpiness) + S * D (accounting for the indentation).
+        model::CppFunctionPtr& prevFun = _visitor->_functionStack.top();
+        prevFun->bumpiness += _curFun->bumpiness +
+          _curFun->statementCount * _visitor->_scopeStack.Top()->Depth();
+        prevFun->statementCount += _curFun->statementCount;
+      }
+    }
+  };
+
   template<typename T>
   bool FunctionStackDecorator(T* fun_, bool (Base::*base_)(T*))
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = (this->*base_)(fun_);
-
-    model::CppFunctionPtr top = _functionStack.top();
-    if (top->astNodeId)
-      _functions.push_back(top);
-    _functionStack.pop();
-
-    return b;
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, fun_->getBody());
+    return (this->*base_)(fun_);
   }
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
@@ -357,34 +388,79 @@ public:
     return StatementStackDecorator(stmt_, base_);
   }
 
+  void CountBumpiness(const NestedScope& scope_)
+  {
+    if (!_functionStack.empty() && scope_.IsReal())
+    {
+      model::CppFunctionPtr& fun = _functionStack.top();
+      fun->bumpiness += scope_.Depth();
+      ++fun->statementCount;
+    }
+  }
+
+  template<typename T>
+  bool ExprStackDecorator(
+    T* expr_,
+    bool (Base::*base_)(T*, DataRecursionQueue*))
+  {
+    NestedStatementScope scope(&_scopeStack, expr_);
+    CountBumpiness(scope);
+
+    return StatementStackDecorator(expr_, base_);
+  }
+
+  template<typename T>
+  bool NestedMcCabeDecorator(
+    T* stmt_,
+    bool (Base::*base_)(T*, DataRecursionQueue*))
+  {
+    NestedOneWayScope scope(&_scopeStack, stmt_, stmt_->getBody());
+    CountBumpiness(scope);
+
+    return McCabeDecorator(stmt_, base_);
+  }
+
   bool TraverseIfStmt(clang::IfStmt* is_)
   {
+    NestedTwoWayScope scope(
+      &_scopeStack, is_, is_->getThen(), is_->getElse());
+    CountBumpiness(scope);
+
     return McCabeDecorator<clang::IfStmt>(is_,
       &Base::TraverseIfStmt);
   }
 
   bool TraverseWhileStmt(clang::WhileStmt* ws_)
   {
-    return McCabeDecorator<clang::WhileStmt>(ws_,
+    return NestedMcCabeDecorator<clang::WhileStmt>(ws_,
       &Base::TraverseWhileStmt);
   }
 
   bool TraverseDoStmt(clang::DoStmt* ds_)
   {
-    return McCabeDecorator<clang::DoStmt>(ds_,
+    return NestedMcCabeDecorator<clang::DoStmt>(ds_,
       &Base::TraverseDoStmt);
   }
 
   bool TraverseForStmt(clang::ForStmt* fs_)
   {
-    return McCabeDecorator<clang::ForStmt>(fs_,
+    return NestedMcCabeDecorator<clang::ForStmt>(fs_,
       &Base::TraverseForStmt);
   }
 
   bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* frs_)
   {
-    return McCabeDecorator<clang::CXXForRangeStmt>(frs_,
+    return NestedMcCabeDecorator<clang::CXXForRangeStmt>(frs_,
       &Base::TraverseCXXForRangeStmt);
+  }
+
+  bool TraverseSwitchStmt(clang::SwitchStmt* ss_)
+  {
+    NestedOneWayScope scope(&_scopeStack, ss_, ss_->getBody());
+    CountBumpiness(scope);
+
+    return StatementStackDecorator<clang::SwitchStmt>(ss_,
+      &Base::TraverseSwitchStmt);
   }
 
   bool TraverseCaseStmt(clang::CaseStmt* cs_)
@@ -411,8 +487,20 @@ public:
       &Base::TraverseGotoStmt);
   }
 
+  bool TraverseCXXTryStmt(clang::CXXTryStmt* ts_)
+  {
+    NestedOneWayScope scope(&_scopeStack, ts_, ts_->getTryBlock());
+    CountBumpiness(scope);
+
+    return StatementStackDecorator<clang::CXXTryStmt>(ts_,
+      &Base::TraverseCXXTryStmt);
+  }
+
   bool TraverseCXXCatchStmt(clang::CXXCatchStmt* cs_)
   {
+    NestedOneWayScope scope(&_scopeStack, cs_, cs_->getHandlerBlock());
+    CountBumpiness(scope);
+
     return McCabeDecorator<clang::CXXCatchStmt>(cs_,
       &Base::TraverseCXXCatchStmt);
   }
@@ -430,10 +518,25 @@ public:
       &Base::TraverseBinaryConditionalOperator);
   }
 
+  bool TraverseCompoundStmt(clang::CompoundStmt* cs_)
+  {
+    NestedCompoundScope scope(&_scopeStack, cs_);
+    CountBumpiness(scope);
+
+    return StatementStackDecorator<clang::CompoundStmt>(cs_,
+      &Base::TraverseCompoundStmt);
+  }
+
   bool TraverseStmt(clang::Stmt* s_)
   {
-    return StatementStackDecorator<clang::Stmt>(s_,
-      &Base::TraverseStmt);
+    if (s_ == nullptr)// This can also happen apparently...
+      return Base::TraverseStmt(s_);
+    else if (llvm::isa<clang::Expr>(s_))
+      return ExprStackDecorator<clang::Stmt>(s_,
+        &Base::TraverseStmt);
+    else
+      return StatementStackDecorator<clang::Stmt>(s_,
+        &Base::TraverseStmt);
   }
 
 
@@ -802,6 +905,8 @@ public:
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
     cppFunction->mccabe = fn_->isThisDeclarationADefinition() ? 1 : 0;
+    cppFunction->bumpiness = 0;
+    cppFunction->statementCount = 0;
 
     //--- Tags ---//
 
@@ -1762,6 +1867,7 @@ private:
   std::unordered_map<unsigned, model::CppAstNode::AstType> _locToAstType;
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
+  NestedStack _scopeStack;
   // This stack contains the parent chain of the current Stmt.
   std::stack<clang::Stmt*> _statements;
   // This stack has the same role as _locTo* maps. In case of
