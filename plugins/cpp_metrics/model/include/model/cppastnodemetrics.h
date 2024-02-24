@@ -17,6 +17,7 @@ struct CppAstNodeMetrics
   {
     PARAMETER_COUNT,
     MCCABE,
+    BUMPY_ROAD,
     LACK_OF_COHESION,
     LACK_OF_COHESION_HS,
   };
