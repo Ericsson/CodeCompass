@@ -104,6 +104,71 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::ValuesIn(paramMcCabe)
 );
 
+// Bumpy Road
+
+struct BumpyRoadParam
+{
+  std::string funName;
+  unsigned int expBumpiness;
+  unsigned int expStmtCount;
+};
+
+class ParameterizedBumpyRoadTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<BumpyRoadParam>
+{};
+
+#define BR_LAM "::(anonymous class)::operator()"
+#define BR_NM1 "::nested1::method1"
+#define BR_NM2 "::nested2::method2"
+#define BR_NM3 "::nested3::method3"
+std::vector<BumpyRoadParam> paramBumpyRoad = {
+  {"flat_empty_inline", 0, 0},
+  {"flat_empty", 0, 0},
+  {"flat_regular", 4, 4},
+  {"single_compound", 3, 2},
+  {"single_if_simple", 4, 3},
+  {"single_if_complex", 4, 3},
+  {"single_for_each", 5, 4},
+  {"single_for_loop", 5, 4},
+  {"nested_chain_compound", 10, 4},
+  {"nested_chain_if", 10, 4},
+  {"nested_chain_compound_if", 10, 4},
+  {"nested_chain_for", 10, 4},
+  {"nested_chain_compound_for", 10, 4},
+  {"nested_chain_mixed", 29, 8},
+  {"compare_level1", 7, 4},
+  {"compare_level2", 12, 5},
+  {"compare_level3", 18, 6},
+  {"complex_two_levels", 18, 11},
+  {"complex_three_levels_min", 14, 8},
+  {"complex_three_levels_max", 23, 8},
+  {"nested_lambda()" BR_LAM "()" BR_LAM "()" BR_LAM, 1, 1},
+  {"nested_lambda()" BR_LAM "()" BR_LAM, 3, 2},
+  {"nested_lambda()" BR_LAM, 6, 3},
+  {"nested_lambda", 10, 4},
+  {"nested_type()" BR_NM1 "()" BR_NM2 "()" BR_NM3, 1, 1},
+  {"nested_type()" BR_NM1 "()" BR_NM2, 3, 2},
+  {"nested_type()" BR_NM1, 6, 3},
+  {"nested_type", 10, 4},
+};
+
+TEST_P(ParameterizedBumpyRoadTest, BumpyRoadTest) {
+  _transaction([&, this]() {
+    model::CppFunction func = _db->query_value<model::CppFunction>(
+      odb::query<model::CppFunction>::qualifiedName == GetParam().funName);
+
+    EXPECT_EQ(GetParam().expBumpiness, func.bumpiness);
+    EXPECT_EQ(GetParam().expStmtCount, func.statementCount);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedBumpyRoadTestSuite,
+  ParameterizedBumpyRoadTest,
+  ::testing::ValuesIn(paramBumpyRoad)
+);
+
 // Lack of Cohesion
 
 struct LackOfCohesionParam
