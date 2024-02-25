@@ -214,21 +214,21 @@ public:
     }
   };
 
-  class FunctionStackScope final
+  class FunctionScope final
   {
   private:
     ClangASTVisitor* _visitor;
     model::CppFunctionPtr _curFun;
 
   public:
-    FunctionStackScope(ClangASTVisitor* visitor_) :
+    FunctionScope(ClangASTVisitor* visitor_) :
       _visitor(visitor_),
       _curFun(std::make_shared<model::CppFunction>())
     {
       _visitor->_functionStack.push(_curFun);
     }
 
-    ~FunctionStackScope()
+    ~FunctionScope()
     {
       if (_curFun->astNodeId)
         _visitor->_functions.push_back(_curFun);
@@ -254,101 +254,61 @@ public:
 
   // Traverse Decl
 
-  bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, fd_->getBody());
-    return Base::TraverseFunctionDecl(fd_);
-  }
-
-  bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* dgd_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, dgd_->getBody());
-    return Base::TraverseCXXDeductionGuideDecl(dgd_);
-  }
-
-  bool TraverseCXXMethodDecl(clang::CXXMethodDecl* md_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, md_->getBody());
-    return Base::TraverseCXXMethodDecl(md_);
-  }
-
-  bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* cd_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, cd_->getBody());
-    return Base::TraverseCXXConstructorDecl(cd_);
-  }
-
-  bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* dd_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, dd_->getBody());
-    return Base::TraverseCXXDestructorDecl(dd_);
-  }
-
-  bool TraverseCXXConversionDecl(clang::CXXConversionDecl* cd_)
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, cd_->getBody());
-    return Base::TraverseCXXConversionDecl(cd_);
-  }
-
-
-  bool TraverseRecordDecl(clang::RecordDecl* rd_)
-  {
-    TypeScope ts(this);
-    return Base::TraverseRecordDecl(rd_);
-  }
-
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
     // Although lambda closure types are implicit by nature as far as
     // Clang is concerned, their operator() is not. In order to be able to
     // properly assign symbol location information to AST nodes within
     // lambda bodies, we must force lambdas to be considered explicit.
-    ScopedValue<bool> sv(_isImplicit,
-      _isImplicit && (rd_ == nullptr || !rd_->isLambda()));
-    TypeScope ts(this);
+    ScopedValue<bool> sv(_isImplicit, _isImplicit && !rd_->isLambda());
     return Base::TraverseCXXRecordDecl(rd_);
   }
 
-
-  bool TraverseClassTemplateSpecializationDecl(
-    clang::ClassTemplateSpecializationDecl* rd_)
-  {
-    TypeScope ts(this);
-    return Base::TraverseClassTemplateSpecializationDecl(rd_);
-  }
-
-  bool TraverseClassTemplatePartialSpecializationDecl(
-    clang::ClassTemplatePartialSpecializationDecl* rd_)
-  {
-    TypeScope ts(this);
-    return Base::TraverseClassTemplatePartialSpecializationDecl(rd_);
-  }
-
-
   bool TraverseEnumDecl(clang::EnumDecl* ed_)
   {
+    // Any type of enum must be placed on the enum stack
+    // for the duration of its traversal.
+    // The scope creates a database object for the enum
+    // at the beginning, and persists it at the end.
     EnumScope es(this);
     return Base::TraverseEnumDecl(ed_);
   }
 
 
-  bool TraverseDecl(clang::Decl* decl_)
+  bool TraverseDecl(clang::Decl* d_)
   {
+    if (d_ == nullptr)
+      return Base::TraverseDecl(d_);
+
     // We use implicitness to determine if actual symbol location information
     // should be stored for AST nodes in our database. This differs somewhat
     // from Clang's concept of implicitness.
     // To bridge the gap between the two interpretations, we mostly assume
     // implicitness to be hereditary from parent to child nodes, except
     // in some known special cases (see lambdas in TraverseCXXRecordDecl).
-    ScopedValue<bool> sv(_isImplicit,
-      _isImplicit || (decl_ != nullptr && decl_->isImplicit()));
-    return Base::TraverseDecl(decl_);
+    ScopedValue<bool> sv(_isImplicit, _isImplicit || d_->isImplicit());
+    
+    if (clang::FunctionDecl* fd = llvm::dyn_cast<clang::FunctionDecl>(d_))
+    {
+      // Any type of function must be placed on the function stack
+      // for the duration of its traversal.
+      // The scope creates a database object for the function
+      // at the beginning, and persists it at the end.
+      FunctionScope fs(this);
+      // We must also make an initial scope entry for the function's body.
+      NestedFunctionScope nfs(&_scopeStack, fd->getBody());
+      return Base::TraverseDecl(d_);
+    }
+    else if (clang::RecordDecl* rd = llvm::dyn_cast<clang::RecordDecl>(d_))
+    {
+      // Any type of record/type must be placed on the type stack
+      // for the duration of its traversal.
+      // The scope creates a database object for the record/type
+      // at the beginning, and persists it at the end.
+      TypeScope ts(this);
+      return Base::TraverseDecl(d_);
+    }
+    else return Base::TraverseDecl(d_);
   }
 
 
@@ -394,27 +354,6 @@ public:
     }
   };
 
-  class StmtScope final
-  {
-  private:
-    ClangASTVisitor* _visitor;
-
-  public:
-    StmtScope(
-      ClangASTVisitor* visitor_,
-      clang::Stmt* stmt_
-    ) :
-      _visitor(visitor_)
-    {
-      _visitor->_statements.push(stmt_);
-    }
-
-    ~StmtScope()
-    {
-      _visitor->_statements.pop();
-    }
-  };
-
 
   // Traverse Expr (Expr : Stmt)
 
@@ -446,7 +385,6 @@ public:
   bool TraverseConditionalOperator(clang::ConditionalOperator* co_)
   {
     CountMcCabe();
-    StmtScope ss(this, co_);
     return Base::TraverseConditionalOperator(co_);
   }
 
@@ -454,7 +392,6 @@ public:
     clang::BinaryConditionalOperator* bco_)
   {
     CountMcCabe();
-    StmtScope ss(this, bco_);
     return Base::TraverseBinaryConditionalOperator(bco_);
   }
 
@@ -475,127 +412,108 @@ public:
 
   bool TraverseIfStmt(clang::IfStmt* is_)
   {
-    NestedTwoWayScope scope(&_scopeStack, is_, is_->getThen(), is_->getElse());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, is_);
     return Base::TraverseIfStmt(is_);
   }
 
   bool TraverseWhileStmt(clang::WhileStmt* ws_)
   {
-    NestedOneWayScope scope(&_scopeStack, ws_, ws_->getBody());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, ws_);
     return Base::TraverseWhileStmt(ws_);
   }
 
   bool TraverseDoStmt(clang::DoStmt* ds_)
   {
-    NestedOneWayScope scope(&_scopeStack, ds_, ds_->getBody());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, ds_);
     return Base::TraverseDoStmt(ds_);
   }
 
   bool TraverseForStmt(clang::ForStmt* fs_)
   {
-    NestedOneWayScope scope(&_scopeStack, fs_, fs_->getBody());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, fs_);
     return Base::TraverseForStmt(fs_);
   }
 
   bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* frs_)
   {
-    NestedOneWayScope scope(&_scopeStack, frs_, frs_->getBody());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, frs_);
     return Base::TraverseCXXForRangeStmt(frs_);
-  }
-
-  bool TraverseSwitchStmt(clang::SwitchStmt* ss_)
-  {
-    NestedOneWayScope scope(&_scopeStack, ss_, ss_->getBody());
-    CountBumpiness(scope);
-    StmtScope ss(this, ss_);
-    return Base::TraverseSwitchStmt(ss_);
   }
 
   bool TraverseCaseStmt(clang::CaseStmt* cs_)
   {
     CountMcCabe();
-    StmtScope ss(this, cs_);
     return Base::TraverseCaseStmt(cs_);
   }
 
   bool TraverseDefaultStmt(clang::DefaultStmt* ds_)
   {
     CountMcCabe();
-    StmtScope ss(this, ds_);
     return Base::TraverseDefaultStmt(ds_);
   }
 
   bool TraverseContinueStmt(clang::ContinueStmt* cs_)
   {
     CountMcCabe();
-    StmtScope ss(this, cs_);
     return Base::TraverseContinueStmt(cs_);
   }
 
   bool TraverseGotoStmt(clang::GotoStmt* gs_)
   {
     CountMcCabe();
-    StmtScope ss(this, gs_);
     return Base::TraverseGotoStmt(gs_);
-  }
-
-  bool TraverseCXXTryStmt(clang::CXXTryStmt* ts_)
-  {
-    NestedOneWayScope scope(&_scopeStack, ts_, ts_->getTryBlock());
-    CountBumpiness(scope);
-    StmtScope ss(this, ts_);
-    return Base::TraverseCXXTryStmt(ts_);
   }
 
   bool TraverseCXXCatchStmt(clang::CXXCatchStmt* cs_)
   {
-    NestedOneWayScope scope(&_scopeStack, cs_, cs_->getHandlerBlock());
-    CountBumpiness(scope);
     CountMcCabe();
-    StmtScope ss(this, cs_);
     return Base::TraverseCXXCatchStmt(cs_);
-  }
-
-  bool TraverseCompoundStmt(clang::CompoundStmt* cs_)
-  {
-    NestedCompoundScope scope(&_scopeStack, cs_);
-    CountBumpiness(scope);
-    StmtScope ss(this, cs_);
-    return Base::TraverseCompoundStmt(cs_);
   }
 
 
   bool TraverseStmt(clang::Stmt* s_)
   {
-    if (s_ == nullptr)// This can also happen apparently...
+    if (s_ == nullptr)
       return Base::TraverseStmt(s_);
-    else if (llvm::isa<clang::Expr>(s_))
-    {
-      NestedStatementScope scope(&_scopeStack, s_);
-      CountBumpiness(scope);
-      StmtScope ss(this, s_);
-      return Base::TraverseStmt(s_);
-    }
-    else
-    {
-      StmtScope ss(this, s_);
-      return Base::TraverseStmt(s_);
-    }
+
+    // Create a statement scope for the current statement for the duration
+    // of its traversal. For every statement, there must be exactly one scope.
+    std::unique_ptr<NestedScope> scope;
+    if (clang::IfStmt* is = llvm::dyn_cast<clang::IfStmt>(s_))
+      scope = std::make_unique<NestedTwoWayScope>(&_scopeStack, is, is->getThen(), is->getElse());
+    else if (clang::WhileStmt* ws = llvm::dyn_cast<clang::WhileStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, ws, ws->getBody());
+    else if (clang::DoStmt* ds = llvm::dyn_cast<clang::DoStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, ds, ds->getBody());
+    else if (clang::ForStmt* fs = llvm::dyn_cast<clang::ForStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, fs, fs->getBody());
+    else if (clang::CXXForRangeStmt* frs = llvm::dyn_cast<clang::CXXForRangeStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, frs, frs->getBody());
+    else if (clang::SwitchStmt* ss = llvm::dyn_cast<clang::SwitchStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, ss, ss->getBody());
+    else if (clang::CXXTryStmt* ts = llvm::dyn_cast<clang::CXXTryStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, ts, ts->getTryBlock());
+    else if (clang::CXXCatchStmt* cs = llvm::dyn_cast<clang::CXXCatchStmt>(s_))
+      scope = std::make_unique<NestedOneWayScope>(&_scopeStack, cs, cs->getHandlerBlock());
+    else if (clang::CompoundStmt* cs = llvm::dyn_cast<clang::CompoundStmt>(s_))
+      scope = std::make_unique<NestedCompoundScope>(&_scopeStack, cs);
+    else if (!llvm::isa<clang::SwitchCase>(s_))
+      // This is why we can't do this in the indidvidual handler functions:
+      // There is no Traverse* function equivalent to a general 'else' case
+      // when the current statement is neither of the above specified ones.
+      // By outsourcing scope creation to specialized handlers,
+      // we would lose the information of whether a specialized scope has
+      // already beeen created.
+      // We could theoretically have a general scope for every statement,
+      // plus extra scopes for specialized ones, but then each specialized
+      // statement would essentially be duplicated on the scope stack,
+      // which would disrupt the meaning of actual scopes in the code.
+      scope = std::make_unique<NestedStatementScope>(&_scopeStack, s_);
+    
+    if (scope)
+      CountBumpiness(*scope);
+
+    return Base::TraverseStmt(s_);
   }
 
 
@@ -1211,18 +1129,22 @@ public:
 
   bool VisitDeclStmt(clang::DeclStmt* ds_)
   {
-    assert(_statements.top() == ds_ &&
-      "ds_ was expected to be the top-level statement.");
-    _statements.pop();
-    clang::Stmt* scopeSt = _statements.top();
-    _statements.push(ds_);
+    clang::Stmt* scope;
+    if (_scopeStack.Top()->Statement() == ds_)
+    {
+      assert(_scopeStack.Top()->Previous() != nullptr &&
+        "Declaration statement is not nested in a scope.");
+      scope = _scopeStack.Top()->Previous()->Statement();
+    }
+    else
+      scope = _scopeStack.Top()->Statement();
 
     for (auto it = ds_->decl_begin(); it != ds_->decl_end(); ++it)
     {
       if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
       {
         model::FileLoc loc =
-          getFileLoc(scopeSt->getEndLoc(), scopeSt->getEndLoc());
+          getFileLoc(scope->getEndLoc(), scope->getEndLoc());
         addDestructorUsage(vd->getType(), loc, vd);
       }
     }
@@ -1929,8 +1851,6 @@ private:
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
   NestedStack _scopeStack;
-  // This stack contains the parent chain of the current Stmt.
-  std::stack<clang::Stmt*> _statements;
   // This stack has the same role as _locTo* maps. In case of
   // clang::DeclRefExpr objects we need to determine the contect of the given
   // expression. In this stack we store the deepest statement node in AST which
