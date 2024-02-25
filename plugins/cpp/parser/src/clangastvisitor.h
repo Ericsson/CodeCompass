@@ -39,6 +39,7 @@
 #include <parser/sourcemanager.h>
 #include <util/hash.h>
 #include <util/odbtransaction.h>
+#include <util/scopedvalue.h>
 
 #include <cppparser/filelocutil.h>
 
@@ -193,27 +194,6 @@ public:
     }
   };
 
-  template<typename T>
-  class ScopedValue final
-  {
-  private:
-    T& _storage;
-    T _oldValue;
-
-  public:
-    ScopedValue(T& storage_, const T& newValue_) :
-      _storage(storage_),
-      _oldValue(_storage)
-    {
-      _storage = newValue_;
-    }
-
-    ~ScopedValue()
-    {
-      _storage = _oldValue;
-    }
-  };
-
   class FunctionScope final
   {
   private:
@@ -260,7 +240,7 @@ public:
     // Clang is concerned, their operator() is not. In order to be able to
     // properly assign symbol location information to AST nodes within
     // lambda bodies, we must force lambdas to be considered explicit.
-    ScopedValue<bool> sv(_isImplicit, _isImplicit && !rd_->isLambda());
+    util::ScopedValue<bool> sv(_isImplicit, _isImplicit && !rd_->isLambda());
     return Base::TraverseCXXRecordDecl(rd_);
   }
 
@@ -286,7 +266,7 @@ public:
     // To bridge the gap between the two interpretations, we mostly assume
     // implicitness to be hereditary from parent to child nodes, except
     // in some known special cases (see lambdas in TraverseCXXRecordDecl).
-    ScopedValue<bool> sv(_isImplicit, _isImplicit || d_->isImplicit());
+    util::ScopedValue<bool> sv(_isImplicit, _isImplicit || d_->isImplicit());
     
     if (clang::FunctionDecl* fd = llvm::dyn_cast<clang::FunctionDecl>(d_))
     {
