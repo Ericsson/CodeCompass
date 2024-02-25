@@ -132,30 +132,87 @@ public:
   }
 
 
+  // AST Visitor configuration
+
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
   bool shouldVisitLambdaBody() const { return true; }
   
 
-  bool TraverseDecl(clang::Decl* decl_)
+  // Traverse Decl helpers
+
+  class TypeScope final
   {
-    // We use implicitness to determine if actual symbol location information
-    // should be stored for AST nodes in our database. This differs somewhat
-    // from Clang's concept of implicitness.
-    // To bridge the gap between the two interpretations, we mostly assume
-    // implicitness to be hereditary from parent to child nodes, except
-    // in some known special cases (see lambdas in TraverseCXXRecordDecl).
-    bool wasImplicit = _isImplicit;
-    if (decl_ != nullptr)
-      _isImplicit |= decl_->isImplicit();
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppRecordPtr _type;
 
-    bool b = Base::TraverseDecl(decl_);
+  public:
+    TypeScope(
+      ClangASTVisitor* visitor_
+    ) :
+      _visitor(visitor_),
+      _type(std::make_shared<model::CppRecord>())
+    {
+      _visitor->_typeStack.push(_type);
+    }
 
-    _isImplicit = wasImplicit;
+    ~TypeScope()
+    {
+      assert(_type == _visitor->_typeStack.top() &&
+        "Type scope destruction order has been violated.");
+      if (_type->astNodeId)
+        _visitor->_types.push_back(_type);
+      _visitor->_typeStack.pop();
+    }
+  };
 
-    return b;
-  }
+  class EnumScope final
+  {
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppEnumPtr _enum;
 
+  public:
+    EnumScope(
+      ClangASTVisitor* visitor_
+    ) :
+      _visitor(visitor_),
+      _enum(std::make_shared<model::CppEnum>())
+    {
+      _visitor->_enumStack.push(_enum);
+    }
+
+    ~EnumScope()
+    {
+      assert(_enum == _visitor->_enumStack.top() &&
+        "Enum scope destruction order has been violated.");
+      if (_enum->astNodeId)
+        _visitor->_enums.push_back(_enum);
+      _visitor->_enumStack.pop();
+    }
+  };
+
+  template<typename T>
+  class ScopedValue final
+  {
+  private:
+    T& _storage;
+    T _oldValue;
+
+  public:
+    ScopedValue(T& storage_, const T& newValue_) :
+      _storage(storage_),
+      _oldValue(_storage)
+    {
+      _storage = newValue_;
+    }
+
+    ~ScopedValue()
+    {
+      _storage = _oldValue;
+    }
+  };
 
   class FunctionStackScope final
   {
@@ -194,62 +251,56 @@ public:
     }
   };
 
-  template<typename T>
-  bool FunctionStackDecorator(T* fun_, bool (Base::*base_)(T*))
-  {
-    FunctionStackScope fss(this);
-    NestedFunctionScope nfs(&_scopeStack, fun_->getBody());
-    return (this->*base_)(fun_);
-  }
+
+  // Traverse Decl
 
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
-    return FunctionStackDecorator<clang::FunctionDecl>(fd_,
-      &Base::TraverseFunctionDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, fd_->getBody());
+    return Base::TraverseFunctionDecl(fd_);
   }
 
   bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* dgd_)
   {
-    return FunctionStackDecorator<clang::CXXDeductionGuideDecl>(dgd_,
-      &Base::TraverseCXXDeductionGuideDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, dgd_->getBody());
+    return Base::TraverseCXXDeductionGuideDecl(dgd_);
   }
 
   bool TraverseCXXMethodDecl(clang::CXXMethodDecl* md_)
   {
-    return FunctionStackDecorator<clang::CXXMethodDecl>(md_,
-      &Base::TraverseCXXMethodDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, md_->getBody());
+    return Base::TraverseCXXMethodDecl(md_);
   }
 
   bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* cd_)
   {
-    return FunctionStackDecorator<clang::CXXConstructorDecl>(cd_,
-      &Base::TraverseCXXConstructorDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, cd_->getBody());
+    return Base::TraverseCXXConstructorDecl(cd_);
   }
 
   bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* dd_)
   {
-    return FunctionStackDecorator<clang::CXXDestructorDecl>(dd_,
-      &Base::TraverseCXXDestructorDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, dd_->getBody());
+    return Base::TraverseCXXDestructorDecl(dd_);
   }
 
   bool TraverseCXXConversionDecl(clang::CXXConversionDecl* cd_)
   {
-    return FunctionStackDecorator<clang::CXXConversionDecl>(cd_,
-      &Base::TraverseCXXConversionDecl);
+    FunctionStackScope fss(this);
+    NestedFunctionScope nfs(&_scopeStack, cd_->getBody());
+    return Base::TraverseCXXConversionDecl(cd_);
   }
 
 
   bool TraverseRecordDecl(clang::RecordDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseRecordDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
+    TypeScope ts(this);
+    return Base::TraverseRecordDecl(rd_);
   }
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
@@ -258,134 +309,55 @@ public:
     // Clang is concerned, their operator() is not. In order to be able to
     // properly assign symbol location information to AST nodes within
     // lambda bodies, we must force lambdas to be considered explicit.
-    bool wasImplicit = _isImplicit;
-    if (rd_ != nullptr)
-      _isImplicit &= !rd_->isLambda();
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseCXXRecordDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-    _isImplicit = wasImplicit;
-
-    return b;
+    ScopedValue<bool> sv(_isImplicit,
+      _isImplicit && (rd_ == nullptr || !rd_->isLambda()));
+    TypeScope ts(this);
+    return Base::TraverseCXXRecordDecl(rd_);
   }
 
 
   bool TraverseClassTemplateSpecializationDecl(
     clang::ClassTemplateSpecializationDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseClassTemplateSpecializationDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
+    TypeScope ts(this);
+    return Base::TraverseClassTemplateSpecializationDecl(rd_);
   }
 
   bool TraverseClassTemplatePartialSpecializationDecl(
     clang::ClassTemplatePartialSpecializationDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseClassTemplatePartialSpecializationDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
+    TypeScope ts(this);
+    return Base::TraverseClassTemplatePartialSpecializationDecl(rd_);
   }
+
 
   bool TraverseEnumDecl(clang::EnumDecl* ed_)
   {
-    _enumStack.push(std::make_shared<model::CppEnum>());
-
-    bool b = Base::TraverseEnumDecl(ed_);
-
-    if (_enumStack.top()->astNodeId)
-      _enums.push_back(_enumStack.top());
-    _enumStack.pop();
-
-    return b;
+    EnumScope es(this);
+    return Base::TraverseEnumDecl(ed_);
   }
 
 
-  template<typename T>
-  bool ContextStackDecorator(
-    T* expr_,
-    bool (Base::*base_)(T*, DataRecursionQueue*))
+  bool TraverseDecl(clang::Decl* decl_)
   {
-    _contextStatementStack.push(expr_);
-    bool b = (this->*base_)(expr_, nullptr);
-    _contextStatementStack.pop();
-    return b;
-  }
-
-  bool TraverseCallExpr(clang::CallExpr* ce_)
-  {
-    return ContextStackDecorator<clang::CallExpr>(ce_,
-      &Base::TraverseCallExpr);
-  }
-
-  bool TraverseDeclStmt(clang::DeclStmt* ds_)
-  {
-    return ContextStackDecorator<clang::DeclStmt>(ds_,
-      &Base::TraverseDeclStmt);
-  }
-
-  bool TraverseMemberExpr(clang::MemberExpr* me_)
-  {
-    return ContextStackDecorator<clang::MemberExpr>(me_,
-      &Base::TraverseMemberExpr);
-  }
-
-  bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
-  {
-    if (bo_->isLogicalOp() && !_functionStack.empty())
-      ++_functionStack.top()->mccabe;
-    
-    return ContextStackDecorator<clang::BinaryOperator>(bo_,
-      &Base::TraverseBinaryOperator);
-  }
-
-  bool TraverseReturnStmt(clang::ReturnStmt* rs_)
-  {
-    return ContextStackDecorator<clang::ReturnStmt>(rs_,
-      &Base::TraverseReturnStmt);
-  }
-
-  bool TraverseCXXDeleteExpr(clang::CXXDeleteExpr* de_)
-  {
-    return ContextStackDecorator<clang::CXXDeleteExpr>(de_,
-      &Base::TraverseCXXDeleteExpr);
+    // We use implicitness to determine if actual symbol location information
+    // should be stored for AST nodes in our database. This differs somewhat
+    // from Clang's concept of implicitness.
+    // To bridge the gap between the two interpretations, we mostly assume
+    // implicitness to be hereditary from parent to child nodes, except
+    // in some known special cases (see lambdas in TraverseCXXRecordDecl).
+    ScopedValue<bool> sv(_isImplicit,
+      _isImplicit || (decl_ != nullptr && decl_->isImplicit()));
+    return Base::TraverseDecl(decl_);
   }
 
 
-  template<typename T>
-  bool StatementStackDecorator(
-    T* stmt_,
-    bool (Base::*base_)(T*, DataRecursionQueue*))
-  {
-    _statements.push(stmt_);
-    bool b = (this->*base_)(stmt_, nullptr);
-    _statements.pop();
-    return b;
-  }
+  // Metrics helpers
 
-  template<typename T>
-  bool McCabeDecorator(
-    T* stmt_,
-    bool (Base::*base_)(T*, DataRecursionQueue*))
+  void CountMcCabe()
   {
     if (!_functionStack.empty())
       ++_functionStack.top()->mccabe;
-    return StatementStackDecorator(stmt_, base_);
   }
 
   void CountBumpiness(const NestedScope& scope_)
@@ -398,147 +370,236 @@ public:
     }
   }
 
-  template<typename T>
-  bool ExprStackDecorator(
-    T* expr_,
-    bool (Base::*base_)(T*, DataRecursionQueue*))
-  {
-    NestedStatementScope scope(&_scopeStack, expr_);
-    CountBumpiness(scope);
 
-    return StatementStackDecorator(expr_, base_);
+  // Traverse Stmt helpers
+
+  class CtxStmtScope final
+  {
+  private:
+    ClangASTVisitor* _visitor;
+
+  public:
+    CtxStmtScope(
+      ClangASTVisitor* visitor_,
+      clang::Stmt* stmt_
+    ) :
+      _visitor(visitor_)
+    {
+      _visitor->_contextStatementStack.push(stmt_);
+    }
+
+    ~CtxStmtScope()
+    {
+      _visitor->_contextStatementStack.pop();
+    }
+  };
+
+  class StmtScope final
+  {
+  private:
+    ClangASTVisitor* _visitor;
+
+  public:
+    StmtScope(
+      ClangASTVisitor* visitor_,
+      clang::Stmt* stmt_
+    ) :
+      _visitor(visitor_)
+    {
+      _visitor->_statements.push(stmt_);
+    }
+
+    ~StmtScope()
+    {
+      _visitor->_statements.pop();
+    }
+  };
+
+
+  // Traverse Expr (Expr : Stmt)
+
+  bool TraverseCallExpr(clang::CallExpr* ce_)
+  {
+    CtxStmtScope css(this, ce_);
+    return Base::TraverseCallExpr(ce_);
   }
 
-  template<typename T>
-  bool NestedMcCabeDecorator(
-    T* stmt_,
-    bool (Base::*base_)(T*, DataRecursionQueue*))
+  bool TraverseMemberExpr(clang::MemberExpr* me_)
   {
-    NestedOneWayScope scope(&_scopeStack, stmt_, stmt_->getBody());
-    CountBumpiness(scope);
+    CtxStmtScope css(this, me_);
+    return Base::TraverseMemberExpr(me_);
+  }
 
-    return McCabeDecorator(stmt_, base_);
+  bool TraverseCXXDeleteExpr(clang::CXXDeleteExpr* de_)
+  {
+    CtxStmtScope css(this, de_);
+    return Base::TraverseCXXDeleteExpr(de_);
+  }
+
+  bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
+  {
+    if (bo_->isLogicalOp()) CountMcCabe();
+    CtxStmtScope css(this, bo_);
+    return Base::TraverseBinaryOperator(bo_);
+  }
+
+  bool TraverseConditionalOperator(clang::ConditionalOperator* co_)
+  {
+    CountMcCabe();
+    StmtScope ss(this, co_);
+    return Base::TraverseConditionalOperator(co_);
+  }
+
+  bool TraverseBinaryConditionalOperator(
+    clang::BinaryConditionalOperator* bco_)
+  {
+    CountMcCabe();
+    StmtScope ss(this, bco_);
+    return Base::TraverseBinaryConditionalOperator(bco_);
+  }
+
+
+  // Traverse Stmt
+
+  bool TraverseDeclStmt(clang::DeclStmt* ds_)
+  {
+    CtxStmtScope css(this, ds_);
+    return Base::TraverseDeclStmt(ds_);
+  }
+
+  bool TraverseReturnStmt(clang::ReturnStmt* rs_)
+  {
+    CtxStmtScope css(this, rs_);
+    return Base::TraverseReturnStmt(rs_);
   }
 
   bool TraverseIfStmt(clang::IfStmt* is_)
   {
-    NestedTwoWayScope scope(
-      &_scopeStack, is_, is_->getThen(), is_->getElse());
+    NestedTwoWayScope scope(&_scopeStack, is_, is_->getThen(), is_->getElse());
     CountBumpiness(scope);
-
-    return McCabeDecorator<clang::IfStmt>(is_,
-      &Base::TraverseIfStmt);
+    CountMcCabe();
+    StmtScope ss(this, is_);
+    return Base::TraverseIfStmt(is_);
   }
 
   bool TraverseWhileStmt(clang::WhileStmt* ws_)
   {
-    return NestedMcCabeDecorator<clang::WhileStmt>(ws_,
-      &Base::TraverseWhileStmt);
+    NestedOneWayScope scope(&_scopeStack, ws_, ws_->getBody());
+    CountBumpiness(scope);
+    CountMcCabe();
+    StmtScope ss(this, ws_);
+    return Base::TraverseWhileStmt(ws_);
   }
 
   bool TraverseDoStmt(clang::DoStmt* ds_)
   {
-    return NestedMcCabeDecorator<clang::DoStmt>(ds_,
-      &Base::TraverseDoStmt);
+    NestedOneWayScope scope(&_scopeStack, ds_, ds_->getBody());
+    CountBumpiness(scope);
+    CountMcCabe();
+    StmtScope ss(this, ds_);
+    return Base::TraverseDoStmt(ds_);
   }
 
   bool TraverseForStmt(clang::ForStmt* fs_)
   {
-    return NestedMcCabeDecorator<clang::ForStmt>(fs_,
-      &Base::TraverseForStmt);
+    NestedOneWayScope scope(&_scopeStack, fs_, fs_->getBody());
+    CountBumpiness(scope);
+    CountMcCabe();
+    StmtScope ss(this, fs_);
+    return Base::TraverseForStmt(fs_);
   }
 
   bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* frs_)
   {
-    return NestedMcCabeDecorator<clang::CXXForRangeStmt>(frs_,
-      &Base::TraverseCXXForRangeStmt);
+    NestedOneWayScope scope(&_scopeStack, frs_, frs_->getBody());
+    CountBumpiness(scope);
+    CountMcCabe();
+    StmtScope ss(this, frs_);
+    return Base::TraverseCXXForRangeStmt(frs_);
   }
 
   bool TraverseSwitchStmt(clang::SwitchStmt* ss_)
   {
     NestedOneWayScope scope(&_scopeStack, ss_, ss_->getBody());
     CountBumpiness(scope);
-
-    return StatementStackDecorator<clang::SwitchStmt>(ss_,
-      &Base::TraverseSwitchStmt);
+    StmtScope ss(this, ss_);
+    return Base::TraverseSwitchStmt(ss_);
   }
 
   bool TraverseCaseStmt(clang::CaseStmt* cs_)
   {
-    return McCabeDecorator<clang::CaseStmt>(cs_,
-      &Base::TraverseCaseStmt);
+    CountMcCabe();
+    StmtScope ss(this, cs_);
+    return Base::TraverseCaseStmt(cs_);
   }
 
   bool TraverseDefaultStmt(clang::DefaultStmt* ds_)
   {
-    return McCabeDecorator<clang::DefaultStmt>(ds_,
-      &Base::TraverseDefaultStmt);
+    CountMcCabe();
+    StmtScope ss(this, ds_);
+    return Base::TraverseDefaultStmt(ds_);
   }
 
   bool TraverseContinueStmt(clang::ContinueStmt* cs_)
   {
-    return McCabeDecorator<clang::ContinueStmt>(cs_,
-      &Base::TraverseContinueStmt);
+    CountMcCabe();
+    StmtScope ss(this, cs_);
+    return Base::TraverseContinueStmt(cs_);
   }
 
   bool TraverseGotoStmt(clang::GotoStmt* gs_)
   {
-    return McCabeDecorator<clang::GotoStmt>(gs_,
-      &Base::TraverseGotoStmt);
+    CountMcCabe();
+    StmtScope ss(this, gs_);
+    return Base::TraverseGotoStmt(gs_);
   }
 
   bool TraverseCXXTryStmt(clang::CXXTryStmt* ts_)
   {
     NestedOneWayScope scope(&_scopeStack, ts_, ts_->getTryBlock());
     CountBumpiness(scope);
-
-    return StatementStackDecorator<clang::CXXTryStmt>(ts_,
-      &Base::TraverseCXXTryStmt);
+    StmtScope ss(this, ts_);
+    return Base::TraverseCXXTryStmt(ts_);
   }
 
   bool TraverseCXXCatchStmt(clang::CXXCatchStmt* cs_)
   {
     NestedOneWayScope scope(&_scopeStack, cs_, cs_->getHandlerBlock());
     CountBumpiness(scope);
-
-    return McCabeDecorator<clang::CXXCatchStmt>(cs_,
-      &Base::TraverseCXXCatchStmt);
-  }
-
-  bool TraverseConditionalOperator(clang::ConditionalOperator* co_)
-  {
-    return McCabeDecorator<clang::ConditionalOperator>(co_,
-      &Base::TraverseConditionalOperator);
-  }
-
-  bool TraverseBinaryConditionalOperator(
-    clang::BinaryConditionalOperator* bco_)
-  {
-    return McCabeDecorator<clang::BinaryConditionalOperator>(bco_,
-      &Base::TraverseBinaryConditionalOperator);
+    CountMcCabe();
+    StmtScope ss(this, cs_);
+    return Base::TraverseCXXCatchStmt(cs_);
   }
 
   bool TraverseCompoundStmt(clang::CompoundStmt* cs_)
   {
     NestedCompoundScope scope(&_scopeStack, cs_);
     CountBumpiness(scope);
-
-    return StatementStackDecorator<clang::CompoundStmt>(cs_,
-      &Base::TraverseCompoundStmt);
+    StmtScope ss(this, cs_);
+    return Base::TraverseCompoundStmt(cs_);
   }
+
 
   bool TraverseStmt(clang::Stmt* s_)
   {
     if (s_ == nullptr)// This can also happen apparently...
       return Base::TraverseStmt(s_);
     else if (llvm::isa<clang::Expr>(s_))
-      return ExprStackDecorator<clang::Stmt>(s_,
-        &Base::TraverseStmt);
+    {
+      NestedStatementScope scope(&_scopeStack, s_);
+      CountBumpiness(scope);
+      StmtScope ss(this, s_);
+      return Base::TraverseStmt(s_);
+    }
     else
-      return StatementStackDecorator<clang::Stmt>(s_,
-        &Base::TraverseStmt);
+    {
+      StmtScope ss(this, s_);
+      return Base::TraverseStmt(s_);
+    }
   }
 
+
+   // Visit functions
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
   {
