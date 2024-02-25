@@ -140,7 +140,7 @@ std::vector<BumpyRoadParam> paramBumpyRoad = {
   {"compare_level1", 7, 4},
   {"compare_level2", 12, 5},
   {"compare_level3", 18, 6},
-  {"complex_two_levels", 18, 11},
+  {"complex_two_levels", 17, 10},
   {"complex_three_levels_min", 14, 8},
   {"complex_three_levels_max", 23, 8},
   {"nested_lambda()" BR_LAM "()" BR_LAM "()" BR_LAM, 1, 1},
