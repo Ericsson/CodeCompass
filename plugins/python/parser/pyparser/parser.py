@@ -10,7 +10,7 @@ config = {
 def log(msg):
     print(f"[PythonParser] {msg}")
 
-def project_config(root_path, venv_path = None):
+def project_config(root_path, venv_path, sys_path):
     
     config["root_path"] = root_path
 
@@ -19,8 +19,13 @@ def project_config(root_path, venv_path = None):
             jedi.create_environment(venv_path)
             config["venv_path"] = venv_path
             log(f"Using virtual environment: {venv_path}")
+        else:
+            venv_path = None
+
+        if sys_path:
+            log(f"Using additional syspath: {sys_path}")
         
-        config["project"] = jedi.Project(path = root_path, environment_path = venv_path)
+        config["project"] = jedi.Project(path = root_path, environment_path = venv_path, added_sys_path = sys_path)
 
     except:
         log(f"Failed to use virtual environment: {venv_path}")

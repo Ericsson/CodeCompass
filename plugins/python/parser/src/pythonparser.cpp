@@ -3,6 +3,7 @@
 #include <util/logutil.h>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace cc
 {
@@ -25,21 +26,29 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   {
     PyErr_Print();
   }
-
 }
 
 void PythonParser::prepareInput(const std::string& root_path)
 {
   try {
-    if (_ctx.options.count("venv"))
+    std::string venv;
+    python::list sys_path;
+
+    if(_ctx.options.count("syspath"))
     {
-      std::string venv = _ctx.options["venv"].as<std::string>();
-      m_py_module.attr("project_config")(root_path, venv);
+      std::vector<std::string> vec = _ctx.options["syspath"].as<std::vector<std::string>>();
+      for(const std::string& s : vec)
+      {
+        sys_path.append(s);
+      }
     }
-    else
+
+    if (_ctx.options.count("venvpath"))
     {
-      m_py_module.attr("project_config")(root_path);
+      venv = _ctx.options["venvpath"].as<std::string>();
     }
+
+    m_py_module.attr("project_config")(root_path, venv, sys_path);
   
   }catch (const python::error_already_set&)
   {
@@ -176,8 +185,10 @@ extern "C"
   {
     boost::program_options::options_description description("Python Plugin");
     description.add_options()
-      ("venv", po::value<std::string>(),
-       "Set 'venv' to specify the project's Python virtual environment path.");
+      ("venvpath", po::value<std::string>(),
+        "Set 'venvpath' to specify the project's Python virtual environment path.")
+      ("syspath", po::value<std::vector<std::string>>(),
+        "Additional sys path for the parser.");
 
     return description;
   }
