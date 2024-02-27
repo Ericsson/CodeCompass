@@ -19,6 +19,7 @@ struct CppAstNodeMetrics
     MCCABE,
     LACK_OF_COHESION,
     LACK_OF_COHESION_HS,
+    EFFERENT_TYPE
   };
 
   #pragma db id auto
