@@ -71,7 +71,11 @@ double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
       CppAstNodeMetricsQuery::type == static_cast<model::CppAstNodeMetrics::Type>(metric_));
 
     if (nodeMetric.empty())
-      return -DBL_MAX;
+    {
+      core::InvalidInput ex;
+      ex.__set_msg("Invalid metric type for AST node: " + astNodeId_);
+      throw ex;
+    }
 
     return nodeMetric.begin()->value;
   });
