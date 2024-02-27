@@ -188,7 +188,7 @@ void PythonServiceHandler::getReferences(
     for(const model::PYName& pyname : nodes)
     {
       AstNodeInfo info;
-      info.id = pyname.id;
+      info.id = std::to_string(pyname.id);
       info.astNodeType = pyname.type;
       info.range.file = std::to_string(pyname.file_id);
       info.range.range.startpos.line = pyname.line_start;
