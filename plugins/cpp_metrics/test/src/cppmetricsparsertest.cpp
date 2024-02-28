@@ -80,7 +80,7 @@ std::vector<McCabeParam> paramMcCabe = {
   {"MyClass::MyClass", 2},
   {"MyClass::~MyClass", 2},
   {"MyClass::operator bool", 1},
-  {"MyClass::operator char *", 1},
+  {"MyClass::operator unsigned int", 1},
   {"MyClass::method1", 8},
   {"NoBody1::NoBody1", 1},
   {"NoBody2::NoBody2", 1},
