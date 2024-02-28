@@ -180,13 +180,7 @@ public:
 class NoBody3
 {
 public:
-	NoBody3(NoBody3&& other) = delete; // 1
+	virtual ~NoBody3(); // -
 };
 
-class NoBody4
-{
-public:
-	virtual ~NoBody4(); // -
-};
-
-NoBody4::~NoBody4() = default; // 1
+NoBody3::~NoBody3() = default; // 1

@@ -84,8 +84,7 @@ std::vector<McCabeParam> paramMcCabe = {
   {"MyClass::method1", 8},
   {"NoBody1::NoBody1", 1},
   {"NoBody2::NoBody2", 1},
-  {"NoBody3::NoBody3", 1},
-  {"NoBody4::NoBody4", 1},
+  {"NoBody3::~NoBody3", 1},
 };
 
 TEST_P(ParameterizedMcCabeTest, McCabeTest) {
