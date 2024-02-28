@@ -5,15 +5,51 @@ namespace cc
 namespace parser
 {
 
-  NestedScope::NestedScope(
-    NestedStack* stack_,
+  StatementScope* StatementStack::TopValid() const
+  {
+    StatementScope* top = _top;
+    while (top != nullptr && top->_state == StatementScope::State::Invalid)
+      top = top->Previous();
+    return top;
+  }
+
+
+  StatementScope::State StatementScope::CheckNext(clang::Stmt* stmt_)
+  {
+    if (_state == State::Invalid)
+      return State::Invalid;
+    EnsureConfigured();
+    switch (_kind)
+    {
+      case Kind::Open:
+        return State::Standalone;
+      case Kind::Closed:
+        return State::Invalid;
+      case Kind::OneWay:
+        return (stmt_ == _exp0)
+          ? State::Expected : State::Invalid;
+      case Kind::TwoWay:
+        return (stmt_ == _exp0 || stmt_ == _exp1)
+          ? State::Expected : State::Invalid;
+      default:
+        assert(false && "This scope has not been configured yet.");
+        return State::Invalid;
+    }
+  }
+
+
+  StatementScope::StatementScope(
+    StatementStack* stack_,
     clang::Stmt* stmt_
   ) :
     _stack(stack_),
     _previous(_stack->_top),
     _stmt(stmt_),
     _depth(0),
-    _state(State::Initial)
+    _state(State::Initial),
+    _kind(Kind::Unknown),
+    _exp0(nullptr),
+    _exp1(nullptr)
   {
     if (_previous != nullptr)
     {
@@ -21,118 +57,110 @@ namespace parser
       if (_stmt != nullptr)
         _state = _previous->CheckNext(_stmt);
     }
-
-    if (_state != State::Invalid)
-      _stack->_top = this;
+    _stack->_top = this;
   }
 
-  NestedScope::~NestedScope()
+  StatementScope::~StatementScope()
   {
-    if (_state != State::Invalid)
-    {
-      assert(_stack->_top == this &&
-        "Scope destruction order has been violated.");
-      _stack->_top = _previous;
-    }
+    assert(_stack->_top == this &&
+      "Scope destruction order has been violated.");
+    _stack->_top = _previous;
   }
 
 
-  NestedScope::State NestedTransparentScope::CheckNext(clang::Stmt*) const
+  void StatementScope::EnsureConfigured()
   {
+    if (_kind == Kind::Unknown)
+      MakeStatement();
+  }
+
+  void StatementScope::MakeTransparent()
+  {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
     // Anything inside a transparent statement block is standalone,
     // we do not expect any particular type of statement to be nested in it.
-    return State::Standalone;
+    _kind = Kind::Open;
   }
 
-  NestedTransparentScope::NestedTransparentScope(
-    NestedStack* stack_,
-    clang::Stmt* stmt_
-  ) :
-    NestedScope(stack_, stmt_)
-  {}
-
-
-  NestedCompoundScope::NestedCompoundScope(
-    NestedStack* stack_,
-    clang::Stmt* stmt_
-  ) :
-    NestedTransparentScope(stack_, stmt_)
+  void StatementScope::MakeCompound()
   {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
+    // Anything inside a compound statement block is standalone,
+    // we do not expect any particular type of statement to be nested in it.
+    _kind = Kind::Open;
+
     // A compound statement block only counts as a non-transparent scope
     // when it is not the expected body of any other statement.
     if (_state == State::Standalone)
       ++_depth;
   }
 
-
-  NestedScope::State NestedStatementScope::CheckNext(clang::Stmt*) const
+  void StatementScope::MakeStatement()
   {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
     // A non-specialized statement scope is a single statement.
     // Anything inside a single statement (e.g sub-expressions) is not
     // something to be counted towards the total bumpiness of a function.
-    return State::Invalid;
-  }
+    _kind = Kind::Closed;
 
-  NestedStatementScope::NestedStatementScope(
-    NestedStack* stack_,
-    clang::Stmt* stmt_
-  ) :
-    NestedScope(stack_, stmt_)
-  {
     // As long as the statement itself is valid on the stack,
     // it is a real scoped statement.
     if (_state != State::Invalid)
       ++_depth;
   }
 
-
-  NestedScope::State NestedOneWayScope::CheckNext(clang::Stmt* stmt_) const
+  void StatementScope::MakeOneWay(clang::Stmt* next_)
   {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
     // A one-way scope expects a particular statement to be nested inside it.
     // Anything else above it on the stack is invalid.
-    return (stmt_ == _next)
-      ? State::Expected : State::Invalid;
+    _kind = Kind::OneWay;
+    _exp0 = next_;
+
+    // As long as the statement itself is valid on the stack,
+    // it is a real scoped statement.
+    if (_state != State::Invalid)
+      ++_depth;
   }
 
-  NestedOneWayScope::NestedOneWayScope(
-    NestedStack* stack_,
-    clang::Stmt* stmt_,
-    clang::Stmt* next_
-  ) :
-    NestedStatementScope(stack_, stmt_),
-    _next(next_)
-  {}
-
-
-  NestedFunctionScope::NestedFunctionScope(
-    NestedStack* stack_,
-    clang::Stmt* next_
-  ) :
-    NestedOneWayScope(stack_, nullptr, next_)
+  void StatementScope::MakeFunction(clang::Stmt* body_)
   {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
+    // A function scope expects its body to be nested inside it.
+    // Anything else above it on the stack is invalid.
+    _kind = Kind::OneWay;
+    _exp0 = body_;
+
     // The level of nestedness always starts from zero at the function level.
     _depth = 0;
   }
 
-
-  NestedScope::State NestedTwoWayScope::CheckNext(clang::Stmt* stmt_) const
+  void StatementScope::MakeTwoWay(clang::Stmt* next0_, clang::Stmt* next1_)
   {
+    assert(_kind == Kind::Unknown &&
+      "Scope has already been configured; it cannot be reconfigured.");
+
     // A two-way scope expects either of two particular statements to be
     // nested inside it. Anything else above it on the stack is invalid.
-    return (stmt_ == _next0 || stmt_ == _next1)
-      ? State::Expected : State::Invalid;
-  }
+    _kind = Kind::TwoWay;
+    _exp0 = next0_;
+    _exp1 = next1_;
 
-  NestedTwoWayScope::NestedTwoWayScope(
-    NestedStack* stack_,
-    clang::Stmt* stmt_,
-    clang::Stmt* next0_,
-    clang::Stmt* next1_
-  ) :
-    NestedStatementScope(stack_, stmt_),
-    _next0(next0_),
-    _next1(next1_)
-  {}
+    // As long as the statement itself is valid on the stack,
+    // it is a real scoped statement.
+    if (_state != State::Invalid)
+      ++_depth;
+  }
 
 }
 }
