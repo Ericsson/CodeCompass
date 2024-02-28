@@ -56,11 +56,17 @@ namespace parser
     virtual ~NestedScope();
   };
 
-  class NestedCompoundScope : public NestedScope
+  class NestedTransparentScope : public NestedScope
   {
   protected:
     virtual State CheckNext(clang::Stmt* stmt_) const override;
 
+  public:
+    NestedTransparentScope(NestedStack* stack_, clang::Stmt* stmt_);
+  };
+
+  class NestedCompoundScope : public NestedTransparentScope
+  {
   public:
     NestedCompoundScope(NestedStack* stack_, clang::Stmt* stmt_);
   };

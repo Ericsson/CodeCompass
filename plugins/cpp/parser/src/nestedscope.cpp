@@ -37,21 +37,29 @@ namespace parser
   }
 
 
-  NestedScope::State NestedCompoundScope::CheckNext(clang::Stmt*) const
+  NestedScope::State NestedTransparentScope::CheckNext(clang::Stmt*) const
   {
-    // Anything inside a compound statement block is standalone,
+    // Anything inside a transparent statement block is standalone,
     // we do not expect any particular type of statement to be nested in it.
     return State::Standalone;
   }
+
+  NestedTransparentScope::NestedTransparentScope(
+    NestedStack* stack_,
+    clang::Stmt* stmt_
+  ) :
+    NestedScope(stack_, stmt_)
+  {}
+
 
   NestedCompoundScope::NestedCompoundScope(
     NestedStack* stack_,
     clang::Stmt* stmt_
   ) :
-    NestedScope(stack_, stmt_)
+    NestedTransparentScope(stack_, stmt_)
   {
-    // A compound statement block only counts as a real scope when it is
-    // not the expected body of any other statement (e.g. if, while, ...)
+    // A compound statement block only counts as a non-transparent scope
+    // when it is not the expected body of any other statement.
     if (_state == State::Standalone)
       ++_depth;
   }

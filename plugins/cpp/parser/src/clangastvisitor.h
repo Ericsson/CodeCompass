@@ -477,7 +477,9 @@ public:
       scope = std::make_unique<NestedOneWayScope>(&_scopeStack, cs, cs->getHandlerBlock());
     else if (clang::CompoundStmt* cs = llvm::dyn_cast<clang::CompoundStmt>(s_))
       scope = std::make_unique<NestedCompoundScope>(&_scopeStack, cs);
-    else if (!llvm::isa<clang::SwitchCase>(s_))
+    else if (clang::SwitchCase* sc = llvm::dyn_cast<clang::SwitchCase>(s_))
+      scope = std::make_unique<NestedTransparentScope>(&_scopeStack, sc);
+    else
       // This is why we can't do this in the indidvidual handler functions:
       // There is no Traverse* function equivalent to a general 'else' case
       // when the current statement is neither of the above specified ones.
@@ -489,9 +491,7 @@ public:
       // statement would essentially be duplicated on the scope stack,
       // which would disrupt the meaning of actual scopes in the code.
       scope = std::make_unique<NestedStatementScope>(&_scopeStack, s_);
-    
-    if (scope)
-      CountBumpiness(*scope);
+    CountBumpiness(*scope);
 
     return Base::TraverseStmt(s_);
   }
