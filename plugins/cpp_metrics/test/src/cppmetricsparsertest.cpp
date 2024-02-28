@@ -90,11 +90,11 @@ std::vector<McCabeParam> paramMcCabe = {
 
 TEST_P(ParameterizedMcCabeTest, McCabeTest) {
   _transaction([&, this]() {
+    typedef odb::query<model::CppFunction> QFun;
     model::CppFunction func = _db->query_value<model::CppFunction>(
-      odb::query<model::CppFunction>::qualifiedName == GetParam().first);
+      QFun::qualifiedName == GetParam().first && QFun::mccabe != 0);
 
-    if (func.mccabe != 0)
-      EXPECT_EQ(GetParam().second, func.mccabe);
+    EXPECT_EQ(GetParam().second, func.mccabe);
   });
 }
 
@@ -155,8 +155,9 @@ std::vector<BumpyRoadParam> paramBumpyRoad = {
 
 TEST_P(ParameterizedBumpyRoadTest, BumpyRoadTest) {
   _transaction([&, this]() {
+    typedef odb::query<model::CppFunction> QFun;
     model::CppFunction func = _db->query_value<model::CppFunction>(
-      odb::query<model::CppFunction>::qualifiedName == GetParam().funName);
+      QFun::qualifiedName == GetParam().funName);
 
     EXPECT_EQ(GetParam().expBumpiness, func.bumpiness);
     EXPECT_EQ(GetParam().expStmtCount, func.statementCount);

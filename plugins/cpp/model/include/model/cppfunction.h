@@ -102,9 +102,6 @@ struct CppFunctionBumpyRoad
 
   #pragma db column(File::path)
   std::string filePath;
-
-  #pragma db column(CppFunction::qualifiedName)
-  std::string qualName;
 };
 
 }
