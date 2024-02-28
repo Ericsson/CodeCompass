@@ -112,20 +112,21 @@ public:
   MyClass(unsigned int arg1) // +1
   {
     if (arg1 < LIMIT) // +1
-      badPractice = new char[LIMIT];
+      size = LIMIT;
     else
-      badPractice = new char[arg1];
+      size = arg1;
+    badPractice = new char[size];
   } // 2
 
   ~MyClass() // +1
   {
-    for (unsigned int i = 0; i < LIMIT; ++i) {} // +1
+    for (unsigned int i = 0; i < size; ++i) {} // +1
     delete[] badPractice;
   } // 2
 
   void method1(int arg1); // -
   
-  operator char*() const; // -
+  operator unsigned int() const; // -
   
   explicit operator bool() const // +1
   {
@@ -133,13 +134,15 @@ public:
   } // 1
   
 private:
-  const unsigned int LIMIT = 42;
+  static constexpr unsigned int LIMIT = 42;
+
   char* badPractice;
+  unsigned int size;
 };
 
-MyClass::operator char*() const // +1
+MyClass::operator unsigned int() const // +1
 {
-  return badPractice;
+  return size;
 } // 1
 
 void MyClass::method1(int arg1) // +1
