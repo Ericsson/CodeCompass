@@ -8,43 +8,58 @@ namespace cc
 namespace parser
 {
 
-  class NestedScope;
+  class StatementScope;
 
-  class NestedStack final
+  class StatementStack final
   {
-    friend class NestedScope;
+    friend class StatementScope;
 
   private:
-    NestedScope* _top;
+    StatementScope* _top;
 
   public:
-    NestedScope* Top() const { return _top; }
+    StatementScope* Top() const { return _top; }
+    StatementScope* TopValid() const;
 
-    NestedStack() : _top(nullptr) {}
+    StatementStack() : _top(nullptr) {}
   };
 
-  class NestedScope
+  class StatementScope final
   {
+    friend class StatementStack;
+    
   protected:
     enum class State : unsigned char
     {
-      Initial,
-      Expected,
-      Standalone,
-      Invalid,
+      Initial,// This statement is the root in its function.
+      Expected,// This statement was expected to be nested inside its parent.
+      Standalone,// This statement was not expected, but not forbidden either.
+      Invalid,// This statement was not expected to be on the stack.
     };
 
-    NestedStack* _stack;
-    NestedScope* _previous;
+    enum class Kind : unsigned char
+    {
+      Unknown,// This scope has not been configured yet.
+      Open,// Any statement can be nested inside this statement.
+      Closed,// No other statement is allowed to be nested inside.
+      OneWay,// Only one specific statement is allowed to be nested inside.
+      TwoWay,// Only two specific statements are allowed to be nested inside.
+    };
+
+    StatementStack* _stack;
+    StatementScope* _previous;
     clang::Stmt* _stmt;
     unsigned int _depth;
     State _state;
+    Kind _kind;
+    clang::Stmt* _exp0;
+    clang::Stmt* _exp1;
 
-    virtual State CheckNext(clang::Stmt* stmt_) const = 0;
+    State CheckNext(clang::Stmt* stmt_);
 
   public:
-    NestedStack* Stack() const { return _stack; }
-    NestedScope* Previous() const { return _previous; }
+    StatementStack* Stack() const { return _stack; }
+    StatementScope* Previous() const { return _previous; }
     clang::Stmt* Statement() const { return _stmt; }
 
     unsigned int PrevDepth() const
@@ -52,73 +67,16 @@ namespace parser
     unsigned int Depth() const { return _depth; }
     bool IsReal() const { return Depth() > PrevDepth(); }
 
-    NestedScope(NestedStack* stack_, clang::Stmt* stmt_);
-    virtual ~NestedScope();
-  };
+    StatementScope(StatementStack* stack_, clang::Stmt* stmt_);
+    ~StatementScope();
 
-  class NestedTransparentScope : public NestedScope
-  {
-  protected:
-    virtual State CheckNext(clang::Stmt* stmt_) const override;
-
-  public:
-    NestedTransparentScope(NestedStack* stack_, clang::Stmt* stmt_);
-  };
-
-  class NestedCompoundScope : public NestedTransparentScope
-  {
-  public:
-    NestedCompoundScope(NestedStack* stack_, clang::Stmt* stmt_);
-  };
-
-  class NestedStatementScope : public NestedScope
-  {
-  protected:
-    virtual State CheckNext(clang::Stmt* stmt_) const override;
-
-  public:
-    NestedStatementScope(NestedStack* stack_, clang::Stmt* stmt_);
-  };
-
-  class NestedOneWayScope : public NestedStatementScope
-  {
-  protected:
-    clang::Stmt* _next;
-
-    virtual State CheckNext(clang::Stmt* stmt_) const override;
-
-  public:
-    NestedOneWayScope(
-      NestedStack* stack_,
-      clang::Stmt* stmt_,
-      clang::Stmt* next_
-    );
-  };
-  
-  class NestedFunctionScope : public NestedOneWayScope
-  {
-  public:
-    NestedFunctionScope(
-      NestedStack* stack_,
-      clang::Stmt* next_
-    );
-  };
-  
-  class NestedTwoWayScope : public NestedStatementScope
-  {
-  protected:
-    clang::Stmt* _next0;
-    clang::Stmt* _next1;
-
-    virtual State CheckNext(clang::Stmt* stmt_) const override;
-
-  public:
-    NestedTwoWayScope(
-      NestedStack* stack_,
-      clang::Stmt* stmt_,
-      clang::Stmt* next0_,
-      clang::Stmt* next1_
-    );
+    void EnsureConfigured();
+    void MakeTransparent();
+    void MakeCompound();
+    void MakeStatement();
+    void MakeOneWay(clang::Stmt* next_);
+    void MakeFunction(clang::Stmt* body_);
+    void MakeTwoWay(clang::Stmt* next0_, clang::Stmt* next1_);
   };
 
 }
