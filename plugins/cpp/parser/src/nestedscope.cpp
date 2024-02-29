@@ -14,11 +14,10 @@ namespace parser
   }
 
 
-  StatementScope::State StatementScope::CheckNext(clang::Stmt* stmt_)
+  StatementScope::State StatementScope::CheckNext(clang::Stmt* stmt_) const
   {
     if (_state == State::Invalid)
       return State::Invalid;
-    EnsureConfigured();
     switch (_kind)
     {
       case Kind::Open:
@@ -53,6 +52,7 @@ namespace parser
   {
     if (_previous != nullptr)
     {
+      _previous->EnsureConfigured();
       _depth = _previous->_depth;
       if (_stmt != nullptr)
         _state = _previous->CheckNext(_stmt);

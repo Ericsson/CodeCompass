@@ -28,7 +28,7 @@ namespace parser
   {
     friend class StatementStack;
     
-  protected:
+  private:
     enum class State : unsigned char
     {
       Initial,// This statement is the root in its function.
@@ -55,7 +55,7 @@ namespace parser
     clang::Stmt* _exp0;
     clang::Stmt* _exp1;
 
-    State CheckNext(clang::Stmt* stmt_);
+    State CheckNext(clang::Stmt* stmt_) const;
 
   public:
     StatementStack* Stack() const { return _stack; }
