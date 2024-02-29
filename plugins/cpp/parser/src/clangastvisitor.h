@@ -306,6 +306,7 @@ public:
       ++_functionStack.top()->mccabe;
   }
 
+
   void CountBumpiness(const StatementScope& scope_)
   {
     if (!_functionStack.empty() && scope_.IsReal())
