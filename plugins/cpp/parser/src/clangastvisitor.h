@@ -283,7 +283,7 @@ public:
       // We must also make an initial scope entry for the function's body.
       StatementScope ss(&_stmtStack, nullptr);
       ss.MakeFunction(fd->getBody());
-      return Base::TraverseDecl(d_);
+      return Base::TraverseDecl(fd);
     }
     else if (clang::RecordDecl* rd = llvm::dyn_cast<clang::RecordDecl>(d_))
     {
@@ -292,7 +292,7 @@ public:
       // The scope creates a database object for the record/type
       // at the beginning, and persists it at the end.
       TypeScope ts(this);
-      return Base::TraverseDecl(d_);
+      return Base::TraverseDecl(rd);
     }
     else return Base::TraverseDecl(d_);
   }

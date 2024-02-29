@@ -6,7 +6,7 @@
   const auto v1 = val1; const auto v2 = val2; \
   const bool n1 = isnan(v1); const bool n2 = isnan(v2); \
   EXPECT_EQ(n1, n2); \
-  if (!n1 && !n2) EXPECT_NEAR(v1, v2, abs_error); \
+  if (!n1 && !n2) { EXPECT_NEAR(v1, v2, abs_error); } \
 }
 
 #include <model/cppfunction.h>
