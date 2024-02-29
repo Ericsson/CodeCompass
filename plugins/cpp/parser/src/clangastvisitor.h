@@ -210,6 +210,8 @@ public:
 
     ~FunctionScope()
     {
+      assert(_curFun == _visitor->_functionStack.top() &&
+        "Function scope destruction order has been violated.");
       if (_curFun->astNodeId)
         _visitor->_functions.push_back(_curFun);
       _visitor->_functionStack.pop();
