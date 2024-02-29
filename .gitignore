@@ -16,23 +16,3 @@ build_*/
 install/
 install_*/
 
-compile_commands.json
-CMakeFiles/cmake.check_cache
-CMakeFiles/CMakeError.log
-CMakeFiles/CMakeOutput.log
-CMakeFiles/3.16.3/CMakeCCompiler.cmake
-CMakeFiles/3.16.3/CMakeCXXCompiler.cmake
-CMakeFiles/3.16.3/CMakeDetermineCompilerABI_C.bin
-CMakeFiles/3.16.3/CMakeDetermineCompilerABI_CXX.bin
-CMakeFiles/3.16.3/CMakeSystem.cmake
-CMakeFiles/3.16.3/CompilerIdC/a.out
-CMakeFiles/3.16.3/CompilerIdC/CMakeCCompilerId.c
-CMakeFiles/3.16.3/CompilerIdCXX/a.out
-CMakeFiles/3.16.3/CompilerIdCXX/CMakeCXXCompilerId.cpp
-plugins/CMakeFiles/CMakeLists.txt
-plugins/search/common/CMakeFiles/searchcommonjava.dir/java_sources
-plugins/search/indexer/CMakeFiles/searchindexerthriftjava.dir/java_sources
-plugins/search/indexer/indexer-java/CMakeFiles/searchindexerjava.dir/java_sources
-plugins/search/service/CMakeFiles/searchthriftjava.dir/java_sources
-plugins/search/service/search-java/CMakeFiles/searchservicejava.dir/java_sources
-service/project/CMakeFiles/corethriftjava.dir/java_sources
