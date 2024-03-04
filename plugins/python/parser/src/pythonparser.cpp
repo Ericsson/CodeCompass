@@ -28,8 +28,13 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
   }
 }
 
-void PythonParser::prepareInput(const std::string& root_path)
+void PythonParser::parseProject(const std::string& root_path)
 {
+  PYNameMap map;
+  ParseResult parse_result;
+  parse_result.full = 0;
+  parse_result.partial = 0;
+
   try {
     std::string venv;
     python::list sys_path;
@@ -48,12 +53,32 @@ void PythonParser::prepareInput(const std::string& root_path)
       venv = _ctx.options["venvpath"].as<std::string>();
     }
 
-    m_py_module.attr("project_config")(root_path, venv, sys_path);
+    python::object result_list = m_py_module.attr("parseProject")(root_path, venv, sys_path);
+    for(int i = 0; i < python::len(result_list); i++)
+    {
+      PythonParser::processFile(result_list[i], map, parse_result);
+    }
+
   
   }catch (const python::error_already_set&)
   {
     PyErr_Print();
   }
+
+  // Insert into database
+  for(const auto& [key, value] : map)
+  {
+    LOG(debug) << "Inserting PYName " << value.id;
+    cc::util::OdbTransaction {_ctx.db} ([&]
+    {
+      _ctx.db->persist(value);  
+    });
+  }
+
+  LOG(info) << "[pythonparser] Parsing finished!";
+  LOG(info) << "[pythonparser] Inserted PYName: " << map.size();
+  LOG(info) << "[pythonparser] Fully parsed files: " << parse_result.full;
+  LOG(info) << "[pythonparser] Partially parsed files: " << parse_result.partial;
 }
 
 bool PythonParser::accept(const std::string& path_)
@@ -62,14 +87,12 @@ bool PythonParser::accept(const std::string& path_)
   return ext == ".py";
 }
 
-void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
+void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseResult& parse_result)
 {
   try {
-
-    // Call PythonParser parse(path)
-    python::object result = m_py_module.attr("parse")(path_);
-    python::object nodes = result["nodes"];
-    std::string status = python::extract<std::string>(result["status"]);
+    python::object nodes = obj["nodes"];
+    const std::string status = python::extract<std::string>(obj["status"]);
+    const std::string path = python::extract<std::string>(obj["path"]);
 
     const int len = python::len(nodes);
     for (int i = 0; i < len; i++)
@@ -100,15 +123,15 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 
     if(status != "none")
     {
-      model::FilePtr pyfile = _ctx.srcMgr.getFile(path_);
+      model::FilePtr pyfile = _ctx.srcMgr.getFile(path);
       
       if(status == "full")
       {
-        m_parse_result.full++;
+        parse_result.full++;
         pyfile->parseStatus = model::File::ParseStatus::PSFullyParsed;
       }else if (status == "partial")
       {
-        m_parse_result.partial++;
+        parse_result.partial++;
         pyfile->parseStatus = model::File::ParseStatus::PSPartiallyParsed;
       }
       
@@ -118,7 +141,7 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 
     // Additional paths (example: builtin definition paths)
     // These files need to be added to db
-    python::object imports = result["imports"];
+    python::object imports = obj["imports"];
     for (int i = 0; i < python::len(imports); i++)
     {
       std::string p = python::extract<std::string>(imports[i]);
@@ -133,42 +156,10 @@ void PythonParser::parseFile(const std::string& path_, PYNameMap& map)
 
 bool PythonParser::parse()
 {
-  PYNameMap map;
-  m_parse_result.full = 0;
-  m_parse_result.partial = 0;
-
   for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
   {
-    PythonParser::prepareInput(path);
-
-    if(boost::filesystem::is_directory(path))
-    {
-      util::iterateDirectoryRecursive(path, [&](const std::string& currPath_)
-      {
-        if (boost::filesystem::is_regular_file(currPath_) && accept(currPath_))
-        {
-          PythonParser::parseFile(currPath_, map);
-        }
-
-        return true;
-      });
-    }
+    PythonParser::parseProject(path);
   }
-
-  // Insert into database
-  for(const auto& [key, value] : map)
-  {
-    LOG(debug) << "Inserting PYName " << value.id;
-    cc::util::OdbTransaction {_ctx.db} ([&]
-    {
-      _ctx.db->persist(value);  
-    });
-  }
-
-  LOG(info) << "[pythonparser] Parsing finished!";
-  LOG(info) << "[pythonparser] Inserted PYName: " << map.size();
-  LOG(info) << "[pythonparser] Fully parsed files: " << m_parse_result.full;
-  LOG(info) << "[pythonparser] Partially parsed files: " << m_parse_result.partial;
 
   return true;
 }

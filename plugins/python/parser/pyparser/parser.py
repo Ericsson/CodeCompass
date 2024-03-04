@@ -1,17 +1,23 @@
+import os
+import sys
 import jedi
-from hashlib import sha1
+import multiprocessing
+from itertools import repeat
 
-config = {
-    "root_path": None,
-    "venv_path": None,
-    "project": None
-}
+from hashlib import sha1
 
 def log(msg):
     print(f"[PythonParser] {msg}")
 
-def project_config(root_path, venv_path, sys_path):
+def parseProject(root_path, venv_path, sys_path):
     
+    config = {
+        "root_path": None,
+        "venv_path": None,
+        "project": None
+    }
+
+    log(f"Parsing project: {root_path}")
     config["root_path"] = root_path
 
     try:
@@ -30,15 +36,30 @@ def project_config(root_path, venv_path, sys_path):
     except:
         log(f"Failed to use virtual environment: {venv_path}")
 
-def parse(path):
+    py_files = []
+
+    for root, dirs, files in os.walk(root_path):
+        for file in files:
+            p = os.path.join(root, file)
+            ext = os.path.splitext(p)[1]
+            
+            if ext and ext.lower() == '.py':
+                py_files.append(p)
+
+    with multiprocessing.Pool(processes=8) as pool:
+        results = pool.starmap(parse, zip(py_files, repeat(config)))
+        return list(filter(lambda e : e, results))
+        
+def parse(path, config):
+    if config["venv_path"] and path.startswith(config["venv_path"]):
+        return None
+    
     result = {
+        "path": path,
         "status": "none",
         "nodes": [],
         "imports": []
     }
-
-    if config["venv_path"] and path.startswith(config["venv_path"]):
-        return result
 
     with open(path) as f:
         log(f"Parsing: {path}")

@@ -31,11 +31,10 @@ private:
     std::uint32_t full;
   };
 
-  bool accept(const std::string& path_);
-  void parseFile(const std::string& path_, PYNameMap& map);
   python::object m_py_module;
-  ParseResult m_parse_result;
-  void prepareInput(const std::string& root_path);
+  bool accept(const std::string& path_);
+  void processFile(const python::object& obj, PYNameMap& map, ParseResult& parse_result);
+  void parseProject(const std::string& root_path);
 };
   
 } // parser
