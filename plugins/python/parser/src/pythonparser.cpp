@@ -38,6 +38,7 @@ void PythonParser::parseProject(const std::string& root_path)
   try {
     std::string venv;
     python::list sys_path;
+    int n_proc = _ctx.options["jobs"].as<int>();
 
     if(_ctx.options.count("syspath"))
     {
@@ -53,7 +54,7 @@ void PythonParser::parseProject(const std::string& root_path)
       venv = _ctx.options["venvpath"].as<std::string>();
     }
 
-    python::object result_list = m_py_module.attr("parseProject")(root_path, venv, sys_path);
+    python::object result_list = m_py_module.attr("parseProject")(root_path, venv, sys_path, n_proc);
     for(int i = 0; i < python::len(result_list); i++)
     {
       PythonParser::processFile(result_list[i], map, parse_result);
@@ -68,7 +69,6 @@ void PythonParser::parseProject(const std::string& root_path)
   // Insert into database
   for(const auto& [key, value] : map)
   {
-    LOG(debug) << "Inserting PYName " << value.id;
     cc::util::OdbTransaction {_ctx.db} ([&]
     {
       _ctx.db->persist(value);  

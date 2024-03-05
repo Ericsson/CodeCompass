@@ -9,8 +9,7 @@ from hashlib import sha1
 def log(msg):
     print(f"[PythonParser] {msg}")
 
-def parseProject(root_path, venv_path, sys_path):
-    
+def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
         "root_path": None,
         "venv_path": None,
@@ -37,6 +36,8 @@ def parseProject(root_path, venv_path, sys_path):
         log(f"Failed to use virtual environment: {venv_path}")
 
     py_files = []
+    
+    log(f"Using {n_proc} process to parse project")
 
     for root, dirs, files in os.walk(root_path):
         for file in files:
@@ -46,7 +47,7 @@ def parseProject(root_path, venv_path, sys_path):
             if ext and ext.lower() == '.py':
                 py_files.append(p)
 
-    with multiprocessing.Pool(processes=8) as pool:
+    with multiprocessing.Pool(processes=n_proc) as pool:
         results = pool.starmap(parse, zip(py_files, repeat(config)))
         return list(filter(lambda e : e, results))
         
