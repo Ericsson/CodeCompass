@@ -3,11 +3,8 @@ import sys
 import jedi
 import multiprocessing
 from itertools import repeat
-
+from parserlog import log, bcolors
 from hashlib import sha1
-
-def log(msg):
-    print(f"[PythonParser] {msg}")
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
@@ -146,8 +143,9 @@ def getNamePosInfo(name):
     return pos
 
 def reportMissingDefinition(name, result):
-    if name.is_definition() and name.type == 'module' and getNamePosInfo(name)["line_start"] > 0:
-        log(f"Missing {name.description}")
+    pos = getNamePosInfo(name)
+    if name.is_definition() and name.type == 'module' and pos["line_start"] > 0:
+        log(f"{bcolors.FAIL}Missing {name.description} (file = {name.module_path} line = {pos['line_start']})")
         result["status"] = "partial"
 
 def putInMap(hashmap, node):

@@ -67,6 +67,7 @@ void PythonParser::parseProject(const std::string& root_path)
   }
 
   // Insert into database
+  LOG(info) << "[pythonparser] Inserting PYNames to database...";
   for(const auto& [key, value] : map)
   {
     cc::util::OdbTransaction {_ctx.db} ([&]
@@ -76,7 +77,7 @@ void PythonParser::parseProject(const std::string& root_path)
   }
 
   LOG(info) << "[pythonparser] Parsing finished!";
-  LOG(info) << "[pythonparser] Inserted PYName: " << map.size();
+  LOG(info) << "[pythonparser] Inserted PYName count: " << map.size();
   LOG(info) << "[pythonparser] Fully parsed files: " << parse_result.full;
   LOG(info) << "[pythonparser] Partially parsed files: " << parse_result.partial;
 }
