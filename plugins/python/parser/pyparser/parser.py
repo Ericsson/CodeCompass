@@ -144,7 +144,7 @@ def getNamePosInfo(name):
 
 def reportMissingDefinition(name, result):
     pos = getNamePosInfo(name)
-    if name.is_definition() and name.type == 'module' and pos["line_start"] > 0:
+    if not name.is_definition() and name.type == 'module':
         log(f"{bcolors.FAIL}Missing {name.description} (file = {name.module_path} line = {pos['line_start']})")
         result["status"] = "partial"
 
