@@ -3,6 +3,8 @@
 
 #include <clang/AST/Stmt.h>
 
+#include <util/scopedvalue.h>
+
 namespace cc
 {
 namespace parser
@@ -12,6 +14,8 @@ namespace parser
 
   class StatementStack final
   {
+    DECLARE_SCOPED_TYPE(StatementStack)
+
     friend class StatementScope;
 
   private:
@@ -26,6 +30,8 @@ namespace parser
 
   class StatementScope final
   {
+    DECLARE_SCOPED_TYPE(StatementScope)
+
     friend class StatementStack;
     
   private:

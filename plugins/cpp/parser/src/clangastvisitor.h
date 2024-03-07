@@ -144,6 +144,8 @@ public:
 
   class TypeScope final
   {
+    DECLARE_SCOPED_TYPE(TypeScope)
+    
   private:
     ClangASTVisitor* _visitor;
     model::CppRecordPtr _type;
@@ -170,6 +172,8 @@ public:
 
   class EnumScope final
   {
+    DECLARE_SCOPED_TYPE(EnumScope)
+
   private:
     ClangASTVisitor* _visitor;
     model::CppEnumPtr _enum;
@@ -196,6 +200,8 @@ public:
 
   class FunctionScope final
   {
+    DECLARE_SCOPED_TYPE(FunctionScope)
+
   private:
     ClangASTVisitor* _visitor;
     model::CppFunctionPtr _curFun;
@@ -321,6 +327,8 @@ public:
 
   class CtxStmtScope final
   {
+    DECLARE_SCOPED_TYPE(CtxStmtScope)
+
   private:
     ClangASTVisitor* _visitor;
 
