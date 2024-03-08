@@ -198,7 +198,7 @@ make install -j $(nproc)
 ```
 
 ### Node.js and NPM
-Make sure you are using at least version 18 of [Node.js](https://nodejs.org/en/).
+Make sure you are using at least version 18.17 of [Node.js](https://nodejs.org/en/).
 Unfortunately only older versions are available in the official Ubuntu repositories
 for all supported versions, therefore a separate installation might be required from
 [NodeSource](https://github.com/nodesource/distributions).
@@ -218,7 +218,7 @@ sudo apt-get install nodejs
 ```
 
 You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install`
-at the root of the project to use the specified Node version (18.13.0).
+at the root of the project to use the specified Node version (18.17.0).
 
 
 ### GTest/Googletest

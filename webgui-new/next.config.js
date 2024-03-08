@@ -4,6 +4,7 @@ require('dotenv').config();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
   modularizeImports: {
     '@mui/icons-material': {
