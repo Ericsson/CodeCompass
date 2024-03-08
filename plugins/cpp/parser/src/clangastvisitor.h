@@ -130,17 +130,23 @@ public:
 
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
-
+  bool shouldVisitLambdaBody() const { return true; }
+  
   bool TraverseDecl(clang::Decl* decl_)
   {
-    bool prevIsImplicit = _isImplicit;
-
-    if (decl_)
-      _isImplicit = decl_->isImplicit() || _isImplicit;
+    // We use implicitness to determine if actual symbol location information
+    // should be stored for AST nodes in our database. This differs somewhat
+    // from Clang's concept of implicitness.
+    // To bridge the gap between the two interpretations, we mostly assume
+    // implicitness to be hereditary from parent to child nodes, except
+    // in some known special cases (see lambdas in TraverseCXXRecordDecl).
+    bool wasImplicit = _isImplicit;
+    if (decl_ != nullptr)
+      _isImplicit |= decl_->isImplicit();
 
     bool b = Base::TraverseDecl(decl_);
 
-    _isImplicit = prevIsImplicit;
+    _isImplicit = wasImplicit;
 
     return b;
   }
@@ -370,6 +376,13 @@ public:
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
+    // Although lambda closure types are implicit by nature as far as
+    // Clang is concerned, their operator() is not. In order to be able to
+    // properly assign symbol location information to AST nodes within
+    // lambda bodies, we must force lambdas to be considered explicit.
+    bool wasImplicit = _isImplicit;
+    if (rd_ != nullptr)
+      _isImplicit &= !rd_->isLambda();
     _typeStack.push(std::make_shared<model::CppRecord>());
 
     bool b = Base::TraverseCXXRecordDecl(rd_);
@@ -377,6 +390,7 @@ public:
     if (_typeStack.top()->astNodeId)
       _types.push_back(_typeStack.top());
     _typeStack.pop();
+    _isImplicit = wasImplicit;
 
     return b;
   }
@@ -620,7 +634,7 @@ public:
     // some implementation defined reasons. The position of this node is at the
     // name of the record after the "class", "struct", etc. keywords. We don't
     // want to store these in the database
-    if (rd_->isImplicit())
+    if (rd_->isImplicit() && !rd_->isLambda())
       return true;
 
     //--- CppAstNode ---//
@@ -920,10 +934,12 @@ public:
     cppFunction->qualifiedType = qualType.getAsString();
     cppFunction->mccabe = 1;
 
-    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
-
     //--- Tags ---//
 
+    if (_isImplicit)
+      cppFunction->tags.insert(model::Tag::Implicit);
+
+    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
     if (md)
     {
       if (md->isVirtual())
@@ -938,9 +954,6 @@ public:
       if (llvm::isa<clang::CXXDestructorDecl>(md))
         cppFunction->tags.insert(model::Tag::Destructor);
     }
-
-    if (_isImplicit)
-      cppFunction->tags.insert(model::Tag::Implicit);
 
     //--- AST type for the return type ---//
 
@@ -1620,34 +1633,27 @@ private:
     model::FileLoc fileLoc;
 
     if (start_.isInvalid() || end_.isInvalid())
-    {
       fileLoc.file = getFile(start_);
-      const std::string& type = fileLoc.file.load()->type;
-      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
-      {
-        fileLoc.file->type = _cppSourceType;
-        _ctx.srcMgr.updateFile(*fileLoc.file);
-      }
-      return fileLoc;
+    else
+    {
+      clang::SourceLocation realStart = start_;
+      clang::SourceLocation realEnd = end_;
+
+      if (_clangSrcMgr.isMacroBodyExpansion(start_))
+        realStart = _clangSrcMgr.getExpansionLoc(start_);
+      if (_clangSrcMgr.isMacroArgExpansion(start_))
+        realStart = _clangSrcMgr.getSpellingLoc(start_);
+
+      if (_clangSrcMgr.isMacroBodyExpansion(end_))
+        realEnd = _clangSrcMgr.getExpansionLoc(end_);
+      if (_clangSrcMgr.isMacroArgExpansion(end_))
+        realEnd = _clangSrcMgr.getSpellingLoc(end_);
+
+      if (!_isImplicit)
+        _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+
+      fileLoc.file = getFile(realStart);
     }
-
-    clang::SourceLocation realStart = start_;
-    clang::SourceLocation realEnd = end_;
-
-    if (_clangSrcMgr.isMacroBodyExpansion(start_))
-      realStart = _clangSrcMgr.getExpansionLoc(start_);
-    if (_clangSrcMgr.isMacroArgExpansion(start_))
-      realStart = _clangSrcMgr.getSpellingLoc(start_);
-
-    if (_clangSrcMgr.isMacroBodyExpansion(end_))
-      realEnd = _clangSrcMgr.getExpansionLoc(end_);
-    if (_clangSrcMgr.isMacroArgExpansion(end_))
-      realEnd = _clangSrcMgr.getSpellingLoc(end_);
-
-    if (!_isImplicit)
-      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
-
-    fileLoc.file = getFile(realStart);
 
     const std::string& type = fileLoc.file.load()->type;
     if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)

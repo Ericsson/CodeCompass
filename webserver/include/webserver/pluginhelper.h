@@ -15,8 +15,8 @@
 #include <util/dbutil.h>
 #include <util/webserverutil.h>
 
-#include "requesthandler.h"
 #include "thrifthandler.h"
+#include "lsphandler.h"
 
 namespace cc
 {
@@ -31,7 +31,6 @@ inline void registerPluginSimple(
   const std::string& serviceName_)
 {
   namespace fs = boost::filesystem;
-  namespace po = boost::program_options;
   namespace pt = boost::property_tree;
 
   for (fs::directory_iterator it(ctx_.options["workspace"].as<std::string>());
@@ -112,6 +111,16 @@ inline void registerPluginSimple(
     return new cc::webserver::ThriftHandler< \
       cc::service::nspace::serviceName##ServiceProcessor>( \
         new cc::service::nspace::serviceName##ServiceHandler( \
+          db_, datadir_, ctx_)); \
+  }
+
+#define CODECOMPASS_LSP_SERVICE_FACTORY_WITH_CFG(serviceName, nspace) \
+  [](std::shared_ptr<odb::database>& db_, \
+     std::shared_ptr<std::string> datadir_, \
+     const cc::webserver::ServerContext& ctx_) { \
+    return new cc::webserver::LspHandler< \
+      cc::service::nspace::serviceName##LspServiceHandler>( \
+        new cc::service::nspace::serviceName##LspServiceHandler( \
           db_, datadir_, ctx_)); \
   }
 

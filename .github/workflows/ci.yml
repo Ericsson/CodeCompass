@@ -12,21 +12,18 @@ env:
 permissions: read-all
 
 jobs:
-
-
-      
   ## BUILD JOBS
   build:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, ubuntu-22.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
     outputs:
-      has-compiled-dependencies: ${{ steps.compilation-flag.outputs.has-compiled-dependencies }}
-      compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
+      ubuntu-20-04-compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
+      ubuntu-22-04-compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
 
     services:
       # Label used to access the service container
@@ -58,34 +55,33 @@ jobs:
         id: compilation-flag
         run: |
           if [ -f ./.github/scripts/${{ matrix.os }}/compile_build.sh ]; then
-            echo "has-compiled-dependencies=true" >> "$GITHUB_OUTPUT"
+            echo "HAS_COMPILED_DEPENDENCIES=true" >> "$GITHUB_ENV"
           else
-            echo "has-compiled-dependencies=false" >> "$GITHUB_OUTPUT"
+            echo "HAS_COMPILED_DEPENDENCIES=false" >> "$GITHUB_ENV"
           fi
 
       - name: Download installers for compiled dependencies
-        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
         id: download-compile-dependencies
         run: |
           chmod +x ./.github/scripts/${{ matrix.os }}/download_build.sh
           ./.github/scripts/${{ matrix.os }}/download_build.sh
 
       - name: Restore compiled dependencies
-        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
         id: restore-compiled-dependencies
         uses: actions/cache/restore@v3
         with:
           path: ${{ env.INSTALL_PATH }}
-          key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
+          key: ${{ matrix.os }}-compile-install-${{ env.CACHE_KEY }}
 
       - name: Compile dependencies
-        if: steps.restore-compiled-dependencies.outputs.cache-hit != 'true' && steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' && steps.restore-compiled-dependencies.outputs.cache-hit != 'true' }}
         run: |
           chmod +x ./.github/scripts/${{ matrix.os }}/compile_build.sh
           ./.github/scripts/${{ matrix.os }}/compile_build.sh
 
       - name: Post compilation configuration (build)
-        if: steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }} 
         run: |
           if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_build.sh ]; then
            chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_build.sh
@@ -93,12 +89,12 @@ jobs:
           fi
 
       - name: Save dependencies
-        if: steps.restore-compiled-dependencies.outputs.cache-hit != 'true' && steps.compilation-flag.outputs.has-compiled-dependencies == 'true'
+        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' && steps.restore-compiled-dependencies.outputs.cache-hit != 'true' }} 
         id: save-compiled-dependencies
         uses: actions/cache/save@v3
         with:
           path: ${{ env.INSTALL_PATH }}
-          key: ${{ matrix.os }}-compile-install-${{steps.download-compile-dependencies.outputs.compile-hash-key}}
+          key: ${{ matrix.os }}-compile-install-${{ env.CACHE_KEY }}
 
       - name: Install database packages
         run: ./.github/scripts/${{ matrix.os }}/setup_${{matrix.db}}.sh
@@ -186,7 +182,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, ubuntu-22.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -199,12 +195,13 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
+        # Set health checks to wait until postgres has started & increase SHM size
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --shm-size=2gb
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
@@ -222,21 +219,26 @@ jobs:
       - name: Install database packages
         run: ./.github/scripts/${{ matrix.os }}/setup_${{matrix.db}}.sh
 
+      - name: Set has-compiled-dependencies flag
+        id: compilation-flag
+        run: |
+          if [ -f ./.github/scripts/${{ matrix.os }}/compile_build.sh ]; then
+            echo "HAS_COMPILED_DEPENDENCIES=true" >> "$GITHUB_ENV"
+          else
+            echo "HAS_COMPILED_DEPENDENCIES=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Restore compiled dependencies
-        if: needs.build.outputs.has-compiled-dependencies == 'true'
+        if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
         id: restore-compiled-dependencies
         uses: actions/cache/restore@v3
         with:
           path: ${{ env.INSTALL_PATH }}
-          key: ${{ matrix.os }}-compile-install-${{needs.build.outputs.compile-hash-key}}
-
-      - name: Post compilation configuration (runtime)
-        if: needs.build.outputs.has-compiled-dependencies == 'true'
-        run: |
-          if [ -f ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh ]; then
-           chmod +x ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-           ./.github/scripts/${{ matrix.os }}/postcompile_runtime.sh
-          fi
+          fail-on-cache-miss: true
+          key: ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-20-04-compile-hash-key }}
+          restore-keys: |
+            ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-20-04-compile-hash-key }}
+            ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
 
       - name: Download CodeCompass binaries
         uses: actions/download-artifact@v2

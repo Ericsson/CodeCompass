@@ -41,15 +41,21 @@ struct CppFunctionParamCount
 };
 
 #pragma db view \
-  object(CppFunction) object(CppVariable = Parameters : CppFunction::parameters) \
-  query((?) + "GROUP BY" + cc::model::CppEntity::astNodeId)
+  object(CppFunction) \
+  object(CppVariable = Parameters : CppFunction::parameters) \
+  object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file) \
+  query((?) + "GROUP BY" + cc::model::CppEntity::astNodeId + "," + cc::model::File::path)
 struct CppFunctionParamCountWithId
 {
-  #pragma db column("CppEntity.astNodeId")
+  #pragma db column(CppEntity::astNodeId)
   CppAstNodeId id;
 
   #pragma db column("count(" + Parameters::id + ")")
   std::size_t count;
+
+  #pragma db column(File::path)
+  std::string filePath;
 };
 
 #pragma db view \
@@ -60,11 +66,20 @@ struct CppFunctionLocalCount
   std::size_t count;
 };
 
-#pragma db view object(CppFunction)
-struct CppFunctionMcCabeWithId
+#pragma db view \
+  object(CppFunction) \
+  object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file)
+struct CppFunctionMcCabe
 {
+  #pragma db column(CppEntity::astNodeId)
   CppAstNodeId astNodeId;
+
+  #pragma db column(CppFunction::mccabe)
   unsigned int mccabe;
+
+  #pragma db column(File::path)
+  std::string filePath;
 };
 
 }

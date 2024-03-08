@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Download installers for compiled dependencies
 
 mkdir -p ${DOWNLOAD_PATH}
@@ -20,4 +22,9 @@ hash_value=$(echo -n "$concatenated_hashes" | md5sum | awk '{print $1}')
 
 ## Save said hash
 
-echo "compile-hash-key=${hash_value}" >> $GITHUB_OUTPUT
+
+### Restore action
+echo "ubuntu-20-04-compile-hash-key=${hash_value}" >> "$GITHUB_OUTPUT"
+
+### Save action
+echo "CACHE_KEY=${hash_value}" >> "$GITHUB_ENV"
