@@ -12,6 +12,8 @@
 #include <model/cppastnodemetrics-odb.hxx>
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
+#include <model/cppfilemetrics.h>
+#include <model/cppfilemetrics-odb.hxx>
 
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
@@ -36,14 +38,21 @@ public:
 
   double getSingleCppMetricForAstNode(
     const core::AstNodeId& astNodeId_,
-    CppMetricsType::type metric_) override;
+    CppAstNodeMetricsType::type metric_) override;
 
   void getCppMetricsForAstNode(
     std::vector<CppMetricsAstNode>& _return,
     const core::AstNodeId& astNodeId_) override;
 
-  void getCppMetricsTypeNames(
-    std::vector<CppMetricsTypeName>& _return) override;
+  void getCppMetricsForModule(
+    std::vector<CppMetricsModule>& _return,
+    const core::FileId& fileId_) override;
+
+  void getCppAstNodeMetricsTypeNames(
+    std::vector<CppAstNodeMetricsTypeName>& _return) override;
+
+  void getCppModuleMetricsTypeNames(
+    std::vector<CppModuleMetricsTypeName>& _return) override;
 
 private:
   std::shared_ptr<odb::database> _db;

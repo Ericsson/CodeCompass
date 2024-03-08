@@ -4,7 +4,7 @@ include "project/project.thrift"
 namespace cpp cc.service.cppmetrics
 namespace java cc.service.cppmetrics
 
-enum CppMetricsType
+enum CppAstNodeMetricsType
 {
   ParameterCount = 1,
   McCabe = 2,
@@ -12,15 +12,32 @@ enum CppMetricsType
   LackOfCohesionHS = 4
 }
 
-struct CppMetricsTypeName
+enum CppModuleMetricsType
 {
-  1:CppMetricsType type,
+  Placeholder = 1
+}
+
+struct CppAstNodeMetricsTypeName
+{
+  1:CppAstNodeMetricsType type,
+  2:string name
+}
+
+struct CppModuleMetricsTypeName
+{
+  1:CppModuleMetricsType type,
   2:string name
 }
 
 struct CppMetricsAstNode
 {
-  1:CppMetricsType type,
+  1:CppAstNodeMetricsType type,
+  2:double value
+}
+
+struct CppMetricsModule
+{
+  1:CppModuleMetricsType type,
   2:double value
 }
 
@@ -32,7 +49,7 @@ service CppMetricsService
    */
   double getSingleCppMetricForAstNode(
     1:common.AstNodeId astNodeId,
-    2:CppMetricsType metric)
+    2:CppAstNodeMetricsType metric)
 
   /**
    * This function returns all available C++ metrics
@@ -42,7 +59,19 @@ service CppMetricsService
     1:common.AstNodeId astNodeId)
 
   /**
-   * This function returns the names of metrics.
+   * This function returns all available C++ metrics
+   * for a particular module.
    */
-  list<CppMetricsTypeName> getCppMetricsTypeNames()
+  list<CppMetricsModule> getCppMetricsForModule(
+    1:common.FileId fileId)
+
+  /**
+   * This function returns the names of AST node metrics.
+   */
+  list<CppAstNodeMetricsTypeName> getCppAstNodeMetricsTypeNames()
+
+  /**
+   * This function returns the names of module-level metrics.
+   */
+   list<CppModuleMetricsTypeName> getCppModuleMetricsTypeNames()
 }

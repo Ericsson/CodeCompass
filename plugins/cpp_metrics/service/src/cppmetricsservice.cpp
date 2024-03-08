@@ -16,25 +16,35 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
 {
 }
 
-void CppMetricsServiceHandler::getCppMetricsTypeNames(
-  std::vector<CppMetricsTypeName>& _return)
+void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
+  std::vector<CppAstNodeMetricsTypeName>& _return)
 {
-  CppMetricsTypeName typeName;
+  CppAstNodeMetricsTypeName typeName;
 
-  typeName.type = CppMetricsType::ParameterCount;
+  typeName.type = CppAstNodeMetricsType::ParameterCount;
   typeName.name = "Number of function parameters";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::McCabe;
+  typeName.type = CppAstNodeMetricsType::McCabe;
   typeName.name = "McCabe metric";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::LackOfCohesion;
+  typeName.type = CppAstNodeMetricsType::LackOfCohesion;
   typeName.name = "Lack of cohesion of function";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::LackOfCohesionHS;
+  typeName.type = CppAstNodeMetricsType::LackOfCohesionHS;
   typeName.name = "Lack of cohesion of function (Henderson-Sellers variant)";
+  _return.push_back(typeName);
+}
+
+void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
+  std::vector<CppModuleMetricsTypeName>& _return)
+{
+  CppModuleMetricsTypeName typeName;
+
+  typeName.type = CppModuleMetricsType::Placeholder;
+  typeName.name = "Placeholder";
   _return.push_back(typeName);
 }
 
@@ -52,7 +62,7 @@ void CppMetricsServiceHandler::getCppMetricsForAstNode(
 
     for (const auto& nodeMetric : nodeMetrics)
     {
-      metric.type = static_cast<CppMetricsType::type>(nodeMetric.type);
+      metric.type = static_cast<CppAstNodeMetricsType::type>(nodeMetric.type);
       metric.value = nodeMetric.value;
       _return.push_back(metric);
     }
@@ -61,7 +71,7 @@ void CppMetricsServiceHandler::getCppMetricsForAstNode(
 
 double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
   const core::AstNodeId& astNodeId_,
-  CppMetricsType::type metric_)
+  CppAstNodeMetricsType::type metric_)
 {
   return _transaction([&, this]() -> std::double_t {
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
@@ -78,6 +88,27 @@ double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
     }
 
     return nodeMetric.begin()->value;
+  });
+}
+
+void CppMetricsServiceHandler::getCppMetricsForModule(
+  std::vector<CppMetricsModule>& _return,
+  const core::FileId& fileId_)
+{
+  CppMetricsModule metric;
+
+  _transaction([&, this](){
+    typedef odb::query<model::CppFileMetrics> CppModuleMetricsQuery;
+
+    auto moduleMetrics = _db->query<model::CppFileMetrics>(
+      CppModuleMetricsQuery::file == std::stoull(fileId_));
+
+    for (const auto& moduleMetric : moduleMetrics)
+    {
+      metric.type = static_cast<CppModuleMetricsType::type>(moduleMetric.type);
+      metric.value = moduleMetric.value;
+      _return.push_back(metric);
+    }
   });
 }
 
