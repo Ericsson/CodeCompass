@@ -1,5 +1,6 @@
 ![Build project](https://github.com/Ericsson/CodeCompass/workflows/Build%20project/badge.svg)
 ![Tarball packaging](https://img.shields.io/gitlab/pipeline/codecompass/CodeCompass/master?gitlab_url=https%3A%2F%2Fgitlab.inf.elte.hu&label=Tarball%20packaging)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Ericsson/CodeCompass/badge)](https://securityscorecards.dev/viewer/?uri=github.com/Ericsson/CodeCompass)
 
 CodeCompass
 ===========
