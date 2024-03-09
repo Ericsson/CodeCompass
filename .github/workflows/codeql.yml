@@ -1,0 +1,144 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: '22 16 * * 5'
+
+jobs:
+  analyze-jsts:
+    name: Analyze JavaScript-TypeScript
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    permissions:
+      # required for all workflows
+      security-events: write
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Initializes the CodeQL tools for scanning
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript-typescript
+
+    # Perform CodeQL analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:javascript-typescript"
+
+
+  analyze-cpp:
+    name: Analyze C-C++
+    env:
+      BUILD_TYPE: Debug
+      INSTALL_PATH: ${{github.workspace}}/dependencies/install
+      DOWNLOAD_PATH: ${{github.workspace}}/dependencies/download
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    permissions:
+      # required for all workflows
+      security-events: write
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Initializes the CodeQL tools for scanning
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: c-cpp
+
+    # Build project
+    - name: Update apt-get
+      run: sudo apt-get update
+
+    - name: Install required packages for build
+      run: ./.github/scripts/ubuntu-22.04/setup_build.sh
+
+    - name: Install database packages
+      run: ./.github/scripts/ubuntu-22.04/setup_postgresql.sh
+
+    - name: Set has-compiled-dependencies flag
+      id: compilation-flag
+      run: |
+        if [ -f ./.github/scripts/ubuntu-22.04/compile_build.sh ]; then
+          echo "HAS_COMPILED_DEPENDENCIES=true" >> "$GITHUB_ENV"
+        else
+          echo "HAS_COMPILED_DEPENDENCIES=false" >> "$GITHUB_ENV"
+        fi
+
+    - name: Download installers for compiled dependencies
+      if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
+      id: download-compile-dependencies
+      run: |
+        chmod +x ./.github/scripts/ubuntu-22.04/download_build.sh
+        ./.github/scripts/ubuntu-22.04/download_build.sh
+
+    - name: Restore compiled dependencies
+      id: restore-compiled-dependencies
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ env.INSTALL_PATH }}
+        key: ubuntu-22.04-compile-install-${{ env.CACHE_KEY }}
+
+    - name: Compile dependencies
+      if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' && steps.restore-compiled-dependencies.outputs.cache-hit != 'true' }}
+      run: |
+        chmod +x ./.github/scripts/ubuntu-22.04/compile_build.sh
+        ./.github/scripts/ubuntu-22.04/compile_build.sh
+
+    - name: Post compilation configuration (build)
+      if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
+      run: |
+        if [ -f ./.github/scripts/ubuntu-22.04/postcompile_build.sh ]; then
+         chmod +x ./.github/scripts/ubuntu-22.04/postcompile_build.sh
+         ./.github/scripts/ubuntu-22.04/postcompile_build.sh
+        fi
+
+    - name: Install database packages
+      run: ./.github/scripts/ubuntu-22.04/setup_postgresql.sh
+
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}
+      run: cmake -E make_directory $HOME/cc-build
+
+    - name: Run CMake
+      run: >
+        cd $HOME/cc-build &&
+        cmake ${{github.workspace}} -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+        -DCMAKE_INSTALL_PREFIX=$HOME/ubuntu-22.04/postgresql/cc-install
+        -DDATABASE=pgsql
+        -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        -DLLVM_DIR=/usr/lib/llvm-11/cmake
+        -DClang_DIR=/usr/lib/cmake/clang-11
+
+    - name: Build
+      run: |
+        cd $HOME/cc-build
+        make -j $(nproc)
+
+    - name: Install
+      run: |
+        cd $HOME/cc-build
+        make install
+
+    # Perform CodeQL analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:c-cpp"
+
