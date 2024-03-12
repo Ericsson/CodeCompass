@@ -151,6 +151,31 @@ public:
     return b;
   }
 
+
+  bool	TraverseCXXForRangeStmt (clang::CXXForRangeStmt *forRangeStmt){
+    return Base::TraverseCXXForRangeStmt(forRangeStmt);
+  }
+
+  bool VisitCXXForRangeStmt(clang::CXXForRangeStmt *forRangeStmt)
+  {
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+    
+    clang::DeclRefExpr* declRefExpr = llvm::dyn_cast<clang::DeclRefExpr>(forRangeStmt->getRangeInit());
+
+    clang::Stmt* stmt = llvm::dyn_cast<clang::Stmt>(forRangeStmt->getRangeInit());
+
+    clang::CallExpr* callExpr = llvm::dyn_cast<clang::CallExpr>(stmt);
+
+    if(declRefExpr){ //lvalue Var
+      VisitDeclRefExpr(declRefExpr);
+    }
+
+    if(callExpr){ //lvalue Function
+      VisitCallExpr(callExpr);
+    }
+    return true;
+  }
+
   bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
   {
     if (fd_->doesThisDeclarationHaveABody())
