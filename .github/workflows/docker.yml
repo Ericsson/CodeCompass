@@ -18,7 +18,7 @@ on:
 permissions: read-all
 
 jobs:
-  docker:
+  docker-sqlite:
     runs-on: ubuntu-22.04
 
     steps:
@@ -44,8 +44,6 @@ jobs:
           docker build -t codecompass:dev     -t modelcpp/codecompass:${BRANCH_PREFIX}dev            --file docker/dev/Dockerfile .
           docker build -t codecompass:runtime -t modelcpp/codecompass:${BRANCH_PREFIX}runtime-sqlite --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=sqlite .
           docker build -t codecompass:web     -t modelcpp/codecompass:${BRANCH_PREFIX}web-sqlite     --file docker/web/Dockerfile --no-cache .
-          docker build -t codecompass:runtime -t modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
-          docker build -t codecompass:web     -t modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql      --file docker/web/Dockerfile --no-cache .
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -59,8 +57,46 @@ jobs:
           BRANCH_PREFIX=${BRANCH_PREFIX}${BRANCH_PREFIX:+-} # append dash if not empty
           docker push modelcpp/codecompass:${BRANCH_PREFIX}dev
           docker push modelcpp/codecompass:${BRANCH_PREFIX}runtime-sqlite
-          docker push modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql
           docker push modelcpp/codecompass:${BRANCH_PREFIX}web-sqlite
+
+  docker-pgsql:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Branch name slug
+        uses: rlespinasse/github-slug-action@v4
+
+      - name: Branch name substring
+        uses: bhowell2/github-substring-action@v1
+        id: branch_substring
+        with:
+          value: ${{ env.GITHUB_REF_SLUG }}
+          index_of_str: "release-"
+          fail_if_not_found: false
+          default_return_value: ""
+
+      - name: Build images
+        run: |
+          BRANCH_PREFIX=${{ steps.branch_substring.outputs.substring }}
+          BRANCH_PREFIX=${BRANCH_PREFIX}${BRANCH_PREFIX:+-} # append dash if not empty
+          docker build -t codecompass:dev     -t modelcpp/codecompass:${BRANCH_PREFIX}dev            --file docker/dev/Dockerfile .
+          docker build -t codecompass:runtime -t modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql  --file docker/runtime/Dockerfile --no-cache --build-arg CC_DATABASE=pgsql .
+          docker build -t codecompass:web     -t modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql      --file docker/web/Dockerfile --no-cache .
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push images
+        run: |
+          BRANCH_PREFIX=${{ steps.branch_substring.outputs.substring }}
+          BRANCH_PREFIX=${BRANCH_PREFIX}${BRANCH_PREFIX:+-} # append dash if not empty
+          docker push modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql
           docker push modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql
 
       - name: Tag and push latest image
