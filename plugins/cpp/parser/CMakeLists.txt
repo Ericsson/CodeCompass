@@ -44,7 +44,8 @@ add_library(cppparser SHARED
   src/ppmacrocallback.cpp
   src/relationcollector.cpp
   src/doccommentformatter.cpp
-  src/diagnosticmessagehandler.cpp)
+  src/diagnosticmessagehandler.cpp
+  src/nestedscope.cpp)
 
 target_link_libraries(cppparser
   cppmodel

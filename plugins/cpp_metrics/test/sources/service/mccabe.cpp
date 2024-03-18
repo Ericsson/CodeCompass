@@ -112,37 +112,75 @@ public:
   MyClass(unsigned int arg1) // +1
   {
     if (arg1 < LIMIT) // +1
-      badPractice = new char[LIMIT];
+      size = LIMIT;
     else
-      badPractice = new char[arg1];
+      size = arg1;
+    badPractice = new char[size];
   } // 2
 
   ~MyClass() // +1
   {
-    for (unsigned int i = 0; i < LIMIT; ++i) {} // +1
+    for (unsigned int i = 0; i < size; ++i) {} // +1
     delete[] badPractice;
   } // 2
 
-  void method1(int arg1) // +1
+  void method1(int arg1); // -
+  
+  operator unsigned int() const; // -
+  
+  explicit operator bool() const // +1
   {
-    for (unsigned int i = arg1; i < LIMIT; ++i) // +1
-    {
-      switch(arg1)
-      {
-        case -1: // +1
-          goto endfor; // +1
-        case 0: // +1
-          break;
-        case 1: // +1
-          break;
-        default: // +1
-          continue; // +1
-      }
-      arg1 *= 2;
-    }
-    endfor:;
-  } // 8
+    return badPractice != nullptr;
+  } // 1
+  
 private:
-  const unsigned int LIMIT = 42;
+  static constexpr unsigned int LIMIT = 42;
+
   char* badPractice;
+  unsigned int size;
 };
+
+MyClass::operator unsigned int() const // +1
+{
+  return size;
+} // 1
+
+void MyClass::method1(int arg1) // +1
+{
+for (unsigned int i = arg1; i < LIMIT; ++i) // +1
+{
+  switch(arg1)
+  {
+    case -1: // +1
+      goto endfor; // +1
+    case 0: // +1
+      break;
+    case 1: // +1
+      break;
+    default: // +1
+      continue; // +1
+  }
+  arg1 *= 2;
+}
+endfor:;
+} // 8
+
+class NoBody1
+{
+public:
+	NoBody1() = default; // 1
+};
+
+class NoBody2
+{
+public:
+	NoBody2(const NoBody2& other) = delete; // 1
+};
+
+class NoBody3
+{
+public:
+	virtual ~NoBody3(); // -
+};
+
+NoBody3::~NoBody3() = default; // 1

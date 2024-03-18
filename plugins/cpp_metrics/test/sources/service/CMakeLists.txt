@@ -3,4 +3,5 @@ project(CppMetricsTestProject)
 
 add_library(CppMetricsTestProject STATIC
   mccabe.cpp
-  lackofcohesion.cpp)
+  lackofcohesion.cpp
+  bumpyroad.cpp)
