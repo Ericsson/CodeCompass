@@ -107,6 +107,7 @@ def getNodeInfo(name, refid, defs = []):
     node["file_id"] = getFileId(name)
     node["type_hint"] = getNameTypeHint(name)
     node["is_builtin"] = name.in_builtin_module() or any(list(map(lambda x : x.in_builtin_module(), defs)))
+    node["is_import"] = "import" in node["value"]
 
     return node
 

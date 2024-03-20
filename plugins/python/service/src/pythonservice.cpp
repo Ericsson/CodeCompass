@@ -173,12 +173,7 @@ void PythonServiceHandler::getReferences(
     switch (referenceId_)
     {
       case DEFINITION:
-        if (pyname.type != "module")
-        {
-          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true);
-        }else{
-          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::line_start == 0);
-        }
+          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false);
         break;
       case USAGE:
         nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false);
@@ -220,12 +215,7 @@ std::int32_t PythonServiceHandler::getReferenceCount(
     switch (referenceId_)
     {
       case DEFINITION:
-        if (pyname.type != "module")
-        {
-          ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true).size();
-        }else{
-          ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::line_start == 0).size();
-        }
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false).size();
         break;
       case USAGE:
         ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false).size();

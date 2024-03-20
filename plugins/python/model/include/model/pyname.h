@@ -19,6 +19,7 @@ struct PYName
     std::uint64_t ref_id;
     bool is_definition = false;
     bool is_builtin = false;
+    bool is_import = false;
     std::string full_name;
     std::string value;
     std::string type;

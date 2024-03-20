@@ -105,6 +105,7 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
       pyname.ref_id = python::extract<uint64_t>(node["ref_id"]);
       pyname.full_name = python::extract<std::string>(node["full_name"]);
       pyname.is_definition = python::extract<bool>(node["is_definition"]);
+      pyname.is_import = python::extract<bool>(node["is_import"]);
       pyname.is_builtin = python::extract<bool>(node["is_builtin"]);
       pyname.line_start = python::extract<uint64_t>(node["line_start"]);
       pyname.line_end = python::extract<uint64_t>(node["line_end"]);
