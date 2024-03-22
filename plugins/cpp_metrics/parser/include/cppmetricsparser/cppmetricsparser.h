@@ -35,6 +35,8 @@ private:
   void functionParameters();
   // Calculate the McCabe complexity of functions.
   void functionMcCabe();
+  // Calculate the McCabe complexity of types.
+  void typeMcCabe();
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();

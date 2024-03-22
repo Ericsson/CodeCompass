@@ -141,6 +141,78 @@ void CppMetricsParser::functionMcCabe()
   });
 }
 
+void CppMetricsParser::typeMcCabe()
+{
+  util::OdbTransaction {_ctx.db} ([&, this]
+  {
+    using MemberT    = model::CppMemberType;
+    using AstNode    = model::CppAstNode;
+    using AstNodeMet = model::CppAstNodeMetrics;
+
+    std::map<model::CppAstNodeId, unsigned int> mcValues;
+
+    // Process all methods.
+    for (const auto& member : _ctx.db->query<MemberT>(
+      odb::query<MemberT>::kind == MemberT::Kind::Method))
+    {
+      // Lookup the class definition.
+      auto classAstNode = _ctx.db->query_one<AstNode>(
+        odb::query<AstNode>::entityHash == member.typeHash &&
+        odb::query<AstNode>::astType == AstNode::AstType::Definition);
+
+      // Skip if class was not found or is included from external library.
+      if (!classAstNode || !classAstNode->location.file)
+        continue;
+      classAstNode->location.file.load();
+      auto classFile = _ctx.db->query_one<model::File>(
+        odb::query<model::File>::id == classAstNode->location.file->id);
+      if (!classFile || !cc::util::isRootedUnderAnyOf(_inputPaths, classFile->path))
+        continue;
+
+      // Lookup AST node of method
+      member.memberAstNode.load();
+      auto methodAstNode = _ctx.db->query_one<AstNode>(
+          odb::query<AstNode>::id == member.memberAstNode->id);
+      if (!methodAstNode)
+        continue;
+
+      // Lookup the definition (different AST node if not defined in class body).
+      auto methodDef = _ctx.db->query_one<AstNode>(
+          odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
+          odb::query<AstNode>::astType == AstNode::AstType::Definition);
+      if (!methodDef)
+        continue;
+
+      // Lookup metrics of this definition.
+      auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
+        odb::query<AstNodeMet>::astNodeId == methodDef->id &&
+        odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
+      if (funcMetrics)
+      {
+        // Increase class mccabe by the method's.
+        auto itMcValue = mcValues.find(classAstNode->id);
+        if (itMcValue != mcValues.end())
+        {
+          itMcValue->second += funcMetrics->value;
+        }
+        else
+        {
+          mcValues[classAstNode->id] = funcMetrics->value;
+        }
+      }
+    }
+
+    for (auto mcValue : mcValues)
+    {
+      model::CppAstNodeMetrics typeMcMetric;
+      typeMcMetric.astNodeId = mcValue.first;
+      typeMcMetric.type = model::CppAstNodeMetrics::Type::MCCABE_TYPE;
+      typeMcMetric.value = mcValue.second;
+      _ctx.db->persist(typeMcMetric);
+    }
+  });
+}
+
 void CppMetricsParser::lackOfCohesion()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
@@ -250,6 +322,7 @@ bool CppMetricsParser::parse()
 {
   functionParameters();
   functionMcCabe();
+  typeMcCabe();
   lackOfCohesion();
   return true;
 }
