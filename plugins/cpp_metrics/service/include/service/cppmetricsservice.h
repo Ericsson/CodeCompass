@@ -48,6 +48,14 @@ public:
     std::vector<CppMetricsModule>& _return,
     const core::FileId& fileId_) override;
 
+  void getCppAstNodeMetricsForPath(
+    std::vector<CppAllMetricsAstNode>& _return,
+    const std::string& path_) override;
+
+  void getCppFileMetricsForPath(
+    std::vector<CppAllMetricsModule>& _return,
+    const std::string& path_) override;
+
   void getCppAstNodeMetricsTypeNames(
     std::vector<CppAstNodeMetricsTypeName>& _return) override;
 

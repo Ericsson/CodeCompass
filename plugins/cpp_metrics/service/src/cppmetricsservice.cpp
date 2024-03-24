@@ -8,12 +8,23 @@ namespace service
 namespace cppmetrics
 {
 
+typedef odb::query<cc::model::CppAstNode> AstQuery;
+typedef odb::result<cc::model::CppAstNode> AstResult;
+
 CppMetricsServiceHandler::CppMetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
     : _db(db_), _transaction(db_), _config(context_.options)
 {
+  LOG(info) << "test";
+  std::vector<CppAllMetricsAstNode> metrics;
+  getCppAstNodeMetricsForPath(metrics, "/home/efekane/repos/tinyxml2/tinyxml2.cpp");
+
+  for (const auto& metric : metrics)
+  {
+    LOG(info) << metric.id << ": " << metric.metrics.size();
+  }
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
@@ -108,6 +119,91 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
       metric.type = static_cast<CppModuleMetricsType::type>(moduleMetric.type);
       metric.value = moduleMetric.value;
       _return.push_back(metric);
+    }
+  });
+}
+
+void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
+  std::vector<CppAllMetricsAstNode>& _return,
+  const std::string& path)
+{
+  _transaction([&, this](){
+    typedef odb::query<model::CppAstNode> CppAstNodeQuery;
+    typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
+
+    // ez így még nagyon todo
+    // a kapott path legyen prefixe az ast node path-ának
+    auto nodes = _db->query<model::CppAstNodeFilePath>();
+
+    if (nodes.empty())
+    {
+      core::InvalidInput ex;
+      ex.__set_msg("Invalid metric type for path: " + path);
+      throw ex;
+    }
+    else
+    {
+      LOG(warning) << nodes.size();
+    }
+
+    for (const auto& node : nodes)
+    {
+      LOG(info) << node.id << "    " << node.path;
+      auto metricsQuery = _db->query<model::CppAstNodeMetrics>(
+        CppAstNodeMetricsQuery::astNodeId == node.id);
+      std::vector<CppMetricsAstNode> metrics;
+
+      CppMetricsAstNode metricsAstNode;
+      for (auto& metric : metricsQuery)
+      {
+        metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
+        metricsAstNode.value = metric.value;
+      }
+
+      CppAllMetricsAstNode nodeMetric;
+      nodeMetric.id = node.id;
+      nodeMetric.metrics = metrics;
+      _return.push_back(nodeMetric);
+    }
+  });
+}
+
+void CppMetricsServiceHandler::getCppFileMetricsForPath(
+  std::vector<CppAllMetricsModule>& _return,
+  const std::string& path_)
+{
+  _transaction([&, this](){
+    typedef odb::query<model::File> FileQuery;
+    typedef odb::query<model::CppFileMetrics> CppFileMetricsQuery;
+
+    // ez így még nagyon todo
+    // a kapott path legyen prefixe a file path-ának
+    auto nodes = _db->query<model::File>();
+
+    if (nodes.empty())
+    {
+      core::InvalidInput ex;
+      ex.__set_msg("Invalid metric type for path: " + path_);
+      throw ex;
+    }
+
+    for (const auto& node : nodes)
+    {
+      auto metricsQuery = _db->query<model::CppFileMetrics>(
+        CppFileMetricsQuery::id == node.id);
+      std::vector<CppMetricsModule> metrics;
+
+      CppMetricsModule metricsModule;
+      for (auto& metric : metricsQuery)
+      {
+        metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
+        metricsModule.value = metric.value;
+      }
+
+      CppAllMetricsModule nodeMetric;
+      nodeMetric.id = node.id;
+      nodeMetric.metrics = metrics;
+      _return.push_back(nodeMetric);
     }
   });
 }
