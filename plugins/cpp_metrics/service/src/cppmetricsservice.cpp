@@ -19,14 +19,6 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
   const cc::webserver::ServerContext& context_)
     : _db(db_), _transaction(db_), _config(context_.options)
 {
-  LOG(info) << "test";
-  std::vector<CppAllMetricsAstNode> metrics;
-  getCppAstNodeMetricsForPath(metrics, "/home/efekane/repos/tinyxml2");
-
-  for (const auto& metric : metrics)
-  {
-    LOG(info) << metric.id << ": " << metric.metrics.size();
-  }
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
@@ -129,14 +121,14 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   std::vector<CppAllMetricsAstNode>& _return,
   const std::string& path_)
 {
-  _transaction([&, this](){
-    typedef odb::query<model::CppAstNode> CppAstNodeQuery;
+  _transaction([&, this]()
+  {
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
+    typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
     typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
+    typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
 
-    // ez így még nagyon todo
-    // a kapott path legyen prefixe az ast node path-ának
-    auto nodes = _db->query<model::CppAstNodeFilePath>(
+    CppAstNodeFilePathResult nodes = _db->query<model::CppAstNodeFilePath>(
       CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
 
     if (nodes.empty())
@@ -145,27 +137,22 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
       ex.__set_msg("Invalid metric type for path: " + path_);
       throw ex;
     }
-    else
-    {
-      LOG(warning) << nodes.size();
-    }
 
     for (const auto& node : nodes)
     {
-      LOG(info) << node.id << "    " << node.path;
       auto metricsQuery = _db->query<model::CppAstNodeMetrics>(
         CppAstNodeMetricsQuery::astNodeId == node.id);
       std::vector<CppMetricsAstNode> metrics;
 
       CppMetricsAstNode metricsAstNode;
-      for (auto& metric : metricsQuery)
+      for (const auto& metric : metricsQuery)
       {
         metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
         metricsAstNode.value = metric.value;
       }
 
       CppAllMetricsAstNode nodeMetric;
-      nodeMetric.id = node.id;
+      nodeMetric.id = std::to_string(node.id);
       nodeMetric.metrics = metrics;
       _return.push_back(nodeMetric);
     }
@@ -176,36 +163,38 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
   std::vector<CppAllMetricsModule>& _return,
   const std::string& path_)
 {
-  _transaction([&, this](){
+  _transaction([&, this]()
+  {
     typedef odb::query<model::File> FileQuery;
+    typedef odb::result<model::File> FileResult;
     typedef odb::query<model::CppFileMetrics> CppFileMetricsQuery;
+    typedef odb::result<model::CppFileMetrics> CppFileMetricsResult;
 
-    // ez így még nagyon todo
-    // a kapott path legyen prefixe a file path-ának
-    auto nodes = _db->query<model::File>();
+    FileResult descendants = _db->query<model::File>(
+      FileQuery::path.like(path_ + '%'));
 
-    if (nodes.empty())
+    if (descendants.empty())
     {
       core::InvalidInput ex;
       ex.__set_msg("Invalid metric type for path: " + path_);
       throw ex;
     }
 
-    for (const auto& node : nodes)
+    for (const auto& file : descendants)
     {
-      auto metricsQuery = _db->query<model::CppFileMetrics>(
-        CppFileMetricsQuery::id == node.id);
+      CppFileMetricsResult metricsQuery = _db->query<model::CppFileMetrics>(
+        CppFileMetricsQuery::file == file.id);
       std::vector<CppMetricsModule> metrics;
 
       CppMetricsModule metricsModule;
-      for (auto& metric : metricsQuery)
+      for (const auto& metric : metricsQuery)
       {
         metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
         metricsModule.value = metric.value;
       }
 
       CppAllMetricsModule nodeMetric;
-      nodeMetric.id = node.id;
+      nodeMetric.id = std::to_string(file.id);
       nodeMetric.metrics = metrics;
       _return.push_back(nodeMetric);
     }
