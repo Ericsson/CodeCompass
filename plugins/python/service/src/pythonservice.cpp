@@ -49,6 +49,11 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
         return_.id = std::to_string(pyname.id);
         return_.astNodeValue = pyname.value;
         return_.symbolType = pyname.type;
+        return_.range.file = std::to_string(pyname.file_id);
+        return_.range.range.startpos.line = pyname.line_start;
+        return_.range.range.startpos.column = pyname.column_start;
+        return_.range.range.endpos.line = pyname.line_end;
+        return_.range.range.endpos.column = pyname.column_end;
       }else{
         LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos_.pos.line << " column = " << fpos_.pos.column << ")";
       }
