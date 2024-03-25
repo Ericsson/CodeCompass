@@ -173,10 +173,10 @@ void PythonServiceHandler::getReferences(
     switch (referenceId_)
     {
       case DEFINITION:
-          nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false);
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + "ORDER BY" + odb::query<model::PYName>::line_start);
         break;
       case USAGE:
-        nodes = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false);
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false) + "ORDER BY" + odb::query<model::PYName>::line_start);
         break;
     }
 
