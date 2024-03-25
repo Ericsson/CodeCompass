@@ -1,6 +1,8 @@
 #include <service/cppmetricsservice.h>
 #include <util/dbutil.h>
 
+#include <odb/query.hxx>
+
 namespace cc
 {
 namespace service
@@ -19,7 +21,7 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
 {
   LOG(info) << "test";
   std::vector<CppAllMetricsAstNode> metrics;
-  getCppAstNodeMetricsForPath(metrics, "/home/efekane/repos/tinyxml2/tinyxml2.cpp");
+  getCppAstNodeMetricsForPath(metrics, "/home/efekane/repos/tinyxml2");
 
   for (const auto& metric : metrics)
   {
@@ -125,20 +127,22 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   std::vector<CppAllMetricsAstNode>& _return,
-  const std::string& path)
+  const std::string& path_)
 {
   _transaction([&, this](){
     typedef odb::query<model::CppAstNode> CppAstNodeQuery;
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
+    typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
 
     // ez így még nagyon todo
     // a kapott path legyen prefixe az ast node path-ának
-    auto nodes = _db->query<model::CppAstNodeFilePath>();
+    auto nodes = _db->query<model::CppAstNodeFilePath>(
+      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
 
     if (nodes.empty())
     {
       core::InvalidInput ex;
-      ex.__set_msg("Invalid metric type for path: " + path);
+      ex.__set_msg("Invalid metric type for path: " + path_);
       throw ex;
     }
     else
