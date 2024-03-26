@@ -149,7 +149,11 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
       {
         metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
         metricsAstNode.value = metric.value;
+        metrics.push_back(metricsAstNode);
       }
+
+      if (metrics.empty())
+        continue;
 
       CppAllMetricsAstNode nodeMetric;
       nodeMetric.id = std::to_string(node.id);
@@ -191,7 +195,11 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
       {
         metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
         metricsModule.value = metric.value;
+        metrics.push_back(metricsModule);
       }
+
+      if (metrics.empty())
+        continue;
 
       CppAllMetricsModule nodeMetric;
       nodeMetric.id = std::to_string(file.id);
