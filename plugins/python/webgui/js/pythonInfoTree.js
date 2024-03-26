@@ -83,46 +83,6 @@ require([
              null;
     }
   
-    function groupReferencesByVisibilities(references, parentNode, nodeInfo) {
-      var res = [];
-      var visibilities = ['public', 'private', 'protected'];
-  
-      visibilities.forEach(function (visibility) {
-        var nodes = references.filter(function (reference) {
-          return reference.tags.indexOf(visibility) > -1;
-        });
-  
-        if (!nodes.length)
-          return;
-  
-        res.push({
-          id          : nodeInfo.id + visibility + parentNode.refType,
-          name        : createReferenceCountLabel(visibility, nodes.length),
-          refType     : parentNode.refType,
-          hasChildren : true,
-          cssClass    : 'icon-visibility icon-' + visibility,
-          getChildren : function () {
-            var res = [];
-  
-            nodes.forEach(function (reference) {
-              res.push({
-                id          : visibility + reference.id,
-                name        : createLabel(reference),
-                refType     : parentNode.refType,
-                nodeInfo    : reference,
-                hasChildren : false,
-                cssClass    : getCssClass(reference)
-              });
-            });
-  
-            return res;
-          }
-        });
-      });
-  
-      return res;
-    }
-  
     function loadReferenceNodes(parentNode, nodeInfo, refTypes, scratch) {
       var res = [];
       var fileGroupsId = [];
@@ -132,10 +92,6 @@ require([
       var references = model.pythonservice.getReferences(
         nodeInfo.id,
         parentNode.refType);
-  
-      if (parentNode.refType === refTypes['Method'] ||
-          parentNode.refType === refTypes['Data member'])
-        return groupReferencesByVisibilities(references, parentNode, nodeInfo);
   
       references.forEach(function (reference) {
         if (parentNode.refType === refTypes['Caller'] ||

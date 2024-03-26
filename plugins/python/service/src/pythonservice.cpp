@@ -158,6 +158,14 @@ void PythonServiceHandler::getReferenceTypes(
   LOG(info) << "[PYSERVICE] " << __func__;
   return_.emplace("Definition", DEFINITION);
   return_.emplace("Usage", USAGE);
+
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
+  if(pyname.type == "class")
+  {
+    return_.emplace("Method", METHOD);
+    return_.emplace("Data member", DATA_MEMBER);
+  }
+
   return;
 }
 
@@ -175,13 +183,21 @@ void PythonServiceHandler::getReferences(
     model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
 
     odb::result<model::PYName> nodes;
+    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start;
+
     switch (referenceId_)
     {
       case DEFINITION:
-        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + "ORDER BY" + odb::query<model::PYName>::line_start);
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by);
         break;
       case USAGE:
-        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false) + "ORDER BY" + odb::query<model::PYName>::line_start);
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false) + order_by);
+        break;
+      case METHOD:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "function" && odb::query<model::PYName>::is_definition == true) + order_by);
+        break;
+      case DATA_MEMBER:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "statement" && odb::query<model::PYName>::is_definition == true) + order_by);
         break;
     }
 
@@ -196,6 +212,7 @@ void PythonServiceHandler::getReferences(
       info.range.range.endpos.line = pyname.line_end;
       info.range.range.endpos.column = pyname.column_end;
       info.astNodeValue = pyname.value;
+
       return_.push_back(info);
     }
 
@@ -224,6 +241,12 @@ std::int32_t PythonServiceHandler::getReferenceCount(
         break;
       case USAGE:
         ret = _db->query<model::PYName>(odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false).size();
+        break;
+      case METHOD:
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "function" && odb::query<model::PYName>::is_definition == true).size();
+        break;
+      case DATA_MEMBER:
+        ret = _db->query<model::PYName>(odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "statement" && odb::query<model::PYName>::is_definition == true).size();
         break;
     }
     return;
@@ -259,8 +282,6 @@ void PythonServiceHandler::getFileReferenceTypes(
   const core::FileId& fileId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  return_["Definition"] = DEFINITION;
-  return_["Usage"] = USAGE;
   return;
 }
 
