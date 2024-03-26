@@ -17,6 +17,7 @@ struct PYName
     std::uint64_t id = 0;
 
     std::uint64_t ref_id;
+    std::uint64_t parent;
     bool is_definition = false;
     bool is_builtin = false;
     bool is_import = false;

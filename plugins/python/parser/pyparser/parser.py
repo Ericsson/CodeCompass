@@ -109,6 +109,9 @@ def getNodeInfo(name, refid, defs = []):
     node["is_builtin"] = name.in_builtin_module() or any(list(map(lambda x : x.in_builtin_module(), defs)))
     node["is_import"] = "import" in node["value"]
 
+    parent = name.parent()
+    node["parent"] = hashName(parent) if parent else node["id"]
+
     return node
 
 def getNameTypeHint(name):
