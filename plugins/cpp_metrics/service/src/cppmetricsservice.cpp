@@ -1,12 +1,17 @@
 #include <service/cppmetricsservice.h>
 #include <util/dbutil.h>
 
+#include <odb/query.hxx>
+
 namespace cc
 {
 namespace service
 {
 namespace cppmetrics
 {
+
+typedef odb::query<cc::model::CppAstNode> AstQuery;
+typedef odb::result<cc::model::CppAstNode> AstResult;
 
 CppMetricsServiceHandler::CppMetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
@@ -16,25 +21,35 @@ CppMetricsServiceHandler::CppMetricsServiceHandler(
 {
 }
 
-void CppMetricsServiceHandler::getCppMetricsTypeNames(
-  std::vector<CppMetricsTypeName>& _return)
+void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
+  std::vector<CppAstNodeMetricsTypeName>& _return)
 {
-  CppMetricsTypeName typeName;
+  CppAstNodeMetricsTypeName typeName;
 
-  typeName.type = CppMetricsType::ParameterCount;
+  typeName.type = CppAstNodeMetricsType::ParameterCount;
   typeName.name = "Number of function parameters";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::McCabe;
+  typeName.type = CppAstNodeMetricsType::McCabe;
   typeName.name = "McCabe metric";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::LackOfCohesion;
+  typeName.type = CppAstNodeMetricsType::LackOfCohesion;
   typeName.name = "Lack of cohesion of function";
   _return.push_back(typeName);
 
-  typeName.type = CppMetricsType::LackOfCohesionHS;
+  typeName.type = CppAstNodeMetricsType::LackOfCohesionHS;
   typeName.name = "Lack of cohesion of function (Henderson-Sellers variant)";
+  _return.push_back(typeName);
+}
+
+void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
+  std::vector<CppModuleMetricsTypeName>& _return)
+{
+  CppModuleMetricsTypeName typeName;
+
+  typeName.type = CppModuleMetricsType::Placeholder;
+  typeName.name = "Placeholder";
   _return.push_back(typeName);
 }
 
@@ -52,7 +67,7 @@ void CppMetricsServiceHandler::getCppMetricsForAstNode(
 
     for (const auto& nodeMetric : nodeMetrics)
     {
-      metric.type = static_cast<CppMetricsType::type>(nodeMetric.type);
+      metric.type = static_cast<CppAstNodeMetricsType::type>(nodeMetric.type);
       metric.value = nodeMetric.value;
       _return.push_back(metric);
     }
@@ -61,7 +76,7 @@ void CppMetricsServiceHandler::getCppMetricsForAstNode(
 
 double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
   const core::AstNodeId& astNodeId_,
-  CppMetricsType::type metric_)
+  CppAstNodeMetricsType::type metric_)
 {
   return _transaction([&, this]() -> std::double_t {
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
@@ -78,6 +93,119 @@ double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
     }
 
     return nodeMetric.begin()->value;
+  });
+}
+
+void CppMetricsServiceHandler::getCppMetricsForModule(
+  std::vector<CppMetricsModule>& _return,
+  const core::FileId& fileId_)
+{
+  CppMetricsModule metric;
+
+  _transaction([&, this](){
+    typedef odb::query<model::CppFileMetrics> CppModuleMetricsQuery;
+
+    auto moduleMetrics = _db->query<model::CppFileMetrics>(
+      CppModuleMetricsQuery::file == std::stoull(fileId_));
+
+    for (const auto& moduleMetric : moduleMetrics)
+    {
+      metric.type = static_cast<CppModuleMetricsType::type>(moduleMetric.type);
+      metric.value = moduleMetric.value;
+      _return.push_back(metric);
+    }
+  });
+}
+
+void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
+  std::vector<CppAllMetricsAstNode>& _return,
+  const std::string& path_)
+{
+  _transaction([&, this]()
+  {
+    typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
+    typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
+    typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
+    typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
+
+    CppAstNodeFilePathResult nodes = _db->query<model::CppAstNodeFilePath>(
+      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
+
+    if (nodes.empty())
+    {
+      core::InvalidInput ex;
+      ex.__set_msg("Invalid metric type for path: " + path_);
+      throw ex;
+    }
+
+    for (const auto& node : nodes)
+    {
+      auto metricsQuery = _db->query<model::CppAstNodeMetrics>(
+        CppAstNodeMetricsQuery::astNodeId == node.id);
+      std::vector<CppMetricsAstNode> metrics;
+
+      CppMetricsAstNode metricsAstNode;
+      for (const auto& metric : metricsQuery)
+      {
+        metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
+        metricsAstNode.value = metric.value;
+        metrics.push_back(metricsAstNode);
+      }
+
+      if (metrics.empty())
+        continue;
+
+      CppAllMetricsAstNode nodeMetric;
+      nodeMetric.id = std::to_string(node.id);
+      nodeMetric.metrics = metrics;
+      _return.push_back(nodeMetric);
+    }
+  });
+}
+
+void CppMetricsServiceHandler::getCppFileMetricsForPath(
+  std::vector<CppAllMetricsModule>& _return,
+  const std::string& path_)
+{
+  _transaction([&, this]()
+  {
+    typedef odb::query<model::File> FileQuery;
+    typedef odb::result<model::File> FileResult;
+    typedef odb::query<model::CppFileMetrics> CppFileMetricsQuery;
+    typedef odb::result<model::CppFileMetrics> CppFileMetricsResult;
+
+    FileResult descendants = _db->query<model::File>(
+      FileQuery::path.like(path_ + '%'));
+
+    if (descendants.empty())
+    {
+      core::InvalidInput ex;
+      ex.__set_msg("Invalid metric type for path: " + path_);
+      throw ex;
+    }
+
+    for (const auto& file : descendants)
+    {
+      CppFileMetricsResult metricsQuery = _db->query<model::CppFileMetrics>(
+        CppFileMetricsQuery::file == file.id);
+      std::vector<CppMetricsModule> metrics;
+
+      CppMetricsModule metricsModule;
+      for (const auto& metric : metricsQuery)
+      {
+        metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
+        metricsModule.value = metric.value;
+        metrics.push_back(metricsModule);
+      }
+
+      if (metrics.empty())
+        continue;
+
+      CppAllMetricsModule nodeMetric;
+      nodeMetric.id = std::to_string(file.id);
+      nodeMetric.metrics = metrics;
+      _return.push_back(nodeMetric);
+    }
   });
 }
 
