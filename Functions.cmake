@@ -1,10 +1,6 @@
 # Generate ODB files from sources
 # @return ODB_CXX_SOURCES - odb cxx source files
 function(generate_odb_files _src)
-  set(DEPENDENCY_PLUGIN_INCLUDE_DIRS ${ARGN})
-  list(TRANSFORM DEPENDENCY_PLUGIN_INCLUDE_DIRS PREPEND "-I${CMAKE_SOURCE_DIR}/plugins/")
-  list(TRANSFORM DEPENDENCY_PLUGIN_INCLUDE_DIRS APPEND "/model/include")
-
   foreach(_file ${_src})
     get_filename_component(_dir ${_file} DIRECTORY)
     get_filename_component(_name ${_file} NAME)
@@ -29,7 +25,6 @@ function(generate_odb_files _src)
           -I ${CMAKE_SOURCE_DIR}/model/include
           -I ${CMAKE_SOURCE_DIR}/util/include
           -I ${ODB_INCLUDE_DIRS}
-          ${DEPENDENCY_PLUGIN_INCLUDE_DIRS}
           ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
       COMMAND
         mv ${CMAKE_CURRENT_BINARY_DIR}/include/model/${_cxx}
