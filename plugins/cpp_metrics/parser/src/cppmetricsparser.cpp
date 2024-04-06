@@ -169,6 +169,7 @@ void CppMetricsParser::typeMcCabe()
   {
     using MemberT    = model::CppMemberType;
     using AstNode    = model::CppAstNode;
+    using Entity     = model::CppEntity;
     using AstNodeMet = model::CppAstNodeMetrics;
 
     std::map<model::CppAstNodeId, unsigned int> mcValues;
@@ -203,6 +204,12 @@ void CppMetricsParser::typeMcCabe()
           odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
           odb::query<AstNode>::astType == AstNode::AstType::Definition);
       if (!methodDef)
+        continue;
+
+      // Skip implicitly defined methods (constructors, operator=, etc.)
+      const auto entity = _ctx.db->query_one<Entity>(
+          odb::query<Entity>::astNodeId == methodDef->id);
+      if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
         continue;
 
       // Lookup metrics of this definition.
