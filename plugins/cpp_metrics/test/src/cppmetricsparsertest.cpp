@@ -169,6 +169,48 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::ValuesIn(paramBumpyRoad)
 );
 
+// Type McCabe
+
+class ParameterizedTypeMcCabeTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<McCabeParam>
+{};
+
+std::vector<McCabeParam> paramTypeMcCabe = {
+  {"Empty",                         0}, // 0 means metric must not be present
+  {"ClassMethodsInside",           16},
+  {"ClassMethodsOutside",          44},
+  {"ClassMethodsInsideAndOutside",  8},
+};
+
+TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {
+  _transaction([&, this]() {
+
+    const auto record = _db->query_value<model::CppRecord>(
+      odb::query<model::CppRecord>::qualifiedName == GetParam().first);
+
+    const auto metric = _db->query_one<model::CppAstNodeMetrics>(
+      odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
+      odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::MCCABE_TYPE);
+
+    if (GetParam().second == 0)
+    {
+      ASSERT_TRUE(metric == nullptr);
+    }
+    else
+    {
+      ASSERT_TRUE(metric != nullptr);
+      EXPECT_EQ(GetParam().second, metric->value);
+    }
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedTypeMcCabeTestSuite,
+  ParameterizedTypeMcCabeTest,
+  ::testing::ValuesIn(paramTypeMcCabe)
+);
+
 // Lack of Cohesion
 
 struct LackOfCohesionParam
