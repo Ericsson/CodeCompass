@@ -179,7 +179,7 @@ void CppMetricsParser::typeMcCabe()
       odb::query<MemberT>::kind == MemberT::Kind::Method))
     {
       // Lookup the class definition.
-      auto classAstNode = _ctx.db->query_one<AstNode>(
+      const auto classAstNode = _ctx.db->query_one<AstNode>(
         odb::query<AstNode>::entityHash == member.typeHash &&
         odb::query<AstNode>::astType == AstNode::AstType::Definition);
 
@@ -187,20 +187,20 @@ void CppMetricsParser::typeMcCabe()
       if (!classAstNode || !classAstNode->location.file)
         continue;
       classAstNode->location.file.load();
-      auto classFile = _ctx.db->query_one<model::File>(
+      const auto classFile = _ctx.db->query_one<model::File>(
         odb::query<model::File>::id == classAstNode->location.file->id);
       if (!classFile || !cc::util::isRootedUnderAnyOf(_inputPaths, classFile->path))
         continue;
 
       // Lookup AST node of method
       member.memberAstNode.load();
-      auto methodAstNode = _ctx.db->query_one<AstNode>(
+      const auto methodAstNode = _ctx.db->query_one<AstNode>(
           odb::query<AstNode>::id == member.memberAstNode->id);
       if (!methodAstNode)
         continue;
 
       // Lookup the definition (different AST node if not defined in class body).
-      auto methodDef = _ctx.db->query_one<AstNode>(
+      const auto methodDef = _ctx.db->query_one<AstNode>(
           odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
           odb::query<AstNode>::astType == AstNode::AstType::Definition);
       if (!methodDef)
@@ -213,14 +213,14 @@ void CppMetricsParser::typeMcCabe()
         continue;
 
       // Lookup metrics of this definition.
-      auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
+      const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
         odb::query<AstNodeMet>::astNodeId == methodDef->id &&
         odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
       if (funcMetrics)
       {
         // Increase class mccabe by the method's.
-        auto itMcValue = mcValues.find(classAstNode->id);
-        if (itMcValue != mcValues.end())
+        const auto itMcValue = mcValues.find(classAstNode->id);
+        if (itMcValue != mcValues.cend())
         {
           itMcValue->second += funcMetrics->value;
         }
@@ -231,7 +231,7 @@ void CppMetricsParser::typeMcCabe()
       }
     }
 
-    for (auto mcValue : mcValues)
+    for (const auto& mcValue : mcValues)
     {
       model::CppAstNodeMetrics typeMcMetric;
       typeMcMetric.astNodeId = mcValue.first;
