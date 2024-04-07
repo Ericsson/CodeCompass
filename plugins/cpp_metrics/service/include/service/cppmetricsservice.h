@@ -41,19 +41,19 @@ public:
     CppAstNodeMetricsType::type metric_) override;
 
   void getCppMetricsForAstNode(
-    std::vector<CppMetricsAstNode>& _return,
+    std::vector<CppMetricsAstNodeSingle>& _return,
     const core::AstNodeId& astNodeId_) override;
 
   void getCppMetricsForModule(
-    std::vector<CppMetricsModule>& _return,
+    std::vector<CppMetricsModuleSingle>& _return,
     const core::FileId& fileId_) override;
 
   void getCppAstNodeMetricsForPath(
-    std::vector<CppAllMetricsAstNode>& _return,
+    std::vector<CppMetricsAstNodeAll>& _return,
     const std::string& path_) override;
 
   void getCppFileMetricsForPath(
-    std::vector<CppAllMetricsModule>& _return,
+    std::vector<CppMetricsModuleAll>& _return,
     const std::string& path_) override;
 
   void getCppAstNodeMetricsTypeNames(

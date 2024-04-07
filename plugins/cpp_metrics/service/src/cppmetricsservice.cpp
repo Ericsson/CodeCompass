@@ -54,10 +54,10 @@ void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
 }
 
 void CppMetricsServiceHandler::getCppMetricsForAstNode(
-  std::vector<CppMetricsAstNode>& _return,
+  std::vector<CppMetricsAstNodeSingle>& _return,
   const core::AstNodeId& astNodeId_)
 {
-  CppMetricsAstNode metric;
+  CppMetricsAstNodeSingle metric;
 
   _transaction([&, this](){
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
@@ -97,10 +97,10 @@ double CppMetricsServiceHandler::getSingleCppMetricForAstNode(
 }
 
 void CppMetricsServiceHandler::getCppMetricsForModule(
-  std::vector<CppMetricsModule>& _return,
+  std::vector<CppMetricsModuleSingle>& _return,
   const core::FileId& fileId_)
 {
-  CppMetricsModule metric;
+  CppMetricsModuleSingle metric;
 
   _transaction([&, this](){
     typedef odb::query<model::CppFileMetrics> CppModuleMetricsQuery;
@@ -118,7 +118,7 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
-  std::vector<CppAllMetricsAstNode>& _return,
+  std::vector<CppMetricsAstNodeAll>& _return,
   const std::string& path_)
 {
   _transaction([&, this]()
@@ -142,9 +142,9 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
     {
       auto metricsQuery = _db->query<model::CppAstNodeMetrics>(
         CppAstNodeMetricsQuery::astNodeId == node.id);
-      std::vector<CppMetricsAstNode> metrics;
+      std::vector<CppMetricsAstNodeSingle> metrics;
 
-      CppMetricsAstNode metricsAstNode;
+      CppMetricsAstNodeSingle metricsAstNode;
       for (const auto& metric : metricsQuery)
       {
         metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
@@ -155,7 +155,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
       if (metrics.empty())
         continue;
 
-      CppAllMetricsAstNode nodeMetric;
+      CppMetricsAstNodeAll nodeMetric;
       nodeMetric.id = std::to_string(node.id);
       nodeMetric.metrics = metrics;
       _return.push_back(nodeMetric);
@@ -164,7 +164,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
 }
 
 void CppMetricsServiceHandler::getCppFileMetricsForPath(
-  std::vector<CppAllMetricsModule>& _return,
+  std::vector<CppMetricsModuleAll>& _return,
   const std::string& path_)
 {
   _transaction([&, this]()
@@ -188,9 +188,9 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
     {
       CppFileMetricsResult metricsQuery = _db->query<model::CppFileMetrics>(
         CppFileMetricsQuery::file == file.id);
-      std::vector<CppMetricsModule> metrics;
+      std::vector<CppMetricsModuleSingle> metrics;
 
-      CppMetricsModule metricsModule;
+      CppMetricsModuleSingle metricsModule;
       for (const auto& metric : metricsQuery)
       {
         metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
@@ -201,7 +201,7 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
       if (metrics.empty())
         continue;
 
-      CppAllMetricsModule nodeMetric;
+      CppMetricsModuleAll nodeMetric;
       nodeMetric.id = std::to_string(file.id);
       nodeMetric.metrics = metrics;
       _return.push_back(nodeMetric);

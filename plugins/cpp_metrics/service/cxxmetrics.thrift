@@ -35,39 +35,28 @@ struct CppModuleMetricsTypeName
   2:string name
 }
 
-struct CppMetricsAstNode
+struct CppMetricsAstNodeSingle
 {
   1:CppAstNodeMetricsType type,
   2:double value
 }
 
-struct CppAllMetricsAstNode
+struct CppMetricsAstNodeAll
 {
   1:common.AstNodeId id,
-  2:list<CppMetricsAstNode> metrics
+  2:list<CppMetricsAstNodeSingle> metrics
 }
 
-struct CppMetricsModule
+struct CppMetricsModuleSingle
 {
   1:CppModuleMetricsType type,
   2:double value
 }
 
-struct CppAllMetricsModule
+struct CppMetricsModuleAll
 {
   1:common.FileId id,
-  2:list<CppMetricsModule> metrics
-}
-
-// Thrift does not provide a union type,
-// the ids can remain empty.
-struct CppMetricsPath
-{
-  1:CppUnitType type
-  2:common.AstNodeId astNodeId
-  3:list<CppMetricsAstNode> astNodeIdMetrics
-  4:common.FileId fileId
-  5:list<CppMetricsModule> fileMetrics
+  2:list<CppMetricsModuleSingle> metrics
 }
 
 service CppMetricsService
@@ -84,28 +73,28 @@ service CppMetricsService
    * This function returns all available C++ metrics
    * for a particular AST node.
    */
-  list<CppMetricsAstNode> getCppMetricsForAstNode(
+  list<CppMetricsAstNodeSingle> getCppMetricsForAstNode(
     1:common.AstNodeId astNodeId)
 
   /**
    * This function returns all available C++ metrics
    * for a particular module.
    */
-  list<CppMetricsModule> getCppMetricsForModule(
+  list<CppMetricsModuleSingle> getCppMetricsForModule(
     1:common.FileId fileId)
 
   /**
    * This function returns all available C++ metrics
    * (AST node-level) for a particular path.
    */
-  list<CppAllMetricsAstNode> getCppAstNodeMetricsForPath(
+  list<CppMetricsAstNodeAll> getCppAstNodeMetricsForPath(
     1:string path)
 
   /**
    * This function returns all available C++ metrics
    * (file-level) for a particular path.
    */
-  list<CppAllMetricsModule> getCppFileMetricsForPath(
+  list<CppMetricsModuleAll> getCppFileMetricsForPath(
     1:string path)
 
   /**
@@ -116,5 +105,5 @@ service CppMetricsService
   /**
    * This function returns the names of module-level metrics.
    */
-   list<CppModuleMetricsTypeName> getCppModuleMetricsTypeNames()
+  list<CppModuleMetricsTypeName> getCppModuleMetricsTypeNames()
 }
