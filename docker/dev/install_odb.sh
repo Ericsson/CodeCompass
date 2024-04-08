@@ -33,10 +33,7 @@ for pack in "$BUILD_LIST"; do
   bpkg build $pack --yes
 done
 # Install ODB (to /usr/local)
-INSTALL_LIST="$BUILD_LIST libstudxml libcutl"
-for pack in "$INSTALL_LIST"; do
-  bpkg install $pack
-done
+bpkg install --all --recursive
 # Clean up
 cd /
 sh install_latest_build2.sh --uninstall
