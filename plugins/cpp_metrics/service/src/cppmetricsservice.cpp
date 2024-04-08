@@ -2,6 +2,8 @@
 #include <util/dbutil.h>
 
 #include <odb/query.hxx>
+#include <model/file.h>
+#include <model/file-odb.hxx>
 
 namespace cc
 {
@@ -121,22 +123,24 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   std::vector<CppMetricsAstNodeAll>& _return,
   const std::string& path_)
 {
-  _transaction([&, this]()
-  {
+  _transaction([&, this](){
     typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
     typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
     typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
     typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
 
+    auto nodesRes = _db->query<model::CppAstNodeMetrics>();
+    std::set<model::CppAstNodeId> nodesWithMetrics;
+    for (const auto& node : nodesRes)
+      nodesWithMetrics.insert(node.astNodeId);
+
     CppAstNodeFilePathResult nodes = _db->query<model::CppAstNodeFilePath>(
-      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
+      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%') &&
+      CppAstNodeFilePathQuery::CppAstNode::id.in_range(
+        nodesWithMetrics.begin(), nodesWithMetrics.end()));
 
     if (nodes.empty())
-    {
-      core::InvalidInput ex;
-      ex.__set_msg("Invalid metric type for path: " + path_);
-      throw ex;
-    }
+      return;
 
     for (const auto& node : nodes)
     {
@@ -167,22 +171,24 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
   std::vector<CppMetricsModuleAll>& _return,
   const std::string& path_)
 {
-  _transaction([&, this]()
-  {
-    typedef odb::query<model::File> FileQuery;
-    typedef odb::result<model::File> FileResult;
+  _transaction([&, this](){
+    typedef odb::query<model::FilePathView> FileQuery;
+    typedef odb::result<model::FilePathView> FileResult;
     typedef odb::query<model::CppFileMetrics> CppFileMetricsQuery;
     typedef odb::result<model::CppFileMetrics> CppFileMetricsResult;
 
-    FileResult descendants = _db->query<model::File>(
-      FileQuery::path.like(path_ + '%'));
+    auto filesRes = _db->query<model::CppFileMetrics>();
+    std::set<model::CppAstNodeId> filesWithMetrics;
+    for (const auto& file : filesRes)
+      filesWithMetrics.insert(file.file);
+
+    FileResult descendants = _db->query<model::FilePathView>(
+      FileQuery::path.like(path_ + '%') &&
+      CppFileMetricsQuery::file.in_range(
+        filesWithMetrics.begin(), filesWithMetrics.end()));
 
     if (descendants.empty())
-    {
-      core::InvalidInput ex;
-      ex.__set_msg("Invalid metric type for path: " + path_);
-      throw ex;
-    }
+      return;
 
     for (const auto& file : descendants)
     {
