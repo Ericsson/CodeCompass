@@ -189,19 +189,11 @@ TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {
     const auto record = _db->query_value<model::CppRecord>(
       odb::query<model::CppRecord>::qualifiedName == GetParam().first);
 
-    const auto metric = _db->query_one<model::CppAstNodeMetrics>(
+    const auto metric = _db->query_value<model::CppAstNodeMetrics>(
       odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
       odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::MCCABE_TYPE);
 
-    if (GetParam().second == 0)
-    {
-      ASSERT_TRUE(metric == nullptr);
-    }
-    else
-    {
-      ASSERT_TRUE(metric != nullptr);
-      EXPECT_EQ(GetParam().second, metric->value);
-    }
+    EXPECT_EQ(GetParam().second, metric.value);
   });
 }
 

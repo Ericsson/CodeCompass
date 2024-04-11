@@ -174,59 +174,53 @@ void CppMetricsParser::typeMcCabe()
 
     std::map<model::CppAstNodeId, unsigned int> mcValues;
 
-    // Process all methods.
-    for (const auto& member : _ctx.db->query<MemberT>(
-      odb::query<MemberT>::kind == MemberT::Kind::Method))
+    // Process all class definitions
+    for (const auto& type : _ctx.db->query<AstNode>(
+      odb::query<AstNode>::symbolType == AstNode::SymbolType::Type &&
+      odb::query<AstNode>::astType == AstNode::AstType::Definition))
     {
-      // Lookup the class definition.
-      const auto classAstNode = _ctx.db->query_one<AstNode>(
-        odb::query<AstNode>::entityHash == member.typeHash &&
-        odb::query<AstNode>::astType == AstNode::AstType::Definition);
-
-      // Skip if class was not found or is included from external library.
-      if (!classAstNode || !classAstNode->location.file)
-        continue;
-      classAstNode->location.file.load();
-      const auto classFile = _ctx.db->query_one<model::File>(
-        odb::query<model::File>::id == classAstNode->location.file->id);
-      if (!classFile || !cc::util::isRootedUnderAnyOf(_inputPaths, classFile->path))
+      // Skip if class is included from external library
+      type.location.file.load();
+      const auto typeFile = _ctx.db->query_one<model::File>(
+        odb::query<model::File>::id == type.location.file->id);
+      if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
         continue;
 
-      // Lookup AST node of method
-      member.memberAstNode.load();
-      const auto methodAstNode = _ctx.db->query_one<AstNode>(
-          odb::query<AstNode>::id == member.memberAstNode->id);
-      if (!methodAstNode)
-        continue;
+      mcValues[type.id] = 0;
 
-      // Lookup the definition (different AST node if not defined in class body).
-      const auto methodDef = _ctx.db->query_one<AstNode>(
+      // Process its methods
+      for (const auto& method : _ctx.db->query<MemberT>(
+        odb::query<MemberT>::typeHash == type.entityHash &&
+        odb::query<MemberT>::kind == MemberT::Kind::Method))
+      {
+        // Lookup AST node of method
+        method.memberAstNode.load();
+        const auto methodAstNode = _ctx.db->query_one<AstNode>(
+          odb::query<AstNode>::id == method.memberAstNode->id);
+        if (!methodAstNode)
+          continue;
+
+        // Lookup the definition (different AST node if not defined in class body)
+        const auto methodDef = _ctx.db->query_one<AstNode>(
           odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
           odb::query<AstNode>::astType == AstNode::AstType::Definition);
-      if (!methodDef)
-        continue;
+        if (!methodDef)
+          continue;
 
-      // Skip implicitly defined methods (constructors, operator=, etc.)
-      const auto entity = _ctx.db->query_one<Entity>(
+        // Skip implicitly defined methods (constructors, operator=, etc.)
+        const auto entity = _ctx.db->query_one<Entity>(
           odb::query<Entity>::astNodeId == methodDef->id);
-      if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
-        continue;
+        if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
+          continue;
 
-      // Lookup metrics of this definition.
-      const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
-        odb::query<AstNodeMet>::astNodeId == methodDef->id &&
-        odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
-      if (funcMetrics)
-      {
-        // Increase class mccabe by the method's.
-        const auto itMcValue = mcValues.find(classAstNode->id);
-        if (itMcValue != mcValues.cend())
+        // Lookup metrics of this definition
+        const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
+          odb::query<AstNodeMet>::astNodeId == methodDef->id &&
+          odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
+        if (funcMetrics)
         {
-          itMcValue->second += funcMetrics->value;
-        }
-        else
-        {
-          mcValues[classAstNode->id] = funcMetrics->value;
+          // Increase class mccabe by the method's
+          mcValues[type.id] += funcMetrics->value;
         }
       }
     }
