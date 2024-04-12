@@ -14,8 +14,6 @@
 
 #include <util/filesystem.h>
 #include <util/logutil.h>
-#include <util/filesystem.h>
-#include <util/odbtransaction.h>
 
 #include <memory>
 
@@ -28,6 +26,7 @@ namespace fs = boost::filesystem;
 
 CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
+  _threadCount = _ctx.options["jobs"].as<int>();
   for (const std::string& path :
     _ctx.options["input"].as<std::vector<std::string>>())
     _inputPaths.push_back(fs::canonical(path).string());
@@ -101,41 +100,35 @@ bool CppMetricsParser::cleanupDatabase()
 
 void CppMetricsParser::functionParameters()
 {
-  util::OdbTransaction {_ctx.db} ([&, this]
+  parallelCalcMetric<model::CppFunctionParamCountWithId>(
+    getFilterPathsQuery<model::CppFunctionParamCountWithId>(),
+    [&, this](const model::CppFunctionParamCountWithId& funParams)
   {
-    for (const model::CppFunctionParamCountWithId& paramCount
-      : _ctx.db->query<model::CppFunctionParamCountWithId>())
+    util::OdbTransaction {_ctx.db} ([&, this]
     {
-      // Skip functions that were included from external libraries.
-      if (!cc::util::isRootedUnderAnyOf(_inputPaths, paramCount.filePath))
-        continue;
-
       model::CppAstNodeMetrics funcParams;
-      funcParams.astNodeId = paramCount.id;
+      funcParams.astNodeId = funParams.id;
       funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
-      funcParams.value = paramCount.count;
+      funcParams.value = funParams.count;
       _ctx.db->persist(funcParams);
-    }
+    });
   });
 }
 
 void CppMetricsParser::functionMcCabe()
 {
-  util::OdbTransaction {_ctx.db} ([&, this]
+  parallelCalcMetric<model::CppFunctionMcCabe>(
+    getFilterPathsQuery<model::CppFunctionMcCabe>(),
+    [&, this](const model::CppFunctionMcCabe& function)
   {
-    for (const model::CppFunctionMcCabe& function
-      : _ctx.db->query<model::CppFunctionMcCabe>())
+    util::OdbTransaction {_ctx.db} ([&, this]
     {
-      // Skip functions that were included from external libraries.
-      if (!cc::util::isRootedUnderAnyOf(_inputPaths, function.filePath))
-        continue;
-
       model::CppAstNodeMetrics funcMcCabe;
       funcMcCabe.astNodeId = function.astNodeId;
       funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
       funcMcCabe.value = function.mccabe;
       _ctx.db->persist(funcMcCabe);
-    }
+    });
   });
 }
 
@@ -165,7 +158,10 @@ void CppMetricsParser::functionBumpyRoad()
 
 void CppMetricsParser::lackOfCohesion()
 {
-  util::OdbTransaction {_ctx.db} ([&, this]
+  // Calculate the cohesion metric for all types on parallel threads.
+  parallelCalcMetric<model::CohesionCppRecordView>(
+    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    [&, this](const model::CohesionCppRecordView& type)
   {
     // Simplify some type names for readability.
     typedef std::uint64_t HashType;
@@ -179,15 +175,9 @@ void CppMetricsParser::lackOfCohesion()
     typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
     const auto& QNodeFilePath = QNode::File::path;
     const auto& QNodeRange = QNode::CppAstNode::location.range;
-
-    // Calculate the cohesion metric for all types.
-    for (const model::CohesionCppRecordView& type
-      : _ctx.db->query<model::CohesionCppRecordView>())
+    
+    util::OdbTransaction {_ctx.db} ([&, this]
     {
-      // Skip types that were included from external libraries.
-      if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
-        continue;
-
       std::unordered_set<HashType> fieldHashes;
       // Query all fields of the current type.
       for (const model::CohesionCppFieldView& field
@@ -264,7 +254,7 @@ void CppMetricsParser::lackOfCohesion()
       lcm_hs.value = trivial ? 0.0 : singular ? NAN :
         ((dM - dC / dF) / (dM - 1.0));
       _ctx.db->persist(lcm_hs);
-    }
+    });
   });
 }
 
