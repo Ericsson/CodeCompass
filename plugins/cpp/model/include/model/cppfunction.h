@@ -53,9 +53,6 @@ struct CppFunctionParamCountWithId
 
   #pragma db column("count(" + Parameters::id + ")")
   std::size_t count;
-
-  #pragma db column(File::path)
-  std::string filePath;
 };
 
 #pragma db view \
@@ -77,9 +74,6 @@ struct CppFunctionMcCabe
 
   #pragma db column(CppFunction::mccabe)
   unsigned int mccabe;
-
-  #pragma db column(File::path)
-  std::string filePath;
 };
 
 }
