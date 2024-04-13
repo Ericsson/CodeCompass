@@ -203,6 +203,7 @@ void CppMetricsParser::typeMcCabe()
         // Lookup the definition (different AST node if not defined in class body)
         const auto methodDef = _ctx.db->query_one<AstNode>(
           odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
+          odb::query<AstNode>::symbolType == AstNode::SymbolType::Function &&
           odb::query<AstNode>::astType == AstNode::AstType::Definition);
         if (!methodDef)
           continue;
