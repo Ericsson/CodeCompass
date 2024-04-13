@@ -81,5 +81,19 @@ class ClassMethodsInsideAndOutside {
   int baz(); // 2 (defined in typemccabe.cpp)
 }; // 8
 
+class ClassWithInnerClass {
+  void foo() // +1
+  {
+    for (int i=0; i<3; ++i) {} // +1
+  } // 2
+
+  bool bar(bool b1, bool b2); // 2 (defined in typemccabe.cpp)
+
+  class InnerClass {
+    int foo() { return 42; } // 1
+    bool bar(bool b1, bool b2); // 2 (defined in typemccabe.cpp)
+  }; // 3
+}; // 4
+
 #endif // TYPE_MCCABE__H
 

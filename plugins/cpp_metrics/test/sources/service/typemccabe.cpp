@@ -133,3 +133,13 @@ int ClassMethodsInsideAndOutside::baz() // +1
   }
 } // 2
 
+bool ClassWithInnerClass::bar(bool b1, bool b2) // +1
+{
+  return b1 || b2; // +1
+} // 2
+
+bool ClassWithInnerClass::InnerClass::bar(bool b1, bool b2) // +1
+{
+  return b1 || b2; // +1
+} // 2
+

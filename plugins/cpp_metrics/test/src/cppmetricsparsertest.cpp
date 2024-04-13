@@ -177,10 +177,12 @@ class ParameterizedTypeMcCabeTest
 {};
 
 std::vector<McCabeParam> paramTypeMcCabe = {
-  {"Empty",                         0}, // 0 means metric must not be present
-  {"ClassMethodsInside",           16},
-  {"ClassMethodsOutside",          44},
-  {"ClassMethodsInsideAndOutside",  8},
+  {"Empty",                           0},
+  {"ClassMethodsInside",             16},
+  {"ClassMethodsOutside",            44},
+  {"ClassMethodsInsideAndOutside",    8},
+  {"ClassWithInnerClass",             4},
+  {"ClassWithInnerClass::InnerClass", 3},
 };
 
 TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {
