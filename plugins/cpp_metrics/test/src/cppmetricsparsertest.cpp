@@ -183,6 +183,7 @@ std::vector<McCabeParam> paramTypeMcCabe = {
   {"ClassMethodsInsideAndOutside",    8},
   {"ClassWithInnerClass",             4},
   {"ClassWithInnerClass::InnerClass", 3},
+  {"TemplateClass",                   2},
 };
 
 TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {

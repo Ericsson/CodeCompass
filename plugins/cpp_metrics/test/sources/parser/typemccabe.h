@@ -95,5 +95,19 @@ class ClassWithInnerClass {
   }; // 3
 }; // 4
 
+template <typename T>
+class TemplateClass {
+  T value;
+public:
+  T get()
+  {
+    return T();
+  } // 1
+  void set(T t)
+  {
+    value = t;
+  } // 1
+}; // 2
+
 #endif // TYPE_MCCABE__H
 

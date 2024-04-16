@@ -186,6 +186,13 @@ void CppMetricsParser::typeMcCabe()
       if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
         continue;
 
+      // Skip if its a template instantiation
+      const auto typeEntity = _ctx.db->query_one<Entity>(
+        odb::query<Entity>::astNodeId == type.id);
+      if (typeEntity && typeEntity->tags.find(model::Tag::TemplateInstantiation)
+                        != typeEntity->tags.cend())
+        continue;
+
       mcValues[type.id] = 0;
 
       // Process its methods

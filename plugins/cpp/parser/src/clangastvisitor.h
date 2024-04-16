@@ -621,6 +621,15 @@ public:
       cppRecord->isAbstract = crd->isAbstract();
       cppRecord->isPOD = crd->isPOD();
 
+      if (crd->getTemplateInstantiationPattern())
+      {
+        cppRecord->tags.insert(
+          crd->getTemplateSpecializationKind() == clang::TSK_ExplicitSpecialization
+          ? model::Tag::TemplateSpecialization
+          : model::Tag::TemplateInstantiation
+        );
+      }
+
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)
