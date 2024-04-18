@@ -101,16 +101,21 @@ bool CppMetricsParser::cleanupDatabase()
 void CppMetricsParser::functionParameters()
 {
   parallelCalcMetric<model::CppFunctionParamCountWithId>(
+    "Function parameters",
+    _threadCount * 5,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CppFunctionParamCountWithId>(),
-    [&, this](const model::CppFunctionParamCountWithId& funParams)
+    [&, this](const MetricsTasks<model::CppFunctionParamCountWithId>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
     {
-      model::CppAstNodeMetrics funcParams;
-      funcParams.astNodeId = funParams.id;
-      funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
-      funcParams.value = funParams.count;
-      _ctx.db->persist(funcParams);
+      for (const model::CppFunctionParamCountWithId& param : tasks)
+      {
+        model::CppAstNodeMetrics funcParams;
+        funcParams.astNodeId = param.id;
+        funcParams.type = model::CppAstNodeMetrics::Type::PARAMETER_COUNT;
+        funcParams.value = param.count;
+        _ctx.db->persist(funcParams);
+      }
     });
   });
 }
@@ -118,16 +123,21 @@ void CppMetricsParser::functionParameters()
 void CppMetricsParser::functionMcCabe()
 {
   parallelCalcMetric<model::CppFunctionMcCabe>(
+    "Function-level McCabe",
+    _threadCount * 5,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CppFunctionMcCabe>(),
-    [&, this](const model::CppFunctionMcCabe& function)
+    [&, this](const MetricsTasks<model::CppFunctionMcCabe>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
     {
-      model::CppAstNodeMetrics funcMcCabe;
-      funcMcCabe.astNodeId = function.astNodeId;
-      funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
-      funcMcCabe.value = function.mccabe;
-      _ctx.db->persist(funcMcCabe);
+      for (const model::CppFunctionMcCabe& param : tasks)
+      {
+        model::CppAstNodeMetrics funcMcCabe;
+        funcMcCabe.astNodeId = param.astNodeId;
+        funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
+        funcMcCabe.value = param.mccabe;
+        _ctx.db->persist(funcMcCabe);
+      }
     });
   });
 }
@@ -160,100 +170,105 @@ void CppMetricsParser::lackOfCohesion()
 {
   // Calculate the cohesion metric for all types on parallel threads.
   parallelCalcMetric<model::CohesionCppRecordView>(
+    "Lack of cohesion",
+    _threadCount * 25,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CohesionCppRecordView>(),
-    [&, this](const model::CohesionCppRecordView& type)
+    [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
   {
-    // Simplify some type names for readability.
-    typedef std::uint64_t HashType;
-
-    typedef odb::query<model::CohesionCppFieldView>::query_columns QField;
-    const auto& QFieldTypeHash = QField::CppMemberType::typeHash;
-
-    typedef odb::query<model::CohesionCppMethodView>::query_columns QMethod;
-    const auto& QMethodTypeHash = QMethod::CppMemberType::typeHash;
-    
-    typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
-    const auto& QNodeFilePath = QNode::File::path;
-    const auto& QNodeRange = QNode::CppAstNode::location.range;
-    
     util::OdbTransaction {_ctx.db} ([&, this]
     {
-      std::unordered_set<HashType> fieldHashes;
-      // Query all fields of the current type.
-      for (const model::CohesionCppFieldView& field
-        : _ctx.db->query<model::CohesionCppFieldView>(
-          QFieldTypeHash == type.entityHash
-        ))
-      {
-        // Record these fields for later use.
-        fieldHashes.insert(field.entityHash);
-      }
-      std::size_t fieldCount = fieldHashes.size();
+      // Simplify some type names for readability.
+      typedef std::uint64_t HashType;
 
-      std::size_t methodCount = 0;
-      std::size_t totalCohesion = 0;
-      // Query all methods of the current type.
-      for (const model::CohesionCppMethodView& method
-        : _ctx.db->query<model::CohesionCppMethodView>(
-          QMethodTypeHash == type.entityHash
-        ))
+      typedef odb::query<model::CohesionCppFieldView>::query_columns QField;
+      const auto& QFieldTypeHash = QField::CppMemberType::typeHash;
+
+      typedef odb::query<model::CohesionCppMethodView>::query_columns QMethod;
+      const auto& QMethodTypeHash = QMethod::CppMemberType::typeHash;
+
+      typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
+      const auto& QNodeFilePath = QNode::File::path;
+      const auto& QNodeRange = QNode::CppAstNode::location.range;
+
+      for (const model::CohesionCppRecordView& type : tasks)
       {
-        // Do not consider methods with no explicit bodies.
-        const model::Position start(method.startLine, method.startColumn);
-        const model::Position end(method.endLine, method.endColumn);
-        if (start < end)
+        std::unordered_set<HashType> fieldHashes;
+        // Query all fields of the current type.
+        for (const model::CohesionCppFieldView& field
+          : _ctx.db->query<model::CohesionCppFieldView>(
+            QFieldTypeHash == type.entityHash
+          ))
         {
-          std::unordered_set<HashType> usedFields;
-          
-          // Query all AST nodes that use a variable for reading or writing...
-          for (const model::CohesionCppAstNodeView& node
-            : _ctx.db->query<model::CohesionCppAstNodeView>(
-              // ... in the same file as the current method
-              (QNodeFilePath == method.filePath &&
-              // ... within the textual scope of the current method's body.
-              (QNodeRange.start.line >= start.line
-                || (QNodeRange.start.line == start.line
-                && QNodeRange.start.column >= start.column)) &&
-              (QNodeRange.end.line <= end.line
-                || (QNodeRange.end.line == end.line
-                && QNodeRange.end.column <= end.column)))
-            ))
-          {
-            // If this AST node is a reference to a field of the type...
-            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
-            {
-              // ... then mark it as used by this method.
-              usedFields.insert(node.entityHash);
-            }
-          }
-          
-          ++methodCount;
-          totalCohesion += usedFields.size();
+          // Record these fields for later use.
+          fieldHashes.insert(field.entityHash);
         }
+        std::size_t fieldCount = fieldHashes.size();
+
+        std::size_t methodCount = 0;
+        std::size_t totalCohesion = 0;
+        // Query all methods of the current type.
+        for (const model::CohesionCppMethodView& method
+          : _ctx.db->query<model::CohesionCppMethodView>(
+            QMethodTypeHash == type.entityHash
+          ))
+        {
+          // Do not consider methods with no explicit bodies.
+          const model::Position start(method.startLine, method.startColumn);
+          const model::Position end(method.endLine, method.endColumn);
+          if (start < end)
+          {
+            std::unordered_set<HashType> usedFields;
+
+            // Query AST nodes that use a variable for reading or writing...
+            for (const model::CohesionCppAstNodeView& node
+              : _ctx.db->query<model::CohesionCppAstNodeView>(
+                // ... in the same file as the current method
+                (QNodeFilePath == method.filePath &&
+                // ... within the textual scope of the current method's body.
+                (QNodeRange.start.line >= start.line
+                  || (QNodeRange.start.line == start.line
+                  && QNodeRange.start.column >= start.column)) &&
+                (QNodeRange.end.line <= end.line
+                  || (QNodeRange.end.line == end.line
+                  && QNodeRange.end.column <= end.column)))
+              ))
+            {
+              // If this AST node is a reference to a field of the type...
+              if (fieldHashes.find(node.entityHash) != fieldHashes.end())
+              {
+                // ... then mark it as used by this method.
+                usedFields.insert(node.entityHash);
+              }
+            }
+
+            ++methodCount;
+            totalCohesion += usedFields.size();
+          }
+        }
+
+        // Calculate and record metrics.
+        const double dF = fieldCount;
+        const double dM = methodCount;
+        const double dC = totalCohesion;
+        const bool trivial = fieldCount == 0 || methodCount == 0;
+        const bool singular = methodCount == 1;
+
+        // Standard lack of cohesion (range: [0,1])
+        model::CppAstNodeMetrics lcm;
+        lcm.astNodeId = type.astNodeId;
+        lcm.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION;
+        lcm.value = trivial ? 0.0 :
+          (1.0 - dC / (dM * dF));
+        _ctx.db->persist(lcm);
+
+        // Henderson-Sellers variant (range: [0,2])
+        model::CppAstNodeMetrics lcm_hs;
+        lcm_hs.astNodeId = type.astNodeId;
+        lcm_hs.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION_HS;
+        lcm_hs.value = trivial ? 0.0 : singular ? NAN :
+          ((dM - dC / dF) / (dM - 1.0));
+        _ctx.db->persist(lcm_hs);
       }
-
-      // Calculate and record metrics.
-      const double dF = fieldCount;
-      const double dM = methodCount;
-      const double dC = totalCohesion;
-      const bool trivial = fieldCount == 0 || methodCount == 0;
-      const bool singular = methodCount == 1;
-      
-      // Standard lack of cohesion (range: [0,1])
-      model::CppAstNodeMetrics lcm;
-      lcm.astNodeId = type.astNodeId;
-      lcm.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION;
-      lcm.value = trivial ? 0.0 :
-        (1.0 - dC / (dM * dF));
-      _ctx.db->persist(lcm);
-
-      // Henderson-Sellers variant (range: [0,2])
-      model::CppAstNodeMetrics lcm_hs;
-      lcm_hs.astNodeId = type.astNodeId;
-      lcm_hs.type = model::CppAstNodeMetrics::Type::LACK_OF_COHESION_HS;
-      lcm_hs.value = trivial ? 0.0 : singular ? NAN :
-        ((dM - dC / dF) / (dM - 1.0));
-      _ctx.db->persist(lcm_hs);
     });
   });
 }
