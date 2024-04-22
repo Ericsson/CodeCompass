@@ -44,8 +44,11 @@ require([
       if (astNodeInfo.tags.indexOf('implicit') > -1)
         labelClass = 'label-implicit';
   
-      var labelValue = astNodeInfo.astNodeValue;
-  
+      var labelValue = astNodeInfo.astNodeValue.trim();
+
+      if (labelValue.slice(-1) == ':') labelValue = labelValue.substr(0, labelValue.length - 1);
+      if(astNodeInfo.astNodeType) labelValue += ' : <span class="label-return-type">' + astNodeInfo.astNodeType + "</span>";
+
       // Create dom node for return type of a function and place it at the end of
       // signature.
       if (astNodeInfo.symbolType === 'Function') {
@@ -277,16 +280,6 @@ require([
           var props = model.pythonservice.getProperties(elementInfo.id);
   
           for (var propName in props) {
-            var propId;
-
-            switch(propName)
-            {
-              case "Builtin": propId = "Declaration"; break;
-              case "Full name": propId = "Name"; break;
-              case "Type hint": propId = "Type"; break;
-              default: propId = propName;
-            }
-            
             var label
               = '<span class="label">' + propName + '</span>: '
               + '<span class="value">' + props[propName] + '</span>';
@@ -295,7 +288,7 @@ require([
               name        : label,
               parent      : 'root',
               nodeInfo    : elementInfo,
-              cssClass    : 'icon-' + propId,
+              cssClass    : 'icon-' + propName.replace(/ /g, '-'),
               hasChildren : false
             });
           }

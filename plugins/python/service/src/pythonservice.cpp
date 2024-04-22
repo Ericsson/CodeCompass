@@ -150,6 +150,7 @@ void PythonServiceHandler::getReferenceTypes(
   LOG(info) << "[PYSERVICE] " << __func__;
   return_.emplace("Definition", DEFINITION);
   return_.emplace("Usage", USAGE);
+  return_.emplace("Parent", PARENT);
 
   model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
 
@@ -304,6 +305,9 @@ odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
     case DATA_MEMBER:
       nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "statement" && odb::query<model::PYName>::is_definition == true) + order_by);
       break;
+    case PARENT:
+      nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent) + order_by);
+      break;
   }
 
   return nodes;
@@ -319,6 +323,7 @@ void PythonServiceHandler::setInfoProperties(AstNodeInfo& info, const model::PYN
   info.range.range.startpos.column = pyname.column_start;
   info.range.range.endpos.line = pyname.line_end;
   info.range.range.endpos.column = pyname.column_end;
+  info.astNodeType = pyname.type_hint;
 }
 
 } // language

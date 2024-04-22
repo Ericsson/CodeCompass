@@ -193,6 +193,8 @@ private:
     EXPANSION, /*!< Macro expansion. */
 
     UNDEFINITION, /*!< Macro undefinition. */
+
+    PARENT,
   };
 
   enum FileReferenceType
