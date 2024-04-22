@@ -151,6 +151,7 @@ void PythonServiceHandler::getReferenceTypes(
   return_.emplace("Definition", DEFINITION);
   return_.emplace("Usage", USAGE);
   return_.emplace("Parent", PARENT);
+  return_.emplace("Parameters", PARAMETER);
 
   model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
 
@@ -288,7 +289,7 @@ odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
   odb::result<model::PYName> nodes;
 
   const model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
-  const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start;
+  const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
 
   switch (referenceId)
   {
@@ -307,6 +308,9 @@ odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
       break;
     case PARENT:
       nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent) + order_by);
+      break;
+    case PARAMETER:
+      nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "param" && odb::query<model::PYName>::is_definition == true) + order_by);
       break;
   }
 

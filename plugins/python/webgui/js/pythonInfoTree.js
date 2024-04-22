@@ -47,7 +47,7 @@ require([
       var labelValue = astNodeInfo.astNodeValue.trim();
 
       if (labelValue.slice(-1) == ':') labelValue = labelValue.substr(0, labelValue.length - 1);
-      if(astNodeInfo.astNodeType) labelValue += ' : <span class="label-return-type">' + astNodeInfo.astNodeType + "</span>";
+      if(astNodeInfo.astNodeType && !labelValue.includes(':')) labelValue += ' : <span class="label-return-type">' + astNodeInfo.astNodeType + "</span>";
 
       // Create dom node for return type of a function and place it at the end of
       // signature.
