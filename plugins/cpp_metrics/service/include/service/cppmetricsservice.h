@@ -54,7 +54,7 @@ public:
     const std::string& path_) override;
 
   void getCppFileMetricsForPath(
-    std::vector<CppMetricsModuleAll>& _return,
+    std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
     const std::string& path_) override;
 
   void getCppAstNodeMetricsTypeNames(

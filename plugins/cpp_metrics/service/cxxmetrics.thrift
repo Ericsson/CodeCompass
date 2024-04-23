@@ -94,7 +94,7 @@ service CppMetricsService
    * This function returns all available C++ metrics
    * (file-level) for a particular path.
    */
-  list<CppMetricsModuleAll> getCppFileMetricsForPath(
+  map<common.FileId, list<CppMetricsModuleSingle>> getCppFileMetricsForPath(
     1:string path)
 
   /**

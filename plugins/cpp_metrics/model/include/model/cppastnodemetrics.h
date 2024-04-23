@@ -45,12 +45,12 @@ struct CppRecordMetricsView
 };
 
 #pragma db view \
-  object(CppAstNode) \
-  object(File = LocFile : CppAstNode::location.file) \
-  object(CppAstNodeMetrics : CppAstNode::id == CppAstNodeMetrics::astNodeId)
+  object(CppAstNodeMetrics) \
+  object(CppAstNode : CppAstNodeMetrics::astNodeId == CppAstNode::id) \
+  object(File = LocFile : CppAstNode::location.file)
 struct CppAstNodeMetricsForPathView
 {
-  #pragma db column(CppAstNode::id)
+  #pragma db column(CppAstNodeMetrics::astNodeId)
   CppAstNodeId astNodeId;
 
   #pragma db column(CppAstNodeMetrics::type)
