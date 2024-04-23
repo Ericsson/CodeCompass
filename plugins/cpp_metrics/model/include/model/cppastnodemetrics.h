@@ -44,6 +44,22 @@ struct CppRecordMetricsView
   double value;
 };
 
+#pragma db view \
+  object(CppAstNode) \
+  object(File = LocFile : CppAstNode::location.file) \
+  object(CppAstNodeMetrics : CppAstNode::id == CppAstNodeMetrics::astNodeId)
+struct CppAstNodeMetricsForPathView
+{
+  #pragma db column(CppAstNode::id)
+  CppAstNodeId astNodeId;
+
+  #pragma db column(CppAstNodeMetrics::type)
+  CppAstNodeMetrics::Type type;
+
+  #pragma db column(CppAstNodeMetrics::value)
+  double value;
+};
+
 } //model
 } //cc
 

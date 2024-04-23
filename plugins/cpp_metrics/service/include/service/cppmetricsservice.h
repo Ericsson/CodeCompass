@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 
 #include <boost/program_options/variables_map.hpp>
 
@@ -49,7 +50,7 @@ public:
     const core::FileId& fileId_) override;
 
   void getCppAstNodeMetricsForPath(
-    std::vector<CppMetricsAstNodeAll>& _return,
+    std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
     const std::string& path_) override;
 
   void getCppFileMetricsForPath(

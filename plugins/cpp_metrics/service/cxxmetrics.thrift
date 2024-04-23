@@ -87,7 +87,7 @@ service CppMetricsService
    * This function returns all available C++ metrics
    * (AST node-level) for a particular path.
    */
-  list<CppMetricsAstNodeAll> getCppAstNodeMetricsForPath(
+  map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getCppAstNodeMetricsForPath(
     1:string path)
 
   /**

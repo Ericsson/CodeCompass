@@ -120,7 +120,7 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
-  std::vector<CppMetricsAstNodeAll>& _return,
+  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
   const std::string& path_)
 {
   _transaction([&, this](){
@@ -128,41 +128,29 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
     typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
     typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
     typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
+    typedef odb::query<model::CppAstNodeMetricsForPathView> CppAstNodeMetricsForPathViewQuery;
+    typedef odb::result<model::CppAstNodeMetricsForPathView> CppAstNodeMetricsForPathViewResult;
 
-    auto nodesRes = _db->query<model::CppAstNodeMetrics>();
-    std::set<model::CppAstNodeId> nodesWithMetrics;
-    for (const auto& node : nodesRes)
-      nodesWithMetrics.insert(node.astNodeId);
-
-    CppAstNodeFilePathResult nodes = _db->query<model::CppAstNodeFilePath>(
-      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%') &&
-      CppAstNodeFilePathQuery::CppAstNode::id.in_range(
-        nodesWithMetrics.begin(), nodesWithMetrics.end()));
-
-    if (nodes.empty())
-      return;
+    auto nodes = _db->query<model::CppAstNodeMetricsForPathView>(
+      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
 
     for (const auto& node : nodes)
     {
-      auto metricsQuery = _db->query<model::CppAstNodeMetrics>(
-        CppAstNodeMetricsQuery::astNodeId == node.id);
-      std::vector<CppMetricsAstNodeSingle> metrics;
+      CppMetricsAstNodeSingle metric;
+      metric.type = static_cast<CppAstNodeMetricsType::type>(node.type);
+      metric.value = node.value;
 
-      CppMetricsAstNodeSingle metricsAstNode;
-      for (const auto& metric : metricsQuery)
+      if (_return.count(std::to_string(node.astNodeId)))
       {
-        metricsAstNode.type = static_cast<CppAstNodeMetricsType::type>(metric.type);
-        metricsAstNode.value = metric.value;
-        metrics.push_back(metricsAstNode);
+        _return[std::to_string(node.astNodeId)].push_back(metric);
       }
-
-      if (metrics.empty())
-        continue;
-
-      CppMetricsAstNodeAll nodeMetric;
-      nodeMetric.id = std::to_string(node.id);
-      nodeMetric.metrics = metrics;
-      _return.push_back(nodeMetric);
+      else
+      {
+        CppMetricsAstNodeAll nodeMetric;
+        std::vector<CppMetricsAstNodeSingle> metricsList;
+        metricsList.push_back(metric);
+        _return.insert(std::make_pair(std::to_string(node.astNodeId), metricsList));
+      }
     }
   });
 }
