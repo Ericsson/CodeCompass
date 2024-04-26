@@ -5,6 +5,7 @@
 
 #include <util/hash.h>
 #include <util/logutil.h>
+#include <util/dbutil.h>
 
 #include <parser/sourcemanager.h>
 
@@ -238,9 +239,9 @@ void SourceManager::removeFile(const model::File& file_)
   _transaction([&]() {
     if(file_.content)
     {
-      auto relFiles = _db->query<model::File>(
+      odb::result<model::File> relFiles = _db->query<model::File>(
         odb::query<model::File>::content == file_.content.object_id());
-      if (relFiles.size() == 1)
+      if (util::isSingletonResult(relFiles))
       {
         removeContent = true;
         _db->erase<model::FileContent>(file_.content.object_id());

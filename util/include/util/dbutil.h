@@ -97,6 +97,40 @@ inline std::string getDbDriver()
 #endif
 }
 
+/// @brief Determines if the specified ODB query result only contains
+/// a single entity. That single entity is then stored in 'singleton_'.
+/// @tparam TEntity The type of entities in the query result.
+/// @param result_ The ODB query result in question.
+/// @param singleton_ The variable that receives the first entity (if any).
+/// @return Returns true if 'result_' only contained 'singleton_';
+/// otherwise false.
+template<typename TEntity>
+bool isSingletonResult(odb::result<TEntity>& result_, TEntity& singleton_)
+{
+  auto it_b = result_.begin();
+  const auto it_e = result_.end();
+  if (it_b != it_e)
+  {
+    singleton_ = *it_b;
+    return ++it_b == it_e;
+  }
+  else return false;
+}
+
+/// @brief Determines if the specified ODB query result only contains
+/// a single entity.
+/// @tparam TEntity The type of entities in the query result.
+/// @param result_ The ODB query result in question.
+/// @return Returns true if 'result_' only contained a single entity;
+/// otherwise false.
+template<typename TEntity>
+bool isSingletonResult(odb::result<TEntity>& result_)
+{
+  auto it_b = result_.begin();
+  const auto it_e = result_.end();
+  return (it_b != it_e) && (++it_b == it_e);
+}
+
 } // util
 } // cc
 
