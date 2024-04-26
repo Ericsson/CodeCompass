@@ -120,7 +120,7 @@ The ODB installation uses the build2 build system. (Build2 is not needed for
 CodeCompass so you may delete it right after the installation of ODB.)
 
 ```bash
-wget https://github.com/Ericsson/CodeCompass/blob/master/scripts/install_latest_build2.sh
+wget https://raw.githubusercontent.com/Ericsson/CodeCompass/master/scripts/install_latest_build2.sh
 sh install_latest_build2.sh "<build2_install_dir>"
 ```
 
