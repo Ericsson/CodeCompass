@@ -53,6 +53,9 @@ struct CppAstNodeMetricsForPathView
   #pragma db column(CppAstNodeMetrics::astNodeId)
   CppAstNodeId astNodeId;
 
+  #pragma db column(LocFile::path)
+  std::string path;
+
   #pragma db column(CppAstNodeMetrics::type)
   CppAstNodeMetrics::Type type;
 

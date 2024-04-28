@@ -124,8 +124,6 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   const std::string& path_)
 {
   _transaction([&, this](){
-    typedef odb::query<model::CppAstNodeMetrics> CppAstNodeMetricsQuery;
-    typedef odb::result<model::CppAstNodeMetrics> CppAstNodeMetricsResult;
     typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
     typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
     typedef odb::query<model::CppAstNodeMetricsForPathView> CppAstNodeMetricsForPathViewQuery;
@@ -136,12 +134,10 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
 
     for (const auto& node : nodes)
     {
-      LOG(info) << node.astNodeId;
       CppMetricsAstNodeSingle metric;
+      metric.path = node.path;
       metric.type = static_cast<CppAstNodeMetricsType::type>(node.type);
-      LOG(info) << node.type;
       metric.value = node.value;
-      LOG(info) << metric.value;
 
       if (_return.count(std::to_string(node.astNodeId)))
       {
@@ -162,32 +158,16 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
   const std::string& path_)
 {
   _transaction([&, this](){
-    typedef odb::query<model::FilePathView> FileQuery;
-    typedef odb::result<model::FilePathView> FileResult;
-    typedef odb::query<model::CppFileMetrics> CppFileMetricsQuery;
-    typedef odb::result<model::CppFileMetrics> CppFileMetricsResult;
     typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
     typedef odb::result<model::CppModuleMetricsForPathView> CppModuleMetricsResult;
 
     auto files = _db->query<model::CppModuleMetricsForPathView>(
       CppModuleMetricsQuery::File::path.like(path_ + '%'));
 
-    /*auto filesRes = _db->query<model::CppFileMetrics>();
-    std::set<model::CppAstNodeId> filesWithMetrics;
-    for (const auto& file : filesRes)
-      filesWithMetrics.insert(file.file);
-
-    FileResult descendants = _db->query<model::FilePathView>(
-      FileQuery::path.like(path_ + '%') &&
-      CppFileMetricsQuery::file.in_range(
-        filesWithMetrics.begin(), filesWithMetrics.end()));
-
-    if (descendants.empty())
-      return;*/
-
     for (const auto& file : files)
     {
       CppMetricsModuleSingle metric;
+      metric.path = file.path;
       metric.type = static_cast<CppModuleMetricsType::type>(file.type);
       metric.value = file.value;
 
@@ -201,25 +181,6 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
         metricsList.push_back(metric);
         _return.insert(std::make_pair(std::to_string(file.fileId), metricsList));
       }
-      /*CppFileMetricsResult metricsQuery = _db->query<model::CppFileMetrics>(
-        CppFileMetricsQuery::file == file.id);
-      std::vector<CppMetricsModuleSingle> metrics;
-
-      CppMetricsModuleSingle metricsModule;
-      for (const auto& metric : metricsQuery)
-      {
-        metricsModule.type = static_cast<CppModuleMetricsType::type>(metric.type);
-        metricsModule.value = metric.value;
-        metrics.push_back(metricsModule);
-      }
-
-      if (metrics.empty())
-        continue;
-
-      CppMetricsModuleAll nodeMetric;
-      nodeMetric.id = std::to_string(file.id);
-      nodeMetric.metrics = metrics;
-      _return.push_back(nodeMetric);*/
     }
   });
 }

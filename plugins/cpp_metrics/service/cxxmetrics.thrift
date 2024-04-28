@@ -37,8 +37,9 @@ struct CppModuleMetricsTypeName
 
 struct CppMetricsAstNodeSingle
 {
-  1:CppAstNodeMetricsType type,
-  2:double value
+  1:string path,
+  2:CppAstNodeMetricsType type,
+  3:double value
 }
 
 struct CppMetricsAstNodeAll
@@ -49,8 +50,9 @@ struct CppMetricsAstNodeAll
 
 struct CppMetricsModuleSingle
 {
-  1:CppModuleMetricsType type,
-  2:double value
+  1:string path,
+  2:CppModuleMetricsType type,
+  3:double value
 }
 
 struct CppMetricsModuleAll

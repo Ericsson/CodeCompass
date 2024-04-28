@@ -30,12 +30,15 @@ struct CppFileMetrics
 };
 
 #pragma db view \
-  object(File) \
-  object(CppFileMetrics : File::id == CppFileMetrics::file)
+  object(CppFileMetrics) \
+  object(File : CppFileMetrics::file == File::id)
 struct CppModuleMetricsForPathView
 {
-  #pragma db column(File::id)
+  #pragma db column(CppFileMetrics::file)
   FileId fileId;
+
+  #pragma db column(File::path)
+  std::string path;
 
   #pragma db column(CppFileMetrics::type)
   CppFileMetrics::Type type;
