@@ -4,12 +4,6 @@ include "project/project.thrift"
 namespace cpp cc.service.cppmetrics
 namespace java cc.service.cppmetrics
 
-enum CppUnitType
-{
-  AstNodeUnit = 1,
-  FileUnit = 2
-}
-
 enum CppAstNodeMetricsType
 {
   ParameterCount = 1,
