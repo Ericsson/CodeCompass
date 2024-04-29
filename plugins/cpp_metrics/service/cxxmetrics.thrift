@@ -74,7 +74,7 @@ service CppMetricsService
 
   /**
    * This function returns all available C++ metrics
-   * for a particular module.
+   * for a particular module (file or directory).
    */
   list<CppMetricsModuleSingle> getCppMetricsForModule(
     1:common.FileId fileId)
@@ -82,6 +82,8 @@ service CppMetricsService
   /**
    * This function returns all available C++ metrics
    * (AST node-level) for a particular path.
+   *
+   * The given path is a handled as a prefix.
    */
   map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getCppAstNodeMetricsForPath(
     1:string path)
@@ -89,17 +91,19 @@ service CppMetricsService
   /**
    * This function returns all available C++ metrics
    * (file-level) for a particular path.
+   *
+   * The given path is a handled as a prefix.
    */
   map<common.FileId, list<CppMetricsModuleSingle>> getCppFileMetricsForPath(
     1:string path)
 
   /**
-   * This function returns the names of AST node metrics.
+   * This function returns the names of the AST node-level C++ metrics.
    */
   list<CppAstNodeMetricsTypeName> getCppAstNodeMetricsTypeNames()
 
   /**
-   * This function returns the names of module-level metrics.
+   * This function returns the names of module-level C++ metrics.
    */
   list<CppModuleMetricsTypeName> getCppModuleMetricsTypeNames()
 }
