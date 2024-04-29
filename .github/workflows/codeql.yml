@@ -41,7 +41,7 @@ jobs:
   analyze-cpp:
     name: Analyze C-C++
     env:
-      BUILD_TYPE: Debug
+      BUILD_TYPE: RelWithDebInfo
       INSTALL_PATH: ${{github.workspace}}/dependencies/install
       DOWNLOAD_PATH: ${{github.workspace}}/dependencies/download
     runs-on: ubuntu-22.04
