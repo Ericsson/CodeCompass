@@ -230,6 +230,18 @@ struct AstCountGroupByFiles
   std::size_t count;
 };
 
+#pragma db view \
+  object(CppAstNode) \
+  object(File = LocFile : CppAstNode::location.file)
+struct CppAstNodeFilePath
+{
+  #pragma db column(CppAstNode::id)
+  CppAstNodeId id;
+
+  #pragma db column(LocFile::path)
+  std::string path;
+};
+
 #pragma db view object(CppAstNode)
 struct CppAstCount
 {
