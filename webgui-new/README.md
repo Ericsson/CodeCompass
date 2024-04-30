@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-Make sure you are using at least version 18 of [Node.js](https://nodejs.org/en/).\
-You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install` at the root of the project to use the specified Node version (18.13.0).
+Make sure you are using at least version 16 of [Node.js](https://nodejs.org/en/).\
+You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install` at the root of the project to use the specified Node version (16.20.2).
 
 ## Development
 

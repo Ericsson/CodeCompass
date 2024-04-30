@@ -198,7 +198,7 @@ make install -j $(nproc)
 ```
 
 ### Node.js and NPM
-Make sure you are using at least version 18 of [Node.js](https://nodejs.org/en/).
+Make sure you are using at least version 16 of [Node.js](https://nodejs.org/en/).
 Unfortunately only older versions are available in the official Ubuntu repositories
 for all supported versions, therefore a separate installation might be required from
 [NodeSource](https://github.com/nodesource/distributions).
@@ -209,7 +209,7 @@ sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 
 # Create deb repository
-NODE_MAJOR=18 # or 20
+NODE_MAJOR=16 # or 18, 20
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 # Run Update and Install
@@ -218,7 +218,7 @@ sudo apt-get install nodejs
 ```
 
 You can also download [nvm](https://github.com/nvm-sh/nvm), and run `nvm install`
-at the root of the project to use the specified Node version (18.13.0).
+at the root of the project to use the specified Node version (16.20.2).
 
 
 ### GTest/Googletest
