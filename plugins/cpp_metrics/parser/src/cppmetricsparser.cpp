@@ -207,23 +207,30 @@ void CppMetricsParser::typeMcCabe()
         if (!methodAstNode)
           continue;
 
-        // Lookup the definition (different AST node if not defined in class body)
-        const auto methodDef = _ctx.db->query_one<AstNode>(
+        // Lookup its definition (different AST node if not defined in class body)
+        auto methodDefs = _ctx.db->query<AstNode>(
           odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
           odb::query<AstNode>::symbolType == AstNode::SymbolType::Function &&
           odb::query<AstNode>::astType == AstNode::AstType::Definition);
-        if (!methodDef)
+        if (methodDefs.empty())
           continue;
+        const auto methodDef = *methodDefs.begin();
+        // Note: we cannot use query_one, because a project might have multiple
+        // functions with the same entityHash compiled to different binaries
+        // So we take the first result, which introduces a small level of
+        // potential inaccuracy
+        // This could be optimized in the future if linkage information about
+        // translation units got added to the database
 
         // Skip implicitly defined methods (constructors, operator=, etc.)
         const auto entity = _ctx.db->query_one<Entity>(
-          odb::query<Entity>::astNodeId == methodDef->id);
+          odb::query<Entity>::astNodeId == methodDef.id);
         if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
           continue;
 
         // Lookup metrics of this definition
         const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
-          odb::query<AstNodeMet>::astNodeId == methodDef->id &&
+          odb::query<AstNodeMet>::astNodeId == methodDef.id &&
           odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
         if (funcMetrics)
         {
