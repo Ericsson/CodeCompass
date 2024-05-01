@@ -241,7 +241,7 @@ void SourceManager::removeFile(const model::File& file_)
     {
       odb::result<model::File> relFiles = _db->query<model::File>(
         odb::query<model::File>::content == file_.content.object_id());
-      if (util::isSingletonResult(relFiles))
+      if (util::isSingleResult(relFiles))
       {
         removeContent = true;
         _db->erase<model::FileContent>(file_.content.object_id());
