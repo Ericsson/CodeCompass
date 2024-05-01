@@ -17,9 +17,10 @@ struct CppAstNodeMetrics
   {
     PARAMETER_COUNT = 1,
     MCCABE = 2,
-    BUMPY_ROAD = 3,
-    LACK_OF_COHESION = 4,
-    LACK_OF_COHESION_HS = 5,
+    MCCABE_TYPE = 3,
+    BUMPY_ROAD = 4,
+    LACK_OF_COHESION = 5,
+    LACK_OF_COHESION_HS = 6,
   };
 
   #pragma db id auto

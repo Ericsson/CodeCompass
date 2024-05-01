@@ -37,6 +37,8 @@ private:
   void functionMcCabe();
   // Calculate the bumpy road metric for every function.
   void functionBumpyRoad();
+  // Calculate the McCabe complexity of types.
+  void typeMcCabe();
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
