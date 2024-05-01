@@ -779,6 +779,10 @@ bool CppParser::parseByJson(
           LOG(warning)
             << '(' << job_.index << '/' << numCompileCommands << ')'
             << " Parsing " << command.Filename << " has been failed.";
+        else          
+          LOG(debug)
+            << '(' << job_.index << '/' << numCompileCommands << ')'
+            << " Parsing " << command.Filename << " finished successfully.";
       });
 
   //--- Push all commands into the thread pool's queue ---//
