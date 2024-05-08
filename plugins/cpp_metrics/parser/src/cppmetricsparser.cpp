@@ -139,6 +139,30 @@ void CppMetricsParser::functionMcCabe()
   });
 }
 
+void CppMetricsParser::functionBumpyRoad()
+{
+  util::OdbTransaction {_ctx.db} ([&, this]
+  {
+    for (const model::CppFunctionBumpyRoad& function
+      : _ctx.db->query<model::CppFunctionBumpyRoad>())
+    {
+      // Skip functions that were included from external libraries.
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, function.filePath))
+        continue;
+
+      const double dB = function.bumpiness;
+      const double dC = function.statementCount;
+      const bool empty = function.statementCount == 0;
+
+      model::CppAstNodeMetrics metrics;
+      metrics.astNodeId = function.astNodeId;
+      metrics.type = model::CppAstNodeMetrics::Type::BUMPY_ROAD;
+      metrics.value = empty ? 1.0 : (dB / dC);
+      _ctx.db->persist(metrics);
+    }
+  });
+}
+
 void CppMetricsParser::lackOfCohesion()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
@@ -248,6 +272,7 @@ bool CppMetricsParser::parse()
 {
   functionParameters();
   functionMcCabe();
+  functionBumpyRoad();
   lackOfCohesion();
   return true;
 }
