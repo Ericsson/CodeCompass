@@ -39,12 +39,10 @@ CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
       _fileIdCache.insert(fm.file);
     }
 
-    for (const model::CppAstNodeMetrics& anm
-      : _ctx.db->query<model::CppAstNodeMetrics>())
+    for (const model::CppAstNodeMetricsFileView& anm
+      : _ctx.db->query<model::CppAstNodeMetricsFileView>())
     {
-      auto node = _ctx.db->query_one<model::CppAstNode>(
-        odb::query<model::CppAstNode>::id == anm.astNodeId);
-      _astNodeIdCache.insert({anm.astNodeId, node->location.file->id});
+      _astNodeIdCache.emplace(anm.astNodeId, anm.fileId);
     }
   });
 }
