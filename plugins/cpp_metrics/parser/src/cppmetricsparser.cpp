@@ -272,9 +272,13 @@ void CppMetricsParser::lackOfCohesion()
 
 bool CppMetricsParser::parse()
 {
+  LOG(info) << "[cppmetricsparser] Computing function parameter count metric.";
   functionParameters();
+  LOG(info) << "[cppmetricsparser] Computing McCabe metric for functions.";
   functionMcCabe();
+  LOG(info) << "[cppmetricsparser] Computing Bumpy Road metric for functions.";
   functionBumpyRoad();
+  LOG(info) << "[cppmetricsparser] Computing Lack of Cohesion metric for types.";
   lackOfCohesion();
   return true;
 }
