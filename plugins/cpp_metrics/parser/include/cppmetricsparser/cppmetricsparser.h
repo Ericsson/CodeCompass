@@ -38,6 +38,8 @@ private:
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
+  // Calculate the cohesion within modules
+  void relationalCohesion();
 
   std::vector<std::string> _inputPaths;
   std::unordered_set<model::FileId> _fileIdCache;
