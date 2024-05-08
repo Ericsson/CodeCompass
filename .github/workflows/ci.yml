@@ -3,7 +3,7 @@ name: Build project
 on: [push, pull_request, workflow_dispatch]
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: RelWithDebInfo
   ## For locally compiled dependencies
   INSTALL_PATH: ${{github.workspace}}/dependencies/install
   ## Temp directory for installers of the downloaded dependencies
