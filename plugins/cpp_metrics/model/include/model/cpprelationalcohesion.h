@@ -63,10 +63,12 @@ namespace cc
             std::string filePath;
         };
 
+        // object(CppEntity) \
+
         #pragma db view \
-        object(CppEntity) \
+        object(CppFunction) \
         object(CppVariable = Parameters : CppFunction::parameters) \
-        object(CppAstNode : CppAstNode.id == CppEntity.astNodeId) \
+        object(CppAstNode : CppAstNode::id == CppFunction::astNodeId) \
         object(File : CppAstNode::location.file)
         struct RelationalCohessionFunctionParameterView
         {
@@ -79,8 +81,9 @@ namespace cc
 
 
         #pragma db view \
+        object(CppFunction) \
         object(CppVariable = Locals : CppFunction::locals) \
-        object(CppAstNode : CppAstNode.id == CppEntity.astNodeId) \
+        object(CppAstNode : CppAstNode::id == CppFunction::astNodeId) \
         object(File : CppAstNode::location.file)
         struct RelationalCohessionFunctionLocalView
         {
@@ -93,7 +96,7 @@ namespace cc
 
         #pragma db view \
         object(CppVariable) \
-        object(CppAstNode : CppAstNode.id == CppEntity.astNodeId) \
+        object(CppAstNode : CppAstNode::id == CppEntity::astNodeId) \
         object(File : CppAstNode::location.file)
         struct RelationalCohesionVariableView
         {
