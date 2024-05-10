@@ -16,7 +16,7 @@ struct CppAstNodeMetrics
   enum Type
   {
     PARAMETER_COUNT = 1,
-    MCCABE = 2,
+    MCCABE_FUNCTION = 2,
     MCCABE_TYPE = 3,
     BUMPY_ROAD = 4,
     LACK_OF_COHESION = 5,

@@ -132,7 +132,7 @@ void CppMetricsParser::functionMcCabe()
 
       model::CppAstNodeMetrics funcMcCabe;
       funcMcCabe.astNodeId = function.astNodeId;
-      funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE;
+      funcMcCabe.type = model::CppAstNodeMetrics::Type::MCCABE_FUNCTION;
       funcMcCabe.value = function.mccabe;
       _ctx.db->persist(funcMcCabe);
     }
@@ -231,7 +231,7 @@ void CppMetricsParser::typeMcCabe()
         // Lookup metrics of this definition
         const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
           odb::query<AstNodeMet>::astNodeId == methodDef.id &&
-          odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE);
+          odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE_FUNCTION);
         if (funcMetrics)
         {
           // Increase class mccabe by the method's
