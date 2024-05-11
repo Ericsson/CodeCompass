@@ -98,6 +98,7 @@ bool CppMetricsParser::cleanupDatabase()
   return true;
 }
 
+
 void CppMetricsParser::functionParameters()
 {
   parallelCalcMetric<model::CppFunctionParamCountWithId>(
