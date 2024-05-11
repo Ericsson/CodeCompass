@@ -98,7 +98,6 @@ bool CppMetricsParser::cleanupDatabase()
   return true;
 }
 
-
 void CppMetricsParser::functionParameters()
 {
   parallelCalcMetric<model::CppFunctionParamCountWithId>(
@@ -145,25 +144,28 @@ void CppMetricsParser::functionMcCabe()
 
 void CppMetricsParser::functionBumpyRoad()
 {
-  util::OdbTransaction {_ctx.db} ([&, this]
+  // Calculate the bumpy road metric for all types on parallel threads.
+  parallelCalcMetric<model::CppFunctionBumpyRoad>(
+    "Bumpy road complexity",
+    _threadCount * 5,// number of jobs; adjust for granularity
+    getFilterPathsQuery<model::CppFunctionBumpyRoad>(),
+    [&, this](const MetricsTasks<model::CppFunctionBumpyRoad>& tasks)
   {
-    for (const model::CppFunctionBumpyRoad& function
-      : _ctx.db->query<model::CppFunctionBumpyRoad>())
+    util::OdbTransaction {_ctx.db} ([&, this]
     {
-      // Skip functions that were included from external libraries.
-      if (!cc::util::isRootedUnderAnyOf(_inputPaths, function.filePath))
-        continue;
+      for (const model::CppFunctionBumpyRoad& function : tasks)
+      {
+        const double dB = function.bumpiness;
+        const double dC = function.statementCount;
+        const bool empty = function.statementCount == 0;
 
-      const double dB = function.bumpiness;
-      const double dC = function.statementCount;
-      const bool empty = function.statementCount == 0;
-
-      model::CppAstNodeMetrics metrics;
-      metrics.astNodeId = function.astNodeId;
-      metrics.type = model::CppAstNodeMetrics::Type::BUMPY_ROAD;
-      metrics.value = empty ? 1.0 : (dB / dC);
-      _ctx.db->persist(metrics);
-    }
+        model::CppAstNodeMetrics metrics;
+        metrics.astNodeId = function.astNodeId;
+        metrics.type = model::CppAstNodeMetrics::Type::BUMPY_ROAD;
+        metrics.value = empty ? 1.0 : (dB / dC);
+        _ctx.db->persist(metrics);
+      }
+    });
   });
 }
 

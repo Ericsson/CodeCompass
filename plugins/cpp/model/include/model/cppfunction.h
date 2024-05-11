@@ -93,9 +93,6 @@ struct CppFunctionBumpyRoad
 
   #pragma db column(CppFunction::statementCount)
   unsigned int statementCount;
-
-  #pragma db column(File::path)
-  std::string filePath;
 };
 
 }
