@@ -22,6 +22,9 @@ namespace cc
             #pragma db column(File::type)
             std::string fileType;
 
+            #pragma db column(File::id)
+            std::size_t fileId;
+
         };
 
         #pragma db view \
