@@ -142,6 +142,7 @@ void CppMetricsParser::functionMcCabe()
   });
 }
 
+<<<<<<< HEAD
 void CppMetricsParser::functionBumpyRoad()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
@@ -166,6 +167,8 @@ void CppMetricsParser::functionBumpyRoad()
   });
 }
 
+=======
+>>>>>>> 61a1f5fe2912f2abe1c177573b0e7c828b5577af
 void CppMetricsParser::relationalCohesion()
 {
   util::OdbTransaction {_ctx.db} ([&, this]
