@@ -33,15 +33,19 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
   _return.push_back(typeName);
 
   typeName.type = CppAstNodeMetricsType::McCabe;
-  typeName.name = "McCabe metric";
+  typeName.name = "Cyclomatic (McCabe) complexity of function";
+  _return.push_back(typeName);
+
+  typeName.type = CppAstNodeMetricsType::BumpyRoad;
+  typeName.name = "Bumpy road complexity of function";
   _return.push_back(typeName);
 
   typeName.type = CppAstNodeMetricsType::LackOfCohesion;
-  typeName.name = "Lack of cohesion of function";
+  typeName.name = "Lack of cohesion of type";
   _return.push_back(typeName);
 
   typeName.type = CppAstNodeMetricsType::LackOfCohesionHS;
-  typeName.name = "Lack of cohesion of function (Henderson-Sellers variant)";
+  typeName.name = "Lack of cohesion of type (Henderson-Sellers variant)";
   _return.push_back(typeName);
 }
 
