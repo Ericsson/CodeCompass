@@ -114,7 +114,7 @@ private:
       util::make_thread_pool<TJobParam>(_threadCount,
         [&](const TJobParam& job)
       {
-        LOG(info) << '(' << job.first << '/' << partitions_
+        LOG(debug) << '(' << job.first << '/' << partitions_
           << ") " << name_;
         worker_(job.second);
       });
