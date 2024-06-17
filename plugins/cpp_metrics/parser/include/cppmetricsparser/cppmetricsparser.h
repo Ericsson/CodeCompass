@@ -66,6 +66,8 @@ private:
   void functionMcCabe();
   // Calculate the bumpy road metric for every function.
   void functionBumpyRoad();
+  // Calculate the McCabe complexity of types.
+  void typeMcCabe();
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
@@ -112,7 +114,7 @@ private:
       util::make_thread_pool<TJobParam>(_threadCount,
         [&](const TJobParam& job)
       {
-        LOG(info) << '(' << job.first << '/' << partitions_
+        LOG(debug) << '(' << job.first << '/' << partitions_
           << ") " << name_;
         worker_(job.second);
       });

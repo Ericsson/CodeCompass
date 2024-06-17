@@ -7,10 +7,11 @@ namespace java cc.service.cppmetrics
 enum CppAstNodeMetricsType
 {
   ParameterCount = 1,
-  McCabe = 2,
-  BumpyRoad = 3,
-  LackOfCohesion = 4,
-  LackOfCohesionHS = 5,
+  McCabeFunction = 2,
+  McCabeType = 3,
+  BumpyRoad = 4,
+  LackOfCohesion = 5,
+  LackOfCohesionHS = 6,
 }
 
 enum CppModuleMetricsType

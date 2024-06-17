@@ -169,6 +169,43 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::ValuesIn(paramBumpyRoad)
 );
 
+// Type McCabe
+
+class ParameterizedTypeMcCabeTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<McCabeParam>
+{};
+
+std::vector<McCabeParam> paramTypeMcCabe = {
+  {"Empty",                           0},
+  {"ClassMethodsInside",             16},
+  {"ClassMethodsOutside",            44},
+  {"ClassMethodsInsideAndOutside",    8},
+  {"ClassWithInnerClass",             4},
+  {"ClassWithInnerClass::InnerClass", 3},
+  {"TemplateClass",                   2},
+};
+
+TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {
+  _transaction([&, this]() {
+
+    const auto record = _db->query_value<model::CppRecord>(
+      odb::query<model::CppRecord>::qualifiedName == GetParam().first);
+
+    const auto metric = _db->query_value<model::CppAstNodeMetrics>(
+      odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
+      odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::MCCABE_TYPE);
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedTypeMcCabeTestSuite,
+  ParameterizedTypeMcCabeTest,
+  ::testing::ValuesIn(paramTypeMcCabe)
+);
+
 // Lack of Cohesion
 
 struct LackOfCohesionParam
