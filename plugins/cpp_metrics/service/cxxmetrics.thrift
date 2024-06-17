@@ -8,8 +8,9 @@ enum CppAstNodeMetricsType
 {
   ParameterCount = 1,
   McCabe = 2,
-  LackOfCohesion = 3,
-  LackOfCohesionHS = 4
+  BumpyRoad = 3,
+  LackOfCohesion = 4,
+  LackOfCohesionHS = 5,
 }
 
 enum CppModuleMetricsType
