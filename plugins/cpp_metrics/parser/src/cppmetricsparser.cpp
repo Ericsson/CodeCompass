@@ -102,7 +102,7 @@ void CppMetricsParser::functionParameters()
 {
   parallelCalcMetric<model::CppFunctionParamCountWithId>(
     "Function parameters",
-    _threadCount * 5,// number of jobs; adjust for granularity
+    _threadCount * functionParamsPartitionMultiplier,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CppFunctionParamCountWithId>(),
     [&, this](const MetricsTasks<model::CppFunctionParamCountWithId>& tasks)
   {
@@ -124,7 +124,7 @@ void CppMetricsParser::functionMcCabe()
 {
   parallelCalcMetric<model::CppFunctionMcCabe>(
     "Function-level McCabe",
-    _threadCount * 5,// number of jobs; adjust for granularity
+    _threadCount * functionMcCabePartitionMultiplier,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CppFunctionMcCabe>(),
     [&, this](const MetricsTasks<model::CppFunctionMcCabe>& tasks)
   {
@@ -147,7 +147,7 @@ void CppMetricsParser::functionBumpyRoad()
   // Calculate the bumpy road metric for all types on parallel threads.
   parallelCalcMetric<model::CppFunctionBumpyRoad>(
     "Bumpy road complexity",
-    _threadCount * 5,// number of jobs; adjust for granularity
+    _threadCount * functionBumpyRoadPartitionMultiplier,// number of jobs; adjust for granularity
     getFilterPathsQuery<model::CppFunctionBumpyRoad>(),
     [&, this](const MetricsTasks<model::CppFunctionBumpyRoad>& tasks)
   {
@@ -174,7 +174,7 @@ void CppMetricsParser::lackOfCohesion()
   // Calculate the cohesion metric for all types on parallel threads.
   parallelCalcMetric<model::CohesionCppRecordView>(
     "Lack of cohesion",
-    _threadCount * 25,// number of jobs; adjust for granularity
+    _threadCount * lackOfCohesionPartitionMultiplier, // number of jobs; adjust for granularity
     getFilterPathsQuery<model::CohesionCppRecordView>(),
     [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
   {

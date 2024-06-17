@@ -185,6 +185,11 @@ private:
   std::vector<std::string> _inputPaths;
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
+
+  static const int functionParamsPartitionMultiplier = 5;
+  static const int functionMcCabePartitionMultiplier = 5;
+  static const int functionBumpyRoadPartitionMultiplier = 5;
+  static const int lackOfCohesionPartitionMultiplier = 25;
 };
   
 } // parser
