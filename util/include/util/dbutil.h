@@ -131,6 +131,33 @@ bool isSingleResult(odb::result<TEntity>& result_)
   return (it_b != it_e) && (++it_b == it_e);
 }
 
+/// @brief Constructs an ODB query that you can use to filter only
+/// the database records of the given parameter type whose path
+/// is rooted under any of the specified filter paths.
+/// @tparam TQueryParam The type of database records to query.
+/// This type must represent an ODB view that has access to
+/// (i.e. is also joined with) the File table.
+/// @tparam TIter The iterator type of the filter paths.
+/// @tparam TSentinel The type of the end of the filter paths.
+/// @param begin_ The iterator referring to the first filter path.
+/// @param end_ The sentinel for the end of the filter paths.
+/// @return A query containing the disjunction of filters.
+template<typename TQueryParam, typename TIter, typename TSentinel>
+odb::query<TQueryParam> getFilterPathsQuery(
+  TIter begin_,
+  const TSentinel& end_)
+{
+  typedef typename odb::query<TQueryParam>::query_columns QParam;
+  const auto& QParamPath = QParam::File::path;
+  constexpr char ODBWildcard = '%';
+
+  assert(begin_ != end_ && "At least one filter path must be provided.");
+  odb::query<TQueryParam> query = QParamPath.like(*begin_ + ODBWildcard);
+  while (++begin_ != end_)
+    query = query || QParamPath.like(*begin_ + ODBWildcard);
+  return query;
+}
+
 } // util
 } // cc
 
