@@ -32,8 +32,12 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
   typeName.name = "Number of function parameters";
   _return.push_back(typeName);
 
-  typeName.type = CppAstNodeMetricsType::McCabe;
+  typeName.type = CppAstNodeMetricsType::McCabeFunction;
   typeName.name = "Cyclomatic (McCabe) complexity of function";
+  _return.push_back(typeName);
+
+  typeName.type = CppAstNodeMetricsType::McCabeType;
+  typeName.name = "Cyclomatic (McCabe) complexity of type";
   _return.push_back(typeName);
 
   typeName.type = CppAstNodeMetricsType::BumpyRoad;
