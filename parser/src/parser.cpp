@@ -411,17 +411,32 @@ int main(int argc, char* argv[])
     incrementalCleanup(ctx);
   }
 
+  std::vector<std::string> afterIndexingPlugins;
+
   // TODO: Handle errors returned by parse().
   for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << pluginName << "] parse started!";
-    pHandler.getParser(pluginName)->parse();
+    auto plugin = pHandler.getParser(pluginName);
+    if (!plugin->isDatabaseIndexRequired())
+    {
+      LOG(info) << "[" << pluginName << "] parse started!";
+      plugin->parse();
+    }
+    else {
+      afterIndexingPlugins.push_back(pluginName);
+    }
   }
 
   //--- Add indexes to the database ---//
 
   if (vm.count("force") || isNewDb)
     cc::util::createIndexes(db, SQL_DIR);
+
+  for (const std::string& pluginName : afterIndexingPlugins)
+  {
+    LOG(info) << "[" << pluginName << "] parse started!";
+    pHandler.getParser(pluginName)->parse();
+  }
 
   //--- Create project config file ---//
 

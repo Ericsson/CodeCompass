@@ -44,6 +44,16 @@ public:
    * @return Returns true if the parse succeeded, false otherwise.
    */
   virtual bool parse() = 0;
+  /**
+   * Returns true in case database indices are required for the parser, due to performance reasons.
+   *
+   * Should return the same value on each call for the same object.
+   * @return Returns true if the database indexing has to be performed before the parser is executed.
+   */
+  virtual bool isDatabaseIndexRequired() const
+  {
+    return false;
+  }
   
 protected:
   ParserContext& _ctx;
