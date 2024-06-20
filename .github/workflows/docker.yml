@@ -100,7 +100,7 @@ jobs:
           docker push modelcpp/codecompass:${BRANCH_PREFIX}web-pgsql
 
       - name: Tag and push latest image
-        if: ${{ inputs.tag-latest == 'true' }}
+        if: ${{ inputs.tag-latest }}
         run: |
-          docker tag modelcpp/codecompass:runtime-pgsql modelcpp/codecompass:latest
+          docker tag modelcpp/codecompass:${BRANCH_PREFIX}runtime-pgsql modelcpp/codecompass:latest
           docker push modelcpp/codecompass:latest
