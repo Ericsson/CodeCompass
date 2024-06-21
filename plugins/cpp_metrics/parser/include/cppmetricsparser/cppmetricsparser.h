@@ -42,8 +42,19 @@ private:
   void lackOfCohesion();
   // Calculate the cohesion within modules
   void relationalCohesion();
+  // Check type relations in template parameter view.
+  // Used in relational cohesion metric.
+  template <typename T>
+  void checkTypes(
+    const std::string path,
+    const std::unordered_set<std::uint64_t>& typesFound,
+    const std::unordered_map<std::uint64_t,std::string>& typeDefinitionPaths,
+    std::unordered_map<std::string,std::unordered_set<std::uint64_t>>& relationsFoundInFile,
+    int& relationsInModule
+  );
 
   std::vector<std::string> _inputPaths;
+  std::string _modulesPath;
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
   std::unique_ptr<util::JobQueueThreadPool<std::string>> _pool;

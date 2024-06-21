@@ -60,7 +60,7 @@ namespace cc
             std::size_t entityHash;
             
             #pragma db column(CppTypedEntity::typeHash)
-            std::size_t returnType;
+            std::size_t typeHash;
 
             #pragma db column(File::path)
             std::string filePath;
