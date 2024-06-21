@@ -59,6 +59,11 @@ public:
   virtual bool cleanupDatabase() override;
   virtual bool parse() override;
 
+  virtual bool isDatabaseIndexRequired() const override
+  {
+    return true;
+  }
+
 private:
   // Calculate the count of parameters for every function.
   void functionParameters();
