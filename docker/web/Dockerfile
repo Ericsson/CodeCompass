@@ -20,7 +20,7 @@ COPY docker/dev/install_odb.sh /
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
-    llvm-11 \
+    llvm-15 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
     postgresql-server-dev-14 \
