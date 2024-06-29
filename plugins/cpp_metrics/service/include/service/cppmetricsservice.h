@@ -53,6 +53,10 @@ public:
     std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
     const std::string& path_) override;
 
+  void getCppAstNodeMetricsAndDataForPath(
+    std::map<core::AstNodeId, CppMetricsAstNodeAllData>& _return,
+    const std::string& path_) override;
+
   void getCppFileMetricsForPath(
     std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
     const std::string& path_) override;

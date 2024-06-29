@@ -4,6 +4,8 @@
 #include <odb/query.hxx>
 #include <model/file.h>
 #include <model/file-odb.hxx>
+#include <model/cppastnode.h>
+#include <model/cppastnode-odb.hxx>
 
 namespace cc
 {
@@ -156,6 +158,41 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
         std::vector<CppMetricsAstNodeSingle> metricsList;
         metricsList.push_back(metric);
         _return.insert(std::make_pair(std::to_string(node.astNodeId), metricsList));
+      }
+    }
+  });
+}
+
+void CppMetricsServiceHandler::getCppAstNodeMetricsAndDataForPath(
+  std::map<core::AstNodeId, CppMetricsAstNodeAllData>& _return,
+  const std::string& path_)
+{
+  _transaction([&, this](){
+    typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
+    typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
+    typedef odb::query<model::CppAstNodeMetricsAndDataForPathView> CppAstNodeMetricsAndDataForPathViewQuery;
+    typedef odb::result<model::CppAstNodeMetricsAndDataForPathView> CppAstNodeMetricsAndDataForPathViewResult;
+
+    auto nodes = _db->query<model::CppAstNodeMetricsAndDataForPathView>(
+      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
+
+    for (const auto& node : nodes)
+    {
+      auto pair = std::make_pair(static_cast<CppAstNodeMetricsType::type>(node.type), node.value);
+      if (_return.count(std::to_string(node.astNodeId)))
+      {
+        _return[std::to_string(node.astNodeId)].metrics.insert(pair);
+      }
+      else
+      {
+        CppMetricsAstNodeAllData metric;
+        metric.path = node.path;
+        metric.symbolType = cc::model::symbolTypeToString(node.symbolType);
+        metric.astType = cc::model::astTypeToString(node.astType);
+
+        std::map<CppAstNodeMetricsType::type, double> metricsList;
+        metricsList.insert(pair);
+        _return.insert(std::make_pair(std::to_string(node.astNodeId), metric));
       }
     }
   });

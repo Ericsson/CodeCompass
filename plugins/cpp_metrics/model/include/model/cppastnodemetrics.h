@@ -78,6 +78,31 @@ struct CppAstNodeMetricsForPathView
   double value;
 };
 
+#pragma db view \
+  object(CppAstNodeMetrics) \
+  object(CppAstNode : CppAstNodeMetrics::astNodeId == CppAstNode::id) \
+  object(File = LocFile : CppAstNode::location.file)
+struct CppAstNodeMetricsAndDataForPathView
+{
+#pragma db column(CppAstNodeMetrics::astNodeId)
+  CppAstNodeId astNodeId;
+
+#pragma db column(LocFile::path)
+  std::string path;
+
+#pragma db column(CppAstNode::symbolType)
+  CppAstNode::SymbolType symbolType;
+
+#pragma db column(CppAstNode::astType)
+  CppAstNode::AstType astType;
+
+#pragma db column(CppAstNodeMetrics::type)
+  CppAstNodeMetrics::Type type;
+
+#pragma db column(CppAstNodeMetrics::value)
+  double value;
+};
+
 } //model
 } //cc
 
