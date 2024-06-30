@@ -186,7 +186,12 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsAndDataForPath(
       else
       {
         CppMetricsAstNodeAllData metric;
-        metric.path = node.path;
+        std::size_t pos = node.path.find_last_of('/');
+        metric.path = node.path.substr(0, pos + 1);
+        metric.file = node.path.substr(pos + 1);
+        metric.startLine = node.startLine;
+        metric.endLine = node.endLine;
+        // TODO: what additional info do we need about the AST
         metric.symbolType = cc::model::symbolTypeToString(node.symbolType);
         metric.astType = cc::model::astTypeToString(node.astType);
 

@@ -4,6 +4,7 @@
 #include <model/cppastnode.h>
 #include <model/cppentity.h>
 #include <model/cpprecord.h>
+#include <model/position.h>
 
 namespace cc
 {
@@ -84,22 +85,30 @@ struct CppAstNodeMetricsForPathView
   object(File = LocFile : CppAstNode::location.file)
 struct CppAstNodeMetricsAndDataForPathView
 {
-#pragma db column(CppAstNodeMetrics::astNodeId)
+  typedef cc::model::Position::PosType PosType;
+
+  #pragma db column(CppAstNodeMetrics::astNodeId)
   CppAstNodeId astNodeId;
 
-#pragma db column(LocFile::path)
+  #pragma db column(LocFile::path)
   std::string path;
 
-#pragma db column(CppAstNode::symbolType)
+  #pragma db column(CppAstNode::location.range.start.line)
+  PosType startLine;
+
+  #pragma db column(CppAstNode::location.range.end.line)
+  PosType endLine;
+
+  #pragma db column(CppAstNode::symbolType)
   CppAstNode::SymbolType symbolType;
 
-#pragma db column(CppAstNode::astType)
+  #pragma db column(CppAstNode::astType)
   CppAstNode::AstType astType;
 
-#pragma db column(CppAstNodeMetrics::type)
+  #pragma db column(CppAstNodeMetrics::type)
   CppAstNodeMetrics::Type type;
 
-#pragma db column(CppAstNodeMetrics::value)
+  #pragma db column(CppAstNodeMetrics::value)
   double value;
 };
 

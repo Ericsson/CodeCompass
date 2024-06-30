@@ -45,8 +45,9 @@ struct CppMetricsAstNodeAllData
   3:string symbolType,
   4:string astType,
   // valami kurva item mező
-  // kibaszott sorszám
-  5:map<CppAstNodeMetricsType, double> metrics
+  5:i32 startLine,
+  6:i32 endLine,
+  7:map<CppAstNodeMetricsType, double> metrics
 }
 
 struct CppMetricsModuleSingle
