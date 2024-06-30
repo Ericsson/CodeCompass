@@ -99,6 +99,9 @@ struct CppAstNodeMetricsAndDataForPathView
   #pragma db column(CppAstNode::location.range.end.line)
   PosType endLine;
 
+  #pragma db column(CppAstNode::astValue)
+  std::string astValue;
+
   #pragma db column(CppAstNode::symbolType)
   CppAstNode::SymbolType symbolType;
 

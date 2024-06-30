@@ -191,7 +191,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsAndDataForPath(
         metric.file = node.path.substr(pos + 1);
         metric.startLine = node.startLine;
         metric.endLine = node.endLine;
-        // TODO: what additional info do we need about the AST
+        metric.astValue = node.astValue;
         metric.symbolType = cc::model::symbolTypeToString(node.symbolType);
         metric.astType = cc::model::astTypeToString(node.astType);
 

@@ -44,10 +44,10 @@ struct CppMetricsAstNodeAllData
   2:string file,
   3:string symbolType,
   4:string astType,
-  // valami kurva item mező
   5:i32 startLine,
   6:i32 endLine,
-  7:map<CppAstNodeMetricsType, double> metrics
+  7:string astValue,
+  8:map<CppAstNodeMetricsType, double> metrics
 }
 
 struct CppMetricsModuleSingle
