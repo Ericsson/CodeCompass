@@ -51,9 +51,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-# Copy install script
-COPY docker/dev/install_odb.sh /
-
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
     curl ca-certificates gnupg \
@@ -80,14 +77,16 @@ RUN set -x && apt-get update -qq && \
       apt-get install -qq --yes --no-install-recommends \
       libsqlite3-dev; \
     fi && \
-    sh /install_odb.sh "${CC_DATABASE}" && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
 
-# Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
+# Copy ODB install directory.
+COPY --from=builder /opt/odb /opt/odb
+
+# Copy CodeCompass install directory.
 COPY --from=builder /CodeCompass-install /codecompass
 
-ENV PATH="/codecompass/bin:$PATH"
+ENV PATH="/codecompass/bin:/opt/odb/bin:$PATH"
 
 ENTRYPOINT ["tini", "--"]
