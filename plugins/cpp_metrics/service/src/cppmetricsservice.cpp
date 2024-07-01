@@ -163,8 +163,8 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   });
 }
 
-void CppMetricsServiceHandler::getCppAstNodeMetricsAndDataForPath(
-  std::map<core::AstNodeId, CppMetricsAstNodeAllData>& _return,
+void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
+  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
   const std::string& path_)
 {
   _transaction([&, this](){
@@ -185,7 +185,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsAndDataForPath(
       }
       else
       {
-        CppMetricsAstNodeAllData metric;
+        CppMetricsAstNodeDetailed metric;
         std::size_t pos = node.path.find_last_of('/');
         metric.path = node.path.substr(0, pos + 1);
         metric.file = node.path.substr(pos + 1);
