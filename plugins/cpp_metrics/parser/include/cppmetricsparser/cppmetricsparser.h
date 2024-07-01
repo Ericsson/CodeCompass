@@ -76,6 +76,18 @@ private:
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
+  // Calculate the cohesion within modules
+  void relationalCohesion();
+  // Check type relations in template parameter view.
+  // Used in relational cohesion metric.
+  template <typename T>
+  void checkTypes(
+    const std::string path,
+    const std::unordered_set<std::uint64_t>& typesFound,
+    const std::unordered_map<std::uint64_t,std::string>& typeDefinitionPaths,
+    std::unordered_map<std::string,std::unordered_set<std::uint64_t>>& relationsFoundInFile,
+    int& relationsInModule
+  );
 
 
   /// @brief Constructs an ODB query that you can use to filter only
@@ -190,6 +202,7 @@ private:
 
   int _threadCount;
   std::vector<std::string> _inputPaths;
+  std::string _modulesPath;
   std::unordered_set<model::FileId> _fileIdCache;
   std::unordered_map<model::CppAstNodeId, model::FileId> _astNodeIdCache;
 

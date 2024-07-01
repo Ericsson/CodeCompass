@@ -13,7 +13,7 @@ struct CppFileMetrics
 {
   enum Type
   {
-    PLACEHOLDER
+    RELATIONAL_COHESION = 1
   };
 
   #pragma db id auto
@@ -26,7 +26,7 @@ struct CppFileMetrics
   Type type;
 
   #pragma db not_null
-  unsigned value;
+  double value;
 };
 
 #pragma db view \
