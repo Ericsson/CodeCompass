@@ -23,9 +23,6 @@ struct CohesionCppRecordView
 
   #pragma db column(CppEntity::astNodeId)
   CppAstNodeId astNodeId;
-  
-  #pragma db column(File::path)
-  std::string filePath;
 };
 
 #pragma db view \

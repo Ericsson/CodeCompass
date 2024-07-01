@@ -6,7 +6,7 @@
   const auto v1 = val1; const auto v2 = val2; \
   const bool n1 = isnan(v1); const bool n2 = isnan(v2); \
   EXPECT_EQ(n1, n2); \
-  if (!n1 && !n2) EXPECT_NEAR(v1, v2, abs_error); \
+  if (!n1 && !n2) { EXPECT_NEAR(v1, v2, abs_error); } \
 }
 
 #include <model/cppfunction.h>
@@ -79,13 +79,19 @@ std::vector<McCabeParam> paramMcCabe = {
   {"trycatch", 3},
   {"MyClass::MyClass", 2},
   {"MyClass::~MyClass", 2},
-  {"MyClass::method1", 8}
+  {"MyClass::operator bool", 1},
+  {"MyClass::operator unsigned int", 1},
+  {"MyClass::method1", 8},
+  {"NoBody1::NoBody1", 1},
+  {"NoBody2::NoBody2", 1},
+  {"NoBody3::~NoBody3", 1},
 };
 
 TEST_P(ParameterizedMcCabeTest, McCabeTest) {
   _transaction([&, this]() {
+    typedef odb::query<model::CppFunction> QFun;
     model::CppFunction func = _db->query_value<model::CppFunction>(
-      odb::query<model::CppFunction>::qualifiedName == GetParam().first);
+      QFun::qualifiedName == GetParam().first && QFun::mccabe != 0);
 
     EXPECT_EQ(GetParam().second, func.mccabe);
   });
@@ -95,6 +101,109 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedMcCabeTestSuite,
   ParameterizedMcCabeTest,
   ::testing::ValuesIn(paramMcCabe)
+);
+
+// Bumpy Road
+
+struct BumpyRoadParam
+{
+  std::string funName;
+  unsigned int expBumpiness;
+  unsigned int expStmtCount;
+};
+
+class ParameterizedBumpyRoadTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<BumpyRoadParam>
+{};
+
+#define BR_LAM "::(anonymous class)::operator()"
+#define BR_NM1 "::nested1::method1"
+#define BR_NM2 "::nested2::method2"
+#define BR_NM3 "::nested3::method3"
+std::vector<BumpyRoadParam> paramBumpyRoad = {
+  {"flat_empty_inline", 0, 0},
+  {"flat_empty", 0, 0},
+  {"flat_regular", 4, 4},
+  {"single_compound", 3, 2},
+  {"single_if_simple", 4, 3},
+  {"single_if_complex", 4, 3},
+  {"single_for_each", 5, 4},
+  {"single_for_loop", 5, 4},
+  {"nested_chain_compound", 10, 4},
+  {"nested_chain_if", 10, 4},
+  {"nested_chain_compound_if", 10, 4},
+  {"nested_chain_for", 10, 4},
+  {"nested_chain_compound_for", 10, 4},
+  {"nested_chain_mixed", 29, 8},
+  {"compare_level1", 7, 4},
+  {"compare_level2", 12, 5},
+  {"compare_level3", 18, 6},
+  {"complex_two_levels", 17, 10},
+  {"complex_three_levels_min", 14, 8},
+  {"complex_three_levels_max", 23, 8},
+  {"nested_lambda()" BR_LAM "()" BR_LAM "()" BR_LAM, 1, 1},
+  {"nested_lambda()" BR_LAM "()" BR_LAM, 3, 2},
+  {"nested_lambda()" BR_LAM, 6, 3},
+  {"nested_lambda", 10, 4},
+  {"nested_type()" BR_NM1 "()" BR_NM2 "()" BR_NM3, 1, 1},
+  {"nested_type()" BR_NM1 "()" BR_NM2, 3, 2},
+  {"nested_type()" BR_NM1, 6, 3},
+  {"nested_type", 10, 4},
+};
+
+TEST_P(ParameterizedBumpyRoadTest, BumpyRoadTest) {
+  _transaction([&, this]() {
+    typedef odb::query<model::CppFunction> QFun;
+    model::CppFunction func = _db->query_value<model::CppFunction>(
+      QFun::qualifiedName == GetParam().funName);
+
+    EXPECT_EQ(GetParam().expBumpiness, func.bumpiness);
+    EXPECT_EQ(GetParam().expStmtCount, func.statementCount);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedBumpyRoadTestSuite,
+  ParameterizedBumpyRoadTest,
+  ::testing::ValuesIn(paramBumpyRoad)
+);
+
+// Type McCabe
+
+class ParameterizedTypeMcCabeTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<McCabeParam>
+{};
+
+std::vector<McCabeParam> paramTypeMcCabe = {
+  {"Empty",                           0},
+  {"ClassMethodsInside",             16},
+  {"ClassMethodsOutside",            44},
+  {"ClassMethodsInsideAndOutside",    8},
+  {"ClassWithInnerClass",             4},
+  {"ClassWithInnerClass::InnerClass", 3},
+  {"TemplateClass",                   2},
+};
+
+TEST_P(ParameterizedTypeMcCabeTest, TypeMcCabeTest) {
+  _transaction([&, this]() {
+
+    const auto record = _db->query_value<model::CppRecord>(
+      odb::query<model::CppRecord>::qualifiedName == GetParam().first);
+
+    const auto metric = _db->query_value<model::CppAstNodeMetrics>(
+      odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
+      odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::MCCABE_TYPE);
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedTypeMcCabeTestSuite,
+  ParameterizedTypeMcCabeTest,
+  ::testing::ValuesIn(paramTypeMcCabe)
 );
 
 // Lack of Cohesion

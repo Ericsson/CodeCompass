@@ -87,6 +87,16 @@ struct FileIdView
 {
   FileId id;
 };
+
+#pragma db view object(File)
+struct FilePathView
+{
+  #pragma db column(File::id)
+  FileId id;
+
+  #pragma db column(File::path)
+  std::string path;
+};
   
 #pragma db view object(File) query((?) + " GROUP BY " + File::type)
 struct FileTypeView

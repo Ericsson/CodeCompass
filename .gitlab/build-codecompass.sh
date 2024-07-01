@@ -63,7 +63,7 @@ cd $CC_BUILD_DIR
 cmake $CC_SRC_DIR \
   -DCMAKE_INSTALL_PREFIX=$CC_INSTALL_DIR \
   -DDATABASE=pgsql \
-  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DCMAKE_BUILD_TYPE=Release \
   -DWITH_AUTH="plain;ldap" \
   -DLLVM_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/llvm/ \
   -DClang_DIR=$DEPS_INSTALL_RUNTIME_DIR/llvm/lib/cmake/clang/

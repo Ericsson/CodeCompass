@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 
 #include <boost/program_options/variables_map.hpp>
 
@@ -12,6 +13,8 @@
 #include <model/cppastnodemetrics-odb.hxx>
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
+#include <model/cppfilemetrics.h>
+#include <model/cppfilemetrics-odb.hxx>
 
 #include <odb/database.hxx>
 #include <util/odbtransaction.h>
@@ -36,14 +39,29 @@ public:
 
   double getSingleCppMetricForAstNode(
     const core::AstNodeId& astNodeId_,
-    CppMetricsType::type metric_) override;
+    CppAstNodeMetricsType::type metric_) override;
 
   void getCppMetricsForAstNode(
-    std::vector<CppMetricsAstNode>& _return,
+    std::vector<CppMetricsAstNodeSingle>& _return,
     const core::AstNodeId& astNodeId_) override;
 
-  void getCppMetricsTypeNames(
-    std::vector<CppMetricsTypeName>& _return) override;
+  void getCppMetricsForModule(
+    std::vector<CppMetricsModuleSingle>& _return,
+    const core::FileId& fileId_) override;
+
+  void getCppAstNodeMetricsForPath(
+    std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+    const std::string& path_) override;
+
+  void getCppFileMetricsForPath(
+    std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+    const std::string& path_) override;
+
+  void getCppAstNodeMetricsTypeNames(
+    std::vector<CppAstNodeMetricsTypeName>& _return) override;
+
+  void getCppModuleMetricsTypeNames(
+    std::vector<CppModuleMetricsTypeName>& _return) override;
 
 private:
   std::shared_ptr<odb::database> _db;

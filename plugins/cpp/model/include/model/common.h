@@ -23,7 +23,9 @@ enum Tag
   Static  = 3,
   Implicit = 4,
   Global = 5,
-  Constant = 6
+  Constant = 6,
+  TemplateSpecialization = 7,
+  TemplateInstantiation = 8 // all cases other than explicit specialization
 };
 
 inline std::string visibilityToString(Visibility v_)

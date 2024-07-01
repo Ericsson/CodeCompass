@@ -29,6 +29,24 @@ struct CppFileMetrics
   unsigned value;
 };
 
+#pragma db view \
+  object(CppFileMetrics) \
+  object(File : CppFileMetrics::file == File::id)
+struct CppModuleMetricsForPathView
+{
+  #pragma db column(CppFileMetrics::file)
+  FileId fileId;
+
+  #pragma db column(File::path)
+  std::string path;
+
+  #pragma db column(CppFileMetrics::type)
+  CppFileMetrics::Type type;
+
+  #pragma db column(CppFileMetrics::value)
+  unsigned value;
+};
+
 } //model
 } //cc
 

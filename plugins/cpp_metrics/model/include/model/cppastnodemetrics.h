@@ -15,11 +15,12 @@ struct CppAstNodeMetrics
 {
   enum Type
   {
-    PARAMETER_COUNT,
-    MCCABE,
-    LACK_OF_COHESION,
-    LACK_OF_COHESION_HS,
-    EFFERENT_TYPE
+    PARAMETER_COUNT = 1,
+    MCCABE_FUNCTION = 2,
+    MCCABE_TYPE = 3,
+    BUMPY_ROAD = 4,
+    LACK_OF_COHESION = 5,
+    LACK_OF_COHESION_HS = 6,
   };
 
   #pragma db id auto
@@ -41,6 +42,38 @@ struct CppAstNodeMetrics
     CppRecord::astNodeId == CppAstNodeMetrics::astNodeId)
 struct CppRecordMetricsView
 {
+  #pragma db column(CppAstNodeMetrics::value)
+  double value;
+};
+
+#pragma db view \
+  object(CppAstNodeMetrics) \
+  object(CppAstNode : CppAstNodeMetrics::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file)
+struct CppAstNodeMetricsFileView
+{
+  #pragma db column(CppAstNode::id)
+  CppAstNodeId astNodeId;
+
+  #pragma db column(File::id)
+  FileId fileId;
+};
+  
+#pragma db view \
+  object(CppAstNodeMetrics) \
+  object(CppAstNode : CppAstNodeMetrics::astNodeId == CppAstNode::id) \
+  object(File = LocFile : CppAstNode::location.file)
+struct CppAstNodeMetricsForPathView
+{
+  #pragma db column(CppAstNodeMetrics::astNodeId)
+  CppAstNodeId astNodeId;
+
+  #pragma db column(LocFile::path)
+  std::string path;
+
+  #pragma db column(CppAstNodeMetrics::type)
+  CppAstNodeMetrics::Type type;
+
   #pragma db column(CppAstNodeMetrics::value)
   double value;
 };
