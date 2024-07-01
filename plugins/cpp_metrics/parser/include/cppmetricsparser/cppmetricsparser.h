@@ -76,6 +76,8 @@ private:
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
+  // Calculate the efferent coupling of types.
+  void efferentTypeLevel();
 
 
   /// @brief Constructs an ODB query that you can use to filter only

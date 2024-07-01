@@ -1,5 +1,4 @@
 #include <cppmetricsparser/cppmetricsparser.h>
-#include "efferent.h"
 
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
@@ -7,6 +6,8 @@
 #include <model/cppcohesionmetrics-odb.hxx>
 #include <model/cppfilemetrics.h>
 #include <model/cppfilemetrics-odb.hxx>
+#include <model/cppinheritance.h>
+#include <model/cppinheritance-odb.hxx>
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
@@ -365,6 +366,58 @@ void CppMetricsParser::lackOfCohesion()
   });
 }
 
+void CppMetricsParser::efferentTypeLevel()
+{
+  typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
+  typedef odb::query<cc::model::CppInheritance> InheritanceQuery;
+
+  util::OdbTransaction{_ctx.db}([&, this]
+  {
+    std::set<std::uint64_t> dependentTypes;
+    for (const model::CohesionCppRecordView& type
+      : _ctx.db->query<model::CohesionCppRecordView>())
+    {
+      // Skip types that were included from external libraries.
+      /*type.location.file.load();
+      const auto typeFile = _ctx.db->query_one<model::File>(
+        odb::query<model::File>::id == type.location.file->id);
+      if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
+        continue;*/
+      //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
+        //continue;
+
+      dependentTypes.clear();
+      for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
+        MemTypeQuery::typeHash == type.entityHash &&
+          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
+      {
+        LOG(warning) << "step 1";
+        dependentTypes.insert(mem.memberAstNode.load()->id);
+      }
+
+      for (const model::CppInheritance& inherit : _ctx.db->query<model::CppInheritance>(
+        InheritanceQuery::derived == type.astNodeId))
+      {
+        LOG(warning) << "step 2";
+        dependentTypes.insert(inherit.base);
+      }
+
+      /*for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
+        MemTypeQuery::typeHash == type.entityHash &&
+          MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+      {
+        dependentTypes.insert(mem.memberAstNode->id);
+      }*/
+
+      model::CppAstNodeMetrics metric;
+      metric.astNodeId = type.astNodeId;
+      metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
+      metric.value = dependentTypes.size();
+      _ctx.db->persist(metric);
+    }
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   LOG(info) << "[cppmetricsparser] Computing function parameter count metric.";
@@ -377,9 +430,8 @@ bool CppMetricsParser::parse()
   typeMcCabe();
   LOG(info) << "[cppmetricsparser] Computing Lack of Cohesion metric for types.";
   lackOfCohesion();
-
-  EfferentCoupling efferent(_ctx, _inputPaths);
-  efferent.efferentTypeLevel();
+  LOG(info) << "[cppmetricsparser] Computing efferent coupling metric for types.";
+  efferentTypeLevel();
   return true;
 }
 
