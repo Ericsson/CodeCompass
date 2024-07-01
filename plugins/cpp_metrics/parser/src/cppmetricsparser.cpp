@@ -6,6 +6,8 @@
 #include <model/cppcohesionmetrics-odb.hxx>
 #include <model/cppfilemetrics.h>
 #include <model/cppfilemetrics-odb.hxx>
+#include <model/cppafferentmetrics.h>
+#include <model/cppafferentmetrics-odb.hxx>
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
@@ -96,6 +98,52 @@ bool CppMetricsParser::cleanupDatabase()
     }
   }
   return true;
+}
+
+
+void CppMetricsParser::afferentCouplingTypeLevel()
+{
+  util::OdbTransaction{_ctx.db}([&,this]
+  {
+    std::set<std::uint64_t> typesFound;
+    std::unordered_map<std::uint64_t, int> typeFoundCnt;
+    std::unordered_map<std::uint64_t,std::uint64_t> astNodeIdOfType;
+
+    for (const model::AfferentRecordView& type
+        : _ctx.db->query<model::AfferentRecordView>())
+    {
+      if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
+      {
+        continue;
+      }
+
+      typesFound.clear();
+      for (const model::CppMemberType& member : _ctx.db->query<model::CppMemberType>(
+        odb::query<cc::model::CppMemberType>::typeHash == type.entityHash &&
+        odb::query<cc::model::CppMemberType>::kind == model::CppMemberType::Kind::Field))
+      {
+        typesFound.insert(member.memberTypeHash);
+      }
+      
+      astNodeIdOfType[type.typeHash] = type.astNodeId;
+
+      for (const auto& t : typesFound)
+      {
+        typeFoundCnt[t]++;
+      }
+    }
+    
+    for (const auto& pair : typeFoundCnt)
+    {
+      model::CppAstNodeMetrics metric;
+      metric.astNodeId = astNodeIdOfType[pair.first];
+      metric.type = model::CppAstNodeMetrics::Type::AFFERENT_COUPLING;
+      metric.value = pair.second;
+      _ctx.db->persist(metric);
+    }
+    
+
+  });
 }
 
 void CppMetricsParser::functionParameters()
@@ -376,6 +424,8 @@ bool CppMetricsParser::parse()
   typeMcCabe();
   LOG(info) << "[cppmetricsparser] Computing Lack of Cohesion metric for types.";
   lackOfCohesion();
+  LOG(info) << "[cppmetricsparser] Computing Afferent Coupling metric for types.";
+  afferentCouplingTypeLevel();
   return true;
 }
 
