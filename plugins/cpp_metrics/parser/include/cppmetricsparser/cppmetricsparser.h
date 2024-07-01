@@ -76,7 +76,8 @@ private:
   // Calculate the lack of cohesion between member variables
   // and member functions for every type.
   void lackOfCohesion();
-
+  // Calculate afferent coupling metric bewteen types
+  void afferentCouplingTypeLevel();
 
   /// @brief Constructs an ODB query that you can use to filter only
   /// the database records of the given parameter type whose path
