@@ -15,9 +15,6 @@ FROM ubuntu:22.04
 # variable prevents this interaction.
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Copy install script
-COPY docker/dev/install_odb.sh /
-
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     llvm-11 \
@@ -43,9 +40,6 @@ RUN set -x && apt-get update -qq \
   && rm -rf /var/lib/apt/lists/ \
   && set +x
 
-# Build ODB from source
-RUN sh /install_odb.sh && rm /install_odb.sh
-
 # Install NodeJS from NodeSource.
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
@@ -55,22 +49,24 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/
 
+# Copy ODB install directory.
+COPY --from=runtime /opt/odb /opt/odb
+
 ARG CC_GID=960
 ARG CC_UID=960
 
 ENV CC_GID ${CC_GID}
 ENV CC_UID ${CC_UID}
 
-
 # Create user and group for CodeCompass.
 RUN groupadd --system codecompass --gid ${CC_GID} && \
     useradd --system --no-log-init --no-create-home --uid ${CC_UID} --gid codecompass codecompass
 
-# Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
+# Copy CodeCompass install directory. (Change permission of the CodeCompass package.)
 # TODO: only the webserver's binaries should be included in this image.
 COPY --from=runtime --chown=codecompass:codecompass /codecompass /codecompass
 
-ENV PATH="/codecompass/bin:$PATH"
+ENV PATH="/codecompass/bin:/opt/odb/bin:$PATH"
 
 COPY --chown=codecompass:codecompass docker/web/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
