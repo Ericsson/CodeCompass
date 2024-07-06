@@ -4,4 +4,9 @@ project(CppMetricsTestProject)
 add_library(CppMetricsTestProject STATIC
   mccabe.cpp
   lackofcohesion.cpp
-  bumpyroad.cpp)
+  bumpyroad.cpp
+  RelationalCohesion/OneTypeInModule/singleTypeInModule.cpp
+  RelationalCohesion/MultipleTypesInModuleNoRelation/A.cpp
+  RelationalCohesion/MultipleTypesInModuleNoRelation/B.cpp
+  RelationalCohesion/MultipleTypesInModuleNoRelation/C.cpp
+  RelationalCohesion/MultipleTypesInModuleNoRelation/D.cpp)

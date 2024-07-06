@@ -46,10 +46,10 @@ private:
   // Used in relational cohesion metric.
   template <typename T>
   void checkTypes(
-    const std::string path,
+    const std::string& path,
     const std::unordered_set<std::uint64_t>& typesFound,
     const std::unordered_map<std::uint64_t,std::string>& typeDefinitionPaths,
-    std::unordered_map<std::string,std::unordered_set<std::uint64_t>>& relationsFoundInFile,
+    std::unordered_multimap<std::string, std::uint64_t>& relationsFoundInFile,
     int& relationsInModule
   );
 

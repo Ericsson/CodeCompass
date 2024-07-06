@@ -13,6 +13,10 @@
 #include <model/cppfunction-odb.hxx>
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppfilemetrics.h>
+#include <model/cppfilemetrics-odb.hxx>
+#include <model/file.h>
+#include <model/file-odb.hxx>
 
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
@@ -230,4 +234,44 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedLackOfCohesionTestSuite,
   ParameterizedLackOfCohesionTest,
   ::testing::ValuesIn(paramLackOfCohesion)
+);
+
+
+// Relational cohesion
+struct RelationalCohesionParam
+{
+  std::string moduleName;
+  double rc;
+};
+
+class ParameterizedRelationalCohesionTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<RelationalCohesionParam>
+{};
+
+std::vector<RelationalCohesionParam> paramRelationalCohesion = {
+  {"OneTypeInModule", 1.0}
+  // {"MultipleTypesInModuleNoRelation", 0.25}
+};
+
+TEST_P(ParameterizedRelationalCohesionTest, RelationalCohesionTest) {
+  _transaction([&, this](){
+    const std::string& moduleName = GetParam().moduleName;
+    std::uint64_t moduleId = _db->query_value<model::File>(
+      !odb::query<model::File>::path.like("%/CMakeFiles/%") &&
+      odb::query<model::File>::filename == moduleName).id;
+    double storedValue = _db->query_value<model::CppFileMetrics>(
+      odb::query<model::CppFileMetrics>::file == moduleId &&
+      odb::query<model::CppFileMetrics>::type == model::CppFileMetrics::Type::RELATIONAL_COHESION
+    ).value;
+
+    constexpr double tolerance = 1e-8;
+    EXPECT_EQF(GetParam().rc, storedValue, tolerance);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedRelationalCohesionTestSuite,
+  ParameterizedRelationalCohesionTest,
+  ::testing::ValuesIn(paramRelationalCohesion)
 );

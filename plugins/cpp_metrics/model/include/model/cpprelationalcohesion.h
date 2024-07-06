@@ -66,7 +66,6 @@ namespace cc
             std::string filePath;
         };
 
-        // object(CppEntity) \
 
         #pragma db view \
         object(CppFunction) \

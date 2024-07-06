@@ -20,7 +20,7 @@
 #include <util/odbtransaction.h>
 
 #include <memory>
-#include <iostream>
+#include <fstream>
 
 namespace cc
 {
@@ -170,10 +170,10 @@ void CppMetricsParser::functionBumpyRoad()
 
 template <typename T>
 void CppMetricsParser::checkTypes(
-  const std::string path,
+  const std::string& path,
   const std::unordered_set<std::uint64_t>& typesFound,
-  const std::unordered_map<std::uint64_t,std::string>& typeDefinitionPaths,
-  std::unordered_map<std::string,std::unordered_set<std::uint64_t>>& relationsFoundInFile,
+  const std::unordered_map<std::uint64_t, std::string>& typeDefinitionPaths,
+  std::unordered_multimap<std::string, std::uint64_t>& relationsFoundInFile,
   int& relationsInModule
 )
 {
@@ -181,144 +181,140 @@ void CppMetricsParser::checkTypes(
     : _ctx.db->query<T>(
       odb::query<T>::query_columns::File::path.like(path + "%")
     ))
-    {
-      if (
-        typesFound.find(item.typeHash) != typesFound.end() &&
-        //check if return type is defined within the current module
-        typeDefinitionPaths.at(item.typeHash) != item.filePath &&
-        //check for self relation
-        (relationsFoundInFile.find(item.filePath) == relationsFoundInFile.end() ||
-        //check if any reletaions were found in the current file
-        relationsFoundInFile[item.filePath].find(item.typeHash) == relationsFoundInFile[item.filePath].end())
-        //check if this relation is already found
+  {
+    if (
+      typesFound.find(item.typeHash) != typesFound.end() &&
+      // Check if return type is defined within the current module
+      typeDefinitionPaths.at(item.typeHash) != item.filePath &&
+      // Check for self relation
+      relationsFoundInFile.find(item.filePath) == relationsFoundInFile.end() &&
+      // Check if any relations were found in the current file
+      std::none_of(
+        relationsFoundInFile.equal_range(item.filePath).first,
+        relationsFoundInFile.equal_range(item.filePath).second,
+        [&item](const auto& pair) { return pair.second == item.typeHash; }
       )
-      {
-        ++relationsInModule;
-        auto it = relationsFoundInFile.find(item.filePath);
-        if (it != relationsFoundInFile.end())
-        {
-          it->second.insert(item.typeHash);
-        }
-        else
-        {
-          relationsFoundInFile.insert(std::make_pair(item.filePath,std::unordered_set<std::uint64_t>{item.typeHash}));
-        }
-      }
+    )
+    {
+      ++relationsInModule;
+      relationsFoundInFile.emplace(item.filePath, item.typeHash);
+      LOG(info) << item.filePath;
     }
+  }
 }
 
 void CppMetricsParser::relationalCohesion()
 {
-  std::unordered_set<std::string> filepaths;
-  std::unordered_map<std::uint64_t,std::string> typeDefinitionPaths;
+  std::unordered_set<std::string> modulePaths;
+  std::unordered_map<std::uint64_t, std::string> typeDefinitionPaths;
   std::unordered_set<std::uint64_t> typesFound;
-  std::unordered_map<std::string,std::uint64_t> moduleIds;
+  std::unordered_map<std::string, std::uint64_t> moduleIds;
 
-  util::OdbTransaction {_ctx.db} ([&, this]
-  {
-
+  util::OdbTransaction{_ctx.db}([&, this] {
     std::ifstream file(_modulesPath);
 
-    //read the specified module list if given
+    // Read the specified module list if given
     if (file.is_open())
     {
       std::string line;
-      while (std::getline(file,line))
+      while (std::getline(file, line))
       {
-        filepaths.insert(line);
+        modulePaths.insert(line);
       }
     }
-    //if no modules list is specified every directory under the input paths is considered one
+    // If no modules list is specified every directory under the input paths is considered one
     else
     {
-      for (const auto &inputPath : _inputPaths)
+      for (const auto& inputPath : _inputPaths)
       {
         for (const model::RelationalCohesionFileView& file
-        : _ctx.db->query<model::RelationalCohesionFileView>(
-          odb::query<model::RelationalCohesionFileView>::query_columns::path.like(inputPath + "%") &&
-          odb::query<model::RelationalCohesionFileView>::query_columns::type.equal("DIR")
-        ))
+          : _ctx.db->query<model::RelationalCohesionFileView>(
+            odb::query<model::RelationalCohesionFileView>::query_columns::path.like(inputPath + "%") &&
+            odb::query<model::RelationalCohesionFileView>::query_columns::type.equal(model::File::DIRECTORY_TYPE)
+          ))
         {
-          filepaths.insert(file.filePath);
-        } 
+          modulePaths.insert(file.filePath);
+        }
       }
     }
 
-    //get the file IDs for each module
-    for (auto &path : filepaths)
+    // Get the file IDs for each module
+    for (auto& path : modulePaths)
     {
       for (const model::RelationalCohesionFileView& file
         : _ctx.db->query<model::RelationalCohesionFileView>(
-          odb::query<model::RelationalCohesionFileView>::query_columns::path.like(path)
+          odb::query<model::RelationalCohesionFileView>::query_columns::path.equal(path)
         ))
-        {
-          moduleIds[file.filePath] = file.fileId;
-        }
+      {
+        moduleIds[file.filePath] = file.fileId;
+      }
     }
 
-    for (const auto &path : filepaths)
+    for (const auto& path : modulePaths)
     {
-
       typesFound.clear();
       typeDefinitionPaths.clear();
-      //find the types defined in the module
+      // Find the types defined in the module
       for (const model::RelationalCohesionRecordView& record
-      : _ctx.db->query<model::RelationalCohesionRecordView>(
-        odb::query<model::RelationalCohesionRecordView>::query_columns::File::path.like(path + "%")
-      ))
+        : _ctx.db->query<model::RelationalCohesionRecordView>(
+          odb::query<model::RelationalCohesionRecordView>::query_columns::File::path.like(path + "%")
+        ))
       {
-        typesFound.insert(record.typeHash); //save types defined inside the module
-        typeDefinitionPaths.insert(std::make_pair(record.typeHash,record.filePath)); //save where the type is defined to avoid self relation
+        // Save types defined inside the module
+        typesFound.insert(record.typeHash); 
+        // Save where the type is defined to avoid self relation
+        typeDefinitionPaths.insert(std::make_pair(record.typeHash, record.filePath)); 
       }
-      
-      std::unordered_map<std::string,std::unordered_set<std::uint64_t>> relationsFoundInFile; //store the type relations already found for each file
+
+      // Store the type relations already found for each file
+      std::unordered_multimap<std::string, std::uint64_t> relationsFoundInFile;
       int relationsInModule = 0;
 
-      //check function return types
+      // Check function return types
       CppMetricsParser::checkTypes<model::RelationalCohesionFunctionView>(
         path,
         typesFound,
         typeDefinitionPaths,
         relationsFoundInFile,
         relationsInModule
-        );
+      );
 
-      //check function parameters
+      // Check function parameters
       CppMetricsParser::checkTypes<model::RelationalCohessionFunctionParameterView>(
         path,
         typesFound,
         typeDefinitionPaths,
         relationsFoundInFile,
         relationsInModule
-        );
+      );
 
-      //check function locals
+      // Check function locals
       CppMetricsParser::checkTypes<model::RelationalCohessionFunctionLocalView>(
         path,
         typesFound,
         typeDefinitionPaths,
         relationsFoundInFile,
         relationsInModule
-        );
+      );
 
-      //check variables
+      // Check variables
       CppMetricsParser::checkTypes<model::RelationalCohesionVariableView>(
         path,
         typesFound,
         typeDefinitionPaths,
         relationsFoundInFile,
         relationsInModule
-        );
-      
-      //calculate relational cohesion for module
-      //formula: H = (R + 1)/ N
-      //where H is the relational cohesion value,
-      //R is the number of relationships internal to the module,
-      //N is the number of types in the module
+      );
+
+      // Calculate relational cohesion for module
+      // Formula: H = (R + 1)/ N
+      // Where H is the relational cohesion value,
+      // R is the number of relationships internal to the module,
+      // N is the number of types in the module
 
       uint numberOfTypesInModule = typesFound.size(); //N
 
-      double relationalCohesion = 
+      double relationalCohesion =
         (static_cast<double>(relationsInModule) + 1.0) / static_cast<double>(numberOfTypesInModule);
 
       model::CppFileMetrics relationalCohesionMetrics;
@@ -326,11 +322,10 @@ void CppMetricsParser::relationalCohesion()
       relationalCohesionMetrics.value = relationalCohesion;
       relationalCohesionMetrics.type = model::CppFileMetrics::Type::RELATIONAL_COHESION;
       _ctx.db->persist(relationalCohesionMetrics);
-
     }
-    
   });
 }
+
 
 void CppMetricsParser::lackOfCohesion()
 {
