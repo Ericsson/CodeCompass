@@ -199,6 +199,7 @@ void CppMetricsParser::checkTypes(
       ++relationsInModule;
       relationsFoundInFile.emplace(item.filePath, item.typeHash);
       LOG(info) << item.filePath;
+      LOG(info) << relationsInModule;
     }
   }
 }
@@ -252,6 +253,10 @@ void CppMetricsParser::relationalCohesion()
 
     for (const auto& path : modulePaths)
     {
+
+      LOG(info) << "looking at module:";
+      LOG(info) << path;
+
       typesFound.clear();
       typeDefinitionPaths.clear();
       // Find the types defined in the module
@@ -262,8 +267,20 @@ void CppMetricsParser::relationalCohesion()
       {
         // Save types defined inside the module
         typesFound.insert(record.typeHash); 
+        LOG(info) << "typesFound incremented with: ";
+        LOG(info) << record.qualifiedName;
+        LOG(info) << record.typeHash;
         // Save where the type is defined to avoid self relation
         typeDefinitionPaths.insert(std::make_pair(record.typeHash, record.filePath)); 
+
+        LOG(info) << "Content of types found:";
+
+        for (auto &&i : typesFound)
+        {
+          LOG(info) << i;
+        }
+        
+
       }
 
       // Store the type relations already found for each file
@@ -313,6 +330,9 @@ void CppMetricsParser::relationalCohesion()
       // N is the number of types in the module
 
       uint numberOfTypesInModule = typesFound.size(); //N
+
+      LOG(info) << relationsInModule;
+      LOG(info) << numberOfTypesInModule;
 
       double relationalCohesion =
         (static_cast<double>(relationsInModule) + 1.0) / static_cast<double>(numberOfTypesInModule);

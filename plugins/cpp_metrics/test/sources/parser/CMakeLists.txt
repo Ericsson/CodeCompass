@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 project(CppMetricsTestProject)
 
+file(GLOB_RECURSE RELATIONAL_COHESION_SOURCES "RelationalCohesion/**/*.cpp")
+
 add_library(CppMetricsTestProject STATIC
   mccabe.cpp
   lackofcohesion.cpp
   bumpyroad.cpp
-  RelationalCohesion/OneTypeInModule/singleTypeInModule.cpp
-  RelationalCohesion/MultipleTypesInModuleNoRelation/A.cpp
-  RelationalCohesion/MultipleTypesInModuleNoRelation/B.cpp
-  RelationalCohesion/MultipleTypesInModuleNoRelation/C.cpp
-  RelationalCohesion/MultipleTypesInModuleNoRelation/D.cpp)
+  ${RELATIONAL_COHESION_SOURCES})

@@ -251,7 +251,10 @@ class ParameterizedRelationalCohesionTest
 
 std::vector<RelationalCohesionParam> paramRelationalCohesion = {
   {"OneTypeInModule", 1.0}
-  // {"MultipleTypesInModuleNoRelation", 0.25}
+  /*{"MultipleTypesInModuleNoRelation", 0.25},
+    {"RelationByFunctionParameter", 7.0/4.0},
+    {"RelationByFunctionReturnValue", 6.0/4.0},
+    {"RelationByVariable", 6.0/4.0}*/
 };
 
 TEST_P(ParameterizedRelationalCohesionTest, RelationalCohesionTest) {
