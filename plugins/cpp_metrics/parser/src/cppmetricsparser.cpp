@@ -103,46 +103,55 @@ bool CppMetricsParser::cleanupDatabase()
 
 void CppMetricsParser::afferentCouplingTypeLevel()
 {
-  util::OdbTransaction{_ctx.db}([&,this]
+
+  // Calculate the cohesion metric for all types on parallel threads.
+  parallelCalcMetric<model::AfferentRecordView>(
+    "Afferent coupling",
+    _threadCount * afferentCouplingPartitionMultiplier, // number of jobs; adjust for granularity
+    getFilterPathsQuery<model::AfferentRecordView>(),
+    [&, this](const MetricsTasks<model::AfferentRecordView>& tasks)
   {
-    std::set<std::uint64_t> typesFound;
-    std::unordered_map<std::uint64_t, int> typeFoundCnt;
-    std::unordered_map<std::uint64_t,std::uint64_t> astNodeIdOfType;
-
-    for (const model::AfferentRecordView& type
-        : _ctx.db->query<model::AfferentRecordView>())
+    util::OdbTransaction{_ctx.db}([&,this]
     {
-      if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
-      {
-        continue;
-      }
+      std::set<std::uint64_t> typesFound;
+      std::unordered_map<std::uint64_t, int> typeFoundCnt;
+      std::unordered_map<std::uint64_t,std::uint64_t> astNodeIdOfType;
 
-      typesFound.clear();
-      for (const model::CppMemberType& member : _ctx.db->query<model::CppMemberType>(
-        odb::query<cc::model::CppMemberType>::typeHash == type.entityHash &&
-        odb::query<cc::model::CppMemberType>::kind == model::CppMemberType::Kind::Field))
+      for (const model::AfferentRecordView& type
+          : _ctx.db->query<model::AfferentRecordView>())
       {
-        typesFound.insert(member.memberTypeHash);
+        if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
+        {
+          continue;
+        }
+
+        typesFound.clear();
+        for (const model::CppMemberType& member : _ctx.db->query<model::CppMemberType>(
+          odb::query<cc::model::CppMemberType>::typeHash == type.entityHash &&
+          odb::query<cc::model::CppMemberType>::kind == model::CppMemberType::Kind::Field)) 
+        {
+          typesFound.insert(member.memberTypeHash);
+        }
+        
+        astNodeIdOfType[type.typeHash] = type.astNodeId;
+
+        for (const auto& t : typesFound)
+        {
+          typeFoundCnt[t]++;
+        }
       }
       
-      astNodeIdOfType[type.typeHash] = type.astNodeId;
-
-      for (const auto& t : typesFound)
+      for (const auto& pair : typeFoundCnt)
       {
-        typeFoundCnt[t]++;
+        model::CppAstNodeMetrics metric;
+        metric.astNodeId = astNodeIdOfType[pair.first];
+        metric.type = model::CppAstNodeMetrics::Type::AFFERENT_COUPLING;
+        metric.value = pair.second;
+        _ctx.db->persist(metric);
       }
-    }
-    
-    for (const auto& pair : typeFoundCnt)
-    {
-      model::CppAstNodeMetrics metric;
-      metric.astNodeId = astNodeIdOfType[pair.first];
-      metric.type = model::CppAstNodeMetrics::Type::AFFERENT_COUPLING;
-      metric.value = pair.second;
-      _ctx.db->persist(metric);
-    }
-    
+      
 
+    });
   });
 }
 
