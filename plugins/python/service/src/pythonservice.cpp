@@ -27,6 +27,11 @@ void PythonServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  _transaction([&]() {
+    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+
+    PythonServiceHandler::setInfoProperties(return_, pyname);
+  });
   return;
 }
 
