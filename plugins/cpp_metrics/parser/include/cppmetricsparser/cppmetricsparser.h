@@ -199,6 +199,7 @@ private:
   static const int functionMcCabePartitionMultiplier = 5;
   static const int functionBumpyRoadPartitionMultiplier = 5;
   static const int lackOfCohesionPartitionMultiplier = 25;
+  static const int efferentCouplingTypesPartitionMultiplier = 5;
 };
   
 } // parser

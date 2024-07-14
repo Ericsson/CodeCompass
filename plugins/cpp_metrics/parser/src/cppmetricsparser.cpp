@@ -368,71 +368,77 @@ void CppMetricsParser::lackOfCohesion()
 
 void CppMetricsParser::efferentTypeLevel()
 {
-  typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
-  typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
-  typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
-  typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
-  typedef odb::query<cc::model::CppFunction> FuncQuery;
-
-  util::OdbTransaction{_ctx.db}([&, this]
-  {
-    /*parallelCalcMetric<model::CppFunctionParamCountWithId>(
-      "Efferent coupling of types",
-      _threadCount * functionParamsPartitionMultiplier,// number of jobs; adjust for granularity
-      getFilterPathsQuery<model::CppFunctionParamCountWithId>(),
-      [&, this](const MetricsTasks<model::CppFunctionParamCountWithId>& tasks)
-      {*/
-    std::set<std::uint64_t> dependentTypes;
-    for (const model::CohesionCppRecordView& type
-      : _ctx.db->query<model::CohesionCppRecordView>())
+  parallelCalcMetric<model::CohesionCppRecordView>(
+    "Efferent coupling of types",
+    _threadCount * efferentCouplingTypesPartitionMultiplier,// number of jobs; adjust for granularity
+    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
     {
-      // Skip types that were included from external libraries.
-      /*type.location.file.load();
-      const auto typeFile = _ctx.db->query_one<model::File>(
-        odb::query<model::File>::id == type.location.file->id);
-      if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
-        continue;*/
-      //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
-        //continue;
+      typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
+      typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
+      typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
+      typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
+      typedef odb::query<cc::model::CppFunction> FuncQuery;
 
-      dependentTypes.clear();
-
-      // Count parent types
-      auto inheritanceView = _ctx.db->query<model::CppInheritanceCount>(
-        InheritanceQuery::derived == type.entityHash);
-
-      // Count unique type attributes
-      for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
-        MemTypeQuery::typeHash == type.entityHash))
+      util::OdbTransaction{_ctx.db}([&, this]
       {
-        auto funcAstNodeId = mem.memberAstNode.load()->id;
+        std::set<std::uint64_t> dependentTypes;
+        for (const model::CohesionCppRecordView& type
+          : _ctx.db->query<model::CohesionCppRecordView>())
+        {
+          // Skip types that were included from external libraries.
 
-        if (mem.kind == cc::model::CppMemberType::Field)
-        {
-          dependentTypes.insert(mem.memberTypeHash);
-        }
-        else
-        {
-          for (const auto& param : _ctx.db->query<model::CppFunctionParamTypeView>(
-            FuncQuery::astNodeId == funcAstNodeId))
+          //const auto typeFile = _ctx.db->query_one<model::File>(
+          //odb::query<model::File>::id == type.location.file->id);
+          //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.file.path))
+            //continue;
+          /*type.location.file.load();
+          const auto typeFile = _ctx.db->query_one<model::File>(
+            odb::query<model::File>::id == type.location.file->id);
+          if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
+            continue;*/
+          //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
+          //continue;
+
+          dependentTypes.clear();
+
+          // Count parent types
+          auto inheritanceView = _ctx.db->query<model::CppInheritanceCount>(
+            InheritanceQuery::derived == type.entityHash);
+
+          // Count unique type attributes
+          for (const model::CppMemberType& mem: _ctx.db->query<model::CppMemberType>(
+            MemTypeQuery::typeHash == type.entityHash))
           {
-            dependentTypes.insert(param.paramTypeHash);
+            auto funcAstNodeId = mem.memberAstNode.load()->id;
+
+            if (mem.kind == cc::model::CppMemberType::Field)
+            {
+              dependentTypes.insert(mem.memberTypeHash);
+            }
+            else
+            {
+              for (const auto& param: _ctx.db->query<model::CppFunctionParamTypeView>(
+                FuncQuery::astNodeId == funcAstNodeId))
+              {
+                dependentTypes.insert(param.paramTypeHash);
+              }
+
+              for (const auto& local: _ctx.db->query<model::CppFunctionLocalTypeView>(
+                FuncQuery::astNodeId == funcAstNodeId))
+              {
+                dependentTypes.insert(local.paramTypeHash);
+              }
+            }
           }
 
-          for (const auto& local : _ctx.db->query<model::CppFunctionLocalTypeView>(
-            FuncQuery::astNodeId == funcAstNodeId))
-          {
-            dependentTypes.insert(local.paramTypeHash);
-          }
+          model::CppAstNodeMetrics metric;
+          metric.astNodeId = type.astNodeId;
+          metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
+          metric.value = inheritanceView.begin()->count + dependentTypes.size();
+          _ctx.db->persist(metric);
         }
-      }
-
-      model::CppAstNodeMetrics metric;
-      metric.astNodeId = type.astNodeId;
-      metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
-      metric.value = inheritanceView.begin()->count + dependentTypes.size();
-      _ctx.db->persist(metric);
-    }
+      });
   });
 }
 
