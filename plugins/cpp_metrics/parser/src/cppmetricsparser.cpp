@@ -370,6 +370,9 @@ void CppMetricsParser::efferentTypeLevel()
 {
   typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
   typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
+  typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
+  typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
+  typedef odb::query<cc::model::CppFunction> FuncQuery;
 
   util::OdbTransaction{_ctx.db}([&, this]
   {
@@ -393,37 +396,41 @@ void CppMetricsParser::efferentTypeLevel()
         //continue;
 
       dependentTypes.clear();
-      unsigned dependentTypeCount = 0;
-
-      // Count unique type attributes
-      for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
-        MemTypeQuery::typeHash == type.entityHash &&
-          MemTypeQuery::kind == model::CppMemberType::Kind::Field))
-      {
-        dependentTypes.insert(mem.memberAstNode.load()->id);
-      }
-      LOG(warning) << type.qualifiedName;
-      LOG(warning) << "step 1: " << dependentTypes.size();
-      dependentTypeCount += dependentTypes.size();
 
       // Count parent types
       auto inheritanceView = _ctx.db->query<model::CppInheritanceCount>(
         InheritanceQuery::derived == type.entityHash);
-      dependentTypeCount += inheritanceView.begin()->count;
 
-      LOG(warning) << "step 2: " << dependentTypeCount;
-
-      /*for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
-        MemTypeQuery::typeHash == type.entityHash &&
-          MemTypeQuery::kind == model::CppMemberType::Kind::Method))
+      // Count unique type attributes
+      for (const model::CppMemberType& mem : _ctx.db->query<model::CppMemberType>(
+        MemTypeQuery::typeHash == type.entityHash))
       {
-        dependentTypes.insert(mem.memberAstNode->id);
-      }*/
+        auto funcAstNodeId = mem.memberAstNode.load()->id;
+
+        if (mem.kind == cc::model::CppMemberType::Field)
+        {
+          dependentTypes.insert(mem.memberTypeHash);
+        }
+        else
+        {
+          for (const auto& param : _ctx.db->query<model::CppFunctionParamTypeView>(
+            FuncQuery::astNodeId == funcAstNodeId))
+          {
+            dependentTypes.insert(param.paramTypeHash);
+          }
+
+          for (const auto& local : _ctx.db->query<model::CppFunctionLocalTypeView>(
+            FuncQuery::astNodeId == funcAstNodeId))
+          {
+            dependentTypes.insert(local.paramTypeHash);
+          }
+        }
+      }
 
       model::CppAstNodeMetrics metric;
       metric.astNodeId = type.astNodeId;
       metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
-      metric.value = dependentTypeCount;
+      metric.value = inheritanceView.begin()->count + dependentTypes.size();
       _ctx.db->persist(metric);
     }
   });

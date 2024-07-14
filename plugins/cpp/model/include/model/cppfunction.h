@@ -95,6 +95,30 @@ struct CppFunctionBumpyRoad
   unsigned int statementCount;
 };
 
+#pragma db view \
+  object(CppFunction) \
+  object(CppVariable = Parameters : CppFunction::parameters)
+struct CppFunctionParamTypeView
+{
+  #pragma db column(CppFunction::astNodeId)
+  CppAstNodeId astNodeId;
+
+  #pragma db column(Parameters::typeHash)
+  std::uint64_t paramTypeHash;
+};
+
+#pragma db view \
+  object(CppFunction) \
+  object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
+  object(CppVariable = Locals : CppFunction::locals)
+struct CppFunctionLocalTypeView
+{
+#pragma db column(CppFunction::astNodeId)
+  CppAstNodeId astNodeId;
+
+#pragma db column(Locals::typeHash)
+  std::uint64_t paramTypeHash;
+};
 }
 }
 
