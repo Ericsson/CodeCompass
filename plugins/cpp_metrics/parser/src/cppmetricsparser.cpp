@@ -374,39 +374,25 @@ void CppMetricsParser::efferentTypeLevel()
     getFilterPathsQuery<model::CohesionCppRecordView>(),
     [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
     {
-      typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
-      typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
-      typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
-      typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
-      typedef odb::query<cc::model::CppFunction> FuncQuery;
-
       util::OdbTransaction{_ctx.db}([&, this]
       {
+        typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
+        typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
+        typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
+        typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
+        typedef odb::query<cc::model::CppFunction> FuncQuery;
+
         std::set<std::uint64_t> dependentTypes;
-        for (const model::CohesionCppRecordView& type
-          : _ctx.db->query<model::CohesionCppRecordView>())
+        for (const model::CohesionCppRecordView& type : tasks)
         {
-          // Skip types that were included from external libraries.
-
-          //const auto typeFile = _ctx.db->query_one<model::File>(
-          //odb::query<model::File>::id == type.location.file->id);
-          //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.file.path))
-            //continue;
-          /*type.location.file.load();
-          const auto typeFile = _ctx.db->query_one<model::File>(
-            odb::query<model::File>::id == type.location.file->id);
-          if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
-            continue;*/
-          //if (!cc::util::isRootedUnderAnyOf(_inputPaths, type.filePath))
-          //continue;
-
           dependentTypes.clear();
 
           // Count parent types
           auto inheritanceView = _ctx.db->query<model::CppInheritanceCount>(
             InheritanceQuery::derived == type.entityHash);
 
-          // Count unique type attributes
+          // Count unique attribute types
+          // and unique types in function parameters and local variables
           for (const model::CppMemberType& mem: _ctx.db->query<model::CppMemberType>(
             MemTypeQuery::typeHash == type.entityHash))
           {

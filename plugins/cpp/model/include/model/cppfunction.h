@@ -109,7 +109,6 @@ struct CppFunctionParamTypeView
 
 #pragma db view \
   object(CppFunction) \
-  object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
   object(CppVariable = Locals : CppFunction::locals)
 struct CppFunctionLocalTypeView
 {
