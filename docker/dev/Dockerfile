@@ -71,6 +71,7 @@ ENV DATABASE=sqlite \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
     WITH_AUTH="plain;ldap" \
     LLVM_DIR=/usr/lib/llvm-11/cmake \
-    Clang_DIR=/usr/lib/cmake/clang-11
+    Clang_DIR=/usr/lib/cmake/clang-11 \
+    CMAKE_PREFIX_PATH=/opt/odb
 
-ENV PATH="$INSTALL_DIR/bin:$PATH"
+ENV PATH="$INSTALL_DIR/bin:/opt/odb/bin:$PATH"

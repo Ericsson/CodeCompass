@@ -39,10 +39,16 @@ struct CppMetricsAstNodeSingle
   3:double value
 }
 
-struct CppMetricsAstNodeAll
+struct CppMetricsAstNodeDetailed
 {
-  1:common.AstNodeId id,
-  2:list<CppMetricsAstNodeSingle> metrics
+  1:string path,
+  2:string file,
+  3:string symbolType,
+  4:string astType,
+  5:i32 startLine,
+  6:i32 endLine,
+  7:string astValue,
+  8:map<CppAstNodeMetricsType, double> metrics
 }
 
 struct CppMetricsModuleSingle
@@ -89,6 +95,15 @@ service CppMetricsService
    * The given path is a handled as a prefix.
    */
   map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getCppAstNodeMetricsForPath(
+    1:string path)
+
+  /**
+   * This function returns all available C++ metrics
+   * (AST node-level) and miscellaneous data for a particular path.
+   *
+   * The given path is a handled as a prefix.
+   */
+  map<common.AstNodeId, CppMetricsAstNodeDetailed> getCppAstNodeMetricsDetailedForPath(
     1:string path)
 
   /**
