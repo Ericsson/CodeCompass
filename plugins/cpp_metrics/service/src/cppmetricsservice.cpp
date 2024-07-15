@@ -198,9 +198,8 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
         metric.astValue = node.astValue;
         metric.symbolType = cc::model::symbolTypeToString(node.symbolType);
         metric.astType = cc::model::astTypeToString(node.astType);
+        metric.metrics.insert(pair);
 
-        std::map<CppAstNodeMetricsType::type, double> metricsList;
-        metricsList.insert(pair);
         _return.insert(std::make_pair(std::to_string(node.astNodeId), metric));
       }
     }
