@@ -173,7 +173,7 @@ bool SearchParser::shouldHandle(const std::string& path_)
 {
   //--- The file is not regular. ---//
 
-  if (!fs::is_regular(path_))
+  if (!fs::is_regular_file(path_))
     return false;
 
   //--- The file is excluded by suffix. ---//

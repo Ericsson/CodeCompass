@@ -44,7 +44,7 @@ public:
     for (fs::directory_iterator dirIter(path_); dirIter != endIter; ++dirIter)
     {
       if (fs::is_regular_file(dirIter->status())
-        && fs::extension(*dirIter) == util::DynamicLibrary::extension())
+        && fs::path(*dirIter).extension() == util::DynamicLibrary::extension())
       {
         _dynamicLibraries.emplace_back(util::DynamicLibraryPtr(
           new util::DynamicLibrary(dirIter->path().string())));
