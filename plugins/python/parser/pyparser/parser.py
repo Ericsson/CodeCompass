@@ -44,14 +44,14 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
             if ext and ext.lower() == '.py':
                 py_files.append(p)
 
+    if config["venv_path"]:
+        py_files = filter(lambda e : not(e.startswith(config["venv_path"])), py_files)
+
     with multiprocessing.Pool(processes=n_proc) as pool:
         results = pool.starmap(parse, zip(py_files, repeat(config)))
-        return list(filter(lambda e : e, results))
+        return results
         
 def parse(path, config):
-    if config["venv_path"] and path.startswith(config["venv_path"]):
-        return None
-    
     result = {
         "path": path,
         "status": "none",
