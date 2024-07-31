@@ -17,7 +17,7 @@ DummyParser::DummyParser(ParserContext& ctx_): AbstractParser(ctx_)
 
 bool DummyParser::accept(const std::string& path_)
 {
-  std::string ext = boost::filesystem::extension(path_);
+  auto ext = boost::filesystem::path(path_).extension();
   return ext == ".dummy";
 }
 

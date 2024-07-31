@@ -159,7 +159,7 @@ bool CppParser::isSourceFile(const std::string& file_) const
   const std::vector<std::string> cppExts{
     ".c", ".cc", ".cpp", ".cxx", ".o", ".so", ".a"};
 
-  std::string ext = fs::extension(file_);
+  std::string ext = fs::path(file_).extension().string();
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
   return std::find(cppExts.begin(), cppExts.end(), ext) != cppExts.end();
@@ -168,6 +168,16 @@ bool CppParser::isSourceFile(const std::string& file_) const
 bool CppParser::isNonSourceFlag(const std::string& arg_) const
 {
   return arg_.find("-Wl,") == 0;
+}
+
+bool CppParser::isObjectiveCpp(const clang::tooling::CompileCommand& command_) const
+{
+  for (std::size_t i = 1; i < command_.CommandLine.size(); ++i)
+  {
+    if (command_.CommandLine[i - 1] ==  "-x" && command_.CommandLine[i] == "objective-c++")
+      return true;
+  }
+  return false;
 }
 
 std::map<std::string, std::string> CppParser::extractInputOutputs(
@@ -209,7 +219,7 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   {
     for (const std::string& src : sources)
     {
-      std::string extension = fs::extension(src);
+      std::string extension = fs::path(src).extension().string();
       inToOut[src] = src.substr(0, src.size() - extension.size() - 1) + ".o";
     }
   }
@@ -232,7 +242,7 @@ model::BuildActionPtr CppParser::addBuildAction(
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
-  std::string extension = fs::extension(command_.Filename);
+  auto extension = fs::path(command_.Filename).extension();
 
   buildAction->command = boost::algorithm::join(command_.CommandLine, " ");
   buildAction->type
@@ -755,7 +765,7 @@ bool CppParser::parseByJson(
     std::remove_if(compileCommands.begin(), compileCommands.end(),
       [&](const clang::tooling::CompileCommand& c)
       {
-        return !isSourceFile(c.Filename);
+        return !isSourceFile(c.Filename) || isObjectiveCpp(c);
       }),
     compileCommands.end());
 

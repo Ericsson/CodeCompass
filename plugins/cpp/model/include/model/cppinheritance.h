@@ -2,6 +2,8 @@
 #define CC_MODEL_CPPINHERITANCE_H
 
 #include <memory>
+#include <cstdint>
+
 #include "common.h"
 
 namespace cc

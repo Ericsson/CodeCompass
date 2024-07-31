@@ -88,6 +88,8 @@ struct CppAstNode
 #pragma db index("location_file_idx") member(location.file)
 #pragma db index("entityHash_astType_idx") members(entityHash, astType)
 #pragma db index("astType_symbolType_idx") members(astType, symbolType)
+#pragma db index("location_range_start_idx") members(location.range.start.line, location.range.start.column)
+#pragma db index("location_range_end_idx") members(location.range.end.line, location.range.end.column)
 };
 
 typedef std::shared_ptr<CppAstNode> CppAstNodePtr;
