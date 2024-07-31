@@ -32,16 +32,25 @@ CppMetricsParser::CppMetricsParser(ParserContext& ctx_): AbstractParser(ctx_)
     _inputPaths.push_back(fs::canonical(path).string());
 
   util::OdbTransaction {_ctx.db} ([&, this] {
-    for (const model::CppFileMetrics& fm
-      : _ctx.db->query<model::CppFileMetrics>())
+    if (_ctx.options.count("force-cpp-metrics"))
     {
-      _fileIdCache.insert(fm.file);
+      LOG(info) << "[cxxmetricsparser] Clearing all C++ metrics.";
+      _ctx.db->erase_query<model::CppFileMetrics>();
+      _ctx.db->erase_query<model::CppAstNodeMetrics>();
     }
-
-    for (const model::CppAstNodeMetricsFileView& anm
-      : _ctx.db->query<model::CppAstNodeMetricsFileView>())
+    else
     {
-      _astNodeIdCache.emplace(anm.astNodeId, anm.fileId);
+      for (const model::CppFileMetrics& fm
+        : _ctx.db->query<model::CppFileMetrics>())
+      {
+        _fileIdCache.insert(fm.file);
+      }
+
+      for (const model::CppAstNodeMetricsFileView& anm
+        : _ctx.db->query<model::CppAstNodeMetricsFileView>())
+      {
+        _astNodeIdCache.emplace(anm.astNodeId, anm.fileId);
+      }
     }
   });
 }
@@ -400,6 +409,9 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("C++ Metrics Plugin");
+
+    description.add_options()
+      ("force-cpp-metrics", "Forced recalculation of all C++ code metrics.");
 
     return description;
   }
