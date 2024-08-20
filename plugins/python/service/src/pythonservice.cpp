@@ -93,6 +93,9 @@ void PythonServiceHandler::getProperties(
     {
       return_.emplace("Type hint", pyname.type_hint);
     }
+
+    return_.emplace("Function call", PythonServiceHandler::boolToString(pyname.is_call));
+
   });
 
   return;
@@ -157,6 +160,7 @@ void PythonServiceHandler::getReferenceTypes(
   return_.emplace("Usage", USAGE);
   return_.emplace("Parent", PARENT);
   return_.emplace("Parameters", PARAMETER);
+  return_.emplace("Caller", CALLER);
 
   model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
 
@@ -316,6 +320,9 @@ odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
       break;
     case PARAMETER:
       nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "param" && odb::query<model::PYName>::is_definition == true) + order_by);
+      break;
+    case CALLER:
+      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::is_call == true) + order_by);
       break;
   }
 

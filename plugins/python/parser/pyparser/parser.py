@@ -3,6 +3,7 @@ import jedi
 import multiprocessing
 from itertools import repeat
 from parserlog import log
+from asthelper import ASTHelper
 from pyname import PYName
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
@@ -63,13 +64,15 @@ def parse(path, config):
         source = f.read()
         script = jedi.Script(source, path=path, project=config["project"])
 
+        asthelper = ASTHelper(source)
+
         nodes = {}
         result["status"] = "full"
 
         for x in script.get_names(references = True, all_scopes = True):
             defs = x.goto(follow_imports = True, follow_builtin_imports = True)
             
-            putInMap(nodes, PYName(x).addDefs(defs, result).getNodeInfo())
+            putInMap(nodes, PYName(x).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
 
             for d in defs:
                 putInMap(nodes, PYName(d).getNodeInfo())

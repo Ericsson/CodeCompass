@@ -116,6 +116,7 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
       pyname.value = python::extract<std::string>(node["value"]);
       pyname.type = python::extract<std::string>(node["type"]);
       pyname.type_hint = python::extract<std::string>(node["type_hint"]);
+      pyname.is_call = python::extract<bool>(node["is_call"]);
 
       // Put in map
       if(map.find(pyname.id) == map.end())

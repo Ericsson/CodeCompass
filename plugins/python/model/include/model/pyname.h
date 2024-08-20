@@ -21,6 +21,7 @@ struct PYName
     bool is_definition = false;
     bool is_builtin = false;
     bool is_import = false;
+    bool is_call = false;
     std::string full_name;
     std::string value;
     std::string type;
