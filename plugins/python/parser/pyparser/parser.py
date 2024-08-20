@@ -101,6 +101,8 @@ def getNodeInfo(name, refid, defs = []):
 
     pos = getNamePosInfo(name)
     node.update(pos) # merge pos dictionary
+    node["column_start"] = node["column_start"] + 1
+    node["column_end"] = node["column_end"] + 1
 
     node["type"] = name.type
     node["is_definition"] = name.is_definition()
@@ -136,13 +138,13 @@ def getNamePosInfo(name):
     if name.get_definition_start_position():
         pos["line_start"] = name.get_definition_start_position()[0]
         pos["line_end"] = name.get_definition_end_position()[0]
-        pos["column_start"] = name.get_definition_start_position()[1] + 1
-        pos["column_end"] = name.get_definition_end_position()[1] + 1
+        pos["column_start"] = name.get_definition_start_position()[1]
+        pos["column_end"] = name.get_definition_end_position()[1]
 
         if pos["line_start"] == pos["line_end"]:
-            pos["value"] = name.get_line_code()[pos["column_start"]-1:pos["column_end"]-1]
+            pos["value"] = name.get_line_code()[pos["column_start"]:pos["column_end"]]
         else:
-            pos["value"] = name.get_line_code()[pos["column_start"]-1:]
+            pos["value"] = name.get_line_code()[pos["column_start"]:]
 
     return pos
 
