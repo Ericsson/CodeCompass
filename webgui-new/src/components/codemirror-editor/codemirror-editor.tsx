@@ -1,10 +1,11 @@
-import ReactCodeMirror, { Decoration, EditorView, ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import ReactCodeMirror, { Decoration, EditorView, Extension, ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { AccordionLabel } from 'enums/accordion-enum';
 import { ThemeContext } from 'global-context/theme-context';
 import React, { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
-import { getCppAstNodeInfoByPosition, getCppReferenceTypes, getCppReferences } from 'service/cpp-service';
+import { createClient, getAstNodeInfoByPosition, getReferenceTypes, getReferences } from 'service/language-service';
 import { AstNodeInfo, FileInfo, Position, Range } from '@thrift-generated';
 import { cpp } from '@codemirror/lang-cpp';
+import { python } from '@codemirror/lang-python';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
 import { FileName } from 'components/file-name/file-name';
@@ -75,6 +76,8 @@ export const CodeMirrorEditor = (): JSX.Element => {
   useEffect(() => {
     if(!editorRef.current || !editorRef.current.view) return;
     setHighlightRanges([]);
+
+    createClient(appCtx.workspaceId, fileInfo?.type);
   }, [appCtx.workspaceId, fileInfo, fileContent])
 
   const createHighlightDecoration = (view: EditorView, highlightPosition: HighlightPosition, highlightColor: string) => {
@@ -100,10 +103,23 @@ export const CodeMirrorEditor = (): JSX.Element => {
     return Decoration.set(decorations, true);
   })}
 
+  const languageExtension = (fileType?: string) =>
+  {
+    switch(fileType)
+    {
+      case "CPP":
+        return cpp();
+      case "PY":
+        return python();
+      default:
+        return null;
+    }
+  }
+
   const updateHighlights = async (astNode : AstNodeInfo) => {
-    const refTypes = await getCppReferenceTypes(astNode.id as string)
+    const refTypes = await getReferenceTypes(astNode.id as string)
     if(visitedLastAstNode?.id !== astNode.id){
-      const allReferences = await getCppReferences(astNode.id as string, refTypes.get('Usage') as number, []);
+      const allReferences = await getReferences(astNode.id as string, refTypes.get('Usage') as number, []);
       const referencesInFile = allReferences.filter(ref => ref.range?.file === fileInfo?.id);
       setHighlightRanges(referencesInFile.map(nodeInfo => {
         const startpos = nodeInfo?.range?.range?.startpos as { line: number, column: number };
@@ -174,7 +190,8 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const astNodeInfo =
       fileInfo?.type === 'Unknown'
         ? null
-        : await getCppAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+        : await getAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+
     if (astNodeInfo) {
       sendGAEvent({
         event_action: 'click_on_word',
@@ -318,7 +335,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
         </SC.GitBlameContainer>
         <ReactCodeMirror
           readOnly={true}
-          extensions={[cpp(), highlightExtension()]}
+          extensions={[languageExtension(fileInfo?.type), highlightExtension()].filter(e => e) as Extension[]}
           theme={theme === 'dark' ? githubDark : githubLight}
           basicSetup={{
             syntaxHighlighting: false,

@@ -3,12 +3,13 @@ import { Code } from '@mui/icons-material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
 import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import {
-  getCppReferenceTypes,
-  getCppReferences,
-  getCppProperties,
-  getCppReferenceCount,
-  getCppAstNodeInfo,
-} from 'service/cpp-service';
+  createClient,
+  getReferenceTypes,
+  getReferences,
+  getProperties,
+  getReferenceCount,
+  getAstNodeInfo,
+} from 'service/language-service';
 import { AstNodeInfo, FileInfo, Range } from '@thrift-generated';
 import { FileIcon, RefIcon } from 'components/custom-icon/custom-icon';
 import { TabName } from 'enums/tab-enum';
@@ -39,20 +40,23 @@ export const InfoTree = (): JSX.Element => {
     if (!appCtx.languageNodeId) return;
     setLoadComplete(false);
     const init = async () => {
-      const initAstNodeInfo = await getCppAstNodeInfo(appCtx.languageNodeId as string);
+      const fileInfo = await getFileInfo(appCtx.projectFileId);
+
+      createClient(appCtx.workspaceId, fileInfo?.type);
+      const initAstNodeInfo = await getAstNodeInfo(appCtx.languageNodeId as string);
       if (!initAstNodeInfo) return;
 
-      const initProps = await getCppProperties(initAstNodeInfo.id as string);
-      const initRefTypes = await getCppReferenceTypes(initAstNodeInfo.id as string);
+      const initProps = await getProperties(initAstNodeInfo.id as string);
+      const initRefTypes = await getReferenceTypes(initAstNodeInfo.id as string);
       const initRefCounts: typeof refCounts = new Map();
       const initRefs: typeof refs = new Map();
       const initFileUsages: typeof fileUsages = new Map();
 
       for (const [rType, rId] of initRefTypes) {
-        const refCount = await getCppReferenceCount(initAstNodeInfo.id as string, rId);
+        const refCount = await getReferenceCount(initAstNodeInfo.id as string, rId);
         initRefCounts.set(rType, refCount);
 
-        const refsForType = await getCppReferences(initAstNodeInfo.id as string, rId, initAstNodeInfo.tags ?? []);
+        const refsForType = await getReferences(initAstNodeInfo.id as string, rId, initAstNodeInfo.tags ?? []);
         initRefs.set(rType, refsForType);
 
         if (rType === 'Caller' || rType === 'Usage') {
