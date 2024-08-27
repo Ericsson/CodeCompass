@@ -10,6 +10,7 @@
 #include <thrift/protocol/TJSONProtocol.h>
 
 #include <util/logutil.h>
+#include <webserver/requesthandler.h>
 
 #include "mongoose.h"
 

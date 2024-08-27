@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <climits>
+#include <unistd.h>
 
 #include <boost/filesystem.hpp>
 
@@ -48,6 +50,29 @@ std::string binaryPathToInstallDir(const char* path)
   }
 
   throw std::runtime_error(std::string("Could not find ") + path + std::string("."));
+}
+
+std::string findCurrentExecutableDir()
+{
+  char exePath[PATH_MAX];
+  ssize_t len = ::readlink("/proc/self/exe", exePath, sizeof(exePath));
+
+  if (len == -1 || len == sizeof(exePath))
+    len = 0;
+
+  exePath[len] = '\0';
+  return fs::path(exePath).parent_path().string();
+}
+
+bool isRootedUnderAnyOf(
+  const std::vector<std::string>& paths_,
+  const std::string& path_)
+{
+  auto it = paths_.begin();
+  const auto end = paths_.end();
+  while (it != end && path_.rfind(*it, 0) != 0)
+    ++it;
+  return it != end;
 }
 
 } // namespace util

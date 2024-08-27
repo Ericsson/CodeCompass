@@ -130,8 +130,8 @@ function (declare, array, dom, style, topic, on, ContentPane, ResizeHandle,
         }]]
       });
 
-    if (gtag) {
-      gtag ('event', 'code_bites', {
+    if (window.gtag) {
+      window.gtag ('event', 'code_bites', {
         'event_category' : urlHandler.getState('wsid'),
         'event_label' : urlHandler.getFileInfo().name
                       + ': '

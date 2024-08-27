@@ -15,9 +15,16 @@ creating and using the database file.
 
 ### Using *PostgreSQL* from package manager
 
-PostgreSQL can be installed from the package manager, using
-`sudo apt-get install postgresql-<version>` (e.g. `postgresql-9.5`). This will
-set up an automatically starting local server on the default port `5432`.
+PostgreSQL can be installed from the package manager:
+
+```bash
+sudo apt install postgresql-<version>
+# (e.g. postgresql-12 for Ubuntu 20.04
+#   and postgresql-14 for Ubuntu 22.04)
+```
+
+This will set up an automatically starting local server on the default port
+`5432`.
 
 This server, by default, is only accessible for an automatically created system
 user named `postgres`. However, CodeCompass's database layer only supports
@@ -32,7 +39,7 @@ psql
 In the PostgreSQL command-line shell, type:
 
 ```sql
-CREATE USER compass WITH SUPERUSER LOGIN PASSWORD '<mypassword>';
+CREATE USER compass WITH CREATEDB LOGIN PASSWORD '<mypassword>';
 ```
 
 You can exit this shell by typing `\q` and pressing the `ENTER` key. A user
@@ -41,9 +48,9 @@ with the given name and credentials is now created.
 This was the most basic way to set up access to the database. In case of a live,
 production, public server, certain other measures need to be taken to ensure
 secure access. For full documentation, see:
-- Read more about the [`CREATE USER`](https://www.postgresql.org/docs/9.5/static/sql-createuser.html)
+- Read more about the [`CREATE USER`](https://www.postgresql.org/docs/12/sql-createuser.html)
   command.
-- [PostgreSQL access configuration file](https://www.postgresql.org/docs/9.5/static/auth-pg-hba-conf.html)
+- [PostgreSQL access configuration file](https://www.postgresql.org/docs/12/auth-pg-hba-conf.html)
 
 The databases inside PostgreSQL instance will be created automatically by the
 CodeCompass parser, so the user needs rights for adding new database.
@@ -64,9 +71,9 @@ A manually started PostgreSQL server is automatically configured to your user,
 and your user only. No extra user creation or configuration needs to take place.
 
 For full documentation see:
-- [Initialize PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-initdb.html)
+- [Initialize PostgreSQL database](https://www.postgresql.org/docs/12/app-initdb.html)
   (`-E SQL_ASCII` flag is recommended!)
-- [Start PostgreSQL database](https://www.postgresql.org/docs/9.5/static/app-postgres.html)
+- [Start PostgreSQL database](https://www.postgresql.org/docs/12/app-postgres.html)
 
 ## 1. Generate compilation database
 If you want to parse a C++ project, you have to create a [compilation database
@@ -279,3 +286,23 @@ CodeCompass_webserver \
 
 The server will be available in a browser on
 [`http://localhost:6251`](http://localhost:6251).
+
+### Logging
+
+In both the parser and the webserver it is possible to write the logs to a given directory.
+This feature can be enabled by passing the `--logtarget` command line option with the full
+path to the directory to be used for storing the log files.
+If this argument is not specified, the logs will be written to the terminal only.
+
+### Language Server Protocol support
+
+The CodeCompass_webserver is not a fully fledged LSP server on its own,
+but it does support some standard and non-standard LSP requests for C and C++ projects.
+The full list can be found here: [Supported LSP Requests](lsp.md)
+
+To access this feature, requests must be sent to the following address:
+`http://<domain>:<port>/<project_name>/CppLspService`
+
+e.g.: [`http://localhost:6251/MyProject/CppLspService`](http://localhost:6251/MyProject/CppLspService)
+
+The project name should match the name of the project used by the CodeCompass_parser.

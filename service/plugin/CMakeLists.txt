@@ -9,10 +9,6 @@ include_directories(SYSTEM
 
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.h
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
@@ -27,8 +23,6 @@ add_custom_command(
     "Generating Thrift for plugin.thrift")
 
 add_library(pluginthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_constants.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/plugin_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/PluginService.cpp)
 
 target_compile_options(pluginthrift PUBLIC -fPIC -Wno-unknown-pragmas)

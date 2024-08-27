@@ -9,6 +9,7 @@ add_jar(searchcommonjava
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/analysis/Location.java
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/analysis/SourceTextAnalyzer.java
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/analysis/SourceTextTokenizer.java
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/common/FileLoggerInitializer.java
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/common/IndexFields.java
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/common/SuggestionDatabase.java
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cc/search/common/NFSFriendlyLockFactory.java

@@ -12,7 +12,7 @@ namespace webserver
 class Session;
 class SessionManager;
 
-struct MainRequestHandler
+class MainRequestHandler
 {
 public:
   SessionManager* sessionManager;
@@ -30,7 +30,7 @@ private:
   template <typename F>
   auto executeWithSessionContext(cc::webserver::Session* sess_, F func);
 };
-  
+
 } // webserver
 } // cc
 

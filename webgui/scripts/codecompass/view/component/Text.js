@@ -343,8 +343,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
 
       this._getSyntaxHighlight(this._fileInfo);
 
-      if (gtag) {
-        gtag('event', 'page_view', {
+      if (window.gtag) {
+        window.gtag('event', 'page_view', {
           page_location: window.location.href,
           page_path: window.location.pathname + window.location.hash,
           page_title: urlFileInfo.path
@@ -453,6 +453,22 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         elementInfo : astNodeInfo
       });
 
+      //--- Update URL ---//
+
+      if (astNodeInfo)
+      {
+        var range = astNodeInfo.range.range;
+        var selection = [
+          range.startpos.line,
+          range.startpos.column,
+          range.endpos.line,
+          range.endpos.column];
+
+        urlHandler.setStateValue({
+          select : selection.join('|')
+        });
+      }
+
       //--- Highlighting the same occurrence of the selected entity ---//
 
       this._markUsages(pos, this._fileInfo);
@@ -469,8 +485,8 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
         astHelper.jumpToDef(astNodeInfo.id, service);
       }
 
-      if (gtag) {
-        gtag('event', 'click_on_word', {
+      if (window.gtag) {
+        window.gtag('event', 'click_on_word', {
           'event_category' : urlHandler.getState('wsid'),
           'event_label' : urlHandler.getFileInfo().name
                         + ': '

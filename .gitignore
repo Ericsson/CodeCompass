@@ -1,7 +1,18 @@
-# IDEs and editors.
-
+## IDEs and editors
+# NetBeans
 nbproject/
-.idea/
+# JetBrains CLion
+.idea/*
+!.idea/codeStyles/
+# Visual Studio Code
+.vscode/
+# Vim
 *.swp
+
+
+## Build folders
 build/
 build_*/
+install/
+install_*/
+

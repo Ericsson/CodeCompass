@@ -14,7 +14,6 @@ include_directories(SYSTEM
 # Generate thrift files
 add_custom_command(
   OUTPUT
-    ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_constants.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_types.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/SearchService.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
@@ -32,7 +31,6 @@ add_custom_command(
 
 # Create cpp static library from thrift files
 add_library(searchthrift STATIC
-  ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_constants.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/search_types.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/SearchService.cpp)
 

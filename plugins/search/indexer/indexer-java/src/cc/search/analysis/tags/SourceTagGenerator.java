@@ -21,8 +21,7 @@ public class SourceTagGenerator implements TagGenerator {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(SourceTagGenerator.class
-    .getName());
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * Options array for initializing _artf460600CTags.
    */

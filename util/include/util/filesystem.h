@@ -16,6 +16,25 @@ namespace util
  */
 std::string binaryPathToInstallDir(const char* path);
 
+/**
+ * @brief Find the directory where a CodeCompass binary is being run from.
+ * @return The absolute path of the directory where the binary is located.
+ */
+std::string findCurrentExecutableDir();
+
+/**
+ * @brief Determines if the given path is rooted under
+ * any of the given other paths.
+ *
+ * @param paths_ A list of canonical paths.
+ * @param path_ A canonical path to match against the given paths.
+ * @return True if any of the paths in paths_ is a prefix of path_,
+ * otherwise false.
+*/
+bool isRootedUnderAnyOf(
+  const std::vector<std::string>& paths_,
+  const std::string& path_);
+
 } // namespace util
 } // namespace cc
 

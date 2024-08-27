@@ -469,7 +469,7 @@ void CppParser::markModifiedFiles()
   // Detect changed files through C++ header inclusions.
   util::OdbTransaction {_ctx.db} ([&]
   {
-    for (const model::FilePtr file : filePtrs)
+    for (const model::FilePtr& file : filePtrs)
     {
       if(file)
       {
@@ -711,7 +711,7 @@ void CppParser::initBuildActions()
   });
 }
 
-void CppParser::markByInclusion(model::FilePtr file_)
+void CppParser::markByInclusion(const model::FilePtr& file_)
 {
   auto inclusions = _ctx.db->query<model::CppHeaderInclusion>(
     odb::query<model::CppHeaderInclusion>::included == file_->id);
@@ -750,6 +750,15 @@ bool CppParser::parseByJson(
 
   std::vector<clang::tooling::CompileCommand> compileCommands =
     compDb->getAllCompileCommands();
+
+  compileCommands.erase(
+    std::remove_if(compileCommands.begin(), compileCommands.end(),
+      [&](const clang::tooling::CompileCommand& c)
+      {
+        return !isSourceFile(c.Filename);
+      }),
+    compileCommands.end());
+
   std::size_t numCompileCommands = compileCommands.size();
 
   //--- Create a thread pool for the current commands ---//
@@ -770,6 +779,10 @@ bool CppParser::parseByJson(
           LOG(warning)
             << '(' << job_.index << '/' << numCompileCommands << ')'
             << " Parsing " << command.Filename << " has been failed.";
+        else          
+          LOG(debug)
+            << '(' << job_.index << '/' << numCompileCommands << ')'
+            << " Parsing " << command.Filename << " finished successfully.";
       });
 
   //--- Push all commands into the thread pool's queue ---//

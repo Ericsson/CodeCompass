@@ -17,8 +17,7 @@ public class QueryAnalyzer extends AnalyzerWrapper {
   /**
    * Logger.
    */
-  private static final Logger _log  = Logger.getLogger(QueryAnalyzer.class.
-    getName());
+  private static final Logger _log  = Logger.getGlobal();
   /**
    * A simple analyzer for queries.
    */

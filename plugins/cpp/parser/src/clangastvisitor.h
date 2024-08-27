@@ -5,11 +5,13 @@
 #include <mutex>
 #include <type_traits>
 #include <stack>
+#include <functional>
 
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/AST/ParentMapContext.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <model/cppastnode.h>
@@ -24,6 +26,8 @@
 #include <model/cppinheritance-odb.hxx>
 #include <model/cppnamespace.h>
 #include <model/cppnamespace-odb.hxx>
+#include <model/cppnamespacealias.h>
+#include <model/cppnamespacealias-odb.hxx>
 #include <model/cpprelation.h>
 #include <model/cpprelation-odb.hxx>
 #include <model/cpprecord.h>
@@ -35,12 +39,13 @@
 #include <parser/sourcemanager.h>
 #include <util/hash.h>
 #include <util/odbtransaction.h>
-#include <util/logutil.h>
+#include <util/scopedvalue.h>
 
 #include <cppparser/filelocutil.h>
 
 #include "entitycache.h"
 #include "symbolhelper.h"
+#include "nestedscope.h"
 
 namespace cc
 {
@@ -67,6 +72,8 @@ namespace parser
 class ClangASTVisitor : public clang::RecursiveASTVisitor<ClangASTVisitor>
 {
 public:
+  using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+
   ClangASTVisitor(
     ParserContext& ctx_,
     clang::ASTContext& astContext_,
@@ -116,6 +123,7 @@ public:
       util::persistAll(_typedefs, _ctx.db);
       util::persistAll(_variables, _ctx.db);
       util::persistAll(_namespaces, _ctx.db);
+      util::persistAll(_namespaceAliases, _ctx.db);
       util::persistAll(_members, _ctx.db);
       util::persistAll(_inheritances, _ctx.db);
       util::persistAll(_friends, _ctx.db);
@@ -124,215 +132,387 @@ public:
     });
   }
 
+
+  // AST Visitor configuration
+
   bool shouldVisitImplicitCode() const { return true; }
   bool shouldVisitTemplateInstantiations() const { return true; }
+  bool shouldVisitLambdaBody() const { return true; }
+  
 
-  bool TraverseDecl(clang::Decl* decl_)
+  // Traverse Decl helpers
+
+  class TypeScope final
   {
-    bool prevIsImplicit = _isImplicit;
+    DECLARE_SCOPED_TYPE(TypeScope)
+    
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppRecordPtr _type;
 
-    if (decl_)
-      _isImplicit = decl_->isImplicit() || _isImplicit;
+  public:
+    TypeScope(
+      ClangASTVisitor* visitor_
+    ) :
+      _visitor(visitor_),
+      _type(std::make_shared<model::CppRecord>())
+    {
+      _visitor->_typeStack.push(_type);
+    }
 
-    bool b = Base::TraverseDecl(decl_);
+    ~TypeScope()
+    {
+      assert(_type == _visitor->_typeStack.top() &&
+        "Type scope destruction order has been violated.");
+      if (_type->astNodeId)
+        _visitor->_types.push_back(_type);
+      _visitor->_typeStack.pop();
+    }
+  };
 
-    _isImplicit = prevIsImplicit;
-
-    return b;
-  }
-
-  bool TraverseFunctionDecl(clang::FunctionDecl* fd_)
+  class EnumScope final
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
+    DECLARE_SCOPED_TYPE(EnumScope)
 
-    bool b = Base::TraverseFunctionDecl(fd_);
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppEnumPtr _enum;
 
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
+  public:
+    EnumScope(
+      ClangASTVisitor* visitor_
+    ) :
+      _visitor(visitor_),
+      _enum(std::make_shared<model::CppEnum>())
+    {
+      _visitor->_enumStack.push(_enum);
+    }
 
-    return b;
-  }
+    ~EnumScope()
+    {
+      assert(_enum == _visitor->_enumStack.top() &&
+        "Enum scope destruction order has been violated.");
+      if (_enum->astNodeId)
+        _visitor->_enums.push_back(_enum);
+      _visitor->_enumStack.pop();
+    }
+  };
 
-  bool TraverseCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl* fd_)
+  class FunctionScope final
   {
-    _functionStack.push(std::make_shared<model::CppFunction>());
+    DECLARE_SCOPED_TYPE(FunctionScope)
 
-    bool b = Base::TraverseCXXDeductionGuideDecl(fd_);
+  private:
+    ClangASTVisitor* _visitor;
+    model::CppFunctionPtr _curFun;
 
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
+  public:
+    FunctionScope(ClangASTVisitor* visitor_) :
+      _visitor(visitor_),
+      _curFun(std::make_shared<model::CppFunction>())
+    {
+      _visitor->_functionStack.push(_curFun);
+    }
 
-    return b;
-  }
+    ~FunctionScope()
+    {
+      assert(_curFun == _visitor->_functionStack.top() &&
+        "Function scope destruction order has been violated.");
+      if (_curFun->astNodeId)
+        _visitor->_functions.push_back(_curFun);
+      _visitor->_functionStack.pop();
 
-  bool TraverseCXXMethodDecl(clang::CXXMethodDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
+      if (_curFun->astNodeId && !_visitor->_functionStack.empty())
+      {
+        StatementScope* scope = _visitor->_stmtStack.TopValid();
+        assert(scope != nullptr &&
+          "Previous function entry has no corresponding scope stack entry.");
+        scope->EnsureConfigured();
 
-    bool b = Base::TraverseCXXMethodDecl(fd_);
+        // If the currently parsed function had a total bumpiness of B
+        // from S statements, and is nested inside an enclosing function
+        // at depth D, then the total bumpiness of that enclosing function
+        // must be increased by the total bumpiness of the nested function:
+        // B (core nested bumpiness) + S * D (accounting for the indentation).
+        model::CppFunctionPtr& prevFun = _visitor->_functionStack.top();
+        prevFun->bumpiness += _curFun->bumpiness +
+          _curFun->statementCount * scope->Depth();
+        prevFun->statementCount += _curFun->statementCount;
+      }
+    }
+  };
 
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
 
-    return b;
-  }
-
-  bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXConstructorDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXDestructorDecl(clang::CXXDestructorDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXDestructorDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseCXXConversionDecl(clang::CXXConversionDecl* fd_)
-  {
-    _functionStack.push(std::make_shared<model::CppFunction>());
-
-    bool b = Base::TraverseCXXConversionDecl(fd_);
-
-    if (_functionStack.top()->astNodeId)
-      _functions.push_back(_functionStack.top());
-    _functionStack.pop();
-
-    return b;
-  }
-
-  bool TraverseRecordDecl(clang::RecordDecl* rd_)
-  {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseRecordDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
-  }
+  // Traverse Decl
 
   bool TraverseCXXRecordDecl(clang::CXXRecordDecl* rd_)
   {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseCXXRecordDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
-  }
-
-  bool TraverseClassTemplateSpecializationDecl(
-    clang::ClassTemplateSpecializationDecl* rd_)
-  {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseClassTemplateSpecializationDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
-  }
-
-  bool TraverseClassTemplatePartialSpecializationDecl(
-    clang::ClassTemplatePartialSpecializationDecl* rd_)
-  {
-    _typeStack.push(std::make_shared<model::CppRecord>());
-
-    bool b = Base::TraverseClassTemplatePartialSpecializationDecl(rd_);
-
-    if (_typeStack.top()->astNodeId)
-      _types.push_back(_typeStack.top());
-    _typeStack.pop();
-
-    return b;
+    // Although lambda closure types are implicit by nature as far as
+    // Clang is concerned, their operator() is not. In order to be able to
+    // properly assign symbol location information to AST nodes within
+    // lambda bodies, we must force lambdas to be considered explicit.
+    util::ScopedValue<bool> sv(_isImplicit, _isImplicit && !rd_->isLambda());
+    return Base::TraverseCXXRecordDecl(rd_);
   }
 
   bool TraverseEnumDecl(clang::EnumDecl* ed_)
   {
-    _enumStack.push(std::make_shared<model::CppEnum>());
-
-    bool b = Base::TraverseEnumDecl(ed_);
-
-    if (_enumStack.top()->astNodeId)
-      _enums.push_back(_enumStack.top());
-    _enumStack.pop();
-
-    return b;
+    // Any type of enum must be placed on the enum stack
+    // for the duration of its traversal.
+    // The scope creates a database object for the enum
+    // at the beginning, and persists it at the end.
+    EnumScope es(this);
+    return Base::TraverseEnumDecl(ed_);
   }
+
+
+  bool TraverseDecl(clang::Decl* d_)
+  {
+    if (d_ == nullptr)
+      return Base::TraverseDecl(d_);
+
+    // We use implicitness to determine if actual symbol location information
+    // should be stored for AST nodes in our database. This differs somewhat
+    // from Clang's concept of implicitness.
+    // To bridge the gap between the two interpretations, we mostly assume
+    // implicitness to be hereditary from parent to child nodes, except
+    // in some known special cases (see lambdas in TraverseCXXRecordDecl).
+    util::ScopedValue<bool> sv(_isImplicit, _isImplicit || d_->isImplicit());
+    
+    if (clang::FunctionDecl* fd = llvm::dyn_cast<clang::FunctionDecl>(d_))
+    {
+      // Any type of function must be placed on the function stack
+      // for the duration of its traversal.
+      // The scope creates a database object for the function
+      // at the beginning, and persists it at the end.
+      FunctionScope fs(this);
+      // We must also make an initial scope entry for the function's body.
+      StatementScope ss(&_stmtStack, nullptr);
+      ss.MakeFunction(fd->getBody());
+      return Base::TraverseDecl(fd);
+    }
+    else if (clang::RecordDecl* rd = llvm::dyn_cast<clang::RecordDecl>(d_))
+    {
+      // Any type of record/type must be placed on the type stack
+      // for the duration of its traversal.
+      // The scope creates a database object for the record/type
+      // at the beginning, and persists it at the end.
+      TypeScope ts(this);
+      return Base::TraverseDecl(rd);
+    }
+    else return Base::TraverseDecl(d_);
+  }
+
+
+  // Metrics helpers
+
+  void CountMcCabe()
+  {
+    if (!_functionStack.empty())
+      ++_functionStack.top()->mccabe;
+  }
+
+  void CountBumpiness(const StatementScope& scope_)
+  {
+    if (!_functionStack.empty() && scope_.IsReal())
+    {
+      model::CppFunctionPtr& fun = _functionStack.top();
+      fun->bumpiness += scope_.Depth();
+      ++fun->statementCount;
+    }
+  }
+
+
+  // Traverse Stmt helpers
+
+  class CtxStmtScope final
+  {
+    DECLARE_SCOPED_TYPE(CtxStmtScope)
+
+  private:
+    ClangASTVisitor* _visitor;
+
+  public:
+    CtxStmtScope(
+      ClangASTVisitor* visitor_,
+      clang::Stmt* stmt_
+    ) :
+      _visitor(visitor_)
+    {
+      _visitor->_contextStatementStack.push(stmt_);
+    }
+
+    ~CtxStmtScope()
+    {
+      _visitor->_contextStatementStack.pop();
+    }
+  };
+
+
+  // Traverse Expr (Expr : Stmt)
 
   bool TraverseCallExpr(clang::CallExpr* ce_)
   {
-    _contextStatementStack.push(ce_);
-    bool b = Base::TraverseCallExpr(ce_);
-    _contextStatementStack.pop();
-    return b;
-  }
-
-  bool TraverseDeclStmt(clang::DeclStmt* ds_)
-  {
-    _contextStatementStack.push(ds_);
-    bool b = Base::TraverseDeclStmt(ds_);
-    _contextStatementStack.pop();
-    return b;
+    CtxStmtScope css(this, ce_);
+    return Base::TraverseCallExpr(ce_);
   }
 
   bool TraverseMemberExpr(clang::MemberExpr* me_)
   {
-    _contextStatementStack.push(me_);
-    bool b = Base::TraverseMemberExpr(me_);
-    _contextStatementStack.pop();
-    return b;
-  }
-
-  bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
-  {
-    _contextStatementStack.push(bo_);
-    bool b = Base::TraverseBinaryOperator(bo_);
-    _contextStatementStack.pop();
-    return b;
-  }
-
-  bool TraverseReturnStmt(clang::ReturnStmt* rs_)
-  {
-    _contextStatementStack.push(rs_);
-    bool b = Base::TraverseReturnStmt(rs_);
-    _contextStatementStack.pop();
-    return b;
+    CtxStmtScope css(this, me_);
+    return Base::TraverseMemberExpr(me_);
   }
 
   bool TraverseCXXDeleteExpr(clang::CXXDeleteExpr* de_)
   {
-    _contextStatementStack.push(de_);
-    bool b = Base::TraverseCXXDeleteExpr(de_);
-    _contextStatementStack.pop();
+    CtxStmtScope css(this, de_);
+    return Base::TraverseCXXDeleteExpr(de_);
+  }
+
+  bool TraverseBinaryOperator(clang::BinaryOperator* bo_)
+  {
+    if (bo_->isLogicalOp()) CountMcCabe();
+    CtxStmtScope css(this, bo_);
+    return Base::TraverseBinaryOperator(bo_);
+  }
+
+  bool TraverseConditionalOperator(clang::ConditionalOperator* co_)
+  {
+    CountMcCabe();
+    return Base::TraverseConditionalOperator(co_);
+  }
+
+  bool TraverseBinaryConditionalOperator(
+    clang::BinaryConditionalOperator* bco_)
+  {
+    CountMcCabe();
+    return Base::TraverseBinaryConditionalOperator(bco_);
+  }
+
+
+  // Traverse Stmt
+
+  bool TraverseCompoundStmt(clang::CompoundStmt* cs_)
+  {
+    _stmtStack.Top()->MakeCompound();
+    return Base::TraverseCompoundStmt(cs_);
+  }
+
+  bool TraverseDeclStmt(clang::DeclStmt* ds_)
+  {
+    CtxStmtScope css(this, ds_);
+    return Base::TraverseDeclStmt(ds_);
+  }
+
+  bool TraverseReturnStmt(clang::ReturnStmt* rs_)
+  {
+    CtxStmtScope css(this, rs_);
+    return Base::TraverseReturnStmt(rs_);
+  }
+
+  bool TraverseIfStmt(clang::IfStmt* is_)
+  {
+    _stmtStack.Top()->MakeTwoWay(is_->getThen(), is_->getElse());
+    CountMcCabe();
+    return Base::TraverseIfStmt(is_);
+  }
+
+  bool TraverseWhileStmt(clang::WhileStmt* ws_)
+  {
+    _stmtStack.Top()->MakeOneWay(ws_->getBody());
+    CountMcCabe();
+    return Base::TraverseWhileStmt(ws_);
+  }
+
+  bool TraverseDoStmt(clang::DoStmt* ds_)
+  {
+    _stmtStack.Top()->MakeOneWay(ds_->getBody());
+    CountMcCabe();
+    return Base::TraverseDoStmt(ds_);
+  }
+
+  bool TraverseForStmt(clang::ForStmt* fs_)
+  {
+    _stmtStack.Top()->MakeOneWay(fs_->getBody());
+    CountMcCabe();
+    return Base::TraverseForStmt(fs_);
+  }
+
+  bool TraverseCXXForRangeStmt(clang::CXXForRangeStmt* frs_)
+  {
+    _stmtStack.Top()->MakeOneWay(frs_->getBody());
+    CountMcCabe();
+    return Base::TraverseCXXForRangeStmt(frs_);
+  }
+
+  bool TraverseSwitchStmt(clang::SwitchStmt* ss_)
+  {
+    _stmtStack.Top()->MakeOneWay(ss_->getBody());
+    return Base::TraverseSwitchStmt(ss_);
+  }
+
+  bool TraverseCaseStmt(clang::CaseStmt* cs_)
+  {
+    _stmtStack.Top()->MakeTransparent();
+    CountMcCabe();
+    return Base::TraverseCaseStmt(cs_);
+  }
+
+  bool TraverseDefaultStmt(clang::DefaultStmt* ds_)
+  {
+    _stmtStack.Top()->MakeTransparent();
+    CountMcCabe();
+    return Base::TraverseDefaultStmt(ds_);
+  }
+
+  bool TraverseContinueStmt(clang::ContinueStmt* cs_)
+  {
+    CountMcCabe();
+    return Base::TraverseContinueStmt(cs_);
+  }
+
+  bool TraverseGotoStmt(clang::GotoStmt* gs_)
+  {
+    CountMcCabe();
+    return Base::TraverseGotoStmt(gs_);
+  }
+
+  bool TraverseCXXTryStmt(clang::CXXTryStmt* ts_)
+  {
+    _stmtStack.Top()->MakeOneWay(ts_->getTryBlock());
+    return Base::TraverseCXXTryStmt(ts_);
+  }
+
+  bool TraverseCXXCatchStmt(clang::CXXCatchStmt* cs_)
+  {
+    _stmtStack.Top()->MakeOneWay(cs_->getHandlerBlock());
+    CountMcCabe();
+    return Base::TraverseCXXCatchStmt(cs_);
+  }
+
+
+  bool TraverseStmt(clang::Stmt* s_)
+  {
+    if (s_ == nullptr)
+      return Base::TraverseStmt(s_);
+
+    // Create a statement scope for the current statement for the duration
+    // of its traversal. For every statement, there must be exactly one scope.
+    StatementScope scope(&_stmtStack, s_);
+    bool b = Base::TraverseStmt(s_);
+    // Base::TraverseStmt will select the best handler function for the
+    // statement's dynamic type. If it is not any of the special statement
+    // types we are explicitly handling, it must be a "normal" statement.
+    // In that case, none of the scope's specialized Make* member functions
+    // will be called. Even so, before counting its nestedness,
+    // we must ensure it is configured at least as a normal statement.
+    scope.EnsureConfigured();
+    CountBumpiness(scope);
     return b;
   }
+
+
+   // Visit functions
 
   bool VisitTypedefTypeLoc(clang::TypedefTypeLoc tl_)
   {
@@ -400,7 +580,7 @@ public:
     // some implementation defined reasons. The position of this node is at the
     // name of the record after the "class", "struct", etc. keywords. We don't
     // want to store these in the database
-    if (rd_->isImplicit())
+    if (rd_->isImplicit() && !rd_->isLambda())
       return true;
 
     //--- CppAstNode ---//
@@ -434,15 +614,22 @@ public:
     cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
+
     if (const clang::CXXRecordDecl* crd
-        = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
+      = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
     {
       cppRecord->isAbstract = crd->isAbstract();
       cppRecord->isPOD = crd->isPOD();
-    }
 
-    if (clang::CXXRecordDecl* crd = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))
-    {
+      if (crd->getTemplateInstantiationPattern())
+      {
+        cppRecord->tags.insert(
+          crd->getTemplateSpecializationKind() == clang::TSK_ExplicitSpecialization
+          ? model::Tag::TemplateSpecialization
+          : model::Tag::TemplateInstantiation
+        );
+      }
+
       //--- CppInheritance ---//
 
       for (auto it = crd->bases_begin(); it != crd->bases_end(); ++it)
@@ -512,6 +699,28 @@ public:
           friendship->target = cppRecord->entityHash;
           friendship->theFriend = util::fnvHash(getUSR(friendDecl));
         }
+      }
+
+      // --- Destructor --- //
+
+      const clang::NamedDecl* ref = crd;
+      model::FileLoc location = getFileLoc(crd->getEndLoc(), crd->getEndLoc());
+      if (clang::CXXDestructorDecl* dd = crd->getDestructor())
+      {
+        ref = dd;
+        if (crd->hasUserDeclaredDestructor())
+        {
+          clang::Stmt* body = dd->getBody();
+          location = body
+            ? getFileLoc(body->getEndLoc(), body->getEndLoc())
+            : getFileLoc(dd->getEndLoc(), dd->getEndLoc());
+        }
+      }
+
+      for (auto it = crd->field_begin(); it != crd->field_end(); ++it)
+      {
+        clang::FieldDecl* fd = *it;
+        addDestructorUsage(fd->getType(), location, ref);
       }
     }
 
@@ -678,11 +887,16 @@ public:
     cppFunction->qualifiedName = fn_->getQualifiedNameAsString();
     cppFunction->typeHash = util::fnvHash(getUSR(qualType, _astContext));
     cppFunction->qualifiedType = qualType.getAsString();
-
-    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
+    cppFunction->mccabe = fn_->isThisDeclarationADefinition() ? 1 : 0;
+    cppFunction->bumpiness = 0;
+    cppFunction->statementCount = 0;
 
     //--- Tags ---//
 
+    if (_isImplicit)
+      cppFunction->tags.insert(model::Tag::Implicit);
+
+    clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
     if (md)
     {
       if (md->isVirtual())
@@ -697,9 +911,6 @@ public:
       if (llvm::isa<clang::CXXDestructorDecl>(md))
         cppFunction->tags.insert(model::Tag::Destructor);
     }
-
-    if (_isImplicit)
-      cppFunction->tags.insert(model::Tag::Implicit);
 
     //--- AST type for the return type ---//
 
@@ -765,11 +976,10 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSourceText(
-      _clangSrcMgr,
-      fd_->getSourceRange().getBegin(),
-      fd_->getSourceRange().getEnd(),
-      true);
+    astNode->astValue = fd_->getType().getAsString();
+    astNode->astValue.append(" ");
+    astNode->astValue.append(fd_->getNameAsString());
+
     astNode->location = getFileLoc(fd_->getBeginLoc(), fd_->getEndLoc());
     astNode->entityHash = util::fnvHash(getUSR(fd_));
     astNode->symbolType
@@ -828,12 +1038,11 @@ public:
 
     model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
 
-    astNode->astValue = getSourceText(
-      _clangSrcMgr,
-      vd_->getOuterLocStart(),
-      vd_->getEndLoc(),
-      true);
-    astNode->location = getFileLoc(vd_->getLocation(), vd_->getLocation());
+    astNode->astValue = vd_->getType().getAsString();
+    astNode->astValue.append(" ");
+    astNode->astValue.append(vd_->getNameAsString());
+
+    astNode->location = getFileLoc(vd_->getBeginLoc(), vd_->getEndLoc());
     astNode->entityHash = util::fnvHash(getUSR(vd_));
     astNode->symbolType
       = isFunctionPointer(vd_)
@@ -880,6 +1089,8 @@ public:
 
     if (_functionStack.empty())
       variable->tags.insert(model::Tag::Global);
+    if (_isImplicit)
+      variable->tags.insert(model::Tag::Implicit);
 
     //--- CppMemberType ---//
 
@@ -920,6 +1131,32 @@ public:
     return true;
   }
 
+  bool VisitDeclStmt(clang::DeclStmt* ds_)
+  {
+    clang::Stmt* s;
+    StatementScope* scope = _stmtStack.TopValid();
+    if (scope->Statement() == ds_)
+    {
+      assert(scope->Previous() != nullptr &&
+        "Declaration statement is not nested in a scope.");
+      s = scope->Previous()->Statement();
+    }
+    else
+      s = scope->Statement();
+
+    for (auto it = ds_->decl_begin(); it != ds_->decl_end(); ++it)
+    {
+      if (clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(*it))
+      {
+        model::FileLoc loc =
+          getFileLoc(s->getEndLoc(), s->getEndLoc());
+        addDestructorUsage(vd->getType(), loc, vd);
+      }
+    }
+
+    return true;
+  }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl* nd_)
   {
     //--- CppAstNode ---//
@@ -953,6 +1190,97 @@ public:
     ns->entityHash = astNode->entityHash;
     ns->name = nd_->getNameAsString();
     ns->qualifiedName = usr;
+
+    return true;
+  }
+
+  bool VisitNamespaceAliasDecl(clang::NamespaceAliasDecl* nad_)
+  {
+    //--- CppAstNode ---//
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      nad_->getBeginLoc(),
+      nad_->getLocation(),
+      true);
+
+    astNode->location = getFileLoc(nad_->getBeginLoc(), nad_->getEndLoc());
+    astNode->entityHash = util::fnvHash(getUSR(nad_->getAliasedNamespace()));
+    astNode->symbolType = model::CppAstNode::SymbolType::NamespaceAlias;
+    astNode->astType = model::CppAstNode::AstType::Definition;
+
+    astNode->id = model::createIdentifier(*astNode);
+
+    if (insertToCache(nad_, astNode))
+      _astNodes.push_back(astNode);
+    else
+      return true;
+
+    //--- CppNamespaceAlias ---//
+
+    model::CppNamespaceAliasPtr nsa = std::make_shared<model::CppNamespaceAlias>();
+    _namespaceAliases.push_back(nsa);
+
+    nsa->astNodeId = astNode->id;
+    nsa->entityHash = astNode->entityHash;
+    nsa->name = nad_->getNameAsString();
+    nsa->qualifiedName = nad_->getQualifiedNameAsString();
+
+    return true;
+  }
+
+
+  bool VisitUsingDecl(clang::UsingDecl* ud_)
+  {
+    //--- CppAstNode ---//
+
+    for (const clang::UsingShadowDecl* nd : ud_->shadows()) {
+      model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+      astNode->astValue = getSourceText(
+        _clangSrcMgr,
+        ud_->getBeginLoc(),
+        ud_->getLocation(),
+        true);
+      astNode->location = getFileLoc(ud_->getBeginLoc(), ud_->getEndLoc());
+      astNode->entityHash = util::fnvHash(getUSR(nd->getTargetDecl()));
+
+      astNode->symbolType = model::CppAstNode::SymbolType::Other;
+      astNode->astType = model::CppAstNode::AstType::UsingLoc;
+
+      astNode->id = model::createIdentifier(*astNode);
+
+      if (insertToCache(nd, astNode))
+        _astNodes.push_back(astNode);
+    }
+
+    return true;
+  }
+
+  bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl* udd_)
+  {
+    //--- CppAstNode ---//
+
+    model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+    const clang::NamespaceDecl* nd = udd_->getNominatedNamespace();
+
+    astNode->astValue = getSourceText(
+      _clangSrcMgr,
+      udd_->getBeginLoc(),
+      udd_->getLocation(),
+      true);
+    astNode->location = getFileLoc(udd_->getBeginLoc(), udd_->getEndLoc());
+    astNode->entityHash = util::fnvHash(getUSR(nd));
+    astNode->symbolType = model::CppAstNode::SymbolType::Namespace;
+    astNode->astType = model::CppAstNode::AstType::Usage;
+
+    astNode->id = model::createIdentifier(*astNode);
+
+    if (insertToCache(udd_, astNode))
+      _astNodes.push_back(astNode);
 
     return true;
   }
@@ -1035,6 +1363,8 @@ public:
     if (insertToCache(de_, astNode))
       _astNodes.push_back(astNode);
 
+    addDestructorUsage(de_->getDestroyedType(), astNode->location, de_);
+
     return true;
   }
 
@@ -1087,9 +1417,6 @@ public:
     if (const clang::VarDecl* vd = llvm::dyn_cast<clang::VarDecl>(decl))
     {
       astNode = std::make_shared<model::CppAstNode>();
-
-      model::FileLoc location =
-        getFileLoc(vd->getLocation(), vd->getLocation());
 
       if (!_contextStatementStack.empty())
       {
@@ -1202,7 +1529,29 @@ public:
   }
 
 private:
-  using Base = clang::RecursiveASTVisitor<ClangASTVisitor>;
+  void addDestructorUsage(
+    clang::QualType type_,
+    const model::FileLoc& location_,
+    const void* clangPtr_)
+  {
+    if (clang::CXXRecordDecl* rd = type_->getAsCXXRecordDecl())
+    {
+      if (clang::CXXDestructorDecl* dd = rd->getDestructor())
+      {
+        model::CppAstNodePtr astNode = std::make_shared<model::CppAstNode>();
+
+        astNode->astValue = getSignature(dd);
+        astNode->location = location_;
+        astNode->entityHash = util::fnvHash(getUSR(dd));
+        astNode->symbolType = model::CppAstNode::SymbolType::Function;
+        astNode->astType = model::CppAstNode::AstType::Usage;
+        astNode->id = model::createIdentifier(*astNode);
+
+        if (insertToCache(clangPtr_, astNode))
+          _astNodes.push_back(astNode);
+      }
+    }
+  }
 
   /**
    * This function inserts a model::CppAstNodeId to a cache in a thread-safe
@@ -1244,29 +1593,27 @@ private:
     model::FileLoc fileLoc;
 
     if (start_.isInvalid() || end_.isInvalid())
-    {
       fileLoc.file = getFile(start_);
-      const std::string& type = fileLoc.file.load()->type;
-      if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
-      {
-        fileLoc.file->type = _cppSourceType;
-        _ctx.srcMgr.updateFile(*fileLoc.file);
-      }
-      return fileLoc;
+    else
+    {
+      clang::SourceLocation realStart = start_;
+      clang::SourceLocation realEnd = end_;
+
+      if (_clangSrcMgr.isMacroBodyExpansion(start_))
+        realStart = _clangSrcMgr.getExpansionLoc(start_);
+      if (_clangSrcMgr.isMacroArgExpansion(start_))
+        realStart = _clangSrcMgr.getSpellingLoc(start_);
+
+      if (_clangSrcMgr.isMacroBodyExpansion(end_))
+        realEnd = _clangSrcMgr.getExpansionLoc(end_);
+      if (_clangSrcMgr.isMacroArgExpansion(end_))
+        realEnd = _clangSrcMgr.getSpellingLoc(end_);
+
+      if (!_isImplicit)
+        _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
+
+      fileLoc.file = getFile(realStart);
     }
-
-    clang::SourceLocation realStart = start_;
-    clang::SourceLocation realEnd = end_;
-
-    if (_clangSrcMgr.isMacroArgExpansion(start_))
-      realStart = _clangSrcMgr.getSpellingLoc(start_);
-    if (_clangSrcMgr.isMacroArgExpansion(end_))
-      realEnd = _clangSrcMgr.getSpellingLoc(end_);
-
-    if (!_isImplicit)
-      _fileLocUtil.setRange(realStart, realEnd, fileLoc.range);
-
-    fileLoc.file = getFile(realStart);
 
     const std::string& type = fileLoc.file.load()->type;
     if (type != model::File::DIRECTORY_TYPE && type != _cppSourceType)
@@ -1385,7 +1732,7 @@ private:
   {
     while (expr_)
     {
-      clang::ASTContext::DynTypedNodeList parents
+      clang::DynTypedNodeList parents
         = _astContext.getParents(*expr_);
 
       const clang::ast_type_traits::DynTypedNode& parent = parents[0];
@@ -1463,24 +1810,25 @@ private:
     return false;
   }
 
-  std::vector<model::CppAstNodePtr>      _astNodes;
-  std::vector<model::CppEnumConstantPtr> _enumConstants;
-  std::vector<model::CppEnumPtr>         _enums;
-  std::vector<model::CppFunctionPtr>     _functions;
+  std::vector<model::CppAstNodePtr>        _astNodes;
+  std::vector<model::CppEnumConstantPtr>   _enumConstants;
+  std::vector<model::CppEnumPtr>           _enums;
+  std::vector<model::CppFunctionPtr>       _functions;
   std::vector<model::CppRecordPtr>         _types;
-  std::vector<model::CppTypedefPtr>      _typedefs;
-  std::vector<model::CppVariablePtr>     _variables;
-  std::vector<model::CppNamespacePtr>    _namespaces;
-  std::vector<model::CppMemberTypePtr>   _members;
-  std::vector<model::CppInheritancePtr>  _inheritances;
-  std::vector<model::CppFriendshipPtr>   _friends;
-  std::vector<model::CppRelationPtr>     _relations;
+  std::vector<model::CppTypedefPtr>        _typedefs;
+  std::vector<model::CppVariablePtr>       _variables;
+  std::vector<model::CppNamespacePtr>      _namespaces;
+  std::vector<model::CppNamespaceAliasPtr> _namespaceAliases;
+  std::vector<model::CppMemberTypePtr>     _members;
+  std::vector<model::CppInheritancePtr>    _inheritances;
+  std::vector<model::CppFriendshipPtr>     _friends;
+  std::vector<model::CppRelationPtr>       _relations;
 
   // TODO: Maybe we don't even need a stack, if functions can't be nested.
   // Check lambda.
   // TODO: _enumStack also doesn't have to be a stack.
   std::stack<model::CppFunctionPtr> _functionStack;
-  std::stack<model::CppRecordPtr>     _typeStack;
+  std::stack<model::CppRecordPtr>   _typeStack;
   std::stack<model::CppEnumPtr>     _enumStack;
 
   bool _isImplicit;
@@ -1507,6 +1855,7 @@ private:
   std::unordered_map<unsigned, model::CppAstNode::AstType> _locToAstType;
   std::unordered_map<unsigned, std::string> _locToAstValue;
 
+  StatementStack _stmtStack;
   // This stack has the same role as _locTo* maps. In case of
   // clang::DeclRefExpr objects we need to determine the contect of the given
   // expression. In this stack we store the deepest statement node in AST which

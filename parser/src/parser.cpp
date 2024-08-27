@@ -70,6 +70,9 @@ po::options_description commandLineArguments()
       po::value<trivial::severity_level>()->default_value(trivial::info),
       "Logging legel of the parser. Possible values are: debug, info, warning, "
       "error, critical.")
+    ("logtarget", po::value<std::string>(),
+      "This is the path to the folder where the logging output files will be written. "
+      "If omitted, the output will be on the console only.")
     ("jobs,j", po::value<int>()->default_value(4),
       "Number of threads the parsers can use.")
     ("skip,s", po::value<std::vector<std::string>>(),
@@ -219,7 +222,7 @@ int main(int argc, char* argv[])
 
   cc::parser::PluginHandler pHandler(PARSER_PLUGIN_DIR);
 
-  cc::util::initLogger();
+  cc::util::initConsoleLogger();
 
   //--- Process command line arguments ---//
 
@@ -228,6 +231,17 @@ int main(int argc, char* argv[])
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv)
     .options(desc).allow_unregistered().run(), vm);
+
+  if (vm.count("logtarget"))
+  {
+    vm.at("logtarget").value() = cc::util::getLoggingBase( vm["logtarget"].as<std::string>()
+                                                          , vm["name"].as<std::string>()
+                                                          );
+    if (!cc::util::initFileLogger(vm["logtarget"].as<std::string>() + "parser.log"))
+    {
+      vm.at("logtarget").value() = std::string();
+    }
+  }
 
   //--- Skip parser list ---//
 
@@ -397,17 +411,32 @@ int main(int argc, char* argv[])
     incrementalCleanup(ctx);
   }
 
+  std::vector<std::string> afterIndexingPlugins;
+
   // TODO: Handle errors returned by parse().
   for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << pluginName << "] parse started!";
-    pHandler.getParser(pluginName)->parse();
+    auto plugin = pHandler.getParser(pluginName);
+    if (!plugin->isDatabaseIndexRequired())
+    {
+      LOG(info) << "[" << pluginName << "] parse started!";
+      plugin->parse();
+    }
+    else {
+      afterIndexingPlugins.push_back(pluginName);
+    }
   }
 
   //--- Add indexes to the database ---//
 
   if (vm.count("force") || isNewDb)
     cc::util::createIndexes(db, SQL_DIR);
+
+  for (const std::string& pluginName : afterIndexingPlugins)
+  {
+    LOG(info) << "[" << pluginName << "] parse started!";
+    pHandler.getParser(pluginName)->parse();
+  }
 
   //--- Create project config file ---//
 

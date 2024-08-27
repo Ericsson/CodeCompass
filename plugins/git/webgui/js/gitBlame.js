@@ -137,8 +137,8 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
         blameForLines.push(blameForLine);
     });
 
-    if (gtag) {
-      gtag ('event', 'git_blame', {
+    if (window.gtag) {
+      window.gtag ('event', 'git_blame', {
         'event_category' : urlHandler.getState('wsid'),
         'event_label' : urlHandler.getFileInfo().name
       });
@@ -204,7 +204,6 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
      * @param {Integer} fileId
      */
     loadBlameView : function (path, fileId) {
-      this.set('selection', [1,1,1,1]);
       var res = model.gitservice.getRepositoryByProjectPath(path);
 
       if (!res.isInRepository)
@@ -250,14 +249,27 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
         if (!fileInfo)
           return;
 
+        var selection = message.nodeInfo
+          ? [
+              message.nodeInfo.range.range.startpos.line,
+              message.nodeInfo.range.range.startpos.column,
+              message.nodeInfo.range.range.endpos.line,
+              message.nodeInfo.range.range.endpos.column]
+          : [1, 1, 1, 1];
+
         commitCache = {};
         that.loadFile(fileInfo.id);
+        that.set('selection', selection);
+        that.jumpToPos(selection[0], selection[1]);
+
         that.loadBlameView(fileInfo.path, fileInfo.id);
 
         topic.publish('codecompass/setCenterModule', that.id);
 
         urlHandler.setStateValue({
-          center : that.id
+          center : that.id,
+          select : selection.join('|'),
+          fid    : fileInfo.id
         });
       });
     }
