@@ -53,6 +53,10 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
   typeName.type = CppAstNodeMetricsType::LackOfCohesionHS;
   typeName.name = "Lack of cohesion of type (Henderson-Sellers variant)";
   _return.push_back(typeName);
+
+  typeName.type = CppAstNodeMetricsType::EfferentType;
+  typeName.name = "Efferent coupling of type";
+  _return.push_back(typeName);
 }
 
 void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
@@ -194,9 +198,8 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
         metric.astValue = node.astValue;
         metric.symbolType = cc::model::symbolTypeToString(node.symbolType);
         metric.astType = cc::model::astTypeToString(node.astType);
+        metric.metrics.insert(pair);
 
-        std::map<CppAstNodeMetricsType::type, double> metricsList;
-        metricsList.insert(pair);
         _return.insert(std::make_pair(std::to_string(node.astNodeId), metric));
       }
     }

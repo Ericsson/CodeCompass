@@ -6,6 +6,8 @@
 #include <model/cppcohesionmetrics-odb.hxx>
 #include <model/cppfilemetrics.h>
 #include <model/cppfilemetrics-odb.hxx>
+#include <model/cppinheritance.h>
+#include <model/cppinheritance-odb.hxx>
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
@@ -364,6 +366,68 @@ void CppMetricsParser::lackOfCohesion()
   });
 }
 
+void CppMetricsParser::efferentTypeLevel()
+{
+  parallelCalcMetric<model::CohesionCppRecordView>(
+    "Efferent coupling of types",
+    _threadCount * efferentCouplingTypesPartitionMultiplier,// number of jobs; adjust for granularity
+    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
+    {
+      util::OdbTransaction{_ctx.db}([&, this]
+      {
+        typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
+        typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
+        typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
+        typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
+        typedef odb::query<cc::model::CppFunction> FuncQuery;
+
+        std::set<std::uint64_t> dependentTypes;
+        for (const model::CohesionCppRecordView& type : tasks)
+        {
+          dependentTypes.clear();
+
+          // Count parent types
+          auto inheritanceView = _ctx.db->query<model::CppInheritanceCount>(
+            InheritanceQuery::derived == type.entityHash);
+
+          // Count unique attribute types
+          // and unique types in function parameters and local variables
+          for (const model::CppMemberType& mem: _ctx.db->query<model::CppMemberType>(
+            MemTypeQuery::typeHash == type.entityHash))
+          {
+            auto funcAstNodeId = mem.memberAstNode.load()->id;
+
+            if (mem.kind == cc::model::CppMemberType::Field)
+            {
+              dependentTypes.insert(mem.memberTypeHash);
+            }
+            else
+            {
+              for (const auto& param: _ctx.db->query<model::CppFunctionParamTypeView>(
+                FuncQuery::astNodeId == funcAstNodeId))
+              {
+                dependentTypes.insert(param.paramTypeHash);
+              }
+
+              for (const auto& local: _ctx.db->query<model::CppFunctionLocalTypeView>(
+                FuncQuery::astNodeId == funcAstNodeId))
+              {
+                dependentTypes.insert(local.paramTypeHash);
+              }
+            }
+          }
+
+          model::CppAstNodeMetrics metric;
+          metric.astNodeId = type.astNodeId;
+          metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
+          metric.value = inheritanceView.begin()->count + dependentTypes.size();
+          _ctx.db->persist(metric);
+        }
+      });
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   LOG(info) << "[cppmetricsparser] Computing function parameter count metric.";
@@ -376,6 +440,8 @@ bool CppMetricsParser::parse()
   typeMcCabe();
   LOG(info) << "[cppmetricsparser] Computing Lack of Cohesion metric for types.";
   lackOfCohesion();
+  LOG(info) << "[cppmetricsparser] Computing efferent coupling metric for types.";
+  efferentTypeLevel();
   return true;
 }
 
