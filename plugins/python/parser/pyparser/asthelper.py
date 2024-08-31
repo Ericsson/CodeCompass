@@ -1,5 +1,5 @@
 import ast
-from typing import List
+from typing import cast, List
 from posinfo import PosInfo
 
 class ASTHelper:
@@ -16,20 +16,31 @@ class ASTHelper:
         except:
             pass
 
-    def getFunctionCalls(self) -> List[ast.AST]:
-        return list(filter(lambda e : isinstance(e, ast.Call), self.astNodes))
+    def getFunctionCalls(self) -> List[ast.Call]:
+        return cast(List[ast.Call], list(filter(lambda e : isinstance(e, ast.Call), self.astNodes)))
 
     def isFunctionCall(self, pos: PosInfo):
         for e in self.getFunctionCalls():
-            if (not isinstance(e, ast.Call) or not isinstance(e.func, ast.Name)):
-               continue
-            
             func = e.func
-            if (func.lineno == pos.line_start and
-                func.end_lineno == pos.line_end and
-                func.col_offset == pos.column_start and
-                func.end_col_offset == pos.column_end):
-                return True
+
+            if (isinstance(func, ast.Name)):
+                if (func.lineno == pos.line_start and
+                    func.end_lineno == pos.line_end and
+                    func.col_offset == pos.column_start and
+                    func.end_col_offset == pos.column_end):
+                    return True
+
+            elif (isinstance(func, ast.Attribute)):
+                if func.end_col_offset:
+                    col_start = func.end_col_offset - len(func.attr)
+                else:
+                    col_start = 0
+
+                if (func.end_lineno == pos.line_start and
+                    func.end_lineno == pos.line_end and
+                    col_start == pos.column_start and
+                    func.end_col_offset == pos.column_end):
+                    return True
 
         return False
  
