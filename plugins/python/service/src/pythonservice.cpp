@@ -307,7 +307,7 @@ odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
       nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by);
       break;
     case USAGE:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false) + order_by);
+      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::id != pyname.id) + order_by);
       break;
     case METHOD:
       nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "function" && odb::query<model::PYName>::is_definition == true) + order_by);
