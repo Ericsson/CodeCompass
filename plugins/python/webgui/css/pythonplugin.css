@@ -13,3 +13,7 @@
 .icon-Parent::before{
   content : '\e033'
 }
+
+.icon-Function-call::before{
+  content : '\e028'
+}
