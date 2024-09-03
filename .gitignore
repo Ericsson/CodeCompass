@@ -9,6 +9,8 @@ nbproject/
 # Vim
 *.swp
 
+# clangd cache
+.cache/
 
 ## Build folders
 build/
