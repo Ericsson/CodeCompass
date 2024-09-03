@@ -13,9 +13,17 @@ namespace parser
 PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   // Init Python Interpreter
-  std::string py_parser_dir = _ctx.compassRoot + "/lib/parserplugin/pyparser/";
+  std::string py_parser_dir = _ctx.compassRoot + "/lib/pythonplugin/pyparser";
+  std::string py_venv_dir = _ctx.compassRoot + "/lib/pythonplugin/venv";
+  std::string path_env = py_venv_dir + "/bin" + ":" + getenv("PATH");
+
+  // Set Python module path
   setenv("PYTHONPATH", py_parser_dir.c_str(), 1);
-  
+
+  // Activate Python venv
+  setenv("VIRTUAL_ENV", py_venv_dir.c_str(), 1);
+  setenv("PATH", path_env.c_str(), 1);
+
   Py_Initialize();
 
   // Init PyParser module

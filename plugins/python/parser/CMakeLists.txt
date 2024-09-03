@@ -23,7 +23,24 @@ target_link_libraries(pythonparser
 
 target_compile_options(pythonparser PUBLIC -Wno-unknown-pragmas)
 
+set(VENV_DIR "${PLUGIN_DIR}/parser/venv/")
+if(NOT EXISTS ${VENV_DIR})
+  message("Creating Python virtual environment: ${VENV_DIR}")
+  execute_process(
+    COMMAND python3 -m venv venv
+    WORKING_DIRECTORY ${PLUGIN_DIR}/parser/)
+endif()
+
+message("Installing Python dependencies...")
+execute_process(
+  COMMAND venv/bin/pip install -r requirements.txt
+  WORKING_DIRECTORY ${PLUGIN_DIR}/parser/)
+
 install(TARGETS pythonparser DESTINATION ${INSTALL_PARSER_DIR})
 install(
-        DIRECTORY ${PLUGIN_DIR}/parser/pyparser/
-        DESTINATION ${INSTALL_PARSER_DIR}/pyparser/)
+  DIRECTORY pyparser/
+  DESTINATION ${INSTALL_PYTHON_DIR}/pyparser)
+install(
+  DIRECTORY venv/
+  DESTINATION ${INSTALL_PYTHON_DIR}/venv)
+
