@@ -1,20 +1,24 @@
 import os
 import jedi
 import multiprocessing
+import traceback
 from itertools import repeat
-from parserlog import log
+from parserlog import log, bcolors
 from asthelper import ASTHelper
 from pyname import PYName
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
-        "root_path": None,
+        "debug": True,
+        "root_path": root_path,
         "venv_path": None,
         "project": None
     }
 
     log(f"Parsing project: {root_path}")
-    config["root_path"] = root_path
+
+    if config["debug"]:
+        log(f"{bcolors.WARNING}Parsing in debug mode!")
 
     try:
         if venv_path:
@@ -54,31 +58,36 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
 def parse(path, config):
     result = {
         "path": path,
-        "status": "none",
+        "status": "full",
         "nodes": [],
         "imports": []
     }
 
+    nodes = {}
+
     with open(path) as f:
-        log(f"Parsing: {path}")
-        source = f.read()
-        script = jedi.Script(source, path=path, project=config["project"])
+        try:
+            log(f"Parsing: {path}")
+            source = f.read()
+            script = jedi.Script(source, path=path, project=config["project"])
 
-        asthelper = ASTHelper(source)
+            asthelper = ASTHelper(source)
 
-        nodes = {}
-        result["status"] = "full"
+            for x in script.get_names(references = True, all_scopes = True):
+                defs = x.goto(follow_imports = True, follow_builtin_imports = True)
 
-        for x in script.get_names(references = True, all_scopes = True):
-            defs = x.goto(follow_imports = True, follow_builtin_imports = True)
-            
-            putInMap(nodes, PYName(x).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
+                putInMap(nodes, PYName(x).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
 
-            for d in defs:
-                putInMap(nodes, PYName(d).getNodeInfo())
-                
-                if d.module_path and not str(d.module_path).startswith(config["root_path"]):
-                    result["imports"].append(str(d.module_path))
+                for d in defs:
+                    putInMap(nodes, PYName(d).getNodeInfo())
+
+                    if d.module_path and not str(d.module_path).startswith(config["root_path"]):
+                        result["imports"].append(str(d.module_path))
+
+        except:
+            log(f"{bcolors.FAIL}Failed to parse file: {path}")
+            if config["debug"]:
+                traceback.print_exc()
 
     result["nodes"] = list(nodes.values())
 
