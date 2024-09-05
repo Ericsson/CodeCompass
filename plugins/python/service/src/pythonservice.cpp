@@ -27,11 +27,9 @@ void PythonServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  _transaction([&]() {
-    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
 
-    PythonServiceHandler::setInfoProperties(return_, pyname);
-  });
+  PythonServiceHandler::setInfoProperties(return_, pyname);
   return;
 }
 
@@ -40,21 +38,8 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
   const core::FilePosition& fpos_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  _transaction([&]() {
-      odb::result<model::PYName> nodes = _db->query<model::PYName>(
-        odb::query<model::PYName>::file_id == std::stoull(fpos_.file) &&
-        odb::query<model::PYName>::line_start == fpos_.pos.line &&
-        odb::query<model::PYName>::column_start <= fpos_.pos.column &&
-        odb::query<model::PYName>::column_end >= fpos_.pos.column
-      );
-
-      if(!nodes.empty())
-      {
-        PythonServiceHandler::setInfoProperties(return_, *nodes.begin());
-      }else{
-        LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos_.pos.line << " column = " << fpos_.pos.column << ")";
-      }
-  });
+  model::PYName node = PythonServiceHandler::queryNodeByPosition(fpos_);
+  PythonServiceHandler::setInfoProperties(return_, node);
   return;
 }
 
@@ -79,24 +64,21 @@ void PythonServiceHandler::getProperties(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  _transaction([&]() {
-    model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
-   
-    if(!pyname.full_name.empty())
-    {
-      return_.emplace("Full name", pyname.full_name);
-    }
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
 
-    return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
+  if(!pyname.full_name.empty())
+  {
+    return_.emplace("Full name", pyname.full_name);
+  }
 
-    if(!pyname.type_hint.empty())
-    {
-      return_.emplace("Type hint", pyname.type_hint);
-    }
+  return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
 
-    return_.emplace("Function call", PythonServiceHandler::boolToString(pyname.is_call));
+  if(!pyname.type_hint.empty())
+  {
+    return_.emplace("Type hint", pyname.type_hint);
+  }
 
-  });
+  return_.emplace("Function call", PythonServiceHandler::boolToString(pyname.is_call));
 
   return;
 }
@@ -171,19 +153,17 @@ void PythonServiceHandler::getReferenceTypes(
     return_.emplace("This calls", THIS_CALLS);
   }
 
-  _transaction([&]() {
-    odb::result<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId, DEFINITION);
+  std::vector<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId, DEFINITION);
 
-    if(!nodes.empty())
+  if(!nodes.empty())
+  {
+    model::PYName def = *nodes.begin();
+    if(def.type == "class")
     {
-      model::PYName def = *nodes.begin();
-      if(def.type == "class")
-      {
-        return_.emplace("Method", METHOD);
-        return_.emplace("Data member", DATA_MEMBER);
-      }
+      return_.emplace("Method", METHOD);
+      return_.emplace("Data member", DATA_MEMBER);
     }
-  });
+  }
 
   return;
 }
@@ -197,16 +177,14 @@ void PythonServiceHandler::getReferences(
   LOG(info) << "[PYSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
 
-  _transaction([&]() {
-    odb::result<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId_, referenceId_);
+  std::vector<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId_, referenceId_);
 
-    for(const model::PYName& pyname : nodes)
-    {
-      AstNodeInfo info;
-      PythonServiceHandler::setInfoProperties(info, pyname);
-      return_.push_back(info);
-    }
-  });
+  for(const model::PYName& pyname : nodes)
+  {
+    AstNodeInfo info;
+    PythonServiceHandler::setInfoProperties(info, pyname);
+    return_.push_back(info);
+  }
 
   return;
 }
@@ -218,9 +196,7 @@ std::int32_t PythonServiceHandler::getReferenceCount(
   LOG(info) << "[PYSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
 
-  return _transaction([&]() {
-    return PythonServiceHandler::queryReferences(astNodeId_, referenceId_).size();
-  });
+  return PythonServiceHandler::queryReferences(astNodeId_, referenceId_).size();
 }
 
 void PythonServiceHandler::getReferencesInFile(
@@ -294,43 +270,68 @@ model::PYName PythonServiceHandler::queryNode(const std::string& id)
   });
 }
 
-odb::result<model::PYName> PythonServiceHandler::queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId)
+model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition& fpos)
 {
-  odb::result<model::PYName> nodes;
-
-  const model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
-  const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
-
-  switch (referenceId)
+  return _transaction([&]()
   {
-    case DEFINITION:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by);
-      break;
-    case USAGE:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::id != pyname.id) + order_by);
-      break;
-    case METHOD:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "function" && odb::query<model::PYName>::is_definition == true) + order_by);
-      break;
-    case LOCAL_VAR:
-    case DATA_MEMBER:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "statement" && odb::query<model::PYName>::is_definition == true) + order_by);
-      break;
-    case PARENT:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent) + order_by);
-      break;
-    case PARAMETER:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "param" && odb::query<model::PYName>::is_definition == true) + order_by);
-      break;
-    case CALLER:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::is_call == true && odb::query<model::PYName>::id != pyname.id) + order_by);
-      break;
-    case THIS_CALLS:
-      nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::is_call == true) + order_by);
-      break;
-  }
+    model::PYName pyname;
+    odb::result<model::PYName> nodes = _db->query<model::PYName>(
+      odb::query<model::PYName>::file_id == std::stoull(fpos.file) &&
+      odb::query<model::PYName>::line_start == fpos.pos.line &&
+      odb::query<model::PYName>::column_start <= fpos.pos.column &&
+      odb::query<model::PYName>::column_end >= fpos.pos.column
+    );
 
-  return nodes;
+    if(!nodes.empty())
+    {
+      pyname = *nodes.begin();
+    }else{
+      LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos.pos.line << " column = " << fpos.pos.column << ")";
+    }
+
+    return pyname;
+  });
+}
+
+std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId)
+{
+  return _transaction([&](){
+    odb::result<model::PYName> nodes;
+
+    const model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
+    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
+
+    switch (referenceId)
+    {
+      case DEFINITION:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by);
+        break;
+      case USAGE:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::id != pyname.id) + order_by);
+        break;
+      case METHOD:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "function" && odb::query<model::PYName>::is_definition == true) + order_by);
+        break;
+      case LOCAL_VAR:
+      case DATA_MEMBER:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "statement" && odb::query<model::PYName>::is_definition == true) + order_by);
+        break;
+      case PARENT:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent) + order_by);
+        break;
+      case PARAMETER:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "param" && odb::query<model::PYName>::is_definition == true) + order_by);
+        break;
+      case CALLER:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false && odb::query<model::PYName>::is_call == true && odb::query<model::PYName>::id != pyname.id) + order_by);
+        break;
+      case THIS_CALLS:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::is_call == true) + order_by);
+        break;
+    }
+
+    return std::vector<model::PYName>(nodes.begin(), nodes.end());
+  });
 }
 
 void PythonServiceHandler::setInfoProperties(AstNodeInfo& info, const model::PYName& pyname)

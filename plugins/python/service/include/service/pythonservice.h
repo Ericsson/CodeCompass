@@ -259,7 +259,8 @@ private:
   const cc::webserver::ServerContext& _context;
   inline const char* const boolToString(bool b) { return b ? "true" : "false"; }
   model::PYName queryNode(const std::string& id);
-  odb::result<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
+  model::PYName queryNodeByPosition(const core::FilePosition& fpos);
+  std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
   void setInfoProperties(AstNodeInfo& info, const model::PYName& pyname);
 };
 
