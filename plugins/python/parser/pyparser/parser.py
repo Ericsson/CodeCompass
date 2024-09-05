@@ -21,16 +21,19 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
     if config["debug"]:
         log(f"{bcolors.WARNING}Parsing in debug mode!")
 
+    if not config["safe_env"]:
+        log(f"{bcolors.WARNING}Creating Python environment in unsafe mode!")
+
     try:
         if venv_path:
             jedi.create_environment(venv_path, safe = config["safe_env"])
             config["venv_path"] = venv_path
-            log(f"Using virtual environment: {venv_path}")
+            log(f"{bcolors.OKGREEN}Using virtual environment: {venv_path}")
         else:
             venv_path = None
 
         if sys_path:
-            log(f"Using additional syspath: {sys_path}")
+            log(f"{bcolors.OKGREEN}Using additional syspath: {sys_path}")
         
         config["project"] = jedi.Project(path = root_path, environment_path = venv_path, added_sys_path = sys_path)
 
@@ -41,7 +44,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
 
     py_files = []
     
-    log(f"Using {n_proc} process to parse project")
+    log(f"{bcolors.OKGREEN}Using {n_proc} process to parse project")
 
     for root, dirs, files in os.walk(root_path):
         for file in files:
