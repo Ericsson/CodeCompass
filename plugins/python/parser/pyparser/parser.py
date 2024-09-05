@@ -10,6 +10,7 @@ from pyname import PYName
 def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
         "debug": True,
+        "safe_env": False,
         "root_path": root_path,
         "venv_path": None,
         "project": None
@@ -22,7 +23,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
 
     try:
         if venv_path:
-            jedi.create_environment(venv_path)
+            jedi.create_environment(venv_path, safe = config["safe_env"])
             config["venv_path"] = venv_path
             log(f"Using virtual environment: {venv_path}")
         else:
