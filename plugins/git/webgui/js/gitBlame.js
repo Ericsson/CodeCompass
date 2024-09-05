@@ -39,7 +39,7 @@ function (on, topic, declare, Color, dom, Tooltip, Text, model, viewHandler,
         commitCache[tooltipId] = gitUtil.createTooltip(commit);
       }
 
-      Tooltip.show(commitCache[tooltipId], domNode, ['above']);
+      Tooltip.show(commitCache[tooltipId], domNode, ['before']);
       on.once(domNode, 'mouseleave', function(){
         Tooltip.hide(domNode);
       })
