@@ -34,7 +34,9 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
         config["project"] = jedi.Project(path = root_path, environment_path = venv_path, added_sys_path = sys_path)
 
     except:
-        log(f"Failed to use virtual environment: {venv_path}")
+        log(f"{bcolors.FAIL}Failed to use virtual environment: {venv_path}")
+        if config["debug"]:
+            traceback.print_exc()
 
     py_files = []
     
