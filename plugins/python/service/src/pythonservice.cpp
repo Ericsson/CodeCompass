@@ -1,5 +1,7 @@
 #include <service/pythonservice.h>
 #include <util/dbutil.h>
+#include <model/pyname.h>
+#include "diagram.h"
 
 namespace cc
 {
@@ -88,6 +90,13 @@ void PythonServiceHandler::getDiagramTypes(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+
+  if(pyname.is_definition == true && pyname.type == "function")
+  {
+    return_.emplace("Function call", FUNCTION_CALL);
+  }
+
   return;
 }
 
@@ -97,6 +106,19 @@ void PythonServiceHandler::getDiagram(
   const std::int32_t diagramId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  util::Graph graph;
+
+  switch (diagramId_)
+  {
+    case FUNCTION_CALL:
+      language::python::getFunctionCallDiagram(graph, pyname, PythonServiceHandler::queryReferences(astNodeId_, THIS_CALLS));
+    break; 
+  }
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+  
   return;
 }
 

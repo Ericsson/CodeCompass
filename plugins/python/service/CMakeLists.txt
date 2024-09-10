@@ -13,6 +13,7 @@ include_directories(SYSTEM
 
 add_library(pythonservice SHARED
   src/pythonservice.cpp
+  src/diagram.cpp
   src/plugin.cpp)
 
 target_compile_options(pythonservice PUBLIC -Wno-unknown-pragmas)
