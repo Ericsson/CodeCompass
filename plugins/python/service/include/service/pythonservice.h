@@ -3,15 +3,17 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include <boost/program_options/variables_map.hpp>
 
-#include <odb/database.hxx>
 #include <util/odbtransaction.h>
 #include <webserver/servercontext.h>
+#include <projectservice/projectservice.h>
 
 #include <LanguageService.h>
 
+#include <odb/database.hxx>
 #include <model/pyname.h>
 #include <model/pyname-odb.hxx>
 
@@ -123,7 +125,6 @@ public:
     std::vector<SyntaxHighlight>& return_,
     const core::FileRange& range_) override;
 
-private:
   enum ReferenceType
   {
     DEFINITION, /*!< By this option the definition(s) of the AST node can be
@@ -252,15 +253,18 @@ private:
       of a module. */
   };
 
-  std::shared_ptr<odb::database> _db;
-  util::OdbTransaction _transaction;
-
-  std::shared_ptr<std::string> _datadir;
-  const cc::webserver::ServerContext& _context;
-  inline const char* const boolToString(bool b) { return b ? "true" : "false"; }
   model::PYName queryNode(const std::string& id);
   model::PYName queryNodeByPosition(const core::FilePosition& fpos);
   std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
+  std::string getNodeLineValue(const model::PYName& pyname);
+
+private:
+  std::shared_ptr<odb::database> _db;
+  util::OdbTransaction _transaction;
+  std::shared_ptr<std::string> _datadir;
+  const cc::webserver::ServerContext& _context;
+
+  inline const char* boolToString(bool b) { return b ? "true" : "false"; }
   void setInfoProperties(AstNodeInfo& info, const model::PYName& pyname);
 };
 

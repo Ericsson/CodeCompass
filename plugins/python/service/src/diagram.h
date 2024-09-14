@@ -5,6 +5,7 @@
 #include <util/graph.h>
 #include <service/pythonservice.h>
 #include <string>
+#include <vector>
 
 namespace cc
 {
@@ -14,7 +15,27 @@ namespace language
 {
 namespace python
 {    
-  void getFunctionCallDiagram(util::Graph& graph_, const model::PYName& pyname, const std::vector<model::PYName>& calls);
+  class Diagram {
+    public:
+      Diagram(
+        std::shared_ptr<odb::database> db_,
+        std::shared_ptr<std::string> datadir_,
+        const cc::webserver::ServerContext& context_);
+
+      util::Graph getFunctionCallDiagram(const model::PYName& pyname);
+
+      enum NodeDecoration {
+        FunctionCenterNode,
+        FunctionCallNode,
+        FunctionCallDefinitionNode,
+        FunctionCallerNode
+      };
+    private:
+      PythonServiceHandler m_pythonService;
+      std::vector<model::PYName> functionGoto(const std::vector<model::PYName>& functions);
+      void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeDecoration& decoration);
+      util::Graph::Node addNode(util::Graph& graph_, const model::PYName& pyname);
+  };
 } // python
 } // language
 } // service

@@ -12,9 +12,9 @@ namespace language
 
 PythonServiceHandler::PythonServiceHandler(
   std::shared_ptr<odb::database> db_,
-  std::shared_ptr<std::string> /*datadir_*/,
+  std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
-    : _db(db_), _transaction(db_), _context(context_) {}
+    : _db(db_), _transaction(db_), _datadir(datadir_), _context(context_) {}
 
 void PythonServiceHandler::getFileTypes(
   std::vector<std::string>& return_) 
@@ -106,15 +106,19 @@ void PythonServiceHandler::getDiagram(
   const std::int32_t diagramId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
-  util::Graph graph;
+  python::Diagram diagram(_db, _datadir, _context);
 
-  switch (diagramId_)
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  util::Graph graph = [&]()
   {
-    case FUNCTION_CALL:
-      language::python::getFunctionCallDiagram(graph, pyname, PythonServiceHandler::queryReferences(astNodeId_, THIS_CALLS));
-    break; 
-  }
+    switch (diagramId_)
+    {
+      case FUNCTION_CALL:
+        return diagram.getFunctionCallDiagram(pyname);
+      default:
+        return util::Graph();
+    }
+  }();
 
   if (graph.nodeCount() != 0)
     return_ = graph.output(util::Graph::SVG);
@@ -369,6 +373,22 @@ void PythonServiceHandler::setInfoProperties(AstNodeInfo& info, const model::PYN
   info.astNodeType = pyname.type_hint;
 }
 
+std::string PythonServiceHandler::getNodeLineValue(const model::PYName& pyname)
+{
+  core::ProjectServiceHandler projectService(_db, _datadir, _context);
+  std::string content;
+  projectService.getFileContent(content, std::to_string(pyname.file_id));
+
+  std::istringstream iss(content);
+  std::string lineStr;
+
+  for (std::size_t i = 1; i <= pyname.line_start; ++i)
+  {
+    std::getline(iss, lineStr);
+  }
+
+  return lineStr;
+}
 } // language
 } // service
 } // cc
