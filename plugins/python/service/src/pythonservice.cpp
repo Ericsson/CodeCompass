@@ -50,6 +50,21 @@ void PythonServiceHandler::getSourceText(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+
+  core::ProjectServiceHandler projectService(_db, _datadir, _context);
+  std::string content;
+  projectService.getFileContent(content, std::to_string(pyname.file_id));
+
+  if(!content.empty())
+  {
+    return_ = cc::util::textRange(
+      content,
+      pyname.line_start,
+      pyname.column_start,
+      pyname.line_end,
+      pyname.column_end);
+  }
   return;
 }
 

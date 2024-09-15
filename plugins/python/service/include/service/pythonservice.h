@@ -8,6 +8,7 @@
 #include <boost/program_options/variables_map.hpp>
 
 #include <util/odbtransaction.h>
+#include <util/util.h>
 #include <webserver/servercontext.h>
 #include <projectservice/projectservice.h>
 
