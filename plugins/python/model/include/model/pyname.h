@@ -18,6 +18,8 @@ struct PYName
 
     std::uint64_t ref_id;
     std::uint64_t parent;
+    std::uint64_t parent_function;
+
     bool is_definition = false;
     bool is_builtin = false;
     bool is_import = false;
@@ -25,12 +27,13 @@ struct PYName
     std::string full_name;
     std::string value;
     std::string type;
+    std::string type_hint;
+
     std::uint64_t line_start;
     std::uint64_t line_end;
     std::uint64_t column_start;
     std::uint64_t column_end;
     std::uint64_t file_id;
-    std::string type_hint;
 };
 
 }

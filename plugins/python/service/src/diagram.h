@@ -28,11 +28,12 @@ namespace python
         FunctionCenterNode,
         FunctionCallNode,
         FunctionCallDefinitionNode,
-        FunctionCallerNode
+        FunctionCallerNode,
+        FunctionCallerDefinitionNode
       };
     private:
       PythonServiceHandler m_pythonService;
-      std::vector<model::PYName> functionGoto(const std::vector<model::PYName>& functions);
+      std::vector<model::PYName> functionGoto(const std::vector<model::PYName>& functions, const PythonServiceHandler::ReferenceType& ref_type);
       void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeDecoration& decoration);
       util::Graph::Node addNode(util::Graph& graph_, const model::PYName& pyname);
   };

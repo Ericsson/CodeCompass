@@ -345,6 +345,9 @@ std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
       case PARENT:
         nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent) + order_by);
         break;
+      case PARENT_FUNCTION:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::id == pyname.parent_function) + order_by);
+        break;
       case PARAMETER:
         nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.ref_id && odb::query<model::PYName>::type == "param" && odb::query<model::PYName>::is_definition == true) + order_by);
         break;

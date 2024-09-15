@@ -196,6 +196,8 @@ public:
     UNDEFINITION, /*!< Macro undefinition. */
 
     PARENT,
+
+    PARENT_FUNCTION,
   };
 
   enum FileReferenceType

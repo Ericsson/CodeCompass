@@ -16,8 +16,8 @@ Diagram::Diagram(
 
 util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
 {
-  const std::vector<model::PYName> callers = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::CALLER);
-  const std::vector<model::PYName> calls = functionGoto(m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::THIS_CALLS));
+  const std::vector<model::PYName> callers = functionGoto(m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::CALLER), PythonServiceHandler::PARENT_FUNCTION);
+  const std::vector<model::PYName> calls = functionGoto(m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::THIS_CALLS), PythonServiceHandler::DEFINITION);
 
   util::Graph graph;
   graph.setAttribute("rankdir", "LR");
@@ -35,22 +35,23 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   for (const model::PYName& node : callers)
   {
     util::Graph::Node callerNode = addNode(graph, node);
-    decorateNode(graph, callerNode, FunctionCallerNode);
+    decorateNode(graph, callerNode, node.is_definition ? FunctionCallerDefinitionNode : FunctionCallerNode);
     util::Graph::Edge edge = graph.createEdge(callerNode, centerNode);
   }
 
   return graph;
 }
 
-std::vector<model::PYName> Diagram::functionGoto(const std::vector<model::PYName>& functions)
+std::vector<model::PYName> Diagram::functionGoto(const std::vector<model::PYName>& functions, const PythonServiceHandler::ReferenceType& ref_type)
 {
   std::vector<model::PYName> calls;
   std::unordered_map<std::uint64_t, bool> added;
 
-  // Find definition for each function
+  // Find reference for each function
+  // Example use case: Find definition for each function
   for(const model::PYName& p : functions)
   {
-    std::vector<model::PYName> defs = m_pythonService.queryReferences(std::to_string(p.id), PythonServiceHandler::DEFINITION);
+    std::vector<model::PYName> defs = m_pythonService.queryReferences(std::to_string(p.id), ref_type);
     if(defs.size() == 1)
     {
       model::PYName d = defs[0];
@@ -100,13 +101,18 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
       graph_.setNodeAttribute(node_, "fillcolor", "gold");
       break;
     case FunctionCallerNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "orange");
+      graph_.setNodeAttribute(node_, "shape", "box");
+      break;
+    case FunctionCallerDefinitionNode:
       graph_.setNodeAttribute(node_, "fillcolor", "coral");
       break;
     case FunctionCallNode:
-      graph_.setNodeAttribute(node_, "fillcolor", "lightblue");
+      graph_.setNodeAttribute(node_, "fillcolor", "cyan");
+      graph_.setNodeAttribute(node_, "shape", "box");
       break;
     case FunctionCallDefinitionNode:
-      graph_.setNodeAttribute(node_, "fillcolor", "cyan");
+      graph_.setNodeAttribute(node_, "fillcolor", "lightblue");
       break;
   }
 }

@@ -84,6 +84,8 @@ class PYName:
             # Add func call
             node["is_call"] = self.asthelper.isFunctionCall(pos)
 
+        node["parent_function"] = self.__getParentFunction()
+
         return node
 
     def __getHashName(self) -> int:
@@ -100,6 +102,22 @@ class PYName:
         if not self.name.is_definition() and self.name.type == 'module':
             log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.name.module_path} line = {pos.line_start})")
             result["status"] = "partial"
+
+    def __getParentFunction(self):
+        try:
+            node = self.name
+            for _ in range(0,10):
+                parent: Name = node.parent()
+                if parent and parent.type == "function" and parent.is_definition():
+                    return PYName(parent).hashName
+                elif parent:
+                    node = parent
+                else:
+                    break
+        except:
+            pass
+
+        return self.hashName
 
     def __getNameTypeHint(self):
         hint = ""
