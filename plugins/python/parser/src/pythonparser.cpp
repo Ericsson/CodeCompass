@@ -158,7 +158,10 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
     for (int i = 0; i < python::len(imports); i++)
     {
       std::string p = python::extract<std::string>(imports[i]);
-      _ctx.srcMgr.getFile(p);
+
+      model::FilePtr file = _ctx.srcMgr.getFile(p);
+      file->type = "PY";
+      _ctx.srcMgr.updateFile(*file);
     }
 
   }catch (const python::error_already_set&)

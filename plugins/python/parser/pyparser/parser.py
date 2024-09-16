@@ -87,7 +87,7 @@ def parse(path, config):
                 for d in defs:
                     putInMap(nodes, PYName(d).getNodeInfo())
 
-                    if d.module_path and not str(d.module_path).startswith(config["root_path"]):
+                    if d.module_path:
                         result["imports"].append(str(d.module_path))
 
         except:
