@@ -30,10 +30,13 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   for (const model::PYName& node : calls)
   {
     util::Graph::Node callNode = addNode(graph, node);
-    decorateNode(graph, callNode, node.is_definition ? FunctionCallDefinitionNode : FunctionCallNode);
-
-    if(!node.is_definition)
+    if(node.is_definition && node.type == "function")
     {
+      decorateNode(graph, callNode, FunctionCallDefinitionNode);
+    }
+    else
+    {
+      decorateNode(graph, callNode, FunctionCallNode);
       graph.setNodeAttribute(callNode, "id", centerNodeID);
     }
 
@@ -43,11 +46,13 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   for (const model::PYName& node : callers)
   {
     util::Graph::Node callerNode = addNode(graph, node);
-    decorateNode(graph, callerNode, node.is_definition ? FunctionCallerDefinitionNode : FunctionCallerNode);
-
-    if(!node.is_definition)
+    if(node.is_definition && node.type == "function")
     {
-      graph.setNodeAttribute(callerNode, "id", centerNodeID);
+      decorateNode(graph, callerNode, FunctionCallerDefinitionNode);
+    }
+    else
+    {
+      decorateNode(graph, callerNode, FunctionCallerNode);
     }
 
     util::Graph::Edge edge = graph.createEdge(callerNode, centerNode);
