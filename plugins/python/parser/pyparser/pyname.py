@@ -73,16 +73,16 @@ class PYName:
         node["file_id"] = self.__getFileId()
         node["type_hint"] = self.__getNameTypeHint()
         node["is_builtin"] = self.name.in_builtin_module() or any(list(map(lambda x : x.in_builtin_module(), self.defs)))
-        node["is_import"] = "import" in node["value"]
 
         parent = self.name.parent()
         node["parent"] = PYName(parent).hashName if parent else node["id"]
 
         node["is_call"] = False
+        node["is_import"] = False
 
         if self.asthelper:
-            # Add func call
             node["is_call"] = self.asthelper.isFunctionCall(pos)
+            node["is_import"] = self.asthelper.isImport(pos)
 
         node["parent_function"] = self.__getParentFunction()
 

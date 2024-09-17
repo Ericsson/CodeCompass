@@ -19,6 +19,9 @@ class ASTHelper:
     def getFunctionCalls(self) -> List[ast.Call]:
         return cast(List[ast.Call], list(filter(lambda e : isinstance(e, ast.Call), self.astNodes)))
 
+    def getImports(self) -> List[ast.Import | ast.ImportFrom]:
+        return cast(List[ast.Import | ast.ImportFrom], list(filter(lambda e : isinstance(e, ast.Import) or isinstance(e, ast.ImportFrom), self.astNodes)))
+
     def isFunctionCall(self, pos: PosInfo):
         for e in self.getFunctionCalls():
             func = e.func
@@ -43,4 +46,14 @@ class ASTHelper:
                     return True
 
         return False
- 
+
+    def isImport(self, pos: PosInfo):
+        for e in self.getImports():
+            if (e.lineno == pos.line_start and
+                e.end_lineno == pos.line_end and
+                e.col_offset == pos.column_start and
+                e.end_col_offset == pos.column_end):
+                return True
+
+        return False
+
