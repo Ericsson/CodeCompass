@@ -33,6 +33,8 @@ namespace python
       };
     private:
       PythonServiceHandler m_pythonService;
+      core::ProjectServiceHandler m_projectService;
+      std::map<core::FileId, util::Graph::Subgraph> m_subgraphs;
       std::vector<model::PYName> functionGoto(const std::vector<model::PYName>& functions, const PythonServiceHandler::ReferenceType& ref_type);
       void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeDecoration& decoration);
       util::Graph::Node addNode(util::Graph& graph_, const model::PYName& pyname);

@@ -12,7 +12,8 @@ Diagram::Diagram(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
-    : m_pythonService(db_, datadir_, context_){}
+    : m_pythonService(db_, datadir_, context_),
+      m_projectService(db_, datadir_, context_){}
 
 util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
 {
@@ -90,7 +91,33 @@ std::vector<model::PYName> Diagram::functionGoto(const std::vector<model::PYName
 
 util::Graph::Node Diagram::addNode(util::Graph& graph_, const model::PYName& pyname)
 {
-  util::Graph::Node node = graph_.getOrCreateNode(std::to_string(pyname.id));
+  const util::Graph::Subgraph subgraph = [&]()
+  {
+    const core::FileId fileId = std::to_string(pyname.file_id);
+    auto it = m_subgraphs.find(fileId);
+
+    if (it != m_subgraphs.end())
+      return it->second;
+
+    core::FileInfo fileInfo;
+    m_projectService.getFileInfo(fileInfo, fileId);
+
+    util::Graph::Subgraph subgraph
+      = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
+
+    graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
+    const std::string coloredLabel =
+      "<table border=\"0\" cellborder=\"0\"><tr><td bgcolor=\"limegreen\">" +
+      fileInfo.path +
+      "</td></tr></table>";
+    graph_.setSubgraphAttribute(subgraph, "label", coloredLabel, true);
+
+    m_subgraphs.insert(it, std::make_pair(fileInfo.path, subgraph));
+
+    return subgraph;
+  }();
+
+  util::Graph::Node node = graph_.getOrCreateNode(std::to_string(pyname.id), subgraph);
 
   std::string label = pyname.value;
 
