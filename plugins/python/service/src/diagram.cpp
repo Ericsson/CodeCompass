@@ -30,7 +30,7 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   for (const model::PYName& node : calls)
   {
     util::Graph::Node callNode = addNode(graph, node);
-    if(node.is_definition && node.type == "function")
+    if(node.is_definition && (node.type == "function" || node.type == "class"))
     {
       decorateNode(graph, callNode, FunctionCallDefinitionNode);
     }
@@ -46,7 +46,7 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   for (const model::PYName& node : callers)
   {
     util::Graph::Node callerNode = addNode(graph, node);
-    if(node.is_definition && node.type == "function")
+    if(node.is_definition && (node.type == "function" || node.type == "class"))
     {
       decorateNode(graph, callerNode, FunctionCallerDefinitionNode);
     }
