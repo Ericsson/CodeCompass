@@ -23,12 +23,19 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   graph.setAttribute("rankdir", "LR");
 
   util::Graph::Node centerNode = addNode(graph, pyname);
+  const std::string centerNodeID = std::to_string(pyname.id);
   decorateNode(graph, centerNode, FunctionCenterNode);
 
   for (const model::PYName& node : calls)
   {
     util::Graph::Node callNode = addNode(graph, node);
     decorateNode(graph, callNode, node.is_definition ? FunctionCallDefinitionNode : FunctionCallNode);
+
+    if(!node.is_definition)
+    {
+      graph.setNodeAttribute(callNode, "id", centerNodeID);
+    }
+
     util::Graph::Edge edge = graph.createEdge(centerNode, callNode);
   }
 
@@ -36,6 +43,12 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   {
     util::Graph::Node callerNode = addNode(graph, node);
     decorateNode(graph, callerNode, node.is_definition ? FunctionCallerDefinitionNode : FunctionCallerNode);
+
+    if(!node.is_definition)
+    {
+      graph.setNodeAttribute(callerNode, "id", centerNodeID);
+    }
+
     util::Graph::Edge edge = graph.createEdge(callerNode, centerNode);
   }
 
