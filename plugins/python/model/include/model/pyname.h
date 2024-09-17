@@ -13,10 +13,12 @@ namespace model
 #pragma db object
 struct PYName
 {
-    #pragma db id
+    #pragma db id unique
     std::uint64_t id = 0;
 
+    #pragma db index
     std::uint64_t ref_id;
+
     std::uint64_t parent;
     std::uint64_t parent_function;
 
@@ -33,6 +35,8 @@ struct PYName
     std::uint64_t line_end;
     std::uint64_t column_start;
     std::uint64_t column_end;
+
+    #pragma db index
     std::uint64_t file_id;
 };
 
