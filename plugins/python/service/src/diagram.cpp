@@ -98,7 +98,11 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
     for (const model::PYName& d : importedDefinitions)
     {
       core::FileInfo fileInfo;
-      m_projectService.getFileInfo(fileInfo, std::to_string(d.file_id));
+      try {
+        m_projectService.getFileInfo(fileInfo, std::to_string(d.file_id));
+      } catch (core::InvalidId) {
+        continue;
+      }
 
       util::Graph::Node node = [&](){
         auto it = map.find(d.file_id);
@@ -152,7 +156,11 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
       return it->second;
 
     core::FileInfo fileInfo;
-    m_projectService.getFileInfo(fileInfo, fileId);
+    try {
+      m_projectService.getFileInfo(fileInfo, fileId);
+    } catch (core::InvalidId) {
+      return util::Graph::Subgraph();
+    }
 
     util::Graph::Subgraph subgraph
       = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
