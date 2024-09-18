@@ -6,6 +6,8 @@
 #include <service/pythonservice.h>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <unordered_map>
 
 namespace cc
 {
@@ -23,21 +25,26 @@ namespace python
         const cc::webserver::ServerContext& context_);
 
       util::Graph getFunctionCallDiagram(const model::PYName& pyname);
+      util::Graph getModuleDiagram(const core::FileId& fileId);
 
-      enum NodeDecoration {
+      enum NodeType {
         FunctionCenterNode,
         FunctionCallNode,
         FunctionCallDefinitionNode,
         FunctionCallerNode,
-        FunctionCallerDefinitionNode
+        FunctionCallerDefinitionNode,
+        FilePathNode,
+        FilePathCenterNode,
+        ImportedNode
       };
     private:
       PythonServiceHandler m_pythonService;
       core::ProjectServiceHandler m_projectService;
       std::map<core::FileId, util::Graph::Subgraph> m_subgraphs;
-      std::vector<model::PYName> functionGoto(const std::vector<model::PYName>& functions, const PythonServiceHandler::ReferenceType& ref_type);
-      void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeDecoration& decoration);
-      util::Graph::Node addNode(util::Graph& graph_, const model::PYName& pyname);
+      void addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType);
+      void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeType& nodeType);
+      util::Graph::Node addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph);
+      util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo);
   };
 } // python
 } // language
