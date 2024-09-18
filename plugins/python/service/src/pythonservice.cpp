@@ -29,7 +29,7 @@ void PythonServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   PythonServiceHandler::setInfoProperties(return_, pyname);
   return;
@@ -50,7 +50,7 @@ void PythonServiceHandler::getSourceText(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   core::ProjectServiceHandler projectService(_db, _datadir, _context);
   std::string content;
@@ -81,7 +81,7 @@ void PythonServiceHandler::getProperties(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if(!pyname.full_name.empty())
   {
@@ -105,7 +105,7 @@ void PythonServiceHandler::getDiagramTypes(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if(pyname.is_definition == true && pyname.type == "function")
   {
@@ -123,7 +123,7 @@ void PythonServiceHandler::getDiagram(
   LOG(info) << "[PYSERVICE] " << __func__;
   python::Diagram diagram(_db, _datadir, _context);
 
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId_);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
   util::Graph graph = [&]()
   {
     switch (diagramId_)
@@ -154,6 +154,7 @@ void PythonServiceHandler::getFileDiagramTypes(
   const core::FileId& fileId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  return_.emplace("Module dependency", MODULE_DEPENDENCY);
   return;
 }
 
@@ -163,6 +164,22 @@ void PythonServiceHandler::getFileDiagram(
   const int32_t diagramId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  python::Diagram diagram(_db, _datadir, _context);
+
+  util::Graph graph = [&]()
+  {
+    switch (diagramId_)
+    {
+      case MODULE_DEPENDENCY:
+        return diagram.getModuleDiagram(fileId_);
+      default:
+        return util::Graph();
+    }
+  }();
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+
   return;
 }
 
@@ -185,7 +202,7 @@ void PythonServiceHandler::getReferenceTypes(
   return_.emplace("Parameters", PARAMETER);
   return_.emplace("Caller", CALLER);
 
-  model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
+  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId);
 
   if(pyname.type == "function" && pyname.is_definition)
   {
@@ -295,7 +312,7 @@ void PythonServiceHandler::getSyntaxHighlight(
   return;
 }
 
-model::PYName PythonServiceHandler::queryNode(const std::string& id)
+model::PYName PythonServiceHandler::queryNodeByID(const std::string& id)
 {
   return _transaction([&]()
   {
@@ -334,12 +351,23 @@ model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition
   });
 }
 
+std::vector<model::PYName> PythonServiceHandler::queryNodes(const odb::query<model::PYName>& odb_query)
+{
+  return _transaction([&](){
+    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
+
+    odb::result<model::PYName> nodes = _db->query(odb_query);
+
+    return std::vector<model::PYName>(nodes.begin(), nodes.end());
+  });
+}
+
 std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId)
 {
   return _transaction([&](){
     odb::result<model::PYName> nodes;
 
-    const model::PYName pyname = PythonServiceHandler::queryNode(astNodeId);
+    const model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId);
     const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
 
     switch (referenceId)
@@ -373,6 +401,16 @@ std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
         nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::is_call == true) + order_by);
         break;
     }
+
+    return std::vector<model::PYName>(nodes.begin(), nodes.end());
+  });
+}
+
+std::vector<model::PYName> PythonServiceHandler::queryNodesInFile(const core::FileId& fileId)
+{
+  return _transaction([&](){
+    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
+    odb::result<model::PYName> nodes = _db->query<model::PYName>((odb::query<model::PYName>::file_id == std::stoull(fileId)) + order_by);
 
     return std::vector<model::PYName>(nodes.begin(), nodes.end());
   });

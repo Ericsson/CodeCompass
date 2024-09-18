@@ -219,6 +219,8 @@ public:
       the edges are the function calls between them. The diagram also displays
       some dynamic information such as virtual function calls. */
 
+    MODULE_DEPENDENCY,
+
     DETAILED_CLASS, /*!< This is a classical UML class diagram for the selected
       class and its direct children and parents. The nodes contain the methods
       and member variables with their visibility. */
@@ -256,9 +258,11 @@ public:
       of a module. */
   };
 
-  model::PYName queryNode(const std::string& id);
+  model::PYName queryNodeByID(const std::string& id);
   model::PYName queryNodeByPosition(const core::FilePosition& fpos);
   std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
+  std::vector<model::PYName> queryNodesInFile(const core::FileId& fileId);
+  std::vector<model::PYName> queryNodes(const odb::query<model::PYName>& odb_query);
   std::string getNodeLineValue(const model::PYName& pyname);
 
 private:
