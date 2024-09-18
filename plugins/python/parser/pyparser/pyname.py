@@ -51,6 +51,11 @@ class PYName:
             else:
                 pos.value = self.name.get_line_code()[pos.column_start:]
 
+        if (self.name.module_path and
+            pos.line_start == 0 and pos.line_end == 0 and
+            pos.column_start == 0 and pos.column_end == 0):
+            pos.value = str(self.name.module_path).split("/")[-1]
+
         return pos
     
     def getNodeInfo(self):
