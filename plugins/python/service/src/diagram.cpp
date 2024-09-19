@@ -110,6 +110,7 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
         if (it == map.end())
         {
           util::Graph::Node n = addFileNode(graph, fileInfo);
+          decorateNode(graph, n, FilePathNode);
           graph.createEdge(centerNode, n);
 
           map.emplace(d.file_id, n);
@@ -118,7 +119,12 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
           return it->second;
         }
       }();
-      decorateNode(graph, node, FilePathNode);
+
+      if(d.line_start == 0 && d.line_end == 0 &&
+        d.column_start == 1 && d.column_end == 1)
+      {
+        continue;
+      }
 
       util::Graph::Node definitionNode = addPYNameNode(graph, d, false);
       decorateNode(graph, definitionNode, ImportedNode);
