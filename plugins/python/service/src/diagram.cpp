@@ -133,14 +133,19 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
 
     map.clear();
 
+    std::unordered_map<std::uint64_t, bool> sameLine;
     for (const model::PYName& p : importedUsages)
     {
       util::Graph::Node node = getFileNode(p, ImportsFilePathNode);
       if (node.empty()) continue;
 
+      if (p.line_start == p.line_end && sameLine.find(p.line_start) != sameLine.end()) continue;
+
       util::Graph::Node graphNode = addPYNameNode(graph, p, false);
       decorateNode(graph, graphNode, ImportsNode);
       graph.createEdge(graphNode, node);
+
+      sameLine.emplace(p.line_start, true);
     }
     return graph;
 }
