@@ -44,6 +44,12 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     id : 'python-file-diagram-handler',
 
     getDiagram : function (diagramType, nodeId, callback) {
+      var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
+
+      if(nodeInfo.id != 0) {
+        nodeId = nodeInfo.range.file;
+      }
+
       model.pythonservice.getFileDiagram(nodeId, diagramType, callback);
     },
 
@@ -52,6 +58,21 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     },
 
     mouseOverInfo : function (diagramType, nodeId) {
+      var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
+      var range = nodeInfo.range.range;
+
+      if(nodeInfo.id != 0) {
+        return {
+          fileId : nodeInfo.range.file,
+          selection : [
+            range.startpos.line,
+            range.startpos.column,
+            range.endpos.line,
+            range.endpos.column
+          ]
+        };
+      }
+
       return {
         fileId : nodeId,
         selection : [1,1,1,1]
