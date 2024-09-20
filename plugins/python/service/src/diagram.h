@@ -34,9 +34,11 @@ namespace python
         FunctionCallDefinitionNode,
         FunctionCallerNode,
         FunctionCallerDefinitionNode,
-        FilePathNode,
         FilePathCenterNode,
-        ImportedNode
+        ImportedFilePathNode,
+        ImportsFilePathNode,
+        ImportedNode,
+        ImportsNode
       };
     private:
       PythonServiceHandler m_pythonService;
@@ -45,6 +47,7 @@ namespace python
       void addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType);
       void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeType& nodeType);
       util::Graph::Node addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph);
+      util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType);
       util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo);
   };
 } // python

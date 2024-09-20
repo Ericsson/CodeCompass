@@ -44,9 +44,11 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     id : 'python-file-diagram-handler',
 
     getDiagram : function (diagramType, nodeId, callback) {
-      var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
-
-      if(nodeInfo.id != 0) {
+      // File path node
+      if (["d","s","f"].includes(nodeId[0])) {
+          nodeId = nodeId.substring(1);
+      } else {
+        var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
         nodeId = nodeInfo.range.file;
       }
 
@@ -58,24 +60,25 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     },
 
     mouseOverInfo : function (diagramType, nodeId) {
-      var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
-      var range = nodeInfo.range.range;
-
-      if(nodeInfo.id != 0) {
+      // File path node
+      if (["d","s","f"].includes(nodeId[0])) {
         return {
-          fileId : nodeInfo.range.file,
-          selection : [
-            range.startpos.line,
-            range.startpos.column,
-            range.endpos.line,
-            range.endpos.column
-          ]
+          fileId : nodeId.substring(1),
+          selection : [1,1,1,1]
         };
       }
 
+      var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
+      var range = nodeInfo.range.range;
+
       return {
-        fileId : nodeId,
-        selection : [1,1,1,1]
+        fileId : nodeInfo.range.file,
+        selection : [
+          range.startpos.line,
+          range.startpos.column,
+          range.endpos.line,
+          range.endpos.column
+        ]
       };
     }
   };
@@ -102,7 +105,7 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
             topic.publish('codecompass/openDiagram', {
               handler : 'python-file-diagram-handler',
               diagramType : diagramTypes[that.type],
-              node : fileInfo.id
+              node : "f" + fileInfo.id
             });
           }
         }));

@@ -86,48 +86,62 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
 
     // Query nodes
     const std::vector<std::uint64_t> nodesInFile = m_pythonService.transformReferences(m_pythonService.queryNodesInFile(fileId, false), model::REF_ID);
+    const std::vector<std::uint64_t> definitionsInFile = m_pythonService.transformReferences(m_pythonService.queryNodesInFile(fileId, true), model::REF_ID);
 
     const std::vector<model::PYName> importedDefinitions = m_pythonService.queryNodes(
-      odb::query<model::PYName>::ref_id.in_range(nodesInFile.begin(), nodesInFile.end()) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false && odb::query<model::PYName>::file_id != file_id);
+      odb::query<model::PYName>::ref_id.in_range(nodesInFile.begin(), nodesInFile.end()) && odb::query<model::PYName>::is_definition == true &&
+      odb::query<model::PYName>::is_import == false && odb::query<model::PYName>::file_id != file_id &&
+      !(odb::query<model::PYName>::line_start == 0 && odb::query<model::PYName>::line_end == 0 && odb::query<model::PYName>::column_start == 1 && odb::query<model::PYName>::column_end == 1));
 
+    const std::vector<model::PYName> importedUsages = m_pythonService.queryNodes(
+      odb::query<model::PYName>::ref_id.in_range(definitionsInFile.begin(), definitionsInFile.end()) && odb::query<model::PYName>::is_definition == false &&
+      odb::query<model::PYName>::file_id != file_id);
 
     std::unordered_map<model::FileId, util::Graph::Node> map;
-    for (const model::PYName& d : importedDefinitions)
+
+    auto getFileNode = [&](const model::PYName& p, const NodeType& nodeType)
     {
       core::FileInfo fileInfo;
       try {
-        m_projectService.getFileInfo(fileInfo, std::to_string(d.file_id));
+        m_projectService.getFileInfo(fileInfo, std::to_string(p.file_id));
       } catch (core::InvalidId) {
-        continue;
+        return util::Graph::Node();
       }
 
-      util::Graph::Node node = [&](){
-        auto it = map.find(d.file_id);
+      auto it = map.find(p.file_id);
 
-        if (it == map.end())
-        {
-          util::Graph::Node n = addFileNode(graph, fileInfo);
-          decorateNode(graph, n, FilePathNode);
-          graph.createEdge(centerNode, n);
-
-          map.emplace(d.file_id, n);
-          return n;
-        }else{
-          return it->second;
-        }
-      }();
-
-      if(d.line_start == 0 && d.line_end == 0 &&
-        d.column_start == 1 && d.column_end == 1)
+      if (it == map.end())
       {
-        continue;
-      }
+        util::Graph::Node n = addFileNode(graph, fileInfo, centerNode, nodeType);
 
-      util::Graph::Node definitionNode = addPYNameNode(graph, d, false);
-      decorateNode(graph, definitionNode, ImportedNode);
-      graph.createEdge(node, definitionNode);
+        map.emplace(p.file_id, n);
+        return n;
+      }else{
+        return it->second;
+      }
+    };
+
+    for (const model::PYName& p : importedDefinitions)
+    {
+      util::Graph::Node node = getFileNode(p, ImportedFilePathNode);
+      if (node.empty()) continue;
+
+      util::Graph::Node graphNode = addPYNameNode(graph, p, false);
+      decorateNode(graph, graphNode, ImportedNode);
+      graph.createEdge(node, graphNode);
     }
 
+    map.clear();
+
+    for (const model::PYName& p : importedUsages)
+    {
+      util::Graph::Node node = getFileNode(p, ImportsFilePathNode);
+      if (node.empty()) continue;
+
+      util::Graph::Node graphNode = addPYNameNode(graph, p, false);
+      decorateNode(graph, graphNode, ImportsNode);
+      graph.createEdge(graphNode, node);
+    }
     return graph;
 }
 
@@ -196,8 +210,25 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
 
 util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo)
 {
-  util::Graph::Node node = graph_.getOrCreateNode(fileInfo.id);
+  util::Graph::Node node = graph_.getOrCreateNode("f" + fileInfo.id);
   graph_.setNodeAttribute(node, "label", fileInfo.path);
+
+  return node;
+}
+
+util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType)
+{
+  const std::string id = (nodeType == ImportedFilePathNode) ? "d" + fileInfo.id : "s" + fileInfo.id;
+
+  util::Graph::Node node = graph_.getOrCreateNode(id);
+  graph_.setNodeAttribute(node, "label", fileInfo.path);
+  decorateNode(graph_, node, nodeType);
+
+  if (nodeType == ImportedFilePathNode) {
+    graph_.createEdge(centerNode, node);
+  } else {
+    graph_.createEdge(node, centerNode);
+  }
 
   return node;
 }
@@ -213,28 +244,36 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
       break;
     case FunctionCallerNode:
       graph_.setNodeAttribute(node_, "fillcolor", "orange");
-      graph_.setNodeAttribute(node_, "shape", "box");
+      graph_.setNodeAttribute(node_, "shape", "cds");
       break;
     case FunctionCallerDefinitionNode:
       graph_.setNodeAttribute(node_, "fillcolor", "coral");
       break;
     case FunctionCallNode:
       graph_.setNodeAttribute(node_, "fillcolor", "cyan");
-      graph_.setNodeAttribute(node_, "shape", "box");
+      graph_.setNodeAttribute(node_, "shape", "cds");
       break;
     case FunctionCallDefinitionNode:
       graph_.setNodeAttribute(node_, "fillcolor", "lightblue");
-      break;
-    case FilePathNode:
-      graph_.setNodeAttribute(node_, "fillcolor", "limegreen");
-      graph_.setNodeAttribute(node_, "shape", "box");
       break;
     case FilePathCenterNode:
       graph_.setNodeAttribute(node_, "fillcolor", "gold");
       graph_.setNodeAttribute(node_, "shape", "box");
       break;
+    case ImportedFilePathNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "limegreen");
+      graph_.setNodeAttribute(node_, "shape", "box");
+      break;
     case ImportedNode:
       graph_.setNodeAttribute(node_, "fillcolor", "lightseagreen");
+      break;
+    case ImportsFilePathNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "orange");
+      graph_.setNodeAttribute(node_, "shape", "box");
+      break;
+    case ImportsNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "coral");
+      graph_.setNodeAttribute(node_, "shape", "cds");
       break;
   }
 }
