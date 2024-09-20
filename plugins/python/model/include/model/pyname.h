@@ -10,6 +10,13 @@ namespace cc
 namespace model
 {
 
+enum PYNameID {
+  ID,
+  REF_ID,
+  PARENT,
+  PARENT_FUNCTION
+};
+
 #pragma db object
 struct PYName
 {

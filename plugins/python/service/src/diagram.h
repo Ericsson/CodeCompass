@@ -4,6 +4,7 @@
 #include <model/pyname.h>
 #include <util/graph.h>
 #include <service/pythonservice.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <algorithm>

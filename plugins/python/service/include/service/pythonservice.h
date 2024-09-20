@@ -1,6 +1,7 @@
 #ifndef CC_SERVICE_PYTHON_PYTHONSERVICE_H
 #define CC_SERVICE_PYTHON_PYTHONSERVICE_H
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <string>
@@ -261,8 +262,9 @@ public:
   model::PYName queryNodeByID(const std::string& id);
   model::PYName queryNodeByPosition(const core::FilePosition& fpos);
   std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
-  std::vector<model::PYName> queryNodesInFile(const core::FileId& fileId);
+  std::vector<model::PYName> queryNodesInFile(const core::FileId& fileId, bool definitions);
   std::vector<model::PYName> queryNodes(const odb::query<model::PYName>& odb_query);
+  std::vector<std::uint64_t> transformReferences(const std::vector<model::PYName>& references, const model::PYNameID& id);
   std::string getNodeLineValue(const model::PYName& pyname);
 
 private:

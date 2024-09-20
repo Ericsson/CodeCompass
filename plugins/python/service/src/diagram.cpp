@@ -19,14 +19,12 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
 {
   // Query calls
   const std::vector<model::PYName> this_calls = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::THIS_CALLS);
-  std::vector<std::uint64_t> this_calls_refs(this_calls.size());
-  std::transform(this_calls.begin(), this_calls.end(), this_calls_refs.begin(), [](const model::PYName& e){return e.ref_id;});
+  std::vector<std::uint64_t> this_calls_refs = m_pythonService.transformReferences(this_calls, model::REF_ID);
   const std::vector<model::PYName> calls = m_pythonService.queryNodes(odb::query<model::PYName>::ref_id.in_range(this_calls_refs.begin(), this_calls_refs.end()) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false);
 
   // Query callers
   const std::vector<model::PYName> function_callers = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::CALLER);
-  std::vector<std::uint64_t> callers_parents(function_callers.size());
-  std::transform(function_callers.begin(), function_callers.end(), callers_parents.begin(), [](const model::PYName& e){return e.parent_function;});
+  std::vector<std::uint64_t> callers_parents = m_pythonService.transformReferences(function_callers, model::PARENT_FUNCTION);
   const std::vector<model::PYName> callers = m_pythonService.queryNodes(odb::query<model::PYName>::id.in_range(callers_parents.begin(), callers_parents.end()));
 
   // Create graph
@@ -87,12 +85,11 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
     decorateNode(graph, centerNode, FilePathCenterNode);
 
     // Query nodes
-    const std::vector<model::PYName> nodesInFile = m_pythonService.queryNodesInFile(fileId);
-    std::vector<std::uint64_t> refs(nodesInFile.size());
-    std::transform(nodesInFile.begin(), nodesInFile.end(), refs.begin(), [](const model::PYName& e){return e.ref_id;});
+    const std::vector<std::uint64_t> nodesInFile = m_pythonService.transformReferences(m_pythonService.queryNodesInFile(fileId, false), model::REF_ID);
 
     const std::vector<model::PYName> importedDefinitions = m_pythonService.queryNodes(
-      odb::query<model::PYName>::ref_id.in_range(refs.begin(), refs.end()) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false && odb::query<model::PYName>::file_id != file_id);
+      odb::query<model::PYName>::ref_id.in_range(nodesInFile.begin(), nodesInFile.end()) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false && odb::query<model::PYName>::file_id != file_id);
+
 
     std::unordered_map<model::FileId, util::Graph::Node> map;
     for (const model::PYName& d : importedDefinitions)

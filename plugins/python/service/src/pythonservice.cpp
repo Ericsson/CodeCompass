@@ -406,14 +406,37 @@ std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
   });
 }
 
-std::vector<model::PYName> PythonServiceHandler::queryNodesInFile(const core::FileId& fileId)
+std::vector<model::PYName> PythonServiceHandler::queryNodesInFile(const core::FileId& fileId, bool definitions)
 {
   return _transaction([&](){
     const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
-    odb::result<model::PYName> nodes = _db->query<model::PYName>((odb::query<model::PYName>::file_id == std::stoull(fileId)) + order_by);
+    odb::result<model::PYName> nodes = (definitions) ?
+      _db->query<model::PYName>((odb::query<model::PYName>::file_id == std::stoull(fileId) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by)
+      : _db->query<model::PYName>((odb::query<model::PYName>::file_id == std::stoull(fileId)) + order_by);
 
     return std::vector<model::PYName>(nodes.begin(), nodes.end());
   });
+}
+
+std::vector<std::uint64_t> PythonServiceHandler::transformReferences(const std::vector<model::PYName>& references, const model::PYNameID& id)
+{
+  std::vector<std::uint64_t> ret(references.size());
+  switch(id)
+  {
+    case model::ID:
+      std::transform(references.begin(), references.end(), ret.begin(), [](const model::PYName& e){return e.id;});
+      break;
+    case model::REF_ID:
+      std::transform(references.begin(), references.end(), ret.begin(), [](const model::PYName& e){return e.ref_id;});
+      break;
+    case model::PARENT:
+      std::transform(references.begin(), references.end(), ret.begin(), [](const model::PYName& e){return e.parent;});
+      break;
+    case model::PARENT_FUNCTION:
+      std::transform(references.begin(), references.end(), ret.begin(), [](const model::PYName& e){return e.parent_function;});
+      break;
+  }
+  return ret;
 }
 
 void PythonServiceHandler::setInfoProperties(AstNodeInfo& info, const model::PYName& pyname)
