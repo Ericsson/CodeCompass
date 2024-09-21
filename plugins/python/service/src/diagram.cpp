@@ -34,7 +34,7 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   // Add center node
   util::Graph::Node centerNode = addPYNameNode(graph, pyname, true);
   const std::string centerNodeID = std::to_string(pyname.id);
-  decorateNode(graph, centerNode, FunctionCenterNode);
+  decorateNode(graph, centerNode, CenterNode);
 
   // Add calls with definitions
   std::unordered_map<std::uint64_t, bool> addedNodes;
@@ -150,6 +150,27 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
     return graph;
 }
 
+util::Graph Diagram::getUsageDiagram(const model::PYName& pyname)
+{
+    util::Graph graph;
+    graph.setAttribute("rankdir", "LR");
+    util::Graph::Node centerNode = addPYNameNode(graph, pyname, true);
+    decorateNode(graph, centerNode, CenterNode);
+
+    if (!pyname.is_definition || pyname.is_import == true) return graph;
+
+    const std::vector<model::PYName> usages = m_pythonService.queryNodes(
+      odb::query<model::PYName>::ref_id == pyname.ref_id && odb::query<model::PYName>::is_definition == false);
+
+    for (const model::PYName& p : usages)
+    {
+      util::Graph::Node graphNode = addPYNameNode(graph, p, true);
+      decorateNode(graph, graphNode, p.is_call ? FunctionCallNode : UsageNode);
+      graph.createEdge(graphNode, centerNode);
+    }
+    return graph;
+}
+
 void Diagram::addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType)
 {
     util::Graph::Node node = addPYNameNode(graph_, pyname, true);
@@ -244,7 +265,7 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
 
   switch(nodeType)
   {
-    case FunctionCenterNode:
+    case CenterNode:
       graph_.setNodeAttribute(node_, "fillcolor", "gold");
       break;
     case FunctionCallerNode:
@@ -255,7 +276,7 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
       graph_.setNodeAttribute(node_, "fillcolor", "coral");
       break;
     case FunctionCallNode:
-      graph_.setNodeAttribute(node_, "fillcolor", "cyan");
+      graph_.setNodeAttribute(node_, "fillcolor", "deepskyblue");
       graph_.setNodeAttribute(node_, "shape", "cds");
       break;
     case FunctionCallDefinitionNode:
@@ -278,6 +299,10 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
       break;
     case ImportsNode:
       graph_.setNodeAttribute(node_, "fillcolor", "coral");
+      graph_.setNodeAttribute(node_, "shape", "cds");
+      break;
+    case UsageNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "cyan");
       graph_.setNodeAttribute(node_, "shape", "cds");
       break;
   }

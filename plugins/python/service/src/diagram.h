@@ -27,9 +27,10 @@ namespace python
 
       util::Graph getFunctionCallDiagram(const model::PYName& pyname);
       util::Graph getModuleDiagram(const core::FileId& fileId);
+      util::Graph getUsageDiagram(const model::PYName& pyname);
 
       enum NodeType {
-        FunctionCenterNode,
+        CenterNode,
         FunctionCallNode,
         FunctionCallDefinitionNode,
         FunctionCallerNode,
@@ -38,7 +39,8 @@ namespace python
         ImportedFilePathNode,
         ImportsFilePathNode,
         ImportedNode,
-        ImportsNode
+        ImportsNode,
+        UsageNode
       };
     private:
       PythonServiceHandler m_pythonService;

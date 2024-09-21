@@ -107,9 +107,13 @@ void PythonServiceHandler::getDiagramTypes(
   LOG(info) << "[PYSERVICE] " << __func__;
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
-  if(pyname.is_definition == true && pyname.type == "function")
-  {
-    return_.emplace("Function call", FUNCTION_CALL);
+  if(pyname.is_definition == true && pyname.is_import == false) {
+    if(pyname.type == "function") {
+      return_.emplace("Function call", FUNCTION_CALL);
+      return_.emplace("Function usage", FUNCTION_USAGE);
+    } else if (pyname.type == "class") {
+      return_.emplace("Class Usage", CLASS_USAGE);
+    }
   }
 
   return;
@@ -130,6 +134,9 @@ void PythonServiceHandler::getDiagram(
     {
       case FUNCTION_CALL:
         return diagram.getFunctionCallDiagram(pyname);
+      case FUNCTION_USAGE:
+      case CLASS_USAGE:
+        return diagram.getUsageDiagram(pyname);
       default:
         return util::Graph();
     }
