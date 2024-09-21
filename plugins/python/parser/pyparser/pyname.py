@@ -19,6 +19,7 @@ class PYName:
         self.refid = self.hashName
         self.defs = []
         self.asthelper = None
+        self.config = None
 
     def addDefs(self, defs: List[Name], result):
         self.defs = defs
@@ -32,6 +33,10 @@ class PYName:
 
     def addASTHelper(self, asthelper: ASTHelper):
         self.asthelper = asthelper
+        return self
+
+    def addConfig(self, config):
+        self.config = config
         return self
 
     def getNamePosInfo(self) -> PosInfo:
@@ -126,6 +131,9 @@ class PYName:
 
     def __getNameTypeHint(self):
         hint = ""
+        if not (self.config and self.config["type_hint"]):
+            return hint
+
         try:
             res = self.name.get_type_hint()
             hint = res if res else ""

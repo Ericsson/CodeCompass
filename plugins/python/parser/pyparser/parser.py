@@ -11,6 +11,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
         "debug": True,
         "safe_env": False,
+        "type_hint": False,
         "root_path": root_path,
         "venv_path": None,
         "project": None
@@ -23,6 +24,11 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
 
     if not config["safe_env"]:
         log(f"{bcolors.WARNING}Creating Python environment in unsafe mode!")
+
+    if config["type_hint"]:
+        log(f"{bcolors.OKGREEN}Type hint support enabled!")
+    else:
+        log(f"{bcolors.OKBLUE}Type hint support disabled!")
 
     try:
         if venv_path:
@@ -82,10 +88,10 @@ def parse(path, config):
             for x in script.get_names(references = True, all_scopes = True):
                 defs = x.goto(follow_imports = True, follow_builtin_imports = True)
 
-                putInMap(nodes, PYName(x).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
+                putInMap(nodes, PYName(x).addConfig(config).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
 
                 for d in defs:
-                    putInMap(nodes, PYName(d).getNodeInfo())
+                    putInMap(nodes, PYName(d).addConfig(config).getNodeInfo())
 
                     if d.module_path:
                         result["imports"].append(str(d.module_path))
