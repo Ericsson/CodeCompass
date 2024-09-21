@@ -76,13 +76,13 @@ void PythonParser::parseProject(const std::string& root_path)
 
   // Insert into database
   LOG(info) << "[pythonparser] Inserting PYNames to database...";
-  for(const auto& [key, value] : map)
+  cc::util::OdbTransaction {_ctx.db} ([&]
   {
-    cc::util::OdbTransaction {_ctx.db} ([&]
+    for(const auto& e : map)
     {
-      _ctx.db->persist(value);  
-    });
-  }
+      _ctx.db->persist(e.second);
+    }
+  });
 
   LOG(info) << "[pythonparser] Parsing finished!";
   LOG(info) << "[pythonparser] Inserted rows: " << map.size();
