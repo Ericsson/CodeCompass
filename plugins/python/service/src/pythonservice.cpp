@@ -329,6 +329,11 @@ model::PYName PythonServiceHandler::queryNodeByID(const std::string& id)
     if(!nodes.empty())
     {
       pyname = *nodes.begin();
+    }else{
+      LOG(info) << "[PYSERVICE] Node not found! (id = " << id << ")";
+      core::InvalidId ex;
+      ex.__set_msg("Node not found!");
+      throw ex;
     }
 
     return pyname;
@@ -352,6 +357,9 @@ model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition
       pyname = *nodes.begin();
     }else{
       LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos.pos.line << " column = " << fpos.pos.column << ")";
+      core::InvalidInput ex;
+      ex.__set_msg("Node not found!");
+      throw ex;
     }
 
     return pyname;

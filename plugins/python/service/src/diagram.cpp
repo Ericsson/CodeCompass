@@ -104,7 +104,7 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
       core::FileInfo fileInfo;
       try {
         m_projectService.getFileInfo(fileInfo, std::to_string(p.file_id));
-      } catch (core::InvalidId) {
+      } catch (const core::InvalidId&) {
         return util::Graph::Node();
       }
 
@@ -201,7 +201,7 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
     core::FileInfo fileInfo;
     try {
       m_projectService.getFileInfo(fileInfo, fileId);
-    } catch (core::InvalidId) {
+    } catch (const core::InvalidId&) {
       return util::Graph::Subgraph();
     }
 
