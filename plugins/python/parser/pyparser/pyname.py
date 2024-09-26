@@ -10,7 +10,7 @@ class PYName:
     id: int
     name: Name
     refid: int
-    defs: List[Name]
+    defs: List['PYName']
     asthelper: ASTHelper | None
 
     def __init__(self, name: Name):
@@ -21,11 +21,11 @@ class PYName:
         self.asthelper = None
         self.config = None
 
-    def addDefs(self, defs: List[Name], result):
+    def addDefs(self, defs: List['PYName'], result):
         self.defs = defs
 
         if len(defs) > 0:
-            self.refid = min(list(map(lambda e : PYName(e).hashName, defs)))
+            self.refid = min(list(map(lambda e : e.hashName, defs)))
         else:
             self.__reportMissingDefinition(result)
 
@@ -37,6 +37,12 @@ class PYName:
 
     def addConfig(self, config):
         self.config = config
+        return self
+
+    def appendModulePath(self, import_list):
+        if self.name.module_path:
+           import_list.append(str(self.name.module_path))
+
         return self
 
     def getNamePosInfo(self) -> PosInfo:
@@ -68,7 +74,7 @@ class PYName:
         node["id"] = self.hashName
         node["ref_id"] = self.refid
         node["module_name"] = self.name.module_name
-        node["module_path"] = self.name.module_path
+        node["module_path"] = str(self.name.module_path)
         node["full_name"] = self.name.full_name if self.name.full_name else ""
 
         pos = self.getNamePosInfo()
@@ -82,7 +88,7 @@ class PYName:
         node["is_definition"] = self.name.is_definition()
         node["file_id"] = self.__getFileId()
         node["type_hint"] = self.__getNameTypeHint()
-        node["is_builtin"] = self.name.in_builtin_module() or any(list(map(lambda x : x.in_builtin_module(), self.defs)))
+        node["is_builtin"] = self.name.in_builtin_module() or any(list(map(lambda x : x.name.in_builtin_module(), self.defs)))
 
         parent = self.name.parent()
         node["parent"] = PYName(parent).hashName if parent else node["id"]
@@ -117,7 +123,7 @@ class PYName:
         try:
             node = self.name
             for _ in range(0,10):
-                parent: Name = node.parent()
+                parent: Name | None = node.parent()
                 if parent and parent.type == "function" and parent.is_definition():
                     return PYName(parent).hashName
                 elif parent:

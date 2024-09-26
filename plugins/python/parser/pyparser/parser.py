@@ -75,7 +75,7 @@ def parse(path, config):
         "imports": []
     }
 
-    nodes = {}
+    nodes: dict[int, PYName] = {}
 
     with open(path) as f:
         try:
@@ -87,14 +87,13 @@ def parse(path, config):
 
             for x in script.get_names(references = True, all_scopes = True):
                 defs = x.goto(follow_imports = True, follow_builtin_imports = True)
+                defs = list(map(lambda e : PYName(e), defs))
 
                 putInMap(nodes, PYName(x).addConfig(config).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
 
                 for d in defs:
-                    putInMap(nodes, PYName(d).addConfig(config).getNodeInfo())
-
-                    if d.module_path:
-                        result["imports"].append(str(d.module_path))
+                    if not (d.hashName in nodes):
+                        putInMap(nodes, d.addConfig(config).appendModulePath(result["imports"]).getNodeInfo())
 
         except:
             log(f"{bcolors.FAIL}Failed to parse file: {path}")
