@@ -97,6 +97,12 @@ void PythonServiceHandler::getProperties(
 
   return_.emplace("Function call", PythonServiceHandler::boolToString(pyname.is_call));
 
+#ifndef NDEBUG
+    return_.emplace("ID", std::to_string(pyname.id));
+    return_.emplace("REF_ID", std::to_string(pyname.ref_id));
+    return_.emplace("DEFINITION", PythonServiceHandler::boolToString(pyname.is_definition));
+#endif
+
   return;
 }
 
