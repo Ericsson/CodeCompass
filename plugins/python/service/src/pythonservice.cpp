@@ -361,6 +361,14 @@ model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition
     if(!nodes.empty())
     {
       pyname = *nodes.begin();
+
+      for(const model::PYName& p : nodes)
+      {
+        if(p.value.size() < pyname.value.size())
+        {
+          pyname = p;
+        }
+      }
     }else{
       LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos.pos.line << " column = " << fpos.pos.column << ")";
       core::InvalidInput ex;
