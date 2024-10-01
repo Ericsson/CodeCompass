@@ -9,12 +9,14 @@ from posinfo import PosInfo
 class PYName:
     id: int
     name: Name
+    pos: PosInfo
     refid: int
     defs: List['PYName']
     asthelper: ASTHelper | None
 
     def __init__(self, name: Name):
         self.name = name
+        self.pos = self.__getNamePosInfo()
         self.hashName = self.__getHashName()
         self.refid = self.hashName
         self.defs = []
@@ -45,7 +47,7 @@ class PYName:
 
         return self
 
-    def getNamePosInfo(self) -> PosInfo:
+    def __getNamePosInfo(self) -> PosInfo:
         pos = PosInfo()
 
         start_pos = self.name.get_definition_start_position()
@@ -77,12 +79,11 @@ class PYName:
         node["module_path"] = str(self.name.module_path)
         node["full_name"] = self.name.full_name if self.name.full_name else ""
 
-        pos = self.getNamePosInfo()
-        node["line_start"] = pos.line_start
-        node["line_end"] = pos.line_end
-        node["column_start"] = pos.column_start + 1
-        node["column_end"] = pos.column_end + 1
-        node["value"] = pos.value
+        node["line_start"] = self.pos.line_start
+        node["line_end"] = self.pos.line_end
+        node["column_start"] = self.pos.column_start + 1
+        node["column_end"] = self.pos.column_end + 1
+        node["value"] = self.pos.value
 
         node["type"] = self.name.type
         node["is_definition"] = self.name.is_definition()
@@ -97,16 +98,15 @@ class PYName:
         node["is_import"] = False
 
         if self.asthelper:
-            node["is_call"] = self.asthelper.isFunctionCall(pos)
-            node["is_import"] = self.asthelper.isImport(pos)
+            node["is_call"] = self.asthelper.isFunctionCall(self.pos)
+            node["is_import"] = self.asthelper.isImport(self.pos)
 
         node["parent_function"] = self.__getParentFunction()
 
         return node
 
     def __getHashName(self) -> int:
-        pos = self.getNamePosInfo() 
-        s = f"{self.name.module_path}|{pos.line_start}|{pos.line_end}|{pos.column_start}|{pos.column_end}".encode("utf-8")
+        s = f"{self.name.module_path}|{self.pos.line_start}|{self.pos.line_end}|{self.pos.column_start}|{self.pos.column_end}".encode("utf-8")
         hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
         return hash
 
@@ -114,9 +114,8 @@ class PYName:
         return fnvHash(str(self.name.module_path))
     
     def __reportMissingDefinition(self, result):
-        pos = self.getNamePosInfo()
         if not self.name.is_definition() and self.name.type == 'module':
-            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.name.module_path} line = {pos.line_start})")
+            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.name.module_path} line = {self.pos.line_start})")
             result["status"] = "partial"
 
     def __getParentFunction(self):
