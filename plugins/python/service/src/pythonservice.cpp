@@ -111,11 +111,19 @@ void PythonServiceHandler::getDiagramTypes(
   const core::AstNodeId& astNodeId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
-  model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
+  const model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
-  if(pyname.is_definition == true && pyname.is_import == false) {
-    if(pyname.type == "function") {
+  if (pyname.is_import == true) return;
+
+  if (pyname.is_definition == true && pyname.type == "function") {
       return_.emplace("Function call", FUNCTION_CALL);
+  }
+
+  // Usage diagrams
+  const size_t count = PythonServiceHandler::queryReferences(astNodeId_, USAGE).size();
+
+  if (count > 0 && pyname.is_definition == true) {
+    if (pyname.type == "function") {
       return_.emplace("Function usage", FUNCTION_USAGE);
     } else if (pyname.type == "class") {
       return_.emplace("Class Usage", CLASS_USAGE);
