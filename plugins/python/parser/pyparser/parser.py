@@ -7,6 +7,7 @@ from parserlog import log, bcolors
 from asthelper import ASTHelper
 from pyname import PYName
 from pyreference import PYReference
+from pybuiltin import PYBuiltin
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
@@ -76,6 +77,8 @@ def parse(path, config):
         "nodes": [],
         "imports": []
     }
+
+    PYBuiltin.findBuiltins()
 
     nodes: dict[int, PYName] = {}
 

@@ -5,6 +5,7 @@ from parserutil import fnvHash
 from parserlog import log, bcolors
 from asthelper import ASTHelper
 from posinfo import PosInfo
+from pybuiltin import PYBuiltin
 
 class PYName:
     id: int
@@ -97,7 +98,7 @@ class PYName:
         node["is_definition"] = self.name.is_definition()
         node["file_id"] = self.__getFileId()
         node["type_hint"] = self.__getNameTypeHint()
-        node["is_builtin"] = self.name.in_builtin_module() or any(list(map(lambda x : x.name.in_builtin_module(), self.defs)))
+        node["is_builtin"] = PYBuiltin.isBuiltin(self.name) or any(list(map(lambda x : PYBuiltin.isBuiltin(x.name), self.defs)))
 
         parent = self.name.parent()
         node["parent"] = PYName(parent).hashName if parent else node["id"]
