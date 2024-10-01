@@ -6,12 +6,14 @@ from itertools import repeat
 from parserlog import log, bcolors
 from asthelper import ASTHelper
 from pyname import PYName
+from pyreference import PYReference
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
     config = {
         "debug": True,
         "safe_env": False,
         "type_hint": False,
+        "file_refs": True,
         "root_path": root_path,
         "venv_path": None,
         "project": None
@@ -82,14 +84,16 @@ def parse(path, config):
             log(f"Parsing: {path}")
             source = f.read()
             script = jedi.Script(source, path=path, project=config["project"])
+            names = script.get_names(references = True, all_scopes = True)
 
             asthelper = ASTHelper(source)
+            pyref = PYReference(config, script, names)
 
-            for x in script.get_names(references = True, all_scopes = True):
-                defs = x.goto(follow_imports = True, follow_builtin_imports = True)
-                defs = list(map(lambda e : PYName(e), defs))
+            for x in names:
+                defs = pyref.getDefs(x)
+                refs = pyref.getFileRefs(x)
 
-                putInMap(nodes, PYName(x).addConfig(config).addDefs(defs, result).addASTHelper(asthelper).getNodeInfo())
+                putInMap(nodes, PYName(x).addConfig(config).addDefs(defs, result).addRefs(refs).addASTHelper(asthelper).getNodeInfo())
 
                 for d in defs:
                     if not (d.hashName in nodes):

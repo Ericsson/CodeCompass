@@ -33,6 +33,14 @@ class PYName:
 
         return self
 
+    def addRefs(self, refs: List['PYName']):
+        defs = list(filter(lambda e : e.name.is_definition(), refs))
+
+        if len(defs) > 0:
+            self.refid = min(list(map(lambda e : e.hashName, defs)))
+
+        return self
+
     def addASTHelper(self, asthelper: ASTHelper):
         self.asthelper = asthelper
         return self
