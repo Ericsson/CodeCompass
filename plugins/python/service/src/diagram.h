@@ -39,7 +39,6 @@ namespace python
         ImportedFilePathNode,
         ImportsFilePathNode,
         ImportedNode,
-        ImportsNode,
         UsageNode
       };
     private:
