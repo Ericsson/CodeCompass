@@ -1,14 +1,10 @@
-class PosInfo:
-    line_start: int
-    line_end: int
-    column_start: int
-    column_end: int
-    value: str
+from dataclasses import dataclass
 
-    def __init__(self):
-        self.line_start = 0
-        self.line_end = 0
-        self.column_start = 0
-        self.column_end = 0
-        self.value = ""
+@dataclass
+class PosInfo:
+    line_start: int = 0
+    line_end: int = 0
+    column_start: int = 0
+    column_end: int = 0
+    value: str = ""
 
