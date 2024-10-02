@@ -25,6 +25,9 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
     else:
         log(f"{bcolors.OKBLUE}Type hint support disabled!")
 
+    if config.stack_trace:
+        log(f"{bcolors.OKGREEN}Stack trace enabled!")
+
     try:
         if venv_path:
             jedi.create_environment(venv_path, safe = config.safe_env)
@@ -40,7 +43,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
 
     except:
         log(f"{bcolors.FAIL}Failed to use virtual environment: {venv_path}")
-        if config.debug:
+        if config.stack_trace:
             traceback.print_exc()
 
     py_files = []
@@ -96,7 +99,7 @@ def parse(path: str, config: ParserConfig):
 
         except:
             log(f"{bcolors.FAIL}Failed to parse file: {path}")
-            if config.debug:
+            if config.stack_trace:
                 traceback.print_exc()
 
     result["nodes"] = list(nodes.values())
