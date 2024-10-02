@@ -2,17 +2,20 @@ from typing import List
 from jedi import Script
 from jedi.api.classes import Name
 from pyname import PYName
+from parserconfig import ParserConfig
 
 class PYReference:
     script: Script
     names: List[Name]
+    config: ParserConfig
 
-    def __init__(self, config, script: Script, names: List[Name]):
+    def __init__(self, config: ParserConfig, script: Script, names: List[Name]):
+        self.config = config
         self.script = script
         self.names = names
         self.refmap = {}
 
-        if config["file_refs"]:
+        if self.config.file_refs:
             self.__lookupFileRefs()
 
     def getDefs(self, name: Name) -> List[PYName]:

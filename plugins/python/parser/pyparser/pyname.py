@@ -6,6 +6,7 @@ from parserlog import log, bcolors
 from asthelper import ASTHelper
 from posinfo import PosInfo
 from pybuiltin import PYBuiltin
+from parserconfig import ParserConfig
 
 class PYName:
     id: int
@@ -14,6 +15,7 @@ class PYName:
     refid: int
     defs: List['PYName']
     asthelper: ASTHelper | None
+    config: ParserConfig | None
 
     def __init__(self, name: Name):
         self.name = name
@@ -46,7 +48,7 @@ class PYName:
         self.asthelper = asthelper
         return self
 
-    def addConfig(self, config):
+    def addConfig(self, config: ParserConfig):
         self.config = config
         return self
 
@@ -145,7 +147,7 @@ class PYName:
 
     def __getNameTypeHint(self):
         hint = ""
-        if not (self.config and self.config["type_hint"]):
+        if not (self.config and self.config.type_hint):
             return hint
 
         try:
