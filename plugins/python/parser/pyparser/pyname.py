@@ -117,7 +117,7 @@ class PYName:
         return node
 
     def __getHashName(self) -> int:
-        s = f"{self.name.module_path}|{self.pos.line_start}|{self.pos.line_end}|{self.pos.column_start}|{self.pos.column_end}".encode("utf-8")
+        s = f"{str(self.name.module_path)}|{self.pos.line_start}|{self.pos.line_end}|{self.pos.column_start}|{self.pos.column_end}".encode("utf-8")
         hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
         return hash
 
@@ -126,7 +126,7 @@ class PYName:
     
     def __reportMissingDefinition(self, result):
         if not self.name.is_definition() and self.name.type == 'module':
-            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.name.module_path} line = {self.pos.line_start})")
+            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {str(self.name.module_path)} line = {self.pos.line_start})")
             result["status"] = "partial"
 
     def __getParentFunction(self):
