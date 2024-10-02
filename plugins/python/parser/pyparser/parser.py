@@ -26,7 +26,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
         log(f"{bcolors.OKBLUE}Type hint support disabled!")
 
     if config.stack_trace:
-        log(f"{bcolors.OKGREEN}Stack trace enabled!")
+        log(f"{bcolors.WARNING}Stack trace enabled!")
 
     try:
         if venv_path:
