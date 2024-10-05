@@ -236,7 +236,13 @@ util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo
 
 util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType)
 {
-  const std::string id = (nodeType == ImportedFilePathNode) ? "d" + fileInfo.id : "s" + fileInfo.id;
+  /* We might need to add a file path multiple times to the diagram.
+    Since we need unique ids, we will differentiate nodes based on starting character:
+    'f' - regular file path node
+    'd' - ImportedFilePathNode, ImportedBuiltinFilePathNode
+    's' - ImportsFilePathNode
+    Any id without a {'f', 'd', 's'} starting character is not a file path node. */
+  const std::string id = (nodeType == ImportedFilePathNode || nodeType == ImportedBuiltinFilePathNode) ? "d" + fileInfo.id : "s" + fileInfo.id;
 
   util::Graph::Node node = graph_.getOrCreateNode(id);
   graph_.setNodeAttribute(node, "label", fileInfo.path);

@@ -46,6 +46,8 @@ function (topic, Menu, MenuItem, PopupMenuItem, model, viewHandler) {
     getDiagram : function (diagramType, nodeId, callback) {
       // File path node
       if (["d","s","f"].includes(nodeId[0])) {
+          // When requesting a file diagram, a valid file needs to be used.
+          // The first character is therefore removed.
           nodeId = nodeId.substring(1);
       } else {
         var nodeInfo = model.pythonservice.getAstNodeInfo(nodeId);
