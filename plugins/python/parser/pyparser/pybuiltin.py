@@ -1,4 +1,5 @@
 import sys
+import os
 import importlib.util
 import traceback
 from jedi.api.classes import Name
@@ -18,6 +19,16 @@ class PYBuiltin:
                 spec = importlib.util.find_spec(e)
                 if spec and spec.origin:
                     PYBuiltin.builtin[spec.origin] = True
+
+                if spec and spec.submodule_search_locations:
+                    for submodule_dir in spec.submodule_search_locations:
+                        for root, dirs, files in os.walk(submodule_dir):
+                            for file in files:
+                                p = os.path.join(root, file)
+                                ext = os.path.splitext(p)[1]
+
+                                if ext and ext.lower() == '.py':
+                                    PYBuiltin.builtin[p] = True
 
         except:
             log(f"{bcolors.FAIL}Failed to find Python builtins!")
