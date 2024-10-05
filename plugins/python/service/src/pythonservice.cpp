@@ -391,9 +391,10 @@ model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition
 std::vector<model::PYName> PythonServiceHandler::queryNodes(const odb::query<model::PYName>& odb_query)
 {
   return _transaction([&](){
-    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
+    const odb::query<model::PYName> order_by = "ORDER BY" + odb::query<model::PYName>::is_builtin + "," + odb::query<model::PYName>::line_start + "," + odb::query<model::PYName>::column_start;
+    const odb::query<model::PYName> q = odb_query + order_by;
 
-    odb::result<model::PYName> nodes = _db->query(odb_query);
+    odb::result<model::PYName> nodes = _db->query(q);
 
     return std::vector<model::PYName>(nodes.begin(), nodes.end());
   });
