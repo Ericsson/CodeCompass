@@ -123,7 +123,7 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
 
     for (const model::PYName& p : importedDefinitions)
     {
-      util::Graph::Node node = getFileNode(p, ImportedFilePathNode);
+      util::Graph::Node node = getFileNode(p, p.is_builtin ? ImportedBuiltinFilePathNode : ImportedFilePathNode);
       if (node.empty()) continue;
 
       util::Graph::Node graphNode = addPYNameNode(graph, p, false);
@@ -198,9 +198,11 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
     util::Graph::Subgraph subgraph
       = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
 
+    const std::string pathColor = pyname.is_builtin ? "dodgerblue" : "limegreen";
+
     graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
     const std::string coloredLabel =
-      "<table border=\"0\" cellborder=\"0\"><tr><td bgcolor=\"limegreen\">" +
+      "<table border=\"0\" cellborder=\"0\"><tr><td bgcolor=\"" + pathColor + "\">" +
       fileInfo.path +
       "</td></tr></table>";
     graph_.setSubgraphAttribute(subgraph, "label", coloredLabel, true);
@@ -240,7 +242,7 @@ util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo
   graph_.setNodeAttribute(node, "label", fileInfo.path);
   decorateNode(graph_, node, nodeType);
 
-  if (nodeType == ImportedFilePathNode) {
+  if (nodeType == ImportedFilePathNode || nodeType == ImportedBuiltinFilePathNode) {
     graph_.createEdge(centerNode, node);
   } else {
     graph_.createEdge(node, centerNode);
@@ -278,6 +280,10 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
       break;
     case ImportedFilePathNode:
       graph_.setNodeAttribute(node_, "fillcolor", "limegreen");
+      graph_.setNodeAttribute(node_, "shape", "box");
+      break;
+    case ImportedBuiltinFilePathNode:
+      graph_.setNodeAttribute(node_, "fillcolor", "dodgerblue");
       graph_.setNodeAttribute(node_, "shape", "box");
       break;
     case ImportedNode:

@@ -37,6 +37,7 @@ namespace python
         FunctionCallerDefinitionNode,
         FilePathCenterNode,
         ImportedFilePathNode,
+        ImportedBuiltinFilePathNode,
         ImportsFilePathNode,
         ImportedNode,
         UsageNode
