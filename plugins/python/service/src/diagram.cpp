@@ -198,7 +198,7 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
     util::Graph::Subgraph subgraph
       = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
 
-    const std::string pathColor = pyname.is_builtin ? "dodgerblue" : "limegreen";
+    const std::string pathColor = (pyname.is_builtin && pyname.is_definition) ? "dodgerblue" : "limegreen";
 
     graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
     const std::string coloredLabel =
