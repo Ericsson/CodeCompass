@@ -1,4 +1,5 @@
 import sys
+import importlib.util
 import traceback
 from jedi.api.classes import Name
 from parserlog import log, bcolors
@@ -12,9 +13,12 @@ class PYBuiltin:
         try:
             # Note: Python 3.10+ required
             stdlib_modules = sys.stdlib_module_names
-            for key, val in sys.modules.items():
-                if hasattr(val, "__file__") and key in stdlib_modules:
-                    PYBuiltin.builtin[val.__file__] = True
+
+            for e in stdlib_modules:
+                spec = importlib.util.find_spec(e)
+                if spec and spec.origin:
+                    PYBuiltin.builtin[spec.origin] = True
+
         except:
             log(f"{bcolors.FAIL}Failed to find Python builtins!")
             if config.stack_trace:
