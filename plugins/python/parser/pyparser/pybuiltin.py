@@ -1,12 +1,14 @@
 import sys
+import traceback
 from jedi.api.classes import Name
 from parserlog import log, bcolors
+from parserconfig import ParserConfig
 
 class PYBuiltin:
     builtin = {}
 
     @staticmethod
-    def findBuiltins():
+    def findBuiltins(config: ParserConfig):
         try:
             # Note: Python 3.10+ required
             stdlib_modules = sys.stdlib_module_names
@@ -15,6 +17,8 @@ class PYBuiltin:
                     PYBuiltin.builtin[val.__file__] = True
         except:
             log(f"{bcolors.FAIL}Failed to find Python builtins!")
+            if config.stack_trace:
+                traceback.print_exc()
 
     @staticmethod
     def isBuiltin(name: Name):

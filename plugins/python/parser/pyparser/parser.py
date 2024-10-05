@@ -73,7 +73,7 @@ def parse(path: str, config: ParserConfig):
         "imports": []
     }
 
-    PYBuiltin.findBuiltins()
+    PYBuiltin.findBuiltins(config)
 
     nodes: dict[int, PYName] = {}
 
