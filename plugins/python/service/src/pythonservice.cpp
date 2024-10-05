@@ -167,6 +167,25 @@ void PythonServiceHandler::getDiagramLegend(
   const std::int32_t diagramId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  python::Diagram diagram(_db, _datadir, _context);
+
+  util::Graph graph = [&]()
+  {
+    switch (diagramId_)
+    {
+      case FUNCTION_CALL:
+        return diagram.getFunctionCallDiagramLegend();
+      case FUNCTION_USAGE:
+      case CLASS_USAGE:
+        return diagram.getUsageDiagramLegend();
+      default:
+        return util::Graph();
+    }
+  }();
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+
   return;
 }
 
@@ -209,6 +228,22 @@ void PythonServiceHandler::getFileDiagramLegend(
   const std::int32_t diagramId_) 
 {
   LOG(info) << "[PYSERVICE] " << __func__;
+  python::Diagram diagram(_db, _datadir, _context);
+
+  util::Graph graph = [&]()
+  {
+    switch (diagramId_)
+    {
+      case MODULE_DEPENDENCY:
+        return diagram.getModuleDiagramLegend();
+      default:
+        return util::Graph();
+    }
+  }();
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
+
   return;
 }
 
