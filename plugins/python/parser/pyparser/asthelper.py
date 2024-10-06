@@ -6,12 +6,14 @@ class ASTHelper:
     astNodes: List[ast.AST]
     calls: List[ast.Call]
     imports: List[ast.Import | ast.ImportFrom]
+    functions: List[ast.FunctionDef]
     source: str
 
     def __init__(self, source):
         self.astNodes = []
         self.calls = []
         self.imports = []
+        self.functions = []
         self.source = source
         
         try:
@@ -19,11 +21,15 @@ class ASTHelper:
             self.astNodes = list(ast.walk(tree))
             self.calls = self.__getFunctionCalls()
             self.imports = self.__getImports()
+            self.functions = self.__getFunctions()
         except:
             pass
 
     def __getFunctionCalls(self) -> List[ast.Call]:
         return cast(List[ast.Call], list(filter(lambda e : isinstance(e, ast.Call), self.astNodes)))
+
+    def __getFunctions(self) -> List[ast.FunctionDef]:
+        return cast(List[ast.FunctionDef], list(filter(lambda e : isinstance(e, ast.FunctionDef), self.astNodes)))
 
     def __getImports(self) -> List[ast.Import | ast.ImportFrom]:
         return cast(List[ast.Import | ast.ImportFrom], list(filter(lambda e : isinstance(e, ast.Import) or isinstance(e, ast.ImportFrom), self.astNodes)))
@@ -63,3 +69,13 @@ class ASTHelper:
 
         return False
 
+    def isFunctionParam(self, pos: PosInfo):
+        for func in self.functions:
+            if isinstance(func.args, ast.arguments) and func.args.args:
+                for e in func.args.args:
+                    if (e.lineno == pos.line_start and
+                        e.end_lineno == pos.line_end and
+                        e.col_offset == pos.column_start):
+                        return True
+
+        return False
