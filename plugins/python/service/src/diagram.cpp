@@ -176,17 +176,14 @@ void Diagram::addFunctionNode(util::Graph& graph_, const util::Graph::Node& cent
     }
 }
 
-util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph)
+util::Graph::Subgraph Diagram::getFileSubgraph(util::Graph& graph_, const model::PYName& pyname)
 {
-  const util::Graph::Subgraph subgraph = [&]()
-  {
-    if(!addSubgraph) return util::Graph::Subgraph();
-
     const core::FileId fileId = std::to_string(pyname.file_id);
     auto it = m_subgraphs.find(fileId);
 
-    if (it != m_subgraphs.end())
+    if (it != m_subgraphs.end()) {
       return it->second;
+    }
 
     core::FileInfo fileInfo;
     try {
@@ -195,22 +192,24 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
       return util::Graph::Subgraph();
     }
 
-    util::Graph::Subgraph subgraph
-      = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
+    util::Graph::Subgraph subgraph = graph_.getOrCreateSubgraph("cluster_" + fileInfo.path);
+    graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
 
     const std::string pathColor = (pyname.is_builtin && pyname.is_definition) ? "dodgerblue" : "limegreen";
-
-    graph_.setSubgraphAttribute(subgraph, "id", fileInfo.id);
     const std::string coloredLabel =
       "<table border=\"0\" cellborder=\"0\"><tr><td bgcolor=\"" + pathColor + "\">" +
       fileInfo.path +
       "</td></tr></table>";
     graph_.setSubgraphAttribute(subgraph, "label", coloredLabel, true);
 
-    m_subgraphs.insert(it, std::make_pair(fileInfo.path, subgraph));
+    m_subgraphs.emplace(fileInfo.path, subgraph);
 
     return subgraph;
-  }();
+}
+
+util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph)
+{
+  const util::Graph::Subgraph subgraph = (addSubgraph) ? getFileSubgraph(graph_, pyname) : util::Graph::Subgraph();
 
   util::Graph::Node node = graph_.getOrCreateNode(std::to_string(pyname.id), subgraph);
 
@@ -360,13 +359,87 @@ void Diagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const
     graph_.setNodeAttribute(node, "shape", "plaintext");
   }
 
-  util::Graph::Node explanation = graph_.createNode();
+  const util::Graph::Node explanation = graph_.createNode();
   graph_.setNodeAttribute(explanation, "shape", "none");
 
-  util::Graph::Edge edge = graph_.createEdge(node, explanation);
+  const util::Graph::Edge edge = graph_.createEdge(node, explanation);
   graph_.setEdgeAttribute(edge, "style", "invis");
 
   graph_.setNodeAttribute(explanation, "label", text);
+}
+
+util::Graph Diagram::getClassDiagram(const model::PYName& pyname)
+{
+    util::Graph graph;
+    graph.setAttribute("rankdir", "BT");
+
+    const util::Graph::Subgraph subgraph = getFileSubgraph(graph, pyname);
+    util::Graph::Node classNode = graph.getOrCreateNode(std::to_string(pyname.id), subgraph);
+    graph.setNodeAttribute(classNode, "shape", "plaintext");
+
+    graph.setNodeAttribute(classNode, "label", getClassTable(pyname), true);
+
+    return graph;
+}
+
+std::string Diagram::getClassTable(const model::PYName& pyname)
+{
+    auto getVisibility = [](const std::string& str)
+    {
+      if (str.substr(0, 6) == "def __" && str.substr(0, 12) != "def __init__") {
+        return "<font color=\"red\"><b>- </b></font>";
+      } else {
+        return "<font color=\"green\"><b>+ </b></font>";
+      }
+    };
+
+    auto getSignature = [this](const model::PYName& p)
+    {
+      const size_t opening = p.value.find('(');
+      if (p.value.substr(0, 3) != "def" || opening == std::string::npos) {
+        return p.value;
+      }
+
+      std::string sign = p.value.substr(0, opening + 1);
+
+      // Query params
+      const std::vector<model::PYName> params = m_pythonService.queryReferences(std::to_string(p.id), PythonServiceHandler::PARAMETER);
+
+      // Add params to signature
+      bool first = true;
+      for (const model::PYName& e : params) {
+        if (first) {
+          first = false;
+        } else {
+          sign += " ";
+        }
+
+        sign += e.value;
+      }
+
+      sign += ')';
+      return sign;
+    };
+
+    // Query nodes
+    const std::vector<model::PYName> data_members = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::DATA_MEMBER);
+    const std::vector<model::PYName> methods = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::METHOD);
+
+    std::string label = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr><td bgcolor=\"lightblue\">" + pyname.value + "</td></tr>";
+
+    label += "<tr><td align=\"left\">";
+    for (const model::PYName& p : data_members) {
+      label += getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
+    }
+    label += "</td></tr>";
+
+    label += "<tr><td align=\"left\">";
+    for (const model::PYName& p : methods) {
+      label += getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
+    }
+    label += "</td></tr>";
+    label += "</table>";
+    return label;
 }
 } // python
 } // language

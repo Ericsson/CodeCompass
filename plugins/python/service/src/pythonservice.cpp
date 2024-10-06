@@ -119,6 +119,10 @@ void PythonServiceHandler::getDiagramTypes(
       return_.emplace("Function call", FUNCTION_CALL);
   }
 
+  if (pyname.is_definition == true && pyname.type == "class") {
+      return_.emplace("Class Overview", CLASS_OVERVIEW);
+  }
+
   // Usage diagrams
   const size_t count = PythonServiceHandler::queryReferences(astNodeId_, USAGE).size();
 
@@ -151,6 +155,8 @@ void PythonServiceHandler::getDiagram(
       case FUNCTION_USAGE:
       case CLASS_USAGE:
         return diagram.getUsageDiagram(pyname);
+      case CLASS_OVERVIEW:
+        return diagram.getClassDiagram(pyname);
       default:
         return util::Graph();
     }

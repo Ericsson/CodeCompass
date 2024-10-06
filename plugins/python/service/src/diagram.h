@@ -28,6 +28,7 @@ namespace python
       util::Graph getFunctionCallDiagram(const model::PYName& pyname);
       util::Graph getModuleDiagram(const core::FileId& fileId);
       util::Graph getUsageDiagram(const model::PYName& pyname);
+      util::Graph getClassDiagram(const model::PYName& pyname);
       util::Graph getFunctionCallDiagramLegend();
       util::Graph getUsageDiagramLegend();
       util::Graph getModuleDiagramLegend();
@@ -55,6 +56,8 @@ namespace python
       util::Graph::Node addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph);
       util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType);
       util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo);
+      util::Graph::Subgraph getFileSubgraph(util::Graph& graph_, const model::PYName& pyname);
+      std::string getClassTable(const model::PYName& pyname);
   };
 } // python
 } // language

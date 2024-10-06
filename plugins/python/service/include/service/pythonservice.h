@@ -219,7 +219,8 @@ public:
     FUNCTION_CALL,
     MODULE_DEPENDENCY,
     FUNCTION_USAGE,
-    CLASS_USAGE
+    CLASS_USAGE,
+    CLASS_OVERVIEW
   };
 
   model::PYName queryNodeByID(const std::string& id);
