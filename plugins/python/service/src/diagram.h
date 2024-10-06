@@ -50,7 +50,7 @@ namespace python
       core::ProjectServiceHandler m_projectService;
       std::map<core::FileId, util::Graph::Subgraph> m_subgraphs;
       void addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType);
-      void addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text);
+      void addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text, bool shape = true);
       void decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeType& nodeType);
       util::Graph::Node addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph);
       util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType);

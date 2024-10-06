@@ -311,8 +311,8 @@ util::Graph Diagram::getFunctionCallDiagramLegend()
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
 
-    addLegendNode(graph, ImportedBuiltinFilePathNode, "Builtin file path");
-    addLegendNode(graph, ImportedFilePathNode, "File path");
+    addLegendNode(graph, ImportedBuiltinFilePathNode, "Builtin file path", false);
+    addLegendNode(graph, ImportedFilePathNode, "File path", false);
     addLegendNode(graph, FunctionCallNode, "Function call without definition");
     addLegendNode(graph, FunctionCallDefinitionNode, "Function call");
     addLegendNode(graph, FunctionCallerNode, "Line of code calling selected node");
@@ -327,8 +327,8 @@ util::Graph Diagram::getUsageDiagramLegend()
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
 
-    addLegendNode(graph, ImportedBuiltinFilePathNode, "Builtin module path");
-    addLegendNode(graph, ImportedFilePathNode, "Module path");
+    addLegendNode(graph, ImportedBuiltinFilePathNode, "Builtin module path", false);
+    addLegendNode(graph, ImportedFilePathNode, "Module path", false);
     addLegendNode(graph, FunctionCallNode, "Function call");
     addLegendNode(graph, UsageNode, "Usage node");
     addLegendNode(graph, CenterNode, "Selected node");
@@ -341,7 +341,7 @@ util::Graph Diagram::getModuleDiagramLegend()
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
 
-    addLegendNode(graph, ImportedNode, "Imported node");
+    addLegendNode(graph, ImportedNode, "Imported definition");
     addLegendNode(graph, ImportedBuiltinFilePathNode, "Imported builtin module");
     addLegendNode(graph, ImportedFilePathNode, "Imported module");
     addLegendNode(graph, ImportsFilePathNode, "Module importing selected node");
@@ -350,11 +350,15 @@ util::Graph Diagram::getModuleDiagramLegend()
     return graph;
 }
 
-void Diagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text)
+void Diagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text, bool shape)
 {
   util::Graph::Node node = graph_.createNode();
   graph_.setNodeAttribute(node, "label", "");
   decorateNode(graph_, node, nodeType);
+
+  if (!shape) {
+    graph_.setNodeAttribute(node, "shape", "plaintext");
+  }
 
   util::Graph::Node explanation = graph_.createNode();
   graph_.setNodeAttribute(explanation, "shape", "none");
