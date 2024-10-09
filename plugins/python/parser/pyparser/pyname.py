@@ -1,7 +1,6 @@
 from jedi.api.classes import Name
 from typing import List
-from hashlib import sha1
-from parserutil import fnvHash
+from parserutil import fnvHash, getHashName
 from parserlog import log, bcolors
 from asthelper import ASTHelper
 from posinfo import PosInfo
@@ -10,6 +9,7 @@ from parserconfig import ParserConfig
 
 class PYName:
     id: int
+    path: str | None
     name: Name
     pos: PosInfo
     refid: int
@@ -19,8 +19,9 @@ class PYName:
 
     def __init__(self, name: Name):
         self.name = name
+        self.path = str(self.name.module_path) if self.name.module_path else None
         self.pos = self.__getNamePosInfo()
-        self.hashName = self.__getHashName()
+        self.hashName = getHashName(self.path, self.pos)
         self.refid = self.hashName
         self.defs = []
         self.asthelper = None
@@ -53,8 +54,8 @@ class PYName:
         return self
 
     def appendModulePath(self, import_list):
-        if self.name.module_path:
-           import_list.append(str(self.name.module_path))
+        if self.path:
+           import_list.append(self.path)
 
         return self
 
@@ -75,10 +76,10 @@ class PYName:
             else:
                 pos.value = self.name.get_line_code()[pos.column_start:]
 
-        if (self.name.module_path and
+        if (self.path and
             pos.line_start == 0 and pos.line_end == 0 and
             pos.column_start == 0 and pos.column_end == 0):
-            pos.value = str(self.name.module_path).split("/")[-1]
+            pos.value = self.path.split("/")[-1]
 
         return pos
     
@@ -87,7 +88,6 @@ class PYName:
         node["id"] = self.hashName
         node["ref_id"] = self.refid
         node["module_name"] = self.name.module_name
-        node["module_path"] = str(self.name.module_path)
         node["full_name"] = self.name.full_name if self.name.full_name else ""
 
         node["line_start"] = self.pos.line_start
@@ -118,17 +118,15 @@ class PYName:
 
         return node
 
-    def __getHashName(self) -> int:
-        s = f"{str(self.name.module_path)}|{self.pos.line_start}|{self.pos.line_end}|{self.pos.column_start}|{self.pos.column_end}".encode("utf-8")
-        hash = int(sha1(s).hexdigest(), 16) & 0xffffffffffffffff
-        return hash
-
     def __getFileId(self):
-        return fnvHash(str(self.name.module_path))
+        if self.path:
+            return fnvHash(self.path)
+        else:
+            return 0
     
     def __reportMissingDefinition(self, result):
         if not self.name.is_definition() and self.name.type == 'module':
-            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {str(self.name.module_path)} line = {self.pos.line_start})")
+            log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.path} line = {self.pos.line_start})")
             result["status"] = "partial"
 
     def __getParentFunction(self):
