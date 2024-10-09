@@ -165,13 +165,13 @@ jobs:
           zip -Rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip *.c *.h *.cpp *.hpp *.cxx *.hxx *.ixx *.js compile_commands.json
 
       - name: Upload CodeCompass binaries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
 
       - name: Upload CodeCompass compile-time source files
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
@@ -241,13 +241,13 @@ jobs:
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
 
       - name: Download CodeCompass binaries
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
           path: ${{github.workspace}}/artifacts
 
       - name: Download CodeCompass compile-time source files
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts
