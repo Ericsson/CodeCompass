@@ -3,12 +3,13 @@ import { IconButton, Menu, MenuItem, Modal, Tooltip } from '@mui/material';
 import { ChevronRight, Close } from '@mui/icons-material';
 import { TabName } from 'enums/tab-enum';
 import {
-  getCppAstNodeInfo,
-  getCppDiagramTypes,
-  getCppDocumentation,
-  getCppReferenceTypes,
-  getCppReferences,
-} from 'service/cpp-service';
+  createClient,
+  getAstNodeInfo,
+  getDiagramTypes,
+  getDocumentation,
+  getReferenceTypes,
+  getReferences,
+} from 'service/language-service';
 import { getAsHTMLForNode } from 'service/cpp-reparse-service';
 import { AstNodeInfo, Range } from '@thrift-generated';
 import { convertSelectionRangeToString } from 'utils/utils';
@@ -52,10 +53,13 @@ export const EditorContextMenu = ({
   useEffect(() => {
     if (!appCtx.languageNodeId) return;
     const init = async () => {
-      const initAstNodeInfo = await getCppAstNodeInfo(appCtx.languageNodeId);
+      const fileInfo = await getFileInfo(appCtx.projectFileId);
+      createClient(appCtx.workspaceId, fileInfo?.type);
+
+      const initAstNodeInfo = await getAstNodeInfo(appCtx.languageNodeId);
       setAstNodeInfo(initAstNodeInfo);
 
-      const initDiagramTypes = await getCppDiagramTypes(appCtx.languageNodeId);
+      const initDiagramTypes = await getDiagramTypes(appCtx.languageNodeId);
       setDiagramTypes(initDiagramTypes);
     };
     init();
@@ -69,7 +73,7 @@ export const EditorContextMenu = ({
   };
 
   const getDocs = async () => {
-    const initDocs = await getCppDocumentation(astNodeInfo?.id as string);
+    const initDocs = await getDocumentation(astNodeInfo?.id as string);
     const fileInfo = await getFileInfo(appCtx.projectFileId as string);
     const parser = new DOMParser();
     const parsedHTML = parser.parseFromString(initDocs, 'text/html');
@@ -115,8 +119,8 @@ export const EditorContextMenu = ({
   const jumpToDef = async () => {
     if (!astNodeInfo) return;
 
-    const refTypes = await getCppReferenceTypes(astNodeInfo.id as string);
-    const defRefs = await getCppReferences(
+    const refTypes = await getReferenceTypes(astNodeInfo.id as string);
+    const defRefs = await getReferences(
       astNodeInfo.id as string,
       refTypes.get('Definition') as number,
       astNodeInfo.tags ?? []
