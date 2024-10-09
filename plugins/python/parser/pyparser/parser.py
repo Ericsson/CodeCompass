@@ -7,6 +7,7 @@ from parserlog import log, bcolors
 from asthelper import ASTHelper
 from pyname import PYName
 from parserconfig import ParserConfig
+from nodeinfo import NodeInfo
 from pyreference import PYReference
 from pybuiltin import PYBuiltin
 
@@ -75,7 +76,7 @@ def parse(path: str, config: ParserConfig):
 
     PYBuiltin.findBuiltins(config)
 
-    nodes: dict[int, PYName] = {}
+    nodes: dict[int, NodeInfo] = {}
 
     with open(path) as f:
         try:
@@ -84,7 +85,7 @@ def parse(path: str, config: ParserConfig):
             script = jedi.Script(source, path=path, project=config.project)
             names = script.get_names(references = True, all_scopes = True)
 
-            asthelper = ASTHelper(source)
+            asthelper = ASTHelper(path, source)
             pyref = PYReference(config, script, names)
 
             for x in names:
@@ -109,6 +110,6 @@ def parse(path: str, config: ParserConfig):
 
     return result
 
-def putInMap(hashmap, node):
-    hashmap[node["id"]] = node
+def putInMap(hashmap: dict[int, NodeInfo], node: NodeInfo):
+    hashmap[node.id] = node
 

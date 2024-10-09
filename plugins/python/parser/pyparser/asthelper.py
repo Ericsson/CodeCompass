@@ -7,13 +7,15 @@ class ASTHelper:
     calls: List[ast.Call]
     imports: List[ast.Import | ast.ImportFrom]
     functions: List[ast.FunctionDef]
+    path: str
     source: str
 
-    def __init__(self, source):
+    def __init__(self, path, source):
         self.astNodes = []
         self.calls = []
         self.imports = []
         self.functions = []
+        self.path = path
         self.source = source
         
         try:

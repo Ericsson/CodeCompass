@@ -6,6 +6,7 @@ from asthelper import ASTHelper
 from posinfo import PosInfo
 from pybuiltin import PYBuiltin
 from parserconfig import ParserConfig
+from nodeinfo import NodeInfo
 
 class PYName:
     id: int
@@ -83,38 +84,34 @@ class PYName:
 
         return pos
     
-    def getNodeInfo(self):
-        node = {}
-        node["id"] = self.hashName
-        node["ref_id"] = self.refid
-        node["module_name"] = self.name.module_name
-        node["full_name"] = self.name.full_name if self.name.full_name else ""
+    def getNodeInfo(self) -> NodeInfo:
+        node = NodeInfo()
+        node.id = self.hashName
+        node.ref_id = self.refid
+        node.module_name = self.name.module_name
+        node.full_name = self.name.full_name if self.name.full_name else ""
 
-        node["line_start"] = self.pos.line_start
-        node["line_end"] = self.pos.line_end
-        node["column_start"] = self.pos.column_start + 1
-        node["column_end"] = self.pos.column_end + 1
-        node["value"] = self.pos.value
+        node.line_start = self.pos.line_start
+        node.line_end = self.pos.line_end
+        node.column_start = self.pos.column_start + 1
+        node.column_end = self.pos.column_end + 1
+        node.value = self.pos.value
 
-        node["type"] = self.name.type
-        node["is_definition"] = self.name.is_definition()
-        node["file_id"] = self.__getFileId()
-        node["type_hint"] = self.__getNameTypeHint()
-        node["is_builtin"] = PYBuiltin.isBuiltin(self.name) or any(list(map(lambda x : PYBuiltin.isBuiltin(x.name), self.defs)))
+        node.type = self.name.type
+        node.is_definition = self.name.is_definition()
+        node.file_id = self.__getFileId()
+        node.type_hint = self.__getNameTypeHint()
+        node.is_builtin = PYBuiltin.isBuiltin(self.name) or any(list(map(lambda x : PYBuiltin.isBuiltin(x.name), self.defs)))
 
         parent = self.name.parent()
-        node["parent"] = PYName(parent).hashName if parent else node["id"]
-
-        node["is_call"] = False
-        node["is_import"] = False
+        node.parent = PYName(parent).hashName if parent else node.id
+        node.parent_function = self.__getParentFunction()
 
         if self.asthelper:
-            node["is_call"] = self.asthelper.isFunctionCall(self.pos)
-            node["is_import"] = self.asthelper.isImport(self.pos)
-            if node["type"] == "param":
-                node["type"] = "astparam" if self.asthelper.isFunctionParam(self.pos) else "param"
-
-        node["parent_function"] = self.__getParentFunction()
+            node.is_call = self.asthelper.isFunctionCall(self.pos)
+            node.is_import = self.asthelper.isImport(self.pos)
+            if node.type == "param":
+                node.type = "astparam" if self.asthelper.isFunctionParam(self.pos) else "param"
 
         return node
 

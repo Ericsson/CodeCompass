@@ -109,23 +109,23 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
       python::object node = nodes[i];
 
       model::PYName pyname;
-      pyname.id = python::extract<uint64_t>(node["id"]);
-      pyname.ref_id = python::extract<uint64_t>(node["ref_id"]);
-      pyname.parent = python::extract<uint64_t>(node["parent"]);
-      pyname.parent_function = python::extract<uint64_t>(node["parent_function"]);
-      pyname.full_name = python::extract<std::string>(node["full_name"]);
-      pyname.is_definition = python::extract<bool>(node["is_definition"]);
-      pyname.is_import = python::extract<bool>(node["is_import"]);
-      pyname.is_builtin = python::extract<bool>(node["is_builtin"]);
-      pyname.line_start = python::extract<uint64_t>(node["line_start"]);
-      pyname.line_end = python::extract<uint64_t>(node["line_end"]);
-      pyname.column_start = python::extract<uint64_t>(node["column_start"]);
-      pyname.column_end = python::extract<uint64_t>(node["column_end"]);
-      pyname.file_id = python::extract<uint64_t>(node["file_id"]);
-      pyname.value = python::extract<std::string>(node["value"]);
-      pyname.type = python::extract<std::string>(node["type"]);
-      pyname.type_hint = python::extract<std::string>(node["type_hint"]);
-      pyname.is_call = python::extract<bool>(node["is_call"]);
+      pyname.id = python::extract<uint64_t>(node.attr("id"));
+      pyname.ref_id = python::extract<uint64_t>(node.attr("ref_id"));
+      pyname.parent = python::extract<uint64_t>(node.attr("parent"));
+      pyname.parent_function = python::extract<uint64_t>(node.attr("parent_function"));
+      pyname.full_name = python::extract<std::string>(node.attr("full_name"));
+      pyname.is_definition = python::extract<bool>(node.attr("is_definition"));
+      pyname.is_import = python::extract<bool>(node.attr("is_import"));
+      pyname.is_builtin = python::extract<bool>(node.attr("is_builtin"));
+      pyname.line_start = python::extract<uint64_t>(node.attr("line_start"));
+      pyname.line_end = python::extract<uint64_t>(node.attr("line_end"));
+      pyname.column_start = python::extract<uint64_t>(node.attr("column_start"));
+      pyname.column_end = python::extract<uint64_t>(node.attr("column_end"));
+      pyname.file_id = python::extract<uint64_t>(node.attr("file_id"));
+      pyname.value = python::extract<std::string>(node.attr("value"));
+      pyname.type = python::extract<std::string>(node.attr("type"));
+      pyname.type_hint = python::extract<std::string>(node.attr("type_hint"));
+      pyname.is_call = python::extract<bool>(node.attr("is_call"));
 
       // Put in map
       if(map.find(pyname.id) == map.end())
