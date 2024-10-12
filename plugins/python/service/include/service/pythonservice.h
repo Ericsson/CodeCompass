@@ -200,6 +200,8 @@ public:
     PARENT,
 
     PARENT_FUNCTION,
+
+    ANNOTATION,
   };
 
   enum FileReferenceType

@@ -375,6 +375,7 @@ util::Graph Diagram::getClassDiagram(const model::PYName& pyname)
 
     const util::Graph::Subgraph subgraph = getFileSubgraph(graph, pyname);
     util::Graph::Node classNode = graph.getOrCreateNode(std::to_string(pyname.id), subgraph);
+    graph.setNodeAttribute(classNode, "fontname", "Noto Serif");
     graph.setNodeAttribute(classNode, "shape", "plaintext");
 
     graph.setNodeAttribute(classNode, "label", getClassTable(pyname), true);
@@ -386,21 +387,48 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
 {
     auto getVisibility = [](const std::string& str)
     {
-      if (str.substr(0, 6) == "def __" && str.substr(0, 12) != "def __init__") {
-        return "<font color=\"red\"><b>- </b></font>";
+      if (str.substr(0, 6) == "def __") {
+        return std::string("<font color=\"red\"><b>- </b></font>");
       } else {
-        return "<font color=\"green\"><b>+ </b></font>";
+        return std::string("<font color=\"green\"><b>+ </b></font>");
       }
     };
 
-    auto getSignature = [this](const model::PYName& p)
+    auto highlightVariable = [](const std::string& str, const std::string& baseColor)
+    {
+      std::string p = (str.back() == ',') ? str.substr(0, str.size() - 1) : str;
+
+      const size_t col = p.find(":");
+      const size_t eq = p.find("=");
+
+      if (col == std::string::npos) {
+        p = "<font color=\"" + baseColor + "\">" + p + "</font>";
+      } else if (eq == std::string::npos) {
+        p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
+          "<font color=\"darkorange\">" + p.substr(col + 1) + "</font>";
+      } else {
+        p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
+          "<font color=\"darkorange\">" + p.substr(col + 1, eq - col - 1) + "</font>" +
+          "<font color=\"" + baseColor + "\">" + p.substr(eq) + "</font>";
+      }
+
+      if (str.back() == ',') {
+        p += ',';
+      }
+
+      return p;
+    };
+
+    auto getSignature = [this, &highlightVariable](const model::PYName& p)
     {
       const size_t opening = p.value.find('(');
       if (p.value.substr(0, 3) != "def" || opening == std::string::npos) {
-        return p.value;
+        return highlightVariable(p.value, "black");
       }
 
-      std::string sign = p.value.substr(0, opening + 1);
+      // Remove "def"
+      std::string sign = p.value.substr(3, opening - 3);
+      sign += '(';
 
       // Query params
       const std::vector<model::PYName> params = m_pythonService.queryReferences(std::to_string(p.id), PythonServiceHandler::PARAMETER);
@@ -408,16 +436,28 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
       // Add params to signature
       bool first = true;
       for (const model::PYName& e : params) {
+        // Skip param "self"
+        if (first && e.value.substr(0,4) == "self") {
+          continue;
+        }
+
         if (first) {
           first = false;
         } else {
           sign += " ";
         }
 
-        sign += e.value;
+        sign += highlightVariable(e.value, "darkgreen");
       }
 
       sign += ')';
+
+      // Query return annotation
+      const std::vector<model::PYName> annotations = m_pythonService.queryReferences(std::to_string(p.id), PythonServiceHandler::ANNOTATION);
+      if(annotations.size() == 1) {
+        sign += "<font color=\"blue\">  ->  " + annotations[0].value + "</font>";
+      }
+
       return sign;
     };
 
@@ -425,17 +465,17 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
     const std::vector<model::PYName> data_members = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::DATA_MEMBER);
     const std::vector<model::PYName> methods = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::METHOD);
 
-    std::string label = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr><td bgcolor=\"lightblue\">" + pyname.value + "</td></tr>";
+    std::string label = "<table border=\"0\" cellborder=\"1\" cellspacing=\"0\"><tr><td bgcolor=\"dodgerblue\">" + pyname.value + "</td></tr>";
 
     label += "<tr><td align=\"left\">";
     for (const model::PYName& p : data_members) {
-      label += getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
+      label += "<br align=\"left\" />" + getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
     }
     label += "</td></tr>";
 
     label += "<tr><td align=\"left\">";
     for (const model::PYName& p : methods) {
-      label += getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
+      label += "<br align=\"left\" />" + getVisibility(p.value) + getSignature(p) + "<br align=\"left\" />";
     }
     label += "</td></tr>";
     label += "</table>";

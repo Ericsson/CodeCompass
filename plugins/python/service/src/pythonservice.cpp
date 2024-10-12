@@ -162,8 +162,13 @@ void PythonServiceHandler::getDiagram(
     }
   }();
 
-  if (graph.nodeCount() != 0)
-    return_ = graph.output(util::Graph::SVG);
+  if (graph.nodeCount() != 0) {
+    if (diagramId_ == CLASS_OVERVIEW) {
+      return_ = graph.output(util::Graph::CAIRO_SVG);
+    } else {
+      return_ = graph.output(util::Graph::SVG);
+    }
+  }
   
   return;
 }
@@ -478,6 +483,9 @@ std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
         break;
       case THIS_CALLS:
         nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::is_call == true) + order_by);
+        break;
+      case ANNOTATION:
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "annotation") + order_by);
         break;
     }
 
