@@ -88,6 +88,9 @@ def parse(path: str, config: ParserConfig):
             asthelper = ASTHelper(path, source)
             pyref = PYReference(config, script, names)
 
+            for e in asthelper.getAnnotations():
+                putInMap(nodes, e)
+
             for x in names:
                 defs = pyref.getDefs(x)
                 refs = pyref.getFileRefs(x)
