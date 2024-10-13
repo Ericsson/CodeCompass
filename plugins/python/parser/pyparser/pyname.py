@@ -110,8 +110,14 @@ class PYName:
         if self.asthelper:
             node.is_call = self.asthelper.isFunctionCall(self.pos)
             node.is_import = self.asthelper.isImport(self.pos)
+
             if node.type == "param":
                 node.type = "astparam" if self.asthelper.isFunctionParam(self.pos) else "param"
+
+            subclass = self.asthelper.getSubclass(self.pos)
+            if subclass:
+                node.type = "baseclass"
+                node.parent = subclass
 
         return node
 

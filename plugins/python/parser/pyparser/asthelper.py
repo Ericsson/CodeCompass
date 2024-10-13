@@ -9,6 +9,7 @@ class ASTHelper:
     calls: List[ast.Call]
     imports: List[ast.Import | ast.ImportFrom]
     functions: List[ast.FunctionDef]
+    classes: List[ast.ClassDef]
     path: str
     source: str
     lines: List[str]
@@ -18,6 +19,7 @@ class ASTHelper:
         self.calls = []
         self.imports = []
         self.functions = []
+        self.classes = []
         self.path = path
         self.file_id = fnvHash(self.path)
         self.source = source
@@ -26,9 +28,11 @@ class ASTHelper:
         try:
             tree = ast.parse(source)
             self.astNodes = list(ast.walk(tree))
+
             self.calls = self.__getFunctionCalls()
             self.imports = self.__getImports()
             self.functions = self.__getFunctions()
+            self.classes = self.__getClasses()
         except:
             pass
 
@@ -37,6 +41,9 @@ class ASTHelper:
 
     def __getFunctions(self) -> List[ast.FunctionDef]:
         return cast(List[ast.FunctionDef], list(filter(lambda e : isinstance(e, ast.FunctionDef), self.astNodes)))
+
+    def __getClasses(self) -> List[ast.ClassDef]:
+        return cast(List[ast.ClassDef], list(filter(lambda e : isinstance(e, ast.ClassDef), self.astNodes)))
 
     def __getImports(self) -> List[ast.Import | ast.ImportFrom]:
         return cast(List[ast.Import | ast.ImportFrom], list(filter(lambda e : isinstance(e, ast.Import) or isinstance(e, ast.ImportFrom), self.astNodes)))
@@ -53,7 +60,7 @@ class ASTHelper:
                     return True
 
             elif (isinstance(func, ast.Attribute)):
-                if func.end_col_offset:
+                if isinstance(func.end_col_offset, int):
                     col_start = func.end_col_offset - len(func.attr)
                 else:
                     col_start = 0
@@ -87,15 +94,36 @@ class ASTHelper:
 
         return False
 
+    def getSubclass(self, pos: PosInfo) -> int | None:
+        for cls in self.classes:
+            if not (isinstance(cls.lineno, int) and
+                isinstance(cls.end_lineno, int) and
+                isinstance(cls.col_offset, int)):
+                continue
+
+            for e in cls.bases:
+                if (isinstance(e, ast.Name) and
+                    e.lineno == pos.line_start and
+                    e.end_lineno == pos.line_end and
+                    e.col_offset == pos.column_start and
+                    e.end_col_offset == pos.column_end):
+
+                    col_end = len(self.lines[cls.end_lineno - 1])
+                    subpos = PosInfo(line_start=cls.lineno, line_end=cls.end_lineno, column_start=cls.col_offset, column_end=col_end)
+                    subhash = getHashName(self.path, subpos)
+                    return subhash
+
+        return None
+
     def getAnnotations(self):
         results = []
 
         for func in self.functions:
             if not (isinstance(func.returns, ast.Subscript) and
-                func.lineno and
-                func.end_lineno and
-                func.col_offset and
-                func.end_col_offset):
+                isinstance(func.lineno, int) and
+                isinstance(func.end_lineno, int) and
+                isinstance(func.col_offset, int) and
+                isinstance(func.end_col_offset, int)):
                 continue
 
             sub = func.returns
