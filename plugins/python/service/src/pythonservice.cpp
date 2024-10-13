@@ -287,6 +287,7 @@ void PythonServiceHandler::getReferenceTypes(
     {
       return_.emplace("Method", METHOD);
       return_.emplace("Data member", DATA_MEMBER);
+      return_.emplace("Base class", BASE_CLASS);
     }
   }
 
@@ -486,6 +487,12 @@ std::vector<model::PYName> PythonServiceHandler::queryReferences(const core::Ast
         break;
       case ANNOTATION:
         nodes = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "annotation") + order_by);
+        break;
+      case BASE_CLASS:
+        odb::result<model::PYName> bases = _db->query<model::PYName>((odb::query<model::PYName>::parent == pyname.id && odb::query<model::PYName>::type == "baseclass"));
+        const std::vector<std::uint64_t> bases_refs = PythonServiceHandler::transformReferences(std::vector<model::PYName>(bases.begin(), bases.end()), model::REF_ID);
+
+        nodes = _db->query<model::PYName>((odb::query<model::PYName>::ref_id.in_range(bases_refs.begin(), bases_refs.end()) && odb::query<model::PYName>::is_definition == true && odb::query<model::PYName>::is_import == false) + order_by);
         break;
     }
 
