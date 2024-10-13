@@ -373,12 +373,29 @@ util::Graph Diagram::getClassDiagram(const model::PYName& pyname)
     util::Graph graph;
     graph.setAttribute("rankdir", "BT");
 
-    const util::Graph::Subgraph subgraph = getFileSubgraph(graph, pyname);
-    util::Graph::Node classNode = graph.getOrCreateNode(std::to_string(pyname.id), subgraph);
-    graph.setNodeAttribute(classNode, "fontname", "Noto Serif");
-    graph.setNodeAttribute(classNode, "shape", "plaintext");
+    auto setAttributes = [this, &graph](const util::Graph::Node& node, const model::PYName& p) {
+      graph.setNodeAttribute(node, "fontname", "Noto Serif");
+      graph.setNodeAttribute(node, "shape", "plaintext");
+      graph.setNodeAttribute(node, "label", getClassTable(p), true);
+    };
 
-    graph.setNodeAttribute(classNode, "label", getClassTable(pyname), true);
+    util::Graph::Node classNode = graph.getOrCreateNode(std::to_string(pyname.id), getFileSubgraph(graph, pyname));
+    setAttributes(classNode, pyname);
+
+    // Query baseclasses
+    const std::vector<model::PYName> bases = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::BASE_CLASS);
+
+    for (const model::PYName& p : bases) {
+      if (p.type != "class") {
+        continue;
+      }
+
+      util::Graph::Node node = graph.getOrCreateNode(std::to_string(p.id), getFileSubgraph(graph, p));
+      setAttributes(node, p);
+
+      util::Graph::Edge edge = graph.createEdge(classNode, node);
+      graph.setEdgeAttribute(edge, "arrowhead", "empty");
+    }
 
     return graph;
 }
@@ -396,6 +413,7 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
 
     auto highlightVariable = [](const std::string& str, const std::string& baseColor)
     {
+      // Remove comma
       std::string p = (str.back() == ',') ? str.substr(0, str.size() - 1) : str;
 
       const size_t col = p.find(":");
@@ -410,10 +428,6 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
         p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
           "<font color=\"darkorange\">" + p.substr(col + 1, eq - col - 1) + "</font>" +
           "<font color=\"" + baseColor + "\">" + p.substr(eq) + "</font>";
-      }
-
-      if (str.back() == ',') {
-        p += ',';
       }
 
       return p;
@@ -444,7 +458,7 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
         if (first) {
           first = false;
         } else {
-          sign += " ";
+          sign += ", ";
         }
 
         sign += highlightVariable(e.value, "darkgreen");
