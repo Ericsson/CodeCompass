@@ -30,13 +30,18 @@ class ASTHelper:
         try:
             tree = ast.parse(source)
             self.astNodes = list(ast.walk(tree))
-
-            self.calls = self.__getFunctionCalls()
-            self.imports = self.__getImports()
-            self.functions = self.__getFunctions()
-            self.classes = self.__getClasses()
         except:
             pass
+
+        if config.ast:
+            if self.config.ast_function_call:
+                self.calls = self.__getFunctionCalls()
+
+            if self.config.ast_import:
+                self.imports = self.__getImports()
+
+            self.functions = self.__getFunctions()
+            self.classes = self.__getClasses()
 
     def __getFunctionCalls(self) -> List[ast.Call]:
         return cast(List[ast.Call], list(filter(lambda e : isinstance(e, ast.Call), self.astNodes)))
@@ -159,7 +164,7 @@ class ASTHelper:
         return None
 
     def getAnnotations(self):
-        if not (self.config.ast_annotations):
+        if not (self.config.ast and self.config.ast_annotations):
             return []
 
         results = []

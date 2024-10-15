@@ -47,7 +47,9 @@ class PYName:
         return self
 
     def addASTHelper(self, asthelper: ASTHelper):
-        self.asthelper = asthelper
+        if self.config and self.config.ast:
+            self.asthelper = asthelper
+
         return self
 
     def addConfig(self, config: ParserConfig):

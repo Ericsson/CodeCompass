@@ -11,6 +11,9 @@ class ParserConfig:
     safe_env: bool = False
     type_hint: bool = False
     file_refs: bool = True
+    ast: bool = True
+    ast_function_call: bool = True
+    ast_import: bool = True
     ast_annotations: bool = True
     ast_inheritance: bool = True
     ast_function_signature: bool = True
