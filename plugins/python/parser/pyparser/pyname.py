@@ -7,6 +7,7 @@ from posinfo import PosInfo
 from pybuiltin import PYBuiltin
 from parserconfig import ParserConfig
 from nodeinfo import NodeInfo
+from parseresult import ParseResult
 
 class PYName:
     id: int
@@ -127,10 +128,10 @@ class PYName:
         else:
             return 0
     
-    def __reportMissingDefinition(self, result):
+    def __reportMissingDefinition(self, result: ParseResult):
         if not self.name.is_definition() and self.name.type == 'module':
             log(f"{bcolors.FAIL}Missing {self.name.description} (file = {self.path} line = {self.pos.line_start})")
-            result["status"] = "partial"
+            result.status = "partial"
 
     def __getParentFunction(self):
         try:

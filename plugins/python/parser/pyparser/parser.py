@@ -8,6 +8,7 @@ from asthelper import ASTHelper
 from pyname import PYName
 from parserconfig import ParserConfig
 from nodeinfo import NodeInfo
+from parseresult import ParseResult
 from pyreference import PYReference
 from pybuiltin import PYBuiltin
 
@@ -54,12 +55,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
         return results
         
 def parse(path: str, config: ParserConfig):
-    result = {
-        "path": path,
-        "status": "full",
-        "nodes": [],
-        "imports": []
-    }
+    result: ParseResult = ParseResult(path=path)
 
     PYBuiltin.findBuiltins(config)
 
@@ -100,11 +96,11 @@ def parse(path: str, config: ParserConfig):
             if config.stack_trace:
                 traceback.print_exc()
 
-    result["nodes"] = list(nodes.values())
-    result["imports"] = list(imports.keys())
+    result.nodes = list(nodes.values())
+    result.imports = list(imports.keys())
 
-    if len(result["nodes"]) == 0:
-        result["status"] = "none"
+    if len(result.nodes) == 0:
+        result.status = "none"
 
     return result
 

@@ -39,7 +39,7 @@ PythonParser::PythonParser(ParserContext& ctx_): AbstractParser(ctx_)
 void PythonParser::parseProject(const std::string& root_path)
 {
   PYNameMap map;
-  ParseResult parse_result;
+  ParseResultStats parse_result;
   parse_result.full = 0;
   parse_result.partial = 0;
 
@@ -96,12 +96,12 @@ bool PythonParser::accept(const std::string& path_)
   return ext == ".py";
 }
 
-void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseResult& parse_result)
+void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseResultStats& parse_result)
 {
   try {
-    python::object nodes = obj["nodes"];
-    const std::string status = python::extract<std::string>(obj["status"]);
-    const std::string path = python::extract<std::string>(obj["path"]);
+    python::object nodes = obj.attr("nodes");
+    const std::string status = python::extract<std::string>(obj.attr("status"));
+    const std::string path = python::extract<std::string>(obj.attr("path"));
 
     const int len = python::len(nodes);
     for (int i = 0; i < len; i++)
@@ -154,7 +154,7 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
 
     // Additional paths (example: builtin definition paths)
     // These files need to be added to db
-    python::object imports = obj["imports"];
+    python::object imports = obj.attr("imports");
     for (int i = 0; i < python::len(imports); i++)
     {
       std::string p = python::extract<std::string>(imports[i]);
