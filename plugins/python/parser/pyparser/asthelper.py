@@ -3,6 +3,7 @@ from typing import cast, List
 from posinfo import PosInfo
 from nodeinfo import NodeInfo
 from parserutil import fnvHash, getHashName
+from parserconfig import ParserConfig
 
 class ASTHelper:
     astNodes: List[ast.AST]
@@ -14,7 +15,7 @@ class ASTHelper:
     source: str
     lines: List[str]
 
-    def __init__(self, path, source):
+    def __init__(self, path: str, source: str, config: ParserConfig):
         self.astNodes = []
         self.calls = []
         self.imports = []
@@ -24,6 +25,7 @@ class ASTHelper:
         self.file_id = fnvHash(self.path)
         self.source = source
         self.lines = source.split("\n")
+        self.config = config
         
         try:
             tree = ast.parse(source)
@@ -95,6 +97,9 @@ class ASTHelper:
         return False
 
     def getSubclass(self, pos: PosInfo) -> int | None:
+        if not (self.config.ast_inheritance):
+            return None
+
         for cls in self.classes:
             if not (isinstance(cls.lineno, int) and
                 isinstance(cls.end_lineno, int) and
@@ -116,6 +121,9 @@ class ASTHelper:
         return None
 
     def getAnnotations(self):
+        if not (self.config.ast_annotations):
+            return []
+
         results = []
 
         for func in self.functions:

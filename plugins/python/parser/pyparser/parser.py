@@ -86,7 +86,7 @@ def parse(path: str, config: ParserConfig):
             script = jedi.Script(source, path=path, project=config.project)
             names = script.get_names(references = True, all_scopes = True)
 
-            asthelper = ASTHelper(path, source)
+            asthelper = ASTHelper(path, source, config)
             pyref = PYReference(config, script, names)
 
             for e in asthelper.getAnnotations():
