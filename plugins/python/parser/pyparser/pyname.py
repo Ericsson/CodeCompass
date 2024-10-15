@@ -54,12 +54,6 @@ class PYName:
         self.config = config
         return self
 
-    def appendModulePath(self, import_list):
-        if self.path:
-           import_list.append(self.path)
-
-        return self
-
     def __getNamePosInfo(self) -> PosInfo:
         pos = PosInfo()
 

@@ -77,6 +77,7 @@ def parse(path: str, config: ParserConfig):
     PYBuiltin.findBuiltins(config)
 
     nodes: dict[int, NodeInfo] = {}
+    imports: dict[str, bool] = {}
 
     with open(path) as f:
         try:
@@ -98,8 +99,14 @@ def parse(path: str, config: ParserConfig):
                 putInMap(nodes, PYName(x).addConfig(config).addDefs(defs, result).addRefs(refs).addASTHelper(asthelper).getNodeInfo())
 
                 for d in defs:
-                    if not (d.hashName in nodes):
-                        putInMap(nodes, d.addConfig(config).appendModulePath(result["imports"]).getNodeInfo())
+                    if not (d.path):
+                        continue
+
+                    # Builtin or library definition
+                    if ((config.venv_path and d.path.startswith(config.venv_path)) or
+                        not (d.path.startswith(config.root_path))):
+                        putInMap(nodes, d.addConfig(config).getNodeInfo())
+                        imports[d.path] = True
 
         except:
             log(f"{bcolors.FAIL}Failed to parse file: {path}")
@@ -107,6 +114,7 @@ def parse(path: str, config: ParserConfig):
                 traceback.print_exc()
 
     result["nodes"] = list(nodes.values())
+    result["imports"] = list(imports.keys())
 
     if len(result["nodes"]) == 0:
         result["status"] = "none"
