@@ -3,7 +3,7 @@ import jedi
 import multiprocessing
 import traceback
 from itertools import repeat
-from parserlog import log, bcolors
+from parserlog import log, bcolors, log_config
 from asthelper import ASTHelper
 from pyname import PYName
 from parserconfig import ParserConfig
@@ -12,22 +12,9 @@ from pyreference import PYReference
 from pybuiltin import PYBuiltin
 
 def parseProject(root_path, venv_path, sys_path, n_proc):
-    log(f"Parsing project: {root_path}")
     config = ParserConfig(root_path=root_path)
-
-    if config.debug:
-        log(f"{bcolors.WARNING}Parsing in debug mode!")
-
-    if not config.safe_env:
-        log(f"{bcolors.WARNING}Creating Python environment in unsafe mode!")
-
-    if config.type_hint:
-        log(f"{bcolors.OKGREEN}Type hint support enabled!")
-    else:
-        log(f"{bcolors.OKBLUE}Type hint support disabled!")
-
-    if config.stack_trace:
-        log(f"{bcolors.WARNING}Stack trace enabled!")
+    log(f"Parsing project: {root_path}")
+    log_config(config)
 
     try:
         if venv_path:
