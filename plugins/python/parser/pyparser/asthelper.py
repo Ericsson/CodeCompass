@@ -120,6 +120,44 @@ class ASTHelper:
 
         return None
 
+    def __getASTValue(self, node: ast.Subscript | ast.Attribute) -> PosInfo | None:
+        line_start = node.lineno - 1
+        line_end = node.end_lineno - 1 if node.end_lineno else line_start
+        col_start = node.col_offset
+        col_end = node.end_col_offset if node.end_col_offset else col_start
+
+        if line_start == line_end:
+            value = self.lines[line_start][col_start:col_end]
+        else:
+            value = self.lines[line_start][col_start:]
+            for l in range(line_start + 1, line_end):
+                value += self.lines[l]
+            value += self.lines[line_end][:col_end]
+
+        if value:
+            return PosInfo(line_start=line_start + 1, line_end=line_end + 1, column_start=node.col_offset, column_end=col_end, value=value)
+        else:
+            return None
+
+    def __getFunctionReturnAnnotation(self, func: ast.FunctionDef) -> PosInfo | None:
+        posinfo = PosInfo()
+        if func.returns:
+            posinfo.line_start = func.returns.lineno
+            posinfo.line_end = func.returns.end_lineno if func.returns.end_lineno else func.returns.lineno
+            posinfo.column_start = func.returns.col_offset
+            posinfo.column_end = func.returns.end_col_offset if func.returns.end_col_offset else func.returns.col_offset
+
+        if isinstance(func.returns, ast.Subscript) or isinstance(func.returns, ast.Attribute):
+            return self.__getASTValue(func.returns)
+        elif isinstance(func.returns, ast.Name) and func.returns.id:
+            posinfo.value = func.returns.id
+            return posinfo
+        elif isinstance(func.returns, ast.Constant):
+            posinfo.value = str(func.returns.value)
+            return posinfo
+
+        return None
+
     def getAnnotations(self):
         if not (self.config.ast_annotations):
             return []
@@ -127,31 +165,16 @@ class ASTHelper:
         results = []
 
         for func in self.functions:
-            if not (isinstance(func.returns, ast.Subscript) and
-                isinstance(func.lineno, int) and
+            if not (isinstance(func.lineno, int) and
                 isinstance(func.end_lineno, int) and
                 isinstance(func.col_offset, int) and
                 isinstance(func.end_col_offset, int)):
                 continue
 
-            sub = func.returns
-            line_start = sub.lineno - 1
-            line_end = sub.end_lineno - 1 if sub.end_lineno else line_start
-            col_start = sub.col_offset
-            col_end = sub.end_col_offset if sub.end_col_offset else col_start
+            subpos = self.__getFunctionReturnAnnotation(func)
 
-            if line_start == line_end:
-                return_type = self.lines[line_start][col_start:col_end]
-            else:
-                return_type = self.lines[line_start][col_start:]
-                for l in range(line_start + 1, line_end):
-                    return_type += self.lines[l]
-                return_type += self.lines[line_end][:col_end]
-
-            if return_type:
+            if subpos:
                 funcpos = PosInfo(line_start=func.lineno, line_end=func.end_lineno, column_start=func.col_offset, column_end=func.end_col_offset)
-                subpos = PosInfo(line_start=sub.lineno, line_end=line_end + 1, column_start=sub.col_offset, column_end=col_end)
-
                 funchash = getHashName(self.path, funcpos)
                 subhash = getHashName(self.path, subpos)
 
@@ -166,8 +189,57 @@ class ASTHelper:
                 nodeinfo.column_end = subpos.column_end
                 nodeinfo.file_id = self.file_id
                 nodeinfo.type = "annotation"
-                nodeinfo.value = return_type
+                nodeinfo.value = subpos.value
 
                 results.append(nodeinfo)
 
         return results
+
+    def getFunctionSignature(self, pos: PosInfo) -> str | None:
+        if not (self.config.ast_function_signature):
+            return None
+
+        for func in self.functions:
+            if not (isinstance(func.lineno, int) and
+                isinstance(func.end_lineno, int) and
+                isinstance(func.col_offset, int) and
+                isinstance(func.end_col_offset, int)):
+                continue
+
+            if not (func.lineno == pos.line_start and
+                func.end_lineno == pos.line_end and
+                func.col_offset == pos.column_start and
+                func.end_col_offset == pos.column_end):
+                continue
+
+            sign = "def " + func.name
+            sign += "("
+
+            first = True
+            for arg in func.args.args:
+                if first:
+                    first = False
+                else:
+                    sign += ", "
+
+                sign += arg.arg
+
+                param_annotation: str | None = None
+                if isinstance(arg.annotation, ast.Name):
+                    param_annotation = arg.annotation.id
+                elif isinstance(arg.annotation, ast.Subscript) or isinstance(arg.annotation, ast.Attribute):
+                    sub = self.__getASTValue(arg.annotation)
+                    param_annotation = sub.value if sub else None
+
+                if param_annotation:
+                    sign += ": " + param_annotation
+
+            sign += ")"
+
+            return_annotation = self.__getFunctionReturnAnnotation(func)
+            if return_annotation:
+                sign += " -> " + return_annotation.value
+
+            return sign
+
+        return None
