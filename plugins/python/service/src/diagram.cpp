@@ -418,16 +418,17 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
 
       const size_t col = p.find(":");
       const size_t eq = p.find("=");
+      const size_t hashtag = p.find("#");
 
-      if (col == std::string::npos) {
-        p = "<font color=\"" + baseColor + "\">" + p + "</font>";
-      } else if (eq == std::string::npos) {
-        p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
-          "<font color=\"darkorange\">" + p.substr(col + 1) + "</font>";
-      } else {
+      if (col != std::string::npos && eq != std::string::npos && col < eq && hashtag == std::string::npos) {
         p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
           "<font color=\"darkorange\">" + p.substr(col + 1, eq - col - 1) + "</font>" +
           "<font color=\"" + baseColor + "\">" + p.substr(eq) + "</font>";
+      } else if (col != std::string::npos && eq == std::string::npos && hashtag == std::string::npos) {
+        p = "<font color=\"" + baseColor + "\">" + p.substr(0, col) + "</font>" + ":" +
+          "<font color=\"darkorange\">" + p.substr(col + 1) + "</font>";
+      } else {
+        p = "<font color=\"" + baseColor + "\">" + p + "</font>";
       }
 
       return p;
