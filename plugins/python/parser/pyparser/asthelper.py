@@ -141,12 +141,19 @@ class ASTHelper:
         else:
             return None
 
-    def __getASTValue(self, node: ast.Subscript | ast.Attribute) -> PosInfo | None:
+    def __getASTValue(self, node: ast.expr) -> PosInfo | None:
         line_end = node.end_lineno if node.end_lineno else node.lineno
         col_end = node.end_col_offset if node.end_col_offset else node.col_offset
 
         pos = PosInfo(line_start=node.lineno, line_end=line_end, column_start=node.col_offset, column_end=col_end)
-        value = self.__getPosValue(pos)
+        value = None
+
+        if isinstance(node, ast.Subscript) or isinstance(node, ast.Attribute):
+            value = self.__getPosValue(pos)
+        elif isinstance(node, ast.Name):
+            value = node.id
+        elif isinstance(node, ast.Constant):
+            value = str(node.value)
 
         if value:
             pos.value = value
@@ -155,23 +162,16 @@ class ASTHelper:
             return None
 
     def __getFunctionReturnAnnotation(self, func: ast.FunctionDef) -> PosInfo | None:
-        posinfo = PosInfo()
         if func.returns:
-            posinfo.line_start = func.returns.lineno
-            posinfo.line_end = func.returns.end_lineno if func.returns.end_lineno else func.returns.lineno
-            posinfo.column_start = func.returns.col_offset
-            posinfo.column_end = func.returns.end_col_offset if func.returns.end_col_offset else func.returns.col_offset
-
-        if isinstance(func.returns, ast.Subscript) or isinstance(func.returns, ast.Attribute):
             return self.__getASTValue(func.returns)
-        elif isinstance(func.returns, ast.Name) and func.returns.id:
-            posinfo.value = func.returns.id
-            return posinfo
-        elif isinstance(func.returns, ast.Constant):
-            posinfo.value = str(func.returns.value)
-            return posinfo
+        else:
+            return None
 
-        return None
+    def __getArgumentAnnotation(self, arg: ast.arg) -> PosInfo | None:
+        if arg.annotation:
+            return self.__getASTValue(arg.annotation)
+        else:
+            return None
 
     def getAnnotations(self):
         if not (self.config.ast and self.config.ast_annotations):
@@ -239,19 +239,13 @@ class ASTHelper:
 
                 sign += arg.arg
 
-                param_annotation: str | None = None
-                if isinstance(arg.annotation, ast.Name):
-                    param_annotation = arg.annotation.id
-                elif isinstance(arg.annotation, ast.Subscript) or isinstance(arg.annotation, ast.Attribute):
-                    sub = self.__getASTValue(arg.annotation)
-                    param_annotation = sub.value if sub else None
-
+                param_annotation: PosInfo | None = self.__getArgumentAnnotation(arg)
                 if param_annotation:
-                    sign += ": " + param_annotation
+                    sign += ": " + param_annotation.value
 
             sign += ")"
 
-            return_annotation = self.__getFunctionReturnAnnotation(func)
+            return_annotation: PosInfo | None = self.__getFunctionReturnAnnotation(func)
             if return_annotation:
                 sign += " -> " + return_annotation.value
 
