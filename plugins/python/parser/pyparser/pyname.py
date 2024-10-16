@@ -109,7 +109,10 @@ class PYName:
             node.is_import = self.asthelper.isImport(self.pos)
 
             if node.type == "param":
-                node.type = "astparam" if self.asthelper.isFunctionParam(self.pos) else "param"
+                param = self.asthelper.getFunctionParam(self.pos)
+                if param:
+                    node.type = "astparam"
+                    node.value = param
 
             if node.type == "function" and node.is_definition and not (node.is_import or node.is_builtin):
                 sign = self.asthelper.getFunctionSignature(self.pos)

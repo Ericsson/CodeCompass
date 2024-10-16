@@ -90,16 +90,15 @@ class ASTHelper:
 
         return False
 
-    def isFunctionParam(self, pos: PosInfo):
+    def getFunctionParam(self, pos: PosInfo) -> str | None:
         for func in self.functions:
             if isinstance(func.args, ast.arguments) and func.args.args:
                 for e in func.args.args:
                     if (e.lineno == pos.line_start and
-                        e.end_lineno == pos.line_end and
                         e.col_offset == pos.column_start):
-                        return True
+                        return self.__getPosValue(pos)
 
-        return False
+        return None
 
     def getSubclass(self, pos: PosInfo) -> int | None:
         if not (self.config.ast_inheritance):
@@ -125,22 +124,33 @@ class ASTHelper:
 
         return None
 
-    def __getASTValue(self, node: ast.Subscript | ast.Attribute) -> PosInfo | None:
-        line_start = node.lineno - 1
-        line_end = node.end_lineno - 1 if node.end_lineno else line_start
-        col_start = node.col_offset
-        col_end = node.end_col_offset if node.end_col_offset else col_start
+    def __getPosValue(self, pos: PosInfo) -> str | None:
+        if not (pos.line_start >= 1 and pos.line_end >= 1):
+            return None
 
-        if line_start == line_end:
-            value = self.lines[line_start][col_start:col_end]
+        if pos.line_start == pos.line_end:
+            value = self.lines[pos.line_start - 1][pos.column_start:pos.column_end]
         else:
-            value = self.lines[line_start][col_start:]
-            for l in range(line_start + 1, line_end):
+            value = self.lines[pos.line_start - 1][pos.column_start:]
+            for l in range(pos.line_start, pos.line_end - 1):
                 value += self.lines[l]
-            value += self.lines[line_end][:col_end]
+            value += self.lines[pos.line_end - 1][:pos.column_end]
 
         if value:
-            return PosInfo(line_start=line_start + 1, line_end=line_end + 1, column_start=node.col_offset, column_end=col_end, value=value)
+            return value
+        else:
+            return None
+
+    def __getASTValue(self, node: ast.Subscript | ast.Attribute) -> PosInfo | None:
+        line_end = node.end_lineno if node.end_lineno else node.lineno
+        col_end = node.end_col_offset if node.end_col_offset else node.col_offset
+
+        pos = PosInfo(line_start=node.lineno, line_end=line_end, column_start=node.col_offset, column_end=col_end)
+        value = self.__getPosValue(pos)
+
+        if value:
+            pos.value = value
+            return pos
         else:
             return None
 
