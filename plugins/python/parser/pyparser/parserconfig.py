@@ -1,13 +1,15 @@
 from dataclasses import dataclass
+from typing import List
 from jedi import Project
 
 @dataclass
 class ParserConfig:
     root_path: str
+    sys_path: List[str]
     venv_path: str | None = None
     project: Project | None = None 
     debug: bool = False
-    stack_trace: bool = True
+    stack_trace: bool = False
     safe_env: bool = False
     type_hint: bool = False
     file_refs: bool = True

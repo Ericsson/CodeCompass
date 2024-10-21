@@ -2,6 +2,7 @@
 #define CC_PARSER_PYTHONPARSER_H
 
 #include <string>
+#include <vector>
 #include <map>
 #include <parser/abstractparser.h>
 #include <parser/parsercontext.h>

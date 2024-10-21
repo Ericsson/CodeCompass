@@ -1,9 +1,6 @@
 #include <pythonparser/pythonparser.h>
 #include <boost/filesystem.hpp>
 #include <util/logutil.h>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace cc
 {
@@ -44,7 +41,6 @@ void PythonParser::parseProject(const std::string& root_path)
   parse_result.partial = 0;
 
   try {
-    std::string venv;
     python::list sys_path;
     int n_proc = _ctx.options["jobs"].as<int>();
 
@@ -57,12 +53,22 @@ void PythonParser::parseProject(const std::string& root_path)
       }
     }
 
-    if (_ctx.options.count("venvpath"))
-    {
-      venv = _ctx.options["venvpath"].as<std::string>();
-    }
+    python::dict settings;
+    settings["root_path"] = root_path;
+    settings["sys_path"] = sys_path;
+    settings["venv_path"] = (_ctx.options.count("venvpath")) ? _ctx.options["venvpath"].as<std::string>() : "";
+    settings["debug"] = (bool)(_ctx.options.count("debug"));
+    settings["stack_trace"] = (bool)(_ctx.options.count("stack-trace"));
+    settings["type_hint"] = (bool)(_ctx.options.count("type-hint"));
+    settings["ast"] = !(_ctx.options.count("disable-ast"));
+    settings["ast_function_call"] = !(_ctx.options.count("disable-ast-function-call"));
+    settings["ast_import"] = !(_ctx.options.count("disable-ast-import"));
+    settings["ast_annotations"] = !(_ctx.options.count("disable-ast-annotations"));
+    settings["ast_inheritance"] = !(_ctx.options.count("disable-ast-inheritance"));
+    settings["ast_function_signature"] = !(_ctx.options.count("disable-ast-function-signature"));
 
-    python::object result_list = m_py_module.attr("parseProject")(root_path, venv, sys_path, n_proc);
+    python::object result_list = m_py_module.attr("parseProject")(settings, n_proc);
+
     for(int i = 0; i < python::len(result_list); i++)
     {
       PythonParser::processFile(result_list[i], map, parse_result);
@@ -195,7 +201,25 @@ extern "C"
       ("venvpath", po::value<std::string>(),
         "Set 'venvpath' to specify the project's Python virtual environment path.")
       ("syspath", po::value<std::vector<std::string>>(),
-        "Additional sys path for the parser.");
+        "Additional sys path for the parser.")
+      ("stack-trace",
+        "Enable error stack trace.")
+      ("type-hint",
+        "Enable type hint parsing.")
+      ("disable-ast",
+        "Disable all AST parsing modules.")
+      ("disable-ast-function-call",
+        "Disable AST function call parsing.")
+      ("disable-ast-import",
+        "Disable AST import parsing.")
+      ("disable-ast-annotations",
+        "Disable AST annotation parsing.")
+      ("disable-ast-inheritance",
+        "Disable AST inheritance parsing.")
+      ("disable-ast-function-signature",
+        "Disable AST function signature parsing.")
+      ("debug",
+        "Enable parsing in debug mode.");
 
     return description;
   }

@@ -12,26 +12,39 @@ from parseresult import ParseResult
 from pyreference import PYReference
 from pybuiltin import PYBuiltin
 
-def parseProject(root_path, venv_path, sys_path, n_proc):
-    config = ParserConfig(root_path=root_path)
-    log(f"Parsing project: {root_path}")
+def parseProject(settings, n_proc):
+    config = ParserConfig(
+        root_path=settings["root_path"],
+        venv_path=settings["venv_path"],
+        sys_path=settings["sys_path"],
+        debug=settings["debug"],
+        stack_trace=settings["stack_trace"],
+        type_hint=settings["type_hint"],
+        ast=settings["ast"],
+        ast_function_call=settings["ast_function_call"],
+        ast_import=settings["ast_import"],
+        ast_annotations=settings["ast_annotations"],
+        ast_inheritance=settings["ast_inheritance"],
+        ast_function_signature=settings["ast_function_signature"]
+    )
+
+    log(f"Parsing project: {config.root_path}")
     log_config(config)
 
     try:
-        if venv_path:
-            jedi.create_environment(venv_path, safe = config.safe_env)
-            config.venv_path = venv_path
-            log(f"{bcolors.OKGREEN}Using virtual environment: {venv_path}")
+        if config.venv_path:
+            jedi.create_environment(config.venv_path, safe = config.safe_env)
+            log(f"{bcolors.OKGREEN}Using virtual environment: {config.venv_path}")
         else:
-            venv_path = None
+            config.venv_path = None
 
-        if sys_path:
-            log(f"{bcolors.OKGREEN}Using additional syspath: {sys_path}")
+        if config.sys_path:
+            log(f"{bcolors.OKGREEN}Using additional syspath: {config.sys_path}")
         
-        config.project = jedi.Project(path = root_path, environment_path = venv_path, added_sys_path = sys_path)
+        config.project = jedi.Project(path = config.root_path, environment_path = config.venv_path, added_sys_path = config.sys_path)
 
     except:
-        log(f"{bcolors.FAIL}Failed to use virtual environment: {venv_path}")
+        log(f"{bcolors.FAIL}Failed to use virtual environment: {config.venv_path}")
         if config.stack_trace:
             traceback.print_exc()
 
@@ -39,7 +52,7 @@ def parseProject(root_path, venv_path, sys_path, n_proc):
     
     log(f"{bcolors.OKGREEN}Using {n_proc} process to parse project")
 
-    for root, dirs, files in os.walk(root_path):
+    for root, dirs, files in os.walk(config.root_path):
         for file in files:
             p = os.path.join(root, file)
             ext = os.path.splitext(p)[1]
