@@ -1,0 +1,9 @@
+[Desktop Entry]
+
+Type=Application
+Version=%PACKAGE_VERSION%
+Name=CodeCompass
+Comment=CodeCompass is a pluginable code comprehension tool.
+Icon=logo
+Terminal=true
+Categories=Development;
