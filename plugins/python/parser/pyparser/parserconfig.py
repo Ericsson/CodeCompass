@@ -13,6 +13,7 @@ class ParserConfig:
     safe_env: bool = False
     type_hint: bool = False
     file_refs: bool = True
+    submodule_discovery: bool = True
     ast: bool = True
     ast_function_call: bool = True
     ast_import: bool = True

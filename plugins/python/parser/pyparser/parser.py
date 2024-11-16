@@ -20,6 +20,7 @@ def parseProject(settings, n_proc):
         debug=settings["debug"],
         stack_trace=settings["stack_trace"],
         type_hint=settings["type_hint"],
+        submodule_discovery=settings["submodule_discovery"],
         ast=settings["ast"],
         ast_function_call=settings["ast_function_call"],
         ast_import=settings["ast_import"],
@@ -31,6 +32,23 @@ def parseProject(settings, n_proc):
     log(f"Parsing project: {config.root_path}")
     log_config(config)
 
+    py_files = []
+    submodule_map = {}
+    for root, dirs, files in os.walk(config.root_path):
+        if config.venv_path and root.startswith(config.venv_path):
+            continue
+
+        for file in files:
+            p = os.path.join(root, file)
+            ext = os.path.splitext(p)[1]
+
+            if ext and ext.lower() == '.py':
+                py_files.append(p)
+
+            if file == '__init__.py':
+                parent_dir = os.path.abspath(os.path.join(root, os.pardir))
+                submodule_map[parent_dir] = True
+
     try:
         if config.venv_path:
             jedi.create_environment(config.venv_path, safe = config.safe_env)
@@ -40,6 +58,11 @@ def parseProject(settings, n_proc):
 
         if config.sys_path:
             log(f"{bcolors.OKGREEN}Using additional syspath: {config.sys_path}")
+
+        submodule_sys_path = list(submodule_map.keys())
+        if config.submodule_discovery and submodule_sys_path:
+            log(f"{bcolors.OKBLUE}Submodule discovery results: {submodule_sys_path}")
+            config.sys_path.extend(submodule_sys_path)
         
         config.project = jedi.Project(path = config.root_path, environment_path = config.venv_path, added_sys_path = config.sys_path)
 
@@ -48,20 +71,7 @@ def parseProject(settings, n_proc):
         if config.stack_trace:
             traceback.print_exc()
 
-    py_files = []
-    
     log(f"{bcolors.OKGREEN}Using {n_proc} process to parse project")
-
-    for root, dirs, files in os.walk(config.root_path):
-        for file in files:
-            p = os.path.join(root, file)
-            ext = os.path.splitext(p)[1]
-            
-            if ext and ext.lower() == '.py':
-                py_files.append(p)
-
-    if config.venv_path:
-        py_files = filter(lambda e : not(e.startswith(config.venv_path)), py_files)
 
     with multiprocessing.Pool(processes=n_proc) as pool:
         results = pool.starmap(parse, zip(py_files, repeat(config)))

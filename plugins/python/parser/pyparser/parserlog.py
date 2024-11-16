@@ -28,6 +28,9 @@ def log_config(config: ParserConfig):
     if config.stack_trace:
         log(f"{bcolors.WARNING}Stack trace enabled!")
 
+    if not (config.submodule_discovery):
+        log(f"{bcolors.WARNING}Submodule discovery disabled!")
+
     if not (config.ast):
         log(f"{bcolors.WARNING}All AST modules disabled!")
 

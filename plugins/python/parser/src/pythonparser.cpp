@@ -60,6 +60,7 @@ void PythonParser::parseProject(const std::string& root_path)
     settings["debug"] = (bool)(_ctx.options.count("debug"));
     settings["stack_trace"] = (bool)(_ctx.options.count("stack-trace"));
     settings["type_hint"] = (bool)(_ctx.options.count("type-hint"));
+    settings["submodule_discovery"] = !(_ctx.options.count("disable-submodule-discovery"));
     settings["ast"] = !(_ctx.options.count("disable-ast"));
     settings["ast_function_call"] = !(_ctx.options.count("disable-ast-function-call"));
     settings["ast_import"] = !(_ctx.options.count("disable-ast-import"));
@@ -206,6 +207,8 @@ extern "C"
         "Enable error stack trace.")
       ("type-hint",
         "Enable type hint parsing.")
+      ("disable-submodule-discovery",
+        "Disable submodule disovery. Submodules will not be added to sys path.")
       ("disable-ast",
         "Disable all AST parsing modules.")
       ("disable-ast-function-call",
