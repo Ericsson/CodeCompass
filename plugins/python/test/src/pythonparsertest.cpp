@@ -15,7 +15,9 @@ class PythonParserTest : public ::testing::Test
 public:
   PythonParserTest() :
     _db(util::connectDatabase(dbConnectionString)),
-    _transaction(_db) {}
+    _transaction(_db)
+  {
+  }
 
 protected:
   std::shared_ptr<odb::database> _db;

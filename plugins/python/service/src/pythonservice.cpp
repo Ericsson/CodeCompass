@@ -1,4 +1,5 @@
 #include <service/pythonservice.h>
+#include <projectservice/projectservice.h>
 #include <util/dbutil.h>
 #include <model/pyname.h>
 #include "diagram.h"

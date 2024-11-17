@@ -22,6 +22,7 @@ target_link_libraries(pythonservice
   util
   model
   pythonmodel
+  mongoose
   projectservice
   languagethrift
   ${THRIFT_LIBTHRIFT_LIBRARIES}

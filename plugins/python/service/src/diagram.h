@@ -1,9 +1,10 @@
 #ifndef CC_SERVICE_PYTHON_DIAGRAM_H
 #define CC_SERVICE_PYTHON_DIAGRAM_H
 
+#include <service/pythonservice.h>
+#include <projectservice/projectservice.h>
 #include <model/pyname.h>
 #include <util/graph.h>
-#include <service/pythonservice.h>
 #include <cstdint>
 #include <string>
 #include <vector>
