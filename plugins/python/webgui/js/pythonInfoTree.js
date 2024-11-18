@@ -6,30 +6,6 @@ require([
   
     model.addService('pythonservice', 'PythonService', LanguageServiceClient);
   
-    function createTagLabels(tags) {
-      var label = '';
-  
-      if (!tags)
-        return label;
-  
-      if (tags.indexOf('static') > -1)
-        label += '<span class="tag tag-static" title="Static">S</span>';
-      if (tags.indexOf('constructor') > -1)
-        label += '<span class="tag tag-constructor" title="Constructor">C</span>';
-      if (tags.indexOf('destructor') > -1)
-        label += '<span class="tag tag-destructor" title="Destructor">D</span>';
-      if (tags.indexOf('implicit') > -1)
-        label += '<span class="tag tag-implicit" title="Implicit">I</span>';
-      if (tags.indexOf('inherited') > -1)
-        label += '<span class="tag tag-inherited" title="Inherited">I</span>';
-      if (tags.indexOf('virtual') > -1)
-        label += '<span class="tag tag-virtual" title="Virtual">V</span>';
-      if (tags.indexOf('global') > -1)
-        label += '<span class="tag tag-global" title="Global">G</span>';
-  
-      return label;
-    }
-  
     function createReferenceCountLabel(label, count) {
       var parsedLabel = $('<div>').append($.parseHTML(label));
       parsedLabel.children('span.reference-count').remove();
@@ -39,51 +15,18 @@ require([
     }
   
     function createLabel(astNodeInfo) {
-      var labelClass = '';
-  
-      if (astNodeInfo.tags.indexOf('implicit') > -1)
-        labelClass = 'label-implicit';
-  
       var labelValue = astNodeInfo.astNodeValue.trim();
 
       if (labelValue.slice(-1) == ':') labelValue = labelValue.substr(0, labelValue.length - 1);
       if(astNodeInfo.astNodeType && !labelValue.includes(':')) labelValue += ' : <span class="label-return-type">' + astNodeInfo.astNodeType + "</span>";
 
-      // Create dom node for return type of a function and place it at the end of
-      // signature.
-      if (astNodeInfo.symbolType === 'Function') {
-        var init = labelValue.slice(0, labelValue.indexOf('('));
-        var returnTypeEnd = init.lastIndexOf(' ');
-  
-        //--- Constructor, destructor doesn't have return type ---//
-  
-        if (returnTypeEnd !== -1) {
-          var funcSignature = init.slice(returnTypeEnd);
-  
-          labelValue = funcSignature
-            + ' : <span class="label-return-type">'
-            + init.slice(0, returnTypeEnd)
-            + "</span>";
-        }
-      }
-  
-      var label = createTagLabels(astNodeInfo.tags)
-        + '<span class="' + labelClass + '">'
+      var label = '<span>'
         + astNodeInfo.range.range.startpos.line   + ':'
         + astNodeInfo.range.range.startpos.column + ': '
         + labelValue
         + '</span>';
   
       return label;
-    }
-  
-    function getCssClass(astNodeInfo) {
-      var tags = astNodeInfo.tags;
-  
-      return tags.indexOf('public')    > -1 ? 'icon-visibility icon-public'  :
-             tags.indexOf('private')   > -1 ? 'icon-visibility icon-private' :
-             tags.indexOf('protected') > -1 ? 'icon-visibility icon-protected' :
-             null;
     }
   
     function loadReferenceNodes(parentNode, nodeInfo, refTypes, scratch) {
@@ -132,7 +75,7 @@ require([
                     refType     : parentNode.refType,
                     nodeInfo    : reference,
                     hasChildren : false,
-                    cssClass    : getCssClass(reference)
+                    cssClass    : null
                   });
                 }
               });
@@ -145,7 +88,7 @@ require([
             refType     : parentNode.refType,
             nodeInfo    : reference,
             hasChildren : false,
-            cssClass    : getCssClass(reference)
+            cssClass    : null
           });
         }
       });
@@ -170,7 +113,7 @@ require([
           refType     : parentNode.refType,
           nodeInfo    : reference,
           hasChildren : false,
-          cssClass    : getCssClass(reference)
+          cssClass    : null
         });
       });
   
@@ -192,8 +135,8 @@ require([
             : elementInfo.name)
         + '</span>';
   
-      var label = createTagLabels(elementInfo.tags)
-        + '<span class="root label">'
+      var label =
+        '<span class="root label">'
         + rootLabel + ': ' + rootValue
         + '</span>';
   
