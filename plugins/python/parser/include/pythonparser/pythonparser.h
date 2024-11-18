@@ -33,7 +33,6 @@ private:
   };
 
   python::object m_py_module;
-  bool accept(const std::string& path_);
   void processFile(const python::object& obj, PYNameMap& map, ParseResultStats& parse_result);
   void parseProject(const std::string& root_path);
 };

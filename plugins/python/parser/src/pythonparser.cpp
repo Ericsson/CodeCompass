@@ -97,12 +97,6 @@ void PythonParser::parseProject(const std::string& root_path)
   LOG(info) << "[pythonparser] Partially parsed files: " << parse_result.partial;
 }
 
-bool PythonParser::accept(const std::string& path_)
-{
-  std::string ext = boost::filesystem::extension(path_);
-  return ext == ".py";
-}
-
 void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseResultStats& parse_result)
 {
   try {
