@@ -173,6 +173,31 @@ class ASTHelper:
         else:
             return None
 
+    def __getFunctionSignature(self, func: ast.FunctionDef) -> str:
+        sign = "def " + func.name
+        sign += "("
+
+        first = True
+        for arg in func.args.args:
+            if first:
+                first = False
+            else:
+                sign += ", "
+
+            sign += arg.arg
+
+            param_annotation: PosInfo | None = self.__getArgumentAnnotation(arg)
+            if param_annotation:
+                sign += ": " + param_annotation.value
+
+        sign += ")"
+
+        return_annotation: PosInfo | None = self.__getFunctionReturnAnnotation(func)
+        if return_annotation:
+            sign += " -> " + return_annotation.value
+
+        return sign
+
     def getAnnotations(self):
         if not (self.config.ast and self.config.ast_annotations):
             return []
@@ -193,24 +218,25 @@ class ASTHelper:
                 funchash = getHashName(self.path, funcpos)
                 subhash = getHashName(self.path, subpos)
 
-                nodeinfo = NodeInfo()
-                nodeinfo.id = subhash
-                nodeinfo.ref_id = subhash
-                nodeinfo.parent = funchash
-                nodeinfo.parent_function = funchash
-                nodeinfo.line_start = subpos.line_start
-                nodeinfo.line_end = subpos.line_end
-                nodeinfo.column_start = subpos.column_start
-                nodeinfo.column_end = subpos.column_end
-                nodeinfo.file_id = self.file_id
-                nodeinfo.type = "annotation"
-                nodeinfo.value = subpos.value
+                nodeinfo = NodeInfo(
+                    id = subhash,
+                    ref_id = subhash,
+                    parent = funchash,
+                    parent_function = funchash,
+                    line_start = subpos.line_start,
+                    line_end = subpos.line_end,
+                    column_start = subpos.column_start,
+                    column_end = subpos.column_end,
+                    file_id = self.file_id,
+                    type = "annotation",
+                    value = subpos.value
+                )
 
                 results.append(nodeinfo)
 
         return results
 
-    def getFunctionSignature(self, pos: PosInfo) -> str | None:
+    def getFunctionSignatureByPosition(self, pos: PosInfo) -> str | None:
         if not (self.config.ast_function_signature):
             return None
 
@@ -227,28 +253,6 @@ class ASTHelper:
                 func.end_col_offset == pos.column_end):
                 continue
 
-            sign = "def " + func.name
-            sign += "("
-
-            first = True
-            for arg in func.args.args:
-                if first:
-                    first = False
-                else:
-                    sign += ", "
-
-                sign += arg.arg
-
-                param_annotation: PosInfo | None = self.__getArgumentAnnotation(arg)
-                if param_annotation:
-                    sign += ": " + param_annotation.value
-
-            sign += ")"
-
-            return_annotation: PosInfo | None = self.__getFunctionReturnAnnotation(func)
-            if return_annotation:
-                sign += " -> " + return_annotation.value
-
-            return sign
+            return self.__getFunctionSignature(func)
 
         return None

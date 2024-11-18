@@ -115,7 +115,7 @@ class PYName:
                     node.value = param
 
             if node.type == "function" and node.is_definition and not (node.is_import or node.is_builtin):
-                sign = self.asthelper.getFunctionSignature(self.pos)
+                sign = self.asthelper.getFunctionSignatureByPosition(self.pos)
                 node.value = sign if sign else node.value
 
             subclass = self.asthelper.getSubclass(self.pos)
