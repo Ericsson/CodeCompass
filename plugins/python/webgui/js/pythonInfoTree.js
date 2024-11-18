@@ -90,8 +90,6 @@ require([
       var res = [];
       var fileGroupsId = [];
   
-      scratch = scratch || {};
-  
       var references = model.pythonservice.getReferences(
         nodeInfo.id,
         parentNode.refType);
@@ -114,11 +112,6 @@ require([
   
           var fileInfo = model.project.getFileInfo(fileId);
   
-          if (parentNode.refType === refTypes['Caller']) {
-            scratch.visitedNodeIDs =
-              (scratch.visitedNodeIDs || []).concat(nodeInfo.id);
-          }
-  
           res.push({
             id          : fileGroupsId[fileId],
             name        : createReferenceCountLabel(
@@ -131,60 +124,8 @@ require([
               var res = [];
   
               referenceInFile.forEach(function (reference) {
-                if (parentNode.refType === refTypes['Caller']) {
-                  var showChildren =
-                    scratch.visitedNodeIDs.indexOf(reference.id) == -1;
-                  res.push({
-                    id          : reference.id,
-                    name        : createLabel(reference),
-                    nodeInfo    : reference,
-                    refType     : parentNode.refType,
-                    cssClass    : 'icon icon-Method',
-                    hasChildren : showChildren,
-                    getChildren : showChildren
-                    ? function () {
-                      var res = [];
-  
-                      //--- Recursive Node ---//
-  
-                      var refCount = model.pythonservice.getReferenceCount(
-                        reference.id, parentNode.refType);
-  
-                      if (refCount)
-                        res.push({
-                          id          : 'Caller-' + reference.id,
-                          name        : createReferenceCountLabel(
-                                          parentNode.name, refCount),
-                          nodeInfo    : reference,
-                          refType     : parentNode.refType,
-                          cssClass    : parentNode.cssClass,
-                          hasChildren : true,
-                          getChildren : function () {
-                            return loadReferenceNodes(this, reference, refTypes, scratch);
-                          }
-                        });
-  
-                      //--- Call ---//
-  
-                      var calls = model.pythonservice.getReferences(
-                        this.nodeInfo.id,
-                        refTypes['This calls']);
-  
-                      calls.forEach(function (call) {
-                        if (call.entityHash === nodeInfo.entityHash)
-                          res.push({
-                            name        : createLabel(call),
-                            refType     : parentNode.refType,
-                            nodeInfo    : call,
-                            hasChildren : false,
-                            cssClass    : getCssClass(call)
-                          });
-                      });
-                      return res;
-                    }
-                    : undefined
-                  });
-                } else if (parentNode.refType === refTypes['Usage']) {
+                if (parentNode.refType === refTypes['Caller'] ||
+                    parentNode.refType === refTypes['Usage']) {
                   res.push({
                     id          : fileGroupsId[fileId] + reference.id,
                     name        : createLabel(reference),
@@ -347,4 +288,3 @@ require([
       service : model.pythonservice
     });
   });
-  
