@@ -227,3 +227,46 @@ TEST_F(PythonParserTest, FunctionCall)
     EXPECT_EQ(pyname.is_call, false);
   });
 }
+
+TEST_F(PythonParserTest, ClassInheritance)
+{
+  _transaction([&, this]() {
+    model::PYName pyname;
+
+    model::PYName base = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 1 &&
+          odb::query<model::PYName>::type == "class");
+
+    model::PYName derived = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 17 &&
+          odb::query<model::PYName>::type == "class");
+
+    model::PYName derived2 = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 21 &&
+          odb::query<model::PYName>::type == "class");
+
+    pyname = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 17 &&
+          odb::query<model::PYName>::column_start == 15 &&
+          odb::query<model::PYName>::value == "Base");
+
+    EXPECT_EQ(pyname.type, "baseclass");
+    EXPECT_EQ(pyname.parent, derived.id);
+
+    pyname = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 21 &&
+          odb::query<model::PYName>::column_start == 16 &&
+          odb::query<model::PYName>::value == "Derived");
+
+    EXPECT_EQ(pyname.type, "baseclass");
+    EXPECT_EQ(pyname.parent, derived2.id);
+
+    pyname = _db->query_value<model::PYName>
+          (odb::query<model::PYName>::line_start == 21 &&
+          odb::query<model::PYName>::column_start == 25 &&
+          odb::query<model::PYName>::value == "Base");
+
+    EXPECT_EQ(pyname.type, "baseclass");
+    EXPECT_EQ(pyname.parent, derived2.id);
+  });
+}
