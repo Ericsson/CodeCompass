@@ -128,5 +128,8 @@ def parse(path: str, config: ParserConfig):
     return result
 
 def putInMap(hashmap: dict[int, NodeInfo], node: NodeInfo):
+    if node.id in hashmap:
+        return
+
     hashmap[node.id] = node
 
