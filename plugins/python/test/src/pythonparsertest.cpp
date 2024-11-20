@@ -21,6 +21,7 @@ public:
   {
     loadFile("functions.py");
     loadFile("classes.py");
+    loadFile("imports.py");
   }
 
   model::PYName queryFile(const std::string& filename, const odb::query<model::PYName>& odb_query)
@@ -106,31 +107,31 @@ TEST_F(PythonParserTest, FunctionParamAST)
 {
   model::PYName pyname;
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 6 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 4 &&
                                            odb::query<model::PYName>::column_start == 12);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 6 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 4 &&
                                            odb::query<model::PYName>::column_start == 18);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 6 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 4 &&
                                            odb::query<model::PYName>::column_start == 26);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 9 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 7 &&
                                            odb::query<model::PYName>::column_start == 9);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 9 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 7 &&
                                            odb::query<model::PYName>::column_start == 12);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 12 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 10 &&
                                            odb::query<model::PYName>::column_start == 10);
   EXPECT_EQ(pyname.type, "astparam");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 12 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 10 &&
                                            odb::query<model::PYName>::column_start == 13);
   EXPECT_EQ(pyname.type, "astparam");
 }
@@ -139,19 +140,19 @@ TEST_F(PythonParserTest, FunctionSignatureAST)
 {
   model::PYName pyname;
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 48 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 49 &&
                                            odb::query<model::PYName>::type == "function");
   EXPECT_EQ(pyname.value, "def sign(a: int, b: str) -> None");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 51 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 52 &&
                                            odb::query<model::PYName>::type == "function");
   EXPECT_EQ(pyname.value, "def sign2(a: int, b: str) -> None");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 56 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 57 &&
                                            odb::query<model::PYName>::type == "function");
   EXPECT_EQ(pyname.value, "def sign3(a: int, b: str) -> None");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 61 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 62 &&
                                            odb::query<model::PYName>::type == "function");
   EXPECT_EQ(pyname.value, "def sign4(a: int, b: str) -> None");
 }
@@ -160,31 +161,31 @@ TEST_F(PythonParserTest, FunctionAnnotationAST)
 {
   model::PYName pyname;
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 68 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 69 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "None");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 72 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 73 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "str");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 76 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 77 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "int");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 80 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 81 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "bool");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 84 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 85 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "List[str]");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 88 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 89 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "Optional[str]");
 
-  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 92 &&
+  pyname = queryFile("functions.py", odb::query<model::PYName>::line_start == 93 &&
                                            odb::query<model::PYName>::type == "annotation");
   EXPECT_EQ(pyname.value, "dict[int, bool]");
 }
@@ -211,35 +212,35 @@ TEST_F(PythonParserTest, FunctionCall)
   // ----------
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 13);
+                                           odb::query<model::PYName>::line_start == 11);
   EXPECT_EQ(pyname.is_call, true);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 16);
+                                           odb::query<model::PYName>::line_start == 14);
   EXPECT_EQ(pyname.is_call, false);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 19);
+                                           odb::query<model::PYName>::line_start == 17);
   EXPECT_EQ(pyname.is_call, false);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 24);
+                                           odb::query<model::PYName>::line_start == 22);
   EXPECT_EQ(pyname.is_call, false);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 28);
+                                           odb::query<model::PYName>::line_start == 26);
   EXPECT_EQ(pyname.is_call, true);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 29);
+                                           odb::query<model::PYName>::line_start == 27);
   EXPECT_EQ(pyname.is_call, false);
-
-  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
-                                           odb::query<model::PYName>::line_start == 42);
-  EXPECT_EQ(pyname.is_call, true);
 
   pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
                                            odb::query<model::PYName>::line_start == 43);
+  EXPECT_EQ(pyname.is_call, true);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 44);
   EXPECT_EQ(pyname.is_call, false);
 }
 
@@ -248,15 +249,15 @@ TEST_F(PythonParserTest, ClassInheritance)
   model::PYName pyname;
 
   model::PYName derived = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 17 &&
+        (odb::query<model::PYName>::line_start == 19 &&
         odb::query<model::PYName>::type == "class"));
 
   model::PYName derived2 = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 21 &&
+        (odb::query<model::PYName>::line_start == 23 &&
         odb::query<model::PYName>::type == "class"));
 
   pyname = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 17 &&
+        (odb::query<model::PYName>::line_start == 19 &&
         odb::query<model::PYName>::column_start == 15 &&
         odb::query<model::PYName>::value == "Base"));
 
@@ -264,7 +265,7 @@ TEST_F(PythonParserTest, ClassInheritance)
   EXPECT_EQ(pyname.parent, derived.id);
 
   pyname = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 21 &&
+        (odb::query<model::PYName>::line_start == 23 &&
         odb::query<model::PYName>::column_start == 16 &&
         odb::query<model::PYName>::value == "Derived"));
 
@@ -272,7 +273,7 @@ TEST_F(PythonParserTest, ClassInheritance)
   EXPECT_EQ(pyname.parent, derived2.id);
 
   pyname = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 21 &&
+        (odb::query<model::PYName>::line_start == 23 &&
         odb::query<model::PYName>::column_start == 25 &&
         odb::query<model::PYName>::value == "Base"));
 
@@ -301,7 +302,7 @@ TEST_F(PythonParserTest, ClassMethod)
   EXPECT_EQ(bar.parent, base.id);
 
   model::PYName test = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 12 &&
+        (odb::query<model::PYName>::line_start == 14 &&
         odb::query<model::PYName>::is_definition == true &&
         odb::query<model::PYName>::type == "function"));
 
@@ -337,7 +338,7 @@ TEST_F(PythonParserTest, LocalVariable)
         odb::query<model::PYName>::value == "def local_var()");
 
   pyname = queryFile("functions.py",
-        (odb::query<model::PYName>::line_start == 96 &&
+        (odb::query<model::PYName>::line_start == 97 &&
         odb::query<model::PYName>::value == "a = 2"));
 
   EXPECT_EQ(pyname.type, "statement");
@@ -345,10 +346,33 @@ TEST_F(PythonParserTest, LocalVariable)
   EXPECT_EQ(pyname.parent, func.id);
 
   pyname = queryFile("functions.py",
-        (odb::query<model::PYName>::line_start == 97 &&
+        (odb::query<model::PYName>::line_start == 98 &&
         odb::query<model::PYName>::value == "for i in range(0,10):\n"));
 
   EXPECT_EQ(pyname.type, "statement");
   EXPECT_EQ(pyname.is_definition, true);
   EXPECT_EQ(pyname.parent, func.id);
+}
+
+TEST_F(PythonParserTest, ImportModule)
+{
+  model::PYName pyname;
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 1 &&
+        odb::query<model::PYName>::value == "import classes"));
+
+  EXPECT_EQ(pyname.is_import, true);
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 2 &&
+        odb::query<model::PYName>::value == "import os"));
+
+  EXPECT_EQ(pyname.is_import, true);
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 3 &&
+        odb::query<model::PYName>::value == "from functions import mul"));
+
+  EXPECT_EQ(pyname.is_import, true);
 }

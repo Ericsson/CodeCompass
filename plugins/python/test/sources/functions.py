@@ -1,8 +1,6 @@
 def hello_world():
     print("Hello, world!")
 
-hello_world()
-
 def runner(func, param1, param2):
     return func(param1,param2)
 
@@ -31,19 +29,22 @@ a3 = mul3()(4,8)
 a4 = mylib["multiply"](4,8)
 a5 = mylib2.multiply(4,8)
 
-print(a)
-print(a2)
-print(a3)
-print(a4)
-print(a5)
+if __name__ == "__main__":
+    hello_world()
 
-print("----------")
+    print(a)
+    print(a2)
+    print(a3)
+    print(a4)
+    print(a5)
 
-print(mul(4,8))
-print(runner(mul,4,8))
-print(mul3()(4,8))
-print(mylib["multiply"](4,8))
-print(mylib2.multiply(4,8))
+    print("----------")
+
+    print(mul(4,8))
+    print(runner(mul,4,8))
+    print(mul3()(4,8))
+    print(mylib["multiply"](4,8))
+    print(mylib2.multiply(4,8))
 
 def sign(a: int, b: str) -> None:
     pass

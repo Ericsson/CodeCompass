@@ -9,6 +9,8 @@ class Base:
         pass
 
     def bar(self):
+        print("bar")
+
         def test():
             pass
 
