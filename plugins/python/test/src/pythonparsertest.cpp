@@ -247,10 +247,6 @@ TEST_F(PythonParserTest, ClassInheritance)
 {
   model::PYName pyname;
 
-  model::PYName base = queryFile("classes.py",
-        (odb::query<model::PYName>::line_start == 1 &&
-        odb::query<model::PYName>::type == "class"));
-
   model::PYName derived = queryFile("classes.py",
         (odb::query<model::PYName>::line_start == 17 &&
         odb::query<model::PYName>::type == "class"));
@@ -282,4 +278,77 @@ TEST_F(PythonParserTest, ClassInheritance)
 
   EXPECT_EQ(pyname.type, "baseclass");
   EXPECT_EQ(pyname.parent, derived2.id);
+}
+
+TEST_F(PythonParserTest, ClassMethod)
+{
+  model::PYName base = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 1 &&
+        odb::query<model::PYName>::type == "class"));
+
+  model::PYName foo = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 8 &&
+        odb::query<model::PYName>::is_definition == true &&
+        odb::query<model::PYName>::type == "function"));
+
+  EXPECT_EQ(foo.parent, base.id);
+
+  model::PYName bar = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 11 &&
+        odb::query<model::PYName>::is_definition == true &&
+        odb::query<model::PYName>::type == "function"));
+
+  EXPECT_EQ(bar.parent, base.id);
+
+  model::PYName test = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 12 &&
+        odb::query<model::PYName>::is_definition == true &&
+        odb::query<model::PYName>::type == "function"));
+
+  EXPECT_EQ(test.parent, bar.id);
+}
+
+TEST_F(PythonParserTest, ClassDataMember)
+{
+  model::PYName pyname;
+
+  model::PYName base = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 1 &&
+        odb::query<model::PYName>::type == "class"));
+
+  pyname = queryFile("classes.py",
+        odb::query<model::PYName>::value == "DEBUG_MODE = False");
+
+  EXPECT_EQ(pyname.type, "statement");
+  EXPECT_EQ(pyname.parent, base.id);
+
+  pyname = queryFile("classes.py",
+        odb::query<model::PYName>::value == "users = []");
+
+  EXPECT_EQ(pyname.type, "statement");
+  EXPECT_EQ(pyname.parent, base.id);
+}
+
+TEST_F(PythonParserTest, LocalVariable)
+{
+  model::PYName pyname;
+
+  model::PYName func = queryFile("functions.py",
+        odb::query<model::PYName>::value == "def local_var()");
+
+  pyname = queryFile("functions.py",
+        (odb::query<model::PYName>::line_start == 96 &&
+        odb::query<model::PYName>::value == "a = 2"));
+
+  EXPECT_EQ(pyname.type, "statement");
+  EXPECT_EQ(pyname.is_definition, true);
+  EXPECT_EQ(pyname.parent, func.id);
+
+  pyname = queryFile("functions.py",
+        (odb::query<model::PYName>::line_start == 97 &&
+        odb::query<model::PYName>::value == "for i in range(0,10):\n"));
+
+  EXPECT_EQ(pyname.type, "statement");
+  EXPECT_EQ(pyname.is_definition, true);
+  EXPECT_EQ(pyname.parent, func.id);
 }

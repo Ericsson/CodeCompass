@@ -91,3 +91,8 @@ def annotation6(a,
 def annotation7(a,
     b) -> dict[int, bool]:
     return {}
+
+def local_var():
+    a = 2
+    for i in range(0,10):
+        a += i
