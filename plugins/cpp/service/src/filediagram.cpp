@@ -711,7 +711,7 @@ util::Graph::Node FileDiagram::addNode(
   }
   else if (fileInfo_.type == "CPP")
   {
-    std::string ext = boost::filesystem::extension(fileInfo_.path);
+    std::string ext = boost::filesystem::path(fileInfo_.path).extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if (ext == ".cpp" || ext == ".cxx" || ext == ".cc"  || ext == ".c")
