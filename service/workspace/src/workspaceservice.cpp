@@ -1,5 +1,6 @@
 #include <boost/filesystem.hpp>
 #include <workspaceservice/workspaceservice.h>
+#include <algorithm>
 
 namespace cc
 { 

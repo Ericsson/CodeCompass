@@ -36,18 +36,18 @@ inline std::string sha1Hash(const std::string& data_)
   using namespace boost::uuids::detail;
 
   sha1 hasher;
-  unsigned int digest[5];
+  unsigned char digest[20];
 
   hasher.process_bytes(data_.c_str(), data_.size());
   hasher.get_digest(digest);
 
   std::stringstream ss;
   ss.setf(std::ios::hex, std::ios::basefield);
-  ss.width(8);
+  ss.width(2);
   ss.fill('0');
 
-  for (int i = 0; i < 5; ++i)
-    ss << digest[i];
+  for (int i = 0; i < 20; ++i)
+    ss << (int)digest[i];
 
   return ss.str();
 }
