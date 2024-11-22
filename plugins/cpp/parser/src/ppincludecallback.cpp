@@ -61,10 +61,11 @@ void PPIncludeCallback::InclusionDirective(
   clang::StringRef fileName_,
   bool,
   clang::CharSourceRange filenameRange_,
-  clang::Optional<clang::FileEntryRef>,
+  clang::OptionalFileEntryRef,
   clang::StringRef searchPath_,
   clang::StringRef,
   const clang::Module*,
+  bool,
   clang::SrcMgr::CharacteristicKind)
 {
   if (searchPath_.empty())

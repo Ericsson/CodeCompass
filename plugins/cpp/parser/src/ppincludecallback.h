@@ -38,10 +38,11 @@ public:
     clang::StringRef FileName,
     bool IsAngled,
     clang::CharSourceRange FilenameRange,
-    clang::Optional<clang::FileEntryRef> File,
+    clang::OptionalFileEntryRef File,
     clang::StringRef SearchPath,
     clang::StringRef RelativePath,
     const clang::Module *Imported,
+    bool ModuleImported,
     clang::SrcMgr::CharacteristicKind FileType) override;
 
 private:
