@@ -252,6 +252,29 @@ TEST_F(PythonParserTest, FunctionCall)
   EXPECT_EQ(pyname.is_call, false);
 }
 
+TEST_F(PythonParserTest, ClassType)
+{
+  model::PYName pyname;
+
+  pyname = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 1 &&
+        odb::query<model::PYName>::value == "class Base:\n"));
+
+  EXPECT_EQ(pyname.type, "class");
+
+  pyname = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 19 &&
+        odb::query<model::PYName>::value == "class Derived(Base):\n"));
+
+  EXPECT_EQ(pyname.type, "class");
+
+  pyname = queryFile("classes.py",
+        (odb::query<model::PYName>::line_start == 23 &&
+        odb::query<model::PYName>::value == "class Derived2(Derived, Base):\n"));
+
+  EXPECT_EQ(pyname.type, "class");
+}
+
 TEST_F(PythonParserTest, ClassInheritance)
 {
   model::PYName pyname;
@@ -424,4 +447,43 @@ TEST_F(PythonParserTest, BuiltinVariable)
         odb::query<model::PYName>::value == "range"));
 
   EXPECT_EQ(pyname.is_builtin, true);
+}
+
+TEST_F(PythonParserTest, ReferenceID)
+{
+  model::PYName pyname;
+
+  model::PYName func = queryFile("functions.py", odb::query<model::PYName>::value == "def mul(a, b)");
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 11);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 14);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 17);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 22);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 26);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 27);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 43);
+  EXPECT_EQ(pyname.ref_id, func.id);
+
+  pyname = queryFile("functions.py", odb::query<model::PYName>::value == "mul" &&
+                                           odb::query<model::PYName>::line_start == 44);
+  EXPECT_EQ(pyname.ref_id, func.id);
 }
