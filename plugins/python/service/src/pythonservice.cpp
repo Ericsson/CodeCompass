@@ -150,7 +150,7 @@ void PythonServiceHandler::getDiagram(
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE]" << __func__;
 #endif
-  python::Diagram diagram(_db, _datadir, _context);
+  PythonDiagram diagram(_db, _datadir, _context);
 
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
   util::Graph graph = [&]()
@@ -187,7 +187,7 @@ void PythonServiceHandler::getDiagramLegend(
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE]" << __func__;
 #endif
-  python::Diagram diagram(_db, _datadir, _context);
+  PythonDiagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
   {
@@ -228,7 +228,7 @@ void PythonServiceHandler::getFileDiagram(
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE]" << __func__;
 #endif
-  python::Diagram diagram(_db, _datadir, _context);
+  PythonDiagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
   {
@@ -254,7 +254,7 @@ void PythonServiceHandler::getFileDiagramLegend(
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE]" << __func__;
 #endif
-  python::Diagram diagram(_db, _datadir, _context);
+  PythonDiagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
   {

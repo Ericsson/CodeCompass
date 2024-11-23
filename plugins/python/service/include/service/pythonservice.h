@@ -27,6 +27,7 @@ namespace language
 
 class PythonServiceHandler : virtual public LanguageServiceIf
 {
+  friend class PythonDiagram;
 public:
    PythonServiceHandler(
     std::shared_ptr<odb::database> db_,
@@ -151,14 +152,6 @@ public:
     CLASS_OVERVIEW
   };
 
-  model::PYName queryNodeByID(const std::string& id);
-  model::PYName queryNodeByPosition(const core::FilePosition& fpos);
-  std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
-  std::vector<model::PYName> queryNodesInFile(const core::FileId& fileId, bool definitions);
-  std::vector<model::PYName> queryNodes(const odb::query<model::PYName>& odb_query);
-  std::vector<std::uint64_t> transformReferences(const std::vector<model::PYName>& references, const model::PYNameID& id);
-  std::string getNodeLineValue(const model::PYName& pyname);
-
 private:
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
@@ -166,6 +159,13 @@ private:
   const cc::webserver::ServerContext& _context;
 
   void setInfoProperties(AstNodeInfo& info, const model::PYName& pyname);
+  model::PYName queryNodeByID(const std::string& id);
+  model::PYName queryNodeByPosition(const core::FilePosition& fpos);
+  std::vector<model::PYName> queryReferences(const core::AstNodeId& astNodeId, const std::int32_t referenceId);
+  std::vector<model::PYName> queryNodesInFile(const core::FileId& fileId, bool definitions);
+  std::vector<model::PYName> queryNodes(const odb::query<model::PYName>& odb_query);
+  std::vector<std::uint64_t> transformReferences(const std::vector<model::PYName>& references, const model::PYNameID& id);
+  std::string getNodeLineValue(const model::PYName& pyname);
 };
 
 } // language

@@ -6,16 +6,14 @@ namespace service
 {
 namespace language
 {  
-namespace python
-{    
-Diagram::Diagram(
+PythonDiagram::PythonDiagram(
   std::shared_ptr<odb::database> db_,
   std::shared_ptr<std::string> datadir_,
   const cc::webserver::ServerContext& context_)
     : m_pythonService(db_, datadir_, context_),
       m_projectService(db_, datadir_, context_){}
 
-util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
+util::Graph PythonDiagram::getFunctionCallDiagram(const model::PYName& pyname)
 {
   // Query calls
   const std::vector<model::PYName> this_calls = m_pythonService.queryReferences(std::to_string(pyname.id), PythonServiceHandler::THIS_CALLS);
@@ -73,7 +71,7 @@ util::Graph Diagram::getFunctionCallDiagram(const model::PYName& pyname)
   return graph;
 }
 
-util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
+util::Graph PythonDiagram::getModuleDiagram(const core::FileId& fileId)
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
@@ -140,7 +138,7 @@ util::Graph Diagram::getModuleDiagram(const core::FileId& fileId)
     return graph;
 }
 
-util::Graph Diagram::getUsageDiagram(const model::PYName& pyname)
+util::Graph PythonDiagram::getUsageDiagram(const model::PYName& pyname)
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
@@ -161,7 +159,7 @@ util::Graph Diagram::getUsageDiagram(const model::PYName& pyname)
     return graph;
 }
 
-void Diagram::addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType)
+void PythonDiagram::addFunctionNode(util::Graph& graph_, const util::Graph::Node& centerNode, const model::PYName& pyname, const NodeType& nodeType)
 {
     util::Graph::Node node = addPYNameNode(graph_, pyname, true);
     decorateNode(graph_, node, nodeType);
@@ -176,7 +174,7 @@ void Diagram::addFunctionNode(util::Graph& graph_, const util::Graph::Node& cent
     }
 }
 
-util::Graph::Subgraph Diagram::getFileSubgraph(util::Graph& graph_, const model::PYName& pyname)
+util::Graph::Subgraph PythonDiagram::getFileSubgraph(util::Graph& graph_, const model::PYName& pyname)
 {
     const core::FileId fileId = std::to_string(pyname.file_id);
     auto it = m_subgraphs.find(fileId);
@@ -207,7 +205,7 @@ util::Graph::Subgraph Diagram::getFileSubgraph(util::Graph& graph_, const model:
     return subgraph;
 }
 
-util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph)
+util::Graph::Node PythonDiagram::addPYNameNode(util::Graph& graph_, const model::PYName& pyname, bool addSubgraph)
 {
   const util::Graph::Subgraph subgraph = (addSubgraph) ? getFileSubgraph(graph_, pyname) : util::Graph::Subgraph();
 
@@ -225,7 +223,7 @@ util::Graph::Node Diagram::addPYNameNode(util::Graph& graph_, const model::PYNam
   return node;
 }
 
-util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo)
+util::Graph::Node PythonDiagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo)
 {
   util::Graph::Node node = graph_.getOrCreateNode("f" + fileInfo.id);
   graph_.setNodeAttribute(node, "label", fileInfo.path);
@@ -233,7 +231,7 @@ util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo
   return node;
 }
 
-util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType)
+util::Graph::Node PythonDiagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo, const util::Graph::Node& centerNode, const NodeType& nodeType)
 {
   /* We might need to add a file path multiple times to the diagram.
     Since we need unique ids, we will differentiate nodes based on starting character:
@@ -256,7 +254,7 @@ util::Graph::Node Diagram::addFileNode(util::Graph& graph_, const core::FileInfo
   return node;
 }
 
-void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeType& nodeType)
+void PythonDiagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const NodeType& nodeType)
 {
   graph_.setNodeAttribute(node_, "style", "filled");
 
@@ -305,7 +303,7 @@ void Diagram::decorateNode(util::Graph& graph_, util::Graph::Node& node_, const 
   }
 }
 
-util::Graph Diagram::getFunctionCallDiagramLegend()
+util::Graph PythonDiagram::getFunctionCallDiagramLegend()
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
@@ -321,7 +319,7 @@ util::Graph Diagram::getFunctionCallDiagramLegend()
     return graph;
 }
 
-util::Graph Diagram::getUsageDiagramLegend()
+util::Graph PythonDiagram::getUsageDiagramLegend()
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
@@ -335,7 +333,7 @@ util::Graph Diagram::getUsageDiagramLegend()
     return graph;
 }
 
-util::Graph Diagram::getModuleDiagramLegend()
+util::Graph PythonDiagram::getModuleDiagramLegend()
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "LR");
@@ -349,7 +347,7 @@ util::Graph Diagram::getModuleDiagramLegend()
     return graph;
 }
 
-void Diagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text, bool shape)
+void PythonDiagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const std::string& text, bool shape)
 {
   util::Graph::Node node = graph_.createNode();
   graph_.setNodeAttribute(node, "label", "");
@@ -368,7 +366,7 @@ void Diagram::addLegendNode(util::Graph& graph_, const NodeType& nodeType, const
   graph_.setNodeAttribute(explanation, "label", text);
 }
 
-util::Graph Diagram::getClassDiagram(const model::PYName& pyname)
+util::Graph PythonDiagram::getClassDiagram(const model::PYName& pyname)
 {
     util::Graph graph;
     graph.setAttribute("rankdir", "BT");
@@ -400,7 +398,7 @@ util::Graph Diagram::getClassDiagram(const model::PYName& pyname)
     return graph;
 }
 
-std::string Diagram::getClassTable(const model::PYName& pyname)
+std::string PythonDiagram::getClassTable(const model::PYName& pyname)
 {
     auto getVisibility = [](const std::string& str)
     {
@@ -496,7 +494,6 @@ std::string Diagram::getClassTable(const model::PYName& pyname)
     label += "</table>";
     return label;
 }
-} // python
 } // language
 } // service
 } // cc

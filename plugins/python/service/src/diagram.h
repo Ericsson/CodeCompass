@@ -17,11 +17,9 @@ namespace service
 {
 namespace language
 {
-namespace python
-{    
-  class Diagram {
+  class PythonDiagram {
     public:
-      Diagram(
+      PythonDiagram(
         std::shared_ptr<odb::database> db_,
         std::shared_ptr<std::string> datadir_,
         const cc::webserver::ServerContext& context_);
@@ -60,7 +58,6 @@ namespace python
       util::Graph::Subgraph getFileSubgraph(util::Graph& graph_, const model::PYName& pyname);
       std::string getClassTable(const model::PYName& pyname);
   };
-} // python
 } // language
 } // service
 } // cc
