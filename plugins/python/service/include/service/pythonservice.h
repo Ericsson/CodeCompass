@@ -240,7 +240,6 @@ private:
   std::shared_ptr<std::string> _datadir;
   const cc::webserver::ServerContext& _context;
 
-  inline const char* boolToString(bool b) { return b ? "true" : "false"; }
   void setInfoProperties(AstNodeInfo& info, const model::PYName& pyname);
 };
 

@@ -1,6 +1,7 @@
 #include <service/pythonservice.h>
 #include <projectservice/projectservice.h>
 #include <util/dbutil.h>
+#include <util/util.h>
 #include <model/pyname.h>
 #include "diagram.h"
 
@@ -89,19 +90,19 @@ void PythonServiceHandler::getProperties(
     return_.emplace("Full name", pyname.full_name);
   }
 
-  return_.emplace("Builtin", PythonServiceHandler::boolToString(pyname.is_builtin));
+  return_.emplace("Builtin", util::boolToString(pyname.is_builtin));
 
   if(!pyname.type_hint.empty())
   {
     return_.emplace("Type hint", pyname.type_hint);
   }
 
-  return_.emplace("Function call", PythonServiceHandler::boolToString(pyname.is_call));
+  return_.emplace("Function call", util::boolToString(pyname.is_call));
 
 #ifndef NDEBUG
     return_.emplace("ID", std::to_string(pyname.id));
     return_.emplace("REF_ID", std::to_string(pyname.ref_id));
-    return_.emplace("DEFINITION", PythonServiceHandler::boolToString(pyname.is_definition));
+    return_.emplace("DEFINITION", util::boolToString(pyname.is_definition));
 #endif
 
   return;
