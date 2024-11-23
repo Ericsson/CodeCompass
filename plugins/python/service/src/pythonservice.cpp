@@ -21,6 +21,9 @@ PythonServiceHandler::PythonServiceHandler(
 void PythonServiceHandler::getFileTypes(
   std::vector<std::string>& return_) 
 {
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   return_.push_back("PY");
   return_.push_back("Dir");
   return;
@@ -30,7 +33,9 @@ void PythonServiceHandler::getAstNodeInfo(
   AstNodeInfo& return_,
   const core::AstNodeId& astNodeId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   PythonServiceHandler::setInfoProperties(return_, pyname);
@@ -41,7 +46,9 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
   AstNodeInfo& return_,
   const core::FilePosition& fpos_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   model::PYName node = PythonServiceHandler::queryNodeByPosition(fpos_);
   PythonServiceHandler::setInfoProperties(return_, node);
   return;
@@ -51,7 +58,9 @@ void PythonServiceHandler::getSourceText(
   std::string& return_,
   const core::AstNodeId& astNodeId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   core::ProjectServiceHandler projectService(_db, _datadir, _context);
@@ -70,19 +79,11 @@ void PythonServiceHandler::getSourceText(
   return;
 }
 
-void PythonServiceHandler::getDocumentation(
-  std::string& return_,
-  const core::AstNodeId& astNodeId_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
-}
-
 void PythonServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if(!pyname.full_name.empty())
@@ -112,7 +113,9 @@ void PythonServiceHandler::getDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::AstNodeId& astNodeId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   const model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if (pyname.is_import == true) return;
@@ -144,7 +147,9 @@ void PythonServiceHandler::getDiagram(
   const core::AstNodeId& astNodeId_,
   const std::int32_t diagramId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   python::Diagram diagram(_db, _datadir, _context);
 
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
@@ -179,7 +184,9 @@ void PythonServiceHandler::getDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   python::Diagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
@@ -206,7 +213,9 @@ void PythonServiceHandler::getFileDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::FileId& fileId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   return_.emplace("Module dependency", MODULE_DEPENDENCY);
   return;
 }
@@ -216,7 +225,9 @@ void PythonServiceHandler::getFileDiagram(
   const core::FileId& fileId_,
   const int32_t diagramId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   python::Diagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
@@ -240,7 +251,9 @@ void PythonServiceHandler::getFileDiagramLegend(
   std::string& return_,
   const std::int32_t diagramId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   python::Diagram diagram(_db, _datadir, _context);
 
   util::Graph graph = [&]()
@@ -264,7 +277,9 @@ void PythonServiceHandler::getReferenceTypes(
   std::map<std::string, std::int32_t>& return_,
   const core::AstNodeId& astNodeId) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
+#endif
   return_.emplace("Definition", DEFINITION);
   return_.emplace("Usage", USAGE);
   return_.emplace("Parent", PARENT);
@@ -302,9 +317,10 @@ void PythonServiceHandler::getReferences(
   const std::int32_t referenceId_,
   const std::vector<std::string>& tags_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
-
+#endif
   std::vector<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId_, referenceId_);
 
   for(const model::PYName& pyname : nodes)
@@ -321,65 +337,12 @@ std::int32_t PythonServiceHandler::getReferenceCount(
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_) 
 {
-  LOG(info) << "[PYSERVICE] " << __func__;
+#ifndef NDEBUG
+  LOG(info) << "[PYTHONSERVICE]" << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
+#endif
 
   return PythonServiceHandler::queryReferences(astNodeId_, referenceId_).size();
-}
-
-void PythonServiceHandler::getReferencesInFile(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const core::FileId& fileId_,
-  const std::vector<std::string>& tags_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
-}
-
-void PythonServiceHandler::getReferencesPage(
-  std::vector<AstNodeInfo>& return_,
-  const core::AstNodeId& astNodeId_,
-  const std::int32_t referenceId_,
-  const std::int32_t pageSize_,
-  const std::int32_t pageNo_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
-}
-
-void PythonServiceHandler::getFileReferenceTypes(
-  std::map<std::string, std::int32_t>& return_,
-  const core::FileId& fileId_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
-}
-
-void PythonServiceHandler::getFileReferences(
-  std::vector<AstNodeInfo>& return_,
-  const core::FileId& fileId_,
-  const std::int32_t referenceId_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
-}
-
-std::int32_t PythonServiceHandler::getFileReferenceCount(
-  const core::FileId& fileId_,
-  const std::int32_t referenceId_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return 0;
-}
-
-void PythonServiceHandler::getSyntaxHighlight(
-  std::vector<SyntaxHighlight>& return_,
-  const core::FileRange& range_) 
-{
-  LOG(info) << "[PYSERVICE] " << __func__;
-  return;
 }
 
 model::PYName PythonServiceHandler::queryNodeByID(const std::string& id)
@@ -393,7 +356,7 @@ model::PYName PythonServiceHandler::queryNodeByID(const std::string& id)
     {
       pyname = *nodes.begin();
     }else{
-      LOG(info) << "[PYSERVICE] Node not found! (id = " << id << ")";
+      LOG(info) << "[PYTHONSERVICE] Node not found! (id = " << id << ")";
       core::InvalidId ex;
       ex.__set_msg("Node not found!");
       throw ex;
@@ -427,7 +390,7 @@ model::PYName PythonServiceHandler::queryNodeByPosition(const core::FilePosition
         }
       }
     }else{
-      LOG(info) << "[PYSERVICE] Node not found! (line = " << fpos.pos.line << " column = " << fpos.pos.column << ")";
+      LOG(info) << "[PYTHONSERVICE] Node not found! (line = " << fpos.pos.line << " column = " << fpos.pos.column << ")";
       core::InvalidInput ex;
       ex.__set_msg("Node not found!");
       throw ex;

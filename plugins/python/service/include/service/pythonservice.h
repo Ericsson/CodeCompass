@@ -49,7 +49,7 @@ public:
 
   void getDocumentation(
     std::string& return_,
-    const core::AstNodeId& astNodeId_) override;
+    const core::AstNodeId& astNodeId_) override {};
 
   void getProperties(
     std::map<std::string, std::string>& return_,
@@ -100,121 +100,46 @@ public:
     const core::AstNodeId& astNodeId_,
     const std::int32_t referenceId_,
     const core::FileId& fileId_,
-    const std::vector<std::string>& tags_) override;
+    const std::vector<std::string>& tags_) override {};
 
   void getReferencesPage(
     std::vector<AstNodeInfo>& return_,
     const core::AstNodeId& astNodeId_,
     const std::int32_t referenceId_,
     const std::int32_t pageSize_,
-    const std::int32_t pageNo_) override;
+    const std::int32_t pageNo_) override {};
 
   void getFileReferenceTypes(
     std::map<std::string, std::int32_t>& return_,
-    const core::FileId& fileId_) override;
+    const core::FileId& fileId_) override {};
 
   void getFileReferences(
     std::vector<AstNodeInfo>& return_,
     const core::FileId& fileId_,
-    const std::int32_t referenceId_) override;
+    const std::int32_t referenceId_) override {};
 
   std::int32_t getFileReferenceCount(
     const core::FileId& fileId_,
-    const std::int32_t referenceId_) override;
+    const std::int32_t referenceId_) override {};
 
   void getSyntaxHighlight(
     std::vector<SyntaxHighlight>& return_,
-    const core::FileRange& range_) override;
+    const core::FileRange& range_) override {};
 
   enum ReferenceType
   {
-    DEFINITION, /*!< By this option the definition(s) of the AST node can be
-      queried. However according to the "one definition rule" a named entity
-      can have only one definition, in a parsing several definitions might be
-      available. This is the case when the project is built for several targets
-      and in the different builds different definitions are defined for an
-      entity (e.g. because of an #ifdef section). */
-
-    DECLARATION, /*!< By this options the declaration(s) of the AST node can be
-      queried. */
-
-    USAGE, /*!< By this option the usages of the AST node can be queried, i.e.
-      the nodes of which the entity hash is identical to the queried one. */
-
-    THIS_CALLS, /*!< Get function calls in a function. WARNING: If the
-      definition of the AST node is not unique then it returns the callees of
-      one of them. */
-
-    CALLS_OF_THIS, /*!< Get calls of a function. */
-
-    CALLEE, /*!< Get called functions definitions. WARNING: If the definition of
-      the AST node is not unique then it returns the callees of one of them. */
-
-    CALLER, /*!< Get caller functions. */
-
-    VIRTUAL_CALL, /*!< A function may be used virtually on a base type object.
-      The exact type of the object is based on dynamic information, which can't
-      be determined statically. Weak usage returns these possible calls. */
-
-    FUNC_PTR_CALL, /*!< Functions can be assigned to function pointers which
-      can be invoked later. This option returns these invocations. */
-
-    PARAMETER, /*!< This option returns the parameters of a function. */
-
-    LOCAL_VAR, /*!< This option returns the local variables of a function. */
-
-    RETURN_TYPE, /*!< This option returns the return type of a function. */
-
-    OVERRIDE, /*!< This option returns the functions which the given function
-      overrides. */
-
-    OVERRIDDEN_BY, /*!< This option returns the overrides of a function. */
-
-    READ, /*!< This option returns the places where a variable is read. */
-
-    WRITE, /*!< This option returns the places where a variable is written. */
-
-    TYPE, /*!< This option returns the type of a variable. */
-
-    ALIAS, /*!< Types may have aliases, e.g. by typedefs. */
-
-    INHERIT_FROM, /*!< Types from which the queried type inherits. */
-
-    INHERIT_BY, /*!< Types by which the queried type is inherited. */
-
-    DATA_MEMBER, /*!< Data members of a class. */
-
-    METHOD, /*!< Members of a class. */
-
-    FRIEND, /*!< The friends of a class. */
-
-    UNDERLYING_TYPE, /*!< Underlying type of a typedef. */
-
-    ENUM_CONSTANTS, /*!< Enum constants. */
-
-    EXPANSION, /*!< Macro expansion. */
-
-    UNDEFINITION, /*!< Macro undefinition. */
-
+    DEFINITION,
+    USAGE,
+    THIS_CALLS,
+    CALLER,
+    PARAMETER,
+    LOCAL_VAR,
+    DATA_MEMBER,
+    METHOD,
     PARENT,
-
     PARENT_FUNCTION,
-
     ANNOTATION,
-
-    BASE_CLASS,
-  };
-
-  enum FileReferenceType
-  {
-    INCLUDES, /*!< Included source files in the current source file after the
-      inclusion directive. */
-
-    TYPES, /*!< User defined data types such as classes, structs etc. */
-
-    FUNCTIONS, /*!< Functions in the current source file. */
-
-    MACROS, /*!< Macros in the current source file. */
+    BASE_CLASS
   };
 
   enum DiagramType
