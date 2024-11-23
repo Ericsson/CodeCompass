@@ -22,7 +22,7 @@ void PythonServiceHandler::getFileTypes(
   std::vector<std::string>& return_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   return_.push_back("PY");
   return_.push_back("Dir");
@@ -34,7 +34,7 @@ void PythonServiceHandler::getAstNodeInfo(
   const core::AstNodeId& astNodeId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
@@ -47,7 +47,7 @@ void PythonServiceHandler::getAstNodeInfoByPosition(
   const core::FilePosition& fpos_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   model::PYName node = PythonServiceHandler::queryNodeByPosition(fpos_);
   PythonServiceHandler::setInfoProperties(return_, node);
@@ -59,7 +59,7 @@ void PythonServiceHandler::getSourceText(
   const core::AstNodeId& astNodeId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
@@ -83,7 +83,7 @@ void PythonServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_) 
 {
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if(!pyname.full_name.empty())
@@ -114,7 +114,7 @@ void PythonServiceHandler::getDiagramTypes(
   const core::AstNodeId& astNodeId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   const model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
@@ -148,7 +148,7 @@ void PythonServiceHandler::getDiagram(
   const std::int32_t diagramId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   PythonDiagram diagram(_db, _datadir, _context);
 
@@ -185,7 +185,7 @@ void PythonServiceHandler::getDiagramLegend(
   const std::int32_t diagramId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   PythonDiagram diagram(_db, _datadir, _context);
 
@@ -214,7 +214,7 @@ void PythonServiceHandler::getFileDiagramTypes(
   const core::FileId& fileId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   return_.emplace("Module dependency", MODULE_DEPENDENCY);
   return;
@@ -226,7 +226,7 @@ void PythonServiceHandler::getFileDiagram(
   const int32_t diagramId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   PythonDiagram diagram(_db, _datadir, _context);
 
@@ -252,7 +252,7 @@ void PythonServiceHandler::getFileDiagramLegend(
   const std::int32_t diagramId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   PythonDiagram diagram(_db, _datadir, _context);
 
@@ -278,7 +278,7 @@ void PythonServiceHandler::getReferenceTypes(
   const core::AstNodeId& astNodeId) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
 #endif
   return_.emplace("Definition", DEFINITION);
   return_.emplace("Usage", USAGE);
@@ -318,7 +318,7 @@ void PythonServiceHandler::getReferences(
   const std::vector<std::string>& tags_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
 #endif
   std::vector<model::PYName> nodes = PythonServiceHandler::queryReferences(astNodeId_, referenceId_);
@@ -338,7 +338,7 @@ std::int32_t PythonServiceHandler::getReferenceCount(
   const std::int32_t referenceId_) 
 {
 #ifndef NDEBUG
-  LOG(info) << "[PYTHONSERVICE]" << __func__;
+  LOG(info) << "[PYTHONSERVICE] " << __func__;
   LOG(info) << "astNodeID: " << astNodeId_;
 #endif
 
