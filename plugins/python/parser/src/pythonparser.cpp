@@ -173,7 +173,7 @@ void PythonParser::processFile(const python::object& obj, PYNameMap& map, ParseR
 
 bool PythonParser::parse()
 {
-  for(std::string path : _ctx.options["input"].as<std::vector<std::string>>())
+  for(const std::string& path : _ctx.options["input"].as<std::vector<std::string>>())
   {
     PythonParser::parseProject(path);
   }
