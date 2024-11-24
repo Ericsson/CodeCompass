@@ -55,15 +55,18 @@ class ASTHelper:
     def __getImports(self) -> List[ast.Import | ast.ImportFrom]:
         return cast(List[ast.Import | ast.ImportFrom], list(filter(lambda e : isinstance(e, ast.Import) or isinstance(e, ast.ImportFrom), self.astNodes)))
 
+    def __equalPos(self, e: ast.expr | ast.stmt, pos: PosInfo):
+        return (e.lineno == pos.line_start and
+                e.end_lineno == pos.line_end and
+                e.col_offset == pos.column_start and
+                e.end_col_offset == pos.column_end)
+
     def isFunctionCall(self, pos: PosInfo):
         for e in self.calls:
             func = e.func
 
             if (isinstance(func, ast.Name)):
-                if (func.lineno == pos.line_start and
-                    func.end_lineno == pos.line_end and
-                    func.col_offset == pos.column_start and
-                    func.end_col_offset == pos.column_end):
+                if (self.__equalPos(func, pos)):
                     return True
 
             elif (isinstance(func, ast.Attribute)):
@@ -82,10 +85,7 @@ class ASTHelper:
 
     def isImport(self, pos: PosInfo):
         for e in self.imports:
-            if (e.lineno == pos.line_start and
-                e.end_lineno == pos.line_end and
-                e.col_offset == pos.column_start and
-                e.end_col_offset == pos.column_end):
+            if (self.__equalPos(e, pos)):
                 return True
 
         return False
@@ -247,10 +247,7 @@ class ASTHelper:
                 isinstance(func.end_col_offset, int)):
                 continue
 
-            if not (func.lineno == pos.line_start and
-                func.end_lineno == pos.line_end and
-                func.col_offset == pos.column_start and
-                func.end_col_offset == pos.column_end):
+            if not (self.__equalPos(func, pos)):
                 continue
 
             return self.__getFunctionSignature(func)
