@@ -196,7 +196,7 @@ util::Graph::Subgraph PythonDiagram::getFileSubgraph(util::Graph& graph_, const 
     const std::string pathColor = (pyname.is_builtin && pyname.is_definition) ? "dodgerblue" : "limegreen";
     const std::string coloredLabel =
       "<table border=\"0\" cellborder=\"0\"><tr><td bgcolor=\"" + pathColor + "\">" +
-      fileInfo.path +
+      getRelativePath(fileInfo.path) +
       "</td></tr></table>";
     graph_.setSubgraphAttribute(subgraph, "label", coloredLabel, true);
 
@@ -226,7 +226,8 @@ util::Graph::Node PythonDiagram::addPYNameNode(util::Graph& graph_, const model:
 util::Graph::Node PythonDiagram::addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo)
 {
   util::Graph::Node node = graph_.getOrCreateNode("f" + fileInfo.id);
-  graph_.setNodeAttribute(node, "label", fileInfo.path);
+  const std::string path = getRelativePath(fileInfo.path);
+  graph_.setNodeAttribute(node, "label", path);
 
   return node;
 }
@@ -242,7 +243,8 @@ util::Graph::Node PythonDiagram::addFileNode(util::Graph& graph_, const core::Fi
   const std::string id = (nodeType == ImportedFilePathNode || nodeType == ImportedBuiltinFilePathNode) ? "d" + fileInfo.id : "s" + fileInfo.id;
 
   util::Graph::Node node = graph_.getOrCreateNode(id);
-  graph_.setNodeAttribute(node, "label", fileInfo.path);
+  const std::string path = getRelativePath(fileInfo.path);
+  graph_.setNodeAttribute(node, "label", path);
   decorateNode(graph_, node, nodeType);
 
   if (nodeType == ImportedFilePathNode || nodeType == ImportedBuiltinFilePathNode) {
@@ -493,6 +495,27 @@ std::string PythonDiagram::getClassTable(const model::PYName& pyname)
     label += "</td></tr>";
     label += "</table>";
     return label;
+}
+
+std::string PythonDiagram::getRelativePath(const std::string& path)
+{
+  std::map<std::string, std::string> labels;
+  m_projectService.getLabels(labels);
+
+  if (labels.count("src")) {
+    std::string projectPath = labels["src"];
+    std::string projectPathWithSlash = labels["src"] + "/";
+
+    if (path.substr(0, projectPathWithSlash.size()) == projectPathWithSlash) {
+      return path.substr(projectPathWithSlash.size());
+    }
+
+    if (path.substr(0, projectPath.size()) == projectPath) {
+      return path.substr(projectPath.size());
+    }
+  }
+
+  return path;
 }
 } // language
 } // service

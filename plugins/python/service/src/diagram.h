@@ -57,6 +57,7 @@ namespace language
       util::Graph::Node addFileNode(util::Graph& graph_, const core::FileInfo& fileInfo);
       util::Graph::Subgraph getFileSubgraph(util::Graph& graph_, const model::PYName& pyname);
       std::string getClassTable(const model::PYName& pyname);
+      std::string getRelativePath(const std::string& path);
   };
 } // language
 } // service
