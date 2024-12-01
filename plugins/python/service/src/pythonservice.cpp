@@ -83,7 +83,9 @@ void PythonServiceHandler::getProperties(
   std::map<std::string, std::string>& return_,
   const core::AstNodeId& astNodeId_) 
 {
+#ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE] " << __func__;
+#endif
   model::PYName pyname = PythonServiceHandler::queryNodeByID(astNodeId_);
 
   if(!pyname.full_name.empty())
