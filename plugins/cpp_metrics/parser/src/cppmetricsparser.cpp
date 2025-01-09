@@ -1,4 +1,6 @@
-#include <cppmetricsparser/cppmetricsparser.h>
+#include <memory>
+
+#include <boost/filesystem.hpp>
 
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
@@ -12,12 +14,10 @@
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
 
-#include <boost/filesystem.hpp>
-
 #include <util/filesystem.h>
 #include <util/logutil.h>
 
-#include <memory>
+#include <cppmetricsparser/cppmetricsparser.h>
 
 namespace cc
 {
@@ -276,9 +276,6 @@ void CppMetricsParser::lackOfCohesion()
       typedef odb::query<model::CohesionCppFieldView>::query_columns QField;
       const auto& QFieldTypeHash = QField::CppMemberType::typeHash;
 
-      typedef odb::query<model::CohesionCppMethodView>::query_columns QMethod;
-      const auto& QMethodTypeHash = QMethod::CppMemberType::typeHash;
-
       typedef odb::query<model::CohesionCppAstNodeView>::query_columns QNode;
       const auto& QNodeFilePath = QNode::File::path;
       const auto& QNodeRange = QNode::CppAstNode::location.range;
@@ -296,47 +293,42 @@ void CppMetricsParser::lackOfCohesion()
           fieldHashes.insert(field.entityHash);
         }
         std::size_t fieldCount = fieldHashes.size();
-
         std::size_t methodCount = 0;
         std::size_t totalCohesion = 0;
-        // Query all methods of the current type.
-        for (const model::CohesionCppMethodView& method
-          : _ctx.db->query<model::CohesionCppMethodView>(
-            QMethodTypeHash == type.entityHash
-          ))
+
+        // Type's range in file.
+        const model::Position start(type.startLine, type.startColumn);
+        const model::Position end(type.endLine, type.endColumn);
+
+        // Do not consider methods with no explicit bodies.
+        if (start < end)
         {
-          // Do not consider methods with no explicit bodies.
-          const model::Position start(method.startLine, method.startColumn);
-          const model::Position end(method.endLine, method.endColumn);
-          if (start < end)
+          std::unordered_set<HashType> usedFields;
+
+          // Query AST nodes that use a variable for reading or writing...
+          for (const model::CohesionCppAstNodeView& node
+            : _ctx.db->query<model::CohesionCppAstNodeView>(
+              // ... in the same file as the current method
+              (QNodeFilePath == type.filePath &&
+              // ... within the textual scope of the current method's body.
+              (QNodeRange.start.line >= start.line
+                || (QNodeRange.start.line == start.line
+                && QNodeRange.start.column >= start.column)) &&
+              (QNodeRange.end.line <= end.line
+                || (QNodeRange.end.line == end.line
+                && QNodeRange.end.column <= end.column)))
+            ))
           {
-            std::unordered_set<HashType> usedFields;
-
-            // Query AST nodes that use a variable for reading or writing...
-            for (const model::CohesionCppAstNodeView& node
-              : _ctx.db->query<model::CohesionCppAstNodeView>(
-                // ... in the same file as the current method
-                (QNodeFilePath == method.filePath &&
-                // ... within the textual scope of the current method's body.
-                (QNodeRange.start.line >= start.line
-                  || (QNodeRange.start.line == start.line
-                  && QNodeRange.start.column >= start.column)) &&
-                (QNodeRange.end.line <= end.line
-                  || (QNodeRange.end.line == end.line
-                  && QNodeRange.end.column <= end.column)))
-              ))
+            // If this AST node is a reference to a field of the type...
+            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
             {
-              // If this AST node is a reference to a field of the type...
-              if (fieldHashes.find(node.entityHash) != fieldHashes.end())
-              {
-                // ... then mark it as used by this method.
-                usedFields.insert(node.entityHash);
-              }
+              // ... then mark it as used by this method.
+              usedFields.insert(node.entityHash);
             }
-
-            ++methodCount;
-            totalCohesion += usedFields.size();
           }
+
+          ++methodCount;
+          totalCohesion += usedFields.size();
         }
 
         // Calculate and record metrics.

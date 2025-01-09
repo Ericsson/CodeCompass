@@ -10,11 +10,13 @@ include(Functions.cmake)
 # Do some sanity check on the testing setup and enable testing if applicable.
 include(Testing.cmake)
 
-find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
-find_package(Java    REQUIRED)
-find_package(ODB     REQUIRED)
-find_package(Threads REQUIRED)
-find_package(Thrift  REQUIRED)
+find_package(Boost    REQUIRED COMPONENTS filesystem log program_options regex system thread)
+find_package(Java     REQUIRED)
+find_package(ODB      REQUIRED)
+find_package(Threads  REQUIRED)
+find_package(Thrift   REQUIRED)
+find_package(Graphviz REQUIRED)
+find_package(LibMagic REQUIRED)
 find_package(GTest)
 
 include(UseJava)

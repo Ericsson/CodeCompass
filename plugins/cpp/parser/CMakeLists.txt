@@ -66,6 +66,13 @@ target_link_libraries(cppparser
 
 target_compile_options(cppparser PUBLIC -Wno-unknown-pragmas)
 
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # cppparser references headers from the parser without implementation
+  set_target_properties(cppparser PROPERTIES LINK_FLAGS
+        "-undefined dynamic_lookup")
+endif(APPLE)
+
 install(TARGETS cppparser DESTINATION ${INSTALL_PARSER_DIR})
 
 # Install Clang additional files
