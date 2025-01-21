@@ -78,6 +78,8 @@ private:
   void lackOfCohesion();
   // Calculate the efferent coupling of types.
   void efferentTypeLevel();
+  // Calculate the afferent coupling of types.
+  void afferentTypeLevel();
 
 
   /// @brief Constructs an ODB query that you can use to filter only
@@ -200,6 +202,7 @@ private:
   static const int functionBumpyRoadPartitionMultiplier = 5;
   static const int lackOfCohesionPartitionMultiplier = 25;
   static const int efferentCouplingTypesPartitionMultiplier = 5;
+  static const int afferentCouplingTypesPartitionMultiplier = 5;
 };
   
 } // parser
