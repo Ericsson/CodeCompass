@@ -268,3 +268,55 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedLackOfCohesionTest,
   ::testing::ValuesIn(paramLackOfCohesion)
 );
+
+// Afferent coupling
+
+typedef std::pair<std::string, unsigned int> AfferentParam;
+class ParameterizedAfferentCouplingTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<AfferentParam>
+{};
+
+std::vector<AfferentParam> paramAfferent = {
+  {"A",   1},
+  {"A2",  1},
+  {"A3",  1},
+  {"A4",  1},
+  {"A5",  1},
+  {"B",   1},
+  {"B2",  1},
+  {"B3",  1},
+  {"B4",  1},
+  {"B5",  1},
+  {"B6",  1},
+  {"B7",  1},
+  {"B8",  1},
+  {"C",   1},
+  {"C2",  1},
+  {"C3",  1},
+  {"E",   1},
+  {"F",   1},
+  {"G",   1},
+  {"H",   2},
+  {"H2",  2},
+};
+
+TEST_P(ParameterizedAfferentCouplingTest, TypeAfferentTest) {
+  _transaction([&, this]() {
+
+    const auto record = _db->query_value<model::CppRecord>(
+      odb::query<model::CppRecord>::qualifiedName == GetParam().first);
+
+    const auto metric = _db->query_value<model::CppAstNodeMetrics>(
+      odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
+      odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::AFFERENT_TYPE);
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedAfferentCouplingTestSuite,
+  ParameterizedAfferentCouplingTest,
+  ::testing::ValuesIn(paramAfferent)
+);

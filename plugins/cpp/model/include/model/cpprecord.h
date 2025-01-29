@@ -90,6 +90,15 @@ struct CppRecordCount
   std::size_t count;
 };
 
+#pragma db view \
+  object(CppMemberType) \
+  object(CppAstNode : CppMemberType::memberAstNode == CppAstNode::id)
+struct CppMemberTypeAstView
+{
+  #pragma db column(CppMemberType::typeHash)
+  std::uint64_t typeHash;
+};
+
 }
 }
 
