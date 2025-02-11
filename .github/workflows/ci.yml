@@ -6,7 +6,7 @@ env:
   BUILD_TYPE: RelWithDebInfo
   ## For locally compiled dependencies
   INSTALL_PATH: ${{github.workspace}}/dependencies/install
-  ## Temp directory for installers of the downloaded dependencies
+  # Temp directory for installers of the downloaded dependencies
   DOWNLOAD_PATH: ${{github.workspace}}/dependencies/download
 
 permissions: read-all
@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-12]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -44,9 +44,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Update apt-get
-        run: sudo apt-get update
 
       - name: Install required packages for build
         run: ./.github/scripts/${{ matrix.os }}/setup_build.sh
@@ -137,8 +134,8 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=$HOME/${{ matrix.os }}/${{ matrix.db }}/cc-install
           -DDATABASE=$DB_TYPE
           -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-          -DLLVM_DIR=/usr/lib/llvm-11/cmake
-          -DClang_DIR=/usr/lib/cmake/clang-11
+          -DLLVM_DIR=/usr/lib/llvm-15/cmake
+          -DClang_DIR=/usr/lib/cmake/clang-15
           -DTEST_DB=$DB_CONNSTRING
 
       - name: Build
@@ -208,9 +205,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Update apt-get
-        run: sudo apt-get update
 
       # We need build dependencies for CodeCompass, as it will parsed as well
       - name: Install required packages for build

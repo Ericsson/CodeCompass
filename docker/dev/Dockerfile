@@ -26,7 +26,7 @@ RUN set -x && apt-get update -qq \
   libmagic-dev \
   libsqlite3-dev \
   libssl-dev \
-  llvm-11 clang-11 llvm-11-dev libclang-11-dev \
+  llvm-15 clang-15 llvm-15-dev libclang-15-dev \
   thrift-compiler libthrift-dev \
   postgresql-server-dev-14 \
   postgresql-14 && \
@@ -70,8 +70,8 @@ ENV DATABASE=sqlite \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
     TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
     WITH_AUTH="plain;ldap" \
-    LLVM_DIR=/usr/lib/llvm-11/cmake \
-    Clang_DIR=/usr/lib/cmake/clang-11 \
+    LLVM_DIR=/usr/lib/llvm-15/cmake \
+    Clang_DIR=/usr/lib/cmake/clang-15 \
     CMAKE_PREFIX_PATH=/opt/odb
 
 ENV PATH="$INSTALL_DIR/bin:/opt/odb/bin:$PATH"
