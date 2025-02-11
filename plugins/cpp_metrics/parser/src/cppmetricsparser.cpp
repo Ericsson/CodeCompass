@@ -8,6 +8,8 @@
 #include <model/cppfilemetrics-odb.hxx>
 #include <model/cppinheritance.h>
 #include <model/cppinheritance-odb.hxx>
+#include <model/cpprecord.h>
+#include <model/cpprecord-odb.hxx>
 
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
@@ -428,6 +430,89 @@ void CppMetricsParser::efferentTypeLevel()
   });
 }
 
+void CppMetricsParser::afferentTypeLevel()
+{
+  parallelCalcMetric<model::CohesionCppRecordView>(
+    "Afferent coupling of types",
+    _threadCount * afferentCouplingTypesPartitionMultiplier,// number of jobs; adjust for granularity
+    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
+    {
+      util::OdbTransaction{_ctx.db}([&, this]
+      {
+        typedef odb::query<cc::model::CppAstNode> AstQuery;
+        typedef odb::query<cc::model::CppInheritance> InheritanceQuery;
+        typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
+        typedef odb::result<cc::model::CppAstNode> AstResult;
+        typedef odb::result<cc::model::CppMemberTypeAstView> MemTypeAstResult;
+
+        std::set<std::uint64_t> dependentTypes;
+        for (const model::CohesionCppRecordView& type : tasks)
+        {
+          dependentTypes.clear();
+
+          // Find derived types
+          for (const model::CppInheritance& inheritance : _ctx.db->query<model::CppInheritance>(
+            InheritanceQuery::base == type.entityHash))
+          {
+            dependentTypes.insert(inheritance.derived);
+          }
+
+          // Find usages of the type
+          for (const model::CppAstNode& usage : _ctx.db->query<model::CppAstNode>(
+              AstQuery::entityHash == type.entityHash &&
+              AstQuery::location.range.end.line != model::Position::npos))
+          {
+            // Check if usage is in class member function or attribute
+            MemTypeAstResult memberNode = _ctx.db->query<model::CppMemberTypeAstView>(
+                AstQuery::symbolType.in(model::CppAstNode::SymbolType::Function, model::CppAstNode::SymbolType::Variable) &&
+                AstQuery::astType.in(model::CppAstNode::AstType::Definition, model::CppAstNode::AstType::Declaration) &&
+                AstQuery::location.file == usage.location.file.object_id() &&
+                AstQuery::location.range.start.line <= usage.location.range.start.line &&
+                AstQuery::location.range.end.line >= usage.location.range.end.line &&
+                MemTypeQuery::typeHash != usage.entityHash);
+
+            if (!memberNode.empty())
+            {
+              dependentTypes.insert(memberNode.begin()->typeHash);
+            } else {
+              // The usage can be in a member function defined outside of the class definition
+              // E.g. void ClassName::foo() { A a; }
+              //                              ^ usage here
+
+              // Find parent function
+              AstResult parentFunction = _ctx.db->query<model::CppAstNode>(
+                AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
+                AstQuery::astType == model::CppAstNode::AstType::Definition &&
+                AstQuery::location.file == usage.location.file.object_id() &&
+                AstQuery::location.range.start.line <= usage.location.range.start.line &&
+                AstQuery::location.range.end.line >= usage.location.range.end.line);
+
+              if (!parentFunction.empty())
+              {
+                // Find if the function is a member function of a class
+                MemTypeAstResult memberFunction = _ctx.db->query<model::CppMemberTypeAstView>(
+                  AstQuery::entityHash == parentFunction.begin()->entityHash &&
+                  MemTypeQuery::typeHash != usage.entityHash);
+
+                if (!memberFunction.empty())
+                {
+                  dependentTypes.insert(memberFunction.begin()->typeHash);
+                }
+              }
+            }
+          }
+
+          model::CppAstNodeMetrics metric;
+          metric.astNodeId = type.astNodeId;
+          metric.type = model::CppAstNodeMetrics::Type::AFFERENT_TYPE;
+          metric.value = dependentTypes.size();
+          _ctx.db->persist(metric);
+        }
+      });
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   LOG(info) << "[cppmetricsparser] Computing function parameter count metric.";
@@ -442,6 +527,8 @@ bool CppMetricsParser::parse()
   lackOfCohesion();
   LOG(info) << "[cppmetricsparser] Computing efferent coupling metric for types.";
   efferentTypeLevel();
+  LOG(info) << "[cppmetricsparser] Computing afferent coupling metric for types.";
+  afferentTypeLevel();
   return true;
 }
 

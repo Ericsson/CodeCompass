@@ -12,7 +12,8 @@ enum CppAstNodeMetricsType
   BumpyRoad = 4,
   LackOfCohesion = 5,
   LackOfCohesionHS = 6,
-  EfferentType = 7
+  EfferentType = 7,
+  AfferentType = 8
 }
 
 enum CppModuleMetricsType

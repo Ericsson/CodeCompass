@@ -57,6 +57,10 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsTypeNames(
   typeName.type = CppAstNodeMetricsType::EfferentType;
   typeName.name = "Efferent coupling of type";
   _return.push_back(typeName);
+
+  typeName.type = CppAstNodeMetricsType::AfferentType;
+  typeName.name = "Afferent coupling of type";
+  _return.push_back(typeName);
 }
 
 void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
