@@ -58,10 +58,10 @@ FullCommentParts::FullCommentParts(
 
     switch (child->getCommentKind())
     {
-      case Comment::NoCommentKind:
+      case CommentKind::None:
         continue;
 
-      case Comment::ParagraphCommentKind:
+      case CommentKind::ParagraphComment:
       {
         const ParagraphComment* pc = llvm::cast<ParagraphComment>(child);
 
@@ -75,7 +75,7 @@ FullCommentParts::FullCommentParts(
         break;
       }
 
-      case Comment::BlockCommandCommentKind:
+      case CommentKind::BlockCommandComment:
       {
         const BlockCommandComment* bcc = llvm::cast<BlockCommandComment>(child);
         const CommandInfo* Info = traits_.getCommandInfo(bcc->getCommandID());
@@ -94,7 +94,7 @@ FullCommentParts::FullCommentParts(
         break;
       }
 
-      case Comment::ParamCommandCommentKind:
+      case CommentKind::ParamCommandComment:
       {
         const ParamCommandComment* pcc = llvm::cast<ParamCommandComment>(child);
 
@@ -108,7 +108,7 @@ FullCommentParts::FullCommentParts(
         break;
       }
 
-      case Comment::TParamCommandCommentKind:
+      case CommentKind::TParamCommandComment:
       {
         const TParamCommandComment* tpcc
           = llvm::cast<TParamCommandComment>(child);
@@ -123,11 +123,11 @@ FullCommentParts::FullCommentParts(
         break;
       }
 
-      case Comment::VerbatimBlockCommentKind:
+      case CommentKind::VerbatimBlockComment:
         _miscBlocks.push_back(cast<BlockCommandComment>(child));
         break;
 
-      case Comment::VerbatimLineCommentKind:
+      case CommentKind::VerbatimLineComment:
       {
         const VerbatimLineComment* vlc = llvm::cast<VerbatimLineComment>(child);
         const CommandInfo* Info = traits_.getCommandInfo(vlc->getCommandID());
@@ -251,22 +251,22 @@ void CommentToMarkdownConverter::visitInlineCommandComment(
 
   switch (c_->getRenderKind())
   {
-    case InlineCommandComment::RenderNormal:
+    case InlineCommandRenderKind::Normal:
       for (unsigned i = 0, e = c_->getNumArgs(); i != e; ++i)
         _res << c_->getArgText(i).str() << ' ';
       return;
 
-    case InlineCommandComment::RenderBold:
+    case InlineCommandRenderKind::Bold:
       assert(c_->getNumArgs() == 1);
       _res << "**" << arg0.str() << "**";
       return;
 
-    case InlineCommandComment::RenderMonospaced:
+    case InlineCommandRenderKind::Monospaced:
       assert(c_->getNumArgs() == 1);
       _res << '`' << arg0.str() << '`';
       return;
 
-    case InlineCommandComment::RenderEmphasized:
+    case InlineCommandRenderKind::Emphasized:
       assert(c_->getNumArgs() == 1);
       _res << '*' << arg0.str() << '*';
       return;
@@ -336,9 +336,9 @@ void CommentToMarkdownConverter::visitParamCommandComment(
 {
   switch (c_->getDirection())
   {
-    case ParamCommandComment::In:    _res << "- *in*: ";     break;
-    case ParamCommandComment::Out:   _res << "- *out*: ";    break;
-    case ParamCommandComment::InOut: _res << "- *in,out*: "; break;
+    case ParamCommandPassDirection::In:    _res << "- *in*: ";     break;
+    case ParamCommandPassDirection::Out:   _res << "- *out*: ";    break;
+    case ParamCommandPassDirection::InOut: _res << "- *in,out*: "; break;
   }
 
   _res << "**" << (c_->isParamIndexValid()
