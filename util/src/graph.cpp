@@ -289,6 +289,9 @@ std::string Graph::output(Graph::Format format_) const
     case Graph::CAIRO_SVG:
       render_format = "svg:cairo";
       break;
+    default:
+      __builtin_unreachable();
+      break;
   }
 
   gvRenderData(

@@ -49,8 +49,8 @@ public:
     const core::AstNodeId& astNodeId_) override;
 
   void getDocumentation(
-    std::string& return_,
-    const core::AstNodeId& astNodeId_) override {};
+    std::string&,
+    const core::AstNodeId&) override {};
 
   void getProperties(
     std::map<std::string, std::string>& return_,
@@ -97,35 +97,35 @@ public:
     const std::int32_t referenceId_) override;
 
   void getReferencesInFile(
-    std::vector<AstNodeInfo>& return_,
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_,
-    const core::FileId& fileId_,
-    const std::vector<std::string>& tags_) override {};
+    std::vector<AstNodeInfo>&,
+    const core::AstNodeId&,
+    const std::int32_t,
+    const core::FileId&,
+    const std::vector<std::string>&) override {};
 
   void getReferencesPage(
-    std::vector<AstNodeInfo>& return_,
-    const core::AstNodeId& astNodeId_,
-    const std::int32_t referenceId_,
-    const std::int32_t pageSize_,
-    const std::int32_t pageNo_) override {};
+    std::vector<AstNodeInfo>&,
+    const core::AstNodeId&,
+    const std::int32_t,
+    const std::int32_t,
+    const std::int32_t) override {};
 
   void getFileReferenceTypes(
-    std::map<std::string, std::int32_t>& return_,
-    const core::FileId& fileId_) override {};
+    std::map<std::string, std::int32_t>&,
+    const core::FileId&) override {};
 
   void getFileReferences(
-    std::vector<AstNodeInfo>& return_,
-    const core::FileId& fileId_,
-    const std::int32_t referenceId_) override {};
+    std::vector<AstNodeInfo>&,
+    const core::FileId&,
+    const std::int32_t) override {};
 
   std::int32_t getFileReferenceCount(
-    const core::FileId& fileId_,
-    const std::int32_t referenceId_) override {};
+    const core::FileId&,
+    const std::int32_t) override { return 0; };
 
   void getSyntaxHighlight(
-    std::vector<SyntaxHighlight>& return_,
-    const core::FileRange& range_) override {};
+    std::vector<SyntaxHighlight>&,
+    const core::FileRange&) override {};
 
   enum ReferenceType
   {

@@ -213,7 +213,7 @@ void PythonServiceHandler::getDiagramLegend(
 
 void PythonServiceHandler::getFileDiagramTypes(
   std::map<std::string, std::int32_t>& return_,
-  const core::FileId& fileId_) 
+  const core::FileId&)
 {
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE] " << __func__;
@@ -317,7 +317,7 @@ void PythonServiceHandler::getReferences(
   std::vector<AstNodeInfo>& return_,
   const core::AstNodeId& astNodeId_,
   const std::int32_t referenceId_,
-  const std::vector<std::string>& tags_) 
+  const std::vector<std::string>&)
 {
 #ifndef NDEBUG
   LOG(info) << "[PYTHONSERVICE] " << __func__;
