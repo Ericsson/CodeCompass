@@ -25,6 +25,11 @@ def log_config(config: ParserConfig):
     else:
         log(f"{bcolors.OKBLUE}Type hint support disabled!")
 
+    if config.file_refs:
+        log(f"{bcolors.OKGREEN}File refs lookup enabled!")
+    else:
+        log(f"{bcolors.OKBLUE}File refs lookup disabled!")
+
     if config.stack_trace:
         log(f"{bcolors.WARNING}Stack trace enabled!")
 

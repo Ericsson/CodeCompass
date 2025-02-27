@@ -26,7 +26,8 @@ def parseProject(settings, n_proc):
         ast_import=settings["ast_import"],
         ast_annotations=settings["ast_annotations"],
         ast_inheritance=settings["ast_inheritance"],
-        ast_function_signature=settings["ast_function_signature"]
+        ast_function_signature=settings["ast_function_signature"],
+        file_refs=settings["file_refs"]
     )
 
     log(f"Parsing project: {config.root_path}")

@@ -67,6 +67,7 @@ void PythonParser::parseProject(const std::string& root_path)
     settings["ast_annotations"] = !(_ctx.options.count("disable-ast-annotations"));
     settings["ast_inheritance"] = !(_ctx.options.count("disable-ast-inheritance"));
     settings["ast_function_signature"] = !(_ctx.options.count("disable-ast-function-signature"));
+    settings["file_refs"] = (bool)(_ctx.options.count("file-refs"));
 
     python::object result_list = m_py_module.attr("parseProject")(settings, n_proc);
 
@@ -215,6 +216,8 @@ extern "C"
         "Disable AST inheritance parsing.")
       ("disable-ast-function-signature",
         "Disable AST function signature parsing.")
+      ("file-refs",
+        "Enable search for references in a file context.")
       ("debug",
         "Enable parsing in debug mode.");
 

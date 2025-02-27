@@ -12,7 +12,7 @@ class ParserConfig:
     stack_trace: bool = False
     safe_env: bool = False
     type_hint: bool = False
-    file_refs: bool = True
+    file_refs: bool = False
     submodule_discovery: bool = True
     ast: bool = True
     ast_function_call: bool = True
