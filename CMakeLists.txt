@@ -35,6 +35,7 @@ add_subdirectory(plugins) # must precede webgui
 add_subdirectory(webgui)
 add_subdirectory(webgui-new)
 add_subdirectory(webserver)
+add_subdirectory(packaging)
 
 # Install java libraries
 install(DIRECTORY
