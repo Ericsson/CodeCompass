@@ -43,7 +43,7 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update apt-get
         run: sudo apt-get update
@@ -69,7 +69,7 @@ jobs:
 
       - name: Restore compiled dependencies
         id: restore-compiled-dependencies
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.INSTALL_PATH }}
           key: ${{ matrix.os }}-compile-install-${{ env.CACHE_KEY }}
@@ -91,7 +91,7 @@ jobs:
       - name: Save dependencies
         if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' && steps.restore-compiled-dependencies.outputs.cache-hit != 'true' }} 
         id: save-compiled-dependencies
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: ${{ env.INSTALL_PATH }}
           key: ${{ matrix.os }}-compile-install-${{ env.CACHE_KEY }}
@@ -165,13 +165,13 @@ jobs:
           zip -Rq ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip *.c *.h *.cpp *.hpp *.cxx *.hxx *.ixx *.js compile_commands.json
 
       - name: Upload CodeCompass binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-bin.zip
 
       - name: Upload CodeCompass compile-time source files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts/codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime.zip
@@ -207,7 +207,7 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update apt-get
         run: sudo apt-get update
@@ -231,7 +231,7 @@ jobs:
       - name: Restore compiled dependencies
         if: ${{ env.HAS_COMPILED_DEPENDENCIES == 'true' }}
         id: restore-compiled-dependencies
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.INSTALL_PATH }}
           fail-on-cache-miss: true
@@ -241,13 +241,13 @@ jobs:
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
 
       - name: Download CodeCompass binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-bin
           path: ${{github.workspace}}/artifacts
 
       - name: Download CodeCompass compile-time source files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: codecompass-${{ matrix.os }}-${{ matrix.db }}-compiletime
           path: ${{github.workspace}}/artifacts

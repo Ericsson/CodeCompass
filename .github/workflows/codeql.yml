@@ -85,7 +85,7 @@ jobs:
 
     - name: Restore compiled dependencies
       id: restore-compiled-dependencies
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: ${{ env.INSTALL_PATH }}
         key: ubuntu-22.04-compile-install-${{ env.CACHE_KEY }}
