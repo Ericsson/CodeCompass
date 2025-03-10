@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/program_options.hpp>
-
 #include <odb/database.hxx>
 
 namespace po = boost::program_options; 
@@ -43,6 +43,7 @@ struct ParserContext
   std::string& compassRoot;
   po::variables_map& options;
   std::unordered_map<std::string, IncrementalStatus> fileStatus;
+  std::vector<std::string> moduleDirectories;
 };
 
 } // parser

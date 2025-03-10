@@ -85,7 +85,11 @@ po::options_description commandLineArguments()
      "further actions modifying the state of the database.")
     ("incremental-threshold", po::value<int>()->default_value(10),
       "This is a threshold percentage. If the total ratio of changed files "
-      "is greater than this value, full parse is forced instead of incremental parsing.");
+      "is greater than this value, full parse is forced instead of incremental parsing.")
+    ("modules,m", po::value<std::string>(),
+      "For metrics calculations, you can specify the project's (sub)module structure."
+      "Provide the path of a text file for this setting."
+      "The file should contain directory paths, each on a separate line, which will be considered modules.");
 
   return desc;
 }
