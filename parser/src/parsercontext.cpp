@@ -12,6 +12,7 @@
 #include <parser/sourcemanager.h>
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 namespace cc
 {
@@ -76,6 +77,31 @@ ParserContext::ParserContext(
 
      // TODO: detect ADDED files
    });
+
+  // Fill moduleDirectories vector
+  if (options.count("modules")) {
+    const std::string& modulesFilePath = options["modules"].as<std::string>();
+
+    std::ifstream fileStream(modulesFilePath);
+
+    if (!fileStream.good()) {
+      LOG(error) << "Failed to open modules file: " << modulesFilePath;
+      exit(1);
+    }
+
+    LOG(info) << "Processing modules file: " << modulesFilePath;
+
+    std::string line;
+    while (std::getline(fileStream, line)) {
+      try {
+        const fs::path p = fs::canonical(line);
+        moduleDirectories.push_back(p.string());
+      } catch (...) {
+        LOG(error) << "Failed to process path from modules file: " << line;
+        exit(1);
+      }
+    }
+  }
 }
 }
 }
