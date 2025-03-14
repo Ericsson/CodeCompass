@@ -91,7 +91,7 @@ public:
     if (fid.isInvalid())
       return std::string();
 
-    const clang::FileEntry* fileEntry = _clangSrcMan.getFileEntryForID(fid);
+    const clang::OptionalFileEntryRef fileEntry = _clangSrcMan.getFileEntryRefForID(fid);
     if (!fileEntry)
       return std::string();
 

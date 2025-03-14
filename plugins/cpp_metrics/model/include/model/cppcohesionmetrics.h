@@ -15,6 +15,8 @@ namespace model
   object(File : CppAstNode::location.file)
 struct CohesionCppRecordView
 {
+  typedef cc::model::Position::PosType PosType;
+
   #pragma db column(CppEntity::entityHash)
   std::size_t entityHash;
 
@@ -23,26 +25,6 @@ struct CohesionCppRecordView
 
   #pragma db column(CppEntity::astNodeId)
   CppAstNodeId astNodeId;
-};
-
-#pragma db view \
-  object(CppMemberType) \
-  object(CppAstNode : CppMemberType::memberAstNode) \
-  query(CppMemberType::kind == cc::model::CppMemberType::Kind::Field && (?))
-struct CohesionCppFieldView
-{
-  #pragma db column(CppAstNode::entityHash)
-  std::size_t entityHash;
-};
-
-#pragma db view \
-  object(CppMemberType) \
-  object(CppAstNode : CppMemberType::memberAstNode) \
-  object(File : CppAstNode::location.file) \
-  query(CppMemberType::kind == cc::model::CppMemberType::Kind::Method && (?))
-struct CohesionCppMethodView
-{
-  typedef cc::model::Position::PosType PosType;
 
   #pragma db column(CppAstNode::location.range.start.line)
   PosType startLine;
@@ -55,6 +37,16 @@ struct CohesionCppMethodView
 
   #pragma db column(File::path)
   std::string filePath;
+};
+
+#pragma db view \
+  object(CppMemberType) \
+  object(CppAstNode : CppMemberType::memberAstNode) \
+  query(CppMemberType::kind == cc::model::CppMemberType::Kind::Field && (?))
+struct CohesionCppFieldView
+{
+  #pragma db column(CppAstNode::entityHash)
+  std::size_t entityHash;
 };
 
 #pragma db view \
