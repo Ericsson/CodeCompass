@@ -80,7 +80,10 @@ private:
   void efferentTypeLevel();
   // Calculate the afferent coupling of types.
   void afferentTypeLevel();
-
+  // Calculate the efferent coupling at module level.
+  void efferentModuleLevel();
+  // Returns module path query based on parser configuration.
+  odb::query<model::File> getModulePathsQuery();
 
   /// @brief Constructs an ODB query that you can use to filter only
   /// the database records of the given parameter type whose path
@@ -203,6 +206,7 @@ private:
   static const int lackOfCohesionPartitionMultiplier = 25;
   static const int efferentCouplingTypesPartitionMultiplier = 5;
   static const int afferentCouplingTypesPartitionMultiplier = 5;
+  static const int efferentCouplingModulesPartitionMultiplier = 5;
 };
   
 } // parser

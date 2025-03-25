@@ -18,6 +18,7 @@ add_library(util SHARED
   src/util.cpp)
 
 target_link_libraries(util
+  model
   gvc
   ${Boost_LIBRARIES})
 
