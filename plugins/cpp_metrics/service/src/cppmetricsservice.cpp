@@ -14,8 +14,10 @@ namespace service
 namespace cppmetrics
 {
 
-typedef odb::query<cc::model::CppAstNode> AstQuery;
-typedef odb::result<cc::model::CppAstNode> AstResult;
+typedef odb::query<model::CppAstNodeMetricsForPathView> CppNodeMetricsQuery;
+typedef odb::result<model::CppAstNodeMetricsForPathView> CppNodeMetricsResult;
+typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
+typedef odb::result<model::CppModuleMetricsForPathView> CppModuleMetricsResult;
 
 CppMetricsServiceHandler::CppMetricsServiceHandler(
   std::shared_ptr<odb::database> db_,
@@ -137,18 +139,12 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
   });
 }
 
-void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
+void CppMetricsServiceHandler::queryCppAstNodeMetricsForPath(
   std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
-  const std::string& path_)
+  const odb::query<model::CppAstNodeMetricsForPathView>& query_)
 {
   _transaction([&, this](){
-    typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
-    typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
-    typedef odb::query<model::CppAstNodeMetricsForPathView> CppAstNodeMetricsForPathViewQuery;
-    typedef odb::result<model::CppAstNodeMetricsForPathView> CppAstNodeMetricsForPathViewResult;
-
-    auto nodes = _db->query<model::CppAstNodeMetricsForPathView>(
-      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
+    auto nodes = _db->query<model::CppAstNodeMetricsForPathView>(query_);
 
     for (const auto& node : nodes)
     {
@@ -171,18 +167,33 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
   });
 }
 
-void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
-  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
+  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
   const std::string& path_)
 {
-  _transaction([&, this](){
-    typedef odb::query<model::CppAstNodeFilePath> CppAstNodeFilePathQuery;
-    typedef odb::result<model::CppAstNodeFilePath> CppAstNodeFilePathResult;
-    typedef odb::query<model::CppAstNodeMetricsAndDataForPathView> CppAstNodeMetricsAndDataForPathViewQuery;
-    typedef odb::result<model::CppAstNodeMetricsAndDataForPathView> CppAstNodeMetricsAndDataForPathViewResult;
+  queryCppAstNodeMetricsForPath(_return,
+    CppNodeMetricsQuery::LocFile::path.like(path_ + '%'));
+}
 
-    auto nodes = _db->query<model::CppAstNodeMetricsAndDataForPathView>(
-      CppAstNodeFilePathQuery::LocFile::path.like(path_ + '%'));
+void CppMetricsServiceHandler::getPagedCppAstNodeMetricsForPath(
+  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+  const std::string& path_,
+  const std::int32_t pageSize_,
+  const std::int32_t pageNumber_)
+{
+  std::vector<model::CppAstNodeId> paged_nodes = pageMetrics<model::CppAstNodeId, model::CppAstNodeMetricsDistinctView>(
+    path_, pageSize_, pageNumber_);
+
+  queryCppAstNodeMetricsForPath(_return,
+    CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end()));
+}
+
+void CppMetricsServiceHandler::queryCppAstNodeMetricsDetailedForPath(
+  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+  const odb::query<model::CppAstNodeMetricsAndDataForPathView>& query_)
+{
+  _transaction([&, this](){
+    auto nodes = _db->query<model::CppAstNodeMetricsAndDataForPathView>(query_);
 
     for (const auto& node : nodes)
     {
@@ -210,16 +221,33 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
   });
 }
 
-void CppMetricsServiceHandler::getCppFileMetricsForPath(
-  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
+  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
   const std::string& path_)
 {
-  _transaction([&, this](){
-    typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
-    typedef odb::result<model::CppModuleMetricsForPathView> CppModuleMetricsResult;
+  queryCppAstNodeMetricsDetailedForPath(_return,
+    CppNodeMetricsQuery::LocFile::path.like(path_ + '%'));
+}
 
-    auto files = _db->query<model::CppModuleMetricsForPathView>(
-      CppModuleMetricsQuery::File::path.like(path_ + '%'));
+void CppMetricsServiceHandler::getPagedCppAstNodeMetricsDetailedForPath(
+  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+  const std::string& path_,
+  const std::int32_t pageSize_,
+  const std::int32_t pageNumber_)
+{
+  std::vector<model::CppAstNodeId> paged_nodes = pageMetrics<model::CppAstNodeId, model::CppAstNodeMetricsDistinctView>(
+    path_, pageSize_, pageNumber_);
+
+  queryCppAstNodeMetricsDetailedForPath(_return,
+    CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end()));
+}
+
+void CppMetricsServiceHandler::queryCppFileMetricsForPath(
+  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  const odb::query<model::CppModuleMetricsForPathView>& query_)
+{
+  _transaction([&, this](){
+    auto files = _db->query<model::CppModuleMetricsForPathView>(query_);
 
     for (const auto& file : files)
     {
@@ -240,6 +268,47 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
       }
     }
   });
+}
+
+void CppMetricsServiceHandler::getCppFileMetricsForPath(
+  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  const std::string& path_)
+{
+  queryCppFileMetricsForPath(_return,
+    CppModuleMetricsQuery::File::path.like(path_ + '%'));
+}
+
+void CppMetricsServiceHandler::getPagedCppFileMetricsForPath(
+  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  const std::string& path_,
+  const std::int32_t pageSize_,
+  const std::int32_t pageNumber_)
+{
+  std::vector<model::FileId> paged_files = pageMetrics<model::FileId, model::CppModuleMetricsDistinctView>(path_, pageSize_, pageNumber_);
+  queryCppFileMetricsForPath(_return,
+    CppModuleMetricsQuery::CppFileMetrics::file.in_range(paged_files.begin(), paged_files.end()));
+}
+
+std::string CppMetricsServiceHandler::getPagingQuery(
+  const std::int32_t pageSize_,
+  const std::int32_t pageNumber_)
+{
+  if (pageSize_ <= 0)
+  {
+    core::InvalidInput ex;
+    ex.__set_msg("Invalid page size: " + std::to_string(pageSize_));
+    throw ex;
+  }
+
+  if (pageNumber_ <= 0)
+  {
+    core::InvalidInput ex;
+    ex.__set_msg("Invalid page number: " + std::to_string(pageNumber_));
+    throw ex;
+  }
+
+  const std::int32_t offset = (pageNumber_ - 1) * pageSize_;
+  return " LIMIT " + std::to_string(pageSize_) + " OFFSET " + std::to_string(offset);
 }
 
 } // cppmetrics

@@ -117,6 +117,17 @@ struct CppAstNodeMetricsAndDataForPathView
   double value;
 };
 
+#pragma db view \
+  object(CppAstNodeMetrics) \
+  object(CppAstNode : CppAstNodeMetrics::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file) \
+  query(distinct)
+struct CppAstNodeMetricsDistinctView
+{
+  #pragma db column(CppAstNodeMetrics::astNodeId)
+  CppAstNodeId astNodeId;
+};
+
 } //model
 } //cc
 

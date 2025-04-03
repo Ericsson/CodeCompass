@@ -47,6 +47,16 @@ struct CppModuleMetricsForPathView
   unsigned value;
 };
 
+#pragma db view \
+  object(CppFileMetrics) \
+  object(File : CppFileMetrics::file == File::id) \
+  query(distinct)
+struct CppModuleMetricsDistinctView
+{
+  #pragma db column(CppFileMetrics::file)
+  FileId fileId;
+};
+
 } //model
 } //cc
 

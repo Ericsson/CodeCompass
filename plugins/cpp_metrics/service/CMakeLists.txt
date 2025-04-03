@@ -20,7 +20,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/CppMetricsService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js:jquery
       -o ${CMAKE_CURRENT_BINARY_DIR}
       -I ${PROJECT_SOURCE_DIR}/service
       ${CMAKE_CURRENT_SOURCE_DIR}/cxxmetrics.thrift
