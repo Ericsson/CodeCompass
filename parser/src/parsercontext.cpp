@@ -1,3 +1,4 @@
+#include <boost/filesystem/exception.hpp>
 #include <fstream>
 
 #include <boost/filesystem.hpp>
@@ -86,7 +87,7 @@ ParserContext::ParserContext(
 
     if (!fileStream.good()) {
       LOG(error) << "Failed to open modules file: " << modulesFilePath;
-      exit(1);
+      return;
     }
 
     LOG(info) << "Processing modules file: " << modulesFilePath;
@@ -96,9 +97,9 @@ ParserContext::ParserContext(
       try {
         const fs::path p = fs::canonical(line);
         moduleDirectories.push_back(p.string());
-      } catch (...) {
+      } catch (fs::filesystem_error& err) {
         LOG(error) << "Failed to process path from modules file: " << line;
-        exit(1);
+        LOG(error) << err.what();
       }
     }
   }
