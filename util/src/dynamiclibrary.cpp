@@ -37,7 +37,7 @@ DynamicLibrary::DynamicLibrary(const std::string& path_)
     throw std::runtime_error(ss.str());
   }
 #else
-  _handle = ::dlopen(path_.c_str(), RTLD_NOW);
+  _handle = ::dlopen(path_.c_str(), RTLD_NOW | RTLD_GLOBAL);
   if (!_handle)
   {
     const char *dlError = ::dlerror();

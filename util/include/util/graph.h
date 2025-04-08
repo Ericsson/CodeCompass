@@ -27,7 +27,7 @@ struct GraphPimpl;
 class Graph
 {
 public:
-  enum Format {DOT, SVG};
+  enum Format {DOT, SVG, CAIRO_SVG};
 
   typedef std::string Node;
   typedef std::string Edge;
