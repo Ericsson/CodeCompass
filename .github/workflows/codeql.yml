@@ -30,6 +30,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: javascript-typescript
+        build-mode: none
 
     # Perform CodeQL analysis
     - name: Perform CodeQL Analysis
@@ -56,6 +57,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: c-cpp
+        build-mode: manual
 
     # Build project
     - name: Update apt-get
@@ -125,11 +127,6 @@ jobs:
       run: |
         cd $HOME/cc-build
         make -j $(nproc)
-
-    - name: Install
-      run: |
-        cd $HOME/cc-build
-        make install
 
     # Perform CodeQL analysis
     - name: Perform CodeQL Analysis
