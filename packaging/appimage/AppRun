@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+usage()
+{
+  echo "CodeCompass AppImage"
+  echo "Usage:"
+  echo "./CodeCompass.AppImage parser <parser arguments>"
+  echo "./CodeCompass.AppImage webserver <webserver arguments>"
+  echo "./CodeCompass.AppImage logger <logger arguments>"
+}
+
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$APPDIR/usr/lib/deps/"
+
+if [ -z "$1" ]; then
+  usage
+elif [ "$1" == "parser" ]; then
+  shift
+  exec $APPDIR/usr/bin/CodeCompass_parser "$@"
+elif [ "$1" == "webserver" ]; then
+  shift
+  exec $APPDIR/usr/bin/CodeCompass_webserver "$@"
+elif [ "$1" == "logger" ]; then
+  shift
+  exec $APPDIR/usr/bin/CodeCompass_logger "$@"
+else
+  usage
+fi
