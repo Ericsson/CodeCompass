@@ -44,7 +44,7 @@ void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
     ++dirIter)
   {
     if (fs::is_regular_file(dirIter->status()) &&
-        fs::extension(*dirIter) == util::DynamicLibrary::extension())
+        fs::path(*dirIter).extension() == util::DynamicLibrary::extension())
     {
       std::string filename = getPluginName(dirIter->path());
 
@@ -85,7 +85,7 @@ std::vector<std::string> PluginHandler::getPluginNames() const
     ++dirIter)
   {
     if (fs::is_regular_file(dirIter->status()) &&
-        fs::extension(*dirIter) == util::DynamicLibrary::extension())
+        fs::path(*dirIter).extension() == util::DynamicLibrary::extension())
     {
       plugins.push_back(getPluginName(dirIter->path()));
     }
