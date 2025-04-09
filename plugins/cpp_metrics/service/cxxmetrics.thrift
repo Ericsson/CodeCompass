@@ -99,6 +99,17 @@ service CppMetricsService
     1:string path)
 
   /**
+   * This is a paged function which returns all available C++ metrics
+   * (AST node-level) for a particular path.
+   *
+   * The given path is a handled as a prefix.
+   */
+  map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getPagedCppAstNodeMetricsForPath(
+    1:string path
+    2:i32 pageSize,
+    3:i32 pageNumber)
+
+  /**
    * This function returns all available C++ metrics
    * (AST node-level) and miscellaneous data for a particular path.
    *
@@ -108,6 +119,17 @@ service CppMetricsService
     1:string path)
 
   /**
+   * This is a paged function which returns all available C++ metrics
+   * (AST node-level) and miscellaneous data for a particular path.
+   *
+   * The given path is a handled as a prefix.
+   */
+  map<common.AstNodeId, CppMetricsAstNodeDetailed> getPagedCppAstNodeMetricsDetailedForPath(
+    1:string path,
+    2:i32 pageSize,
+    3:i32 pageNumber)
+
+  /**
    * This function returns all available C++ metrics
    * (file-level) for a particular path.
    *
@@ -115,6 +137,17 @@ service CppMetricsService
    */
   map<common.FileId, list<CppMetricsModuleSingle>> getCppFileMetricsForPath(
     1:string path)
+
+  /**
+   * This is a paged function which returns all available C++ metrics
+   * (file-level) for a particular path.
+   *
+   * The given path is a handled as a prefix.
+   */
+  map<common.FileId, list<CppMetricsModuleSingle>> getPagedCppFileMetricsForPath(
+    1:string path,
+    2:i32 pageSize,
+    3:i32 pageNumber)
 
   /**
    * This function returns the names of the AST node-level C++ metrics.
