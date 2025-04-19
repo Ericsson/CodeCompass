@@ -56,12 +56,11 @@ struct CppTypeDependencyMetricsPathView
   object(File = EntityFile : EntityAstNode::location.file == EntityFile::id) \
   object(CppAstNode = DependencyAstNode : CppTypeDependencyMetrics::dependencyHash == DependencyAstNode::entityHash \
     && DependencyAstNode::astType == cc::model::CppAstNode::AstType::Definition) \
-  object(File = DependencyFile : DependencyAstNode::location.file == DependencyFile::id) \
-  query((?), distinct)
-struct CppDistinctTypeDependencyMetricsPathView
+  object(File = DependencyFile : DependencyAstNode::location.file == DependencyFile::id)
+struct CppTypeDependencyMetricsPathViewDistinctCount
 {
-  #pragma db column(CppTypeDependencyMetrics::dependencyHash)
-  std::size_t dependencyHash;
+  #pragma db column("count(distinct" + CppTypeDependencyMetrics::dependencyHash + ")")
+  std::size_t count;
 };
 
 } // model

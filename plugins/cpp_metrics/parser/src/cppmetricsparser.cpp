@@ -395,6 +395,8 @@ void CppMetricsParser::efferentTypeLevel()
           // Count parent types
           auto inheritanceView = _ctx.db->query<model::CppInheritance>(
             InheritanceQuery::derived == type.entityHash);
+          auto inheritanceCount = _ctx.db->query_value<model::CppInheritanceCount>(
+            InheritanceQuery::derived == type.entityHash);
 
           // Count unique attribute types
           // and unique types in function parameters and local variables
@@ -426,7 +428,7 @@ void CppMetricsParser::efferentTypeLevel()
           model::CppAstNodeMetrics metric;
           metric.astNodeId = type.astNodeId;
           metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
-          metric.value = inheritanceView.size() + dependentTypes.size();
+          metric.value = inheritanceCount.count + dependentTypes.size();
           _ctx.db->persist(metric);
 
           auto typeRelationInserter = [this](const std::uint64_t& entityHash, const std::uint64_t& dependencyHash)
@@ -555,19 +557,19 @@ void CppMetricsParser::efferentModuleLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<cc::model::CppDistinctTypeDependencyMetricsPathView> TypeDependencyQuery;
-        typedef odb::result<cc::model::CppDistinctTypeDependencyMetricsPathView> TypeDependencyResult;
+        typedef odb::query<model::CppTypeDependencyMetricsPathViewDistinctCount> TypeDependencyQuery;
+        typedef model::CppTypeDependencyMetricsPathViewDistinctCount TypeDependencyResult;
 
         for (const model::File& file : tasks)
         {
-          TypeDependencyResult types = _ctx.db->query<model::CppDistinctTypeDependencyMetricsPathView>(
+          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetricsPathViewDistinctCount>(
             TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
             !TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
 
           model::CppFileMetrics metric;
           metric.file = file.id;
           metric.type = model::CppFileMetrics::Type::EFFERENT_MODULE;
-          metric.value = types.size();
+          metric.value = types.count;
           _ctx.db->persist(metric);
         }
       });
