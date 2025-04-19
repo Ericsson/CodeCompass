@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <string>
+#include <model/file.h>
+#include <model/file-odb.hxx>
 
 #include <odb/database.hxx>
 
@@ -147,10 +149,15 @@ odb::query<TQueryParam> getFilterPathsQuery(
   TIter begin_,
   const TSentinel& end_)
 {
-  typedef typename odb::query<TQueryParam>::query_columns QParam;
-  const auto& QParamPath = QParam::File::path;
-  constexpr char ODBWildcard = '%';
+  const auto& QParamPath = [](){
+    if constexpr (std::is_same<TQueryParam, cc::model::File>::value) {
+      return odb::query<TQueryParam>::path;
+    } else {
+      return odb::query<TQueryParam>::query_columns::File::path;
+    }
+  }();
 
+  constexpr char ODBWildcard = '%';
   assert(begin_ != end_ && "At least one filter path must be provided.");
   odb::query<TQueryParam> query = QParamPath.like(*begin_ + ODBWildcard);
   while (++begin_ != end_)

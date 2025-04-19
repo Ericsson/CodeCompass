@@ -36,7 +36,7 @@ struct CppFunction : CppTypedEntity
 typedef std::shared_ptr<CppFunction> CppFunctionPtr;
 
 #pragma db view \
-  object(CppFunction) object(CppVariable = Parameters : CppFunction::parameters)
+  object(CppFunction) object(CppVariable = Parameters inner : CppFunction::parameters)
 struct CppFunctionParamCount
 {
   #pragma db column("count(" + Parameters::id + ")")
@@ -45,7 +45,7 @@ struct CppFunctionParamCount
 
 #pragma db view \
   object(CppFunction) \
-  object(CppVariable = Parameters : CppFunction::parameters) \
+  object(CppVariable = Parameters inner : CppFunction::parameters) \
   object(CppAstNode : CppFunction::astNodeId == CppAstNode::id) \
   object(File : CppAstNode::location.file) \
   query((?) + "GROUP BY" + cc::model::CppEntity::astNodeId + "," + cc::model::File::path)
@@ -59,7 +59,7 @@ struct CppFunctionParamCountWithId
 };
 
 #pragma db view \
-  object(CppFunction) object(CppVariable = Locals : CppFunction::locals)
+  object(CppFunction) object(CppVariable = Locals inner : CppFunction::locals)
 struct CppFunctionLocalCount
 {
   #pragma db column("count(" + Locals::id + ")")
@@ -97,7 +97,7 @@ struct CppFunctionBumpyRoad
 
 #pragma db view \
   object(CppFunction) \
-  object(CppVariable = Parameters : CppFunction::parameters)
+  object(CppVariable = Parameters inner : CppFunction::parameters)
 struct CppFunctionParamTypeView
 {
   #pragma db column(CppFunction::astNodeId)
@@ -109,7 +109,7 @@ struct CppFunctionParamTypeView
 
 #pragma db view \
   object(CppFunction) \
-  object(CppVariable = Locals : CppFunction::locals)
+  object(CppVariable = Locals inner : CppFunction::locals)
 struct CppFunctionLocalTypeView
 {
 #pragma db column(CppFunction::astNodeId)
