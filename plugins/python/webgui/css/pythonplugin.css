@@ -1,0 +1,23 @@
+.icon-Builtin::before {
+  content : '\e017'
+}
+
+.icon-Type-hint::before {
+  content : '\e040'
+}
+
+.icon-Full-name::before {
+  content: '\e001';
+}
+
+.icon-Parent::before {
+  content : '\e034'
+}
+
+.icon-Base-class::before {
+  content : '\e033'
+}
+
+.icon-Function-call::before {
+  content : '\e028'
+}

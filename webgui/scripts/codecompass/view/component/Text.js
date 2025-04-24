@@ -341,6 +341,11 @@ function (declare, domClass, dom, style, query, topic, ContentPane, Dialog,
       this.set('content', fileContent);
       this.set('header', this._fileInfo);
 
+      if(this._fileInfo.type == "PY")
+      {
+        this._codeMirror.setOption("mode", 'text/x-python');
+      }
+
       this._getSyntaxHighlight(this._fileInfo);
 
       if (window.gtag) {
