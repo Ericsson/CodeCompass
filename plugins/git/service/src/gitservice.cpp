@@ -151,7 +151,7 @@ void GitServiceHandler::getRepositoryList(std::vector<GitRepository>& return_)
   std::string repoFile(versionDataDir.string() + "/repositories.txt");
   boost::property_tree::ptree pt;
 
-  if (!fs::is_regular(repoFile))
+  if (!fs::is_regular_file(repoFile))
   {
     LOG(warning) << "Repository file not found in data directory: " << repoFile;
     return;

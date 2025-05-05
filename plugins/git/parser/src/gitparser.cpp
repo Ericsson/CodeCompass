@@ -164,7 +164,7 @@ util::DirIterCallback GitParser::getParserCallback()
       boost::property_tree::ptree pt;
       std::string repoFile(versionDataDir + "/repositories.txt");
 
-      if (boost::filesystem::is_regular(repoFile))
+      if (boost::filesystem::is_regular_file(repoFile))
         boost::property_tree::read_ini(repoFile, pt);
 
       pt.put(repoId + ".name", path.filename().string());
