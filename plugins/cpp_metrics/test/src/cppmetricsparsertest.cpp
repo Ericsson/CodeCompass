@@ -13,6 +13,8 @@
 #include <model/cppfunction-odb.hxx>
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
+#include <model/cppfilemetrics.h>
+#include <model/cppfilemetrics-odb.hxx>
 
 #include <util/dbutil.h>
 #include <util/odbtransaction.h>
@@ -20,6 +22,8 @@
 using namespace cc;
 
 extern char* dbConnectionString;
+
+typedef std::pair<std::string, unsigned int> StringUintParam;
 
 class CppMetricsParserTest : public ::testing::Test
 {
@@ -62,14 +66,12 @@ bool CppMetricsParserTest::queryRecordMetric(
 
 // McCabe
 
-typedef std::pair<std::string, unsigned int> McCabeParam;
-
 class ParameterizedMcCabeTest
   : public CppMetricsParserTest,
-    public ::testing::WithParamInterface<McCabeParam>
+    public ::testing::WithParamInterface<StringUintParam>
 {};
 
-std::vector<McCabeParam> paramMcCabe = {
+std::vector<StringUintParam> paramMcCabe = {
   {"conditionals", 8},
   {"loops1", 6},
   {"loops2", 6},
@@ -173,10 +175,10 @@ INSTANTIATE_TEST_SUITE_P(
 
 class ParameterizedTypeMcCabeTest
   : public CppMetricsParserTest,
-    public ::testing::WithParamInterface<McCabeParam>
+    public ::testing::WithParamInterface<StringUintParam>
 {};
 
-std::vector<McCabeParam> paramTypeMcCabe = {
+std::vector<StringUintParam> paramTypeMcCabe = {
   {"Empty",                           0},
   {"ClassMethodsInside",             16},
   {"ClassMethodsOutside",            44},
@@ -271,13 +273,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 // Afferent coupling
 
-typedef std::pair<std::string, unsigned int> AfferentParam;
 class ParameterizedAfferentCouplingTest
   : public CppMetricsParserTest,
-    public ::testing::WithParamInterface<AfferentParam>
+    public ::testing::WithParamInterface<StringUintParam>
 {};
 
-std::vector<AfferentParam> paramAfferent = {
+std::vector<StringUintParam> paramAfferent = {
   {"A",   1},
   {"A2",  1},
   {"A3",  1},
@@ -319,4 +320,36 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedAfferentCouplingTestSuite,
   ParameterizedAfferentCouplingTest,
   ::testing::ValuesIn(paramAfferent)
+);
+
+// Efferent coupling at module level
+
+class ParameterizedEfferentModuleCouplingTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<StringUintParam>
+{};
+
+std::vector<StringUintParam> paramEfferentModule = {
+  {"%/test/sources/parser/module_a", 1},
+  {"%/test/sources/parser/module_b", 0},
+  {"%/test/sources/parser/module_c", 2},
+};
+
+TEST_P(ParameterizedEfferentModuleCouplingTest, ModuleEfferentTest) {
+  _transaction([&, this]() {
+
+    typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
+
+    const auto metric = _db->query_value<model::CppModuleMetricsForPathView>(
+      CppModuleMetricsQuery::CppFileMetrics::type == model::CppFileMetrics::Type::EFFERENT_MODULE &&
+      CppModuleMetricsQuery::File::path.like(GetParam().first));
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedEfferentModuleCouplingTestSuite,
+  ParameterizedEfferentModuleCouplingTest,
+  ::testing::ValuesIn(paramEfferentModule)
 );
