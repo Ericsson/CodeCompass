@@ -1,6 +1,7 @@
 # Build Environment
 We build CodeCompass in a Linux environment. Currently, Ubuntu Long-Term
-Support releases are the main targets: Ubuntu 20.04 LTS and Ubuntu 22.04 LTS.
+Support releases are the main targets: Ubuntu 22.04 LTS (and Ubuntu 24.04 LTS 
+is planned).
 
 We also provide a Docker image that can be used as developer environment to
 CodeCompass. See its usage [in a seperate document](/docker/README.md).
@@ -50,25 +51,6 @@ be installed from the official repository of the given Linux distribution.
 The following command installs the packages except for those which have some
 known issues.
 
-#### Ubuntu 20.04 ("Focal Fossa") LTS
-
-The standard Ubuntu Focal package repository contains only LLCM/Clang version 12,
-which is not sufficient for CodeCompass, as at least version 15 is required.
-Therefore LLVM and Clang should be installed from the official LLVM repositories:
-
-```bash
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo tee /etc/apt/sources.list.d/llvm.list
-echo "deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main" | sudo -a tee /etc/apt/sources.list.d/llvm.list
-sudo apt-get update
-
-sudo apt install git cmake make g++ libboost-all-dev \
-  llvm-15-dev clang-15 libclang-15-dev \
-  odb libodb-dev \
-  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev ctags doxygen \
-  libldap2-dev libgtest-dev
-```
-
 #### Ubuntu 22.04 ("Jammy Jellyfish") LTS
 
 ```bash
@@ -82,17 +64,7 @@ sudo apt install git cmake make g++ libboost-all-dev \
 #### Database engine support
 
 Depending on the desired database engines to be supported, the following
-packages should be installed:
-
-##### Ubuntu 20.04 ("Focal Fossa") LTS
-
-```bash
-# For SQLite database systems:
-sudo apt install libodb-sqlite-dev libsqlite3-dev
-
-# For PostgreSQL database systems:
-sudo apt install libodb-pgsql-dev postgresql-server-dev-12
-```
+packages should be installed.
 
 ##### Ubuntu 22.04 ("Jammy Jellyfish") LTS
 
@@ -165,46 +137,6 @@ time (depending on the machine one is using).
 
 > **Note:** now you may delete the *Build2* toolchain installed in the
 > `<build2_install_dir>` folder, if you do not need any longer.
-
-### Thrift (for Ubuntu 20.04)
-CodeCompass needs [Thrift](https://thrift.apache.org/) which provides Remote
-Procedure Call (RPC) between the server and the client. A suitable version of
-Thrift is, unfortunately, not part of the official Ubuntu repositories for
-this version (only an older version is available), so you should download and 
-build from source.
-
-Thrift can generate stubs for many programming languages. The configure
-script looks at the development environment and if it finds the environment
-for a given language then it'll use it. For example in the previous step npm
-was installed which requires NodeJS. If NodeJS can be found on your machine
-then the corresponding stub will also compile. If you don't need it then you
-can turn it off: `./configure --without-nodejs`.
-
-In certain cases, installation may fail if development libraries for
-languages are not installed on the target machine. E.g. if Python is
-installed but the Python development headers are not, Thrift will unable to
-install. Python, PHP and such other Thrift builds are NOT required by
-CodeCompass, and can significantly increase compile time so it is advised to
-avoid using them if it's not necessary.
-
-```bash
-# Download and uncompress Thrift:
-wget "http://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=thrift/0.16.0/thrift-0.16.0.tar.gz" \
-  -O thrift-0.16.0.tar.gz
-tar -xvf ./thrift-0.16.0.tar.gz
-cd thrift-0.16.0
-
-./configure --prefix=<thrift_install_dir> --silent --without-python \
-  --enable-libtool-lock --enable-tutorial=no --enable-tests=no      \
-  --with-libevent --with-zlib --without-nodejs --without-lua        \
-  --without-ruby --without-csharp --without-erlang --without-perl   \
-  --without-php --without-php_extension --without-dart              \
-  --without-haskell --without-go --without-rs --without-haxe        \
-  --without-dotnetcore --without-d --without-qt4 --without-qt5      \
-  --without-java
-
-make install -j $(nproc)
-```
 
 ### Node.js and NPM
 Make sure you are using at least version 18.17 of [Node.js](https://nodejs.org/en/).

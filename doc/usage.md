@@ -19,8 +19,7 @@ PostgreSQL can be installed from the package manager:
 
 ```bash
 sudo apt install postgresql-<version>
-# (e.g. postgresql-12 for Ubuntu 20.04
-#   and postgresql-14 for Ubuntu 22.04)
+# (e.g. postgresql-14 for Ubuntu 22.04)
 ```
 
 This will set up an automatically starting local server on the default port
