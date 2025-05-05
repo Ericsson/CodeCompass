@@ -17,7 +17,7 @@ hash_value=$(echo -n "${build2_version}${odb_signature}" | md5sum | awk '{print 
 ## Save said hash
 
 ### Restore action
-echo "ubuntu-22-04-compile-hash-key=${hash_value}" >> "$GITHUB_OUTPUT"
+echo "compile-hash-key=${hash_value}" >> "$GITHUB_OUTPUT"
 
 ### Save action
 echo "CACHE_KEY=${hash_value}" >> "$GITHUB_ENV"

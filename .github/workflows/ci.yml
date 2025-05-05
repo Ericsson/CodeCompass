@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     outputs:
       ubuntu-20-04-compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
-      ubuntu-22-04-compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }}
+      ubuntu-22-04-compile-hash-key: ${{ steps.download-compile-dependencies.outputs.compile-hash-key }} # update this to 24.04 later
 
     services:
       # Label used to access the service container
@@ -235,7 +235,7 @@ jobs:
         with:
           path: ${{ env.INSTALL_PATH }}
           fail-on-cache-miss: true
-          key: ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-20-04-compile-hash-key }}
+          key: ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
           restore-keys: |
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-20-04-compile-hash-key }}
             ${{ matrix.os }}-compile-install-${{ needs.build.outputs.ubuntu-22-04-compile-hash-key }}
