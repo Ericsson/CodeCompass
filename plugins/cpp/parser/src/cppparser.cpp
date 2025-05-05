@@ -232,7 +232,7 @@ model::BuildActionPtr CppParser::addBuildAction(
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
-  auto extension = fs::path(command_.Filename).extension();
+  auto extension = fs::path(command_.Filename).extension().string();
 
   buildAction->command = boost::algorithm::join(command_.CommandLine, " ");
   buildAction->type
