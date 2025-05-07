@@ -4,3 +4,4 @@
 #include "./module_b/b2.h"
 #include "./module_c/c1.h"
 #include "./module_c/c2.h"
+#include "./module_d/d1.h"
