@@ -13,7 +13,8 @@ struct CppFileMetrics
 {
   enum Type
   {
-    EFFERENT_MODULE
+    EFFERENT_MODULE,
+    AFFERENT_MODULE
   };
 
   #pragma db id auto
