@@ -13,7 +13,8 @@ struct CppFileMetrics
 {
   enum Type
   {
-    EFFERENT_MODULE
+    EFFERENT_MODULE,
+    RELATIONAL_COHESION_MODULE
   };
 
   #pragma db id auto
@@ -26,7 +27,7 @@ struct CppFileMetrics
   Type type;
 
   #pragma db not_null
-  unsigned value;
+  double value;
 };
 
 #pragma db view \
@@ -44,7 +45,7 @@ struct CppModuleMetricsForPathView
   CppFileMetrics::Type type;
 
   #pragma db column(CppFileMetrics::value)
-  unsigned value;
+  double value;
 };
 
 #pragma db view \
