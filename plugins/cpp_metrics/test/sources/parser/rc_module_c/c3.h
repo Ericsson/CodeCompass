@@ -1,0 +1,9 @@
+#ifndef CC_CPP_RC_MODULE_METRICS_TEST_C3
+#define CC_CPP_RC_MODULE_METRICS_TEST_C3
+
+namespace CC_CPP_RC_MODULE_METRICS_TEST
+{
+class C3 {};
+}
+
+#endif

@@ -26,6 +26,16 @@ struct CohesionCppRecordView
 };
 
 #pragma db view \
+  object(CppRecord) \
+  object(CppAstNode : CppRecord::astNodeId == CppAstNode::id) \
+  object(File : CppAstNode::location.file)
+struct CohesionCppRecord_Count
+{
+  #pragma db column("count(" + CppEntity::id + ")")
+  std::size_t count;
+};
+
+#pragma db view \
   object(CppMemberType) \
   object(CppAstNode : CppMemberType::memberAstNode) \
   query(CppMemberType::kind == cc::model::CppMemberType::Kind::Field && (?))
