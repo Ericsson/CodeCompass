@@ -383,8 +383,6 @@ void CppMetricsParser::efferentTypeLevel()
       {
         typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
         typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
-        typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
-        typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
         typedef odb::query<cc::model::CppFunction> FuncQuery;
 
         std::set<std::uint64_t> dependentTypes;
@@ -612,7 +610,7 @@ void CppMetricsParser::relationalCohesionModuleLevel()
 
   parallelCalcMetric<model::File>(
     "Relational cohesion at module level",
-    _threadCount * relationalCohesionPartitionMultiplier,// number of jobs; adjust for granularity
+    _threadCount * relationalCohesionPartitionMultiplier, // number of jobs; adjust for granularity
     getModulePathsQuery(),
     [&, this](const MetricsTasks<model::File>& tasks)
     {

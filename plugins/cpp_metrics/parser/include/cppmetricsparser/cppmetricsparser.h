@@ -212,6 +212,7 @@ private:
   static const int afferentCouplingTypesPartitionMultiplier = 5;
   static const int efferentCouplingModulesPartitionMultiplier = 5;
   static const int afferentCouplingModulesPartitionMultiplier = 5;
+  static const int relationalCohesionPartitionMultiplier = 5;
 };
   
 } // parser
