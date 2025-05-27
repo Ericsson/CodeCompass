@@ -57,9 +57,23 @@ struct CppTypeDependencyMetricsPathView
   object(CppAstNode = DependencyAstNode : CppTypeDependencyMetrics::dependencyHash == DependencyAstNode::entityHash \
     && DependencyAstNode::astType == cc::model::CppAstNode::AstType::Definition) \
   object(File = DependencyFile : DependencyAstNode::location.file == DependencyFile::id)
-struct CppTypeDependencyMetricsPathViewDistinctCount
+struct CppTypeDependencyMetrics_Distinct_D_Count
 {
   #pragma db column("count(distinct" + CppTypeDependencyMetrics::dependencyHash + ")")
+  std::size_t count;
+};
+
+#pragma db view \
+  object(CppTypeDependencyMetrics) \
+  object(CppAstNode = EntityAstNode : CppTypeDependencyMetrics::entityHash == EntityAstNode::entityHash \
+    && EntityAstNode::astType == cc::model::CppAstNode::AstType::Definition) \
+  object(File = EntityFile : EntityAstNode::location.file == EntityFile::id) \
+  object(CppAstNode = DependencyAstNode : CppTypeDependencyMetrics::dependencyHash == DependencyAstNode::entityHash \
+    && DependencyAstNode::astType == cc::model::CppAstNode::AstType::Definition) \
+  object(File = DependencyFile : DependencyAstNode::location.file == DependencyFile::id)
+struct CppTypeDependencyMetrics_Distinct_E_Count
+{
+  #pragma db column("count(distinct" + CppTypeDependencyMetrics::entityHash + ")")
   std::size_t count;
 };
 
