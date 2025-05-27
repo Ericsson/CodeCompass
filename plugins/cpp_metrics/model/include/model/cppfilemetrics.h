@@ -14,6 +14,7 @@ struct CppFileMetrics
   enum Type
   {
     EFFERENT_MODULE,
+    AFFERENT_MODULE,
     RELATIONAL_COHESION_MODULE
   };
 

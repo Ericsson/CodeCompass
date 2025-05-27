@@ -557,18 +557,47 @@ void CppMetricsParser::efferentModuleLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<model::CppTypeDependencyMetricsPathViewDistinctCount> TypeDependencyQuery;
-        typedef model::CppTypeDependencyMetricsPathViewDistinctCount TypeDependencyResult;
+        typedef odb::query<model::CppTypeDependencyMetrics_Distinct_D_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependencyMetrics_Distinct_D_Count TypeDependencyResult;
 
         for (const model::File& file : tasks)
         {
-          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetricsPathViewDistinctCount>(
+          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetrics_Distinct_D_Count>(
             TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
             !TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
 
           model::CppFileMetrics metric;
           metric.file = file.id;
           metric.type = model::CppFileMetrics::Type::EFFERENT_MODULE;
+          metric.value = types.count;
+          _ctx.db->persist(metric);
+        }
+      });
+  });
+}
+
+void CppMetricsParser::afferentModuleLevel()
+{
+  parallelCalcMetric<model::File>(
+    "Afferent coupling at module level",
+    _threadCount * afferentCouplingModulesPartitionMultiplier,// number of jobs; adjust for granularity
+    getModulePathsQuery(),
+    [&, this](const MetricsTasks<model::File>& tasks)
+    {
+      util::OdbTransaction{_ctx.db}([&, this]
+      {
+        typedef odb::query<model::CppTypeDependencyMetrics_Distinct_E_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependencyMetrics_Distinct_E_Count TypeDependencyResult;
+
+        for (const model::File& file : tasks)
+        {
+          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetrics_Distinct_E_Count>(
+            !TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
+            TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
+
+          model::CppFileMetrics metric;
+          metric.file = file.id;
+          metric.type = model::CppFileMetrics::Type::AFFERENT_MODULE;
           metric.value = types.count;
           _ctx.db->persist(metric);
         }
@@ -641,6 +670,8 @@ bool CppMetricsParser::parse()
   afferentTypeLevel();
   LOG(info) << "[cppmetricsparser] Computing efferent coupling metric at module level.";
   efferentModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
+  LOG(info) << "[cppmetricsparser] Computing afferent coupling metric at module level.";
+  afferentModuleLevel(); // This metric needs to be calculated after afferentTypeLevel
   LOG(info) << "[cppmetricsparser] Computing relational cohesion metric at module level.";
   relationalCohesionModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
   return true;

@@ -331,9 +331,10 @@ class ParameterizedEfferentModuleCouplingTest
 {};
 
 std::vector<StringUintParam> paramEfferentModule = {
-  {"%/test/sources/parser/module_a", 1},
+  {"%/test/sources/parser/module_a", 1}, // B1
   {"%/test/sources/parser/module_b", 0},
-  {"%/test/sources/parser/module_c", 2},
+  {"%/test/sources/parser/module_c", 2}, // A2, B1
+  {"%/test/sources/parser/module_d", 2}, // C1, C2
 };
 
 TEST_P(ParameterizedEfferentModuleCouplingTest, ModuleEfferentTest) {
@@ -353,6 +354,39 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedEfferentModuleCouplingTestSuite,
   ParameterizedEfferentModuleCouplingTest,
   ::testing::ValuesIn(paramEfferentModule)
+);
+
+// Afferent coupling at module level
+
+class ParameterizedAfferentModuleCouplingTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<StringUintParam>
+{};
+
+std::vector<StringUintParam> paramAfferentModule = {
+  {"%/test/sources/parser/module_a", 1}, // C2
+  {"%/test/sources/parser/module_b", 3}, // A2, C1, C2
+  {"%/test/sources/parser/module_c", 1}, // D1
+  {"%/test/sources/parser/module_d", 0},
+};
+
+TEST_P(ParameterizedAfferentModuleCouplingTest, ModuleAfferentTest) {
+  _transaction([&, this]() {
+
+    typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
+
+    const auto metric = _db->query_value<model::CppModuleMetricsForPathView>(
+      CppModuleMetricsQuery::CppFileMetrics::type == model::CppFileMetrics::Type::AFFERENT_MODULE &&
+      CppModuleMetricsQuery::File::path.like(GetParam().first));
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedAfferentModuleCouplingTestSuite,
+  ParameterizedAfferentModuleCouplingTest,
+  ::testing::ValuesIn(paramAfferentModule)
 );
 
 // Relational cohesion at module level
