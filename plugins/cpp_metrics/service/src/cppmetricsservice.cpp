@@ -70,8 +70,16 @@ void CppMetricsServiceHandler::getCppModuleMetricsTypeNames(
 {
   CppModuleMetricsTypeName typeName;
 
-  typeName.type = CppModuleMetricsType::Placeholder;
-  typeName.name = "Placeholder";
+  typeName.type = CppModuleMetricsType::EfferentModule;
+  typeName.name = "Efferent coupling of module";
+  _return.push_back(typeName);
+
+  typeName.type = CppModuleMetricsType::AfferentModule;
+  typeName.name = "Afferent coupling of module";
+  _return.push_back(typeName);
+
+  typeName.type = CppModuleMetricsType::RelationalCohesionModule;
+  typeName.name = "Relational cohesion of module";
   _return.push_back(typeName);
 }
 

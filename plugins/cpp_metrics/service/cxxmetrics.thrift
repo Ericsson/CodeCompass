@@ -18,7 +18,9 @@ enum CppAstNodeMetricsType
 
 enum CppModuleMetricsType
 {
-  Placeholder = 1
+  EfferentModule = 1,
+  AfferentModule = 2,
+  RelationalCohesionModule = 3
 }
 
 struct CppAstNodeMetricsTypeName
