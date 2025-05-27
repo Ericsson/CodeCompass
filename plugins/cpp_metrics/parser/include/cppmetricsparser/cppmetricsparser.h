@@ -84,6 +84,8 @@ private:
   void efferentModuleLevel();
   // Calculate the afferent coupling at module level.
   void afferentModuleLevel();
+  // Calculate relational cohesion at module level.
+  void relationalCohesionModuleLevel();
   // Returns module path query based on parser configuration.
   odb::query<model::File> getModulePathsQuery();
 
@@ -210,6 +212,7 @@ private:
   static const int afferentCouplingTypesPartitionMultiplier = 5;
   static const int efferentCouplingModulesPartitionMultiplier = 5;
   static const int afferentCouplingModulesPartitionMultiplier = 5;
+  static const int relationalCohesionPartitionMultiplier = 5;
 };
   
 } // parser

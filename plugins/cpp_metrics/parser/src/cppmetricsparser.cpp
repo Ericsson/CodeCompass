@@ -383,8 +383,6 @@ void CppMetricsParser::efferentTypeLevel()
       {
         typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
         typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
-        typedef odb::query<cc::model::CppFunctionParamTypeView> ParamQuery;
-        typedef odb::query<cc::model::CppFunctionLocalTypeView> LocalQuery;
         typedef odb::query<cc::model::CppFunction> FuncQuery;
 
         std::set<std::uint64_t> dependentTypes;
@@ -605,6 +603,53 @@ void CppMetricsParser::afferentModuleLevel()
   });
 }
 
+void CppMetricsParser::relationalCohesionModuleLevel()
+{
+  // Compute relational cohesion defined by CppDepend:
+  // https://www.cppdepend.com/documentation/code-metrics#RelationalCohesion
+
+  parallelCalcMetric<model::File>(
+    "Relational cohesion at module level",
+    _threadCount * relationalCohesionPartitionMultiplier, // number of jobs; adjust for granularity
+    getModulePathsQuery(),
+    [&, this](const MetricsTasks<model::File>& tasks)
+    {
+      util::OdbTransaction{_ctx.db}([&, this]
+      {
+        typedef odb::query<model::CppTypeDependencyMetrics_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependencyMetrics_Count TypeDependencyResult;
+        typedef odb::query<model::CohesionCppRecord_Count> RecordQuery;
+        typedef model::CohesionCppRecord_Count RecordResult;
+
+        for (const model::File& file : tasks)
+        {
+          TypeDependencyResult dependencies = _ctx.db->query_value<model::CppTypeDependencyMetrics_Count>(
+            TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
+            TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
+
+          // Let R be the number of type relationships that are internal to a module
+          // (i.e that do not connect to types outside the module)
+          const std::size_t r = dependencies.count;
+
+          RecordResult types = _ctx.db->query_value<model::CohesionCppRecord_Count>(
+            RecordQuery::File::path.like(file.path + '%'));
+
+          // Let N be the number of types within the module.
+          const std::size_t n = types.count;
+
+          // Relational cohesion
+          const double h = (n != 0) ? (double)(r + 1) / n : 0;
+
+          model::CppFileMetrics metric;
+          metric.file = file.id;
+          metric.type = model::CppFileMetrics::Type::RELATIONAL_COHESION_MODULE;
+          metric.value = h;
+          _ctx.db->persist(metric);
+        }
+      });
+  });
+}
+
 bool CppMetricsParser::parse()
 {
   LOG(info) << "[cppmetricsparser] Computing function parameter count metric.";
@@ -625,6 +670,8 @@ bool CppMetricsParser::parse()
   efferentModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
   LOG(info) << "[cppmetricsparser] Computing afferent coupling metric at module level.";
   afferentModuleLevel(); // This metric needs to be calculated after afferentTypeLevel
+  LOG(info) << "[cppmetricsparser] Computing relational cohesion metric at module level.";
+  relationalCohesionModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
   return true;
 }
 

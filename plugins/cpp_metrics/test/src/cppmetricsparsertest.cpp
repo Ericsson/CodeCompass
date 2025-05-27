@@ -24,6 +24,7 @@ using namespace cc;
 extern char* dbConnectionString;
 
 typedef std::pair<std::string, unsigned int> StringUintParam;
+typedef std::pair<std::string, double> StringDoubleParam;
 
 class CppMetricsParserTest : public ::testing::Test
 {
@@ -386,4 +387,42 @@ INSTANTIATE_TEST_SUITE_P(
   ParameterizedAfferentModuleCouplingTestSuite,
   ParameterizedAfferentModuleCouplingTest,
   ::testing::ValuesIn(paramAfferentModule)
+);
+
+// Relational cohesion at module level
+
+class ParameterizedRelationalCohesionTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<StringDoubleParam>
+{};
+
+// Relational cohesion formula:
+// H = (R + 1)/ N
+// where R is the number of type relationships that are internal to a module,
+// N is the number of types within a module.
+
+std::vector<StringDoubleParam> paramRelationalCohesion = {
+  {"%/test/sources/parser/rc_module_a", (3 + 1) / 3.0},
+  {"%/test/sources/parser/rc_module_b", (0 + 1) / 1.0},
+  {"%/test/sources/parser/rc_module_c", (1 + 1) / 4.0},
+};
+
+TEST_P(ParameterizedRelationalCohesionTest, RelationalCohesionTest) {
+  _transaction([&, this]() {
+
+    typedef odb::query<model::CppModuleMetricsForPathView> CppModuleMetricsQuery;
+
+    const auto metric = _db->query_value<model::CppModuleMetricsForPathView>(
+      CppModuleMetricsQuery::CppFileMetrics::type == model::CppFileMetrics::Type::RELATIONAL_COHESION_MODULE &&
+      CppModuleMetricsQuery::File::path.like(GetParam().first));
+
+    constexpr double tolerance = 1e-8;
+    EXPECT_NEAR(GetParam().second, metric.value, tolerance);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedRelationalCohesionTestSuite,
+  ParameterizedRelationalCohesionTest,
+  ::testing::ValuesIn(paramRelationalCohesion)
 );
