@@ -24,6 +24,9 @@ struct CppTypeDependencyMetrics
 
   #pragma db not_null
   std::uint64_t dependencyHash;
+
+#pragma db index member(entityHash)
+#pragma db index member(dependencyHash)
 };
 
 #pragma db view \

@@ -29,6 +29,8 @@ struct CppFileMetrics
 
   #pragma db not_null
   double value;
+
+#pragma db index member(file)
 };
 
 #pragma db view \
