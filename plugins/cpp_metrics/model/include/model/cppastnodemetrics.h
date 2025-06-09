@@ -37,6 +37,8 @@ struct CppAstNodeMetrics
 
   #pragma db null
   double value;
+
+#pragma db index member(astNodeId)
 };
 
 #pragma db view \
