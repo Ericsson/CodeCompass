@@ -669,7 +669,7 @@ bool CppMetricsParser::parse()
   LOG(info) << "[cppmetricsparser] Computing efferent coupling metric at module level.";
   efferentModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
   LOG(info) << "[cppmetricsparser] Computing afferent coupling metric at module level.";
-  afferentModuleLevel(); // This metric needs to be calculated after afferentTypeLevel
+  afferentModuleLevel(); // This metric needs to be calculated after efferentTypeLevel (sic!)
   LOG(info) << "[cppmetricsparser] Computing relational cohesion metric at module level.";
   relationalCohesionModuleLevel(); // This metric needs to be calculated after efferentTypeLevel
   return true;
