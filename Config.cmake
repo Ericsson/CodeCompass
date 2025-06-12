@@ -51,6 +51,9 @@ set(INSTALL_GEN_DIR "${INSTALL_SCRIPTS_DIR}/generated")
 # Installation directory for Java libraries
 set(INSTALL_JAVA_LIB_DIR "${INSTALL_LIB_DIR}/java")
 
+# Installation directory for the Python plugin
+set(INSTALL_PYTHON_DIR "${INSTALL_LIB_DIR}/pythonplugin")
+
 # Installation directory for executables
 set(INSTALL_BIN_DIR "bin")
 

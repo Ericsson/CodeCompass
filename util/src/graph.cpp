@@ -278,10 +278,26 @@ std::string Graph::output(Graph::Format format_) const
 
   gvLayout(_graphPimpl->_gvc, _graphPimpl->_graph, "dot");
 
+  const char* render_format;
+  switch (format_) {
+    case Graph::DOT:
+      render_format = "dot";
+      break;
+    case Graph::SVG:
+      render_format = "svg";
+      break;
+    case Graph::CAIRO_SVG:
+      render_format = "svg:cairo";
+      break;
+    default:
+      __builtin_unreachable();
+      break;
+  }
+
   gvRenderData(
     _graphPimpl->_gvc,
     _graphPimpl->_graph,
-    format_ == Graph::DOT ? "dot" : "svg",
+    render_format,
     result,
     length);
 
