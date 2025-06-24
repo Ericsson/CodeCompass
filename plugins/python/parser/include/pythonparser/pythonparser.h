@@ -1,0 +1,43 @@
+#ifndef CC_PARSER_PYTHONPARSER_H
+#define CC_PARSER_PYTHONPARSER_H
+
+#include <string>
+#include <vector>
+#include <map>
+#include <parser/abstractparser.h>
+#include <parser/parsercontext.h>
+#include <parser/sourcemanager.h>
+#include <util/parserutil.h>
+#include <boost/python.hpp>
+#include <model/pyname.h>
+#include <model/pyname-odb.hxx>
+namespace cc
+{
+namespace parser
+{
+  
+namespace python = boost::python;
+
+typedef std::unordered_map<std::uint64_t, model::PYName> PYNameMap;
+
+class PythonParser : public AbstractParser
+{
+public:
+  PythonParser(ParserContext& ctx_);
+  virtual ~PythonParser();
+  virtual bool parse() override;
+private:
+  struct ParseResultStats {
+    std::uint32_t partial;
+    std::uint32_t full;
+  };
+
+  python::object m_py_module;
+  void processFile(const python::object& obj, PYNameMap& map, ParseResultStats& parse_result);
+  void parseProject(const std::string& root_path);
+};
+  
+} // parser
+} // cc
+
+#endif // CC_PARSER_PYTHONPARSER_H
