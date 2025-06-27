@@ -86,6 +86,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
     std::map<std::string, std::string> expected =
     {
       {"Name", "SimpleClass"},
+      {"Context", "Namespace"},
       {"Qualified name", "cc::test::SimpleClass"}
     };
 
@@ -96,6 +97,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
     std::map<std::string, std::string> expected =
     {
       {"Name", "NestedClass"},
+      {"Context", "Namespace"},
       {"Qualified name", "cc::test::NestedClass"},
       {"POD type", "true"}
     };
@@ -107,6 +109,7 @@ TEST_F(CppPropertiesServiceTest, ClassPropertiesTest)
     std::map<std::string, std::string> expected =
     {
       {"Name", "InnerClass"},
+      {"Context", "Record"},
       {"Qualified name", "cc::test::NestedClass::InnerClass"},
       {"POD type", "true"}
     };
@@ -121,6 +124,7 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
     std::map<std::string, std::string> expected =
     {
       {"Name", "BaseClass1"},
+      {"Context", "Namespace"},
       {"Qualified name", "cc::test::BaseClass1"},
       {"Abstract type", "true"}
     };
@@ -132,6 +136,7 @@ TEST_F(CppPropertiesServiceTest, InheritancePropertiesTest)
     std::map<std::string, std::string> expected =
     {
       {"Name", "DerivedClass"},
+      {"Context", "Namespace"},
       {"Qualified name", "cc::test::DerivedClass"}
     };
 

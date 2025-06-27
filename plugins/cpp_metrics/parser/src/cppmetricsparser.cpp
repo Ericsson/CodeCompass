@@ -264,13 +264,28 @@ void CppMetricsParser::typeMcCabe()
   });
 }
 
+odb::query<model::CohesionCppRecordView> CppMetricsParser::getCohesionRecordQuery()
+{
+  odb::query<model::CohesionCppRecordView> query = getFilterPathsQuery<model::CohesionCppRecordView>();
+
+  if (_ctx.options.count("cppmetrics-ignore-lambdas")) {
+    query = query && odb::query<model::CohesionCppRecordView>::CppRecord::isLambda == false;
+  }
+
+  if (_ctx.options.count("cppmetrics-ignore-nested-classes")) {
+    query = query && odb::query<model::CohesionCppRecordView>::CppRecord::context != model::CppRecord::Context::RECORD;
+  }
+
+  return query;
+}
+
 void CppMetricsParser::lackOfCohesion()
 {
   // Calculate the cohesion metric for all types on parallel threads.
   parallelCalcMetric<model::CohesionCppRecordView>(
     "Lack of cohesion",
     _threadCount * lackOfCohesionPartitionMultiplier, // number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    getCohesionRecordQuery(),
     [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
@@ -376,7 +391,7 @@ void CppMetricsParser::efferentTypeLevel()
   parallelCalcMetric<model::CohesionCppRecordView>(
     "Efferent coupling of types",
     _threadCount * efferentCouplingTypesPartitionMultiplier,// number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    getCohesionRecordQuery(),
     [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
     {
       util::OdbTransaction{_ctx.db}([&, this]
@@ -456,7 +471,7 @@ void CppMetricsParser::afferentTypeLevel()
   parallelCalcMetric<model::CohesionCppRecordView>(
     "Afferent coupling of types",
     _threadCount * afferentCouplingTypesPartitionMultiplier,// number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CohesionCppRecordView>(),
+    getCohesionRecordQuery(),
     [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
     {
       util::OdbTransaction{_ctx.db}([&, this]
@@ -696,6 +711,12 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("C++ Metrics Plugin");
+
+    description.add_options()
+    ("cppmetrics-ignore-lambdas",
+      "Skip Efferent/Afferent Coupling, Lack of Cohesion C++ metrics calculations for lambdas.")
+    ("cppmetrics-ignore-nested-classes",
+      "Skip Efferent/Afferent Coupling, Lack of Cohesion C++ metrics calculations for nested classes.");
 
     return description;
   }

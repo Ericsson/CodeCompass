@@ -333,9 +333,12 @@ void CppServiceHandler::getProperties(
             return_["Abstract type"] = "true";
           if (type.isPOD)
             return_["POD type"] = "true";
+          if(type.isLambda)
+            return_["Lambda"] = "true";
 
           return_["Name"] = type.name;
           return_["Qualified name"] = type.qualifiedName;
+          return_["Context"] = type.getContextString();
         }
         else
           LOG(warning)

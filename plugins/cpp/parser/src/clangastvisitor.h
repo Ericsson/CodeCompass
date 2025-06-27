@@ -614,6 +614,20 @@ public:
     cppRecord->entityHash = astNode->entityHash;
     cppRecord->name = rd_->getNameAsString();
     cppRecord->qualifiedName = rd_->getQualifiedNameAsString();
+    cppRecord->isLambda = rd_->isLambda();
+
+    const clang::DeclContext* parentDecl = rd_->getParent();
+    if (parentDecl) {
+      if (parentDecl->isTranslationUnit()) {
+        cppRecord->context = model::CppRecord::Context::TOP_LEVEL;
+      } else if (parentDecl->isNamespace()) {
+        cppRecord->context = model::CppRecord::Context::NAMESPACE;
+      } else if (parentDecl->isRecord()) {
+        cppRecord->context = model::CppRecord::Context::RECORD;
+      } else if (parentDecl->isFunctionOrMethod()) {
+        cppRecord->context = model::CppRecord::Context::FUNCTION;
+      }
+    }
 
     if (const clang::CXXRecordDecl* crd
       = llvm::dyn_cast<clang::CXXRecordDecl>(rd_))

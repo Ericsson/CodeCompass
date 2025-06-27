@@ -7,6 +7,9 @@
 #include <model/cppastnodemetrics.h>
 #include <model/cppastnodemetrics-odb.hxx>
 
+#include <model/cppcohesionmetrics.h>
+#include <model/cppcohesionmetrics-odb.hxx>
+
 #include <model/cppfunction.h>
 #include <model/cppfunction-odb.hxx>
 
@@ -88,6 +91,8 @@ private:
   void relationalCohesionModuleLevel();
   // Returns module path query based on parser configuration.
   odb::query<model::File> getModulePathsQuery();
+  // Returns cohesion record query based on parser configuration.
+  odb::query<model::CohesionCppRecordView> getCohesionRecordQuery();
 
   /// @brief Constructs an ODB query that you can use to filter only
   /// the database records of the given parameter type whose path
