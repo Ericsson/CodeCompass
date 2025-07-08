@@ -36,7 +36,7 @@ inline std::string sha1Hash(const std::string& data_)
   using namespace boost::uuids::detail;
 
   sha1 hasher;
-  unsigned int digest[5];
+  boost::uuids::detail::sha1::digest_type digest;
 
   hasher.process_bytes(data_.c_str(), data_.size());
   hasher.get_digest(digest);
@@ -46,8 +46,23 @@ inline std::string sha1Hash(const std::string& data_)
   ss.width(8);
   ss.fill('0');
 
+  // To ensure correct output, especially for newer Boost versions where digest might be treated as 20 bytes,
+  // we explicitly cast the relevant 4 bytes into a uint32_t.
+  // For older Boost, digest[i] is already a uint32_t.
+  // For newer Boost, digest is a uint8_t[20]. We need to reconstruct the 32-bit values.
+#if BOOST_VERSION >= 108600 /* 1.86.0 */
+  for (int i = 0; i < 5; ++i)
+  {
+    uint32_t part = (static_cast<uint32_t>(digest[i * 4]) << 24) |
+                    (static_cast<uint32_t>(digest[i * 4 + 1]) << 16) |
+                    (static_cast<uint32_t>(digest[i * 4 + 2]) << 8) |
+                     static_cast<uint32_t>(digest[i * 4 + 3]);
+    ss << part;
+  }
+#else
   for (int i = 0; i < 5; ++i)
     ss << digest[i];
+#endif
 
   return ss.str();
 }
