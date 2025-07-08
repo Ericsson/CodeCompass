@@ -315,36 +315,63 @@ void CppMetricsParser::lackOfCohesion()
           // Record these fields for later use.
           fieldHashes.insert(field.entityHash);
         }
-        std::size_t fieldCount = fieldHashes.size();
 
-        std::size_t methodCount = 0;
-        std::size_t totalCohesion = 0;
         // Query all methods of the current type.
+        std::vector<model::CohesionCppMethodView> methods;
+        // Build a query for variable access that within ANY of the methods.
+        odb::query<model::CohesionCppAstNodeView> nodeQuery(false);
         for (const model::CohesionCppMethodView& method
-          : _ctx.db->query<model::CohesionCppMethodView>(
-            QMethodTypeHash == type.entityHash
-          ))
+          : _ctx.db->query<model::CohesionCppMethodView>(QMethodTypeHash == type.entityHash))
         {
           // Do not consider methods with no explicit bodies.
           const model::Position start(method.startLine, method.startColumn);
           const model::Position end(method.endLine, method.endColumn);
-          if (start < end)
+          if (!(start < end))
           {
-            std::unordered_set<HashType> usedFields;
+            continue;
+          }
 
-            // Query AST nodes that use a variable for reading or writing...
-            for (const model::CohesionCppAstNodeView& node
-              : _ctx.db->query<model::CohesionCppAstNodeView>(
-                // ... in the same file as the current method
-                (QNodeFilePath == method.filePath &&
-                // ... within the textual scope of the current method's body.
-                (QNodeRange.start.line >= start.line
-                  || (QNodeRange.start.line == start.line
+          methods.push_back(method);
+
+          // Query AST nodes that use a variable for reading or writing...
+          nodeQuery = nodeQuery ||
+            // ... in the same file as the current method
+            (QNodeFilePath == method.filePath &&
+              // ... within the textual scope of the current method's body.
+              (QNodeRange.start.line > start.line
+                || (QNodeRange.start.line == start.line
                   && QNodeRange.start.column >= start.column)) &&
-                (QNodeRange.end.line <= end.line
-                  || (QNodeRange.end.line == end.line
-                  && QNodeRange.end.column <= end.column)))
-              ))
+              (QNodeRange.end.line < end.line
+                || (QNodeRange.end.line == end.line
+                  && QNodeRange.end.column <= end.column)));
+        }
+
+        // Query all nodes in a single operation.
+        std::vector<model::CohesionCppAstNodeView> nodes;
+        for (const model::CohesionCppAstNodeView& node: _ctx.db->query<model::CohesionCppAstNodeView>(nodeQuery))
+        {
+          nodes.push_back(node);
+        }
+
+        // Counter variables.
+        std::size_t fieldCount = fieldHashes.size();
+        std::size_t methodCount = methods.size();
+        std::size_t totalCohesion = 0;
+
+        // For each node, find the method it belongs to and check for field usage.
+        for (const auto& method : methods) {
+          model::Position start(method.startLine, method.startColumn);
+          model::Position end(method.endLine, method.endColumn);
+
+          std::unordered_set<HashType> usedFields;
+
+          for (const auto& node : nodes) {
+            // Filter AST nodes used in this method.
+            if (node.filePath == method.filePath &&
+                (node.startLine > start.line ||
+                  (node.startLine == start.line && node.startColumn >= start.column)) &&
+                (node.endLine < end.line ||
+                  (node.endLine == end.line && node.endColumn <= end.column)))
             {
               // If this AST node is a reference to a field of the type...
               if (fieldHashes.find(node.entityHash) != fieldHashes.end())
@@ -353,10 +380,9 @@ void CppMetricsParser::lackOfCohesion()
                 usedFields.insert(node.entityHash);
               }
             }
-
-            ++methodCount;
-            totalCohesion += usedFields.size();
           }
+
+          totalCohesion += usedFields.size();
         }
 
         // Calculate and record metrics.
