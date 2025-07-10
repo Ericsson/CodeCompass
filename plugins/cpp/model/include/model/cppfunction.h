@@ -1,6 +1,7 @@
 #ifndef CC_MODEL_CPPFUNCTION_H
 #define CC_MODEL_CPPFUNCTION_H
 
+#include <cstdint>
 #include <vector>
 
 #include "cppentity.h"
@@ -22,6 +23,10 @@ struct CppFunction : CppTypedEntity
   unsigned int mccabe;
   unsigned int bumpiness;
   unsigned int statementCount;
+
+  // Hash of the record (e.g. class or struct) in which this function is declared
+  // recordHash = 0 means this is a global function
+  std::uint64_t recordHash = 0;
 
   std::string toString() const
   {

@@ -6,5 +6,6 @@ add_library(CppMetricsTestProject STATIC
   typemccabe.cpp
   lackofcohesion.cpp
   bumpyroad.cpp
+  efferentcoupling.cpp
   afferentcoupling.cpp
   modulemetrics.cpp)

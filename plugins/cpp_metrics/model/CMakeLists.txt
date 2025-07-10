@@ -5,8 +5,7 @@ include_directories(
 set(ODB_SOURCES
   include/model/cppastnodemetrics.h
   include/model/cppcohesionmetrics.h
-  include/model/cppfilemetrics.h
-  include/model/cpptypedependencymetrics.h)
+  include/model/cppfilemetrics.h)
 
 generate_odb_files("${ODB_SOURCES}" "cpp")
 
