@@ -1,6 +1,8 @@
 #include <memory>
 #include <vector>
 
+namespace CC_CPP_AFFERENT_COUPLING_METRICS_TEST
+{
 // Member types
 class A {};
 class A_D {
@@ -174,3 +176,4 @@ class H2_D2 {
   }
 };
 // ==========
+}

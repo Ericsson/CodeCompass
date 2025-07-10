@@ -34,6 +34,8 @@
 #include <model/cpprecord-odb.hxx>
 #include <model/cpptypedef.h>
 #include <model/cpptypedef-odb.hxx>
+#include <model/cpptypedependency.h>
+#include <model/cpptypedependency-odb.hxx>
 
 #include <parser/parsercontext.h>
 #include <parser/sourcemanager.h>
@@ -129,6 +131,7 @@ public:
       util::persistAll(_friends, _ctx.db);
       util::persistAll(_functions, _ctx.db);
       util::persistAll(_relations, _ctx.db);
+      util::persistAll(_typeDependencies, _ctx.db);
     });
   }
 
@@ -571,6 +574,27 @@ public:
 
     _locToTypeLoc[tl_.getBeginLoc().getRawEncoding()] = astNode;
 
+    //--- CppTypeDependency ---//
+    std::uint64_t typeHash = 0;
+    if (!_typeStack.empty())
+    {
+      typeHash = _typeStack.top()->entityHash;
+    }
+
+    if (typeHash == 0 && !_functionStack.empty())
+    {
+      typeHash = _functionStack.top()->recordHash;
+    }
+
+    if (typeHash != 0 && typeHash != astNode->entityHash)
+    {
+      model::CppTypeDependencyPtr td = std::make_shared<model::CppTypeDependency>();
+      _typeDependencies.push_back(td);
+
+      td->entityHash = typeHash;
+      td->dependencyHash = astNode->entityHash;
+    }
+
     return true;
   }
 
@@ -913,6 +937,11 @@ public:
     clang::CXXMethodDecl* md = llvm::dyn_cast<clang::CXXMethodDecl>(fn_);
     if (md)
     {
+      if (const clang::CXXRecordDecl* parent = md->getParent())
+      {
+        cppFunction->recordHash = util::fnvHash(getUSR(parent));
+      }
+
       if (md->isVirtual())
         cppFunction->tags.insert(model::Tag::Virtual);
 
@@ -1837,6 +1866,7 @@ private:
   std::vector<model::CppInheritancePtr>    _inheritances;
   std::vector<model::CppFriendshipPtr>     _friends;
   std::vector<model::CppRelationPtr>       _relations;
+  std::vector<model::CppTypeDependencyPtr> _typeDependencies;
 
   // TODO: Maybe we don't even need a stack, if functions can't be nested.
   // Check lambda.

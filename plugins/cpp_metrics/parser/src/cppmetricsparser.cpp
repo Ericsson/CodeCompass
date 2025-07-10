@@ -10,8 +10,8 @@
 #include <model/cppinheritance-odb.hxx>
 #include <model/cpprecord.h>
 #include <model/cpprecord-odb.hxx>
-#include <model/cpptypedependencymetrics.h>
-#include <model/cpptypedependencymetrics-odb.hxx>
+#include <model/cpptypedependency.h>
+#include <model/cpptypedependency-odb.hxx>
 #include <model/cppastnode.h>
 #include <model/cppastnode-odb.hxx>
 #include <model/file.h>
@@ -422,71 +422,19 @@ void CppMetricsParser::efferentTypeLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
-        typedef odb::query<cc::model::CppInheritanceCount> InheritanceQuery;
-        typedef odb::query<cc::model::CppFunction> FuncQuery;
+        typedef odb::query<model::CppTypeDependency_Efferent_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependency_Efferent_Count TypeDependencyResult;
 
-        std::set<std::uint64_t> dependentTypes;
         for (const model::CohesionCppRecordView& type : tasks)
         {
-          dependentTypes.clear();
-
-          // Count parent types
-          auto inheritanceView = _ctx.db->query<model::CppInheritance>(
-            InheritanceQuery::derived == type.entityHash);
-          auto inheritanceCount = _ctx.db->query_value<model::CppInheritanceCount>(
-            InheritanceQuery::derived == type.entityHash);
-
-          // Count unique attribute types
-          // and unique types in function parameters and local variables
-          for (const model::CppMemberType& mem: _ctx.db->query<model::CppMemberType>(
-            MemTypeQuery::typeHash == type.entityHash))
-          {
-            auto funcAstNodeId = mem.memberAstNode.load()->id;
-
-            if (mem.kind == cc::model::CppMemberType::Field)
-            {
-              dependentTypes.insert(mem.memberTypeHash);
-            }
-            else
-            {
-              for (const auto& param: _ctx.db->query<model::CppFunctionParamTypeView>(
-                FuncQuery::astNodeId == funcAstNodeId))
-              {
-                dependentTypes.insert(param.paramTypeHash);
-              }
-
-              for (const auto& local: _ctx.db->query<model::CppFunctionLocalTypeView>(
-                FuncQuery::astNodeId == funcAstNodeId))
-              {
-                dependentTypes.insert(local.paramTypeHash);
-              }
-            }
-          }
+          const TypeDependencyResult result = _ctx.db->query_value<model::CppTypeDependency_Efferent_Count>(
+            TypeDependencyQuery::entityHash == type.entityHash);
 
           model::CppAstNodeMetrics metric;
           metric.astNodeId = type.astNodeId;
           metric.type = model::CppAstNodeMetrics::Type::EFFERENT_TYPE;
-          metric.value = inheritanceCount.count + dependentTypes.size();
+          metric.value = result.count;
           _ctx.db->persist(metric);
-
-          auto typeRelationInserter = [this](const std::uint64_t& entityHash, const std::uint64_t& dependencyHash)
-          {
-            model::CppTypeDependencyMetrics relation;
-            relation.entityHash = entityHash;
-            relation.dependencyHash = dependencyHash;
-            _ctx.db->persist(relation);
-          };
-
-          // Insert type dependency relations
-          for (const std::uint64_t& d : dependentTypes) {
-            typeRelationInserter(type.entityHash, d);
-          }
-
-          // Insert inheritance relations
-          for (const model::CppInheritance& d : inheritanceView) {
-            typeRelationInserter(type.entityHash, d.base);
-          }
         }
       });
   });
@@ -502,73 +450,18 @@ void CppMetricsParser::afferentTypeLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<cc::model::CppAstNode> AstQuery;
-        typedef odb::query<cc::model::CppInheritance> InheritanceQuery;
-        typedef odb::query<cc::model::CppMemberType> MemTypeQuery;
-        typedef odb::result<cc::model::CppAstNode> AstResult;
-        typedef odb::result<cc::model::CppMemberTypeAstView> MemTypeAstResult;
+        typedef odb::query<model::CppTypeDependency_Afferent_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependency_Afferent_Count TypeDependencyResult;
 
-        std::set<std::uint64_t> dependentTypes;
         for (const model::CohesionCppRecordView& type : tasks)
         {
-          dependentTypes.clear();
-
-          // Find derived types
-          for (const model::CppInheritance& inheritance : _ctx.db->query<model::CppInheritance>(
-            InheritanceQuery::base == type.entityHash))
-          {
-            dependentTypes.insert(inheritance.derived);
-          }
-
-          // Find usages of the type
-          for (const model::CppAstNode& usage : _ctx.db->query<model::CppAstNode>(
-              AstQuery::entityHash == type.entityHash &&
-              AstQuery::location.range.end.line != model::Position::npos))
-          {
-            // Check if usage is in class member function or attribute
-            MemTypeAstResult memberNode = _ctx.db->query<model::CppMemberTypeAstView>(
-                AstQuery::symbolType.in(model::CppAstNode::SymbolType::Function, model::CppAstNode::SymbolType::Variable) &&
-                AstQuery::astType.in(model::CppAstNode::AstType::Definition, model::CppAstNode::AstType::Declaration) &&
-                AstQuery::location.file == usage.location.file.object_id() &&
-                AstQuery::location.range.start.line <= usage.location.range.start.line &&
-                AstQuery::location.range.end.line >= usage.location.range.end.line &&
-                MemTypeQuery::typeHash != usage.entityHash);
-
-            if (!memberNode.empty())
-            {
-              dependentTypes.insert(memberNode.begin()->typeHash);
-            } else {
-              // The usage can be in a member function defined outside of the class definition
-              // E.g. void ClassName::foo() { A a; }
-              //                              ^ usage here
-
-              // Find parent function
-              AstResult parentFunction = _ctx.db->query<model::CppAstNode>(
-                AstQuery::symbolType == model::CppAstNode::SymbolType::Function &&
-                AstQuery::astType == model::CppAstNode::AstType::Definition &&
-                AstQuery::location.file == usage.location.file.object_id() &&
-                AstQuery::location.range.start.line <= usage.location.range.start.line &&
-                AstQuery::location.range.end.line >= usage.location.range.end.line);
-
-              if (!parentFunction.empty())
-              {
-                // Find if the function is a member function of a class
-                MemTypeAstResult memberFunction = _ctx.db->query<model::CppMemberTypeAstView>(
-                  AstQuery::entityHash == parentFunction.begin()->entityHash &&
-                  MemTypeQuery::typeHash != usage.entityHash);
-
-                if (!memberFunction.empty())
-                {
-                  dependentTypes.insert(memberFunction.begin()->typeHash);
-                }
-              }
-            }
-          }
+          const TypeDependencyResult result = _ctx.db->query_value<model::CppTypeDependency_Afferent_Count>(
+            TypeDependencyQuery::dependencyHash == type.entityHash);
 
           model::CppAstNodeMetrics metric;
           metric.astNodeId = type.astNodeId;
           metric.type = model::CppAstNodeMetrics::Type::AFFERENT_TYPE;
-          metric.value = dependentTypes.size();
+          metric.value = result.count;
           _ctx.db->persist(metric);
         }
       });
@@ -596,12 +489,12 @@ void CppMetricsParser::efferentModuleLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<model::CppTypeDependencyMetrics_Distinct_D_Count> TypeDependencyQuery;
-        typedef model::CppTypeDependencyMetrics_Distinct_D_Count TypeDependencyResult;
+        typedef odb::query<model::CppTypeDependency_Distinct_D_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependency_Distinct_D_Count TypeDependencyResult;
 
         for (const model::File& file : tasks)
         {
-          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetrics_Distinct_D_Count>(
+          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependency_Distinct_D_Count>(
             TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
             !TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
 
@@ -625,12 +518,12 @@ void CppMetricsParser::afferentModuleLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<model::CppTypeDependencyMetrics_Distinct_E_Count> TypeDependencyQuery;
-        typedef model::CppTypeDependencyMetrics_Distinct_E_Count TypeDependencyResult;
+        typedef odb::query<model::CppTypeDependency_Distinct_E_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependency_Distinct_E_Count TypeDependencyResult;
 
         for (const model::File& file : tasks)
         {
-          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependencyMetrics_Distinct_E_Count>(
+          TypeDependencyResult types = _ctx.db->query_value<model::CppTypeDependency_Distinct_E_Count>(
             !TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
             TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
 
@@ -657,14 +550,14 @@ void CppMetricsParser::relationalCohesionModuleLevel()
     {
       util::OdbTransaction{_ctx.db}([&, this]
       {
-        typedef odb::query<model::CppTypeDependencyMetrics_Count> TypeDependencyQuery;
-        typedef model::CppTypeDependencyMetrics_Count TypeDependencyResult;
+        typedef odb::query<model::CppTypeDependency_Count> TypeDependencyQuery;
+        typedef model::CppTypeDependency_Count TypeDependencyResult;
         typedef odb::query<model::CohesionCppRecord_Count> RecordQuery;
         typedef model::CohesionCppRecord_Count RecordResult;
 
         for (const model::File& file : tasks)
         {
-          TypeDependencyResult dependencies = _ctx.db->query_value<model::CppTypeDependencyMetrics_Count>(
+          TypeDependencyResult dependencies = _ctx.db->query_value<model::CppTypeDependency_Count>(
             TypeDependencyQuery::EntityFile::path.like(file.path + '%') &&
             TypeDependencyQuery::DependencyFile::path.like(file.path + '%'));
 

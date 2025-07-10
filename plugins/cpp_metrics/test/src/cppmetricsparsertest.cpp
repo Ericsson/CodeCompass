@@ -272,6 +272,71 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::ValuesIn(paramLackOfCohesion)
 );
 
+// Efferent coupling
+
+class ParameterizedEfferentCouplingTest
+  : public CppMetricsParserTest,
+    public ::testing::WithParamInterface<StringUintParam>
+{};
+
+std::vector<StringUintParam> paramEfferent = {
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A",   0},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A1",  0},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A2",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A3",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A4",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A5",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A6",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::A7",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B",   1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B2",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B3",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B4",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B5",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B6",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::B7",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C",   1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C2",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C3",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C4",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C5",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::C6",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::D",   1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::D2",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::D3",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::E",   1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::F",   1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::F2",  1},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G",   2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G2",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G3",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G4",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G5",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G6",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G7",  2},
+  {"CC_CPP_EFFERENT_COUPLING_METRICS_TEST::G8",  2},
+};
+
+TEST_P(ParameterizedEfferentCouplingTest, TypeEfferentTest) {
+  _transaction([&, this]() {
+
+    const auto record = _db->query_value<model::CppRecord>(
+      odb::query<model::CppRecord>::qualifiedName == GetParam().first);
+
+    const auto metric = _db->query_value<model::CppAstNodeMetrics>(
+      odb::query<model::CppAstNodeMetrics>::astNodeId == record.astNodeId &&
+      odb::query<model::CppAstNodeMetrics>::type == model::CppAstNodeMetrics::EFFERENT_TYPE);
+
+    EXPECT_EQ(GetParam().second, metric.value);
+  });
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  ParameterizedEfferentCouplingTestSuite,
+  ParameterizedEfferentCouplingTest,
+  ::testing::ValuesIn(paramEfferent)
+);
+
 // Afferent coupling
 
 class ParameterizedAfferentCouplingTest
@@ -280,27 +345,27 @@ class ParameterizedAfferentCouplingTest
 {};
 
 std::vector<StringUintParam> paramAfferent = {
-  {"A",   1},
-  {"A2",  1},
-  {"A3",  1},
-  {"A4",  1},
-  {"A5",  1},
-  {"B",   1},
-  {"B2",  1},
-  {"B3",  1},
-  {"B4",  1},
-  {"B5",  1},
-  {"B6",  1},
-  {"B7",  1},
-  {"B8",  1},
-  {"C",   1},
-  {"C2",  1},
-  {"C3",  1},
-  {"E",   1},
-  {"F",   1},
-  {"G",   1},
-  {"H",   2},
-  {"H2",  2},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::A",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::A2",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::A3",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::A4",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::A5",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B2",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B3",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B4",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B5",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B6",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B7",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::B8",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::C",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::C2",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::C3",  1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::E",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::F",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::G",   1},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::H",   2},
+  {"CC_CPP_AFFERENT_COUPLING_METRICS_TEST::H2",  2},
 };
 
 TEST_P(ParameterizedAfferentCouplingTest, TypeAfferentTest) {
