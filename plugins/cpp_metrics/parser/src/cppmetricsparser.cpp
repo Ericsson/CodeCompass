@@ -315,6 +315,60 @@ void CppMetricsParser::lackOfCohesion()
           // Record these fields for later use.
           fieldHashes.insert(field.entityHash);
         }
+        std::size_t fieldCount = fieldHashes.size();
+
+#ifdef DATABASE_SQLITE
+        /* SQLite has a fixed-size recursive descent parser, and each logical operator (like OR) adds a
+         * level to the parser's stack. Constructing queries with many ORs can lead to a stack overflow.
+         */
+
+        // Counter variables.
+        std::size_t methodCount = 0;
+        std::size_t totalCohesion = 0;
+
+        for (const model::CohesionCppMethodView& method
+          : _ctx.db->query<model::CohesionCppMethodView>(QMethodTypeHash == type.entityHash))
+        {
+          // Do not consider methods with no explicit bodies.
+          const model::Position start(method.startLine, method.startColumn);
+          const model::Position end(method.endLine, method.endColumn);
+
+          if (!(start < end))
+          {
+            continue;
+          }
+
+          std::unordered_set<HashType> usedFields;
+
+          // Query AST nodes that use a variable for reading or writing...
+          for (const model::CohesionCppAstNodeView& node
+            : _ctx.db->query<model::CohesionCppAstNodeView>(
+            // ... in the same file as the current method
+            (QNodeFilePath == method.filePath &&
+              // ... within the textual scope of the current method's body.
+              (QNodeRange.start.line > start.line
+                || (QNodeRange.start.line == start.line
+                  && QNodeRange.start.column >= start.column)) &&
+              (QNodeRange.end.line < end.line
+                || (QNodeRange.end.line == end.line
+                  && QNodeRange.end.column <= end.column)))
+          ))
+          {
+            // If this AST node is a reference to a field of the type...
+            if (fieldHashes.find(node.entityHash) != fieldHashes.end())
+            {
+              // ... then mark it as used by this method.
+              usedFields.insert(node.entityHash);
+            }
+          }
+
+          ++methodCount;
+          totalCohesion += usedFields.size();
+        }
+#else
+        /* With more advanced database engines like PostgreSQL or MySQL we can choose an optimized query strategy.
+         * These engines use much more robust parsing engine and can handle deeply nested expressions.
+         */
 
         // Query all methods of the current type.
         std::vector<model::CohesionCppMethodView> methods;
@@ -354,7 +408,6 @@ void CppMetricsParser::lackOfCohesion()
         }
 
         // Counter variables.
-        std::size_t fieldCount = fieldHashes.size();
         std::size_t methodCount = methods.size();
         std::size_t totalCohesion = 0;
 
@@ -384,6 +437,7 @@ void CppMetricsParser::lackOfCohesion()
 
           totalCohesion += usedFields.size();
         }
+#endif
 
         // Calculate and record metrics.
         const double dF = fieldCount;
