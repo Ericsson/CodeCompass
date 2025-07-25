@@ -57,7 +57,7 @@ public:
     std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
-    const std::int32_t pageNumber_) override;
+    const core::AstNodeId& previousId_) override;
 
   void getCppAstNodeMetricsDetailedForPath(
     std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
@@ -67,7 +67,7 @@ public:
     std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
-    const std::int32_t pageNumber_) override;
+    const core::AstNodeId& previousId_) override;
 
   void getCppFileMetricsForPath(
     std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
@@ -77,7 +77,7 @@ public:
     std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
-    const std::int32_t pageNumber_) override;
+    const core::FileId& previousId_) override;
 
   void getCppAstNodeMetricsTypeNames(
     std::vector<CppAstNodeMetricsTypeName>& _return) override;
@@ -91,33 +91,17 @@ private:
 
   const boost::program_options::variables_map& _config;
 
-  std::string getPagingQuery(
-    const std::int32_t pageSize_,
-    const std::int32_t pageNumber_);
+  std::string getLimitQuery(const std::int32_t pageSize_);
 
-  template <typename TID, typename TView>
-  std::vector<TID> pageMetrics(
+  std::vector<model::CppAstNodeId> pageAstNodeMetrics(
     const std::string& path_,
     const std::int32_t pageSize_,
-    const std::int32_t pageNumber_)
-  {
-    return _transaction([&, this](){
-      odb::result<TView> paged_nodes = _db->query<TView>(
-        odb::query<TView>::File::path.like(path_ + '%') + getPagingQuery(pageSize_, pageNumber_));
+    const model::CppAstNodeId previousId_);
 
-      std::vector<TID> paged_ids(paged_nodes.size());
-      std::transform(paged_nodes.begin(), paged_nodes.end(), paged_ids.begin(),
-        [](const TView& e){
-            if constexpr (std::is_same<TView, model::CppAstNodeMetricsDistinctView>::value) {
-              return e.astNodeId;
-            } else if constexpr (std::is_same<TView, model::CppModuleMetricsDistinctView>::value) {
-              return e.fileId;
-            }
-        });
-
-      return paged_ids;
-    });
-  }
+  std::vector<model::FileId> pageFileMetrics(
+    const std::string& path_,
+    const std::int32_t pageSize_,
+    const model::FileId previousId_);
 
   void queryCppAstNodeMetricsForPath(
     std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
