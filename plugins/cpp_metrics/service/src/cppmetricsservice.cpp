@@ -187,10 +187,10 @@ void CppMetricsServiceHandler::getPagedCppAstNodeMetricsForPath(
   std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
-  const std::int32_t pageNumber_)
+  const core::AstNodeId& previousId_)
 {
-  std::vector<model::CppAstNodeId> paged_nodes = pageMetrics<model::CppAstNodeId, model::CppAstNodeMetricsDistinctView>(
-    path_, pageSize_, pageNumber_);
+  std::vector<model::CppAstNodeId> paged_nodes = pageAstNodeMetrics(
+    path_, pageSize_, previousId_.empty() ? 0 : std::stoull(previousId_));
 
   queryCppAstNodeMetricsForPath(_return,
     CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end()));
@@ -241,10 +241,10 @@ void CppMetricsServiceHandler::getPagedCppAstNodeMetricsDetailedForPath(
   std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
-  const std::int32_t pageNumber_)
+  const core::AstNodeId& previousId_)
 {
-  std::vector<model::CppAstNodeId> paged_nodes = pageMetrics<model::CppAstNodeId, model::CppAstNodeMetricsDistinctView>(
-    path_, pageSize_, pageNumber_);
+  std::vector<model::CppAstNodeId> paged_nodes = pageAstNodeMetrics(
+    path_, pageSize_, previousId_.empty() ? 0 : std::stoull(previousId_));
 
   queryCppAstNodeMetricsDetailedForPath(_return,
     CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end()));
@@ -290,16 +290,16 @@ void CppMetricsServiceHandler::getPagedCppFileMetricsForPath(
   std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
-  const std::int32_t pageNumber_)
+  const core::FileId& previousId_)
 {
-  std::vector<model::FileId> paged_files = pageMetrics<model::FileId, model::CppModuleMetricsDistinctView>(path_, pageSize_, pageNumber_);
+  std::vector<model::FileId> paged_files = pageFileMetrics(
+    path_, pageSize_, previousId_.empty() ? 0 : std::stoull(previousId_));
   queryCppFileMetricsForPath(_return,
     CppModuleMetricsQuery::CppFileMetrics::file.in_range(paged_files.begin(), paged_files.end()));
 }
 
-std::string CppMetricsServiceHandler::getPagingQuery(
-  const std::int32_t pageSize_,
-  const std::int32_t pageNumber_)
+std::string CppMetricsServiceHandler::getLimitQuery(
+  const std::int32_t pageSize_)
 {
   if (pageSize_ <= 0)
   {
@@ -308,15 +308,65 @@ std::string CppMetricsServiceHandler::getPagingQuery(
     throw ex;
   }
 
-  if (pageNumber_ <= 0)
-  {
-    core::InvalidInput ex;
-    ex.__set_msg("Invalid page number: " + std::to_string(pageNumber_));
-    throw ex;
-  }
+  return " LIMIT " + std::to_string(pageSize_);
+}
 
-  const std::int32_t offset = (pageNumber_ - 1) * pageSize_;
-  return " LIMIT " + std::to_string(pageSize_) + " OFFSET " + std::to_string(offset);
+std::vector<model::CppAstNodeId> CppMetricsServiceHandler::pageAstNodeMetrics(
+  const std::string& path_,
+  const std::int32_t pageSize_,
+  const model::CppAstNodeId previousId_)
+{
+  typedef odb::query<model::CppAstNodeMetricsDistinctView> MetricQuery;
+  typedef odb::result<model::CppAstNodeMetricsDistinctView> MetricResult;
+
+  return _transaction([&, this](){
+    MetricQuery condition = MetricQuery::File::path.like(path_ + '%');
+    if (previousId_ != 0) {
+      condition = condition && (MetricQuery::CppAstNodeMetrics::astNodeId > previousId_);
+    }
+
+    MetricResult paged_nodes = _db->query<model::CppAstNodeMetricsDistinctView>(
+      condition +
+      ("ORDER BY" + odb::query<model::CppAstNodeMetrics>::astNodeId) +
+      getLimitQuery(pageSize_));
+
+    std::vector<model::CppAstNodeId> paged_ids(paged_nodes.size());
+    std::transform(paged_nodes.begin(), paged_nodes.end(), paged_ids.begin(),
+      [](const model::CppAstNodeMetricsDistinctView& e){
+        return e.astNodeId;
+      });
+
+    return paged_ids;
+  });
+}
+
+std::vector<model::FileId> CppMetricsServiceHandler::pageFileMetrics(
+  const std::string& path_,
+  const std::int32_t pageSize_,
+  const model::FileId previousId_)
+{
+  typedef odb::query<model::CppModuleMetricsDistinctView> MetricQuery;
+  typedef odb::result<model::CppModuleMetricsDistinctView> MetricResult;
+
+  return _transaction([&, this](){
+    MetricQuery condition = MetricQuery::File::path.like(path_ + '%');
+    if (previousId_ != 0) {
+      condition = condition && (MetricQuery::CppFileMetrics::file > previousId_);
+    }
+
+    MetricResult paged_nodes = _db->query<model::CppModuleMetricsDistinctView>(
+      condition +
+      ("ORDER BY" + odb::query<model::CppFileMetrics>::file) +
+      getLimitQuery(pageSize_));
+
+    std::vector<model::FileId> paged_ids(paged_nodes.size());
+    std::transform(paged_nodes.begin(), paged_nodes.end(), paged_ids.begin(),
+      [](const model::CppModuleMetricsDistinctView& e){
+        return e.fileId;
+      });
+
+    return paged_ids;
+  });
 }
 
 } // cppmetrics

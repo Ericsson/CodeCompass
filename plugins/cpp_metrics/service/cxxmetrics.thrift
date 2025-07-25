@@ -109,7 +109,7 @@ service CppMetricsService
   map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getPagedCppAstNodeMetricsForPath(
     1:string path
     2:i32 pageSize,
-    3:i32 pageNumber)
+    3:common.AstNodeId previousId)
 
   /**
    * This function returns all available C++ metrics
@@ -129,7 +129,7 @@ service CppMetricsService
   map<common.AstNodeId, CppMetricsAstNodeDetailed> getPagedCppAstNodeMetricsDetailedForPath(
     1:string path,
     2:i32 pageSize,
-    3:i32 pageNumber)
+    3:common.AstNodeId previousId)
 
   /**
    * This function returns all available C++ metrics
@@ -149,7 +149,7 @@ service CppMetricsService
   map<common.FileId, list<CppMetricsModuleSingle>> getPagedCppFileMetricsForPath(
     1:string path,
     2:i32 pageSize,
-    3:i32 pageNumber)
+    3:common.FileId previousId)
 
   /**
    * This function returns the names of the AST node-level C++ metrics.
