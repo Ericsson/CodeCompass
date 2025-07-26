@@ -5,6 +5,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/webserver/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(
@@ -40,6 +41,13 @@ target_link_libraries(authenticationservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   authenticationthrift)
+
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # authenticationservice references headers from the webserver without implementation
+  set_target_properties(authenticationservice PROPERTIES LINK_FLAGS
+      "-undefined dynamic_lookup")
+endif(APPLE)
 
 install(TARGETS authenticationservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift()
