@@ -178,89 +178,90 @@ void CppMetricsParser::functionBumpyRoad()
 
 void CppMetricsParser::typeMcCabe()
 {
-  util::OdbTransaction {_ctx.db} ([&, this]
+  using MemberT    = model::CppMemberType;
+  using AstNode    = model::CppAstNode;
+  using Entity     = model::CppEntity;
+  using AstNodeMet = model::CppAstNodeMetrics;
+
+  // Calculate type level McCabe metric for all types on parallel threads.
+  parallelCalcMetric<AstNode>(
+    "Type-level McCabe",
+    _threadCount * typeMcCabePartitionMultiplier,// number of jobs; adjust for granularity
+    odb::query<AstNode>::symbolType == AstNode::SymbolType::Type &&
+    odb::query<AstNode>::astType == AstNode::AstType::Definition,
+    [&, this](const MetricsTasks<AstNode>& tasks)
   {
-    using MemberT    = model::CppMemberType;
-    using AstNode    = model::CppAstNode;
-    using Entity     = model::CppEntity;
-    using AstNodeMet = model::CppAstNodeMetrics;
-
-    std::map<model::CppAstNodeId, unsigned int> mcValues;
-
-    // Process all class definitions
-    for (const auto& type : _ctx.db->query<AstNode>(
-      odb::query<AstNode>::symbolType == AstNode::SymbolType::Type &&
-      odb::query<AstNode>::astType == AstNode::AstType::Definition))
+    util::OdbTransaction {_ctx.db} ([&, this]
     {
-      // Skip if class is included from external library
-      type.location.file.load();
-      const auto typeFile = _ctx.db->query_one<model::File>(
-        odb::query<model::File>::id == type.location.file->id);
-      if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
-        continue;
-
-      // Skip if its a template instantiation
-      const auto typeEntity = _ctx.db->query_one<Entity>(
-        odb::query<Entity>::astNodeId == type.id);
-      if (typeEntity && typeEntity->tags.find(model::Tag::TemplateInstantiation)
-                        != typeEntity->tags.cend())
-        continue;
-
-      mcValues[type.id] = 0;
-
-      // Process its methods
-      for (const auto& method : _ctx.db->query<MemberT>(
-        odb::query<MemberT>::typeHash == type.entityHash &&
-        odb::query<MemberT>::kind == MemberT::Kind::Method))
+      for (const AstNode& type : tasks)
       {
-        // Lookup AST node of method
-        method.memberAstNode.load();
-        const auto methodAstNode = _ctx.db->query_one<AstNode>(
-          odb::query<AstNode>::id == method.memberAstNode->id);
-        if (!methodAstNode)
+        // Skip if class is included from external library
+        type.location.file.load();
+        const auto typeFile = _ctx.db->query_one<model::File>(
+          odb::query<model::File>::id == type.location.file->id);
+        if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
           continue;
 
-        // Lookup its definition (different AST node if not defined in class body)
-        auto methodDefs = _ctx.db->query<AstNode>(
-          odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
-          odb::query<AstNode>::symbolType == AstNode::SymbolType::Function &&
-          odb::query<AstNode>::astType == AstNode::AstType::Definition);
-        if (methodDefs.empty())
-          continue;
-        const auto methodDef = *methodDefs.begin();
-        // Note: we cannot use query_one, because a project might have multiple
-        // functions with the same entityHash compiled to different binaries
-        // So we take the first result, which introduces a small level of
-        // potential inaccuracy
-        // This could be optimized in the future if linkage information about
-        // translation units got added to the database
-
-        // Skip implicitly defined methods (constructors, operator=, etc.)
-        const auto entity = _ctx.db->query_one<Entity>(
-          odb::query<Entity>::astNodeId == methodDef.id);
-        if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
+        // Skip if its a template instantiation
+        const auto typeEntity = _ctx.db->query_one<Entity>(
+          odb::query<Entity>::astNodeId == type.id);
+        if (typeEntity && typeEntity->tags.find(model::Tag::TemplateInstantiation)
+                          != typeEntity->tags.cend())
           continue;
 
-        // Lookup metrics of this definition
-        const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
-          odb::query<AstNodeMet>::astNodeId == methodDef.id &&
-          odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE_FUNCTION);
-        if (funcMetrics)
+        unsigned int value = 0;
+
+        // Process its methods
+        for (const auto& method : _ctx.db->query<MemberT>(
+          odb::query<MemberT>::typeHash == type.entityHash &&
+          odb::query<MemberT>::kind == MemberT::Kind::Method))
         {
-          // Increase class mccabe by the method's
-          mcValues[type.id] += funcMetrics->value;
-        }
-      }
-    }
+          // Lookup AST node of method
+          method.memberAstNode.load();
+          const auto methodAstNode = _ctx.db->query_one<AstNode>(
+            odb::query<AstNode>::id == method.memberAstNode->id);
+          if (!methodAstNode)
+            continue;
 
-    for (const auto& mcValue : mcValues)
-    {
-      model::CppAstNodeMetrics typeMcMetric;
-      typeMcMetric.astNodeId = mcValue.first;
-      typeMcMetric.type = model::CppAstNodeMetrics::Type::MCCABE_TYPE;
-      typeMcMetric.value = mcValue.second;
-      _ctx.db->persist(typeMcMetric);
-    }
+          // Lookup its definition (different AST node if not defined in class body)
+          auto methodDefs = _ctx.db->query<AstNode>(
+            odb::query<AstNode>::entityHash == methodAstNode->entityHash &&
+            odb::query<AstNode>::symbolType == AstNode::SymbolType::Function &&
+            odb::query<AstNode>::astType == AstNode::AstType::Definition);
+          if (methodDefs.empty())
+            continue;
+          const auto methodDef = *methodDefs.begin();
+          // Note: we cannot use query_one, because a project might have multiple
+          // functions with the same entityHash compiled to different binaries
+          // So we take the first result, which introduces a small level of
+          // potential inaccuracy
+          // This could be optimized in the future if linkage information about
+          // translation units got added to the database
+
+          // Skip implicitly defined methods (constructors, operator=, etc.)
+          const auto entity = _ctx.db->query_one<Entity>(
+            odb::query<Entity>::astNodeId == methodDef.id);
+          if (entity && entity->tags.find(model::Tag::Implicit) != entity->tags.cend())
+            continue;
+
+          // Lookup metrics of this definition
+          const auto funcMetrics = _ctx.db->query_one<AstNodeMet>(
+            odb::query<AstNodeMet>::astNodeId == methodDef.id &&
+            odb::query<AstNodeMet>::type == model::CppAstNodeMetrics::Type::MCCABE_FUNCTION);
+          if (funcMetrics)
+          {
+            // Increase class mccabe by the method's
+            value += funcMetrics->value;
+          }
+        }
+
+        model::CppAstNodeMetrics typeMcMetric;
+        typeMcMetric.astNodeId = type.id;
+        typeMcMetric.type = model::CppAstNodeMetrics::Type::MCCABE_TYPE;
+        typeMcMetric.value = value;
+        _ctx.db->persist(typeMcMetric);
+      }
+    });
   });
 }
 
