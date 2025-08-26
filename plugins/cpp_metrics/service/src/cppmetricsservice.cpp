@@ -148,7 +148,7 @@ void CppMetricsServiceHandler::getCppMetricsForModule(
 }
 
 void CppMetricsServiceHandler::queryCppAstNodeMetricsForPath(
-  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+  std::vector<CppMetricsAstNodeEntry>& result_,
   const odb::query<model::CppAstNodeMetricsForPathView>& query_)
 {
   _transaction([&, this](){
@@ -161,22 +161,32 @@ void CppMetricsServiceHandler::queryCppAstNodeMetricsForPath(
       metric.type = static_cast<CppAstNodeMetricsType::type>(node.type);
       metric.value = node.value;
 
-      if (_return.count(std::to_string(node.astNodeId)))
+      // Try to find existing entry with same astNodeId
+      auto it = std::find_if(result_.begin(), result_.end(),
+        [&](const CppMetricsAstNodeEntry& entry) {
+          return std::stoull(entry.astNodeId) == node.astNodeId;
+        });
+
+      if (it != result_.end())
       {
-        _return[std::to_string(node.astNodeId)].push_back(metric);
+        // Found existing entry → append metric
+        it->metrics.push_back(metric);
       }
+
       else
       {
-        std::vector<CppMetricsAstNodeSingle> metricsList;
-        metricsList.push_back(metric);
-        _return.insert(std::make_pair(std::to_string(node.astNodeId), metricsList));
+        // No entry for this astNodeId → create new one
+        CppMetricsAstNodeEntry entry;
+        entry.astNodeId = std::to_string(node.astNodeId);
+        entry.metrics.push_back(metric);
+        result_.push_back(std::move(entry));
       }
     }
   });
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
-  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+  std::vector<CppMetricsAstNodeEntry>& _return,
   const std::string& path_)
 {
   queryCppAstNodeMetricsForPath(_return,
@@ -184,7 +194,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsForPath(
 }
 
 void CppMetricsServiceHandler::getPagedCppAstNodeMetricsForPath(
-  std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+  std::vector<CppMetricsAstNodeEntry>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
   const core::AstNodeId& previousId_)
@@ -197,7 +207,7 @@ void CppMetricsServiceHandler::getPagedCppAstNodeMetricsForPath(
 }
 
 void CppMetricsServiceHandler::queryCppAstNodeMetricsDetailedForPath(
-  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+  std::vector<CppMetricsAstNodeDetailedEntry>& result_,
   const odb::query<model::CppAstNodeMetricsAndDataForPathView>& query_)
 {
   _transaction([&, this](){
@@ -206,12 +216,21 @@ void CppMetricsServiceHandler::queryCppAstNodeMetricsDetailedForPath(
     for (const auto& node : nodes)
     {
       auto pair = std::make_pair(static_cast<CppAstNodeMetricsType::type>(node.type), node.value);
-      if (_return.count(std::to_string(node.astNodeId)))
+
+      // Try to find existing entry with same astNodeId
+      auto it = std::find_if(result_.begin(), result_.end(),
+        [&](const CppMetricsAstNodeDetailedEntry& entry) {
+          return std::stoull(entry.astNodeId) == node.astNodeId;
+        });
+
+      if (it != result_.end())
       {
-        _return[std::to_string(node.astNodeId)].metrics.insert(pair);
+        // Found existing entry → append metric
+        it->details.metrics.insert(pair);
       }
       else
       {
+        // No entry for this astNodeId → create new one
         CppMetricsAstNodeDetailed metric;
         std::size_t pos = node.path.find_last_of('/');
         metric.path = node.path.substr(0, pos + 1);
@@ -223,14 +242,18 @@ void CppMetricsServiceHandler::queryCppAstNodeMetricsDetailedForPath(
         metric.astType = cc::model::astTypeToString(node.astType);
         metric.metrics.insert(pair);
 
-        _return.insert(std::make_pair(std::to_string(node.astNodeId), metric));
+        CppMetricsAstNodeDetailedEntry entry;
+        entry.astNodeId = std::to_string(node.astNodeId);
+        entry.details = metric;
+
+        result_.push_back(std::move(entry));
       }
     }
   });
 }
 
 void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
-  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+  std::vector<CppMetricsAstNodeDetailedEntry>& _return,
   const std::string& path_)
 {
   queryCppAstNodeMetricsDetailedForPath(_return,
@@ -238,7 +261,7 @@ void CppMetricsServiceHandler::getCppAstNodeMetricsDetailedForPath(
 }
 
 void CppMetricsServiceHandler::getPagedCppAstNodeMetricsDetailedForPath(
-  std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+  std::vector<CppMetricsAstNodeDetailedEntry>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
   const core::AstNodeId& previousId_)
@@ -247,11 +270,12 @@ void CppMetricsServiceHandler::getPagedCppAstNodeMetricsDetailedForPath(
     path_, pageSize_, previousId_.empty() ? 0 : std::stoull(previousId_));
 
   queryCppAstNodeMetricsDetailedForPath(_return,
-    CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end()));
+    CppNodeMetricsQuery::CppAstNodeMetrics::astNodeId.in_range(paged_nodes.begin(), paged_nodes.end())
+    + ("ORDER BY" + odb::query<model::CppAstNodeMetrics>::astNodeId));
 }
 
 void CppMetricsServiceHandler::queryCppFileMetricsForPath(
-  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  std::vector<CppMetricsModuleEntry>& result_,
   const odb::query<model::CppModuleMetricsForPathView>& query_)
 {
   _transaction([&, this](){
@@ -264,22 +288,32 @@ void CppMetricsServiceHandler::queryCppFileMetricsForPath(
       metric.type = static_cast<CppModuleMetricsType::type>(file.type);
       metric.value = file.value;
 
-      if (_return.count(std::to_string(file.fileId)))
+      // Try to find existing entry with same fileId
+      auto it = std::find_if(result_.begin(), result_.end(),
+        [&](const CppMetricsModuleEntry& entry) {
+          return std::stoull(entry.fileId) == file.fileId;
+        });
+
+      if (it != result_.end())
       {
-        _return[std::to_string(file.fileId)].push_back(metric);
+        // Found existing entry → append metric
+        it->metrics.push_back(metric);
       }
+
       else
       {
-        std::vector<CppMetricsModuleSingle> metricsList;
-        metricsList.push_back(metric);
-        _return.insert(std::make_pair(std::to_string(file.fileId), metricsList));
+        // No entry for this fileId → create new one
+        CppMetricsModuleEntry entry;
+        entry.fileId = std::to_string(file.fileId);
+        entry.metrics.push_back(metric);
+        result_.push_back(std::move(entry));
       }
     }
   });
 }
 
 void CppMetricsServiceHandler::getCppFileMetricsForPath(
-  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  std::vector<CppMetricsModuleEntry>& _return,
   const std::string& path_)
 {
   queryCppFileMetricsForPath(_return,
@@ -287,15 +321,17 @@ void CppMetricsServiceHandler::getCppFileMetricsForPath(
 }
 
 void CppMetricsServiceHandler::getPagedCppFileMetricsForPath(
-  std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+  std::vector<CppMetricsModuleEntry>& _return,
   const std::string& path_,
   const std::int32_t pageSize_,
   const core::FileId& previousId_)
 {
   std::vector<model::FileId> paged_files = pageFileMetrics(
     path_, pageSize_, previousId_.empty() ? 0 : std::stoull(previousId_));
+
   queryCppFileMetricsForPath(_return,
-    CppModuleMetricsQuery::CppFileMetrics::file.in_range(paged_files.begin(), paged_files.end()));
+    CppModuleMetricsQuery::CppFileMetrics::file.in_range(paged_files.begin(), paged_files.end())
+    + ("ORDER BY" + odb::query<model::CppFileMetrics>::file));
 }
 
 std::string CppMetricsServiceHandler::getLimitQuery(

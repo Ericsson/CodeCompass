@@ -50,31 +50,31 @@ public:
     const core::FileId& fileId_) override;
 
   void getCppAstNodeMetricsForPath(
-    std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+    std::vector<CppMetricsAstNodeEntry>& _return,
     const std::string& path_) override;
 
   void getPagedCppAstNodeMetricsForPath(
-    std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+    std::vector<CppMetricsAstNodeEntry>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
     const core::AstNodeId& previousId_) override;
 
   void getCppAstNodeMetricsDetailedForPath(
-    std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+    std::vector<CppMetricsAstNodeDetailedEntry>& _return,
     const std::string& path_) override;
 
   void getPagedCppAstNodeMetricsDetailedForPath(
-    std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+    std::vector<CppMetricsAstNodeDetailedEntry>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
     const core::AstNodeId& previousId_) override;
 
   void getCppFileMetricsForPath(
-    std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+    std::vector<CppMetricsModuleEntry>& _return,
     const std::string& path_) override;
 
   void getPagedCppFileMetricsForPath(
-    std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+    std::vector<CppMetricsModuleEntry>& _return,
     const std::string& path_,
     const std::int32_t pageSize_,
     const core::FileId& previousId_) override;
@@ -104,15 +104,15 @@ private:
     const model::FileId previousId_);
 
   void queryCppAstNodeMetricsForPath(
-    std::map<core::AstNodeId, std::vector<CppMetricsAstNodeSingle>>& _return,
+    std::vector<CppMetricsAstNodeEntry>& result_,
     const odb::query<model::CppAstNodeMetricsForPathView>& query_);
 
   void queryCppAstNodeMetricsDetailedForPath(
-    std::map<core::AstNodeId, CppMetricsAstNodeDetailed>& _return,
+    std::vector<CppMetricsAstNodeDetailedEntry>& result_,
     const odb::query<model::CppAstNodeMetricsAndDataForPathView>& query_);
 
   void queryCppFileMetricsForPath(
-    std::map<core::FileId, std::vector<CppMetricsModuleSingle>>& _return,
+    std::vector<CppMetricsModuleEntry>& result_,
     const odb::query<model::CppModuleMetricsForPathView>& query_);
 };
 

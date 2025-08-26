@@ -61,10 +61,22 @@ struct CppMetricsModuleSingle
   3:double value
 }
 
-struct CppMetricsModuleAll
+struct CppMetricsAstNodeEntry
 {
-  1:common.FileId id,
-  2:list<CppMetricsModuleSingle> metrics
+  1: common.AstNodeId astNodeId,
+  2: list<CppMetricsAstNodeSingle> metrics
+}
+
+struct CppMetricsAstNodeDetailedEntry
+{
+  1: common.AstNodeId astNodeId,
+  2: CppMetricsAstNodeDetailed details
+}
+
+struct CppMetricsModuleEntry
+{
+  1: common.FileId fileId,
+  2: list<CppMetricsModuleSingle> metrics
 }
 
 service CppMetricsService
@@ -97,7 +109,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getCppAstNodeMetricsForPath(
+  list<CppMetricsAstNodeEntry> getCppAstNodeMetricsForPath(
     1:string path)
 
   /**
@@ -106,7 +118,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.AstNodeId, list<CppMetricsAstNodeSingle>> getPagedCppAstNodeMetricsForPath(
+  list<CppMetricsAstNodeEntry> getPagedCppAstNodeMetricsForPath(
     1:string path
     2:i32 pageSize,
     3:common.AstNodeId previousId)
@@ -117,7 +129,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.AstNodeId, CppMetricsAstNodeDetailed> getCppAstNodeMetricsDetailedForPath(
+  list<CppMetricsAstNodeDetailedEntry> getCppAstNodeMetricsDetailedForPath(
     1:string path)
 
   /**
@@ -126,7 +138,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.AstNodeId, CppMetricsAstNodeDetailed> getPagedCppAstNodeMetricsDetailedForPath(
+  list<CppMetricsAstNodeDetailedEntry> getPagedCppAstNodeMetricsDetailedForPath(
     1:string path,
     2:i32 pageSize,
     3:common.AstNodeId previousId)
@@ -137,7 +149,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.FileId, list<CppMetricsModuleSingle>> getCppFileMetricsForPath(
+  list<CppMetricsModuleEntry> getCppFileMetricsForPath(
     1:string path)
 
   /**
@@ -146,7 +158,7 @@ service CppMetricsService
    *
    * The given path is a handled as a prefix.
    */
-  map<common.FileId, list<CppMetricsModuleSingle>> getPagedCppFileMetricsForPath(
+  list<CppMetricsModuleEntry> getPagedCppFileMetricsForPath(
     1:string path,
     2:i32 pageSize,
     3:common.FileId previousId)
