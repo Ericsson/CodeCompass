@@ -4,6 +4,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/util/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(
