@@ -1,4 +1,4 @@
-import { TreeView, TreeItem, treeItemClasses } from '@mui/lab';
+import { TreeView, TreeItem, treeItemClasses } from '@mui/x-tree-view';
 import { Menu, TableRow, alpha, styled } from '@mui/material';
 
 export const StyledDiv = styled('div')({});

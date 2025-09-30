@@ -114,7 +114,11 @@ export const SearchResults = (): JSX.Element => {
   }, [searchResult, fileSearch]);
 
   const handleDirNodeSelect = () => {
-    return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+    return (_e: SyntheticEvent<Element, Event>, nodeIds: string | string[]) => {
+      // Handle both single string and array of strings
+      const nodeId = Array.isArray(nodeIds) ? nodeIds[0] : nodeIds;
+      if (!nodeId) return;
+
       if (!expandedPathNodes) return;
       const index = expandedPathNodes.indexOf(nodeId);
       const copyExpanded = [...expandedPathNodes];
@@ -131,8 +135,11 @@ export const SearchResults = (): JSX.Element => {
   };
 
   const handleFileNodeSelect = (pathIdx: string) => {
-    return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
-      if (!expandedFileNodes) return;
+    return (_e: SyntheticEvent<Element, Event>, nodeIds: string | string[]) => {
+      // Handle both single string and array of strings
+      const nodeId = Array.isArray(nodeIds) ? nodeIds[0] : nodeIds;
+      if (!nodeId || !expandedFileNodes) return;
+
       const expandedNodes = expandedFileNodes[pathIdx].expandedNodes;
       const index = expandedNodes.indexOf(nodeId);
       const copyExpanded = [...expandedNodes];

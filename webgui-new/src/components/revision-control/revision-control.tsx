@@ -255,7 +255,11 @@ export const RevisionControl = (): JSX.Element => {
         defaultCollapseIcon={<ExpandMore />}
         sx={{ width: 'max-content' }}
         expanded={expandedTreeNodes}
-        onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+        onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeIds: string | string[]) => {
+          // Handle both single string and array of strings
+          const nodeId = Array.isArray(nodeIds) ? nodeIds[0] : nodeIds;
+          if (!nodeId) return;
+
           const index = expandedTreeNodes.indexOf(nodeId) as number;
           const copyExpanded = [...expandedTreeNodes];
           if (index === -1) {
