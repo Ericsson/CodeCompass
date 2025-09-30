@@ -224,8 +224,12 @@ export const FileManager = (): JSX.Element => {
   };
 
   const handleTreeNodeSelect = () => {
-    return (_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+    return (_e: SyntheticEvent<Element, Event>, nodeIds: string | string[]) => {
       if (!expandedFileTreeNodes) return;
+
+      // Handle both single string and array of strings
+      const nodeId = Array.isArray(nodeIds) ? nodeIds[0] : nodeIds;
+      if (!nodeId) return;
 
       const index = expandedFileTreeNodes.indexOf(nodeId);
       const copyExpanded = [...expandedFileTreeNodes];

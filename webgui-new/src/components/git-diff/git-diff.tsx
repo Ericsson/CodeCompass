@@ -158,7 +158,11 @@ export const GitDiff = (): JSX.Element => {
           defaultCollapseIcon={<TextSnippet />}
           defaultExpandIcon={<TextSnippet />}
           expanded={expandedFiles}
-          onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeId: string) => {
+          onNodeSelect={(_e: SyntheticEvent<Element, Event>, nodeIds: string | string[]) => {
+            // Handle both single string and array of strings
+            const nodeId = Array.isArray(nodeIds) ? nodeIds[0] : nodeIds;
+            if (!nodeId) return;
+
             const index = expandedFiles.indexOf(nodeId) as number;
             const copyExpanded = [...expandedFiles];
             if (index === -1) {
