@@ -29,6 +29,10 @@ std::string textRange(
  */
 std::string escapeHtml(const std::string& str_);
 
+inline const char* boolToString(bool b) {
+  return b ? "true" : "false";
+}
+
 }
 }
 
