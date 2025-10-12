@@ -709,3 +709,9 @@ div.CodeMirror-linenumber {
 .cm-s-default .cm-Function { font-weight: bold; }
 .cm-s-default .cm-Type { color:rgb(43, 145, 175); }
 .cm-s-default .cm-Enum { color:rgb(47, 79, 79); }
+
+/* Revision (Git) Management */
+
+.git-message {
+  overflow-wrap: break-word;
+}

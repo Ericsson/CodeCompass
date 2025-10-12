@@ -1,0 +1,9 @@
+#ifndef CC_CPP_RC_MODULE_METRICS_TEST_C4
+#define CC_CPP_RC_MODULE_METRICS_TEST_C4
+
+namespace CC_CPP_RC_MODULE_METRICS_TEST
+{
+class C4 {};
+}
+
+#endif

@@ -13,6 +13,15 @@ Graph::Graph(const std::string name_, bool directed_, bool strict_)
   setAttribute("fontsize", "11");
 }
 
+Graph::Graph(Graph&& other) noexcept
+  : _ids(std::move(other._ids)),
+    _directed(other._directed),
+    _strict(other._strict),
+    _isSubgraph(other._isSubgraph)
+{
+  std::swap(this->_graphPimpl, other._graphPimpl);
+}
+
 Graph::~Graph()
 {
   delete _graphPimpl;

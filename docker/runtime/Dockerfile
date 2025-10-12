@@ -6,6 +6,9 @@ ARG CC_DATABASE=sqlite
 
 FROM codecompass:dev as builder
 
+ARG CC_REPO_URL="https://github.com/Ericsson/CodeCompass.git"
+ENV CC_REPO_URL ${CC_REPO_URL}
+
 ARG CC_VERSION=master
 ENV CC_VERSION ${CC_VERSION}
 
@@ -19,7 +22,7 @@ RUN apt-get update -qq && \
     apt-get install --yes git
 
 # Download CodeCompass release.
-RUN git clone https://github.com/Ericsson/CodeCompass.git /CodeCompass
+RUN git clone ${CC_REPO_URL} /CodeCompass
 WORKDIR /CodeCompass
 RUN git checkout ${CC_VERSION}
 
@@ -38,7 +41,7 @@ RUN mkdir /CodeCompass-build && \
 #--------------------------    PRODUCTION STAGE   ----------------------------#
 ###############################################################################
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # tzdata package is installed implicitly in the following command. This package
 # sets timezone interactively during the installation process. This environment
@@ -48,36 +51,37 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG CC_DATABASE
 ENV CC_DATABASE ${CC_DATABASE}
 
-RUN if [ "pgsql" = "${CC_DATABASE}" ]; then \
-    apt-get update -qq --yes && \
-    apt-get install -qq --yes --no-install-recommends \
-    postgresql-server-dev-12 \   
-    libodb-pgsql-dev; \
-    else \
-    apt-get update -qq && \
-    apt-get install -qq --yes --no-install-recommends \
-    libsqlite3-dev \
-    libodb-sqlite-dev; \
-    fi;
-    
 RUN set -x && apt-get update -qq && \
     apt-get install -qq --yes --no-install-recommends \
-    llvm-10 \
+    curl ca-certificates gnupg \
+    wget \
+    llvm-15 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \
-    libssl1.1 \
+    libssl3 \
     libgvc6 \
-    libldap-2.4-2 \
+    libldap-2.5-0 \
     libmagic-dev \
     libthrift-dev \
-    ctags \
+    universal-ctags \
+    gcc-11 g++-11 \
     tini && \
+    ln -s /usr/bin/gcc-11 /usr/bin/gcc && \
+    ln -s /usr/bin/g++-11 /usr/bin/g++ && \
+    if [ "pgsql" = "${CC_DATABASE}" ]; then \
+      apt-get install -qq --yes --no-install-recommends \
+      libpq5 \
+      postgresql-server-dev-14; \
+    else \
+      apt-get install -qq --yes --no-install-recommends \
+      libsqlite3-dev; \
+    fi && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
 
-# Install .NET 6.
+# Install .NET 8.
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   apt-get update; \
@@ -85,11 +89,12 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
   apt-get update && \
   apt-get install -y dotnet-sdk-6.0
 
-# Copy CodeCompass installed directory. (Change permission of the CodeCompass package.)
+# Copy ODB install directory.
+COPY --from=builder /opt/odb /opt/odb
+
+# Copy CodeCompass install directory.
 COPY --from=builder /CodeCompass-install /codecompass
 
-ENV PATH="/codecompass/bin:$PATH"
-
+ENV PATH="/codecompass/bin:/opt/odb/bin:$PATH"
 
 ENTRYPOINT ["tini", "--"]
-

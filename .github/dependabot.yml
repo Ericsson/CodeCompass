@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "Target: Developer environment"
+  
+  # Maintain dependencies for npm
+  - package-ecosystem: "npm"
+    directory: "/webgui-new"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "Target: WebGUI"
+    # Disable version updates, only security updates will be made!
+    open-pull-requests-limit: 0

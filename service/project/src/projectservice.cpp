@@ -124,6 +124,8 @@ void ProjectServiceHandler::getRootFiles(std::vector<FileInfo>& return_)
       return_.push_back(makeFileInfo(f));
     }
   });
+
+  std::sort(return_.begin(), return_.end(), fileInfoOrder);
 }
 
 void ProjectServiceHandler::getChildFiles(

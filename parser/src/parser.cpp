@@ -85,7 +85,11 @@ po::options_description commandLineArguments()
      "further actions modifying the state of the database.")
     ("incremental-threshold", po::value<int>()->default_value(10),
       "This is a threshold percentage. If the total ratio of changed files "
-      "is greater than this value, full parse is forced instead of incremental parsing.");
+      "is greater than this value, full parse is forced instead of incremental parsing.")
+    ("modules,m", po::value<std::string>(),
+      "For metrics calculations, you can specify the project's (sub)module structure."
+      "Provide the path of a text file for this setting."
+      "The file should contain directory paths, each on a separate line, which will be considered modules.");
 
   return desc;
 }
@@ -411,17 +415,32 @@ int main(int argc, char* argv[])
     incrementalCleanup(ctx);
   }
 
+  std::vector<std::string> afterIndexingPlugins;
+
   // TODO: Handle errors returned by parse().
   for (const std::string& pluginName : pluginNames)
   {
-    LOG(info) << "[" << pluginName << "] parse started!";
-    pHandler.getParser(pluginName)->parse();
+    auto plugin = pHandler.getParser(pluginName);
+    if (!plugin->isDatabaseIndexRequired())
+    {
+      LOG(info) << "[" << pluginName << "] parse started!";
+      plugin->parse();
+    }
+    else {
+      afterIndexingPlugins.push_back(pluginName);
+    }
   }
 
   //--- Add indexes to the database ---//
 
   if (vm.count("force") || isNewDb)
     cc::util::createIndexes(db, SQL_DIR);
+
+  for (const std::string& pluginName : afterIndexingPlugins)
+  {
+    LOG(info) << "[" << pluginName << "] parse started!";
+    pHandler.getParser(pluginName)->parse();
+  }
 
   //--- Create project config file ---//
 

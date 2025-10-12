@@ -2,6 +2,8 @@
 #define CC_MODEL_CPPRELATION_H
 
 #include <memory>
+#include <cstdint>
+#include <string>
 
 namespace cc
 {

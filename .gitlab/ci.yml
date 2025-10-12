@@ -28,8 +28,8 @@ variables:
     script:
         - cd .gitlab
         - chmod +x build-deps.sh build-codecompass.sh
-        - ./build-deps.sh
-        - ./build-codecompass.sh
+        - ./build-deps.sh > ./build-deps.log
+        - ./build-codecompass.sh > ./build-codecompass.log
         - cd $BUILD_DIR
         - cp $CI_PROJECT_DIR/.gitlab/cc-env.sh .
         - cp $CI_PROJECT_DIR/.gitlab/README.md .
@@ -38,7 +38,10 @@ variables:
     artifacts:
         paths:
             - build/codecompass.tar.gz
+            - .gitlab/build-deps.log
+            - .gitlab/build-codecompass.log
         expire_in: 1 week
+        when: always
     cache:
         paths:
             - $DEPS_INSTALL_BUILD_DIR/gcc-install/
@@ -58,64 +61,16 @@ variables:
     echo "GLIBC version: $GLIBC_VERSION"
     echo "GLIBCXX versions: $GLIBCXX_VERSIONS"
 
-# Temporarily disabled job
-.tarball suse-15:
+tarball ubuntu-20.04:
     extends: .tarball
-    image: opensuse/leap:15
+    image: ubuntu:20.04
     cache:
-        key: "leap"
+        key: "focal"
     variables:
         GCC_VERSION: 9.3.0
         ODB_VERSION: 2.5.0
-    before_script:
-        - zypper refresh
-        - zypper update -y
-        # download tools
-        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
-        # build tools for CodeCompass
-        - zypper install -y -t pattern devel_basis
-        - zypper install -y binutils gcc-c++ gmp-devel
-        # build tools for OpenLDAP
-        - zypper install -y groff
-        # build tools for ccdb-tools
-        - zypper install -y libffi-devel
-        # show GLIBC verison
-        - *show-glibc-version
-
-tarball suse-42.1:
-    extends: .tarball
-    image: opensuse/archive:42.1
-    cache:
-        key: "malachite"
-    variables:
-        GCC_VERSION: 5.5.0
-        ODB_VERSION: 2.4.0
-    before_script:
-        - zypper refresh
-        - zypper update -y
-        # download tools
-        - zypper install -y curl wget gzip bzip2 unzip ca-certificates
-        # build tools for CodeCompass
-        - zypper install -y -t pattern devel_basis
-        - zypper install -y binutils gcc-c++ gmp-devel
-        # build tools for OpenLDAP
-        - zypper install -y groff
-        # build tools for ccdb-tools
-        - zypper install -y libffi-devel
-        # disable SSL certificate check (distribution's cacert is outdated)
-        - echo "check_certificate = off" >> /etc/wgetrc
-        - echo insecure >> ~/.curlrc
-        # show GLIBC verison
-        - *show-glibc-version
-
-tarball ubuntu-16.04:
-    extends: .tarball
-    image: ubuntu:16.04
-    cache:
-        key: "xenial"
-    variables:
-        GCC_VERSION: 5.5.0
-        ODB_VERSION: 2.4.0
+        # No interactive timezone dialog for tzdata
+        DEBIAN_FRONTEND: noninteractive
     before_script:
         - apt-get update -yqq
         # download tools
@@ -125,7 +80,7 @@ tarball ubuntu-16.04:
         # build tools for ctags
         - apt-get install -yqq dh-autoreconf pkg-config
         # build tools for OpenLDAP
-        - apt install -yqq groff-base
+        - apt-get install -yqq groff-base
         # build tools for ccdb-tools
         - apt-get install -yqq libffi-dev
         # show GLIBC verison
@@ -150,21 +105,8 @@ tarball ubuntu-16.04:
         - scp -P22 build/codecompass.tar.gz gitlab-deployer@codecompass.net:/var/www/codecompass/$FILENAME
         - ssh -p22 gitlab-deployer@codecompass.net "mv -f /var/www/codecompass/$FILENAME /var/www/codecompass/live/wwwroot/tarball/$FILENAME"
 
-# Temporarily disabled job
-.upload suse-15:
+upload ubuntu-20.04:
     extends: .upload
     variables:
-        ARCH_SUFFIX: suse-15
-    needs: ["tarball suse-15"]
-
-upload suse-42.1:
-    extends: .upload
-    variables:
-        ARCH_SUFFIX: suse-42.1
-    needs: ["tarball suse-42.1"]
-
-upload ubuntu-16.04:
-    extends: .upload
-    variables:
-        ARCH_SUFFIX: ubuntu-16.04
-    needs: ["tarball ubuntu-16.04"]
+        ARCH_SUFFIX: ubuntu-20.04
+    needs: ["tarball ubuntu-20.04"]

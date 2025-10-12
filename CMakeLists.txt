@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.16.3)
 project(CodeCompass)
 
 # Common config variables and settings
@@ -12,7 +12,7 @@ include(Testing.cmake)
 
 find_package(Boost   REQUIRED COMPONENTS filesystem log program_options regex system thread)
 find_package(Java    REQUIRED)
-find_package(Odb     REQUIRED)
+find_package(ODB     REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Thrift  REQUIRED)
 find_package(GTest)
@@ -33,6 +33,7 @@ add_subdirectory(service)
 add_subdirectory(util)
 add_subdirectory(plugins) # must precede webgui
 add_subdirectory(webgui)
+add_subdirectory(webgui-new)
 add_subdirectory(webserver)
 
 # Install java libraries

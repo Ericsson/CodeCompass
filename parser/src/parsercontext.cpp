@@ -1,3 +1,4 @@
+#include <boost/filesystem/exception.hpp>
 #include <fstream>
 
 #include <boost/filesystem.hpp>
@@ -12,6 +13,7 @@
 #include <parser/sourcemanager.h>
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 namespace cc
 {
@@ -76,6 +78,31 @@ ParserContext::ParserContext(
 
      // TODO: detect ADDED files
    });
+
+  // Fill moduleDirectories vector
+  if (options.count("modules")) {
+    const std::string& modulesFilePath = options["modules"].as<std::string>();
+
+    std::ifstream fileStream(modulesFilePath);
+
+    if (!fileStream.good()) {
+      LOG(error) << "Failed to open modules file: " << modulesFilePath;
+      return;
+    }
+
+    LOG(info) << "Processing modules file: " << modulesFilePath;
+
+    std::string line;
+    while (std::getline(fileStream, line)) {
+      try {
+        const fs::path p = fs::canonical(line);
+        moduleDirectories.push_back(p.string());
+      } catch (fs::filesystem_error& err) {
+        LOG(error) << "Failed to process path from modules file: " << line;
+        LOG(error) << err.what();
+      }
+    }
+  }
 }
 }
 }

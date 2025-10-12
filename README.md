@@ -1,5 +1,6 @@
 ![Build project](https://github.com/Ericsson/CodeCompass/workflows/Build%20project/badge.svg)
 ![Tarball packaging](https://img.shields.io/gitlab/pipeline/codecompass/CodeCompass/master?gitlab_url=https%3A%2F%2Fgitlab.inf.elte.hu&label=Tarball%20packaging)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/Ericsson/CodeCompass/badge)](https://securityscorecards.dev/viewer/?uri=github.com/Ericsson/CodeCompass)
 
 CodeCompass
 ===========
@@ -12,10 +13,7 @@ CodeCompass is a pluginable code comprehension tool.
 
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/home.png" height="100px" /><img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/codebites.png" height="100px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/infotree.png" height="100px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_function_call_diagram.png" height="100px" />
-<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_detailed_class_diagram.png" height="100px" />
+<img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/home.png" height="100px" /> <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/codebites.png" height="100px" /> <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/webgui/images/infotree.png" height="100px" /> <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_function_call_diagram.png" height="100px" /> <img src="https://raw.githubusercontent.com/Ericsson/codecompass/master/plugins/cpp/webgui/images/cpp_detailed_class_diagram.png" height="100px" />
 
 Features
 --------
@@ -29,10 +27,12 @@ Features
 
 Documentations
 --------
-- [User guide](doc/usage.md)
+- [Backend user guide](doc/usage.md)
+- [Frontend user guide](doc/webgui.md)
 - [Docker guide](docker/README.md)
 
 Development
 --------
 - [Building CodeCompass](doc/deps.md)
+- [Frontend development guide](webgui-new/README.md)
 - [Coding conventions](doc/coding_conventions.md)

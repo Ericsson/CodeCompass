@@ -159,7 +159,7 @@ bool CppParser::isSourceFile(const std::string& file_) const
   const std::vector<std::string> cppExts{
     ".c", ".cc", ".cpp", ".cxx", ".o", ".so", ".a"};
 
-  std::string ext = fs::extension(file_);
+  std::string ext = fs::path(file_).extension().string();
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
   return std::find(cppExts.begin(), cppExts.end(), ext) != cppExts.end();
@@ -209,7 +209,7 @@ std::map<std::string, std::string> CppParser::extractInputOutputs(
   {
     for (const std::string& src : sources)
     {
-      std::string extension = fs::extension(src);
+      std::string extension = fs::path(src).extension().string();
       inToOut[src] = src.substr(0, src.size() - extension.size() - 1) + ".o";
     }
   }
@@ -232,7 +232,7 @@ model::BuildActionPtr CppParser::addBuildAction(
 
   model::BuildActionPtr buildAction(new model::BuildAction);
 
-  std::string extension = fs::extension(command_.Filename);
+  auto extension = fs::path(command_.Filename).extension().string();
 
   buildAction->command = boost::algorithm::join(command_.CommandLine, " ");
   buildAction->type
@@ -779,6 +779,10 @@ bool CppParser::parseByJson(
           LOG(warning)
             << '(' << job_.index << '/' << numCompileCommands << ')'
             << " Parsing " << command.Filename << " has been failed.";
+        else          
+          LOG(debug)
+            << '(' << job_.index << '/' << numCompileCommands << ')'
+            << " Parsing " << command.Filename << " finished successfully.";
       });
 
   //--- Push all commands into the thread pool's queue ---//

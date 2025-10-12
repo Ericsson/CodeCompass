@@ -10,7 +10,6 @@
     "dojox"            : "^1.11.2",
     "dojo-util"        : "^1.11.2",
     "d3"               : "^3.5.6",
-    "thrift"           : "~0.13.0",
     "codemirror"       : "^5.19.0",
     "jquery.fancytree" : "^2.19.0",
     "svg-pan-zoom"     : "^3.6.1",

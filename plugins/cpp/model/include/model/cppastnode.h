@@ -34,6 +34,7 @@ struct CppAstNode
     Enum,
     EnumConstant,
     Namespace,
+    NamespaceAlias,
     StringLiteral,
     File = 500,
     Other = 1000
@@ -57,6 +58,7 @@ struct CppAstNode
     LocalTypeLoc,
     TypedefTypeLoc,
     InheritanceTypeLoc,
+    UsingLoc,
     Other = 1000
   };
 
@@ -103,6 +105,7 @@ inline std::string symbolTypeToString(CppAstNode::SymbolType type_)
     case CppAstNode::SymbolType::Enum: return "Enum";
     case CppAstNode::SymbolType::EnumConstant: return "EnumConstant";
     case CppAstNode::SymbolType::Namespace: return "Namespace";
+    case CppAstNode::SymbolType::NamespaceAlias: return "NamespaceAlias";
     case CppAstNode::SymbolType::StringLiteral: return "StringLiteral";
     case CppAstNode::SymbolType::File: return "File";
     case CppAstNode::SymbolType::Other: return "Other";
@@ -131,6 +134,7 @@ inline std::string astTypeToString(CppAstNode::AstType type_)
     case CppAstNode::AstType::LocalTypeLoc: return "LocalTypeLoc";
     case CppAstNode::AstType::TypedefTypeLoc: return "TypedefTypeLoc";
     case CppAstNode::AstType::InheritanceTypeLoc: return "InheritanceTypeLoc";
+    case CppAstNode::AstType::UsingLoc: return "UsingLoc";
     case CppAstNode::AstType::Other: return "Other";
   }
 
@@ -224,6 +228,18 @@ struct AstCountGroupByFiles
 
   #pragma db column("count(" + CppAstNode::id + ")")
   std::size_t count;
+};
+
+#pragma db view \
+  object(CppAstNode) \
+  object(File = LocFile : CppAstNode::location.file)
+struct CppAstNodeFilePath
+{
+  #pragma db column(CppAstNode::id)
+  CppAstNodeId id;
+
+  #pragma db column(LocFile::path)
+  std::string path;
 };
 
 #pragma db view object(CppAstNode)

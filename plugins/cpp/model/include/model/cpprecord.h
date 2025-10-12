@@ -49,8 +49,21 @@ typedef std::shared_ptr<CppMemberType> CppMemberTypePtr;
 #pragma db object
 struct CppRecord : CppEntity
 {
+  enum Context {
+    TOP_LEVEL,
+    NAMESPACE,
+    RECORD,
+    FUNCTION,
+    OTHER
+  };
+
   bool isAbstract = false;
   bool isPOD = false;
+  bool isLambda = false;
+
+  // Context defines where the CppRecord is located in (e.g. in a namespace).
+  // Context = RECORD means it is nested within another record.
+  Context context = Context::OTHER;
 
   std::string toString() const
   {
@@ -72,6 +85,18 @@ struct CppRecord : CppEntity
 
     return ret;
   }
+
+  std::string getContextString() const
+  {
+    switch (context)
+    {
+      case Context::TOP_LEVEL: return "Top Level";
+      case Context::NAMESPACE: return "Namespace";
+      case Context::RECORD: return "Record";
+      case Context::FUNCTION: return "Function";
+      case Context::OTHER: return "Other";
+    }
+  }
 };
 
 typedef std::shared_ptr<CppRecord> CppRecordPtr;
@@ -88,6 +113,15 @@ struct CppRecordCount
 {
   #pragma db column("count(" + CppRecord::id + ")")
   std::size_t count;
+};
+
+#pragma db view \
+  object(CppMemberType) \
+  object(CppAstNode : CppMemberType::memberAstNode == CppAstNode::id)
+struct CppMemberTypeAstView
+{
+  #pragma db column(CppMemberType::typeHash)
+  std::uint64_t typeHash;
 };
 
 }

@@ -64,5 +64,16 @@ std::string findCurrentExecutableDir()
   return fs::path(exePath).parent_path().string();
 }
 
+bool isRootedUnderAnyOf(
+  const std::vector<std::string>& paths_,
+  const std::string& path_)
+{
+  auto it = paths_.begin();
+  const auto end = paths_.end();
+  while (it != end && path_.rfind(*it, 0) != 0)
+    ++it;
+  return it != end;
+}
+
 } // namespace util
 } // namespace cc

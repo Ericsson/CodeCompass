@@ -107,7 +107,7 @@ void FileDiagram::getIncludeDependencyDiagram(
   util::bfsBuild(graph_, currentNode,std::bind(&FileDiagram::getRevUsages,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, revUsagesEdgeDecoration, 3);
-  
+
   util::bfsBuild(graph_, currentNode, std::bind(&FileDiagram::getProvides,
     this, std::placeholders::_1, std::placeholders::_2),
     {}, usagesEdgeDecoration, 3);
@@ -711,7 +711,7 @@ util::Graph::Node FileDiagram::addNode(
   }
   else if (fileInfo_.type == "CPP")
   {
-    std::string ext = boost::filesystem::extension(fileInfo_.path);
+    std::string ext = boost::filesystem::path(fileInfo_.path).extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     if (ext == ".cpp" || ext == ".cxx" || ext == ".cc"  || ext == ".c")
