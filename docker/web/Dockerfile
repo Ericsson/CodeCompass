@@ -19,6 +19,7 @@ RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     wget \
     llvm-15 \
+    dotnet-sdk-8.0 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
     postgresql-server-dev-14 \
@@ -49,14 +50,6 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/
-
-# Install .NET 6.
-RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-  dpkg -i packages-microsoft-prod.deb && \
-  apt-get update; \
-  apt-get install -y apt-transport-https && \
-  apt-get update && \
-  apt-get install -y dotnet-sdk-6.0
 
 # Copy ODB install directory.
 COPY --from=runtime /opt/odb /opt/odb

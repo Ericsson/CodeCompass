@@ -56,6 +56,7 @@ RUN set -x && apt-get update -qq && \
     curl ca-certificates gnupg \
     wget \
     llvm-15 \
+    dotnet-sdk-8.0 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \
@@ -80,14 +81,6 @@ RUN set -x && apt-get update -qq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
     set +x
-
-# Install .NET 8.
-RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-  dpkg -i packages-microsoft-prod.deb && \
-  apt-get update; \
-  apt-get install -y apt-transport-https && \
-  apt-get update && \
-  apt-get install -y dotnet-sdk-6.0
 
 # Copy ODB install directory.
 COPY --from=builder /opt/odb /opt/odb
