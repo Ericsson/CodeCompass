@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\lib\csharp\thrift_netstd\Thrift\Thrift.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\..\codecompass\intjftw-build\plugins\csharp\service\src_csharp\gen-netstd\gen-netstd.csproj" />
+    <ProjectReference Include="..\..\..\..\build_pgsql\plugins\csharp\service\src_csharp\gen-netstd\gen-netstd.csproj" />
   </ItemGroup>
 
   <ItemGroup>
