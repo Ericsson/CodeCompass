@@ -10,7 +10,7 @@ add_custom_target(dotnetbuildservice
 )
 
 add_custom_target(dotnetaddclasslib
-  COMMAND dotnet new classlib -o ${CMAKE_CURRENT_BINARY_DIR}/gen-netstd/ --force
+  COMMAND dotnet new classlib -o ${CMAKE_CURRENT_BINARY_DIR}/gen-netstd/ -f "net8.0" --force
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
