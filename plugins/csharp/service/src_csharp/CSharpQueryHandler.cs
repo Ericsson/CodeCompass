@@ -285,14 +285,14 @@ public class CSharpQueryHandler : CsharpService.IAsync
     }
     
 
-    public async Task<language.AstNodeInfo> getAstNodeInfoAsync(string astNodeId, 
+    public async Task<language.AstNodeInfo> getAstNodeInfo(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getAstNodeInfoAsync");
         return await Task.FromResult(new language.AstNodeInfo());
     }
 
-    public async Task<language.AstNodeInfo> getAstNodeInfoByPositionAsync(string path_, 
+    public async Task<language.AstNodeInfo> getAstNodeInfoByPosition(string path_, 
         Position pos_,
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -321,7 +321,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(createAstNodeInfo(minNode));
     }
 
-    public async Task<Dictionary<string, string>> getPropertiesAsync(string astNodeIds, 
+    public async Task<Dictionary<string, string>> getProperties(string astNodeIds, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         Dictionary<string, string> ret = new Dictionary<string, string>();
@@ -411,7 +411,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);
     }
 
-    public async Task<string> getDocumentationAsync(string astNodeId, 
+    public async Task<string> getDocumentation(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getDocumentationAsync");
@@ -419,13 +419,13 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult("Documentation");
     }
 
-    public async Task<FileRange> getFileRangeAsync(string astNodeId, 
+    public async Task<FileRange> getFileRange(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {        
         return await Task.FromResult(getFileRange(queryCsharpAstNode(astNodeId)));
     }
 
-    public async Task<Dictionary<string, int>> getReferenceTypesAsync(string astNodeId, 
+    public async Task<Dictionary<string, int>> getReferenceTypes(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         var node = queryCsharpAstNode(astNodeId);
@@ -503,7 +503,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);
     }
 
-    public async Task<int> getReferenceCountAsync(string astNodeId, int referenceId, 
+    public async Task<int> getReferenceCount(string astNodeId, int referenceId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         var node = queryCsharpAstNode(astNodeId);        
@@ -570,7 +570,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);
     }
 
-    public async Task<List<language.AstNodeInfo>> getReferencesAsync(string astNodeId, 
+    public async Task<List<language.AstNodeInfo>> getReferences(string astNodeId, 
         int referenceId, List<string> tags, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -638,7 +638,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);        
     }
 
-    public async Task<Dictionary<string, int>> getFileReferenceTypesAsync(
+    public async Task<Dictionary<string, int>> getFileReferenceTypes(
         CancellationToken cancellationToken = default(CancellationToken))
     {
         var ret = new Dictionary<string, int>();
@@ -648,32 +648,32 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);
     }
 
-    public async Task<int> getFileReferenceCountAsync(string path, int referenceId, 
+    public async Task<int> getFileReferenceCount(string path, int referenceId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         return await Task.FromResult(0);
     }
 
-    public async Task<List<language.AstNodeInfo>> getFileReferencesAsync(string path, 
+    public async Task<List<language.AstNodeInfo>> getFileReferences(string path, 
         int referenceId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         return await Task.FromResult(new List<language.AstNodeInfo>());
     }
 
-    public async Task<Dictionary<string, int>> getDiagramTypesAsync(string astNodeId, 
+    public async Task<Dictionary<string, int>> getDiagramTypes(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         return await Task.FromResult(new Dictionary<string, int>());
     }
 
-    public async Task<string> getDiagramAsync(string astNodeId, int diagramId, 
+    public async Task<string> getDiagram(string astNodeId, int diagramId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         return await Task.FromResult("Diagram");
     }
 
-    public async Task<List<language.SyntaxHighlight>> getSyntaxHighlightAsync(FileRange range, 
+    public async Task<List<language.SyntaxHighlight>> getSyntaxHighlight(FileRange range, 
         List<string> content, 
         CancellationToken cancellationToken = default(CancellationToken))
     {

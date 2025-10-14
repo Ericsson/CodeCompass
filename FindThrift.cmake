@@ -15,7 +15,7 @@ find_path(libthrift_INCLUDE_DIR
 find_library(libthrift_LIBRARY
   NAMES thrift libthrift
   HINTS
-    ${THIRFT_LIBRARY_PATH}
+    ${THRIFT_LIBRARY_PATH}
     ${PC_LIBTHIRFT_LIBRARY_DIRS})
 
 find_program(thrift_BIN
