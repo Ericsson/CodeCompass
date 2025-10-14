@@ -16,22 +16,15 @@ add_custom_target(dotnetaddclasslib
 
 add_dependencies(dotnetaddclasslib dotnetbuildservice)
 
-add_custom_target(dotnetaddref
-  COMMAND dotnet add reference ${CMAKE_CURRENT_BINARY_DIR}/gen-netstd/gen-netstd.csproj
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-add_dependencies(dotnetaddref dotnetaddclasslib)
-
 add_custom_target(dotnetaddthriftlib
   COMMAND dotnet add package ApacheThrift --version 0.16.0
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen-netstd/"
 )
 
-add_dependencies(dotnetaddthriftlib dotnetaddref)
+add_dependencies(dotnetaddthriftlib dotnetaddclasslib)
 
 add_custom_target(dotnetbuildfiles ALL
-  COMMAND dotnet build -o ${CMAKE_CURRENT_BINARY_DIR}/csharpservice
+  COMMAND dotnet build -o ${CMAKE_CURRENT_BINARY_DIR}/csharpservice -p:BuildDir=${CMAKE_CURRENT_BINARY_DIR}
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 

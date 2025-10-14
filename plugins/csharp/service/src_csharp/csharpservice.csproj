@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\model\*.cs" />
+    <Compile Include="../../model/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\build_pgsql\plugins\csharp\service\src_csharp\gen-netstd\gen-netstd.csproj" />
+    <ProjectReference Include="$(BuildDir)/gen-netstd/gen-netstd.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\model\*.cs" />
-    <Compile Include="..\..\migrations\*.cs" />
+    <Compile Include="../../model/*.cs" />
+    <Compile Include="../../migrations/*.cs" />
   </ItemGroup>
 
   <ItemGroup>
