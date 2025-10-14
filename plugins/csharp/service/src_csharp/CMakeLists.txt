@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(CodeCompassCSharp)
-
 add_custom_target(dotnetbuildservice
   COMMAND ${THRIFT_EXECUTABLE} --gen netstd
     -o ${CMAKE_CURRENT_BINARY_DIR}
@@ -24,12 +21,13 @@ add_custom_target(dotnetaddthriftlib
 add_dependencies(dotnetaddthriftlib dotnetaddclasslib)
 
 add_custom_target(dotnetbuildfiles ALL
-  COMMAND dotnet build -o ${CMAKE_CURRENT_BINARY_DIR}/csharpservice -p:BuildDir=${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND dotnet build -c ${DOTNET_CONFIG} -o ${CMAKE_CURRENT_BINARY_DIR}/csharpservice -p:BuildDir=${CMAKE_CURRENT_BINARY_DIR}
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 add_dependencies(dotnetbuildfiles dotnetaddthriftlib)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/csharpservice 
-DESTINATION ${INSTALL_SERVICE_DIR}
-USE_SOURCE_PERMISSIONS)
+  DESTINATION ${INSTALL_SERVICE_DIR}
+  USE_SOURCE_PERMISSIONS
+)
