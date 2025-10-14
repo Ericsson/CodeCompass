@@ -12,8 +12,9 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp/LanguageService.h
     ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen-js
+    ${CMAKE_CURRENT_BINARY_DIR}/gen-netstd
   COMMAND
-    ${THRIFT_EXECUTABLE} --gen cpp --gen js
+    ${THRIFT_EXECUTABLE} --gen cpp --gen js --gen netstd
       -o ${CMAKE_CURRENT_BINARY_DIR}
       ${CMAKE_CURRENT_SOURCE_DIR}/language.thrift
   DEPENDS
