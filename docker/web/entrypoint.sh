@@ -9,4 +9,13 @@ if [ "$(id -u)" == '0' ]; then
   exec gosu codecompass "$0" "$@"
 fi
 
+set -es
+# Set default value for API_PREFIX if not provided
+: "${API_PREFIX:=""}"
+
+# Create web_config.env file with the API_PREFIX
+cat > ../../webgui-new/.env.local <<EOF
+API_PREFIX=/${API_PREFIX}
+EOF
+
 exec "$@"
