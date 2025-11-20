@@ -110,7 +110,7 @@ void CppMetricsParser::functionParameters()
   parallelCalcMetric<model::CppFunctionParamCountWithId>(
     "Function parameters",
     _threadCount * functionParamsPartitionMultiplier,// number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CppFunctionParamCountWithId>(),
+    getFunctionQuery<model::CppFunctionParamCountWithId>(),
     [&, this](const MetricsTasks<model::CppFunctionParamCountWithId>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
@@ -132,7 +132,7 @@ void CppMetricsParser::functionMcCabe()
   parallelCalcMetric<model::CppFunctionMcCabe>(
     "Function-level McCabe",
     _threadCount * functionMcCabePartitionMultiplier,// number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CppFunctionMcCabe>(),
+    getFunctionQuery<model::CppFunctionMcCabe>(),
     [&, this](const MetricsTasks<model::CppFunctionMcCabe>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
@@ -155,7 +155,7 @@ void CppMetricsParser::functionBumpyRoad()
   parallelCalcMetric<model::CppFunctionBumpyRoad>(
     "Bumpy road complexity",
     _threadCount * functionBumpyRoadPartitionMultiplier,// number of jobs; adjust for granularity
-    getFilterPathsQuery<model::CppFunctionBumpyRoad>(),
+    getFunctionQuery<model::CppFunctionBumpyRoad>(),
     [&, this](const MetricsTasks<model::CppFunctionBumpyRoad>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
@@ -184,27 +184,19 @@ void CppMetricsParser::typeMcCabe()
   using AstNodeMet = model::CppAstNodeMetrics;
 
   // Calculate type level McCabe metric for all types on parallel threads.
-  parallelCalcMetric<AstNode>(
+  parallelCalcMetric<model::CohesionCppRecordView>(
     "Type-level McCabe",
     _threadCount * typeMcCabePartitionMultiplier,// number of jobs; adjust for granularity
-    odb::query<AstNode>::symbolType == AstNode::SymbolType::Type &&
-    odb::query<AstNode>::astType == AstNode::AstType::Definition,
-    [&, this](const MetricsTasks<AstNode>& tasks)
+    getCohesionRecordQuery(),
+    [&, this](const MetricsTasks<model::CohesionCppRecordView>& tasks)
   {
     util::OdbTransaction {_ctx.db} ([&, this]
     {
-      for (const AstNode& type : tasks)
+      for (const model::CohesionCppRecordView& type : tasks)
       {
-        // Skip if class is included from external library
-        type.location.file.load();
-        const auto typeFile = _ctx.db->query_one<model::File>(
-          odb::query<model::File>::id == type.location.file->id);
-        if (!typeFile || !cc::util::isRootedUnderAnyOf(_inputPaths, typeFile->path))
-          continue;
-
         // Skip if its a template instantiation
         const auto typeEntity = _ctx.db->query_one<Entity>(
-          odb::query<Entity>::astNodeId == type.id);
+          odb::query<Entity>::astNodeId == type.astNodeId);
         if (typeEntity && typeEntity->tags.find(model::Tag::TemplateInstantiation)
                           != typeEntity->tags.cend())
           continue;
@@ -256,7 +248,7 @@ void CppMetricsParser::typeMcCabe()
         }
 
         model::CppAstNodeMetrics typeMcMetric;
-        typeMcMetric.astNodeId = type.id;
+        typeMcMetric.astNodeId = type.astNodeId;
         typeMcMetric.type = model::CppAstNodeMetrics::Type::MCCABE_TYPE;
         typeMcMetric.value = value;
         _ctx.db->persist(typeMcMetric);

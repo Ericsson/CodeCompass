@@ -23,6 +23,7 @@ struct CppFunction : CppTypedEntity
   unsigned int mccabe;
   unsigned int bumpiness;
   unsigned int statementCount;
+  bool inLambdaObject = false;
 
   // Hash of the record (e.g. class or struct) in which this function is declared
   // recordHash = 0 means this is a global function

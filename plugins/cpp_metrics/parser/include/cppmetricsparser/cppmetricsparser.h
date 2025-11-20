@@ -94,6 +94,19 @@ private:
   // Returns cohesion record query based on parser configuration.
   odb::query<model::CohesionCppRecordView> getCohesionRecordQuery();
 
+  // Returns metric function query based on parser configuration.
+  template<typename TQueryParam>
+  odb::query<TQueryParam> getFunctionQuery() const
+  {
+    odb::query<TQueryParam> query = getFilterPathsQuery<TQueryParam>();
+
+    if (_ctx.options.count("cppmetrics-ignore-lambdas")) {
+      query = query && odb::query<TQueryParam>::CppFunction::inLambdaObject == false;
+    }
+
+    return query;
+  }
+
   /// @brief Constructs an ODB query that you can use to filter only
   /// the database records of the given parameter type whose path
   /// is rooted under any of this parser's input paths.
