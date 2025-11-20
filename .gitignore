@@ -8,6 +8,8 @@ nbproject/
 .vscode/
 # Vim
 *.swp
+# clangd cache directory
+.cache/
 
 
 ## Build folders
