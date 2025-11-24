@@ -6,6 +6,17 @@ is planned).
 We also provide a Docker image that can be used as developer environment to
 CodeCompass. See its usage [in a seperate document](/docker/README.md).
 
+It is recommended to have the following filesystem layout:
+
+```
+...
+ `-CodeCompass
+   |-CodeCompass   # Source code from Git. 
+   |-build         # CMake runs here.
+   |-install       # CodeCompass goes here.
+   `-workspace     # Parsed projects' workspace directory.
+```
+
 # Dependencies
 The following third-party tools are needed for building CodeCompass. These can
 be installed from the official repository of the given Linux distribution.
