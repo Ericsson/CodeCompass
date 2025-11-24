@@ -123,7 +123,7 @@ CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connecti
 - **Database**: The plugins can use an SQL database as storage. By the
   connection string the user can give the location of a running database
   system. If the database name is not given in the connection string then the
-  project name will be used.
+  project name will be used. The database name should be different for each parsed project.
 
 For full documentation see `CodeCompass_parser -h`.
 
