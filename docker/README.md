@@ -32,7 +32,7 @@ Table of Contents
   * [How to use docker to develop CodeCompass](#how-to-use-docker-to-develop-codecompass)
     * [Build, install and test CodeCompass](#build-install-and-test-codecompass)
     * [Make a Postgresql container](#make-a-postgresql-container)
-    * [Create a network and connect CodeCompass and Postgres](#create-a-network-and-connect-codecompass)
+    * [Create a network and connect CodeCompass and Postgres](#create-a-network-and-connect-codecompass-and-postgres)
     * [Create a Postgres user](#create-a-postgres-user)
     * [How to parse a project](#how-to-parse-a-project)
     * [How to start a webserver](#how-to-start-a-webserver)
