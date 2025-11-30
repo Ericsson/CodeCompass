@@ -64,13 +64,13 @@ COPY docker/dev/codecompass-build.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/codecompass-build.sh
 
 # Setting the environment.
-ENV DATABASE=sqlite \
+ENV DATABASE=pgsql \
     BUILD_TYPE=Release \
     BUILD_DIR=/CodeCompass/build \
     INSTALL_DIR=/CodeCompass/install \
     SOURCE_DIR=/CodeCompass/CodeCompass \
     TEST_WORKSPACE=/CodeCompass/test_workspace \
-    TEST_DB="sqlite:database=$TEST_WORKSPACE/cc_test.sqlite" \
+    TEST_DB="pgsql:database=$TEST_WORKSPACE/cc_test.pgsql" \
     WITH_AUTH="plain;ldap" \
     LLVM_DIR=/usr/lib/llvm-15/cmake \
     Clang_DIR=/usr/lib/cmake/clang-15 \
