@@ -23,20 +23,7 @@ const main = async () => {
     },
   });
 
-  let API_PREFIX = process.env.API_PREFIX || "/";
-
-  if (!API_PREFIX.startsWith("/")) {
-    API_PREFIX = `/${API_PREFIX}`;
-  }
-
-  if (/^https?:\/\//.test(API_PREFIX)) {
-    console.warn(
-      `[WARN] API_PREFIX appears to be a full URL (${API_PREFIX}). Expected a path like "/api". Using "/" instead.`
-    );
-    API_PREFIX = "/";
-  }
-
-  app.use(API_PREFIX, proxyHandler);
+  app.use("/", proxyHandler);
   app.get('*', (req, res) => nextHandler(req, res));
 
   await nextApp.prepare();
