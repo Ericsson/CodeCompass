@@ -1,6 +1,6 @@
 const { replaceInFileSync } = require('replace-in-file');
 
-const PLACEHOLDER = '__BASE_PATH__';
+const PLACEHOLDER = '/__URL_BASE_PATH__';
 const NEW_BASE = process.env.APP_BASE_PATH || '/new';
 
 console.log(`[patch-basepath] ${PLACEHOLDER} -> ${NEW_BASE}`);

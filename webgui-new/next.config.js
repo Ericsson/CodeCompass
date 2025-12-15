@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 
-const BASE_PLACEHOLDER = '__BASE_PATH__';
+const BASE_PLACEHOLDER = '/__URL_BASE_PATH__';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
