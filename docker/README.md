@@ -162,6 +162,11 @@ docker run \
   CodeCompass_webserver -w /workspace
 ```
 
+If you want to edit the public URL of the web GUI, you can do this by appending the
+`-e APP_BASE_PATH=/YOUR_PATH` command option to the previous run command.
+Leaving this out of the command will start the web interface with no set path.
+The new GUI will still be accessible in the /new path appended to the end of your URL.
+
 # Official DockerHub images
 
 Prebuilt images can be downloaded from DockerHub, from the 
