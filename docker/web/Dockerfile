@@ -76,4 +76,5 @@ EXPOSE 8080
 
 ENTRYPOINT ["tini", "--", "/usr/local/bin/entrypoint.sh"]
 
-CMD ["CodeCompass_webserver", "-w", "/workspace", "-p", "8080"]
+CMD ["sh", "-c", "node ../../webgui-new/scripts/patch-basepath.js && CodeCompass_webserver -w /workspace -p 8080"]
+
