@@ -940,6 +940,7 @@ public:
       if (const clang::CXXRecordDecl* parent = md->getParent())
       {
         cppFunction->recordHash = util::fnvHash(getUSR(parent));
+        cppFunction->inLambdaObject = parent->isLambda();
       }
 
       if (md->isVirtual())
