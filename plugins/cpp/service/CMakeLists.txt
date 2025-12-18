@@ -26,7 +26,14 @@ target_link_libraries(cppservice
   mongoose
   projectservice
   languagethrift
-  gvc
+  ${GRAPHVIZ_GVC_LIBRARY}
   ${THRIFT_LIBTHRIFT_LIBRARIES})
+
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # cppservice references headers from the webserver without implementation
+  set_target_properties(cppservice PROPERTIES LINK_FLAGS
+      "-undefined dynamic_lookup")
+endif(APPLE)
 
 install(TARGETS cppservice DESTINATION ${INSTALL_SERVICE_DIR})

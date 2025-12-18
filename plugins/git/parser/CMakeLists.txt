@@ -10,7 +10,7 @@ target_compile_options(gitparser PUBLIC -Wno-unknown-pragmas)
 
 target_link_libraries(gitparser
   util
-  git2
-  ssl)
+  ${LIBGIT2_LIBRARIES}
+  ${OPENSSL_SSL_LIBRARY})
 
 install(TARGETS gitparser DESTINATION ${INSTALL_PARSER_DIR})

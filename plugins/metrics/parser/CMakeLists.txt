@@ -13,6 +13,13 @@ target_link_libraries(metricsparser
   util
   ${Boost_LIBRARIES})
 
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # metricsparser references headers from the parser without implementation
+  set_target_properties(metricsparser PROPERTIES LINK_FLAGS
+      "-undefined dynamic_lookup")
+endif(APPLE)
+
 install(TARGETS metricsparser
   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
   DESTINATION ${INSTALL_PARSER_DIR})
