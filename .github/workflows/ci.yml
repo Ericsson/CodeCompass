@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, ubuntu-24.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -182,7 +182,7 @@ jobs:
     strategy:
       matrix:
         db: [postgresql, sqlite3]
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, ubuntu-24.04]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}

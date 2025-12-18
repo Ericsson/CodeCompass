@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 #include <odb/core.hxx>
 #include <odb/lazy-ptr.hxx>

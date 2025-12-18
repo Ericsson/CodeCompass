@@ -18,8 +18,11 @@ creating and using the database file.
 PostgreSQL can be installed from the package manager:
 
 ```bash
-sudo apt install postgresql-<version>
-# (e.g. postgresql-14 for Ubuntu 22.04)
+# For Ubuntu 22.04:
+sudo apt install postgresql-14
+
+# For Ubuntu 24.04:
+sudo apt install postgresql-16
 ```
 
 This will set up an automatically starting local server on the default port

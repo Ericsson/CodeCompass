@@ -1,7 +1,6 @@
 # Build Environment
 We build CodeCompass in a Linux environment. Currently, Ubuntu Long-Term
-Support releases are the main targets: Ubuntu 22.04 LTS (and Ubuntu 24.04 LTS 
-is planned).
+Support releases are the main targets: Ubuntu 22.04 LTS and Ubuntu 24.04 LTS.
 
 We also provide a Docker image that can be used as developer environment to
 CodeCompass. See its usage [in a seperate document](/docker/README.md).
@@ -61,23 +60,40 @@ sudo apt install git cmake make g++ libboost-all-dev \
   libldap2-dev libgtest-dev
 ```
 
+#### Ubuntu 24.04 ("Noble Numbat") LTS
+
+```bash
+sudo apt install git cmake make g++ libboost-all-dev \
+  llvm-15-dev clang-15 libclang-15-dev \
+  gcc-13-plugin-dev thrift-compiler libthrift-dev \
+  default-jdk libssl-dev libgraphviz-dev libmagic-dev libgit2-dev exuberant-ctags doxygen \
+  libldap2-dev libgtest-dev
+```
+
 #### Database engine support
 
 Depending on the desired database engines to be supported, the following
 packages should be installed.
 
-##### Ubuntu 22.04 ("Jammy Jellyfish") LTS
-
-The database connector library must be compiled manually for this release,
+The database connector library (ODB) must be compiled manually,
 however, the database programs themselves should be installed from the
 package manager.
 
-```bash
-# For SQLite database systems:
-sudo apt install libsqlite3-dev
+##### SQLite
 
-# For PostgreSQL database systems:
+```bash
+# For Ubuntu 22.04, Ubuntu 24.04:
+sudo apt install libsqlite3-dev
+```
+
+##### PostgreSQL
+
+```bash
+# For Ubuntu 22.04:
 sudo apt install postgresql-server-dev-14
+
+# For Ubuntu 24.04:
+sudo apt install postgresql-server-dev-16
 ```
 
 ## Known issues
@@ -91,10 +107,10 @@ by other processes which could, in extreme cases, make the system very hard or
 impossible to recover. **Please do NOT add a `sudo` in front of any `make` or
 other commands below, unless *explicitly* specified!**
 
-### ODB (for Ubuntu 22.04)
+### ODB
 ODB is an Object Relational Mapping tool, that is required by CodeCompass.
-For Ubuntu 22.04, the official release of ODB conflicts with the official
-compiler (GNU G++ 11) of the distribution. A newer version of ODB must be
+In recent Ubuntu versions, the official release of ODB conflicts with the official
+compiler (GNU G++) of the distribution. A newer version of ODB must be
 compiled manually.
 
 The ODB installation uses the build2 build system. (Build2 is not needed for
@@ -186,11 +202,7 @@ seen by CMake. Please set this environment before executing the build.
 # For all supported OS versions:
 export GTEST_ROOT=<gtest_install_dir>
 
-# If using Ubuntu 22.04:
-export CMAKE_PREFIX_PATH=<thrift_install_dir>:$CMAKE_PREFIX_PATH
 export CMAKE_PREFIX_PATH=<odb_install_directory>:$CMAKE_PREFIX_PATH
-
-export PATH=<thrift_install_dir>/bin:$PATH
 export PATH=<odb_install_directory>/bin:$PATH
 ```
 
