@@ -2,6 +2,7 @@
 #define CC_SERVICE_WORKSPACE_WORKSPACESERVICE_H
 
 #include <WorkspaceService.h>
+#include <algorithm>
 
 namespace cc
 { 
