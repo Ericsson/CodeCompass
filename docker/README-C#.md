@@ -63,7 +63,9 @@ First, you have to start a docker container from this image, which will mount
 your CodeCompass directory from your host and starts a shell:
 ```bash
 docker run --rm -ti \
-  --env DATABASE=pgsql --env BUILD_TYPE=Release \
+  --env DATABASE=pgsql \
+  --env TEST_DB="postgresql://postgres:password@postgres_container:5432/postgres" \
+  --env BUILD_TYPE=Release \
   --volume /path/to/host/CodeCompass:/CodeCompass \
   --volume /path/to/your/host/project:/projects/myproject \
   -p 8001:8080 \
