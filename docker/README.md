@@ -115,11 +115,8 @@ docker network connect my_network codecompass_container
 You need to create a Postgres user and give it admin rights.
 (Run these commands from the host computer)
 ```bash
-# 1. Create user "your_user" with password "your_password"
-docker exec -it postgres_container psql -U postgres -d postgres -c "CREATE USER your_user WITH PASSWORD 'your_password';"
-
-# 2. Adunk neki Superuser jogot (hogy biztosan tudjon adatbázist írni/olvasni)
-docker exec -it postgres_container psql -U postgres -d postgres -c "ALTER USER your_user WITH SUPERUSER;"
+# Create user "your_user" with password "your_password" and give Superuser rights
+docker exec -it postgres_container psql -U postgres -d postgres -c "CREATE USER your_user WITH PASSWORD 'your_password' SUPERUSER;"
 ```
 
 ### How to parse a project
