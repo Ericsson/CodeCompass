@@ -57,6 +57,9 @@ set(INSTALL_BIN_DIR "bin")
 set(DATABASE sqlite CACHE STRING "Database type")
 string(TOUPPER ${DATABASE} DATABASE_U)
 
+# Installation directory for dependencies
+set(INSTALL_DEPS_DIR_NAME "deps")
+
 # Set up the dynamic libraries' runtime path to the install folder
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
