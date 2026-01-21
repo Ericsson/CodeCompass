@@ -1,0 +1,10 @@
+Package: codecompass
+Version: %PACKAGE_VERSION%
+Section: devel
+Priority: optional
+Architecture: amd64
+Depends: %PACKAGE_DEPENDS%
+Maintainer: CodeCompass Developers <email>
+Homepage: https://github.com/Ericsson/CodeCompass/
+Description: CodeCompass
+ CodeCompass is a pluginable code comprehension tool.
