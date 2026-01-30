@@ -304,3 +304,12 @@ To access this feature, requests must be sent to the following address:
 e.g.: [`http://localhost:6251/MyProject/CppLspService`](http://localhost:6251/MyProject/CppLspService)
 
 The project name should match the name of the project used by the CodeCompass_parser.
+
+### C# specific remarks
+
+The C# parser is still in an experimental phase.
+There are some considerations that should be taken into account, when parsing a C# project:
+
+- The C# parser currently supports parsing only a single project.
+- The C# parser currently supports only PostgreSQL as a database backend, not SQLite.
+- The path to the output build directory (e.g. to the `bin/Release/` folder) shall also be specified through the `-b` flag, when executing the `CodeCompass_parser` command.

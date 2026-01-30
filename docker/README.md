@@ -30,6 +30,7 @@ Table of Contents
 * [Development](#development)
   * [Build image for development](#build-image-for-development)
   * [How to use docker to develop CodeCompass](#how-to-use-docker-to-develop-codecompass)
+    * [Use PostgreSQL and run it in a separate container](#use-postgresql-and-run-it-in-a-separate-container)
     * [Build, install and test CodeCompass](#build-install-and-test-codecompass)
     * [How to parse a project](#how-to-parse-a-project)
     * [How to start a webserver](#how-to-start-a-webserver)
@@ -67,12 +68,51 @@ docker run --rm -ti \
   codecompass:dev \
   /bin/bash
 ```
+
 This container will be used in the next subsections to build CodeCompass,
 parse a project and start a webserver.
 
 *Note*: you do not have to give the `--publish` option and set the `DATABASE`
 environment variable if you do not want to run a webserver. Also you do not
 have to mount a project directory if you do not want to parse it later.
+
+### Use PostgreSQL and run it in a separate container
+Alternatively, instead of SQLite, you may want to ue PostgreSQL and run the database
+engine in a Docker container as well:
+```bash
+docker run --rm -ti \
+  --env DATABASE=pgsql \
+  --env TEST_DB="postgresql://postgres:password@postgres_container:5432/postgres" \
+  --env BUILD_TYPE=Release \
+  --volume /path/to/host/CodeCompass:/CodeCompass \
+  --volume /path/to/your/host/project:/projects/myproject \
+  -p 8001:8080 \
+  codecompass:dev \
+  /bin/bash
+```
+
+You need to create a PostgreSQL container that CodeCompass can communicate with:
+```bash
+docker run \
+  --name postgres_container \
+  -e POSTGRES_PASSWORD=root_password \
+  -d \
+  -p 5432:5432 \
+  postgres:15
+```
+
+You also need to create a Postgres user and give it admin rights:
+```bash
+# Create user "your_user" with password "your_password" and give Superuser rights
+docker exec -it postgres_container psql -U postgres -d postgres -c "CREATE USER your_user WITH PASSWORD 'your_password' SUPERUSER;"
+```
+
+Finally, create a network and connect CodeCompass and Postgres to it:
+```bash
+docker network create my_network
+docker network connect my_network postgres_name
+docker network connect my_network codecompass_container
+```
 
 ### Build, install and test CodeCompass
 You can use the `codecompass-build.sh` script inside the container to build,
@@ -88,8 +128,11 @@ codecompass-build.sh install
 codecompass-build.sh test
 ```
 
+*Note*: if you get a timeout error when downloading, add these variable definitions before install:  
+`NODE_OPTIONS="--max-old-space-size=4096" NEXT_PRIVATE_BUILD_WORKER_TIMEOUT=600`
+
 ### How to parse a project
-You can parse a project inside a docker container by using the following
+You can parse a project (after building it) inside a docker container by using the following
 command:
 ```bash
 CodeCompass_parser \
@@ -104,9 +147,6 @@ CodeCompass_parser \
 ### How to start a webserver
 You can start a webserver inside the container by using the following command:
 ```bash
-# Create a workspace directory.
-mkdir -p /CodeCompass/workspace
-
 # Run the web server.
 CodeCompass_webserver \
   -w /CodeCompass/workspace
