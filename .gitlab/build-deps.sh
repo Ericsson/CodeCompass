@@ -63,7 +63,7 @@ rm -rf $PACKAGES_DIR/m4-1.4.19.tar.gz
 ###########
 
 cd $PACKAGES_DIR
-wget --no-verbose --no-clobber https://quantum-mirror.hu/mirrors/pub/gnu/libtool/libtool-2.4.6.tar.gz
+wget --no-verbose --no-clobber https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz
 tar -xf libtool-2.4.6.tar.gz
 cd libtool-2.4.6
 PATH=$DEPS_INSTALL_BUILD_DIR/m4-install/bin:$PATH \
