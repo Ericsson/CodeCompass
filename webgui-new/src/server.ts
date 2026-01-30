@@ -23,7 +23,7 @@ const main = async () => {
     },
   });
 
-  app.use('/', proxyHandler);
+  app.use("/", proxyHandler);
   app.get('*', (req, res) => nextHandler(req, res));
 
   await nextApp.prepare();
