@@ -305,7 +305,7 @@ rm -f $PACKAGES_DIR/ctags-p5.9.20201129.0.tar.gz
 
 if [ ! -f $DEPS_INSTALL_RUNTIME_DIR/boost-install/lib/libboost_program_options.so ]; then
   cd $PACKAGES_DIR
-  wget --no-verbose --no-clobber https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.gz
+  wget --no-verbose --no-clobber https://archives.boost.io/release/1.74.0/source/boost_1_74_0.tar.gz
   tar -xf boost_1_74_0.tar.gz
   cd boost_1_74_0
 
