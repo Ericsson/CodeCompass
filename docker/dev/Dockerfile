@@ -8,6 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # CodeCompass development dependencies.
 RUN set -x && apt-get update -qq \
   && apt-get -y install --no-install-recommends \
+  wget \
   cmake make \
   default-jdk \
   universal-ctags \
@@ -27,6 +28,7 @@ RUN set -x && apt-get update -qq \
   libsqlite3-dev \
   libssl-dev \
   llvm-15 clang-15 llvm-15-dev libclang-15-dev \
+  dotnet-sdk-8.0 \
   thrift-compiler libthrift-dev \
   postgresql-server-dev-14 \
   postgresql-14 && \

@@ -11,10 +11,8 @@ nbproject/
 # clangd cache directory
 .cache/
 
-
 ## Build folders
 build/
 build_*/
 install/
 install_*/
-

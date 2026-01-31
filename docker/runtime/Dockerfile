@@ -56,6 +56,7 @@ RUN set -x && apt-get update -qq && \
     curl ca-certificates gnupg \
     wget \
     llvm-15 \
+    dotnet-sdk-8.0 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     default-jre \
     libgit2-dev \

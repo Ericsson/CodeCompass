@@ -17,7 +17,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
+    wget \
     llvm-15 \
+    dotnet-sdk-8.0 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
     libsqlite3-dev \
     postgresql-server-dev-14 \
