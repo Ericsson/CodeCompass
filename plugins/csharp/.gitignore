@@ -1,0 +1,5 @@
+# C#
+bin/
+obj/
+*.out
+*.bak

@@ -125,8 +125,7 @@ CodeCompass_parser -w <workspace> -n <name> -i <input1> -i <input2> -d <connecti
   input parameters.
 - **Database**: The plugins can use an SQL database as storage. By the
   connection string the user can give the location of a running database
-  system. If the database name is not given in the connection string then the
-  project name will be used.
+  system. The database name should be different for each parsed project.
 
 For full documentation see `CodeCompass_parser -h`.
 
@@ -308,3 +307,12 @@ To access this feature, requests must be sent to the following address:
 e.g.: [`http://localhost:6251/MyProject/CppLspService`](http://localhost:6251/MyProject/CppLspService)
 
 The project name should match the name of the project used by the CodeCompass_parser.
+
+### C# specific remarks
+
+The C# parser is still in an experimental phase.
+There are some considerations that should be taken into account, when parsing a C# project:
+
+- The C# parser currently supports parsing only a single project.
+- The C# parser currently supports only PostgreSQL as a database backend, not SQLite.
+- The path to the output build directory (e.g. to the `bin/Release/` folder) shall also be specified through the `-b` flag, when executing the `CodeCompass_parser` command.
