@@ -19,6 +19,7 @@ RUN set -x && apt-get update -qq \
   libboost-log-dev \
   libboost-program-options-dev \
   libboost-regex-dev \
+  libboost-python-dev \
   libgit2-dev \
   libgraphviz-dev \
   libgtest-dev \

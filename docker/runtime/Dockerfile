@@ -56,7 +56,7 @@ RUN set -x && apt-get update -qq && \
     curl ca-certificates gnupg \
     wget \
     llvm-15 \
-    libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
+    libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-python-dev \
     default-jre \
     libgit2-dev \
     libssl3 \

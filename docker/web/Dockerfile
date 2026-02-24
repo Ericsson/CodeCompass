@@ -18,7 +18,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN set -x && apt-get update -qq \
   && apt-get install -qqy --no-install-recommends \
     llvm-15 \
-    libboost-filesystem-dev libboost-log-dev libboost-program-options-dev \
+    libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-python-dev \
     libsqlite3-dev \
     postgresql-server-dev-14 \
     default-jre \
