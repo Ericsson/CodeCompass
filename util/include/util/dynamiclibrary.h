@@ -21,7 +21,7 @@ class DynamicLibrary
 {
 public:
   DynamicLibrary(void* handle_);
-  DynamicLibrary(const std::string& path_);
+  DynamicLibrary(const std::string& path_, int dlopen_flags_ = RTLD_NOW);
   
   ~DynamicLibrary();
 
