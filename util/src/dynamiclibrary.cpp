@@ -16,7 +16,7 @@ std::string DynamicLibrary::extension()
 
 DynamicLibrary::DynamicLibrary(void* handle_) : _handle(handle_){}
 
-DynamicLibrary::DynamicLibrary(const std::string& path_)
+DynamicLibrary::DynamicLibrary(const std::string& path_, int dlopen_flags_)
 {
   if (path_.empty())
   {
@@ -37,7 +37,7 @@ DynamicLibrary::DynamicLibrary(const std::string& path_)
     throw std::runtime_error(ss.str());
   }
 #else
-  _handle = ::dlopen(path_.c_str(), RTLD_NOW | RTLD_GLOBAL);
+  _handle = ::dlopen(path_.c_str(), dlopen_flags_);
   if (!_handle)
   {
     const char *dlError = ::dlerror();

@@ -52,8 +52,17 @@ void PluginHandler::loadPlugins(std::vector<std::string>& skipParserList_)
         skipParserList_.end())
       {
         std::string dynamicLibraryPath = dirIter->path().string();
+        int dlopenFlags = RTLD_NOW;
+        if (filename == "pythonparser")
+        {
+          // RTLD_GLOBAL:
+          // The symbols defined by this shared object will be made available for
+          // symbol resolution of subsequently loaded shared objects.
+          dlopenFlags |= RTLD_GLOBAL;
+        }
+
         _dynamicLibraries[filename] = util::DynamicLibraryPtr(
-          new util::DynamicLibrary(dynamicLibraryPath));
+          new util::DynamicLibrary(dynamicLibraryPath, dlopenFlags));
       }
       else
       {
