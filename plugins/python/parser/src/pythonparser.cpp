@@ -88,6 +88,11 @@ void PythonParser::parseProject(const std::string& root_path)
   {
     for(const auto& e : map)
     {
+      if (_ctx.db->query_one<model::PYName>(odb::query<model::PYName>::id == e.first))
+      {
+        _ctx.db->erase(e.second);
+      }
+
       _ctx.db->persist(e.second);
     }
   });
