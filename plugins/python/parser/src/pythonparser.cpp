@@ -182,6 +182,19 @@ bool PythonParser::parse()
   return true;
 }
 
+bool PythonParser::cleanupDatabase()
+{
+  LOG(info) << "[pythonparser] Incremental parsing unsupported, cleaning up previous analysis results from database ...";
+  odb::connection_ptr connection = _ctx.db->connection();
+#ifdef DATABASE_PGSQL
+  connection->execute("TRUNCATE TABLE \"PYName\";");
+#else
+  connection->execute("DELETE FROM \"PYName\";");
+#endif
+  LOG(info) << "[pythonparser] Cleanup finished!";
+  return true;
+}
+
 PythonParser::~PythonParser()
 {
 }

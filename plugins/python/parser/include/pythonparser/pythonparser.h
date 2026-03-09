@@ -26,6 +26,7 @@ public:
   PythonParser(ParserContext& ctx_);
   virtual ~PythonParser();
   virtual bool parse() override;
+  virtual bool cleanupDatabase() override;
 private:
   struct ParseResultStats {
     std::uint32_t partial;
