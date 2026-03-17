@@ -44,6 +44,7 @@ export LDFLAGS="-Wl,-rpath-link,$DEPS_INSTALL_RUNTIME_DIR/openssl-install/lib "\
 #       otherwise version in postgresql-install/lib is used
 
 export LD_LIBRARY_PATH=$DEPS_INSTALL_RUNTIME_DIR/odb-install/lib\
+:$DEPS_INSTALL_RUNTIME_DIR/python-install/lib\
 :$LD_LIBRARY_PATH
 
 export CMAKE_PREFIX_PATH=$DEPS_INSTALL_RUNTIME_DIR/libgit2-install\
