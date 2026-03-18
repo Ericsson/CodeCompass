@@ -1,4 +1,5 @@
 import os
+import sys
 import jedi
 import multiprocessing
 import traceback
@@ -71,6 +72,10 @@ def parseProject(settings, n_proc):
         log(f"{bcolors.FAIL}Failed to use virtual environment: {config.venv_path}")
         if config.stack_trace:
             traceback.print_exc()
+        else:
+            log(f"{bcolors.FAIL}Apply the --stack-trace parser option to view a more detailed stack trace of the error")
+
+        sys.exit(1)
 
     log(f"{bcolors.OKGREEN}Using {n_proc} process to parse project")
 
