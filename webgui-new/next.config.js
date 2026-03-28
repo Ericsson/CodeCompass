@@ -2,6 +2,8 @@
 
 require('dotenv').config();
 
+const BASE_PLACEHOLDER = '/__URL_BASE_PATH__';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
@@ -13,8 +15,8 @@ const nextConfig = {
   },
   trailingSlash: true,
   ...(process.env.NODE_ENV === 'production' && {
-    assetPrefix: `${process.env.PUBLIC_URL || ''}/new`,
-    basePath: `${process.env.PUBLIC_URL || ''}/new`,
+    assetPrefix: `${process.env.PUBLIC_URL || ''}${BASE_PLACEHOLDER}`,
+    basePath: `${process.env.PUBLIC_URL || ''}${BASE_PLACEHOLDER}`,
   }),
 };
 
