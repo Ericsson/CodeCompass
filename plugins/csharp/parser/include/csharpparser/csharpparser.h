@@ -32,9 +32,10 @@ private:
 
   bool acceptProjectBuildPath(const std::string& buildDir_);
   bool parseProjectBuildPath(
-    const std::vector<std::string>& path_,
-    const std::string& buildPath_);
-  void addSource(const std::string& filepath_, bool error_);
+    const std::vector<std::string>& path_ //,
+    ); //const std::string& buildPath_
+  //void addSource(const std::string& filepath_, bool error_);
+  void addSource(const std::string& filepath_, const std::string& targetDll_, bool error_);
 };
   
 } // parser

@@ -9,14 +9,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CSharpParser.model;
+using System.Xml.Linq;
 
 namespace CSharpParser
 {
     class Program
     {
-        //private readonly CsharpDbContext _context;
         private static List<string> _rootDir;
-        private static string _buildDir = "";
         private static string _buildDirBase = "";
         private static string _connectionString = "";
 
@@ -28,11 +27,10 @@ namespace CSharpParser
             try
             {
                 _connectionString = args[0].Replace("'", "");
-                _buildDir = args[1].Replace("'", "");
-                _buildDirBase = args[2].Replace("'", "");
-                threadNum = int.Parse(args[3]);
+                _buildDirBase = args[1].Replace("'", ""); //indexes
+                threadNum = int.Parse(args[2]);
 
-                for (int i = 4; i < args.Length; ++i)
+                for (int i = 3; i < args.Length; ++i)
                 {
                     _rootDir.Add(args[i].Replace("'", ""));
                 }
@@ -42,44 +40,6 @@ namespace CSharpParser
                 WriteLine("Error in parsing command!");
                 return 1;
             }
-            /*if (args.Length < 3)
-            {
-                WriteLine("Missing command-line arguments in CSharpParser!");                              
-                return 1;
-            }
-            else if (args.Length == 3)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-            }
-            else if (args.Length == 4)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-                bool success = int.TryParse(args[3], out threadNum);
-                if (!success){
-                    WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
-                }
-            }
-            else if (args.Length == 5)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-                _buildDirBase = args[3].Replace("'", "");
-                bool success = int.TryParse(args[4], out threadNum);
-                if (!success)
-                {
-                    WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
-                }            
-            }
-            else if (args.Length > 5)
-            {
-                WriteLine("Too many command-line arguments in CSharpParser!");
-                return 1;
-            }*/
 
             //Converting the connectionstring into entiy framwork style connectionstring
             string csharpConnectionString = transformConnectionString();
@@ -91,21 +51,67 @@ namespace CSharpParser
             CsharpDbContext _context = new CsharpDbContext(options);
             _context.Database.Migrate();
 
+
             List<string> allFiles = new List<string>();
+            // This dictionary will remember which file belongs to which DLL
+            Dictionary<string, string> fileToTargetDll = new Dictionary<string, string>();
+
             foreach (var p in _rootDir)
             {
-                Console.WriteLine(p);
-                allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
+                // We find all .csproj files
+                var csprojFiles = Directory.GetFiles(p, "*.csproj", SearchOption.AllDirectories);
+                foreach (var csproj in csprojFiles)
+                {
+                    string projectDir = Path.GetDirectoryName(csproj);
+                    // Default DLL name based on project file name
+                    string targetDll = Path.GetFileNameWithoutExtension(csproj) + ".dll";
+
+                    // we try to read the real AssemblyName from the XML
+                    try {
+                        XDocument doc = XDocument.Load(csproj);
+                        var assemblyNameNode = doc.Descendants("AssemblyName").FirstOrDefault();
+                        if (assemblyNameNode != null && !string.IsNullOrWhiteSpace(assemblyNameNode.Value))
+                        {
+                            targetDll = assemblyNameNode.Value + ".dll";
+                        }
+                    } catch { /* If we cannot read the XML, the default name will remain.*/ }
+
+                    // search for C# files belonging to the project (filtering out the garbage)
+                    var csFiles = Directory.GetFiles(projectDir, "*.cs", SearchOption.AllDirectories)
+                        .Where(f => !f.Contains("/obj/") && !f.Contains("\\obj\\") && 
+                                    !f.Contains("/bin/") && !f.Contains("\\bin\\"));
+
+                    foreach (var cs in csFiles)
+                    {
+                        // if a file is not already in it (to avoid duplication)
+                        if (!fileToTargetDll.ContainsKey(cs))
+                        {
+                            fileToTargetDll[cs] = targetDll;
+                            allFiles.Add(cs);
+                        }
+                    }
+                }
             }
+            allFiles = allFiles.Distinct().ToList();
 
             foreach (var f in allFiles)
             {
                 WriteLine(f);
             }
-            IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
-            IEnumerable<string> assemblies_base = assemblies;
-            if (args.Length == 5)
-                assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll");
+
+
+            IEnumerable<string> assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll"); //loading basic dlls
+            
+            List<string> assemblies = new List<string>();
+            foreach (var p in _rootDir)
+            {
+                // We search for all .dll files in all input directories
+                assemblies.AddRange(GetSourceFilesFromDir(p, ".dll")); 
+            }
+            // Let's keep only one of each DLL based on the file name!
+            assemblies = assemblies.GroupBy(x => System.IO.Path.GetFileName(x))
+                                   .Select(g => g.First())
+                                   .ToList();
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -129,14 +135,14 @@ namespace CSharpParser
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
 
-            var runtask = ParalellRun(csharpConnectionString, threadNum, trees, compilation);
+            var runtask = ParalellRun(csharpConnectionString, threadNum, trees, compilation, fileToTargetDll);
             int ret = runtask.Result;
             
             return 0;
         }
 
         private static async Task<int> ParalellRun(string csharpConnectionString, int threadNum,
-            List<SyntaxTree> trees, CSharpCompilation compilation)
+            List<SyntaxTree> trees, CSharpCompilation compilation, Dictionary<string, string> fileToTargetDll)
         {
             var options = new DbContextOptionsBuilder<CsharpDbContext>()
                 .UseNpgsql(csharpConnectionString)
@@ -156,7 +162,7 @@ namespace CSharpParser
             WriteLine(threadNum);
             for (int i = 0; i < maxThread; i++)
             {                
-                ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i));
+                ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i,fileToTargetDll));
             }
 
             int nextTreeIndex = maxThread;
@@ -169,7 +175,7 @@ namespace CSharpParser
                 if (nextTreeIndex < trees.Count)
                 {
                     ParsingTasks.Add(ParseTree(contextList[nextContextIndex],
-                        trees[nextTreeIndex],compilation,nextContextIndex));
+                        trees[nextTreeIndex],compilation,nextContextIndex, fileToTargetDll));
                     ++nextTreeIndex;
                 }
             }
@@ -183,15 +189,20 @@ namespace CSharpParser
         }
 
         private static async Task<int> ParseTree(CsharpDbContext context, 
-            SyntaxTree tree, CSharpCompilation compilation, int index)
+            SyntaxTree tree, CSharpCompilation compilation, int index, 
+            Dictionary<string, string> fileToTargetDll)
         {
             var ParsingTask = Task.Run(() =>
             {
                 WriteLine("ParallelRun " + tree.FilePath);
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(context, model, tree);
-                visitor.Visit(tree.GetCompilationUnitRoot());                
-                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
+                visitor.Visit(tree.GetCompilationUnitRoot());      
+
+                // Find the DLL name and append a | to the filename.
+                string target = fileToTargetDll.ContainsKey(tree.FilePath) ? fileToTargetDll[tree.FilePath] : "Unknown.dll";
+                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath + "|" + target);
+
                 return index;
             });
             return await ParsingTask;
