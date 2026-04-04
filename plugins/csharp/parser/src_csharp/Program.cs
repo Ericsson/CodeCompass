@@ -7,8 +7,11 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CSharpParser.model;
+using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis.MSBuild;
 
 namespace CSharpParser
 {
@@ -20,8 +23,9 @@ namespace CSharpParser
         private static string _buildDirBase = "";
         private static string _connectionString = "";
 
-        static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
+            MSBuildLocator.RegisterDefaults();
             _rootDir = new List<string>();
             int threadNum = 4;
 
@@ -37,7 +41,7 @@ namespace CSharpParser
                     _rootDir.Add(args[i].Replace("'", ""));
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 WriteLine("Error in parsing command!");
                 return 1;
@@ -91,9 +95,72 @@ namespace CSharpParser
             CsharpDbContext _context = new CsharpDbContext(options);
             _context.Database.Migrate();
 
+            if (_rootDir.Count == 0)
+            {
+                WriteLine("Missing input path argument in CSharpParser!");
+                return 1;
+            }
+
+            string primaryInput = _rootDir[0];
+
+            if (IsSolutionInput(primaryInput))
+            {
+                await ParseSolutionPathAsync(primaryInput, csharpConnectionString, threadNum);
+                return 0;
+            }
+
+            if (IsProjectInput(primaryInput))
+            {
+                var projectInputs = _rootDir
+                    .Where(IsProjectInput)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                await ParseProjectsByPathAsync(projectInputs, csharpConnectionString, threadNum);
+                return 0;
+            }
+
+            if (Directory.Exists(primaryInput))
+            {
+                await ParseLegacyMode(csharpConnectionString, threadNum);
+                return 0;
+            }
+
+            if (File.Exists(primaryInput))
+            {
+                Console.Error.WriteLine($"Unsupported file type: {primaryInput}");
+                Console.Error.WriteLine("Supported: .sln, .slnx, .csproj");
+                return 1;
+            }
+
+            WriteLine("Unsupported input path in CSharpParser!");
+            return 1;
+        }
+
+        private static bool IsSolutionInput(string inputPath)
+        {
+            return File.Exists(inputPath)
+                && (inputPath.EndsWith(".sln", StringComparison.OrdinalIgnoreCase)
+                    || inputPath.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsProjectInput(string inputPath)
+        {
+            return File.Exists(inputPath)
+                && inputPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task ParseLegacyMode(string csharpConnectionString, int threadNum)
+        {
             List<string> allFiles = new List<string>();
             foreach (var p in _rootDir)
             {
+                if (!Directory.Exists(p))
+                {
+                    WriteLine("Skipping non-directory input in legacy mode: " + p);
+                    continue;
+                }
+
                 Console.WriteLine(p);
                 allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
             }
@@ -102,10 +169,13 @@ namespace CSharpParser
             {
                 WriteLine(f);
             }
+
             IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
             IEnumerable<string> assemblies_base = assemblies;
-            if (args.Length == 5)
+            if (Directory.Exists(_buildDirBase))
+            {
                 assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll");
+            }
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -119,7 +189,7 @@ namespace CSharpParser
             CSharpCompilation compilation = CSharpCompilation.Create("CSharpCompilation")
                 .AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
                 .AddSyntaxTrees(trees);
-            
+
             foreach (string file in assemblies_base)
             {
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
@@ -129,10 +199,7 @@ namespace CSharpParser
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
 
-            var runtask = ParalellRun(csharpConnectionString, threadNum, trees, compilation);
-            int ret = runtask.Result;
-            
-            return 0;
+            await ParalellRun(csharpConnectionString, threadNum, trees, compilation);
         }
 
         private static async Task<int> ParalellRun(string csharpConnectionString, int threadNum,
@@ -285,6 +352,304 @@ namespace CSharpParser
             }
 
             return csharpConnectionString;
+        }
+
+        private static async Task ParseSolutionPathAsync(
+            string solutionPath,
+            string csharpConnectionString,
+            int threadCount)
+        {
+            try
+            {
+                var solution = await LoadSolutionAsync(solutionPath);
+                int documentCount = solution.Projects
+                    .SelectMany(p => p.Documents)
+                    .Count(d => !string.IsNullOrEmpty(d.FilePath));
+
+                if (solution.Projects.Any() && documentCount > 0)
+                {
+                    await ParseSolutionAsync(solution, csharpConnectionString, threadCount);
+                    return;
+                }
+
+                Console.WriteLine(
+                    "OpenSolutionAsync returned no usable documents, trying manual project discovery.");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"OpenSolutionAsync failed: {ex.Message}");
+                Console.WriteLine("Trying manual project discovery from solution file.");
+            }
+
+            var projectPaths = ExtractProjectPathsFromSolution(solutionPath);
+            if (projectPaths.Count == 0)
+            {
+                Console.Error.WriteLine($"No C# projects found in solution: {solutionPath}");
+                return;
+            }
+
+            await ParseProjectsByPathAsync(projectPaths, csharpConnectionString, threadCount);
+        }
+
+        private static List<string> ExtractProjectPathsFromSolution(string solutionPath)
+        {
+            var projectPaths = new List<string>();
+            var solutionDir = Path.GetDirectoryName(solutionPath) ?? string.Empty;
+
+            // Works for both classic .sln rows and .slnx quoted project paths.
+            var csprojRegex = new Regex(
+                "\"([^\"]+\\.csproj)\"",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            IEnumerable<string> solutionLines;
+            try
+            {
+                solutionLines = File.ReadLines(solutionPath);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to read solution file '{solutionPath}': {ex.Message}");
+                return projectPaths;
+            }
+
+            foreach (var line in solutionLines)
+            {
+                var matches = csprojRegex.Matches(line);
+                foreach (Match match in matches)
+                {
+                    var relativeProjectPath = match.Groups[1].Value.Trim();
+                    if (string.IsNullOrEmpty(relativeProjectPath))
+                    {
+                        continue;
+                    }
+
+                    var normalizedProjectPath = relativeProjectPath
+                        .Replace('\\', Path.DirectorySeparatorChar)
+                        .Replace('/', Path.DirectorySeparatorChar);
+
+                    var fullProjectPath = Path.GetFullPath(
+                        Path.Combine(solutionDir, normalizedProjectPath));
+
+                    if (!File.Exists(fullProjectPath))
+                    {
+                        Console.Error.WriteLine(
+                            $"Project path from solution not found: {fullProjectPath}");
+                        continue;
+                    }
+
+                    projectPaths.Add(fullProjectPath);
+                }
+            }
+
+            return projectPaths
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static async Task ParseProjectsByPathAsync(
+            List<string> projectPaths,
+            string csharpConnectionString,
+            int threadCount)
+        {
+            Console.WriteLine($"Fallback project count: {projectPaths.Count}");
+            foreach (var projectPath in projectPaths)
+            {
+                try
+                {
+                    Console.WriteLine($"Fallback loading project: {projectPath}");
+                    var workspace = CreateMsBuildWorkspace();
+                    var project = await workspace.OpenProjectAsync(projectPath);
+                    await ParseProjectAsync(
+                        project,
+                        csharpConnectionString,
+                        threadCount);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine(
+                        $"Fallback load failed for '{projectPath}': {ex.Message}");
+                }
+            }
+        }
+
+        private static MSBuildWorkspace CreateMsBuildWorkspace()
+        {
+            var workspace = MSBuildWorkspace.Create();
+            workspace.LoadMetadataForReferencedProjects = true;
+            workspace.WorkspaceFailed += (sender, args) =>
+            {
+                Console.Error.WriteLine($"Workspace warning: {args.Diagnostic.Message}");
+            };
+
+            return workspace;
+        }
+
+        private static async Task<Solution> LoadInputAsync(string inputPath)
+        {
+            if (File.Exists(inputPath))
+            {
+                if (inputPath.EndsWith(".sln", StringComparison.OrdinalIgnoreCase) ||
+                    inputPath.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await LoadSolutionAsync(inputPath);
+                }
+                if (inputPath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await LoadProjectAsync(inputPath);
+                }
+                else
+                {
+                    Console.Error.WriteLine($"Unsupported file type: {inputPath}");
+                    Console.Error.WriteLine("Supported: .sln, .slnx, .csproj");
+                    return null;
+                }
+            }
+            if (Directory.Exists(inputPath))
+            {
+                return null;
+            }
+            else
+            {
+                Console.Error.WriteLine($"Input path not found: {inputPath}");
+                return null;
+            }
+        }
+
+        private static async Task<Solution> LoadSolutionAsync(string solutionPath)
+        {
+            Console.WriteLine($"Loading solution: {solutionPath}");
+            var workspace = CreateMsBuildWorkspace();
+            
+            var solution = await workspace.OpenSolutionAsync(solutionPath);
+            Console.WriteLine($"Solution loaded: {solution.FilePath}");
+            Console.WriteLine($"Projects found: {solution.Projects.Count()}");
+            return solution;
+        }
+
+        private static async Task<Solution> LoadProjectAsync(string projectPath)
+        {
+            Console.WriteLine($"Loading project: {projectPath}");
+            var workspace = CreateMsBuildWorkspace();
+            
+            var project = await workspace.OpenProjectAsync(projectPath);
+            Console.WriteLine($"Project loaded: {project.Name}");
+
+            return project.Solution;
+        }
+
+        private static async Task ParseSolutionAsync(
+            Solution solution,
+            string csharpConnectionString,
+            int threadCount)
+        {
+            Console.WriteLine($"Solution loaded: {solution.FilePath}");
+            Console.WriteLine($"Projects found: {solution.Projects.Count()}");
+
+            foreach (var project in solution.Projects)
+            {
+                await ParseProjectAsync(project, csharpConnectionString, threadCount);
+            }
+        }
+
+        private static async Task ParseProjectAsync(
+            Project project,
+            string csharpConnectionString,
+            int threadCount)
+        {
+            Console.WriteLine($"Processing project: {project.Name}");
+
+            var compilation = await project.GetCompilationAsync();
+
+            if (compilation == null)
+            {
+                Console.WriteLine($"- Compilation failed for {project.Name}");
+                return;
+            }
+
+            var documents = project.Documents
+                .Where(d => !string.IsNullOrEmpty(d.FilePath))
+                .ToList();
+            Console.WriteLine($"- Documents in {project.Name}: {documents.Count}");
+
+            await ProcessDocumentsInParallel(
+                documents,
+                compilation,
+                csharpConnectionString,
+                threadCount,
+                project.Name
+            );
+        }
+
+        private static async Task ProcessDocumentsInParallel(
+            List<Document> documents,
+            Compilation compilation,
+            string csharpConnectionString,
+            int threadCount,
+            string projectName)
+        {
+            if (documents.Count == 0)
+            {
+                return;
+            }
+
+            var tasks = new List<Task>();
+            int effectiveThreadCount = Math.Max(1, Math.Min(threadCount, documents.Count));
+            var documentGroups = documents.Chunk(documents.Count / effectiveThreadCount + 1);
+
+            foreach (var group in documentGroups)
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    var options = new DbContextOptionsBuilder<CsharpDbContext>()
+                        .UseNpgsql(csharpConnectionString)
+                        .Options;
+                    var localDbContext = new CsharpDbContext(options);
+
+                    foreach (var document in group)
+                    {
+                        await ProcessSingleDocument(
+                            document,
+                            compilation,
+                            localDbContext,
+                            projectName
+                        );
+                    }
+
+                    await localDbContext.SaveChangesAsync();
+                }));
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        private static async Task ProcessSingleDocument(
+            Document document,
+            Compilation compilation,
+            CsharpDbContext dbContext,
+            string projectName)
+        {
+            try
+            {
+                var syntaxTree = await document.GetSyntaxTreeAsync();
+                if (syntaxTree == null) return;
+                
+                var semanticModel = compilation.GetSemanticModel(syntaxTree);
+                
+                var visitor = new AstVisitor(
+                    dbContext,
+                    semanticModel,
+                    syntaxTree);
+                
+                var root = await syntaxTree.GetRootAsync();
+                visitor.Visit(root);
+                
+                string status = visitor.FullyParsed ? "+" : "-";
+                Console.WriteLine($"{status}{document.FilePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error parsing {document.FilePath}: {ex.Message}");
+                Console.WriteLine($"-{document.FilePath}");
+            }
         }
     }
 }
