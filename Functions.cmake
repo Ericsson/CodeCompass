@@ -29,6 +29,7 @@ function(generate_odb_files _src)
           -I ${CMAKE_SOURCE_DIR}/model/include
           -I ${CMAKE_SOURCE_DIR}/util/include
           -I ${ODB_INCLUDE_DIRS}
+          -I ${Boost_INCLUDE_DIRS}
           ${DEPENDENCY_PLUGIN_INCLUDE_DIRS}
           ${CMAKE_CURRENT_SOURCE_DIR}/${_file}
       COMMAND
@@ -51,6 +52,7 @@ function(add_odb_library _name)
   target_link_libraries(${_name} ${ODB_LIBRARIES})
   target_include_directories(${_name} PUBLIC
     ${ODB_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/util/include
     ${CMAKE_SOURCE_DIR}/model/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include

@@ -9,6 +9,8 @@ std::string DynamicLibrary::extension()
 {
 #ifdef WIN32
   return ".dll";
+#elif __APPLE__
+  return ".dylib";
 #else
   return ".so";
 #endif
