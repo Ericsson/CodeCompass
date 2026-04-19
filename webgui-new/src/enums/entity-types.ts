@@ -48,6 +48,9 @@ const diagramTypeArray = [
   i18n.t('diagramTypes.INCLUDE_DEPENDENCY'),
   i18n.t('diagramTypes.INTERFACE'),
   i18n.t('diagramTypes.SUBSYSTEM_DEPENDENCY'),
+  i18n.t('diagramTypes.MODULE_DEPENDENCY'),
+  i18n.t('diagramTypes.FUNCTION_USAGE'),
+  i18n.t('diagramTypes.CLASS_USAGE'),
 ];
 
 export { referenceTypeArray, fileReferenceTypeArray, diagramTypeArray };
