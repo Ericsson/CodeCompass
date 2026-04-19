@@ -4,7 +4,8 @@ using System.Linq;
 using static System.Console;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using CSharpParser.model;
+using DbModel;
+// using CSharpParser.model;
 using Microsoft.CodeAnalysis;
 
 namespace CSharpParser
