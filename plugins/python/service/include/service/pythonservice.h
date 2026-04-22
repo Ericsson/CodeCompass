@@ -145,11 +145,11 @@ public:
 
   enum DiagramType
   {
-    FUNCTION_CALL,
-    MODULE_DEPENDENCY,
-    FUNCTION_USAGE,
-    CLASS_USAGE,
-    CLASS_OVERVIEW
+    FUNCTION_CALL = 0,
+    MODULE_DEPENDENCY = 10,
+    FUNCTION_USAGE = 11,
+    CLASS_USAGE = 12,
+    CLASS_OVERVIEW = 2
   };
 
 private:

@@ -4,7 +4,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { TabName } from 'enums/tab-enum';
 import { FileInfo } from '@thrift-generated';
 import { AppContext } from 'global-context/app-context';
-import { getCppFileDiagramTypes } from 'service/cpp-service';
+import { createClient, getFileDiagramTypes } from 'service/language-service';
 import { Tooltip } from '@mui/material';
 import { ChevronRight } from '@mui/icons-material';
 import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
@@ -40,7 +40,8 @@ export const FileContextMenu = ({
   useEffect(() => {
     if (!fileInfo) return;
     const init = async () => {
-      const initDiagramTypes = await getCppFileDiagramTypes(fileInfo.id as string);
+      createClient(appCtx.workspaceId, fileInfo?.type);
+      const initDiagramTypes = await getFileDiagramTypes(fileInfo.id as string);
       setDiagramTypes(initDiagramTypes);
     };
     init();

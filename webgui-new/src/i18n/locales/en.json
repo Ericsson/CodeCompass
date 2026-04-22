@@ -354,7 +354,10 @@
     "EXTERNAL_USERS": "Users of this module",
     "INCLUDE_DEPENDENCY": "Include Dependency",
     "INTERFACE": "Interface Diagram",
-    "SUBSYSTEM_DEPENDENCY": "Internal architecture of this module"
+    "SUBSYSTEM_DEPENDENCY": "Internal architecture of this module",
+    "MODULE_DEPENDENCY": "Module dependency diagram",
+    "FUNCTION_USAGE": "Function usage diagram",
+    "CLASS_USAGE": "Class usage diagram"
   },
   "cookie": {
     "ACCEPT": "Accept",

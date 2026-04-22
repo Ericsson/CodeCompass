@@ -7,7 +7,7 @@ let client: LanguageService.Client | undefined;
 export const createClient = (workspace: string, fileType: string | undefined) => {
   if (!config || !fileType) return;
   
-  const service = () => 
+  const service = (() =>
   {
     switch(fileType)
     {
@@ -16,13 +16,15 @@ export const createClient = (workspace: string, fileType: string | undefined) =>
       case "PY":
         return "PythonService";
     }
-  };
+  })();
+
+  if (!service) return;
 
   const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
     transport: thrift.TBufferedTransport,
     protocol: thrift.TJSONProtocol,
     https: config.webserver_https,
-    path: `${config.webserver_path}/${workspace}/${service()}`,
+    path: `${config.webserver_path}/${workspace}/${service}`,
   });
   client = thrift.createXHRClient(LanguageService, connection);
   return client;
