@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Symlink CodeCompass commands to /usr/bin/
+rm -f /usr/bin/CodeCompass_logger
+rm -f /usr/bin/CodeCompass_parser
+rm -f /usr/bin/CodeCompass_webserver
+
+ln -s /usr/share/codecompass/bin/CodeCompass_logger /usr/bin/CodeCompass_logger
+ln -s /usr/share/codecompass/bin/CodeCompass_parser /usr/bin/CodeCompass_parser
+ln -s /usr/share/codecompass/bin/CodeCompass_webserver /usr/bin/CodeCompass_webserver
