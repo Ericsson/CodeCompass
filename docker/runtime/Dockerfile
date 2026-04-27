@@ -57,6 +57,7 @@ RUN set -x && apt-get update -qq && \
     wget \
     llvm-15 \
     libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-python-dev \
+    python3-venv \
     default-jre \
     libgit2-dev \
     libssl3 \
