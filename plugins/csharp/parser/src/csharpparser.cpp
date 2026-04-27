@@ -42,6 +42,11 @@ bool CsharpParser::parse()
   bool success = true;
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
+  if (paths.empty())
+  {
+    LOG(error) << "No input path specified for C# parser!";
+    return false;
+  }
   std::string buildPath = _ctx.options["build-dir"].as<std::string>();
   
     if (acceptProjectBuildPath(buildPath))
@@ -86,14 +91,11 @@ bool CsharpParser::parseProjectBuildPath(
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
 
-  for (auto p : paths_)
+  for (const auto& inputPath : paths_)
   {
-    if (fs::is_directory(p))
-    {
-      command.append(" '");
-      command.append(p);
-      command.append("' ");
-    }
+    command.append(" '");
+    command.append(inputPath);
+    command.append("'");
   }
 
   LOG(debug) << "CSharpParser command: " << command;
@@ -113,7 +115,7 @@ bool CsharpParser::parseProjectBuildPath(
   
   while(std::getline(log_str, line, '\n'))
   {
-    if (line[0] == '+' || line[0] == '-')
+    if (!line.empty() && (line[0] == '+' || line[0] == '-'))
     {
       addSource(line.substr(1), line[0] == '-');
       if (line[0] == '+')
@@ -124,6 +126,10 @@ bool CsharpParser::parseProjectBuildPath(
       {
         countPart++;
       }
+    }
+    else if (!line.empty())
+    {
+      LOG(debug) << "[CSharpParser] " << line;
     }
   }
 
