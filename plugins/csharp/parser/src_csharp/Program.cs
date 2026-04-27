@@ -385,7 +385,8 @@ namespace CSharpParser
             if (projectPaths.Count == 0)
             {
                 Console.Error.WriteLine($"No C# projects found in solution: {solutionPath}");
-                return;
+                throw new InvalidOperationException(
+                    $"No C# projects found in solution: {solutionPath}");
             }
 
             await ParseProjectsByPathAsync(projectPaths, csharpConnectionString, threadCount);
@@ -457,7 +458,7 @@ namespace CSharpParser
                 try
                 {
                     Console.WriteLine($"Fallback loading project: {projectPath}");
-                    var workspace = CreateMsBuildWorkspace();
+                    using var workspace = CreateMsBuildWorkspace();
                     var project = await workspace.OpenProjectAsync(projectPath);
                     await ParseProjectAsync(
                         project,
@@ -518,7 +519,7 @@ namespace CSharpParser
         private static async Task<Solution> LoadSolutionAsync(string solutionPath)
         {
             Console.WriteLine($"Loading solution: {solutionPath}");
-            var workspace = CreateMsBuildWorkspace();
+            using var workspace = CreateMsBuildWorkspace();
             
             var solution = await workspace.OpenSolutionAsync(solutionPath);
             Console.WriteLine($"Solution loaded: {solution.FilePath}");
@@ -529,7 +530,7 @@ namespace CSharpParser
         private static async Task<Solution> LoadProjectAsync(string projectPath)
         {
             Console.WriteLine($"Loading project: {projectPath}");
-            var workspace = CreateMsBuildWorkspace();
+            using var workspace = CreateMsBuildWorkspace();
             
             var project = await workspace.OpenProjectAsync(projectPath);
             Console.WriteLine($"Project loaded: {project.Name}");
