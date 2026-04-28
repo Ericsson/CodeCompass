@@ -15,32 +15,19 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using language;
 using cc.service.csharp;
-using CSharpParser.model;
+// using CSharpParser.model;
+using DbModel;
 
 public class CSharpQueryHandler : CsharpService.IAsync
 {        
     private CsharpDbContext dbContext;
-    public CSharpQueryHandler(string connenctionString)
+    public CSharpQueryHandler(string connectionString)
     {
-        // Converting the connectionstring into Entity Framework style connection string
-        connenctionString = connenctionString.Substring(connenctionString.IndexOf(':')+1);
-        connenctionString = connenctionString.Replace("user", "username");
-        string[] properties = connenctionString.Split(';');
-        string csharpConnenctionString = "";
-        for (int i = 0; i < properties.Length; ++i)
-        {
-            csharpConnenctionString += properties[i].Substring(0,1).ToUpper()
-                + properties[i].Substring(1);
-            if (i < properties.Length-1)
-            {
-                csharpConnenctionString += ";";
-            }
-        }
+        string dbSystem = connectionString.Substring(0, connectionString.IndexOf(':')).ToLower();
+        //Converting the connectionstring into entiy framwork style connectionstring
+        string csharpConnectionString = transformConnectionString(dbSystem, connectionString);
 
-        var options = new DbContextOptionsBuilder<CsharpDbContext>()
-                    .UseNpgsql(csharpConnenctionString)
-                    .Options;
-        dbContext = new CsharpDbContext(options);
+        dbContext = new CsharpDbContext(dbSystem, csharpConnectionString);
     }
 
     private language.AstNodeInfo createAstNodeInfo(CsharpAstNode node)
@@ -104,8 +91,9 @@ public class CSharpQueryHandler : CsharpService.IAsync
         CsharpAstNode ret;
         try
         {
+            ulong NodeId = ulong.Parse(astNodeId);
             ret = dbContext.CsharpAstNodes
-                .Where(a => a.Id.ToString()==astNodeId)
+                .Where(a => a.Id==NodeId)
                 .First();
         }
         catch (InvalidOperationException e)
@@ -680,5 +668,33 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(new List<language.SyntaxHighlight>());
     }
 
+    private static string transformConnectionString(string dbSystem, string connectionString)
+    {
+      string csharpConnectionString = "";
+      if (dbSystem == "pgsql")
+      {
+        connectionString = connectionString.Substring(connectionString.IndexOf(':') + 1);
+        connectionString = connectionString.Replace("user", "username");
+        string[] properties = connectionString.Split(';');
+
+        for (int i = 0; i < properties.Length; ++i)
+        {
+          csharpConnectionString += properties[i].Substring(0, 1).ToUpper()
+              + properties[i].Substring(1);
+          if (i < properties.Length - 1)
+          {
+            csharpConnectionString += ";";
+          }
+        }
+      }
+      else
+      {
+        // "sqlite:database=" needs to be removed from the connection string.
+        connectionString = connectionString.Substring(connectionString.IndexOf(':') + 10);
+        csharpConnectionString = "Data Source=" + connectionString;
+      }
+
+      return csharpConnectionString;
+    }
 
 }

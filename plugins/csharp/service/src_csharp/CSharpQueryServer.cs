@@ -19,7 +19,8 @@ using Thrift.Processor;
 using System.Diagnostics;
 using language;
 using cc.service.csharp;
-using CSharpParser.model;
+// using CSharpParser.model;
+using DbModel;
 
 namespace Server
 {

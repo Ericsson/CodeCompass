@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CSharpParser.model
+namespace DbModel
 {
     //[Table("csharp_enum_members")]
-    class CsharpEnumMember : CsharpEntity
+    public class CsharpEnumMember : CsharpEntity
     {
         public int EqualsValue { get; set; }
+        public long? CsharpEnumId { get; set; }
     }
 }

@@ -1,22 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CSharpParser.model
+namespace DbModel
 {
-    enum ClassTypeEnum
+    public enum ClassTypeEnum
     {
         Class,
         Interface,
         Record
     }
-    class CsharpClass : CsharpEntity
+    public class CsharpClass : CsharpEntity
     {
         public ClassTypeEnum ClassType { get; set; }
-        public CsharpNamespace CsharpNamespace { get; set; }
+        public CsharpNamespace? CsharpNamespace { get; set; }
     }
     //[Table("csharp_structs")]
-    class CsharpStruct : CsharpEntity
+    public class CsharpStruct : CsharpEntity
     {
-        public CsharpNamespace CsharpNamespace { get; set; }
+        public CsharpNamespace? CsharpNamespace { get; set; }
     }
 }
