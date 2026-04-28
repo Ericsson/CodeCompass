@@ -46,8 +46,6 @@ bool CsharpParser::parse()
   
     if (acceptProjectBuildPath(buildPath))
     {
-      LOG(debug) << "C# parser parse path: " << paths[0];
-      LOG(debug) << "Parsed csharp project build path: " << buildPath;
       success = success && parseProjectBuildPath(paths, buildPath);
     }
     else
@@ -108,7 +106,6 @@ bool CsharpParser::parseProjectBuildPath(
 
   std::string line;
   std::stringstream log_str(log.get());
-  //LOG(warning) << log_str.str();
   int countFull = 0, countPart = 0;
   
   while(std::getline(log_str, line, '\n'))

@@ -82,7 +82,7 @@ namespace CSharpParser
             }*/
 
             //Converting the connectionstring into entiy framwork style connectionstring
-            string csharpConnectionString = transformConnectionString();
+            string csharpConnectionString = ProgramHelper.transformConnectionString(_connectionString);
 
             var options = new DbContextOptionsBuilder<CsharpDbContext>()
                             .UseNpgsql(csharpConnectionString)
@@ -95,17 +95,17 @@ namespace CSharpParser
             foreach (var p in _rootDir)
             {
                 Console.WriteLine(p);
-                allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
+                allFiles.AddRange(ProgramHelper.GetSourceFilesFromDir(p, ".cs"));
             }
 
             foreach (var f in allFiles)
             {
                 WriteLine(f);
             }
-            IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
+            IEnumerable<string> assemblies = ProgramHelper.GetSourceFilesFromDir(_buildDir, ".dll");
             IEnumerable<string> assemblies_base = assemblies;
             if (args.Length == 5)
-                assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll");
+                assemblies_base = ProgramHelper.GetSourceFilesFromDir(_buildDirBase, ".dll");
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -197,6 +197,11 @@ namespace CSharpParser
             return await ParsingTask;
         }
 
+        
+    }
+
+    class ProgramHelper
+    {
         public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)
         {
             IEnumerable<string> allFiles = new string[]{};
@@ -268,7 +273,7 @@ namespace CSharpParser
             return allFiles;
         }
 
-        private static string transformConnectionString()
+        public static string transformConnectionString(string _connectionString)
         {
             _connectionString = _connectionString.Substring(_connectionString.IndexOf(':')+1);
             _connectionString = _connectionString.Replace("user", "username");
