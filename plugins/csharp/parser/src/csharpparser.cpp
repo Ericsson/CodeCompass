@@ -18,6 +18,9 @@
 
 #include <memory>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 namespace cc
 {
 namespace parser
@@ -104,31 +107,34 @@ bool CsharpParser::parseProjectBuildPath(
 
   while(std::getline(log_str, line, '\n'))
   {
-    if (line[0] == '+' || line[0] == '-')
-    {
-      std::string content = line.substr(1); // We cut off the +/- sign
-      
-      // Find the line (|) that separates the file and the DLL
-      size_t separatorPos = content.find('|'); 
-      
-      if (separatorPos != std::string::npos) {
-          // If it exists, we split the text along |
-          std::string filepath = content.substr(0, separatorPos);
-          std::string targetDll = content.substr(separatorPos + 1);
-          
-          // We clean up the spaces from the beginning
-          filepath.erase(0, filepath.find_first_not_of(" \t"));
-          
-          addSource(filepath, targetDll, line[0] == '-'); 
-      }
-      else {
-          // Fallback if for some reason the DLL name was not sent by C#
-          content.erase(0, content.find_first_not_of(" \t"));
-          addSource(content, "Unknown.dll", line[0] == '-');
-      }
+    // Skip empty lines or non-JSON lines (like debug info "ParallelRun ...")
+    if (line.empty() || line[0] != '{') continue;
 
-      if (line[0] == '+') { countFull++; }
+    try 
+    {
+      std::stringstream jsonStream(line);
+      boost::property_tree::ptree pt;
+      boost::property_tree::read_json(jsonStream, pt);
+
+      bool fullyParsed = pt.get<bool>("fullyParsed");
+      std::string filepath = pt.get<std::string>("filePath");
+      std::string targetDll = pt.get<std::string>("targetDll");
+
+      // Check if it's an error based on 'fullyParsed'
+      bool isError = !fullyParsed;
+
+      addSource(filepath, targetDll, isError);
+
+      if (fullyParsed) { countFull++; }
       else { countPart++; }
+    } 
+    catch (const boost::property_tree::json_parser::json_parser_error& e) 
+    {
+      LOG(warning) << "Failed to parse JSON output from C# parser: " << e.what() << " | Line: " << line;
+    }
+    catch (const boost::property_tree::ptree_error& e)
+    {
+       LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << line;
     }
   }
 
@@ -148,7 +154,7 @@ void CsharpParser::addSource(const std::string& filepath_, const std::string& ta
   util::OdbTransaction transaction(_ctx.db);
 
   model::BuildActionPtr buildAction(new model::BuildAction);
-  buildAction->command = "dotnet build " + targetDll_;  //buildAction->command = " ";
+  buildAction->command = "dotnet build ";
   buildAction->type = model::BuildAction::Compile;
 
   model::BuildSource buildSource;
@@ -159,21 +165,12 @@ void CsharpParser::addSource(const std::string& filepath_, const std::string& ta
   buildSource.file->type = "CS";
   buildSource.action = buildAction;
 
-
-  model::BuildTarget buildTarget;
-  buildTarget.action = buildAction;
-
-  buildTarget.file = _ctx.srcMgr.getFile(targetDll_); 
-  buildTarget.file->type = "CS_DLL";
-
   _ctx.srcMgr.updateFile(*buildSource.file);
-  _ctx.srcMgr.updateFile(*buildTarget.file);
   _ctx.srcMgr.persistFiles();
 
   transaction([&, this] { 
     _ctx.db->persist(buildAction);
     _ctx.db->persist(buildSource);
-    _ctx.db->persist(buildTarget); //new!!
   });
 }
 

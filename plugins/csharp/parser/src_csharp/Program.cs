@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CSharpParser.model;
 using System.Xml.Linq;
+using System.Text.Json;
 
 namespace CSharpParser
 {
@@ -58,39 +59,7 @@ namespace CSharpParser
 
             foreach (var p in _rootDir)
             {
-                // We find all .csproj files
-                var csprojFiles = Directory.GetFiles(p, "*.csproj", SearchOption.AllDirectories);
-                foreach (var csproj in csprojFiles)
-                {
-                    string projectDir = Path.GetDirectoryName(csproj);
-                    // Default DLL name based on project file name
-                    string targetDll = Path.GetFileNameWithoutExtension(csproj) + ".dll";
-
-                    // we try to read the real AssemblyName from the XML
-                    try {
-                        XDocument doc = XDocument.Load(csproj);
-                        var assemblyNameNode = doc.Descendants("AssemblyName").FirstOrDefault();
-                        if (assemblyNameNode != null && !string.IsNullOrWhiteSpace(assemblyNameNode.Value))
-                        {
-                            targetDll = assemblyNameNode.Value + ".dll";
-                        }
-                    } catch { /* If we cannot read the XML, the default name will remain.*/ }
-
-                    // search for C# files belonging to the project (filtering out the garbage)
-                    var csFiles = Directory.GetFiles(projectDir, "*.cs", SearchOption.AllDirectories)
-                        .Where(f => !f.Contains("/obj/") && !f.Contains("\\obj\\") && 
-                                    !f.Contains("/bin/") && !f.Contains("\\bin\\"));
-
-                    foreach (var cs in csFiles)
-                    {
-                        // if a file is not already in it (to avoid duplication)
-                        if (!fileToTargetDll.ContainsKey(cs))
-                        {
-                            fileToTargetDll[cs] = targetDll;
-                            allFiles.Add(cs);
-                        }
-                    }
-                }
+                allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
             }
             allFiles = allFiles.Distinct().ToList();
 
@@ -201,7 +170,15 @@ namespace CSharpParser
 
                 // Find the DLL name and append a | to the filename.
                 string target = fileToTargetDll.ContainsKey(tree.FilePath) ? fileToTargetDll[tree.FilePath] : "Unknown.dll";
-                WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath + "|" + target);
+                
+                var resultData = new 
+                {
+                    fullyParsed = visitor.FullyParsed,
+                    filePath = tree.FilePath,
+                    targetDll = target
+                };
+
+                WriteLine(JsonSerializer.Serialize(resultData));
 
                 return index;
             });
