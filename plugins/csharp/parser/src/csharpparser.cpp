@@ -18,6 +18,9 @@
 
 #include <memory>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 namespace cc
 {
 namespace parser
@@ -27,11 +30,7 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
 {
   _threadNum = _ctx.options["jobs"].as<int>();
 }
-/*
-bool CsharpParser::acceptProjectBuildPath(const std::vector<std::string>& path_)
-{
-  return path_.size() >= 2 && fs::is_directory(path_[0]) && fs::is_directory(path_[1]);
-}*/
+
 bool CsharpParser::acceptProjectBuildPath(const std::string& buildPath_)
 {
   return fs::is_directory(buildPath_);
@@ -42,17 +41,15 @@ bool CsharpParser::parse()
   bool success = true;
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
-  std::string buildPath = _ctx.options["build-dir"].as<std::string>();
   
-    if (acceptProjectBuildPath(buildPath))
+    if (!paths.empty())     
     {
-      LOG(debug) << "C# parser parse path: " << paths[0];
-      LOG(debug) << "Parsed csharp project build path: " << buildPath;
-      success = success && parseProjectBuildPath(paths, buildPath);
+      LOG(debug) << "C# parser parse path: " << paths.size(); 
+      success = success && parseProjectBuildPath(paths);
     }
     else
     {
-      LOG(error) << "Build path must be a directory!";
+      LOG(error) << "No input directories provided for C# parser!";
       success = false;
     }
   
@@ -60,8 +57,8 @@ bool CsharpParser::parse()
 }
 
 bool CsharpParser::parseProjectBuildPath(
-  const std::vector<std::string>& paths_,
-  const std::string& buildPath_)
+  const std::vector<std::string>& paths_ //,
+  ) 
 {
   namespace ch = std::chrono;
   std::future<std::string> log;
@@ -79,8 +76,6 @@ bool CsharpParser::parseProjectBuildPath(
   std::string command("./CSharpParser ");
   command.append("'");
   command.append(_ctx.options["database"].as<std::string>());
-  command.append("' '");
-  command.append(buildPath_);
   command.append("' '");
   command.append(csharp_path.string());
   command.append("' ");
@@ -108,22 +103,38 @@ bool CsharpParser::parseProjectBuildPath(
 
   std::string line;
   std::stringstream log_str(log.get());
-  //LOG(warning) << log_str.str();
   int countFull = 0, countPart = 0;
-  
+
   while(std::getline(log_str, line, '\n'))
   {
-    if (line[0] == '+' || line[0] == '-')
+    // Skip empty lines or non-JSON lines (like debug info "ParallelRun ...")
+    if (line.empty() || line[0] != '{') continue;
+
+    try 
     {
-      addSource(line.substr(1), line[0] == '-');
-      if (line[0] == '+')
-      {
-        countFull++;
-      }
-      else
-      {
-        countPart++;
-      }
+      std::stringstream jsonStream(line);
+      boost::property_tree::ptree pt;
+      boost::property_tree::read_json(jsonStream, pt);
+
+      bool fullyParsed = pt.get<bool>("fullyParsed");
+      std::string filepath = pt.get<std::string>("filePath");
+      std::string targetDll = pt.get<std::string>("targetDll");
+
+      // Check if it's an error based on 'fullyParsed'
+      bool isError = !fullyParsed;
+
+      addSource(filepath, targetDll, isError);
+
+      if (fullyParsed) { countFull++; }
+      else { countPart++; }
+    } 
+    catch (const boost::property_tree::json_parser::json_parser_error& e) 
+    {
+      LOG(warning) << "Failed to parse JSON output from C# parser: " << e.what() << " | Line: " << line;
+    }
+    catch (const boost::property_tree::ptree_error& e)
+    {
+       LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << line;
     }
   }
 
@@ -138,12 +149,12 @@ bool CsharpParser::parseProjectBuildPath(
   return result == 0;
 }
 
-void CsharpParser::addSource(const std::string& filepath_, bool error_)
+void CsharpParser::addSource(const std::string& filepath_, const std::string& targetDll_, bool error_)
 {
   util::OdbTransaction transaction(_ctx.db);
 
   model::BuildActionPtr buildAction(new model::BuildAction);
-  buildAction->command = " ";
+  buildAction->command = "dotnet build ";
   buildAction->type = model::BuildAction::Compile;
 
   model::BuildSource buildSource;
@@ -175,10 +186,6 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("C# Plugin");
-
-    description.add_options()
-        ("build-dir,b", po::value<std::string>()->default_value("Build directory"),
-          "The build directory of the parsed project.");
 
     return description;
   }
