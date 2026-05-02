@@ -1,0 +1,69 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "db_model", "db_model", "{2E2F0E00-502D-A052-0019-82CFB9270E3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "migrations", "migrations", "{D4C4D1C2-DE9C-AF20-17FD-0A3EB2BFD436}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "service", "service", "{226567F5-DD15-7888-5BF1-C4407778305A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "parser", "parser", "{BC34E35A-B109-A120-90EC-15530B70B9CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbModel", "db_model\DbModel.csproj", "{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqliteMigrations", "migrations\sqliteMigrations\SqliteMigrations.csproj", "{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PgsqlMigrations", "migrations\pgsqlMigrations\PgsqlMigrations.csproj", "{20C587AF-64DB-68B4-1F92-61681232D74B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src_csharp", "src_csharp", "{9BD6E17B-7A65-7B8B-5096-A508D0BE5AAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "csharpservice", "service\src_csharp\csharpservice.csproj", "{1AF03105-21A5-3508-A40F-365ADA9DFF92}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src_csharp", "src_csharp", "{37C60329-C8F7-3ACB-DE03-F714C9EE58C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpParser", "parser\src_csharp\CSharpParser.csproj", "{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20C587AF-64DB-68B4-1F92-61681232D74B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20C587AF-64DB-68B4-1F92-61681232D74B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20C587AF-64DB-68B4-1F92-61681232D74B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20C587AF-64DB-68B4-1F92-61681232D74B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AF03105-21A5-3508-A40F-365ADA9DFF92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AF03105-21A5-3508-A40F-365ADA9DFF92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AF03105-21A5-3508-A40F-365ADA9DFF92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AF03105-21A5-3508-A40F-365ADA9DFF92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BADE2559-4F0F-21F6-067B-8EDF7DE9DFC1} = {2E2F0E00-502D-A052-0019-82CFB9270E3D}
+		{2C9A9B86-A50E-C025-B4E0-195D2ACD4B54} = {D4C4D1C2-DE9C-AF20-17FD-0A3EB2BFD436}
+		{20C587AF-64DB-68B4-1F92-61681232D74B} = {D4C4D1C2-DE9C-AF20-17FD-0A3EB2BFD436}
+		{9BD6E17B-7A65-7B8B-5096-A508D0BE5AAA} = {226567F5-DD15-7888-5BF1-C4407778305A}
+		{1AF03105-21A5-3508-A40F-365ADA9DFF92} = {9BD6E17B-7A65-7B8B-5096-A508D0BE5AAA}
+		{37C60329-C8F7-3ACB-DE03-F714C9EE58C5} = {BC34E35A-B109-A120-90EC-15530B70B9CB}
+		{568E5C5A-2A3E-AEA2-1355-EC26E382DA2B} = {37C60329-C8F7-3ACB-DE03-F714C9EE58C5}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {17FCE6F1-24FA-4D94-8799-D869033FFB44}
+	EndGlobalSection
+EndGlobal

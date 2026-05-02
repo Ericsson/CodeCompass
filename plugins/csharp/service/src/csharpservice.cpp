@@ -3,6 +3,7 @@
 #include <util/util.h>
 #include <model/file.h>
 #include <model/file-odb.hxx>
+#include <boost/asio.hpp>
 
 namespace cc
 {
@@ -15,7 +16,7 @@ namespace fs = boost::filesystem;
 namespace bp = boost::process;
 namespace pt = boost::property_tree;
 
-int CsharpServiceHandler::_thriftServerPort = 9091;
+int CsharpServiceHandler::_thriftServerPort = getThriftServerPort();
 
 CsharpServiceHandler::CsharpServiceHandler(
   std::shared_ptr<odb::database> db_,
@@ -46,6 +47,26 @@ CsharpServiceHandler::CsharpServiceHandler(
   }
 }
 
+int CsharpServiceHandler::getThriftServerPort()
+{
+  boost::asio::io_service service;
+  boost::system::error_code ec;
+
+  for (int port = 9091; port <= 65535; ++port){
+    boost::asio::ip::tcp::acceptor acceptor(service);
+    boost::asio::ip::tcp::endpoint endPoint(boost::asio::ip::tcp::v4(), port);
+    acceptor.open(endPoint.protocol(), ec);  
+    acceptor.bind(endPoint, ec);
+    
+    if (!ec) {
+      acceptor.close(ec);
+      return port; 
+    }
+  }
+
+  return 9091;
+}
+
 std::string CsharpServiceHandler::getDbString()
 {
   pt::ptree _pt;
@@ -56,7 +77,6 @@ std::string CsharpServiceHandler::getDbString()
 
 void CsharpServiceHandler::getFileTypes(std::vector<std::string>& return_)
 {
-  //LOG(info) << "CsharpServiceHandler getFileTypes";
   return_.push_back("CS");
   return_.push_back("Dir");
 }
@@ -73,7 +93,6 @@ void CsharpServiceHandler::getAstNodeInfo(
   std::stringstream ss;
   ss << file;
   return_.range.file = ss.str();
-  //LOG(info) << "csharpQuery.getAstNodeInfo: file = " << return_.range.file;
 }
 
 void CsharpServiceHandler::getAstNodeInfoByPosition(
@@ -91,7 +110,6 @@ void CsharpServiceHandler::getSourceText(
         std::string& return_,
         const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getSourceText";
   core::FileRange fileRange;
 
   _csharpQueryHandler.getFileRange(fileRange, astNodeId_);
@@ -117,7 +135,6 @@ void CsharpServiceHandler::getProperties(
         std::map<std::string, std::string>& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "getProperties";
   _csharpQueryHandler.getProperties(return_, astNodeId_);
 }
 
@@ -125,7 +142,6 @@ void CsharpServiceHandler::getDocumentation(
         std::string& return_,
         const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getDocumentation";
   _csharpQueryHandler.getDocumentation(return_, astNodeId_);
 }
 
@@ -133,7 +149,7 @@ void CsharpServiceHandler::getDiagramTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::AstNodeId& astNodeId_)
 {
-  LOG(info) << "getDiagramTypes";
+  //TODO
   //csharpQueryHandler.getDiagramTypes(return_, astNodeId_);
 }
 
@@ -142,7 +158,7 @@ void CsharpServiceHandler::getDiagram(
         const core::AstNodeId& astNodeId_,
         const std::int32_t diagramId_)
 {
-  LOG(info) << "getDiagram";
+  //TODO
   //csharpQueryHandler.getDiagram(return_, astNodeId_, diagramId_);
 }
 
@@ -150,14 +166,14 @@ void CsharpServiceHandler::getDiagramLegend(
         std::string& return_,
         const std::int32_t diagramId_)
 {
-  LOG(info) << "getDiagramLegend";
+  //TODO
 }
 
 void CsharpServiceHandler::getFileDiagramTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::FileId& fileId_)
 {
-  LOG(info) << "getFileDiagramTypes";
+  //TODO
 }
 
 void CsharpServiceHandler::getFileDiagram(
@@ -165,21 +181,20 @@ void CsharpServiceHandler::getFileDiagram(
         const core::FileId& fileId_,
         const int32_t diagramId_)
 {
-  LOG(info) << "getFileDiagram";
+  //TODO
 }
 
 void CsharpServiceHandler::getFileDiagramLegend(
         std::string& return_,
         const std::int32_t diagramId_)
 {
-  LOG(info) << "getFileDiagramLegend";
+  //TODO
 }
 
 void CsharpServiceHandler::getReferenceTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::AstNodeId& astNodeId_)
 {
-  //LOG(info) << "getReferenceTypes";
   _csharpQueryHandler.getReferenceTypes(return_, astNodeId_);
 }
 
@@ -187,7 +202,6 @@ std::int32_t CsharpServiceHandler::getReferenceCount(
         const core::AstNodeId& astNodeId_,
         const std::int32_t referenceId_)
 {
-  //LOG(info) << "getReferenceCount";
   return _csharpQueryHandler.getReferenceCount(astNodeId_, referenceId_);
 }
 
@@ -197,7 +211,6 @@ void CsharpServiceHandler::getReferences(
         const std::int32_t referenceId_,
         const std::vector<std::string>& tags_)
 {
-  //LOG(info) << "getReferences";
   _csharpQueryHandler.getReferences(return_, astNodeId_, referenceId_, tags_);
   std::vector<AstNodeInfo> ret;
   for (AstNodeInfo nodeinfo : return_)
@@ -222,7 +235,6 @@ void CsharpServiceHandler::getReferencesInFile(
         const core::FileId& /* fileId_ */,
         const std::vector<std::string>& /* tags_ */)
 {
-  //LOG(info) << "getReferencesInFile";
   // TODO
 }
 
@@ -233,7 +245,6 @@ void CsharpServiceHandler::getReferencesPage(
         const std::int32_t /* pageSize_ */,
         const std::int32_t /* pageNo_ */)
 {
-  //LOG(info) << "getReferencesPage";
   // TODO
 }
 
@@ -241,7 +252,6 @@ void CsharpServiceHandler::getFileReferenceTypes(
         std::map<std::string, std::int32_t>& return_,
         const core::FileId& /* fileId_*/)
 {
-  //LOG(info) << "getFileReferenceTypes";
   _csharpQueryHandler.getFileReferenceTypes(return_);
 }
 
@@ -249,7 +259,6 @@ std::int32_t CsharpServiceHandler::getFileReferenceCount(
         const core::FileId& fileId_,
         const std::int32_t referenceId_)
 {
-  //LOG(info) << "getFileReferenceCount";
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
@@ -262,7 +271,6 @@ void CsharpServiceHandler::getFileReferences(
         const core::FileId& fileId_,
         const std::int32_t referenceId_)
 {
-  //LOG(info) << "getFileReferences";
   model::FilePtr file = _transaction([&, this](){
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
@@ -274,7 +282,7 @@ void CsharpServiceHandler::getSyntaxHighlight(
         std::vector<SyntaxHighlight>& return_,
         const core::FileRange& range_)
 {
-  LOG(info) << "getSyntaxHighlight";
+  //TODO
   /*
   std::vector<std::string> content;
   _transaction([&, this]() {

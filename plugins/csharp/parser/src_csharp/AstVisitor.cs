@@ -14,6 +14,7 @@ namespace CSharpParser
         private readonly CsharpDbContext DbContext;
         private readonly SemanticModel Model;
         private readonly SyntaxTree Tree;
+        private readonly AstVisitorHelper Helper;
 
         public bool FullyParsed = true;
 
@@ -21,55 +22,9 @@ namespace CSharpParser
         {
             this.DbContext = context;
             this.Model = model;
-            this.Tree = tree;            
-        }    
-
-        private ulong createIdentifier(CsharpAstNode astNode){
-            string[] properties = 
-            {
-                astNode.AstValue,":",
-                astNode.AstType.ToString(),":",
-                astNode.EntityHash.ToString(),":",
-                astNode.RawKind.ToString(),":",
-                astNode.Path,":",
-                astNode.Location_range_start_line.ToString(),":",
-                astNode.Location_range_start_column.ToString(),":",
-                astNode.Location_range_end_line.ToString(),":",
-                astNode.Location_range_end_column.ToString()
-            };
-
-            string res = string.Concat(properties);
-            
-            //WriteLine(res);
-            return fnvHash(res);
+            this.Tree = tree;  
+            this.Helper = new AstVisitorHelper();          
         }
-
-        private ulong fnvHash(string data_)
-        {
-            ulong hash = 14695981039346656037;
-
-            int len = data_.Length;
-            for (int i = 0; i < len; ++i)
-            {
-                hash ^= data_[i];
-                hash *= 1099511628211;
-            }
-
-            return hash;
-        }     
-
-        private ulong getAstNodeId(SyntaxNode node){
-            CsharpAstNode astNode = new CsharpAstNode
-            {
-                AstValue = node.ToString(),
-                RawKind = node.Kind(),
-                EntityHash = node.GetHashCode(),
-                AstType = AstTypeEnum.Declaration
-            };
-            astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
-            var ret = createIdentifier(astNode);
-            return ret;
-        }  
 
         private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type, AstTypeEnum astType)
         {
@@ -92,7 +47,7 @@ namespace CSharpParser
                 Accessibility = acc
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
-            astNode.Id = createIdentifier(astNode);          
+            astNode.Id = Helper.createIdentifier(astNode);          
 
             if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
             {
@@ -933,7 +888,7 @@ namespace CSharpParser
                                 FullyParsed = false;
                             }
                             var info = Model.GetTypeInfo(node).ConvertedType;
-                            var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
+                            var declaratorNodeId = Helper.getAstNodeId(declaration.GetSyntax());
                             var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
                             CsharpEtcEntity invoc = new CsharpEtcEntity
                             {
@@ -981,7 +936,7 @@ namespace CSharpParser
                         EtcEntityTypeEnum.ForeachExpr : EtcEntityTypeEnum.Invocation;
                     if (node.Parent.Parent.Kind() != SyntaxKind.InvocationExpression)
                     {
-                        var declaratorNodeId = getAstNodeId(declaration.GetSyntax());
+                        var declaratorNodeId = Helper.getAstNodeId(declaration.GetSyntax());
                         var astNode = AstNode(node, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
                         CsharpEtcEntity expr = new CsharpEtcEntity
                         {

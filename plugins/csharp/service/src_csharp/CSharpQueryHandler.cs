@@ -13,13 +13,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using language;
+using CodeCompass.Service.Language;
 using cc.service.csharp;
 using CSharpParser.model;
 
 public class CSharpQueryHandler : CsharpService.IAsync
 {        
     private CsharpDbContext dbContext;
+
+    private QueryHelper queryHelper = new QueryHelper();
     public CSharpQueryHandler(string connenctionString)
     {
         // Converting the connectionstring into Entity Framework style connection string
@@ -41,62 +43,6 @@ public class CSharpQueryHandler : CsharpService.IAsync
                     .UseNpgsql(csharpConnenctionString)
                     .Options;
         dbContext = new CsharpDbContext(options);
-    }
-
-    private language.AstNodeInfo createAstNodeInfo(CsharpAstNode node)
-    {
-        language.AstNodeInfo ret = new language.AstNodeInfo();
-        ret.Id = node.Id.ToString();
-        ret.AstNodeValue = node.AstValue;
-        ret.AstNodeType = node.RawKind.ToString();
-        ret.SymbolType = node.AstSymbolType.ToString();
-        ret.Range = getFileRange(node);
-
-        List<string> tags = new List<string>();
-        tags.Add(node.Accessibility.ToString());
-
-        ret.Tags = tags;
-
-        return ret;
-    }
-
-    private List<language.AstNodeInfo> createAstNodeInfoList(List<CsharpAstNode> nodeList)
-    {
-        var ret = new List<language.AstNodeInfo>();
-        foreach (var node in nodeList)
-        {
-            var astNodeInfo = createAstNodeInfo(node);
-            ret.Add(astNodeInfo);
-        }
-
-        return ret;
-    }
-
-    private FileRange getFileRange(CsharpAstNode node)
-    {
-        FileRange fileRange = new FileRange();
-        Position startPosition = new Position
-        {
-            Line = (int)node.Location_range_start_line,
-            Column = (int)node.Location_range_start_column
-        };
-
-        Position endPosition = new Position
-        {
-            Line = (int)node.Location_range_end_line,
-            Column = (int)node.Location_range_end_column
-        };
-
-        Range range = new Range
-        {
-            Startpos = startPosition,
-            Endpos = endPosition
-        };
-
-        fileRange.File = node.Path;
-        fileRange.Range = range;
-
-        return fileRange;
     }
 
     private CsharpAstNode queryCsharpAstNode(string astNodeId)
@@ -285,14 +231,14 @@ public class CSharpQueryHandler : CsharpService.IAsync
     }
     
 
-    public async Task<language.AstNodeInfo> getAstNodeInfo(string astNodeId, 
+    public async Task<AstNodeInfo> getAstNodeInfo(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getAstNodeInfoAsync");
-        return await Task.FromResult(new language.AstNodeInfo());
+        return await Task.FromResult(new AstNodeInfo());
     }
 
-    public async Task<language.AstNodeInfo> getAstNodeInfoByPosition(string path_, 
+    public async Task<AstNodeInfo> getAstNodeInfoByPosition(string path_, 
         Position pos_,
         CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -308,7 +254,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         if (nodes.Count() == 0)
         {
             System.Console.WriteLine("[CSharpService error] There are no AstNode at this position!");
-            return await Task.FromResult(new language.AstNodeInfo());
+            return await Task.FromResult(new AstNodeInfo());
         } 
 
         var minNode = nodes.FirstOrDefault();
@@ -318,7 +264,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 minNode = node;            
         }
 
-        return await Task.FromResult(createAstNodeInfo(minNode));
+        return await Task.FromResult(queryHelper.createAstNodeInfo(minNode));
     }
 
     public async Task<Dictionary<string, string>> getProperties(string astNodeIds, 
@@ -422,7 +368,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<FileRange> getFileRange(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {        
-        return await Task.FromResult(getFileRange(queryCsharpAstNode(astNodeId)));
+        return await Task.FromResult(queryHelper.getFileRange(queryCsharpAstNode(astNodeId)));
     }
 
     public async Task<Dictionary<string, int>> getReferenceTypes(string astNodeId, 
@@ -570,65 +516,65 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(ret);
     }
 
-    public async Task<List<language.AstNodeInfo>> getReferences(string astNodeId, 
+    public async Task<List<AstNodeInfo>> getReferences(string astNodeId, 
         int referenceId, List<string> tags, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         var node = queryCsharpAstNode(astNodeId);        
-        var ret = new List<language.AstNodeInfo>();
+        var ret = new List<AstNodeInfo>();
         switch ((ReferenceType)referenceId)
         {
             case ReferenceType.USAGE:
-                ret = createAstNodeInfoList(queryInvocations(node));
+                ret = queryHelper.createAstNodeInfoList(queryInvocations(node));
                 break;
             case ReferenceType.DEFINITION:
             case ReferenceType.DECLARATION:
-                ret = createAstNodeInfoList(queryDeclarators(node));
+                ret = queryHelper.createAstNodeInfoList(queryDeclarators(node));
                 break;
             case ReferenceType.EVALUATION:
-                ret = createAstNodeInfoList(queryEvals(node));
+                ret = queryHelper.createAstNodeInfoList(queryEvals(node));
                 break;
             case ReferenceType.PARAMETER:
-                ret = createAstNodeInfoList(queryParams(node));
+                ret = queryHelper.createAstNodeInfoList(queryParams(node));
                 break;
             case ReferenceType.LOCAL_VAR:
-                ret = createAstNodeInfoList(queryLocals(node));
+                ret = queryHelper.createAstNodeInfoList(queryLocals(node));
                 break;
             case ReferenceType.DATA_MEMBER:
-                ret = createAstNodeInfoList(queryProperties(node));
+                ret = queryHelper.createAstNodeInfoList(queryProperties(node));
                 break;
             case ReferenceType.THIS_CALLS:
-                ret = createAstNodeInfoList(queryCalls(node));
+                ret = queryHelper.createAstNodeInfoList(queryCalls(node));
                 break;
             case ReferenceType.CALLEE:
-                ret = createAstNodeInfoList(queryCallees(node));
+                ret = queryHelper.createAstNodeInfoList(queryCallees(node));
                 break;
             case ReferenceType.CALLER:
-                ret = createAstNodeInfoList(queryCallers(node));
+                ret = queryHelper.createAstNodeInfoList(queryCallers(node));
                 break;
             case ReferenceType.ENUM_CONSTANTS:
-                ret = createAstNodeInfoList(queryEnumConsts(node));
+                ret = queryHelper.createAstNodeInfoList(queryEnumConsts(node));
                 break;
             case ReferenceType.METHOD:
-                ret = createAstNodeInfoList(queryMethods(node));
+                ret = queryHelper.createAstNodeInfoList(queryMethods(node));
                 break;
             case ReferenceType.CONSTRUCTOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Constructor));
+                ret = queryHelper.createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Constructor));
                 break;
             case ReferenceType.DESTRUCTOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Destuctor));
+                ret = queryHelper.createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Destuctor));
                 break;
             case ReferenceType.OPERATOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Operator));
+                ret = queryHelper.createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Operator));
                 break;
             case ReferenceType.ACCESSOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Accessor));
+                ret = queryHelper.createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Accessor));
                 break;
             case ReferenceType.DELEGATE:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Delegate));
+                ret = queryHelper.createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Delegate));
                 break;
             case ReferenceType.EVENT:
-                ret = createAstNodeInfoList(queryEvents(node));
+                ret = queryHelper.createAstNodeInfoList(queryEvents(node));
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 
@@ -654,11 +600,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(0);
     }
 
-    public async Task<List<language.AstNodeInfo>> getFileReferences(string path, 
+    public async Task<List<AstNodeInfo>> getFileReferences(string path, 
         int referenceId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        return await Task.FromResult(new List<language.AstNodeInfo>());
+        return await Task.FromResult(new List<AstNodeInfo>());
     }
 
     public async Task<Dictionary<string, int>> getDiagramTypes(string astNodeId, 
@@ -673,12 +619,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult("Diagram");
     }
 
-    public async Task<List<language.SyntaxHighlight>> getSyntaxHighlight(FileRange range, 
+    public async Task<List<SyntaxHighlight>> getSyntaxHighlight(FileRange range, 
         List<string> content, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        return await Task.FromResult(new List<language.SyntaxHighlight>());
+        return await Task.FromResult(new List<SyntaxHighlight>());
     }
-
 
 }

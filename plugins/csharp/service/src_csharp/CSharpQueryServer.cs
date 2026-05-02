@@ -17,7 +17,7 @@ using Thrift.Transport;
 using Thrift.Transport.Server;
 using Thrift.Processor;
 using System.Diagnostics;
-using language;
+using CodeCompass.Service.Language;
 using cc.service.csharp;
 using CSharpParser.model;
 
