@@ -408,6 +408,47 @@ TEST_F(PythonParserTest, ImportModule)
   EXPECT_EQ(pyname.is_import, true);
 }
 
+TEST_F(PythonParserTest, BuiltinVariable)
+{
+  model::PYName pyname;
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 2 &&
+        odb::query<model::PYName>::value == "import os"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 6 &&
+        odb::query<model::PYName>::value == "print"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+
+  pyname = queryFile("imports.py",
+        (odb::query<model::PYName>::line_start == 12 &&
+        odb::query<model::PYName>::value == "getpid"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+
+  pyname = queryFile("functions.py",
+        (odb::query<model::PYName>::line_start == 85 &&
+        odb::query<model::PYName>::value == "str"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+
+  pyname = queryFile("functions.py",
+        (odb::query<model::PYName>::line_start == 85 &&
+        odb::query<model::PYName>::value == "List"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+
+  pyname = queryFile("functions.py",
+        (odb::query<model::PYName>::line_start == 98 &&
+        odb::query<model::PYName>::value == "range"));
+
+  EXPECT_EQ(pyname.is_builtin, true);
+}
+
 TEST_F(PythonParserTest, ReferenceID)
 {
   model::PYName pyname;
