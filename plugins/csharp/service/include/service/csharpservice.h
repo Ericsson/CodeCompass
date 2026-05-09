@@ -81,7 +81,7 @@ public:
 
         if (elapsed_time > timeoutInMs_)
         {
-          LOG(debug) << "Connection timeout, could not reach CSharp server on"
+          LOG(error) << "Connection timeout, could not reach CSharp server on"
                      << host << ":" << _thriftServerPort;
           apache::thrift::GlobalOutput.setOutputFunction(
                   apache::thrift::TOutput::errorTimeWrapper);
@@ -332,6 +332,7 @@ private:
 
   cc::service::csharp::CSharpQueryHandler _csharpQueryHandler;
   static int _thriftServerPort;
+  static int getThriftServerPort();
 };
 
 } // language
