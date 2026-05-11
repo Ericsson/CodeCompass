@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace CSharpParser.model
+namespace DbModel
 {
-    enum MethodTypeEnum
+    public enum MethodTypeEnum
     {
         Delegate,
         Accessor,
@@ -12,7 +12,7 @@ namespace CSharpParser.model
         Operator
     }
 
-    class CsharpMethod : CsharpTypedEntity
+    public class CsharpMethod : CsharpTypedEntity
     {
         public MethodTypeEnum MethodType { get; set; }
     }

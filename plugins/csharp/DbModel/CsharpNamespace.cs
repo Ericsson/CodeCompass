@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CSharpParser.model
+namespace DbModel
 {
     //[Table("csharp_namespaces")]
-    class CsharpNamespace : CsharpEntity
+    public class CsharpNamespace : CsharpEntity
     {
 
     }

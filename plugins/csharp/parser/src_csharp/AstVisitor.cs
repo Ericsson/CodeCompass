@@ -4,7 +4,7 @@ using System.Linq;
 using static System.Console;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using CSharpParser.model;
+using DbModel;
 using Microsoft.CodeAnalysis;
 
 namespace CSharpParser
@@ -24,7 +24,7 @@ namespace CSharpParser
             this.Tree = tree;            
         }    
 
-        private ulong createIdentifier(CsharpAstNode astNode){
+        private ulong CreateIdentifier(CsharpAstNode astNode){
             string[] properties = 
             {
                 astNode.AstValue,":",
@@ -67,7 +67,7 @@ namespace CSharpParser
                 AstType = AstTypeEnum.Declaration
             };
             astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
-            var ret = createIdentifier(astNode);
+            var ret = CreateIdentifier(astNode);
             return ret;
         }  
 
@@ -92,7 +92,7 @@ namespace CSharpParser
                 Accessibility = acc
             };
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
-            astNode.Id = createIdentifier(astNode);          
+            astNode.Id = CreateIdentifier(astNode);          
 
             if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
             {

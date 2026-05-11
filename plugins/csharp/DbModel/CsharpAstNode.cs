@@ -2,9 +2,9 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace CSharpParser.model
+namespace DbModel
 {
-    enum AstSymbolTypeEnum
+    public enum AstSymbolTypeEnum
     {
         Variable,
         Method, 
@@ -17,7 +17,7 @@ namespace CSharpParser.model
 
     }
 
-    enum AstTypeEnum
+    public enum AstTypeEnum
     {
         Declaration,
         Definition,
@@ -27,10 +27,10 @@ namespace CSharpParser.model
         Expression
     }
 
-    class CsharpAstNode
+    public class CsharpAstNode
     {
         public ulong Id { get; set; }
-        public string AstValue { get; set; }
+        public string? AstValue { get; set; }
         public AstSymbolTypeEnum AstSymbolType { get; set; }
         public AstTypeEnum AstType { get; set; }
         public Accessibility Accessibility { get; set; }
@@ -38,7 +38,7 @@ namespace CSharpParser.model
         public long Location_range_start_column { get; set; }
         public long Location_range_end_line { get; set; }
         public long Location_range_end_column { get; set; }
-        public string Path { get; set; }
+        public string? Path { get; set; }
         public long EntityHash { get; set; }
         public SyntaxKind RawKind { get; set; } //SyntaxKind Enum
         public void SetLocation(FileLinePositionSpan f)

@@ -15,35 +15,26 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using language;
 using cc.service.csharp;
-using CSharpParser.model;
+using DbModel;
 
 public class CSharpQueryHandler : CsharpService.IAsync
 {        
     private CsharpDbContext dbContext;
-    public CSharpQueryHandler(string connenctionString)
+    public CSharpQueryHandler(string connectionString)
     {
-        // Converting the connectionstring into Entity Framework style connection string
-        connenctionString = connenctionString.Substring(connenctionString.IndexOf(':')+1);
-        connenctionString = connenctionString.Replace("user", "username");
-        string[] properties = connenctionString.Split(';');
-        string csharpConnenctionString = "";
-        for (int i = 0; i < properties.Length; ++i)
+        string dbSystem = connectionString.Substring(0, connectionString.IndexOf(':')).ToLower();
+        //Converting the connectionstring into entiy framwork style connectionstring
+        string csharpConnectionString = TransformConnectionString(dbSystem, connectionString);
+
+        if(csharpConnectionString == null)
         {
-            csharpConnenctionString += properties[i].Substring(0,1).ToUpper()
-                + properties[i].Substring(1);
-            if (i < properties.Length-1)
-            {
-                csharpConnenctionString += ";";
-            }
+            throw new NotSupportedException($"Unsupported database system:{dbSystem}");
         }
 
-        var options = new DbContextOptionsBuilder<CsharpDbContext>()
-                    .UseNpgsql(csharpConnenctionString)
-                    .Options;
-        dbContext = new CsharpDbContext(options);
+        dbContext = new CsharpDbContext(dbSystem, csharpConnectionString);
     }
 
-    private language.AstNodeInfo createAstNodeInfo(CsharpAstNode node)
+    private language.AstNodeInfo CreateAstNodeInfo(CsharpAstNode node)
     {
         language.AstNodeInfo ret = new language.AstNodeInfo();
         ret.Id = node.Id.ToString();
@@ -60,12 +51,12 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<language.AstNodeInfo> createAstNodeInfoList(List<CsharpAstNode> nodeList)
+    private List<language.AstNodeInfo> CreateAstNodeInfoList(List<CsharpAstNode> nodeList)
     {
         var ret = new List<language.AstNodeInfo>();
         foreach (var node in nodeList)
         {
-            var astNodeInfo = createAstNodeInfo(node);
+            var astNodeInfo = CreateAstNodeInfo(node);
             ret.Add(astNodeInfo);
         }
 
@@ -99,13 +90,14 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return fileRange;
     }
 
-    private CsharpAstNode queryCsharpAstNode(string astNodeId)
+    private CsharpAstNode QueryCsharpAstNode(string astNodeId)
     {
         CsharpAstNode ret;
         try
         {
+            ulong nodeId = ulong.Parse(astNodeId);
             ret = dbContext.CsharpAstNodes
-                .Where(a => a.Id.ToString()==astNodeId)
+                .Where(a => a.Id==nodeId)
                 .First();
         }
         catch (InvalidOperationException e)
@@ -114,10 +106,16 @@ public class CSharpQueryHandler : CsharpService.IAsync
             ret = new CsharpAstNode();
             ret.Id = 0;
         }
+        catch (FormatException e)
+        {
+            System.Console.WriteLine($"[CSharpService error] Invalid AstNode ID format:{astNodeId}");
+            ret = new CsharpAstNode();
+            ret.Id = 0;
+        }
         return ret;
     }
 
-    private List<CsharpAstNode> queryInvocations(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryInvocations(CsharpAstNode astNode)
     {
         var ret = dbContext.CsharpEtcEntitys
             .Where(e => e.DeclaratorNodeId == astNode.Id)
@@ -126,7 +124,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryDeclarators(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryDeclarators(CsharpAstNode astNode)
     {
         var ids = dbContext.CsharpEtcEntitys
             .Where(e => e.AstNode.Id == astNode.Id)
@@ -139,11 +137,11 @@ public class CSharpQueryHandler : CsharpService.IAsync
         }
         else
         {
-            return ids.Select(id => queryCsharpAstNode(id)).ToList();
+            return ids.Select(id => QueryCsharpAstNode(id)).ToList();
         }
     }
 
-    private List<CsharpAstNode> queryEvals(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryEvals(CsharpAstNode astNode)
     {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
@@ -157,7 +155,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.ToList();
     }
 
-    private List<CsharpAstNode> queryParams(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryParams(CsharpAstNode astNode)
     {
         var ret = dbContext.CsharpVariables
             .Where(e => e.ParentNode.Id == astNode.Id 
@@ -167,7 +165,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryLocals(CsharpAstNode astNode){        
+    private List<CsharpAstNode> QueryLocals(CsharpAstNode astNode){        
         var ret = dbContext.CsharpVariables
             .Where(e => e.ParentNode.Id == astNode.Id 
                 && e.VariableType == VariableTypeEnum.Variable)
@@ -176,7 +174,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryProperties(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryProperties(CsharpAstNode astNode)
     {
         var ret = dbContext.CsharpVariables
             .Where(e => e.ParentNode.Id == astNode.Id 
@@ -186,7 +184,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryCalls(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryCalls(CsharpAstNode astNode)
     {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
@@ -200,7 +198,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.ToList();
     }
 
-    private List<CsharpAstNode> queryCallees(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryCallees(CsharpAstNode astNode)
     {
         var ret = 
             from invoc in dbContext.CsharpEtcEntitys
@@ -214,7 +212,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.Distinct().ToList();
     }
 
-    private List<CsharpAstNode> queryCallers(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryCallers(CsharpAstNode astNode)
     {
         var invocations = dbContext.CsharpEtcEntitys
             .Where(e => e.DeclaratorNodeId == astNode.Id)
@@ -230,7 +228,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret.Distinct().ToList();
     }
 
-    private List<CsharpAstNode> queryEnumConsts(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryEnumConsts(CsharpAstNode astNode)
     {
         var ret = new List<CsharpAstNode>();
         if (astNode.AstSymbolType == AstSymbolTypeEnum.Enum)
@@ -255,7 +253,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
     
-    private List<CsharpAstNode> queryMethods(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryMethods(CsharpAstNode astNode)
     {
         var ret = dbContext.CsharpMethods
             .Where(e => e.ParentNode.Id == astNode.Id)
@@ -264,7 +262,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryMethodType(CsharpAstNode astNode, MethodTypeEnum type)
+    private List<CsharpAstNode> QueryMethodType(CsharpAstNode astNode, MethodTypeEnum type)
     {
         var ret = dbContext.CsharpMethods
             .Where(e => e.ParentNode.Id == astNode.Id
@@ -274,7 +272,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return ret;
     }
 
-    private List<CsharpAstNode> queryEvents(CsharpAstNode astNode)
+    private List<CsharpAstNode> QueryEvents(CsharpAstNode astNode)
     {
         var ret = dbContext.CsharpEtcEntitys
             .Where(e => e.ParentNode.Id == astNode.Id
@@ -318,14 +316,14 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 minNode = node;            
         }
 
-        return await Task.FromResult(createAstNodeInfo(minNode));
+        return await Task.FromResult(CreateAstNodeInfo(minNode));
     }
 
     public async Task<Dictionary<string, string>> getProperties(string astNodeIds, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
         Dictionary<string, string> ret = new Dictionary<string, string>();
-        CsharpAstNode node = queryCsharpAstNode(astNodeIds);    
+        CsharpAstNode node = QueryCsharpAstNode(astNodeIds);    
         ret.Add("AstNode Type", node.RawKind.ToString());    
         ret.Add("Accessibility", node.Accessibility.ToString());    
         switch(node.AstSymbolType){
@@ -415,20 +413,20 @@ public class CSharpQueryHandler : CsharpService.IAsync
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getDocumentationAsync");
-        CsharpAstNode node = queryCsharpAstNode(astNodeId);
+        CsharpAstNode node = QueryCsharpAstNode(astNodeId);
         return await Task.FromResult("Documentation");
     }
 
     public async Task<FileRange> getFileRange(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {        
-        return await Task.FromResult(getFileRange(queryCsharpAstNode(astNodeId)));
+        return await Task.FromResult(getFileRange(QueryCsharpAstNode(astNodeId)));
     }
 
     public async Task<Dictionary<string, int>> getReferenceTypes(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        var node = queryCsharpAstNode(astNodeId);
+        var node = QueryCsharpAstNode(astNodeId);
         Dictionary<string, int> ret = new Dictionary<string, int>();
         ret.Add("Definition", (int)ReferenceType.DEFINITION);
         ret.Add("Declaration", (int)ReferenceType.DECLARATION);
@@ -506,61 +504,61 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<int> getReferenceCount(string astNodeId, int referenceId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        var node = queryCsharpAstNode(astNodeId);        
+        var node = QueryCsharpAstNode(astNodeId);        
         int ret = 0;
         switch ((ReferenceType)referenceId)
         {
             case ReferenceType.USAGE:
-                ret = queryInvocations(node).Count();
+                ret = QueryInvocations(node).Count();
                 break;
             case ReferenceType.DEFINITION:
             case ReferenceType.DECLARATION:
-                ret = queryDeclarators(node).Count();
+                ret = QueryDeclarators(node).Count();
                 break;
             case ReferenceType.EVALUATION:
-                ret = queryEvals(node).Count();
+                ret = QueryEvals(node).Count();
                 break;
             case ReferenceType.PARAMETER:
-                ret = queryParams(node).Count();
+                ret = QueryParams(node).Count();
                 break;
             case ReferenceType.LOCAL_VAR:
-                ret = queryLocals(node).Count();
+                ret = QueryLocals(node).Count();
                 break;
             case ReferenceType.DATA_MEMBER:
-                ret = queryProperties(node).Count();
+                ret = QueryProperties(node).Count();
                 break;
             case ReferenceType.THIS_CALLS:
-                ret = queryCalls(node).Count();
+                ret = QueryCalls(node).Count();
                 break;
             case ReferenceType.CALLEE:
-                ret = queryCallees(node).Count();
+                ret = QueryCallees(node).Count();
                 break;
             case ReferenceType.CALLER:
-                ret = queryCallers(node).Count();
+                ret = QueryCallers(node).Count();
                 break;
             case ReferenceType.ENUM_CONSTANTS:
-                ret = queryEnumConsts(node).Count();
+                ret = QueryEnumConsts(node).Count();
                 break;
             case ReferenceType.METHOD:
-                ret = queryMethods(node).Count();
+                ret = QueryMethods(node).Count();
                 break;
             case ReferenceType.CONSTRUCTOR:
-                ret = queryMethodType(node, MethodTypeEnum.Constructor).Count();
+                ret = QueryMethodType(node, MethodTypeEnum.Constructor).Count();
                 break;
             case ReferenceType.DESTRUCTOR:
-                ret = queryMethodType(node, MethodTypeEnum.Destuctor).Count();
+                ret = QueryMethodType(node, MethodTypeEnum.Destuctor).Count();
                 break;
             case ReferenceType.OPERATOR:
-                ret = queryMethodType(node, MethodTypeEnum.Operator).Count();
+                ret = QueryMethodType(node, MethodTypeEnum.Operator).Count();
                 break;
             case ReferenceType.ACCESSOR:
-                ret = queryMethodType(node, MethodTypeEnum.Accessor).Count();
+                ret = QueryMethodType(node, MethodTypeEnum.Accessor).Count();
                 break;
             case ReferenceType.DELEGATE:
-                ret = queryMethodType(node, MethodTypeEnum.Delegate).Count();
+                ret = QueryMethodType(node, MethodTypeEnum.Delegate).Count();
                 break;
             case ReferenceType.EVENT:
-                ret = queryEvents(node).Count();
+                ret = QueryEvents(node).Count();
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 
@@ -574,61 +572,61 @@ public class CSharpQueryHandler : CsharpService.IAsync
         int referenceId, List<string> tags, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        var node = queryCsharpAstNode(astNodeId);        
+        var node = QueryCsharpAstNode(astNodeId);        
         var ret = new List<language.AstNodeInfo>();
         switch ((ReferenceType)referenceId)
         {
             case ReferenceType.USAGE:
-                ret = createAstNodeInfoList(queryInvocations(node));
+                ret = CreateAstNodeInfoList(QueryInvocations(node));
                 break;
             case ReferenceType.DEFINITION:
             case ReferenceType.DECLARATION:
-                ret = createAstNodeInfoList(queryDeclarators(node));
+                ret = CreateAstNodeInfoList(QueryDeclarators(node));
                 break;
             case ReferenceType.EVALUATION:
-                ret = createAstNodeInfoList(queryEvals(node));
+                ret = CreateAstNodeInfoList(QueryEvals(node));
                 break;
             case ReferenceType.PARAMETER:
-                ret = createAstNodeInfoList(queryParams(node));
+                ret = CreateAstNodeInfoList(QueryParams(node));
                 break;
             case ReferenceType.LOCAL_VAR:
-                ret = createAstNodeInfoList(queryLocals(node));
+                ret = CreateAstNodeInfoList(QueryLocals(node));
                 break;
             case ReferenceType.DATA_MEMBER:
-                ret = createAstNodeInfoList(queryProperties(node));
+                ret = CreateAstNodeInfoList(QueryProperties(node));
                 break;
             case ReferenceType.THIS_CALLS:
-                ret = createAstNodeInfoList(queryCalls(node));
+                ret = CreateAstNodeInfoList(QueryCalls(node));
                 break;
             case ReferenceType.CALLEE:
-                ret = createAstNodeInfoList(queryCallees(node));
+                ret = CreateAstNodeInfoList(QueryCallees(node));
                 break;
             case ReferenceType.CALLER:
-                ret = createAstNodeInfoList(queryCallers(node));
+                ret = CreateAstNodeInfoList(QueryCallers(node));
                 break;
             case ReferenceType.ENUM_CONSTANTS:
-                ret = createAstNodeInfoList(queryEnumConsts(node));
+                ret = CreateAstNodeInfoList(QueryEnumConsts(node));
                 break;
             case ReferenceType.METHOD:
-                ret = createAstNodeInfoList(queryMethods(node));
+                ret = CreateAstNodeInfoList(QueryMethods(node));
                 break;
             case ReferenceType.CONSTRUCTOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Constructor));
+                ret = CreateAstNodeInfoList(QueryMethodType(node, MethodTypeEnum.Constructor));
                 break;
             case ReferenceType.DESTRUCTOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Destuctor));
+                ret = CreateAstNodeInfoList(QueryMethodType(node, MethodTypeEnum.Destuctor));
                 break;
             case ReferenceType.OPERATOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Operator));
+                ret = CreateAstNodeInfoList(QueryMethodType(node, MethodTypeEnum.Operator));
                 break;
             case ReferenceType.ACCESSOR:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Accessor));
+                ret = CreateAstNodeInfoList(QueryMethodType(node, MethodTypeEnum.Accessor));
                 break;
             case ReferenceType.DELEGATE:
-                ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Delegate));
+                ret = CreateAstNodeInfoList(QueryMethodType(node, MethodTypeEnum.Delegate));
                 break;
             case ReferenceType.EVENT:
-                ret = createAstNodeInfoList(queryEvents(node));
+                ret = CreateAstNodeInfoList(QueryEvents(node));
                 break;
             default:
                 System.Console.WriteLine($"[CSharpService] {(ReferenceType)referenceId}"+ 
@@ -680,5 +678,37 @@ public class CSharpQueryHandler : CsharpService.IAsync
         return await Task.FromResult(new List<language.SyntaxHighlight>());
     }
 
+    private static string TransformConnectionString(string dbSystem, string connectionString)
+    {
+      string csharpConnectionString = "";
+      if (dbSystem == "pgsql")
+      {
+        connectionString = connectionString.Substring(connectionString.IndexOf(':') + 1);
+        connectionString = connectionString.Replace("user", "username");
+        string[] properties = connectionString.Split(';');
+
+        for (int i = 0; i < properties.Length; ++i)
+        {
+          csharpConnectionString += properties[i].Substring(0, 1).ToUpper()
+              + properties[i].Substring(1);
+          if (i < properties.Length - 1)
+          {
+            csharpConnectionString += ";";
+          }
+        }
+      }
+      else if(dbSystem == "sqlite")
+      {
+        // "sqlite:database=" needs to be removed from the connection string.
+        connectionString = connectionString.Substring(connectionString.IndexOf(':') + 10);
+        csharpConnectionString = "Data Source=" + connectionString;
+      }
+      else
+      {
+        csharpConnectionString = null;
+      }
+
+      return csharpConnectionString;
+    }
 
 }

@@ -19,7 +19,7 @@ using Thrift.Processor;
 using System.Diagnostics;
 using language;
 using cc.service.csharp;
-using CSharpParser.model;
+using DbModel;
 
 namespace Server
 {
@@ -73,8 +73,17 @@ namespace Server
             TTransportFactory transportFactory = new TBufferedTransport.Factory();
             TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
 
-            var handler = new CSharpQueryHandler(connenctionString);
-            ITAsyncProcessor processor = new CsharpService.AsyncProcessor(handler);
+            ITAsyncProcessor processor = null;
+            try
+            {
+                var handler = new CSharpQueryHandler(connenctionString);
+                processor = new CsharpService.AsyncProcessor(handler);
+            }
+            catch (Exception x)
+            {
+                Logger.LogInformation("{x}",x);
+            }
+            
 
             try
             {
