@@ -4,7 +4,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/model/include)
 
 include_directories(SYSTEM
-  ${ODB_INCLUDE_DIRS})
+  ${ODB_INCLUDE_DIRS}
+  ${LIBMAGIC_INCLUDES})
 
 add_executable(CodeCompass_parser
   src/pluginhandler.cpp
@@ -21,7 +22,7 @@ target_link_libraries(CodeCompass_parser
   ${Boost_LIBRARIES}
   ${ODB_LIBRARIES}
   ${CMAKE_DL_LIBS}
-  magic
+  ${LIBMAGIC_LIBRARIES}
   pthread)
 
 install(TARGETS CodeCompass_parser
