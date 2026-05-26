@@ -1,27 +1,39 @@
-import { Button, IconButton, Modal, Tooltip } from '@mui/material';
-import { ZoomIn, ZoomOut } from '@mui/icons-material';
-import { FileName } from 'components/file-name/file-name';
-import React, { useContext, useEffect, useRef, useState, MouseEvent } from 'react';
+import { Button, IconButton, Modal, Tooltip } from "@mui/material";
+import { ZoomIn, ZoomOut } from "@mui/icons-material";
+import { FileName } from "components/file-name/file-name";
+import React, {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  MouseEvent,
+} from "react";
+import { toast } from "react-toastify";
 import {
-  getCppAstNodeInfo,
-  getCppDiagram,
-  getCppDiagramLegend,
-  getCppFileDiagram,
-  getCppFileDiagramLegend,
-  getCppReferenceTypes,
-  getCppReferences,
-} from 'service/cpp-service';
-import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
-import { FileInfo, AstNodeInfo } from '@thrift-generated';
-import { AppContext } from 'global-context/app-context';
-import { getFileInfo } from 'service/project-service';
-import { CodeBites } from 'components/codebites/codebites';
-import * as SC from './styled-components';
-import { convertSelectionRangeToString } from 'utils/utils';
-import { useRouter } from 'next/router';
-import { RouterQueryType } from 'utils/types';
-import { useTranslation } from 'react-i18next';
-import { sendGAEvent } from 'utils/analytics';
+  createClient,
+  getAstNodeInfo,
+  getDiagram,
+  getDiagramLegend,
+  getFileDiagram,
+  getFileDiagramLegend,
+  getReferenceTypes,
+  getReferences,
+} from "service/language-service";
+import {
+  TransformWrapper,
+  TransformComponent,
+  ReactZoomPanPinchRef,
+} from "react-zoom-pan-pinch";
+import { FileInfo, AstNodeInfo } from "@thrift-generated";
+import { AppContext } from "global-context/app-context";
+import { getFileInfo } from "service/project-service";
+import { CodeBites } from "components/codebites/codebites";
+import * as SC from "./styled-components";
+import { convertSelectionRangeToString } from "utils/utils";
+import { useRouter } from "next/router";
+import { RouterQueryType } from "utils/types";
+import { useTranslation } from "react-i18next";
+import { sendGAEvent } from "utils/analytics";
 
 export const Diagrams = (): JSX.Element => {
   const { t } = useTranslation();
@@ -30,7 +42,9 @@ export const Diagrams = (): JSX.Element => {
 
   const [legendModalOpen, setLegendModalOpen] = useState<boolean>(false);
   const [exportTooltipOpen, setExportTooltipOpen] = useState<boolean>(false);
-  const [diagramInfo, setDiagramInfo] = useState<FileInfo | AstNodeInfo | undefined>(undefined);
+  const [diagramInfo, setDiagramInfo] = useState<
+    FileInfo | AstNodeInfo | undefined
+  >(undefined);
   const [codeBitesDisplayed, setCodeBitesDisplayed] = useState<boolean>(false);
 
   const diagramContainerRef = useRef<HTMLDivElement | null>(null);
@@ -38,23 +52,46 @@ export const Diagrams = (): JSX.Element => {
   const transformComponentRef = useRef<ReactZoomPanPinchRef | null>(null);
 
   useEffect(() => {
-    if (appCtx.diagramGenId === '' || appCtx.diagramTypeId === '' || !appCtx.diagramType) return;
+    if (
+      appCtx.diagramGenId === "" ||
+      appCtx.diagramTypeId === "" ||
+      !appCtx.diagramType
+    )
+      return;
     const init = async () => {
-      const initDiagramInfo =
-        appCtx.diagramType === 'file'
+      const fileInfoForClient =
+        appCtx.diagramType === "file"
           ? await getFileInfo(appCtx.diagramGenId)
-          : appCtx.diagramType === 'ast'
-          ? await getCppAstNodeInfo(appCtx.diagramGenId)
-          : undefined;
+          : appCtx.projectFileId
+            ? await getFileInfo(appCtx.projectFileId)
+            : undefined;
+
+      if (!fileInfoForClient?.type) {
+        toast.error("File type is required to generate this diagram.");
+        return;
+      }
+
+      createClient(appCtx.workspaceId, fileInfoForClient?.type);
+
+      const initDiagramInfo =
+        appCtx.diagramType === "file"
+          ? fileInfoForClient
+          : appCtx.diagramType === "ast"
+            ? await getAstNodeInfo(appCtx.diagramGenId)
+            : undefined;
 
       if (!initDiagramInfo) return;
 
       if (parseInt(appCtx.diagramTypeId) === 999) {
-        const refTypes = await getCppReferenceTypes(initDiagramInfo.id as string);
-        if (refTypes.get('Definition') === undefined) return;
+        const refTypes = await getReferenceTypes(initDiagramInfo.id as string);
+        if (refTypes.get("Definition") === undefined) return;
 
         const astNodeDef = (
-          await getCppReferences(initDiagramInfo.id as string, refTypes.get('Definition') as number, [])
+          await getReferences(
+            initDiagramInfo.id as string,
+            refTypes.get("Definition") as number,
+            [],
+          )
         )[0];
 
         setDiagramInfo(astNodeDef);
@@ -64,11 +101,17 @@ export const Diagrams = (): JSX.Element => {
 
       const diagram =
         initDiagramInfo instanceof FileInfo
-          ? await getCppFileDiagram(appCtx.diagramGenId, parseInt(appCtx.diagramTypeId))
+          ? await getFileDiagram(
+              appCtx.diagramGenId,
+              parseInt(appCtx.diagramTypeId),
+            )
           : initDiagramInfo instanceof AstNodeInfo
-          ? await getCppDiagram(appCtx.diagramGenId, parseInt(appCtx.diagramTypeId))
-          : '';
-      
+            ? await getDiagram(
+                appCtx.diagramGenId,
+                parseInt(appCtx.diagramTypeId),
+              )
+            : "";
+
       sendGAEvent({
         event_action: `load_diagram: ${appCtx.diagramTypeId}`,
         event_category: appCtx.workspaceId,
@@ -76,16 +119,21 @@ export const Diagrams = (): JSX.Element => {
           initDiagramInfo instanceof FileInfo
             ? initDiagramInfo.name
             : initDiagramInfo instanceof AstNodeInfo
-            ? initDiagramInfo.astNodeValue
-            : '',
+              ? initDiagramInfo.astNodeValue
+              : "",
       });
-      
-      const parser = new DOMParser();
-      const parsedDiagram = parser.parseFromString(diagram, 'text/xml');
-      const diagramSvg = parsedDiagram.getElementsByTagName('svg')[0];
 
-      diagramSvg.style.height = '100%';
-      diagramSvg.style.cursor = 'pointer';
+      const parser = new DOMParser();
+      const parsedDiagram = parser.parseFromString(diagram, "text/xml");
+      const diagramSvg = parsedDiagram.getElementsByTagName("svg")[0];
+
+      if (!diagramSvg) {
+        toast.error("Failed to parse diagram or diagram is empty.");
+        return;
+      }
+
+      diagramSvg.style.height = "100%";
+      diagramSvg.style.cursor = "pointer";
 
       transformComponentRef?.current?.resetTransform();
       diagramContainerRef?.current?.replaceChildren(diagramSvg);
@@ -93,47 +141,72 @@ export const Diagrams = (): JSX.Element => {
       setDiagramInfo(initDiagramInfo);
     };
     init();
-  }, [appCtx.diagramGenId, appCtx.diagramTypeId, appCtx.diagramType, appCtx.workspaceId]);
+  }, [
+    appCtx.diagramGenId,
+    appCtx.diagramTypeId,
+    appCtx.diagramType,
+    appCtx.projectFileId,
+    appCtx.workspaceId,
+  ]);
 
   const generateDiagram = async (e: MouseEvent) => {
     const parentNode = (e.target as HTMLElement)?.parentElement;
-    if ((parentNode?.className as unknown as SVGAnimatedString).baseVal !== 'node') return;
+    if (
+      (parentNode?.className as unknown as SVGAnimatedString).baseVal !== "node"
+    )
+      return;
 
     const diagramGenId = parentNode?.id as string;
 
-    const initDiagramInfo =
-      appCtx.diagramType === 'file'
+    const fileInfoForClient =
+      appCtx.diagramType === "file"
         ? await getFileInfo(appCtx.diagramGenId)
-        : appCtx.diagramType === 'ast'
-        ? await getCppAstNodeInfo(appCtx.diagramGenId)
-        : undefined;
+        : appCtx.projectFileId
+          ? await getFileInfo(appCtx.projectFileId)
+          : undefined;
+
+    if (!fileInfoForClient?.type) {
+      toast.error("File type is required to navigate to this diagram.");
+      return;
+    }
+
+    createClient(appCtx.workspaceId, fileInfoForClient?.type);
+
+    const initDiagramInfo =
+      appCtx.diagramType === "file"
+        ? fileInfoForClient
+        : appCtx.diagramType === "ast"
+          ? await getAstNodeInfo(appCtx.diagramGenId)
+          : undefined;
 
     if (!initDiagramInfo) return;
 
     if (initDiagramInfo instanceof FileInfo) {
       router.push({
-        pathname: '/project',
+        pathname: "/project",
         query: {
           ...router.query,
           projectFileId: diagramGenId,
         } as RouterQueryType,
       });
     } else if (initDiagramInfo instanceof AstNodeInfo) {
-      const astNodeInfo = await getCppAstNodeInfo(diagramGenId);
+      const astNodeInfo = await getAstNodeInfo(diagramGenId);
 
       router.push({
-        pathname: '/project',
+        pathname: "/project",
         query: {
           ...router.query,
           projectFileId: astNodeInfo?.range?.file as string,
-          editorSelection: convertSelectionRangeToString(astNodeInfo?.range?.range),
+          editorSelection: convertSelectionRangeToString(
+            astNodeInfo?.range?.range,
+          ),
           languageNodeId: diagramGenId,
         } as RouterQueryType,
       });
     }
 
     router.push({
-      pathname: '/project',
+      pathname: "/project",
       query: {
         ...router.query,
         diagramGenId: diagramGenId,
@@ -146,23 +219,32 @@ export const Diagrams = (): JSX.Element => {
 
     const diagramLegend =
       diagramInfo instanceof FileInfo
-        ? await getCppFileDiagramLegend(parseInt(appCtx.diagramTypeId))
+        ? await getFileDiagramLegend(parseInt(appCtx.diagramTypeId))
         : diagramInfo instanceof AstNodeInfo
-        ? await getCppDiagramLegend(parseInt(appCtx.diagramTypeId))
-        : '';
+          ? await getDiagramLegend(parseInt(appCtx.diagramTypeId))
+          : "";
 
     const parser = new DOMParser();
-    const parsedDiagramLegend = parser.parseFromString(diagramLegend, 'text/xml');
-    const diagramLegendSvg = parsedDiagramLegend.getElementsByTagName('svg')[0];
+    const parsedDiagramLegend = parser.parseFromString(
+      diagramLegend,
+      "text/xml",
+    );
+    const diagramLegendSvg = parsedDiagramLegend.getElementsByTagName("svg")[0];
 
-    diagramLegendSvg.style.height = '100%';
+    if (!diagramLegendSvg) {
+      toast.error("Failed to parse legend diagram or it is empty.");
+      return;
+    }
+
+    diagramLegendSvg.style.height = "100%";
     diagramLegendContainerRef.current.replaceChildren(diagramLegendSvg);
 
     setLegendModalOpen(true);
   };
 
   const exportDiagramSVG = () => {
-    const svgString = diagramContainerRef.current?.querySelector('svg')?.outerHTML as string;
+    const svgString = diagramContainerRef.current?.querySelector("svg")
+      ?.outerHTML as string;
     navigator.clipboard.writeText(svgString);
     setExportTooltipOpen(true);
     setTimeout(() => {
@@ -171,16 +253,18 @@ export const Diagrams = (): JSX.Element => {
   };
 
   const downloadSVG = () => {
-    const svgElement = diagramContainerRef.current?.querySelector('svg') as SVGSVGElement;
+    const svgElement = diagramContainerRef.current?.querySelector(
+      "svg",
+    ) as SVGSVGElement;
     if (!svgElement) return;
 
     const svgCode = new XMLSerializer().serializeToString(svgElement);
-    const blob = new Blob([svgCode], { type: 'image/svg+xml' });
+    const blob = new Blob([svgCode], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
 
-    const link = document.createElement('a');
-    link.setAttribute('download', 'file-diagram.svg');
-    link.setAttribute('href', url);
+    const link = document.createElement("a");
+    link.setAttribute("download", "file-diagram.svg");
+    link.setAttribute("href", url);
     link.click();
   };
 
@@ -188,8 +272,8 @@ export const Diagrams = (): JSX.Element => {
     <>
       {diagramInfo instanceof FileInfo ? (
         <FileName
-          fileName={diagramInfo ? (diagramInfo.name as string) : ''}
-          filePath={diagramInfo ? (diagramInfo.path as string) : ''}
+          fileName={diagramInfo ? (diagramInfo.name as string) : ""}
+          filePath={diagramInfo ? (diagramInfo.path as string) : ""}
           parseStatus={diagramInfo ? (diagramInfo.parseStatus as number) : 4}
           info={diagramInfo ?? undefined}
         />
@@ -210,20 +294,27 @@ export const Diagrams = (): JSX.Element => {
                     <IconButton onClick={() => zoomIn()}>
                       <ZoomIn />
                     </IconButton>
-                    <Button onClick={() => resetTransform()}>{t('diagrams.reset')}</Button>
+                    <Button onClick={() => resetTransform()}>
+                      {t("diagrams.reset")}
+                    </Button>
                     <IconButton onClick={() => zoomOut()}>
                       <ZoomOut />
                     </IconButton>
                   </SC.ZoomOptions>
                   <TransformComponent>
-                    <SC.DiagramContainer ref={diagramContainerRef} onClick={(e) => generateDiagram(e)} />
+                    <SC.DiagramContainer
+                      ref={diagramContainerRef}
+                      onClick={(e) => generateDiagram(e)}
+                    />
                   </TransformComponent>
                 </SC.TransformContainer>
               )}
             </TransformWrapper>
 
             <SC.DiagramOptionsContainer>
-              <Button onClick={() => generateLegend()}>{t('diagrams.legend')}</Button>
+              <Button onClick={() => generateLegend()}>
+                {t("diagrams.legend")}
+              </Button>
               <Tooltip
                 PopperProps={{
                   disablePortal: true,
@@ -233,13 +324,21 @@ export const Diagrams = (): JSX.Element => {
                 disableFocusListener
                 disableHoverListener
                 disableTouchListener
-                title={t('diagrams.copyNotification')}
+                title={t("diagrams.copyNotification")}
                 arrow
               >
-                <Button onClick={() => exportDiagramSVG()}>{t('diagrams.exportSVG')}</Button>
+                <Button onClick={() => exportDiagramSVG()}>
+                  {t("diagrams.exportSVG")}
+                </Button>
               </Tooltip>
-              <Button onClick={() => downloadSVG()}>{t('diagrams.downloadImg')}</Button>
-              <Modal open={legendModalOpen} onClose={() => setLegendModalOpen(false)} keepMounted>
+              <Button onClick={() => downloadSVG()}>
+                {t("diagrams.downloadImg")}
+              </Button>
+              <Modal
+                open={legendModalOpen}
+                onClose={() => setLegendModalOpen(false)}
+                keepMounted
+              >
                 <SC.ModalBox>
                   <SC.DiagramLegendContainer ref={diagramLegendContainerRef} />
                 </SC.ModalBox>
@@ -250,6 +349,6 @@ export const Diagrams = (): JSX.Element => {
       </>
     </>
   ) : (
-    <SC.Placeholder>{t('diagrams.noDiagram')}</SC.Placeholder>
+    <SC.Placeholder>{t("diagrams.noDiagram")}</SC.Placeholder>
   );
 };

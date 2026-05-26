@@ -1,19 +1,21 @@
-import React, { createContext, useEffect, useState } from 'react';
-import { GitBlameHunk, WorkspaceInfo } from '@thrift-generated';
-import { createWorkspaceClient, getWorkspaces } from 'service/workspace-service';
-import { createProjectClient, getLabels } from 'service/project-service';
-import { createSearchClient } from 'service/search-service';
-import { createCppClient } from 'service/cpp-service';
-import { createCppReparseClient } from 'service/cpp-reparse-service';
-import { createMetricsClient } from 'service/metrics-service';
-import { createGitClient } from 'service/git-service';
-import { createConfig } from 'service/config';
-import { SearchProps } from 'utils/types';
-import { TabName } from 'enums/tab-enum';
-import { AccordionLabel } from 'enums/accordion-enum';
-import { useUrlState } from 'hooks/use-url-state';
-import { getStore } from 'utils/store';
-import { Box, CircularProgress } from '@mui/material';
+import React, { createContext, useEffect, useState } from "react";
+import { GitBlameHunk, WorkspaceInfo } from "@thrift-generated";
+import {
+  createWorkspaceClient,
+  getWorkspaces,
+} from "service/workspace-service";
+import { createProjectClient, getLabels } from "service/project-service";
+import { createSearchClient } from "service/search-service";
+import { createCppReparseClient } from "service/cpp-reparse-service";
+import { createMetricsClient } from "service/metrics-service";
+import { createGitClient } from "service/git-service";
+import { createConfig } from "service/config";
+import { SearchProps } from "utils/types";
+import { TabName } from "enums/tab-enum";
+import { AccordionLabel } from "enums/accordion-enum";
+import { useUrlState } from "hooks/use-url-state";
+import { getStore } from "utils/store";
+import { Box, CircularProgress } from "@mui/material";
 
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
@@ -62,64 +64,82 @@ export const AppContext = createContext<AppContextProps>({
   setWorkspaces: (_val) => {},
   labels: new Map(),
   setLabels: (_val) => {},
-  workspaceId: '',
+  workspaceId: "",
   setWorkspaceId: (_val) => {},
-  projectFileId: '',
+  projectFileId: "",
   setProjectFileId: (_val) => {},
   searchProps: undefined,
   setSearchProps: (_val) => {},
-  metricsGenId: '',
+  metricsGenId: "",
   setMetricsGenId: (_val) => {},
-  diagramGenId: '',
+  diagramGenId: "",
   setDiagramGenId: (_val) => {},
-  diagramTypeId: '',
+  diagramTypeId: "",
   setDiagramTypeId: (_val) => {},
-  diagramType: 'file',
+  diagramType: "file",
   setDiagramType: (_val) => {},
-  languageNodeId: '',
+  languageNodeId: "",
   setLanguageNodeId: (_val) => {},
-  editorSelection: '',
+  editorSelection: "",
   setEditorSelection: (_val) => {},
-  gitRepoId: '',
+  gitRepoId: "",
   setGitRepoId: (_val) => {},
-  gitBranch: '',
+  gitBranch: "",
   setGitBranch: (_val) => {},
-  gitCommitId: '',
+  gitCommitId: "",
   setGitCommitId: (_val) => {},
   gitBlameInfo: [],
   setGitBlameInfo: (_val) => {},
-  activeAccordion: '',
+  activeAccordion: "",
   setActiveAccordion: (_val) => {},
-  activeTab: '0',
+  activeTab: "0",
   setActiveTab: (_val) => {},
-  treeViewOption: 'false',
+  treeViewOption: "false",
   setTreeViewOption: (_val) => {},
 });
 /* eslint-enable no-unused-vars */
 /* eslint-enable @typescript-eslint/no-empty-function */
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
-export const AppContextController = ({ children }: { children: React.ReactNode }): JSX.Element => {
+export const AppContextController = ({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element => {
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
 
-  const [searchProps, setSearchProps] = useState<SearchProps | undefined>(undefined);
+  const [searchProps, setSearchProps] = useState<SearchProps | undefined>(
+    undefined,
+  );
   const [gitBlameInfo, setGitBlameInfo] = useState<GitBlameHunk[]>([]);
 
-  const [workspaceId, setWorkspaceId] = useUrlState('workspaceId', '');
-  const [projectFileId, setProjectFileId] = useUrlState('projectFileId', '');
-  const [metricsGenId, setMetricsGenId] = useUrlState('metricsGenId', '');
-  const [diagramGenId, setDiagramGenId] = useUrlState('diagramGenId', '');
-  const [diagramTypeId, setDiagramTypeId] = useUrlState('diagramTypeId', '');
-  const [diagramType, setDiagramType] = useUrlState('diagramType', 'file');
-  const [languageNodeId, setLanguageNodeId] = useUrlState('languageNodeId', '');
-  const [editorSelection, setEditorSelection] = useUrlState('editorSelection', '');
-  const [gitRepoId, setGitRepoId] = useUrlState('gitRepoId', '');
-  const [gitBranch, setGitBranch] = useUrlState('gitBranch', '');
-  const [gitCommitId, setGitCommitId] = useUrlState('gitCommitId', '');
-  const [activeAccordion, setActiveAccordion] = useUrlState('activeAccordion', AccordionLabel.FILE_MANAGER);
-  const [activeTab, setActiveTab] = useUrlState('activeTab', TabName.WELCOME.toString());
-  const [treeViewOption, setTreeViewOption] = useUrlState('treeViewOption', 'false');
+  const [workspaceId, setWorkspaceId] = useUrlState("workspaceId", "");
+  const [projectFileId, setProjectFileId] = useUrlState("projectFileId", "");
+  const [metricsGenId, setMetricsGenId] = useUrlState("metricsGenId", "");
+  const [diagramGenId, setDiagramGenId] = useUrlState("diagramGenId", "");
+  const [diagramTypeId, setDiagramTypeId] = useUrlState("diagramTypeId", "");
+  const [diagramType, setDiagramType] = useUrlState("diagramType", "file");
+  const [languageNodeId, setLanguageNodeId] = useUrlState("languageNodeId", "");
+  const [editorSelection, setEditorSelection] = useUrlState(
+    "editorSelection",
+    "",
+  );
+  const [gitRepoId, setGitRepoId] = useUrlState("gitRepoId", "");
+  const [gitBranch, setGitBranch] = useUrlState("gitBranch", "");
+  const [gitCommitId, setGitCommitId] = useUrlState("gitCommitId", "");
+  const [activeAccordion, setActiveAccordion] = useUrlState(
+    "activeAccordion",
+    AccordionLabel.FILE_MANAGER,
+  );
+  const [activeTab, setActiveTab] = useUrlState(
+    "activeTab",
+    TabName.WELCOME.toString(),
+  );
+  const [treeViewOption, setTreeViewOption] = useUrlState(
+    "treeViewOption",
+    "false",
+  );
 
   const [loadComplete, setLoadComplete] = useState<boolean>(true);
 
@@ -128,14 +148,16 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
       const url = window.location;
       const wHost = url.hostname;
       const wPort = url.port;
-      const wHTTPS = url.protocol === 'https:';
+      const wHTTPS = url.protocol === "https:";
       const wPath = url.pathname;
 
       createConfig({
         webserver_host: wHost,
         webserver_port: wHTTPS && !wPort ? 443 : parseInt(wPort),
         webserver_https: wHTTPS,
-        webserver_path: wPath.includes('/new') ? wPath.slice(0, wPath.lastIndexOf('/new')) : wPath,
+        webserver_path: wPath.includes("/new")
+          ? wPath.slice(0, wPath.lastIndexOf("/new"))
+          : wPath,
       });
 
       createWorkspaceClient();
@@ -151,7 +173,6 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
     const initializeApp = async () => {
       createProjectClient(workspaceId);
       createSearchClient(workspaceId);
-      createCppClient(workspaceId);
       createCppReparseClient(workspaceId);
       createMetricsClient(workspaceId);
       createGitClient(workspaceId);
@@ -213,7 +234,14 @@ export const AppContextController = ({ children }: { children: React.ReactNode }
   return loadComplete ? (
     <AppContext.Provider value={appContext}>{children}</AppContext.Provider>
   ) : (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
       <CircularProgress />
     </Box>
   );
