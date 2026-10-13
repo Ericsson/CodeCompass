@@ -17,3 +17,6 @@ install_*/
 
 # Mac OS specific files
 .DS_Store
+
+# Local dev docker compose
+local-dev/
