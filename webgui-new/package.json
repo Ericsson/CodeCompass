@@ -53,7 +53,7 @@
     "reactflow": "^11.11.4",
     "recharts": "^2.15.4",
     "sass": "^1.93.2",
-    "sharp": "^0.32.6",
+    "sharp": "^0.35.5",
     "thrift": "0.16.0"
   },
   "engines": {
