@@ -1,6 +1,8 @@
 #include <csharpparser/csharpparser.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <model/buildaction.h>
 #include <model/buildaction-odb.hxx>
@@ -18,9 +20,6 @@
 
 #include <memory>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 namespace cc
 {
 namespace parser
@@ -31,9 +30,9 @@ CsharpParser::CsharpParser(ParserContext& ctx_): AbstractParser(ctx_)
   _threadNum = _ctx.options["jobs"].as<int>();
 }
 
-bool CsharpParser::acceptProjectBuildPath(const std::string& buildPath_)
+bool CsharpParser::acceptProjectBuildPath(const std::string& path_)
 {
-  return fs::is_directory(buildPath_);
+  return fs::exists(path_);
 }
 
 bool CsharpParser::parse()
@@ -42,36 +41,33 @@ bool CsharpParser::parse()
 
   std::vector<std::string> paths = _ctx.options["input"].as<std::vector<std::string>>();
   
-    if (!paths.empty())     
-    {
-      LOG(debug) << "C# parser parse path: " << paths.size(); 
-      success = success && parseProjectBuildPath(paths);
-    }
-    else
-    {
-      LOG(error) << "No input directories provided for C# parser!";
-      success = false;
-    }
+  if (!paths.empty())     
+  {
+    LOG(debug) << "C# parser input paths count: " << paths.size(); 
+    success = success && parseProjectBuildPath(paths);
+  }
+  else
+  {
+    LOG(error) << "No input paths provided for C# parser!";
+    success = false;
+  }
   
   return success;
 }
 
-bool CsharpParser::parseProjectBuildPath(
-  const std::vector<std::string>& paths_ //,
-  ) 
+bool CsharpParser::parseProjectBuildPath(const std::vector<std::string>& paths_) 
 {
   namespace ch = std::chrono;
   std::future<std::string> log;
   fs::path csharp_path = util::findCurrentExecutableDir() + "/../lib/csharp/";
 
   /*
-   * Concatenate the command parameters to pass to the C# parser.
+   * Concatenate the command parameters to pass to the C# parser:
    * 1) C# parser binary
    * 2) Database connection string
-   * 3) Project build directory path
-   * 4) CC lib directory path
-   * 5) Thread number
-   * 6+) Source directories
+   * 3) CC lib directory path
+   * 4) Thread number
+   * 5+) Input paths (directories, .sln, .slnx, or .csproj files)
    */
   std::string command("./CSharpParser ");
   command.append("'");
@@ -81,13 +77,17 @@ bool CsharpParser::parseProjectBuildPath(
   command.append("' ");
   command.append(std::to_string(_ctx.options["jobs"].as<int>()));
 
-  for (auto p : paths_)
+  for (const auto& p : paths_)
   {
-    if (fs::is_directory(p))
+    if (fs::exists(p))
     {
       command.append(" '");
       command.append(p);
       command.append("' ");
+    }
+    else
+    {
+      LOG(warning) << "Input path does not exist: " << p;
     }
   }
 
@@ -105,7 +105,7 @@ bool CsharpParser::parseProjectBuildPath(
   std::stringstream log_str(log.get());
   int countFull = 0, countPart = 0;
 
-while(std::getline(log_str, line, '\n'))
+  while (std::getline(log_str, line, '\n'))
   {
     line.erase(std::remove(line.begin(), line.end(), '\r'), line.end()); // remove \r
     if (line.empty()) continue;
@@ -137,7 +137,7 @@ while(std::getline(log_str, line, '\n'))
       }
       catch (const boost::property_tree::ptree_error& e)
       {
-         LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << jsonString;
+        LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << jsonString;
       }
     }
     else
@@ -147,12 +147,11 @@ while(std::getline(log_str, line, '\n'))
   }
 
   ch::steady_clock::time_point after = ch::steady_clock::now();
-  elapsed_time =
-    ch::duration_cast<ch::milliseconds>(after - current).count();
+  elapsed_time = ch::duration_cast<ch::milliseconds>(after - current).count();
 
   LOG(debug) << "C# source manage time: " << elapsed_time << " ms";
   LOG(info) << "Number of files fully parsed: " << countFull << 
-    ", partially parsed: " << countPart << ", total: " <<  countFull+countPart;
+    ", partially parsed: " << countPart << ", total: " << countFull + countPart;
 
   return result == 0;
 }
@@ -173,15 +172,27 @@ void CsharpParser::addSource(const std::string& filepath_, const std::string& ta
   buildSource.file->type = "CS";
   buildSource.action = buildAction;
 
+  model::BuildTarget buildTarget;
+  if (!targetDll_.empty())
+  {
+    buildTarget.file = _ctx.srcMgr.getFile(targetDll_);
+    buildTarget.file->type = "Binary";
+    buildTarget.action = buildAction;
+    _ctx.srcMgr.updateFile(*buildTarget.file);
+  }
+
   _ctx.srcMgr.updateFile(*buildSource.file);
   _ctx.srcMgr.persistFiles();
 
   transaction([&, this] { 
     _ctx.db->persist(buildAction);
     _ctx.db->persist(buildSource);
+    if (!targetDll_.empty())
+    {
+      _ctx.db->persist(buildTarget);
+    }
   });
 }
-
 
 CsharpParser::~CsharpParser()
 {
@@ -194,7 +205,6 @@ extern "C"
   boost::program_options::options_description getOptions()
   {
     boost::program_options::options_description description("C# Plugin");
-
     return description;
   }
 
