@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 using CSharpParser.model;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
+using System.Xml.Linq;
+using System.Text.Json;
 
 namespace CSharpParser
 {
     class Program
     {
-        //private readonly CsharpDbContext _context;
         private static List<string> _rootDir;
-        private static string _buildDir = "";
         private static string _buildDirBase = "";
         private static string _connectionString = "";
 
@@ -40,11 +40,10 @@ namespace CSharpParser
             try
             {
                 _connectionString = args[0].Replace("'", "");
-                _buildDir = args[1].Replace("'", "");
-                _buildDirBase = args[2].Replace("'", "");
-                threadNum = int.Parse(args[3]);
+                _buildDirBase = args[1].Replace("'", ""); // indexes
+                threadNum = int.Parse(args[2]);
 
-                for (int i = 4; i < args.Length; ++i)
+                for (int i = 3; i < args.Length; ++i)
                 {
                     _rootDir.Add(args[i].Replace("'", ""));
                 }
@@ -54,44 +53,6 @@ namespace CSharpParser
                 Console.WriteLine("Error in parsing command!");
                 return 1;
             }
-            /*if (args.Length < 3)
-            {
-                WriteLine("Missing command-line arguments in CSharpParser!");                              
-                return 1;
-            }
-            else if (args.Length == 3)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-            }
-            else if (args.Length == 4)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-                bool success = int.TryParse(args[3], out threadNum);
-                if (!success){
-                    WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
-                }
-            }
-            else if (args.Length == 5)
-            {
-                _connectionString = args[0].Replace("'", "");
-                _rootDir = args[1].Replace("'", "");
-                _buildDir = args[2].Replace("'", "");
-                _buildDirBase = args[3].Replace("'", "");
-                bool success = int.TryParse(args[4], out threadNum);
-                if (!success)
-                {
-                    WriteLine("Invalid threadnumber argument! Multithreaded parsing disabled!");                    
-                }            
-            }
-            else if (args.Length > 5)
-            {
-                WriteLine("Too many command-line arguments in CSharpParser!");
-                return 1;
-            }*/
 
             if (_rootDir.Count == 0)
             {
@@ -101,7 +62,7 @@ namespace CSharpParser
 
             string primaryInput = _rootDir[0];
 
-            //Converting the connectionstring into entity framework style connectionstring
+            // Converting the connectionstring into entity framework style connectionstring
             string csharpConnectionString = transformConnectionString();
 
             var options = new DbContextOptionsBuilder<CsharpDbContext>()
@@ -110,7 +71,6 @@ namespace CSharpParser
 
             await using var _context = new CsharpDbContext(options);
             _context.Database.Migrate();
-
 
             if (IsSolutionInput(primaryInput))
             {
@@ -131,6 +91,28 @@ namespace CSharpParser
 
             if (Directory.Exists(primaryInput))
             {
+                var solutionFiles = Directory.GetFiles(primaryInput, "*.sln", SearchOption.AllDirectories)
+                    .Concat(Directory.GetFiles(primaryInput, "*.slnx", SearchOption.AllDirectories))
+                    .ToList();
+
+                if (solutionFiles.Count > 0)
+                {
+                    Console.WriteLine($"Found solution file in directory: {solutionFiles[0]}");
+                    await ParseSolutionPathAsync(solutionFiles[0], csharpConnectionString, threadNum);
+                    return 0;
+                }
+
+                var projectFiles = Directory.GetFiles(primaryInput, "*.csproj", SearchOption.AllDirectories)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (projectFiles.Count > 0)
+                {
+                    Console.WriteLine($"Found {projectFiles.Count} .csproj file(s) in directory.");
+                    await ParseProjectsByPathAsync(projectFiles, csharpConnectionString, threadNum);
+                    return 0;
+                }
+
                 await ParseLegacyMode(csharpConnectionString, threadNum);
                 return 0;
             }
@@ -162,6 +144,9 @@ namespace CSharpParser
         private static async Task ParseLegacyMode(string csharpConnectionString, int threadNum)
         {
             List<string> allFiles = new List<string>();
+            // This dictionary will remember which file belongs to which DLL
+            Dictionary<string, string> fileToTargetDll = new Dictionary<string, string>();
+
             foreach (var p in _rootDir)
             {
                 if (!Directory.Exists(p))
@@ -173,18 +158,30 @@ namespace CSharpParser
                 Console.WriteLine(p);
                 allFiles.AddRange(GetSourceFilesFromDir(p, ".cs"));
             }
+            allFiles = allFiles.Distinct().ToList();
 
             foreach (var f in allFiles)
             {
                 Console.WriteLine(f);
             }
 
-            IEnumerable<string> assemblies = GetSourceFilesFromDir(_buildDir, ".dll");
-            IEnumerable<string> assemblies_base = assemblies;
-            if (Directory.Exists(_buildDirBase))
+            IEnumerable<string> assemblies_base = Directory.Exists(_buildDirBase)
+                ? GetSourceFilesFromDir(_buildDirBase, ".dll")
+                : Enumerable.Empty<string>();
+
+            List<string> assemblies = new List<string>();
+            foreach (var p in _rootDir)
             {
-                assemblies_base = GetSourceFilesFromDir(_buildDirBase, ".dll");
+                if (Directory.Exists(p))
+                {
+                    // We search for all .dll files in all input directories
+                    assemblies.AddRange(GetSourceFilesFromDir(p, ".dll"));
+                }
             }
+            // Let's keep only one of each DLL based on the file name!
+            assemblies = assemblies.GroupBy(x => System.IO.Path.GetFileName(x))
+                                   .Select(g => g.First())
+                                   .ToList();
 
             List<SyntaxTree> trees = new List<SyntaxTree>();
             foreach (string file in allFiles)
@@ -208,11 +205,11 @@ namespace CSharpParser
                 compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
             }
 
-            await ParalellRun(csharpConnectionString, threadNum, trees, compilation);
+            await ParalellRun(csharpConnectionString, threadNum, trees, compilation, fileToTargetDll);
         }
 
         private static async Task<int> ParalellRun(string csharpConnectionString, int threadNum,
-            List<SyntaxTree> trees, CSharpCompilation compilation)
+            List<SyntaxTree> trees, CSharpCompilation compilation, Dictionary<string, string> fileToTargetDll)
         {
             var options = new DbContextOptionsBuilder<CsharpDbContext>()
                 .UseNpgsql(csharpConnectionString)
@@ -231,8 +228,8 @@ namespace CSharpParser
             int maxThread = threadNum < trees.Count() ? threadNum : trees.Count();
             Console.WriteLine(threadNum);
             for (int i = 0; i < maxThread; i++)
-            {                
-                ParsingTasks.Add(ParseTree(contextList[i],trees[i],compilation,i));
+            {
+                ParsingTasks.Add(ParseTree(contextList[i], trees[i], compilation, i, fileToTargetDll));
             }
 
             int nextTreeIndex = maxThread;
@@ -245,7 +242,7 @@ namespace CSharpParser
                 if (nextTreeIndex < trees.Count)
                 {
                     ParsingTasks.Add(ParseTree(contextList[nextContextIndex],
-                        trees[nextTreeIndex],compilation,nextContextIndex));
+                        trees[nextTreeIndex], compilation, nextContextIndex, fileToTargetDll));
                     ++nextTreeIndex;
                 }
             }
@@ -258,16 +255,31 @@ namespace CSharpParser
             return 0;
         }
 
-        private static async Task<int> ParseTree(CsharpDbContext context, 
-            SyntaxTree tree, CSharpCompilation compilation, int index)
+        private static async Task<int> ParseTree(CsharpDbContext context,
+            SyntaxTree tree, CSharpCompilation compilation, int index,
+            Dictionary<string, string> fileToTargetDll)
         {
             var ParsingTask = Task.Run(() =>
             {
                 Console.WriteLine("ParallelRun " + tree.FilePath);
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(context, model, tree);
-                visitor.Visit(tree.GetCompilationUnitRoot());                
-                Console.WriteLine((visitor.FullyParsed ? "+" : "-") + tree.FilePath);
+                visitor.Visit(tree.GetCompilationUnitRoot());
+
+                context.SaveChanges();
+                context.ChangeTracker.Clear();
+
+                string target = fileToTargetDll.ContainsKey(tree.FilePath) ? fileToTargetDll[tree.FilePath] : "";
+
+                var resultData = new
+                {
+                    fullyParsed = visitor.FullyParsed,
+                    filePath = tree.FilePath,
+                    targetDll = target
+                };
+
+                Console.WriteLine("JSON_READY:" + JsonSerializer.Serialize(resultData));
+
                 return index;
             });
             return await ParsingTask;
@@ -275,8 +287,7 @@ namespace CSharpParser
 
         public static IEnumerable<string> GetSourceFilesFromDir(string root, string extension)
         {
-            IEnumerable<string> allFiles = new string[]{};
-            // Data structure to hold names of subfolders. 
+            IEnumerable<string> allFiles = new string[] { };
             ArrayList dirs = new ArrayList();
 
             if (!System.IO.Directory.Exists(root))
@@ -305,7 +316,6 @@ namespace CSharpParser
                     continue;
                 }
 
-                // Add the subdirectories for traversal.
                 dirs.AddRange(subDirs);
 
                 string[] files = null;
@@ -329,13 +339,13 @@ namespace CSharpParser
                     try
                     {
                         System.IO.FileInfo fi = new System.IO.FileInfo(file);
-                        if (fi.Extension == extension) {
+                        if (fi.Extension == extension)
+                        {
                             allFiles = allFiles.Append(file);
                         }
                     }
                     catch (System.IO.FileNotFoundException e)
                     {
-                        // If file was deleted by a separate application
                         Console.WriteLine(e.Message);
                     }
                 }
@@ -346,15 +356,15 @@ namespace CSharpParser
 
         private static string transformConnectionString()
         {
-            _connectionString = _connectionString.Substring(_connectionString.IndexOf(':')+1);
+            _connectionString = _connectionString.Substring(_connectionString.IndexOf(':') + 1);
             _connectionString = _connectionString.Replace("user", "username");
-            string [] properties = _connectionString.Split(';');
+            string[] properties = _connectionString.Split(';');
             string csharpConnectionString = "";
             for (int i = 0; i < properties.Length; ++i)
             {
-                csharpConnectionString += properties[i].Substring(0,1).ToUpper()
+                csharpConnectionString += properties[i].Substring(0, 1).ToUpper()
                     + properties[i].Substring(1);
-                if (i < properties.Length-1)
+                if (i < properties.Length - 1)
                 {
                     csharpConnectionString += ";";
                 }
@@ -406,7 +416,6 @@ namespace CSharpParser
             var projectPaths = new List<string>();
             var solutionDir = Path.GetDirectoryName(solutionPath) ?? string.Empty;
 
-            // Works for both classic .sln rows and .slnx quoted project paths.
             var csprojRegex = new Regex(
                 "\"([^\"]+\\.csproj)\"",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -494,18 +503,16 @@ namespace CSharpParser
             return workspace;
         }
 
-
         private static async Task<Solution> LoadSolutionAsync(string solutionPath)
         {
             Console.WriteLine($"Loading solution: {solutionPath}");
             using var workspace = CreateMsBuildWorkspace();
-            
+
             var solution = await workspace.OpenSolutionAsync(solutionPath);
             Console.WriteLine($"Solution loaded: {solution.FilePath}");
             Console.WriteLine($"Projects found: {solution.Projects.Count()}");
             return solution;
         }
-
 
         private static async Task ParseSolutionAsync(
             Solution solution,
@@ -532,21 +539,24 @@ namespace CSharpParser
 
             if (compilation == null)
             {
-                Console.WriteLine($"- Compilation failed for {project.Name}");
+                Console.WriteLine($"Compilation failed for {project.Name}");
                 return;
             }
 
             var documents = project.Documents
                 .Where(d => !string.IsNullOrEmpty(d.FilePath))
                 .ToList();
-            Console.WriteLine($"- Documents in {project.Name}: {documents.Count}");
+            Console.WriteLine($"Documents in {project.Name}: {documents.Count}");
+
+            string targetDll = project.OutputFilePath ?? $"{project.Name}.dll";
 
             await ProcessDocumentsInParallel(
                 documents,
                 compilation,
                 csharpConnectionString,
                 threadCount,
-                project.Name
+                project.Name,
+                targetDll
             );
         }
 
@@ -555,7 +565,8 @@ namespace CSharpParser
             Compilation compilation,
             string csharpConnectionString,
             int threadCount,
-            string projectName)
+            string projectName,
+            string targetDll)
         {
             if (documents.Count == 0)
             {
@@ -582,7 +593,8 @@ namespace CSharpParser
                             document,
                             compilation,
                             localDbContext,
-                            projectName
+                            projectName,
+                            targetDll
                         );
                     }
 
@@ -596,32 +608,48 @@ namespace CSharpParser
             Document document,
             Compilation compilation,
             CsharpDbContext dbContext,
-            string projectName)
+            string projectName,
+            string targetDll)
         {
             try
             {
                 var syntaxTree = await document.GetSyntaxTreeAsync();
                 if (syntaxTree == null) return;
-                
+
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                
+
                 var visitor = new AstVisitor(
                     dbContext,
                     semanticModel,
                     syntaxTree);
-                
+
                 var root = await syntaxTree.GetRootAsync();
                 visitor.Visit(root);
-                
-                string status = visitor.FullyParsed ? "+" : "-";
+
                 Console.WriteLine($"[{projectName}] {document.FilePath}");
-                Console.WriteLine($"{status}{document.FilePath}");
+
+                var resultData = new
+                {
+                    fullyParsed = visitor.FullyParsed,
+                    filePath = document.FilePath,
+                    targetDll = targetDll
+                };
+
+                Console.WriteLine("JSON_READY:" + JsonSerializer.Serialize(resultData));
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Error parsing {document.FilePath}: {ex.Message}");
                 Console.WriteLine($"[{projectName}] {document.FilePath}");
-                Console.WriteLine($"-{document.FilePath}");
+
+                var resultData = new
+                {
+                    fullyParsed = false,
+                    filePath = document.FilePath ?? "",
+                    targetDll = targetDll
+                };
+
+                Console.WriteLine("JSON_READY:" + JsonSerializer.Serialize(resultData));
             }
         }
     }

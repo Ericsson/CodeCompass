@@ -94,11 +94,13 @@ namespace CSharpParser
             astNode.SetLocation(Tree.GetLineSpan(node.Span));
             astNode.Id = createIdentifier(astNode);          
 
-            if (DbContext.CsharpAstNodes.Find(astNode.Id) == null)
+            var existingNode = DbContext.CsharpAstNodes.Find(astNode.Id);
+            if (existingNode == null)
             {
                 DbContext.CsharpAstNodes.Add(astNode);
+                return astNode;
             }
-            return astNode;
+            return existingNode;
         }
 
         private CsharpAstNode AstNode(SyntaxNode node, AstSymbolTypeEnum type)
