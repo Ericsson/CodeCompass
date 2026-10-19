@@ -54,7 +54,8 @@ add_test(NAME pythonparser COMMAND pythonparsertest
        --name pythonparsertest \
        --input ${CMAKE_CURRENT_SOURCE_DIR}/sources/ \
        --workspace ${CMAKE_CURRENT_BINARY_DIR}/workdir/ \
-       --force"
+       --force \
+       --debug"
     "${TEST_DB}")
 
 add_test(NAME pythonservice COMMAND pythonservicetest
@@ -64,5 +65,6 @@ add_test(NAME pythonservice COMMAND pythonservicetest
        --name pythonservicetest \
        --input ${CMAKE_CURRENT_SOURCE_DIR}/sources/ \
        --workspace ${CMAKE_CURRENT_BINARY_DIR}/workdir/ \
-       --force"
+       --force \
+       --debug"
     "${TEST_DB}")
