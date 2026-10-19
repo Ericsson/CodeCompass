@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+
+#if __linux__
 #include <sys/prctl.h>
+#endif
 
 namespace cc
 {
@@ -75,10 +78,13 @@ int PipedProcess::startProcess(bool dieWithMe_)
     throw Failure("fork failed!");
   }
 
+#if __linux__
+  // prctl.h is not available on macOS
   if (_childPid == 0 && dieWithMe_)
   {
     ::prctl(PR_SET_PDEATHSIG, SIGTERM);
   }
+#endif
 
   return _childPid;
 }

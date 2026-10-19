@@ -2,6 +2,7 @@ include_directories(
   ${PROJECT_BINARY_DIR}/service/project/gen-cpp)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(

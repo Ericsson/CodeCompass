@@ -170,6 +170,16 @@ bool CppParser::isNonSourceFlag(const std::string& arg_) const
   return arg_.find("-Wl,") == 0;
 }
 
+bool CppParser::isObjectiveCpp(const clang::tooling::CompileCommand& command_) const
+{
+  for (std::size_t i = 1; i < command_.CommandLine.size(); ++i)
+  {
+    if (command_.CommandLine[i - 1] ==  "-x" && command_.CommandLine[i] == "objective-c++")
+      return true;
+  }
+  return false;
+}
+
 std::map<std::string, std::string> CppParser::extractInputOutputs(
   const clang::tooling::CompileCommand& command_) const
 {
@@ -755,7 +765,7 @@ bool CppParser::parseByJson(
     std::remove_if(compileCommands.begin(), compileCommands.end(),
       [&](const clang::tooling::CompileCommand& c)
       {
-        return !isSourceFile(c.Filename);
+        return !isSourceFile(c.Filename) || isObjectiveCpp(c);
       }),
     compileCommands.end());
 

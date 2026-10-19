@@ -34,11 +34,11 @@ public:
 
   ~PPMacroCallback();
 
-  virtual void MacroExpands(
+  /*virtual void MacroExpands(
     const clang::Token& macroNameTok_,
     const clang::MacroDefinition& md_,
     clang::SourceRange range_,
-    const clang::MacroArgs* args_) override;
+    const clang::MacroArgs* args_) override;*/
 
   virtual void MacroDefined(
     const clang::Token& macroNameTok_,

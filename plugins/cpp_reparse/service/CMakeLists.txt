@@ -13,6 +13,7 @@ include_directories(
   ${cpp_PLUGIN_DIR}/parser/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
   ${LLVM_INCLUDE_DIRS}
   ${CLANG_INCLUDE_DIRS})
@@ -69,8 +70,7 @@ target_link_libraries(cppreparseservice
   clangFrontend
   clangBasic
   clangAST
-  clang
-  )
+  clang)
 
 install(TARGETS cppreparseservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift()

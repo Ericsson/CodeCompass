@@ -12,6 +12,11 @@
 
 #include <webserver/mongoose.h>
 
+#if __APPLE__
+// Not included in signal.h for macOS, as it is a GNU extension
+typedef void (* sighandler_t)(int);
+#endif
+
 namespace cc
 {
 namespace webserver
