@@ -70,8 +70,14 @@ void CsharpServiceHandler::getAstNodeInfo(
     return _db->query_one<model::File>(
       FileQuery::path == return_.range.file);
   });
+  if (!file)
+  {
+    LOG(warning) << "[csharpservice] getAstNodeInfo: file not found for path: " << return_.range.file;
+    return_.range.file = ""; // File ID not found safely clear the file path instead of propagating string path
+    return;
+  }
   std::stringstream ss;
-  ss << file;
+  ss << file->id;
   return_.range.file = ss.str();
   //LOG(info) << "csharpQuery.getAstNodeInfo: file = " << return_.range.file;
 }
@@ -203,10 +209,14 @@ void CsharpServiceHandler::getReferences(
   for (AstNodeInfo nodeinfo : return_)
   {
     model::FilePtr file = _transaction([&, this](){
-    return _db->query_one<model::File>(
-    FileQuery::path == nodeinfo.range.file);
+      return _db->query_one<model::File>(
+        FileQuery::path == nodeinfo.range.file);
     });
-    
+    if (!file)
+    {
+      LOG(warning) << "[csharpservice] getReferences: file not found for path: " << nodeinfo.range.file;
+      continue;
+    }
     std::stringstream ss;
     ss << file->id;
     nodeinfo.range.file = ss.str();
@@ -254,6 +264,11 @@ std::int32_t CsharpServiceHandler::getFileReferenceCount(
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
   });
+  if (!file)
+  {
+    LOG(warning) << "[csharpservice] getFileReferenceCount: file not found for id: " << fileId_;
+    return 0;
+  }
   return _csharpQueryHandler.getFileReferenceCount(file->path, referenceId_);
 }
 
@@ -267,6 +282,11 @@ void CsharpServiceHandler::getFileReferences(
     return _db->query_one<model::File>(
       FileQuery::id == std::stoull(fileId_));
   });
+  if (!file)
+  {
+    LOG(warning) << "[csharpservice] getFileReferences: file not found for id: " << fileId_;
+    return;
+  }
   _csharpQueryHandler.getFileReferences(return_, file->path, referenceId_);
 }
 

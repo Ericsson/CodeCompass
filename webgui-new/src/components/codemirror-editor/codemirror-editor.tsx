@@ -1,33 +1,54 @@
-import ReactCodeMirror, { Decoration, EditorView, Extension, ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { AccordionLabel } from 'enums/accordion-enum';
-import { ThemeContext } from 'global-context/theme-context';
-import React, { useContext, useRef, useState, useEffect, MouseEvent } from 'react';
-import { createClient, getAstNodeInfoByPosition, getReferenceTypes, getReferences } from 'service/language-service';
-import { AstNodeInfo, FileInfo, Position, Range } from '@thrift-generated';
-import { cpp } from '@codemirror/lang-cpp';
-import { python } from '@codemirror/lang-python';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import { EditorContextMenu } from 'components/editor-context-menu/editor-context-menu';
-import { FileName } from 'components/file-name/file-name';
-import { AppContext } from 'global-context/app-context';
-import { getFileContent, getFileInfo } from 'service/project-service';
-import { convertSelectionRangeToString, convertSelectionStringToRange, formatDate } from 'utils/utils';
-import { TabName } from 'enums/tab-enum';
-import { getRepositoryByProjectPath } from 'service/git-service';
-import { useRouter } from 'next/router';
-import { RouterQueryType } from 'utils/types';
-import { Tooltip, alpha } from '@mui/material';
-import * as SC from './styled-components';
-import { useTranslation } from 'react-i18next';
-import { sendGAEvent } from 'utils/analytics';
+import ReactCodeMirror, {
+  Decoration,
+  EditorView,
+  Extension,
+  ReactCodeMirrorRef,
+} from "@uiw/react-codemirror";
+import { AccordionLabel } from "enums/accordion-enum";
+import { ThemeContext } from "global-context/theme-context";
+import React, {
+  useContext,
+  useRef,
+  useState,
+  useEffect,
+  MouseEvent,
+} from "react";
+import {
+  createClient,
+  getAstNodeInfoByPosition,
+  getReferenceTypes,
+  getReferences,
+} from "service/language-service";
+import { AstNodeInfo, FileInfo, Position, Range } from "@thrift-generated";
+import { cpp } from "@codemirror/lang-cpp";
+import { csharp } from "@replit/codemirror-lang-csharp";
+import { python } from "@codemirror/lang-python";
+import { githubDark, githubLight } from "@uiw/codemirror-theme-github";
+import { EditorContextMenu } from "components/editor-context-menu/editor-context-menu";
+import { FileName } from "components/file-name/file-name";
+import { AppContext } from "global-context/app-context";
+import { getFileContent, getFileInfo } from "service/project-service";
+import {
+  convertSelectionRangeToString,
+  convertSelectionStringToRange,
+  formatDate,
+} from "utils/utils";
+import { TabName } from "enums/tab-enum";
+import { getRepositoryByProjectPath } from "service/git-service";
+import { useRouter } from "next/router";
+import { RouterQueryType } from "utils/types";
+import { Tooltip, alpha } from "@mui/material";
+import * as SC from "./styled-components";
+import { useTranslation } from "react-i18next";
+import { sendGAEvent } from "utils/analytics";
 
 type HighlightPosition = {
-  startpos: {line: number, column: number}
-  endpos: {line: number, column: number}
-}
+  startpos: { line: number; column: number };
+  endpos: { line: number; column: number };
+};
 
-const HIGHLIGHT_FOR_DARK = 'rgba(187, 181, 255, 0.3)';
-const HIGHLIGHT_FOR_LIGHT = '#f0d8a8';
+const HIGHLIGHT_FOR_DARK = "rgba(187, 181, 255, 0.3)";
+const HIGHLIGHT_FOR_LIGHT = "#f0d8a8";
 
 export const CodeMirrorEditor = (): JSX.Element => {
   const { t } = useTranslation();
@@ -38,19 +59,24 @@ export const CodeMirrorEditor = (): JSX.Element => {
   const editorRef = useRef<ReactCodeMirrorRef | null>(null);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [fileContent, setFileContent] = useState<string>('');
+  const [fileContent, setFileContent] = useState<string>("");
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
   } | null>(null);
-  const [highlightRanges, setHighlightRanges] = useState<HighlightPosition[]>([]);
-  const [visitedLastAstNode, setVisitedLastAstNode] = useState<AstNodeInfo | null>(null);
-  const [highlightColor, setHighlightColor] = useState(theme === 'dark' ?  HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT);
+  const [highlightRanges, setHighlightRanges] = useState<HighlightPosition[]>(
+    [],
+  );
+  const [visitedLastAstNode, setVisitedLastAstNode] =
+    useState<AstNodeInfo | null>(null);
+  const [highlightColor, setHighlightColor] = useState(
+    theme === "dark" ? HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT,
+  );
 
   useEffect(() => {
     if (!appCtx.workspaceId) return;
     setFileInfo(undefined);
-    setFileContent('');
+    setFileContent("");
   }, [appCtx.workspaceId]);
 
   useEffect(() => {
@@ -70,19 +96,32 @@ export const CodeMirrorEditor = (): JSX.Element => {
   }, [appCtx.editorSelection, fileContent]);
 
   useEffect(() => {
-    setHighlightColor(theme === 'dark' ? HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT);
-  }, [theme])
+    setHighlightColor(
+      theme === "dark" ? HIGHLIGHT_FOR_DARK : HIGHLIGHT_FOR_LIGHT,
+    );
+  }, [theme]);
 
   useEffect(() => {
-    if(!editorRef.current || !editorRef.current.view) return;
-    setHighlightRanges([]);
-
     createClient(appCtx.workspaceId, fileInfo?.type);
-  }, [appCtx.workspaceId, fileInfo, fileContent])
+  }, [appCtx.workspaceId, fileInfo]);
 
-  const createHighlightDecoration = (view: EditorView, highlightPosition: HighlightPosition, highlightColor: string) => {
-    if (!editorRef.current || !editorRef.current.state || !editorRef.current.view) return;
-    
+  useEffect(() => {
+    if (!editorRef.current || !editorRef.current.view) return;
+    setHighlightRanges([]);
+  }, [appCtx.workspaceId, fileInfo, fileContent]);
+
+  const createHighlightDecoration = (
+    view: EditorView,
+    highlightPosition: HighlightPosition,
+    highlightColor: string,
+  ) => {
+    if (
+      !editorRef.current ||
+      !editorRef.current.state ||
+      !editorRef.current.view
+    )
+      return;
+
     const startPos = highlightPosition.startpos as Position;
     const endPos = highlightPosition.endpos as Position;
 
@@ -91,51 +130,76 @@ export const CodeMirrorEditor = (): JSX.Element => {
       (startPos.column as number) -
       1;
     const to =
-      view.state.doc.line(endPos.line as number).from + (endPos.column as number) - 1;
+      view.state.doc.line(endPos.line as number).from +
+      (endPos.column as number) -
+      1;
 
     return Decoration.mark({
       attributes: { style: `background-color:${highlightColor}` },
     }).range(from, to);
   };
-  
-  const highlightExtension = () => {return EditorView.decorations.of((view) => {
-    const decorations = highlightRanges.map((pos) => createHighlightDecoration(view, pos, highlightColor)) as never;
-    return Decoration.set(decorations, true);
-  })}
 
-  const languageExtension = (fileType?: string) =>
-  {
-    switch(fileType)
-    {
+  const highlightExtension = () => {
+    return EditorView.decorations.of((view) => {
+      const decorations = highlightRanges
+        .map((pos) => createHighlightDecoration(view, pos, highlightColor))
+        .filter((d) => d !== undefined) as never;
+      return Decoration.set(decorations, true);
+    });
+  };
+
+  const languageExtension = (fileType?: string) => {
+    switch (fileType) {
       case "CPP":
         return cpp();
+      case "CS":
+        return csharp();
       case "PY":
         return python();
       default:
         return null;
     }
-  }
+  };
 
-  const updateHighlights = async (astNode : AstNodeInfo) => {
-    const refTypes = await getReferenceTypes(astNode.id as string)
-    if(visitedLastAstNode?.id !== astNode.id){
-      const allReferences = await getReferences(astNode.id as string, refTypes.get('Usage') as number, []);
-      const referencesInFile = allReferences.filter(ref => ref.range?.file === fileInfo?.id);
-      setHighlightRanges(referencesInFile.map(nodeInfo => {
-        const startpos = nodeInfo?.range?.range?.startpos as { line: number, column: number };
-        const endpos = nodeInfo?.range?.range?.endpos as { line: number, column: number };
-        return {
-          startpos: { line: startpos.line, column: startpos.column },
-          endpos: { line: endpos.line, column: endpos.column }
-        };
-      }));
+  const updateHighlights = async (astNode: AstNodeInfo) => {
+    const refTypes = await getReferenceTypes(astNode.id as string);
+    if (visitedLastAstNode?.id !== astNode.id) {
+      const usageReferenceType = refTypes.get("Usage");
+      if (usageReferenceType === undefined) {
+        setHighlightRanges([]);
+        setVisitedLastAstNode(null);
+        return;
+      }
+      const allReferences = await getReferences(
+        astNode.id as string,
+        usageReferenceType,
+        [],
+      );
+      const referencesInFile = allReferences.filter(
+        (ref) => ref.range?.file === fileInfo?.id,
+      );
+      setHighlightRanges(
+        referencesInFile.map((nodeInfo) => {
+          const startpos = nodeInfo?.range?.range?.startpos as {
+            line: number;
+            column: number;
+          };
+          const endpos = nodeInfo?.range?.range?.endpos as {
+            line: number;
+            column: number;
+          };
+          return {
+            startpos: { line: startpos.line, column: startpos.column },
+            endpos: { line: endpos.line, column: endpos.column },
+          };
+        }),
+      );
       setVisitedLastAstNode(astNode);
-
-    }else{
+    } else {
       setHighlightRanges([]);
       setVisitedLastAstNode(null);
     }
-  }
+  };
 
   const dispatchSelection = (range: Range) => {
     if (!range || !range.startpos || !range.endpos) return;
@@ -146,8 +210,14 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const editor = editorRef.current?.view;
     if (editor) {
       try {
-        const fromPos = editor.state.doc.line(startLine as number).from + (startCol as number) - 1;
-        const codeSnippetEnd = editor.state.doc.line(endLine as number).from + (endCol as number) - 1;
+        const fromPos =
+          editor.state.doc.line(startLine as number).from +
+          (startCol as number) -
+          1;
+        const codeSnippetEnd =
+          editor.state.doc.line(endLine as number).from +
+          (endCol as number) -
+          1;
         const startLineEnd = editor.state.doc.line(startLine as number).to;
         const toPos = Math.min(codeSnippetEnd, startLineEnd);
 
@@ -172,7 +242,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
             mouseX: event.clientX + 2,
             mouseY: event.clientY - 6,
           }
-        : null
+        : null,
     );
     handleAstNodeSelect();
   };
@@ -188,13 +258,17 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const column = view.state.selection.ranges[0].head - line.from;
 
     const astNodeInfo =
-      fileInfo?.type === 'Unknown'
+      fileInfo?.type === "Unknown"
         ? null
-        : await getAstNodeInfoByPosition(fileInfo?.id as string, line.number, column);
+        : await getAstNodeInfoByPosition(
+            fileInfo?.id as string,
+            line.number,
+            column,
+          );
 
     if (astNodeInfo) {
       sendGAEvent({
-        event_action: 'click_on_word',
+        event_action: "click_on_word",
         event_category: appCtx.workspaceId,
         event_label: `${fileInfo?.name}: ${astNodeInfo.astNodeValue}`,
       });
@@ -202,7 +276,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
       await updateHighlights(astNodeInfo);
       dispatchSelection(nodeRange);
       router.push({
-        pathname: '/project',
+        pathname: "/project",
         query: {
           ...router.query,
           editorSelection: convertSelectionRangeToString(nodeRange),
@@ -222,7 +296,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
         }),
       });
       sendGAEvent({
-        event_action: 'click_on_word',
+        event_action: "click_on_word",
         event_category: appCtx.workspaceId,
         event_label: `${fileInfo?.name}: ${convertSelectionRangeToString(range)}`,
       });
@@ -230,11 +304,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
       setVisitedLastAstNode(null);
       dispatchSelection(range);
       router.push({
-        pathname: '/project',
+        pathname: "/project",
         query: {
           ...router.query,
           editorSelection: convertSelectionRangeToString(range),
-          languageNodeId: '',
+          languageNodeId: "",
         } as RouterQueryType,
       });
     }
@@ -243,7 +317,7 @@ export const CodeMirrorEditor = (): JSX.Element => {
   const getCommitInfo = async (finalCommitId: string) => {
     const repo = await getRepositoryByProjectPath(fileInfo?.path as string);
     router.push({
-      pathname: '/project',
+      pathname: "/project",
       query: {
         ...router.query,
         gitRepoId: repo?.repoId as string,
@@ -258,9 +332,11 @@ export const CodeMirrorEditor = (): JSX.Element => {
     const renderedLines = appCtx.gitBlameInfo.map((info, idx) => {
       const trimmedMessage =
         (info?.finalCommitMessage?.length as number) > 27
-          ? `${info.finalCommitMessage?.split('').slice(0, 27).join('')}...`
+          ? `${info.finalCommitMessage?.split("").slice(0, 27).join("")}...`
           : info?.finalCommitMessage;
-      const date = formatDate(new Date((info.finalSignature?.time as unknown as number) * 1000));
+      const date = formatDate(
+        new Date((info.finalSignature?.time as unknown as number) * 1000),
+      );
 
       previousLineCount = info.linesInHunk as number;
       const lineHeight = 17.9 * previousLineCount;
@@ -269,39 +345,40 @@ export const CodeMirrorEditor = (): JSX.Element => {
         <Tooltip
           key={idx}
           title={
-            <div style={{ width: 'max-content' }}>
+            <div style={{ width: "max-content" }}>
               <div>{`#${info.finalCommitId?.substring(0, 8)} `}</div>
               <div>{info.finalCommitMessage}</div>
               <div>{`${info.finalSignature?.name} (${info.finalSignature?.email})`}</div>
-              <div>{t('gitBlame.commitedOn', { date })}</div>
+              <div>{t("gitBlame.commitedOn", { date })}</div>
             </div>
           }
-          placement={'top-start'}
+          placement={"top-start"}
           componentsProps={{
             tooltip: {
               sx: {
-                fontSize: '0.85rem',
-                padding: '10px',
-                width: '400px',
-                height: 'auto',
-                overflow: 'scroll',
+                fontSize: "0.85rem",
+                padding: "10px",
+                width: "400px",
+                height: "auto",
+                overflow: "scroll",
               },
             },
           }}
         >
           <SC.GitBlameLine
             sx={{
-              cursor: 'pointer',
+              cursor: "pointer",
               marginBottom: `${lineHeight}px`,
               borderTop: (theme) => `1px solid ${theme.colors?.primary}`,
-              ':hover': {
-                backgroundColor: (theme) => alpha(theme.backgroundColors?.secondary as string, 0.3),
+              ":hover": {
+                backgroundColor: (theme) =>
+                  alpha(theme.backgroundColors?.secondary as string, 0.3),
               },
             }}
             onClick={() => getCommitInfo(info.finalCommitId as string)}
           >
             <div>{trimmedMessage}</div>
-            <div>{t('gitBlame.onDate', { date })}</div>
+            <div>{t("gitBlame.onDate", { date })}</div>
           </SC.GitBlameLine>
         </Tooltip>
       );
@@ -313,19 +390,19 @@ export const CodeMirrorEditor = (): JSX.Element => {
   return (
     <>
       <FileName
-        fileName={fileInfo ? (fileInfo.name as string) : ''}
-        filePath={fileInfo ? (fileInfo.path as string) : ''}
+        fileName={fileInfo ? (fileInfo.name as string) : ""}
+        filePath={fileInfo ? (fileInfo.path as string) : ""}
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
         gitBlameEnabled={appCtx.gitBlameInfo.length !== 0}
-        hideFileRefMenu={fileInfo?.type === 'Unknown'}
+        hideFileRefMenu={fileInfo?.type === "Unknown"}
       />
       <SC.OuterContainer>
         <SC.GitBlameContainer
-          id={'gitBlameContainer'}
-          sx={{ display: appCtx.gitBlameInfo.length ? 'flex' : 'none' }}
+          id={"gitBlameContainer"}
+          sx={{ display: appCtx.gitBlameInfo.length ? "flex" : "none" }}
           onScroll={(e) => {
-            const editor = document.querySelector('.cm-scroller');
+            const editor = document.querySelector(".cm-scroller");
             if (!editor) return;
             const scroll = e.currentTarget.scrollTop;
             editor.scrollTop = scroll;
@@ -335,28 +412,40 @@ export const CodeMirrorEditor = (): JSX.Element => {
         </SC.GitBlameContainer>
         <ReactCodeMirror
           readOnly={true}
-          extensions={[languageExtension(fileInfo?.type), highlightExtension()].filter(e => e) as Extension[]}
-          theme={theme === 'dark' ? githubDark : githubLight}
+          extensions={
+            [languageExtension(fileInfo?.type), highlightExtension()].filter(
+              (e) => e,
+            ) as Extension[]
+          }
+          theme={theme === "dark" ? githubDark : githubLight}
           basicSetup={{
             syntaxHighlighting: false,
             highlightSelectionMatches: false,
-            highlightActiveLine: false
+            highlightActiveLine: false,
           }}
-          style={{ fontSize: '0.8rem' }}
-          width={appCtx.gitBlameInfo.length !== 0 ? 'calc(100vw - 280px - 400px)' : 'calc(100vw - 280px)'}
-          height={'100%'}
-          minWidth={'calc(1460px - 280px)'}
-          maxWidth={'calc(100vw - 280px)'}
-          maxHeight={'calc(100vh - 78px - 48px - 49px)'}
-          value={fileContent ?? ''}
+          style={{ fontSize: "0.8rem" }}
+          width={
+            appCtx.gitBlameInfo.length !== 0
+              ? "calc(100vw - 280px - 400px)"
+              : "calc(100vw - 280px)"
+          }
+          height={"100%"}
+          minWidth={"calc(1460px - 280px)"}
+          maxWidth={"calc(100vw - 280px)"}
+          maxHeight={"calc(100vh - 78px - 48px - 49px)"}
+          value={fileContent ?? ""}
           ref={editorRef}
           onCreateEditor={(view, state) => {
             editorRef.current = { view, state };
 
-            const cmScroller = document.querySelector('.cm-scroller') as HTMLDivElement;
-            const gitBlameContainer = document.querySelector('#gitBlameContainer') as HTMLDivElement;
+            const cmScroller = document.querySelector(
+              ".cm-scroller",
+            ) as HTMLDivElement;
+            const gitBlameContainer = document.querySelector(
+              "#gitBlameContainer",
+            ) as HTMLDivElement;
 
-            cmScroller.addEventListener('scroll', () => {
+            cmScroller.addEventListener("scroll", () => {
               gitBlameContainer.scrollTop = cmScroller.scrollTop;
             });
           }}
@@ -367,7 +456,10 @@ export const CodeMirrorEditor = (): JSX.Element => {
           onContextMenu={(e) => handleContextMenu(e)}
         />
       </SC.OuterContainer>
-      <EditorContextMenu contextMenu={contextMenu} setContextMenu={setContextMenu} />
+      <EditorContextMenu
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+      />
     </>
   );
 };

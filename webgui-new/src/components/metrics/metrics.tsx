@@ -8,16 +8,23 @@ import {
   OutlinedInput,
   Select,
   Tooltip,
-} from '@mui/material';
-import { FileName } from 'components/file-name/file-name';
-import React, { Dispatch, SetStateAction, useContext, useEffect, useMemo, useState } from 'react';
-import { getMetrics, getMetricsTypeNames } from 'service/metrics-service';
-import { FileInfo, MetricsType, MetricsTypeName } from '@thrift-generated';
-import { Treemap } from 'recharts';
-import { AppContext } from 'global-context/app-context';
-import { getFileInfoByPath } from 'service/project-service';
-import * as SC from './styled-components';
-import { useTranslation } from 'react-i18next';
+} from "@mui/material";
+import { FileName } from "components/file-name/file-name";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { getMetrics, getMetricsTypeNames } from "service/metrics-service";
+import { FileInfo, MetricsType, MetricsTypeName } from "@thrift-generated";
+import { Treemap } from "recharts";
+import { AppContext } from "global-context/app-context";
+import { getFileInfoByPath } from "service/project-service";
+import * as SC from "./styled-components";
+import { useTranslation } from "react-i18next";
 
 type RespType = {
   [key: string]: {
@@ -50,7 +57,7 @@ const CustomizedContent = (
     filePath: string;
     setFilePath: Dispatch<SetStateAction<string>>;
     setFileInfo: Dispatch<SetStateAction<FileInfo | undefined>>;
-  }
+  },
 ): JSX.Element => {
   const { x, y, width, height, depth, size, name, children } = props as {
     x: number;
@@ -79,10 +86,10 @@ const CustomizedContent = (
     const newFileInfo = await getFileInfoByPath(newPath);
     const newData = children.map((child) =>
       Object.fromEntries([
-        ['name', child.name],
-        ['size', child.size],
-        ['children', child.children],
-      ])
+        ["name", child.name],
+        ["size", child.size],
+        ["children", child.children],
+      ]),
     );
 
     props.setFileInfo(newFileInfo);
@@ -100,14 +107,21 @@ const CustomizedContent = (
           height={height}
           sx={{
             fill: getDarkenedRGBCode(size),
-            stroke: '#FFF',
-            ':hover': {
-              fill: props.children ? '#9597E4' : getDarkenedRGBCode(size),
+            stroke: "#FFF",
+            ":hover": {
+              fill: props.children ? "#9597E4" : getDarkenedRGBCode(size),
             },
-            cursor: props.children ? 'pointer' : '',
+            cursor: props.children ? "pointer" : "",
           }}
         />
-        <text x={x + width / 2} y={y + height / 2} textAnchor="middle" fill="#fff" fontSize={14} strokeWidth={0.1}>
+        <text
+          x={x + width / 2}
+          y={y + height / 2}
+          textAnchor="middle"
+          fill="#fff"
+          fontSize={14}
+          strokeWidth={0.1}
+        >
           {name}
         </text>
       </g>
@@ -117,7 +131,7 @@ const CustomizedContent = (
   );
 };
 
-const fileTypeOptions = ['Unknown', 'Dir', 'Binary', 'CPP'];
+const fileTypeOptions = ["Unknown", "Dir", "Binary", "CPP", "CS"];
 
 const sumSizes = (node: DataItem): number => {
   let sum = 0;
@@ -148,7 +162,7 @@ const convertResObject = (res: RespType): DataItem => {
   for (const key in obj) {
     const value = obj[key];
 
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       const child = convertResObject({ [key]: value } as RespType);
       child.name = key;
       child.size = sumSizes(child);
@@ -166,12 +180,17 @@ export const Metrics = (): JSX.Element => {
   const appCtx = useContext(AppContext);
 
   const [fileInfo, setFileInfo] = useState<FileInfo | undefined>(undefined);
-  const [filePath, setFilePath] = useState<string>('');
-  const [initialPath, setInitialPath] = useState<string>('');
+  const [filePath, setFilePath] = useState<string>("");
+  const [initialPath, setInitialPath] = useState<string>("");
   const [data, setData] = useState<DataItem[] | undefined>(undefined);
-  const [selectedFileTypeOptions, setSelectedFileTypeOptions] = useState<string[]>(fileTypeOptions);
-  const [sizeDimension, setSizeDimension] = useState<MetricsTypeName | undefined>(undefined);
-  const [metricsTypeNames, setMetricsTypeNames] = useState<MetricsTypeName[]>([]);
+  const [selectedFileTypeOptions, setSelectedFileTypeOptions] =
+    useState<string[]>(fileTypeOptions);
+  const [sizeDimension, setSizeDimension] = useState<
+    MetricsTypeName | undefined
+  >(undefined);
+  const [metricsTypeNames, setMetricsTypeNames] = useState<MetricsTypeName[]>(
+    [],
+  );
 
   useEffect(() => {
     if (!appCtx.metricsGenId) return;
@@ -181,7 +200,7 @@ export const Metrics = (): JSX.Element => {
       const metricsRes = await getMetrics(
         appCtx.metricsGenId,
         fileTypeOptions,
-        initMetricsTypeNames[0].type as MetricsType
+        initMetricsTypeNames[0].type as MetricsType,
       );
       const convertedObject = convertResObject(JSON.parse(metricsRes));
 
@@ -209,7 +228,7 @@ export const Metrics = (): JSX.Element => {
     const metricsRes = await getMetrics(
       fInfo?.id as string,
       selectedFileTypeOptions,
-      sizeDimension?.type as MetricsType
+      sizeDimension?.type as MetricsType,
     );
     const convertedObject = convertResObject(JSON.parse(metricsRes));
     if (fPath) {
@@ -246,15 +265,15 @@ export const Metrics = (): JSX.Element => {
   return appCtx.metricsGenId && fileInfo && sizeDimension ? (
     <>
       <FileName
-        fileName={fileInfo ? (fileInfo.name as string) : ''}
-        filePath={fileInfo ? (fileInfo.path as string) : ''}
+        fileName={fileInfo ? (fileInfo.name as string) : ""}
+        filePath={fileInfo ? (fileInfo.path as string) : ""}
         parseStatus={fileInfo ? (fileInfo.parseStatus as number) : 4}
         info={fileInfo ?? undefined}
       />
       <SC.OuterContainer>
         <SC.MetricsOptionsContainer>
           <FormControl sx={{ width: 300 }}>
-            <InputLabel>{t('metrics.fileType')}</InputLabel>
+            <InputLabel>{t("metrics.fileType")}</InputLabel>
             <Select
               multiple
               value={selectedFileTypeOptions}
@@ -262,27 +281,33 @@ export const Metrics = (): JSX.Element => {
                 const {
                   target: { value },
                 } = e;
-                setSelectedFileTypeOptions(typeof value === 'string' ? value.split(',') : value);
+                setSelectedFileTypeOptions(
+                  typeof value === "string" ? value.split(",") : value,
+                );
               }}
-              input={<OutlinedInput label={t('metrics.fileType')} />}
-              renderValue={(selected) => selected.join(', ')}
+              input={<OutlinedInput label={t("metrics.fileType")} />}
+              renderValue={(selected) => selected.join(", ")}
             >
               {fileTypeOptions.map((type) => (
                 <MenuItem key={type} value={type}>
-                  <Checkbox checked={selectedFileTypeOptions.indexOf(type) > -1} />
+                  <Checkbox
+                    checked={selectedFileTypeOptions.indexOf(type) > -1}
+                  />
                   <ListItemText primary={type} />
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
           <FormControl>
-            <InputLabel>{t('metrics.sizeDimension')}</InputLabel>
+            <InputLabel>{t("metrics.sizeDimension")}</InputLabel>
             <Select
               value={sizeDimension.name}
-              label={t('metrics.sizeDimension')}
+              label={t("metrics.sizeDimension")}
               onChange={(e) =>
                 setSizeDimension(
-                  metricsTypeNames.find((typeName) => typeName.name === e.target.value) as MetricsTypeName
+                  metricsTypeNames.find(
+                    (typeName) => typeName.name === e.target.value,
+                  ) as MetricsTypeName,
                 )
               }
             >
@@ -293,28 +318,35 @@ export const Metrics = (): JSX.Element => {
               ))}
             </Select>
           </FormControl>
-          <Button onClick={() => generateMetrics()}>{t('metrics.drawMetrics')}</Button>
+          <Button onClick={() => generateMetrics()}>
+            {t("metrics.drawMetrics")}
+          </Button>
         </SC.MetricsOptionsContainer>
         <SC.StyledBreadcrumbs>
-          {filePath.split('/').map((p, idx) => (
+          {filePath.split("/").map((p, idx) => (
             <SC.StyledDiv
               key={idx}
               sx={
-                idx !== filePath.split('/').length - 1 && !initialPath.slice(0, -1).includes(p)
+                idx !== filePath.split("/").length - 1 &&
+                !initialPath.slice(0, -1).includes(p)
                   ? {
-                      cursor: 'pointer',
-                      ':hover': {
+                      cursor: "pointer",
+                      ":hover": {
                         color: (theme) => theme.backgroundColors?.secondary,
                       },
                     }
                   : {}
               }
               onClick={() => {
-                if (idx === filePath.split('/').length - 1 || initialPath.slice(0, -1).includes(p)) return;
+                if (
+                  idx === filePath.split("/").length - 1 ||
+                  initialPath.slice(0, -1).includes(p)
+                )
+                  return;
                 const trimmedPath = filePath
-                  ?.split('/')
+                  ?.split("/")
                   .slice(0, idx + 1)
-                  .join('/') as string;
+                  .join("/") as string;
                 generateMetrics(trimmedPath);
               }}
             >
@@ -326,6 +358,6 @@ export const Metrics = (): JSX.Element => {
       </SC.OuterContainer>
     </>
   ) : (
-    <SC.Placeholder>{t('metrics.noMetrics')}</SC.Placeholder>
+    <SC.Placeholder>{t("metrics.noMetrics")}</SC.Placeholder>
   );
 };

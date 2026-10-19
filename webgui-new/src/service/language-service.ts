@@ -1,29 +1,43 @@
-import thrift from 'thrift';
-import { LanguageService, FilePosition, Position } from '@thrift-generated';
-import { config } from './config';
-import { toast } from 'react-toastify';
+import thrift from "thrift";
+import { LanguageService, FilePosition, Position } from "@thrift-generated";
+import { config } from "./config";
+import { toast } from "react-toastify";
 
 let client: LanguageService.Client | undefined;
-export const createClient = (workspace: string, fileType: string | undefined) => {
+export const createClient = (
+  workspace: string,
+  fileType: string | undefined,
+) => {
+  client = undefined;
   if (!config || !fileType) return;
-  
-  const service = () => 
-  {
-    switch(fileType)
-    {
+
+  const service = () => {
+    switch (fileType) {
       case "CPP":
         return "CppService";
       case "PY":
         return "PythonService";
+      case "CS":
+        return "CsharpService";
+      default:
+        return undefined;
     }
   };
 
-  const connection = thrift.createXHRConnection(config.webserver_host, config.webserver_port, {
-    transport: thrift.TBufferedTransport,
-    protocol: thrift.TJSONProtocol,
-    https: config.webserver_https,
-    path: `${config.webserver_path}/${workspace}/${service()}`,
-  });
+  const serviceName = service();
+  if (!serviceName) return;
+
+  const connection = thrift.createXHRConnection(
+    config.webserver_host,
+    config.webserver_port,
+    {
+      transport: thrift.TBufferedTransport,
+      protocol: thrift.TJSONProtocol,
+      https: config.webserver_https,
+      path: `${config.webserver_path}/${workspace}/${serviceName}`,
+      timeout: 10000,
+    },
+  );
   client = thrift.createXHRClient(LanguageService, connection);
   return client;
 };
@@ -51,27 +65,27 @@ export const getFileDiagramTypes = async (fileId: string) => {
 
 export const getFileDiagram = async (fileId: string, diagramId: number) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getFileDiagram(fileId, diagramId);
   } catch (e) {
-    toast.error('Could not display diagram.');
+    toast.error("Could not display diagram.");
     console.error(e);
-    return '';
+    return "";
   }
 };
 
 export const getFileDiagramLegend = async (diagramId: number) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getFileDiagramLegend(diagramId);
   } catch (e) {
-    toast.error('Could not display diagram legend.');
+    toast.error("Could not display diagram legend.");
     console.error(e);
-    return '';
+    return "";
   }
 };
 
@@ -91,27 +105,27 @@ export const getDiagramTypes = async (astNodeId: string) => {
 
 export const getDiagram = async (astNodeId: string, diagramId: number) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getDiagram(astNodeId, diagramId);
   } catch (e) {
-    toast.error('Could not display diagram.');
+    toast.error("Could not display diagram.");
     console.error(e);
-    return '';
+    return "";
   }
 };
 
 export const getDiagramLegend = async (diagramId: number) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getDiagramLegend(diagramId);
   } catch (e) {
-    toast.error('Could not display diagram legend.');
+    toast.error("Could not display diagram legend.");
     console.error(e);
-    return '';
+    return "";
   }
 };
 
@@ -129,7 +143,10 @@ export const getFileReferenceTypes = async (fileId: string) => {
   return resultMap;
 };
 
-export const getFileReferences = async (fileId: string, referenceId: number) => {
+export const getFileReferences = async (
+  fileId: string,
+  referenceId: number,
+) => {
   if (!client) {
     return [];
   }
@@ -141,7 +158,10 @@ export const getFileReferences = async (fileId: string, referenceId: number) => 
   }
 };
 
-export const getFileReferenceCount = async (fileId: string, referenceId: number) => {
+export const getFileReferenceCount = async (
+  fileId: string,
+  referenceId: number,
+) => {
   if (!client) {
     return 0;
   }
@@ -167,7 +187,11 @@ export const getReferenceTypes = async (astNodeId: string) => {
   return resultMap;
 };
 
-export const getReferences = async (astNodeId: string, referenceId: number, tags: string[]) => {
+export const getReferences = async (
+  astNodeId: string,
+  referenceId: number,
+  tags: string[],
+) => {
   if (!client) {
     return [];
   }
@@ -179,7 +203,10 @@ export const getReferences = async (astNodeId: string, referenceId: number, tags
   }
 };
 
-export const getReferenceCount = async (astNodeId: string, referenceId: number) => {
+export const getReferenceCount = async (
+  astNodeId: string,
+  referenceId: number,
+) => {
   if (!client) {
     return 0;
   }
@@ -195,13 +222,18 @@ export const getReferencesInFile = async (
   astNodeId: string,
   referenceId: number,
   fileId: string,
-  tags: string[]
+  tags: string[],
 ) => {
   if (!client) {
     return [];
   }
   try {
-    return await client.getReferencesInFile(astNodeId, referenceId, fileId, tags);
+    return await client.getReferencesInFile(
+      astNodeId,
+      referenceId,
+      fileId,
+      tags,
+    );
   } catch (e) {
     console.error(e);
     return [];
@@ -212,13 +244,18 @@ export const getReferencesPage = async (
   astNodeId: string,
   referenceId: number,
   pageSize: number,
-  pageNo: number
+  pageNo: number,
 ) => {
   if (!client) {
     return [];
   }
   try {
-    return await client.getReferencesPage(astNodeId, referenceId, pageSize, pageNo);
+    return await client.getReferencesPage(
+      astNodeId,
+      referenceId,
+      pageSize,
+      pageNo,
+    );
   } catch (e) {
     console.error(e);
     return [];
@@ -227,13 +264,13 @@ export const getReferencesPage = async (
 
 export const getSourceText = async (astNodeId: string) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getSourceText(astNodeId);
   } catch (e) {
     console.error(e);
-    return '';
+    return "";
   }
 };
 
@@ -253,14 +290,14 @@ export const getProperties = async (astNodeId: string) => {
 
 export const getDocumentation = async (astNodeId: string) => {
   if (!client) {
-    return '';
+    return "";
   }
   try {
     return await client.getDocumentation(astNodeId);
   } catch (e) {
-    toast.error('Could not get documentation about this AST node.');
+    toast.error("Could not get documentation about this AST node.");
     console.error(e);
-    return '';
+    return "";
   }
 };
 
@@ -276,7 +313,11 @@ export const getAstNodeInfo = async (astNodeId: string) => {
   }
 };
 
-export const getAstNodeInfoByPosition = async (fileId: string, line: number, column: number) => {
+export const getAstNodeInfoByPosition = async (
+  fileId: string,
+  line: number,
+  column: number,
+) => {
   if (!client) {
     return;
   }
@@ -288,7 +329,7 @@ export const getAstNodeInfoByPosition = async (fileId: string, line: number, col
           line,
           column,
         }),
-      })
+      }),
     );
   } catch (e) {
     return;
