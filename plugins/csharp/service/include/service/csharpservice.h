@@ -184,14 +184,6 @@ public:
     _service -> getDiagramTypes(return_, astNodeId_);
   }
 
-  void getDiagram(
-          std::string& return_,
-          const core::AstNodeId& astNodeId_,
-          const std::int32_t diagramId_) override
-  {
-    _service -> getDiagram(return_, astNodeId_, diagramId_);
-  }
-
   void getSyntaxHighlight(
           std::vector<language::SyntaxHighlight>& return_,
           const core::FileRange& range_,
@@ -219,7 +211,7 @@ using TransportException = apache::thrift::transport::TTransportException;
 
 class CsharpServiceHandler : virtual public LanguageServiceIf
 {
-  friend class Diagram;
+  friend class CsharpDiagram;
 
 public:
   CsharpServiceHandler(
@@ -323,6 +315,18 @@ public:
     const core::FileRange& range_) override;
 
 private:
+  // Must be kept in sync with CSharpServiceEnums.cs.
+  enum DiagramType
+  {
+    FUNCTION_CALL
+  };
+
+  enum ReferenceType
+  {
+    CALLEE = 5,
+    CALLER = 6
+  };
+
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;
 
