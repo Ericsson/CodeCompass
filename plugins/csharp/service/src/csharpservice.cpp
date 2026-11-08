@@ -4,6 +4,8 @@
 #include <model/file.h>
 #include <model/file-odb.hxx>
 
+#include "csharpdiagram.h"
+
 namespace cc
 {
 namespace service
@@ -71,9 +73,8 @@ void CsharpServiceHandler::getAstNodeInfo(
       FileQuery::path == return_.range.file);
   });
   std::stringstream ss;
-  ss << file;
+  ss << file->id;
   return_.range.file = ss.str();
-  //LOG(info) << "csharpQuery.getAstNodeInfo: file = " << return_.range.file;
 }
 
 void CsharpServiceHandler::getAstNodeInfoByPosition(
@@ -134,7 +135,7 @@ void CsharpServiceHandler::getDiagramTypes(
         const core::AstNodeId& astNodeId_)
 {
   LOG(info) << "getDiagramTypes";
-  //csharpQueryHandler.getDiagramTypes(return_, astNodeId_);
+  _csharpQueryHandler.getDiagramTypes(return_, astNodeId_);
 }
 
 void CsharpServiceHandler::getDiagram(
@@ -143,7 +144,29 @@ void CsharpServiceHandler::getDiagram(
         const std::int32_t diagramId_)
 {
   LOG(info) << "getDiagram";
-  //csharpQueryHandler.getDiagram(return_, astNodeId_, diagramId_);
+  CsharpDiagram diagram(_db, _datadir, _context);
+  util::Graph graph;
+
+  switch (diagramId_)
+  {
+    case FUNCTION_CALL:
+    {
+      AstNodeInfo centerInfo;
+      getAstNodeInfo(centerInfo, astNodeId_);
+
+      std::vector<AstNodeInfo> calleeInfos;
+      getReferences(calleeInfos, astNodeId_, CALLEE, {});
+
+      std::vector<AstNodeInfo> callerInfos;
+      getReferences(callerInfos, astNodeId_, CALLER, {});
+
+      diagram.getFunctionCallDiagram(graph, centerInfo, calleeInfos, callerInfos);
+      break;
+    }
+  }
+
+  if (graph.nodeCount() != 0)
+    return_ = graph.output(util::Graph::SVG);
 }
 
 void CsharpServiceHandler::getDiagramLegend(
@@ -151,6 +174,15 @@ void CsharpServiceHandler::getDiagramLegend(
         const std::int32_t diagramId_)
 {
   LOG(info) << "getDiagramLegend";
+
+  CsharpDiagram diagram(_db, _datadir, _context);
+
+  switch (diagramId_)
+  {
+    case FUNCTION_CALL:
+      return_ = diagram.getFunctionCallLegend();
+      break;
+  }
 }
 
 void CsharpServiceHandler::getFileDiagramTypes(
