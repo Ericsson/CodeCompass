@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
+    "@replit/codemirror-lang-csharp": "^6.2.0",
     "@codemirror/lang-python": "^6.2.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

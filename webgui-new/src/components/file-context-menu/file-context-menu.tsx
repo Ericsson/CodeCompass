@@ -1,18 +1,24 @@
-import React, { Dispatch, SetStateAction, useContext, useEffect, useState } from 'react';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { TabName } from 'enums/tab-enum';
-import { FileInfo } from '@thrift-generated';
-import { AppContext } from 'global-context/app-context';
-import { getCppFileDiagramTypes } from 'service/cpp-service';
-import { Tooltip } from '@mui/material';
-import { ChevronRight } from '@mui/icons-material';
-import { getBlameInfo, getRepositoryByProjectPath } from 'service/git-service';
-import { useRouter } from 'next/router';
-import { RouterQueryType } from 'utils/types';
-import { useTranslation } from 'react-i18next';
-import { diagramTypeArray } from 'enums/entity-types';
-import { sendGAEvent } from 'utils/analytics';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { TabName } from "enums/tab-enum";
+import { FileInfo } from "@thrift-generated";
+import { AppContext } from "global-context/app-context";
+import { createClient, getFileDiagramTypes } from "service/language-service";
+import { Tooltip } from "@mui/material";
+import { ChevronRight } from "@mui/icons-material";
+import { getBlameInfo, getRepositoryByProjectPath } from "service/git-service";
+import { useRouter } from "next/router";
+import { RouterQueryType } from "utils/types";
+import { useTranslation } from "react-i18next";
+import { diagramTypeArray } from "enums/entity-types";
+import { sendGAEvent } from "utils/analytics";
 
 export const FileContextMenu = ({
   contextMenu,
@@ -35,25 +41,31 @@ export const FileContextMenu = ({
   const router = useRouter();
   const appCtx = useContext(AppContext);
 
-  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(new Map());
+  const [diagramTypes, setDiagramTypes] = useState<Map<string, number>>(
+    new Map(),
+  );
 
   useEffect(() => {
-    if (!fileInfo) return;
+    if (!fileInfo || fileInfo.isDirectory || fileInfo.type === "Unknown")
+      return;
     const init = async () => {
-      const initDiagramTypes = await getCppFileDiagramTypes(fileInfo.id as string);
+      createClient(appCtx.workspaceId, fileInfo?.type);
+      const initDiagramTypes = await getFileDiagramTypes(fileInfo.id as string);
       setDiagramTypes(initDiagramTypes);
     };
     init();
-  }, [fileInfo]);
+  }, [appCtx.workspaceId, fileInfo]);
 
   const getGitBlameInfo = async () => {
     setContextMenu(null);
-    const currentRepo = await getRepositoryByProjectPath(fileInfo.path as string);
+    const currentRepo = await getRepositoryByProjectPath(
+      fileInfo.path as string,
+    );
     const blameInfo = await getBlameInfo(
       currentRepo?.repoId as string,
       currentRepo?.commitId as string,
       currentRepo?.repoPath as string,
-      fileInfo.id as string
+      fileInfo.id as string,
     );
     return blameInfo;
   };
@@ -63,19 +75,23 @@ export const FileContextMenu = ({
       open={contextMenu !== null}
       onClose={() => setContextMenu(null)}
       anchorReference="anchorPosition"
-      anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
+      anchorPosition={
+        contextMenu !== null
+          ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+          : undefined
+      }
     >
       {fileInfo && fileInfo.isDirectory && (
         <MenuItem
           onClick={async () => {
             sendGAEvent({
-              event_action: 'metrics',
+              event_action: "metrics",
               event_category: appCtx.workspaceId,
               event_label: fileInfo.name,
             });
             setContextMenu(null);
             router.push({
-              pathname: '/project',
+              pathname: "/project",
               query: {
                 ...router.query,
                 metricsGenId: fileInfo?.id as string,
@@ -84,7 +100,7 @@ export const FileContextMenu = ({
             });
           }}
         >
-          {t('fileContextMenu.metrics')}
+          {t("fileContextMenu.metrics")}
         </MenuItem>
       )}
       {fileInfo && !fileInfo.isDirectory && (
@@ -94,7 +110,7 @@ export const FileContextMenu = ({
             appCtx.setGitBlameInfo(blameInfo);
           }}
         >
-          {t('fileContextMenu.gitBlame')}
+          {t("fileContextMenu.gitBlame")}
         </MenuItem>
       )}
       {diagramTypes.size !== 0 ? (
@@ -107,12 +123,14 @@ export const FileContextMenu = ({
                   onClick={() => {
                     setContextMenu(null);
                     router.push({
-                      pathname: '/project',
+                      pathname: "/project",
                       query: {
                         ...router.query,
                         diagramGenId: fileInfo.id as string,
-                        diagramTypeId: (diagramTypes.get(type) as number).toString(),
-                        diagramType: 'file',
+                        diagramTypeId: (
+                          diagramTypes.get(type) as number
+                        ).toString(),
+                        diagramType: "file",
                         activeTab: TabName.DIAGRAMS.toString(),
                       } as RouterQueryType,
                     });
@@ -123,15 +141,15 @@ export const FileContextMenu = ({
               ))}
             </>
           }
-          placement={'right-start'}
+          placement={"right-start"}
         >
-          <MenuItem sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div>{t('fileContextMenu.diagrams')}</div>
+          <MenuItem sx={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <div>{t("fileContextMenu.diagrams")}</div>
             <ChevronRight />
           </MenuItem>
         </Tooltip>
       ) : (
-        ''
+        ""
       )}
     </Menu>
   );
