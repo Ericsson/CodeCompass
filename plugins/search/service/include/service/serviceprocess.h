@@ -61,6 +61,7 @@ public:
       std::string classpath = compassRoot_ + "/lib/java/*";
 
       ::execlp("java", "java", "-server",
+        "-Dfile.encoding=UTF-8",
         "-classpath", classpath.c_str(),
         //"-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8666",
         "-Djava.util.logging.config.class=cc.search.common.config.LogConfigurator",

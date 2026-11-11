@@ -44,7 +44,7 @@ public class IOHelper {
 
     if (charset == null) {
       in.reset();
-      charset = Charset.defaultCharset().name();
+      charset = "UTF-8";
     }
 
     return new InputStreamReader(in, charset);
@@ -57,14 +57,12 @@ public class IOHelper {
    * @throws IOException 
    */
   public static String readFullContent(InputStreamReader reader_) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    int b = reader_.read();
-    while (b != -1) {
-      out.write(b);
-      b = reader_.read();
+    StringBuilder out = new StringBuilder();
+    char[] buffer = new char[4096];
+    int read;
+    while ((read = reader_.read(buffer)) != -1) {
+      out.append(buffer, 0, read);
     }
-
-    return out.toString(reader_.getEncoding());
+    return out.toString();
   }
 }
