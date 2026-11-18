@@ -72,6 +72,13 @@ void CsharpServiceHandler::getAstNodeInfo(
     return _db->query_one<model::File>(
       FileQuery::path == return_.range.file);
   });
+  if (!file)
+  {
+    core::InvalidId ex;
+    ex.__set_msg("Invalid C# AST node ID or source file");
+    ex.__set_nodeid(astNodeId_);
+    throw ex;
+  }
   std::stringstream ss;
   ss << file->id;
   return_.range.file = ss.str();
@@ -238,7 +245,15 @@ void CsharpServiceHandler::getReferences(
     return _db->query_one<model::File>(
     FileQuery::path == nodeinfo.range.file);
     });
-    
+
+    // Skip the reference instead of failing the whole request.
+    if (!file)
+    {
+      LOG(warning) << "[csharpservice] No file record for reference: "
+                   << nodeinfo.range.file;
+      continue;
+    }
+
     std::stringstream ss;
     ss << file->id;
     nodeinfo.range.file = ss.str();

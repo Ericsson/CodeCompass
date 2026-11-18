@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cctype>
+
 #include <boost/algorithm/string.hpp>
 
 #include <service/csharpservice.h>
@@ -18,33 +21,82 @@ namespace
 {
 
 /**
- * Removes the annotation lines and the accessibility modifiers from the
- * signature of a node, and cuts the signature before the body.
+ * Returns the position after the attribute section (e.g. [Route("[x]")])
+ * starting at pos_, or std::string::npos if the brackets are unbalanced.
+ */
+std::size_t skipAttribute(const std::string& str_, std::size_t pos_)
+{
+  int depth = 0;
+  bool inString = false;
+
+  for (; pos_ < str_.size(); ++pos_)
+  {
+    char c = str_[pos_];
+
+    if (inString)
+    {
+      if (c == '\\')
+        ++pos_;
+      else if (c == '"')
+        inString = false;
+    }
+    else if (c == '"')
+      inString = true;
+    else if (c == '[')
+      ++depth;
+    else if (c == ']' && --depth == 0)
+      return pos_ + 1;
+  }
+
+  return std::string::npos;
+}
+
+/**
+ * Removes the leading attributes and accessibility modifiers from the
+ * declaration of a node, and cuts the signature before the body.
  */
 std::string toSignature(std::string str_)
 {
   static const std::vector<std::string> accessibilityTags = {
-    "protected internal", "private protected",
     "public", "private", "protected", "internal"};
 
-  std::stringstream ss(str_), result;
-  std::string line;
+  boost::trim_left(str_);
 
-  while (std::getline(ss, line))
-    if (line.find('[') != 0)
-      result << line << '\n';
-
-  str_ = result.str();
-  boost::trim(str_);
-
-  for (const auto& tag : accessibilityTags)
+  // Attributes may share a line with the declaration, so they are removed
+  // by bracket matching instead of dropping whole lines.
+  while (!str_.empty() && str_[0] == '[')
   {
-    std::size_t pos = str_.find(tag);
-    if (pos != std::string::npos)
-      str_.erase(pos, tag.length() + 1);
+    std::size_t end = skipAttribute(str_, 0);
+    if (end == std::string::npos)
+      break;
+
+    str_.erase(0, end);
+    boost::trim_left(str_);
   }
 
-  return str_.substr(0, str_.find('{'));
+  // Accessibility modifiers are only removed as whole leading words, so names
+  // like "publicKey" are kept.
+  bool removed = true;
+  while (removed)
+  {
+    removed = false;
+
+    for (const auto& tag : accessibilityTags)
+      if (boost::starts_with(str_, tag) &&
+          (str_.size() == tag.size() ||
+           std::isspace(static_cast<unsigned char>(str_[tag.size()]))))
+      {
+        str_.erase(0, tag.size());
+        boost::trim_left(str_);
+        removed = true;
+      }
+  }
+
+  // Cut before a block body or an expression body.
+  str_ = str_.substr(0, std::min(str_.find('{'), str_.find("=>")));
+  boost::trim(str_);
+
+  return str_;
 }
 
 }
@@ -72,19 +124,33 @@ void CsharpDiagram::getFunctionCallDiagram(
   const std::vector<AstNodeInfo>& calleeNodeInfos_,
   const std::vector<AstNodeInfo>& callerNodeInfos_)
 {
+  // A node is decorated only when it is first added, so e.g. a recursive
+  // center node keeps its own decoration (same as in the C++ plugin).
+  std::map<core::AstNodeId, util::Graph::Node> visitedNodes;
+
   graph_.setAttribute("rankdir", "LR");
 
   AstNodeInfo centerInfo = centerNodeInfo_;
   centerInfo.astNodeValue = toSignature(centerInfo.astNodeValue);
   util::Graph::Node centerNode = addNode(graph_, centerInfo);
   decorateNode(graph_, centerNode, centerNodeDecoration);
+  visitedNodes[centerInfo.id] = centerNode;
 
   for (const auto& calleeNodeInfo : calleeNodeInfos_)
   {
-    AstNodeInfo calleeInfo = calleeNodeInfo;
-    calleeInfo.astNodeValue = toSignature(calleeInfo.astNodeValue);
-    util::Graph::Node calleeNode = addNode(graph_, calleeInfo);
-    decorateNode(graph_, calleeNode, calleeNodeDecoration);
+    util::Graph::Node calleeNode;
+
+    auto it = visitedNodes.find(calleeNodeInfo.id);
+    if (it == visitedNodes.end())
+    {
+      AstNodeInfo calleeInfo = calleeNodeInfo;
+      calleeInfo.astNodeValue = toSignature(calleeInfo.astNodeValue);
+      calleeNode = addNode(graph_, calleeInfo);
+      decorateNode(graph_, calleeNode, calleeNodeDecoration);
+      visitedNodes.insert(it, std::make_pair(calleeInfo.id, calleeNode));
+    }
+    else
+      calleeNode = it->second;
 
     if (!graph_.hasEdge(centerNode, calleeNode))
     {
@@ -95,10 +161,19 @@ void CsharpDiagram::getFunctionCallDiagram(
 
   for (const auto& callerNodeInfo : callerNodeInfos_)
   {
-    AstNodeInfo callerInfo = callerNodeInfo;
-    callerInfo.astNodeValue = toSignature(callerInfo.astNodeValue);
-    util::Graph::Node callerNode = addNode(graph_, callerInfo);
-    decorateNode(graph_, callerNode, callerNodeDecoration);
+    util::Graph::Node callerNode;
+
+    auto it = visitedNodes.find(callerNodeInfo.id);
+    if (it == visitedNodes.end())
+    {
+      AstNodeInfo callerInfo = callerNodeInfo;
+      callerInfo.astNodeValue = toSignature(callerInfo.astNodeValue);
+      callerNode = addNode(graph_, callerInfo);
+      decorateNode(graph_, callerNode, callerNodeDecoration);
+      visitedNodes.insert(it, std::make_pair(callerInfo.id, callerNode));
+    }
+    else
+      callerNode = it->second;
 
     if (!graph_.hasEdge(callerNode, centerNode))
     {
