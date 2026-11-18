@@ -56,14 +56,35 @@ namespace CSharpParser
             }
 
             return hash;
-        }     
+        }
+
+        // Deterministic replacement for GetHashCode(), which is reference based
+        // for syntax nodes and randomized per process for strings. Both would
+        // give different ids for the same entity on every parse.
+        private long stableHash(string data_)
+        {
+            return unchecked((long)fnvHash(data_));
+        }
+
+        private long getEntityHash(SyntaxNode node)
+        {
+            string[] properties =
+            {
+                node.SyntaxTree.FilePath,":",
+                node.Kind().ToString(),":",
+                node.Span.Start.ToString(),":",
+                node.Span.End.ToString()
+            };
+
+            return stableHash(string.Concat(properties));
+        }
 
         private ulong getAstNodeId(SyntaxNode node){
             CsharpAstNode astNode = new CsharpAstNode
             {
                 AstValue = node.ToString(),
                 RawKind = node.Kind(),
-                EntityHash = node.GetHashCode(),
+                EntityHash = getEntityHash(node),
                 AstType = AstTypeEnum.Declaration
             };
             astNode.SetLocation(node.SyntaxTree.GetLineSpan(node.Span));
@@ -86,7 +107,7 @@ namespace CSharpParser
             {
                 AstValue = node.ToString(),
                 RawKind = node.Kind(),
-                EntityHash = node.GetHashCode(),
+                EntityHash = getEntityHash(node),
                 AstSymbolType = type,
                 AstType = astType,
                 Accessibility = acc
@@ -616,7 +637,7 @@ namespace CSharpParser
                 QualifiedName = qName,
                 QualifiedType = qType,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                TypeHash = qType.GetHashCode(),
+                TypeHash = stableHash(qType),
                 EntityHash = astNode.EntityHash,
                 ParentNode = parent,
                 MethodType = MethodTypeEnum.Method
@@ -666,7 +687,7 @@ namespace CSharpParser
                 QualifiedName = qName,
                 QualifiedType = qType,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
-                TypeHash = qType.GetHashCode(),
+                TypeHash = stableHash(qType),
                 EntityHash = astNode.EntityHash,
                 ParentNode = parent,
                 MethodType = MethodTypeEnum.Operator
@@ -704,7 +725,7 @@ namespace CSharpParser
                     AstNode = astNode,
                     Name = param.Identifier.Text,
                     QualifiedType = paramQType,
-                    TypeHash = paramQType.GetHashCode(),
+                    TypeHash = stableHash(paramQType),
                     EntityHash = astNode.EntityHash,
                     ParentNode = parent,
                     VariableType = VariableTypeEnum.Parameter
@@ -752,7 +773,7 @@ namespace CSharpParser
                     AstNode = astNode,
                     Name = variable.Identifier.Text,
                     QualifiedType = varQType,
-                    TypeHash = varQType.GetHashCode(),
+                    TypeHash = stableHash(varQType),
                     DocumentationCommentXML = Model.GetDeclaredSymbol(variable).GetDocumentationCommentXml(),
                     EntityHash = astNode.EntityHash,
                     VariableType = isLINQvar ? VariableTypeEnum.LINQ : VariableTypeEnum.Variable,
@@ -779,7 +800,7 @@ namespace CSharpParser
                 AstNode = astNode,
                 Name = node.Identifier.Text,
                 QualifiedType = varQType,
-                TypeHash = varQType.GetHashCode(),
+                TypeHash = stableHash(varQType),
                 VariableType = VariableTypeEnum.Property,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
                 EntityHash = astNode.EntityHash,
@@ -951,11 +972,69 @@ namespace CSharpParser
                             DbContext.CsharpEtcEntitys.Add(invoc);
                         }
                     }
-                }                
-            }            
+                }
+            }
+
+            VisitMethodInvocation(node);
 
             base.VisitInvocationExpression(node);
-        } 
+        }
+
+        // Records an invocation whose DeclaratorNodeId points to the declaration
+        // of the called method. This is what the Callee / Caller references and
+        // the function call diagram rely on.
+        private void VisitMethodInvocation(InvocationExpressionSyntax node)
+        {
+            SimpleNameSyntax name = node.Expression switch
+            {
+                MemberAccessExpressionSyntax memberAccess => memberAccess.Name,
+                MemberBindingExpressionSyntax memberBinding => memberBinding.Name,
+                SimpleNameSyntax simpleName => simpleName,
+                _ => null
+            };
+
+            // Unqualified Foo() calls are already recorded by VisitIdentifierName.
+            if (name == null || (name == node.Expression && name is IdentifierNameSyntax))
+                return;
+
+            var method = Model.GetSymbolInfo(node).Symbol as IMethodSymbol;
+            if (method == null)
+                return;
+
+            method = (method.ReducedFrom ?? method).OriginalDefinition;
+            method = method.PartialImplementationPart ?? method;
+
+            var declaration = method.DeclaringSyntaxReferences
+                .Select(r => r.GetSyntax())
+                .FirstOrDefault(s => s is BaseMethodDeclarationSyntax);
+            if (declaration == null)
+                return;
+
+            var type = "";
+            try
+            {
+                var info = Model.GetTypeInfo(node).ConvertedType;
+                if (info != null) type = info.Name;
+            }
+            catch (Exception)
+            {
+                FullyParsed = false;
+            }
+
+            var declaratorNodeId = getAstNodeId(declaration);
+            var astNode = AstNode(name, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
+            CsharpEtcEntity invoc = new CsharpEtcEntity
+            {
+                AstNode = astNode,
+                EntityHash = astNode.EntityHash,
+                EtcEntityType = EtcEntityTypeEnum.Invocation,
+                DeclaratorNodeId = declaratorNodeId,
+                Name = name.Identifier.Text,
+                QualifiedName = method.ToString(),
+                QualifiedType = type
+            };
+            DbContext.CsharpEtcEntitys.Add(invoc);
+        }
 
         public override void VisitIdentifierName(IdentifierNameSyntax node)
         {

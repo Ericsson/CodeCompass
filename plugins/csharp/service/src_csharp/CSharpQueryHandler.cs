@@ -289,7 +289,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getAstNodeInfoAsync");
-        return await Task.FromResult(new language.AstNodeInfo());
+        return await Task.FromResult(createAstNodeInfo(queryCsharpAstNode(astNodeId)));
     }
 
     public async Task<language.AstNodeInfo> getAstNodeInfoByPosition(string path_, 
@@ -664,13 +664,13 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<Dictionary<string, int>> getDiagramTypes(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        return await Task.FromResult(new Dictionary<string, int>());
-    }
+        var node = queryCsharpAstNode(astNodeId);
+        var ret = new Dictionary<string, int>();
 
-    public async Task<string> getDiagram(string astNodeId, int diagramId, 
-        CancellationToken cancellationToken = default(CancellationToken))
-    {
-        return await Task.FromResult("Diagram");
+        if (node.AstSymbolType == AstSymbolTypeEnum.Method)
+            ret.Add("Function call diagram", (int)DiagramType.FUNCTION_CALL);
+
+        return await Task.FromResult(ret);
     }
 
     public async Task<List<language.SyntaxHighlight>> getSyntaxHighlight(FileRange range, 
