@@ -44,7 +44,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../webgui-new/out ${I
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   # Remove application source code in case of Release build
-  file(REMOVE ${INSTALL_WEBROOT_REACT_DIR}/app)
+  file(REMOVE_RECURSE ${INSTALL_WEBROOT_REACT_DIR}/app)
 endif()
 
 message("Building React App finished.")
