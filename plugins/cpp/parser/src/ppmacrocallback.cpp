@@ -35,7 +35,7 @@ PPMacroCallback::~PPMacroCallback()
   });
 }
 
-void PPMacroCallback::MacroExpands(
+/*void PPMacroCallback::MacroExpands(
   const clang::Token& macroNameTok_,
   const clang::MacroDefinition& md_,
   clang::SourceRange range_,
@@ -121,9 +121,9 @@ void PPMacroCallback::MacroExpands(
       expansion += _pp.getSpelling(tok);
     else
     {
-      expansion += "/*< FIXME: ";
+      expansion += "/ *< FIXME: ";
       expansion += tok.getName();
-      expansion += " token not expanded. >*/";
+      expansion += " token not expanded. >* /";
     }
     _pp.Lex(tok);
   }
@@ -146,7 +146,7 @@ void PPMacroCallback::MacroExpands(
 
     _macrosExpansion.push_back(mExp);
   }
-}
+}*/
 
 void PPMacroCallback::MacroDefined(
   const clang::Token& macroNameTok_,

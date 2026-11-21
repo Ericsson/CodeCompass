@@ -6,6 +6,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/webserver/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS}
   ${ODB_INCLUDE_DIRS})
 
@@ -83,6 +84,13 @@ target_link_libraries(projectservice
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   projectthrift
   commonthrift)
+
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # projectservice references headers from the webserver without implementation
+  set_target_properties(projectservice PROPERTIES LINK_FLAGS
+        "-undefined dynamic_lookup")
+endif(APPLE)
 
 install(TARGETS projectservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_jar(corethriftjava "${INSTALL_JAVA_LIB_DIR}")

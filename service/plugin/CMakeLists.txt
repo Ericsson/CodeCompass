@@ -5,6 +5,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/util/include)
 
 include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
   ${THRIFT_LIBTHRIFT_INCLUDE_DIRS})
 
 add_custom_command(
@@ -35,6 +36,13 @@ target_link_libraries(pluginservice
   util
   ${THRIFT_LIBTHRIFT_LIBRARIES}
   pluginthrift)
+
+if(APPLE)
+  # Use Linux-like linking behaviour, dynamic libraries may contain references without implementation.
+  # pluginservice references headers from the webserver without implementation
+  set_target_properties(pluginservice PROPERTIES LINK_FLAGS
+      "-undefined dynamic_lookup")
+endif(APPLE)
 
 install(TARGETS pluginservice DESTINATION ${INSTALL_SERVICE_DIR})
 install_js_thrift()
