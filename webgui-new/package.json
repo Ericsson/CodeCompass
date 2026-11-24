@@ -40,7 +40,7 @@
     "@uiw/react-codemirror": "^4.25.2",
     "dagre": "^0.8.5",
     "devicons-react": "^1.5.0",
-    "i18next": "^23.16.8",
+    "i18next": "^27.2.6",
     "next": "^14.2.35",
     "react": "^18.3.1",
     "react-diff-viewer-continued": "^3.4.0",
