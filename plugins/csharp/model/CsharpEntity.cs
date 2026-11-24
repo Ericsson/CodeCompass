@@ -23,7 +23,8 @@ namespace CSharpParser.model
     {
         Event,
         Invocation,
-        ForeachExpr
+        ForeachExpr,
+        Inheritance
     }
     class CsharpEtcEntity : CsharpTypedEntity
     {

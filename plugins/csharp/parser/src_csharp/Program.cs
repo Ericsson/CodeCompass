@@ -72,6 +72,23 @@ namespace CSharpParser
             }
         }
 
+        private static void RecreateCsharpTables(CsharpDbContext context)
+        {
+            var tables = context.Model.GetEntityTypes()
+                .Select(e => e.GetTableName())
+                .Where(t => t != null)
+                .Distinct()
+                .Append("__EFMigrationsHistory");
+
+            foreach (var table in tables)
+            {
+                string sql = "DROP TABLE IF EXISTS \"" + table + "\" CASCADE";
+                context.Database.ExecuteSqlRaw(sql);
+            }
+
+            context.Database.Migrate();
+        }
+
         private static async Task<int> RunParserAsync(string primaryInput, int threadNum)
         {
             // Converting the connectionstring into entity framework style connectionstring
@@ -82,7 +99,7 @@ namespace CSharpParser
                             .Options;
 
             await using var _context = new CsharpDbContext(options);
-            _context.Database.Migrate();
+            RecreateCsharpTables(_context);
 
             if (IsSolutionInput(primaryInput))
             {

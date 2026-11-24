@@ -6,6 +6,7 @@ using System.Net.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -119,11 +120,130 @@ public class CSharpQueryHandler : CsharpService.IAsync
 
     private List<CsharpAstNode> queryInvocations(CsharpAstNode astNode)
     {
+        // Base list entries are listed by the Inherited by reference instead.
         var ret = dbContext.CsharpEtcEntitys
-            .Where(e => e.DeclaratorNodeId == astNode.Id)
+            .Where(e => e.DeclaratorNodeId == astNode.Id
+                && e.EtcEntityType != EtcEntityTypeEnum.Inheritance)
             .Select(e => e.AstNode)
             .ToList();
         return ret;
+    }
+
+    private List<CsharpAstNode> queryInheritFrom(CsharpAstNode astNode)
+    {
+        var ret =
+            from inh in dbContext.CsharpEtcEntitys
+            join node in dbContext.CsharpAstNodes
+                on inh.DeclaratorNodeId equals node.Id
+            where inh.ParentNode.Id == astNode.Id
+                && inh.EtcEntityType == EtcEntityTypeEnum.Inheritance
+            select node;
+        return ret.Distinct().ToList();
+    }
+
+    private List<CsharpAstNode> queryInheritBy(CsharpAstNode astNode)
+    {
+        var ret = dbContext.CsharpEtcEntitys
+            .Where(e => e.DeclaratorNodeId == astNode.Id
+                && e.EtcEntityType == EtcEntityTypeEnum.Inheritance)
+            .Select(e => e.ParentNode)
+            .Distinct()
+            .ToList();
+        return ret;
+    }
+
+    private static string toVisibilityTag(Microsoft.CodeAnalysis.Accessibility accessibility)
+    {
+        switch (accessibility)
+        {
+            case Microsoft.CodeAnalysis.Accessibility.Public:
+                return "public";
+            case Microsoft.CodeAnalysis.Accessibility.Private:
+                return "private";
+            case Microsoft.CodeAnalysis.Accessibility.Protected:
+            case Microsoft.CodeAnalysis.Accessibility.ProtectedOrInternal:
+            case Microsoft.CodeAnalysis.Accessibility.ProtectedAndInternal:
+                return "protected";
+            case Microsoft.CodeAnalysis.Accessibility.Internal:
+                return "internal";
+            default:
+                return null;
+        }
+    }
+
+    // Creates the infos of the members of a type ordered by their position,
+    // tagged with their lowercase visibility, "static", "virtual" (also for
+    // abstract, override and interface members) and "accessor". The modifiers
+    // are not stored in the database, so they are read from the source text.
+    private List<language.AstNodeInfo> createMemberInfoList(
+        List<CsharpAstNode> members, CsharpAstNode type)
+    {
+        var typeSyntax = SyntaxFactory.ParseMemberDeclaration(type.AstValue ?? "")
+            as BaseTypeDeclarationSyntax;
+        bool isInterface = typeSyntax is InterfaceDeclarationSyntax;
+
+        // Field declarators do not contain the modifiers of their declaration.
+        var fieldModifiers = new Dictionary<string, Microsoft.CodeAnalysis.SyntaxTokenList>();
+        if (typeSyntax is TypeDeclarationSyntax typeDeclaration)
+            foreach (var field in typeDeclaration.Members.OfType<BaseFieldDeclarationSyntax>())
+                foreach (var variable in field.Declaration.Variables)
+                    fieldModifiers[variable.Identifier.Text] = field.Modifiers;
+
+        var ret = new List<language.AstNodeInfo>();
+        foreach (var member in members
+            .OrderBy(m => m.Location_range_start_line)
+            .ThenBy(m => m.Location_range_start_column))
+        {
+            var info = createAstNodeInfo(member);
+            var modifiers = new Microsoft.CodeAnalysis.SyntaxTokenList();
+            bool hasBody = true;
+
+            if (member.RawKind == SyntaxKind.VariableDeclarator)
+            {
+                string name = new string((member.AstValue ?? "")
+                    .TakeWhile(c => char.IsLetterOrDigit(c) || c == '_' || c == '@')
+                    .ToArray());
+                fieldModifiers.TryGetValue(name, out modifiers);
+            }
+            else if (member.RawKind.ToString().EndsWith("AccessorDeclaration"))
+            {
+                info.Tags.Add("accessor");
+            }
+            else
+            {
+                var memberSyntax = SyntaxFactory.ParseMemberDeclaration(member.AstValue ?? "");
+                if (memberSyntax != null)
+                    modifiers = memberSyntax.Modifiers;
+                if (memberSyntax is BaseMethodDeclarationSyntax method)
+                    hasBody = method.Body != null || method.ExpressionBody != null;
+            }
+
+            string visibility = toVisibilityTag(member.Accessibility);
+            if (visibility != null)
+                info.Tags.Add(visibility);
+
+            bool has(SyntaxKind kind) => modifiers.Any(t => t.RawKind == (int)kind);
+
+            bool isStatic = has(SyntaxKind.StaticKeyword) || has(SyntaxKind.ConstKeyword);
+            if (isStatic)
+                info.Tags.Add("static");
+
+            if (has(SyntaxKind.VirtualKeyword)
+                || has(SyntaxKind.AbstractKeyword)
+                || has(SyntaxKind.OverrideKeyword)
+                || (isInterface && !isStatic && !hasBody))
+                info.Tags.Add("virtual");
+
+            ret.Add(info);
+        }
+
+        return ret;
+    }
+
+    private bool isType(CsharpAstNode astNode)
+    {
+        return astNode.AstSymbolType == AstSymbolTypeEnum.Class
+            || astNode.AstSymbolType == AstSymbolTypeEnum.Struct;
     }
 
     private List<CsharpAstNode> queryDeclarators(CsharpAstNode astNode)
@@ -289,7 +409,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
         CancellationToken cancellationToken = default(CancellationToken))
     {
         System.Console.WriteLine("[CSharpService] getAstNodeInfoAsync");
-        return await Task.FromResult(new language.AstNodeInfo());
+        return await Task.FromResult(createAstNodeInfo(queryCsharpAstNode(astNodeId)));
     }
 
     public async Task<language.AstNodeInfo> getAstNodeInfoByPosition(string path_, 
@@ -529,6 +649,12 @@ public class CSharpQueryHandler : CsharpService.IAsync
             case ReferenceType.DATA_MEMBER:
                 ret = queryProperties(node).Count();
                 break;
+            case ReferenceType.INHERIT_FROM:
+                ret = queryInheritFrom(node).Count();
+                break;
+            case ReferenceType.INHERIT_BY:
+                ret = queryInheritBy(node).Count();
+                break;
             case ReferenceType.THIS_CALLS:
                 ret = queryCalls(node).Count();
                 break;
@@ -592,10 +718,18 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret = createAstNodeInfoList(queryParams(node));
                 break;
             case ReferenceType.LOCAL_VAR:
-                ret = createAstNodeInfoList(queryLocals(node));
+                ret = isType(node)
+                    ? createMemberInfoList(queryLocals(node), node)
+                    : createAstNodeInfoList(queryLocals(node));
                 break;
             case ReferenceType.DATA_MEMBER:
-                ret = createAstNodeInfoList(queryProperties(node));
+                ret = createMemberInfoList(queryProperties(node), node);
+                break;
+            case ReferenceType.INHERIT_FROM:
+                ret = createAstNodeInfoList(queryInheritFrom(node));
+                break;
+            case ReferenceType.INHERIT_BY:
+                ret = createAstNodeInfoList(queryInheritBy(node));
                 break;
             case ReferenceType.THIS_CALLS:
                 ret = createAstNodeInfoList(queryCalls(node));
@@ -610,7 +744,7 @@ public class CSharpQueryHandler : CsharpService.IAsync
                 ret = createAstNodeInfoList(queryEnumConsts(node));
                 break;
             case ReferenceType.METHOD:
-                ret = createAstNodeInfoList(queryMethods(node));
+                ret = createMemberInfoList(queryMethods(node), node);
                 break;
             case ReferenceType.CONSTRUCTOR:
                 ret = createAstNodeInfoList(queryMethodType(node, MethodTypeEnum.Constructor));
@@ -664,13 +798,19 @@ public class CSharpQueryHandler : CsharpService.IAsync
     public async Task<Dictionary<string, int>> getDiagramTypes(string astNodeId, 
         CancellationToken cancellationToken = default(CancellationToken))
     {
-        return await Task.FromResult(new Dictionary<string, int>());
-    }
+        var node = queryCsharpAstNode(astNodeId);
+        var ret = new Dictionary<string, int>();
 
-    public async Task<string> getDiagram(string astNodeId, int diagramId, 
-        CancellationToken cancellationToken = default(CancellationToken))
-    {
-        return await Task.FromResult("Diagram");
+        // Usages offer the diagrams of their definition, like in the C++ plugin.
+        if (node.AstSymbolType == AstSymbolTypeEnum.EtcEntity)
+            node = queryDeclarators(node).FirstOrDefault() ?? node;
+
+        if (node.AstSymbolType == AstSymbolTypeEnum.Method)
+            ret.Add("Function call diagram", (int)DiagramType.FUNCTION_CALL);
+        else if (isType(node))
+            ret.Add("Detailed class diagram", (int)DiagramType.DETAILED_CLASS);
+
+        return await Task.FromResult(ret);
     }
 
     public async Task<List<language.SyntaxHighlight>> getSyntaxHighlight(FileRange range, 
