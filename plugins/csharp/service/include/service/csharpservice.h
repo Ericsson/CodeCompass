@@ -334,11 +334,7 @@ private:
     METHOD = 22
   };
 
-  /**
-   * Returns the ID of the definition of a usage node (e.g. a call or a type
-   * name), so diagrams can be opened from usages like in the C++ plugin.
-   * Other nodes are returned unchanged.
-   */
+  
   core::AstNodeId getDefinitionId(const core::AstNodeId& astNodeId_);
 
   std::shared_ptr<odb::database> _db;

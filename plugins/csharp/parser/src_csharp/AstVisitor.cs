@@ -509,9 +509,6 @@ namespace CSharpParser
             DbContext.CsharpClasses.Add(csharpRecord);
         }
 
-        // Records the base class and the implemented interfaces of a type. The
-        // DeclaratorNodeId points to the declaration of the base type, so only
-        // types declared in the parsed sources are recorded.
         private void VisitBaseList(BaseListSyntax baseList, CsharpAstNode parent)
         {
             if (baseList == null)
