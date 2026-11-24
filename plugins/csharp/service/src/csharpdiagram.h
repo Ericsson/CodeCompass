@@ -36,8 +36,55 @@ public:
    */
   std::string getFunctionCallLegend();
 
+  /**
+   * This is a classical UML class diagram for the selected type and its direct
+   * base types and derived types. The nodes contain the data members and the
+   * methods with their visibility. The members are queried through the
+   * service handler like in the C++ plugin.
+   */
+  void getDetailedClassDiagram(
+    util::Graph& graph_,
+    CsharpServiceHandler& csharpHandler_,
+    const core::AstNodeId& astNodeId_);
+
+  /**
+   * This function creates legend for the Detailed class diagram.
+   * @return The generated legend as a string in SVG format.
+   */
+  std::string getDetailedClassLegend();
+
 private:
   typedef std::vector<std::pair<std::string, std::string>> Decoration;
+
+  /**
+   * This function adds a type node with an UML class label to the graph.
+   */
+  util::Graph::Node addClassNode(
+    util::Graph& graph_,
+    CsharpServiceHandler& csharpHandler_,
+    const AstNodeInfo& nodeInfo_);
+
+  /**
+   * This function creates the HTML label of a type node: the name of the type,
+   * its data members (fields and properties) and its methods.
+   */
+  std::string getDetailedClassNodeLabel(
+    CsharpServiceHandler& csharpHandler_,
+    const AstNodeInfo& nodeInfo_);
+
+  /**
+   * This function returns the colored UML visibility sign of a member based on
+   * its tags.
+   */
+  std::string visibilityToHtml(const AstNodeInfo& node_);
+
+  /**
+   * This function makes the already escaped content of a member bold if it is
+   * static and italic if it is virtual, abstract or override.
+   */
+  std::string memberContentToHtml(
+    const AstNodeInfo& node_,
+    const std::string& content_);
 
   /**
    * This function adds a node which represents an AST node. The label of the
@@ -96,6 +143,8 @@ private:
   static const Decoration callerNodeDecoration;
   static const Decoration calleeEdgeDecoration;
   static const Decoration callerEdgeDecoration;
+  static const Decoration classNodeDecoration;
+  static const Decoration inheritClassEdgeDecoration;
 
   std::map<core::FileId, util::Graph::Subgraph> _subgraphs;
 

@@ -318,14 +318,28 @@ private:
   // Must be kept in sync with CSharpServiceEnums.cs.
   enum DiagramType
   {
-    FUNCTION_CALL
+    FUNCTION_CALL,
+    DETAILED_CLASS
   };
 
   enum ReferenceType
   {
+    DEFINITION = 0,
     CALLEE = 5,
-    CALLER = 6
+    CALLER = 6,
+    LOCAL_VAR = 10,
+    INHERIT_FROM = 19,
+    INHERIT_BY = 20,
+    DATA_MEMBER = 21,
+    METHOD = 22
   };
+
+  /**
+   * Returns the ID of the definition of a usage node (e.g. a call or a type
+   * name), so diagrams can be opened from usages like in the C++ plugin.
+   * Other nodes are returned unchanged.
+   */
+  core::AstNodeId getDefinitionId(const core::AstNodeId& astNodeId_);
 
   std::shared_ptr<odb::database> _db;
   util::OdbTransaction _transaction;

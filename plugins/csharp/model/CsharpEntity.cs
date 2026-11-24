@@ -23,7 +23,8 @@ namespace CSharpParser.model
     {
         Event,
         Invocation,
-        ForeachExpr
+        ForeachExpr,
+        Inheritance // AstNode: base type in the base list, ParentNode: derived type
     }
     class CsharpEtcEntity : CsharpTypedEntity
     {

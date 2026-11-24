@@ -72,6 +72,31 @@ namespace CSharpParser
             }
         }
 
+        // The C# parser always parses every input again and has no incremental
+        // mode, so its tables are dropped and recreated before each run.
+        // Otherwise every rerun would duplicate the entity rows. Only the tables
+        // of the C# model are dropped: they are created by EF Core migrations,
+        // so the --force option of CodeCompass_parser does not know them.
+        // (EnsureDeleted() must not be used: it drops the whole database.)
+        private static void RecreateCsharpTables(CsharpDbContext context)
+        {
+            var tables = context.Model.GetEntityTypes()
+                .Select(e => e.GetTableName())
+                .Where(t => t != null)
+                .Distinct()
+                .Append("__EFMigrationsHistory");
+
+            foreach (var table in tables)
+            {
+                // Table names cannot be SQL parameters. They come from the EF
+                // model, not from user input.
+                string sql = "DROP TABLE IF EXISTS \"" + table + "\" CASCADE";
+                context.Database.ExecuteSqlRaw(sql);
+            }
+
+            context.Database.Migrate();
+        }
+
         private static async Task<int> RunParserAsync(string primaryInput, int threadNum)
         {
             // Converting the connectionstring into entity framework style connectionstring
@@ -82,7 +107,7 @@ namespace CSharpParser
                             .Options;
 
             await using var _context = new CsharpDbContext(options);
-            _context.Database.Migrate();
+            RecreateCsharpTables(_context);
 
             if (IsSolutionInput(primaryInput))
             {

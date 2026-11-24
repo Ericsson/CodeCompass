@@ -196,7 +196,9 @@ namespace CSharpParser
                 QualifiedName = qName,
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
                 EntityHash = astNode.EntityHash
-            };            
+            };
+
+            VisitBaseList(node.BaseList, astNode);
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
             {
@@ -247,9 +249,11 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
-            foreach (VariableDeclarationSyntax variableDeclaration in node.Members.OfType<VariableDeclarationSyntax>())
+            VisitBaseList(node.BaseList, astNode);
+
+            foreach (var variableDeclaration in node.Members.OfType<FieldDeclarationSyntax>())
             {
-                VisitVariableDecl(variableDeclaration, astNode);
+                VisitVariableDecl(variableDeclaration.Declaration, astNode);
             }
 
             foreach (PropertyDeclarationSyntax propertyDeclaration in node.Members.OfType<PropertyDeclarationSyntax>())
@@ -341,6 +345,8 @@ namespace CSharpParser
                 DocumentationCommentXML = Model.GetDeclaredSymbol(node).GetDocumentationCommentXml(),
                 EntityHash = astNode.EntityHash
             };
+
+            VisitBaseList(node.BaseList, astNode);
 
             foreach (var variableDeclaration in node.Members.OfType<FieldDeclarationSyntax>())
             {
@@ -437,6 +443,8 @@ namespace CSharpParser
                 EntityHash = astNode.EntityHash
             };
 
+            VisitBaseList(node.BaseList, astNode);
+
             foreach (var variableDeclaration in node.Members.OfType<FieldDeclarationSyntax>())
             {
                 VisitVariableDecl(variableDeclaration.Declaration, astNode);
@@ -499,6 +507,44 @@ namespace CSharpParser
             }
 
             DbContext.CsharpClasses.Add(csharpRecord);
+        }
+
+        // Records the base class and the implemented interfaces of a type. The
+        // DeclaratorNodeId points to the declaration of the base type, so only
+        // types declared in the parsed sources are recorded.
+        private void VisitBaseList(BaseListSyntax baseList, CsharpAstNode parent)
+        {
+            if (baseList == null)
+                return;
+
+            foreach (BaseTypeSyntax baseType in baseList.Types)
+            {
+                var symbol = Model.GetTypeInfo(baseType.Type).Type as INamedTypeSymbol;
+                if (symbol == null)
+                    continue;
+
+                symbol = symbol.OriginalDefinition;
+
+                var declaration = symbol.DeclaringSyntaxReferences
+                    .Select(r => r.GetSyntax())
+                    .FirstOrDefault(s => s is BaseTypeDeclarationSyntax);
+                if (declaration == null)
+                    continue;
+
+                var astNode = AstNode(baseType, AstSymbolTypeEnum.EtcEntity, AstTypeEnum.Usage);
+                CsharpEtcEntity inheritance = new CsharpEtcEntity
+                {
+                    AstNode = astNode,
+                    EntityHash = astNode.EntityHash,
+                    ParentNode = parent,
+                    EtcEntityType = EtcEntityTypeEnum.Inheritance,
+                    DeclaratorNodeId = getAstNodeId(declaration),
+                    Name = symbol.Name,
+                    QualifiedName = symbol.ToString(),
+                    QualifiedType = symbol.TypeKind.ToString()
+                };
+                DbContext.CsharpEtcEntitys.Add(inheritance);
+            }
         }
 
         private void VisitDelegateDecl(DelegateDeclarationSyntax node, CsharpAstNode parent)

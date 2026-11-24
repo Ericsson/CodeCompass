@@ -154,22 +154,28 @@ void CsharpServiceHandler::getDiagram(
   CsharpDiagram diagram(_db, _datadir, _context);
   util::Graph graph;
 
+  core::AstNodeId definitionId = getDefinitionId(astNodeId_);
+
   switch (diagramId_)
   {
     case FUNCTION_CALL:
     {
       AstNodeInfo centerInfo;
-      getAstNodeInfo(centerInfo, astNodeId_);
+      getAstNodeInfo(centerInfo, definitionId);
 
       std::vector<AstNodeInfo> calleeInfos;
-      getReferences(calleeInfos, astNodeId_, CALLEE, {});
+      getReferences(calleeInfos, definitionId, CALLEE, {});
 
       std::vector<AstNodeInfo> callerInfos;
-      getReferences(callerInfos, astNodeId_, CALLER, {});
+      getReferences(callerInfos, definitionId, CALLER, {});
 
       diagram.getFunctionCallDiagram(graph, centerInfo, calleeInfos, callerInfos);
       break;
     }
+
+    case DETAILED_CLASS:
+      diagram.getDetailedClassDiagram(graph, *this, definitionId);
+      break;
   }
 
   if (graph.nodeCount() != 0)
@@ -189,7 +195,26 @@ void CsharpServiceHandler::getDiagramLegend(
     case FUNCTION_CALL:
       return_ = diagram.getFunctionCallLegend();
       break;
+
+    case DETAILED_CLASS:
+      return_ = diagram.getDetailedClassLegend();
+      break;
   }
+}
+
+core::AstNodeId CsharpServiceHandler::getDefinitionId(
+        const core::AstNodeId& astNodeId_)
+{
+  AstNodeInfo nodeInfo;
+  getAstNodeInfo(nodeInfo, astNodeId_);
+
+  if (nodeInfo.symbolType != "EtcEntity")
+    return astNodeId_;
+
+  std::vector<AstNodeInfo> definitions;
+  getReferences(definitions, astNodeId_, DEFINITION, {});
+
+  return definitions.empty() ? astNodeId_ : definitions.front().id;
 }
 
 void CsharpServiceHandler::getFileDiagramTypes(

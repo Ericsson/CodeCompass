@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <regex>
 
 #include <boost/algorithm/string.hpp>
 
@@ -51,15 +52,26 @@ std::size_t skipAttribute(const std::string& str_, std::size_t pos_)
   return std::string::npos;
 }
 
+const std::vector<std::string> accessibilityModifiers = {
+  "public", "private", "protected", "internal"};
+
 /**
- * Removes the leading attributes and accessibility modifiers from the
+ * All member modifiers. In the class diagram the visibility and the static and
+ * virtual members are shown by formatting, so the keywords are not needed.
+ */
+const std::vector<std::string> memberModifiers = {
+  "public", "private", "protected", "internal", "static", "virtual",
+  "abstract", "override", "sealed", "new", "extern", "unsafe", "partial",
+  "async", "readonly", "required", "volatile", "const"};
+
+/**
+ * Removes the leading attributes and the given leading modifiers from the
  * declaration of a node, and cuts the signature before the body.
  */
-std::string toSignature(std::string str_)
+std::string toSignature(
+  std::string str_,
+  const std::vector<std::string>& modifiers_ = accessibilityModifiers)
 {
-  static const std::vector<std::string> accessibilityTags = {
-    "public", "private", "protected", "internal"};
-
   boost::trim_left(str_);
 
   // Attributes may share a line with the declaration, so they are removed
@@ -74,14 +86,14 @@ std::string toSignature(std::string str_)
     boost::trim_left(str_);
   }
 
-  // Accessibility modifiers are only removed as whole leading words, so names
-  // like "publicKey" are kept.
+  // Modifiers are only removed as whole leading words, so names like
+  // "publicKey" are kept.
   bool removed = true;
   while (removed)
   {
     removed = false;
 
-    for (const auto& tag : accessibilityTags)
+    for (const auto& tag : modifiers_)
       if (boost::starts_with(str_, tag) &&
           (str_.size() == tag.size() ||
            std::isspace(static_cast<unsigned char>(str_[tag.size()]))))
@@ -97,6 +109,72 @@ std::string toSignature(std::string str_)
   boost::trim(str_);
 
   return str_;
+}
+
+/**
+ * Returns the signature of a member for the class diagram: without
+ * attributes, modifiers, body and constructor initializer (": base(...)").
+ */
+std::string toMemberSignature(const std::string& str_, const std::string& kind_)
+{
+  // Multi-line parameter lists are joined into one line.
+  static const std::regex whitespace("\\s+");
+  static const std::regex afterOpenParen("\\( ");
+  static const std::regex beforeCloseParen(" \\)");
+  std::string signature = std::regex_replace(
+    toSignature(str_, memberModifiers), whitespace, " ");
+  signature = std::regex_replace(signature, afterOpenParen, "(");
+  signature = std::regex_replace(signature, beforeCloseParen, ")");
+
+  // Interface, abstract and delegate members end with a semicolon.
+  if (!signature.empty() && signature.back() == ';')
+  {
+    signature.pop_back();
+    boost::trim_right(signature);
+  }
+
+  if (kind_ == "ConstructorDeclaration")
+  {
+    std::size_t open = signature.find('(');
+    int depth = 0;
+
+    for (std::size_t i = open; open != std::string::npos && i < signature.size(); ++i)
+      if (signature[i] == '(')
+        ++depth;
+      else if (signature[i] == ')' && --depth == 0)
+      {
+        signature.erase(i + 1);
+        break;
+      }
+  }
+
+  return signature;
+}
+
+/**
+ * Removes the namespace qualifiers from a type name, e.g.
+ * "System.Collections.Generic.List<MyApp.Models.Item>" -> "List<Item>".
+ */
+std::string toShortTypeName(const std::string& type_)
+{
+  static const std::regex qualifier("[A-Za-z_][A-Za-z0-9_]*\\.");
+  return std::regex_replace(type_, qualifier, "");
+}
+
+/**
+ * This function wraps the content to a HTML tag and adds attributes to it.
+ */
+std::string graphHtmlTag(
+  const std::string& tag_,
+  const std::string& content_,
+  const std::string& attr_ = "")
+{
+  return "<" + tag_ + " " + attr_ + ">" + content_ + "</" + tag_ + ">";
+}
+
+bool contains(const std::vector<std::string>& tags_, const std::string& tag_)
+{
+  return std::find(tags_.begin(), tags_.end(), tag_) != tags_.end();
 }
 
 }
@@ -198,6 +276,208 @@ std::string CsharpDiagram::getFunctionCallLegend()
   return builder.getOutput();
 }
 
+void CsharpDiagram::getDetailedClassDiagram(
+  util::Graph& graph_,
+  CsharpServiceHandler& csharpHandler_,
+  const core::AstNodeId& astNodeId_)
+{
+  std::vector<AstNodeInfo> nodes;
+
+  graph_.setAttribute("rankdir", "BT");
+
+  //--- Center node ---//
+
+  AstNodeInfo nodeInfo;
+  csharpHandler_.getAstNodeInfo(nodeInfo, astNodeId_);
+
+  util::Graph::Node currentNode = addClassNode(graph_, csharpHandler_, nodeInfo);
+
+  //--- Types from which the queried type inherits ---//
+
+  csharpHandler_.getReferences(nodes, nodeInfo.id,
+    CsharpServiceHandler::INHERIT_FROM, {});
+
+  for (const AstNodeInfo& node : nodes)
+  {
+    util::Graph::Node inheritNode = addClassNode(graph_, csharpHandler_, node);
+
+    if (!graph_.hasEdge(currentNode, inheritNode))
+    {
+      util::Graph::Edge edge = graph_.createEdge(currentNode, inheritNode);
+      decorateEdge(graph_, edge, inheritClassEdgeDecoration);
+    }
+  }
+
+  nodes.clear();
+
+  //--- Types by which the queried type is inherited ---//
+
+  csharpHandler_.getReferences(nodes, nodeInfo.id,
+    CsharpServiceHandler::INHERIT_BY, {});
+
+  for (const AstNodeInfo& node : nodes)
+  {
+    util::Graph::Node inheritNode = addClassNode(graph_, csharpHandler_, node);
+
+    if (!graph_.hasEdge(inheritNode, currentNode))
+    {
+      util::Graph::Edge edge = graph_.createEdge(inheritNode, currentNode);
+      decorateEdge(graph_, edge, inheritClassEdgeDecoration);
+    }
+  }
+
+  _subgraphs.clear();
+}
+
+std::string CsharpDiagram::getDetailedClassLegend()
+{
+  util::LegendBuilder builder("Detailed Class Diagram");
+
+  builder.addNode("class", classNodeDecoration);
+  builder.addNode("public member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "+", "color='green'")}}, true);
+  builder.addNode("private member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "-", "color='red'")}}, true);
+  builder.addNode("protected member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "#", "color='blue'")}}, true);
+  builder.addNode("internal member", {{"shape", "none"},
+    {"label", graphHtmlTag("font", "~", "color='darkorange'")}}, true);
+  builder.addNode("static method or data member", {{"shape", "none"},
+    {"label", "<b>static</b>"}}, true);
+  builder.addNode("virtual, abstract or override method", {{"shape", "none"},
+    {"label", "<i>virtual</i>"}}, true);
+  builder.addEdge("inheritance", inheritClassEdgeDecoration);
+
+  return builder.getOutput();
+}
+
+util::Graph::Node CsharpDiagram::addClassNode(
+  util::Graph& graph_,
+  CsharpServiceHandler& csharpHandler_,
+  const AstNodeInfo& nodeInfo_)
+{
+  util::Graph::Node node = addNode(graph_, nodeInfo_);
+
+  graph_.setNodeAttribute(node, "label",
+    getDetailedClassNodeLabel(csharpHandler_, nodeInfo_), true);
+  graph_.setNodeAttribute(node, "shape", "none");
+
+  return node;
+}
+
+std::string CsharpDiagram::getDetailedClassNodeLabel(
+  CsharpServiceHandler& csharpHandler_,
+  const AstNodeInfo& nodeInfo_)
+{
+  std::string colAttr = "border='0' align='left'";
+  std::string label = "<table border='1' cellspacing='0'>";
+
+  // The AST node value of a type is its whole source text, so the name is
+  // taken from its properties.
+  std::map<std::string, std::string> properties;
+  csharpHandler_.getProperties(properties, nodeInfo_.id);
+  std::string name = boost::trim_copy(properties["Name"]);
+
+  label.append(graphHtmlTag("tr", graphHtmlTag("td",
+    graphHtmlTag("font", util::escapeHtml(name), "color='white'"),
+    "colspan='2' SIDES='B' bgcolor='#316ECF' align='center'")));
+
+  //--- Data members of the type: fields, then properties ---//
+
+  std::vector<AstNodeInfo> nodes;
+  csharpHandler_.getReferences(nodes, nodeInfo_.id,
+    CsharpServiceHandler::LOCAL_VAR, {});
+
+  std::vector<AstNodeInfo> propertyNodes;
+  csharpHandler_.getReferences(propertyNodes, nodeInfo_.id,
+    CsharpServiceHandler::DATA_MEMBER, {});
+  nodes.insert(nodes.end(), propertyNodes.begin(), propertyNodes.end());
+
+  for (auto it = nodes.begin(); it != nodes.end(); ++it)
+  {
+    std::map<std::string, std::string> memberProperties;
+    csharpHandler_.getProperties(memberProperties, it->id);
+
+    std::string content = boost::trim_copy(memberProperties["Name"]);
+    std::string type = toShortTypeName(
+      boost::trim_copy(memberProperties["Qualified Type"]));
+    if (!type.empty())
+      content += " : " + type;
+
+    std::string attr = colAttr;
+    if (it == nodes.end() - 1)
+      attr = "border='1' align='left' SIDES='B'";
+
+    label += graphHtmlTag("tr",
+      graphHtmlTag("td", visibilityToHtml(*it), attr) +
+      graphHtmlTag("td",
+        memberContentToHtml(*it, util::escapeHtml(content)), attr));
+  }
+
+  nodes.clear();
+
+  //--- Methods of the type ---//
+
+  csharpHandler_.getReferences(nodes, nodeInfo_.id,
+    CsharpServiceHandler::METHOD, {});
+
+  for (const AstNodeInfo& node : nodes)
+  {
+    // Property accessors are shown by their properties.
+    if (contains(node.tags, "accessor"))
+      continue;
+
+    std::string signature =
+      toMemberSignature(node.astNodeValue, node.astNodeType);
+
+    if (!signature.empty())
+      label += graphHtmlTag("tr",
+        graphHtmlTag("td", visibilityToHtml(node), colAttr) +
+        graphHtmlTag("td",
+          memberContentToHtml(node, util::escapeHtml(signature)), colAttr));
+  }
+
+  label.append("</table>");
+
+  return label;
+}
+
+std::string CsharpDiagram::visibilityToHtml(const AstNodeInfo& node_)
+{
+  if (contains(node_.tags, "public"))
+    return graphHtmlTag("font", "+", "color='green'");
+  if (contains(node_.tags, "private"))
+    return graphHtmlTag("font", "-", "color='red'");
+  if (contains(node_.tags, "protected"))
+    return graphHtmlTag("font", "#", "color='blue'");
+  if (contains(node_.tags, "internal"))
+    return graphHtmlTag("font", "~", "color='darkorange'");
+
+  return "";
+}
+
+std::string CsharpDiagram::memberContentToHtml(
+  const AstNodeInfo& node_,
+  const std::string& content_)
+{
+  std::string startTags;
+  std::string endTags;
+
+  if (contains(node_.tags, "static"))
+  {
+    startTags += "<b>";
+    endTags.insert(0, "</b>");
+  }
+
+  if (contains(node_.tags, "virtual"))
+  {
+    startTags += "<i>";
+    endTags.insert(0, "</i>");
+  }
+
+  return startTags + content_ + endTags;
+}
+
 util::Graph::Node CsharpDiagram::addNode(
   util::Graph& graph_,
   const AstNodeInfo& nodeInfo_)
@@ -282,6 +562,14 @@ const CsharpDiagram::Decoration CsharpDiagram::calleeEdgeDecoration = {
 
 const CsharpDiagram::Decoration CsharpDiagram::callerEdgeDecoration = {
   {"color", "red"}
+};
+
+const CsharpDiagram::Decoration CsharpDiagram::classNodeDecoration = {
+  {"shape", "box"}
+};
+
+const CsharpDiagram::Decoration CsharpDiagram::inheritClassEdgeDecoration = {
+  {"arrowhead", "empty"}
 };
 
 }
